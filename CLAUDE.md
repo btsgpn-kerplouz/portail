@@ -54,6 +54,12 @@ apps/identification-habitats/
   Seule la clé publique **`anon`** va côté client, protégée par la **RLS**.
 - Secrets dans un fichier **`.env`** (ignoré par git), jamais en dur dans le code.
 - Données d'élèves **minimisées** ; **région EU** ; **RLS bien configurée**.
+- ⚠️ **Le dépôt GitHub est PUBLIC** → vigilance renforcée : **ne jamais committer de
+  donnée personnelle** (même de simples **initiales d'enseignant**). Toute donnée
+  réelle vit **uniquement dans Supabase**.
+- 🔍 **AUDIT OBLIGATOIRE de `organisation-cours` AVANT de migrer son code** dans le
+  dépôt : vérifier qu'aucune donnée sensible n'est en dur (initiales, noms,
+  emplois du temps réels…). Tant que l'audit n'est pas fait, ne pas committer son code.
 - Langue de travail : **français**.
 
 ## Workflow git
