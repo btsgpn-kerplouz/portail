@@ -1,0 +1,178 @@
+/* =====================================================================
+   CHARTE « ATLAS NATURALISTE » — design system commun · btsgpn-kerplouz
+   ---------------------------------------------------------------------
+   SOURCE DE VÉRITÉ de l'identité visuelle partagée par toutes les apps.
+
+   Principes (validés) :
+     • COHÉRENCE de structure  → même grammaire partout : typographie,
+       bandeau texturé, cartes, boutons, champs. Apprendre une app apprend
+       à lire les autres.
+     • VARIATION de couleur    → chaque app porte SA couleur « franche ».
+       Il suffit de définir --acc (voir « COULEUR D'APP » plus bas).
+     • HUB ≠ APP               → le portail se reconnaît au premier coup
+       d'œil : base NEUTRE graphite (--house) + toutes les couleurs en
+       légende. Une app = UNE seule couleur + sa texture + retour ‹ Portail.
+     • INCLUSION               → police Atkinson Hyperlegible (lettres non
+       ambiguës I/l/1, O/0), interligne 1.6, texte aligné à gauche,
+       chiffres tabulaires. Aide les lecteurs dyslexiques ET tout le monde.
+
+   ⚠ « Vanilla sans build » : chaque app étant déployée séparément, ce fichier
+   est la RÉFÉRENCE. Une page peut le charger (<link ... /shared/theme.css>)
+   si le déploiement sert shared/, sinon en recopier le contenu en local
+   (cas du portail, auto-suffisant). Charte modifiée → mettre à jour CE
+   fichier, puis répercuter. Textures : voir shared/texture.js.
+   ===================================================================== */
+
+/* --- Polices (réserve commune : shared/fonts/) --------------------- */
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
+
+:root{
+  /* ---- STRUCTURE COMMUNE (identique dans toutes les apps) ---------- */
+  --page:#e2e7e0;      /* fond de page, neutre froid choisi */
+  --surface:#f2f5ef;   /* surfaces / cadres                 */
+  --panel:#fbfcf9;     /* cartes                            */
+  --ink:#141d17;       /* texte principal                   */
+  --muted:#55605a;     /* texte secondaire                  */
+  --faint:#8a958c;     /* texte tertiaire / désactivé       */
+  --line:#d0d9ce;      /* filets                            */
+  --line-2:#e0e6dd;    /* filets doux                       */
+  --soft:#e7ebe3;      /* aplats doux                       */
+  --radius:16px;
+  --radius-sm:11px;
+  --shadow:0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09);
+  --shadow-hover:0 10px 26px rgba(20,30,20,.12);
+  --sans:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* ---- COULEUR NEUTRE DU HUB (portail) ---------------------------- */
+  --house:#2b3a40;     /* graphite : n'appartient à aucune app */
+
+  /* ---- COULEUR D'APP (à définir par app / par carte) -------------- */
+  /* Défaut = graphite du hub. Chaque app/carte fait : style="--acc:#2e7d4f"
+     Palette d'app conseillée :
+       Phytoscope #2e7d4f · Végétations #6f8f2c · Habitats-Gâvres #0f7aa0
+       Habitats-Landes #7d4f83 · Organisation #8a6d3d               */
+  --acc:var(--house);
+}
+
+/* --- Rendu clair forcé (pas de dark auto : identité « papier de terrain ») */
+html,body{color-scheme:light}
+@media (prefers-color-scheme: dark){
+  :root{--page:#e2e7e0;--surface:#f2f5ef;--panel:#fbfcf9;--ink:#141d17;--muted:#55605a;--line:#d0d9ce}
+}
+
+/* --- Base (réglages inclusifs par défaut) -------------------------- */
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--page);color:var(--ink);
+  font-family:var(--sans);line-height:1.6;text-align:left;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+h1,h2,h3{font-weight:700;letter-spacing:-.015em;line-height:1.12;text-wrap:balance}
+a{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums slashed-zero}
+
+/* --- Champs & menus déroulants (apps de saisie) -------------------- */
+label{display:inline-block;font-weight:700;font-size:.9rem;color:var(--ink)}
+input,select,textarea,button{font-family:var(--sans);font-size:1rem}
+input,select,textarea{
+  width:100%;padding:.6rem .75rem;min-height:2.6rem;background:#fff;color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--radius-sm);
+  transition:border-color .12s ease, box-shadow .12s ease;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--acc);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+}
+textarea{min-height:5rem;resize:vertical;line-height:1.5}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+select{
+  appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:2.2rem;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2355605a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .8rem center;background-size:1.05em;
+}
+
+/* --- Cadre (enveloppe portail/app : bandeau + corps) --------------- */
+.frame{
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  background:var(--surface);box-shadow:var(--shadow);
+}
+.frame-body{padding:clamp(1.2rem,3vw,1.7rem);border-top:1px solid var(--line-2)}
+
+/* --- Bandeau foncé texturé (en-tête) ------------------------------- */
+/* Couleur pilotée par --acc (app) ou --house (hub). Fond À PLAT + texture. */
+.banner{
+  position:relative;overflow:hidden;min-height:184px;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(1.5rem,3.6vw,2.3rem);
+  --bg1:color-mix(in srgb, var(--acc) 82%, #0a1510);
+  background:var(--bg1);
+}
+.banner.hub{--acc:var(--house)}
+.banner-texture{position:absolute;inset:0;width:100%;height:100%;display:block}
+.banner-scrim{position:absolute;inset:0;background:linear-gradient(100deg,var(--bg1) 0%,color-mix(in srgb,var(--bg1) 82%,transparent) 36%,transparent 74%)}
+.banner-inner{position:relative;max-width:56ch}
+.banner h1,.banner h2{margin:.5rem 0 .4rem;color:#f4f8f4;text-shadow:0 1px 2px rgba(0,0,0,.22);font-size:clamp(1.7rem,4.4vw,2.6rem)}
+.banner h1{font-size:clamp(1.8rem,4.6vw,2.7rem)}
+.banner .subtitle{margin:0;color:rgba(238,244,238,.84);font-size:1.02rem}
+
+/* --- Pastille signature (point = couleur de l'app ; légende = hub) - */
+.pastille{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;font-weight:500;color:rgba(240,246,240,.86)}
+.pastille .dot{width:.58rem;height:.58rem;border-radius:50%;background:var(--dot,#cfe3d6);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.pastille.legend .dots{display:inline-flex;gap:3px}
+.pastille.legend .dot{width:.5rem;height:.5rem;box-shadow:0 0 0 2px rgba(255,255,255,.1)}
+
+/* --- Retour vers le hub (présent dans les APPS, absent du portail) - */
+.backlink{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;color:rgba(236,243,236,.68);text-decoration:none;margin-bottom:.15rem}
+.backlink:hover{color:#fff}
+
+/* --- Grille d'outils + carte (bandeau de couleur par app) ---------- */
+.tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.9rem}
+.tool{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);transition:transform .14s ease, box-shadow .14s ease}
+/* Carte entièrement cliquable (pas de bouton) → hover/flèche réservés aux liens */
+a.tool{text-decoration:none;color:inherit;cursor:pointer}
+a.tool:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+a.tool:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.go{display:inline-block;color:var(--acc);font-weight:700;transition:transform .12s ease}
+a.tool:hover .go{transform:translateX(3px)}
+/* Carte « à part » (ex. réservé enseignants) : grisée, moins attractive */
+.tool--muted{opacity:.9}
+.tool--muted .tool-band{background:#e6eae3;color:var(--muted)}
+.tool--muted .tool-band h3{color:var(--ink)}
+.staff{margin-top:1.4rem;padding-top:1.1rem;border-top:1px dashed var(--line)}
+.staff-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
+.staff .tool{max-width:22rem}
+.tool-band{background:var(--acc);color:#fff;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.tool-band h3{margin:0;font-weight:700;font-size:1.04rem;color:#fff}
+.tool-band .tag{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;opacity:.92;white-space:nowrap}
+.tool-body{padding:.85rem .95rem 1rem;display:flex;flex-direction:column;flex-grow:1}
+.tool-body p{margin:0 0 1rem;color:var(--muted);font-size:.92rem;flex-grow:1}
+.tool-foot{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:auto}
+
+/* --- Statut (couleur SÉMANTIQUE, indépendante de l'accent) --------- */
+.status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.status::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:currentColor}
+.status.live{color:#2e7d4f}
+.status.wip{color:#a9772a}
+
+/* --- Lien « Ouvrir » + chip data ----------------------------------- */
+.open{display:inline-flex;align-items:center;gap:.35rem;font-weight:700;font-size:.86rem;color:var(--acc);text-decoration:none}
+.open:hover{text-decoration:underline;text-underline-offset:2px}
+.open:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+.open.disabled{color:var(--faint);pointer-events:none}
+.chip{font-family:var(--mono);font-size:.64rem;letter-spacing:.03em;color:var(--muted);background:color-mix(in srgb,var(--acc) 9%,#fff);border:1px solid color-mix(in srgb,var(--acc) 22%,var(--line));border-radius:999px;padding:.16rem .5rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* --- Boutons ------------------------------------------------------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;text-decoration:none;cursor:pointer;font-weight:700;font-size:.94rem;padding:.58rem 1rem;border-radius:var(--radius-sm);background:var(--acc);color:#fff;border:1px solid var(--acc);transition:filter .12s ease, transform .12s ease}
+.btn:hover{filter:brightness(.93);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--acc)}
+.btn.ghost:hover{background:var(--soft);filter:none}
+.btn.is-disabled{background:var(--soft);color:var(--faint);border-color:var(--line);pointer-events:none;transform:none;filter:none}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
