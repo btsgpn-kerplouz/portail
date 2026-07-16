@@ -29,7 +29,7 @@ indépendamment**. Travail collaboratif via Claude Code.
 |---|---|---|---|
 | **organisation-cours** | saisie | à migrer vers Supabase | Historique : serveur Node local + fichiers `data/`. **Ne jamais écraser `data/`.** |
 | **phytoscope** | saisie · multi-utilisateur | Supabase ✓ | **Modèle de référence** (déjà éprouvé). |
-| **vegetations-ouest** | consultation seule | aucune | **Purement statique** : pas de Supabase, pas d'auth. |
+| **vegetations-armoricaines** | consultation seule | aucune | « Végétations du massif armoricain ». **Purement statique** (PWA) : pas de Supabase, pas d'auth. |
 | **identification-habitats** | saisie | Supabase | **En cours**, à bâtir sur le modèle Phytoscope. |
 
 ## Structure du dépôt
@@ -41,7 +41,7 @@ shared/              <- design system CSS + helpers + client Supabase
 portail/             <- la page-hub
 apps/organisation-cours/
 apps/phytoscope/
-apps/vegetations-ouest/
+apps/vegetations-armoricaines/
 apps/identification-habitats/
 ```
 

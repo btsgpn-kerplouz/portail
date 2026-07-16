@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portail BTS GPN — outils pédagogiques</title>
+  <style>
+    :root {
+      --vert-fonce: #1b4332;
+      --vert: #2d6a4f;
+      --vert-clair: #40916c;
+      --vert-pale: #d8f3dc;
+      --terre: #a67c52;
+      --fond: #f4f9f4;
+      --carte: #ffffff;
+      --texte: #1b2e24;
+      --texte-doux: #52685d;
+      --ombre: 0 1px 3px rgba(27,67,50,.12), 0 8px 24px rgba(27,67,50,.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--texte);
+      background: var(--fond);
+      line-height: 1.55;
+    }
+
+    /* En-tête */
+    header {
+      background: linear-gradient(135deg, var(--vert-fonce), var(--vert-clair));
+      color: #fff;
+      padding: 3rem 1.25rem 2.5rem;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 .5rem; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+    header p { margin: 0 auto; max-width: 42rem; opacity: .92; font-size: 1.05rem; }
+    .badge-equipe {
+      display: inline-block; margin-top: 1rem; padding: .3rem .8rem;
+      background: rgba(255,255,255,.18); border-radius: 999px;
+      font-size: .85rem; letter-spacing: .02em;
+    }
+
+    /* Grille des apps */
+    main { max-width: 60rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
+    .grille {
+      display: grid; gap: 1.25rem;
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    }
+    .carte {
+      background: var(--carte); border-radius: 14px; padding: 1.5rem;
+      box-shadow: var(--ombre); border: 1px solid #e6f0e9;
+      display: flex; flex-direction: column;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .carte:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(27,67,50,.14), 0 16px 40px rgba(27,67,50,.12); }
+    .icone { font-size: 2.4rem; line-height: 1; margin-bottom: .75rem; }
+    .carte h2 { margin: 0 0 .4rem; font-size: 1.2rem; }
+    .carte p { margin: 0 0 1.25rem; color: var(--texte-doux); font-size: .95rem; flex-grow: 1; }
+
+    .statut {
+      display: inline-block; padding: .18rem .6rem; border-radius: 999px;
+      font-size: .75rem; font-weight: 600; margin-bottom: .9rem; width: fit-content;
+    }
+    .statut.actif { background: var(--vert-pale); color: var(--vert-fonce); }
+    .statut.chantier { background: #fdf0d5; color: #9c6a15; }
+
+    .bouton {
+      display: inline-block; text-align: center; text-decoration: none;
+      padding: .6rem 1rem; border-radius: 9px; font-weight: 600;
+      background: var(--vert); color: #fff; transition: background .15s ease;
+    }
+    .bouton:hover { background: var(--vert-fonce); }
+    .bouton.desactive {
+      background: #e6ece8; color: #9aa8a0; pointer-events: none;
+    }
+
+    footer {
+      text-align: center; padding: 2rem 1.25rem 3rem;
+      color: var(--texte-doux); font-size: .85rem;
+    }
+    footer a { color: var(--vert); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌿 Portail d'outils pédagogiques</h1>
+    <p>Les outils du BTS Gestion et Protection de la Nature — pour comprendre,
+       observer et apprendre, en classe comme sur le terrain.</p>
+    <span class="badge-equipe">btsgpn-kerplouz</span>
+  </header>
+
+  <main>
+    <div class="grille">
+
+      <!-- Phytoscope -->
+      <article class="carte">
+        <div class="icone">🔬</div>
+        <span class="statut actif">En service</span>
+        <h2>Phytoscope</h2>
+        <p>Saisie et partage d'observations botaniques entre plusieurs
+           utilisateurs.</p>
+        <!-- TODO : remplacer "#" par l'adresse réelle de l'app une fois déployée -->
+        <a class="bouton" href="#">Ouvrir</a>
+      </article>
+
+      <!-- Végétations du massif armoricain -->
+      <article class="carte">
+        <div class="icone">🌾</div>
+        <span class="statut actif">En service</span>
+        <h2>Végétations du massif armoricain</h2>
+        <p>Document interactif de consultation sur les végétations du massif
+           armoricain. Aucune saisie.</p>
+        <!-- TODO : remplacer "#" par l'adresse réelle -->
+        <a class="bouton" href="#">Ouvrir</a>
+      </article>
+
+      <!-- Identification d'habitats -->
+      <article class="carte">
+        <div class="icone">🏞️</div>
+        <span class="statut chantier">En construction</span>
+        <h2>Identification d'habitats</h2>
+        <p>Aide à l'identification des habitats naturels. Outil en cours
+           d'élaboration.</p>
+        <a class="bouton desactive" href="#" aria-disabled="true">Bientôt disponible</a>
+      </article>
+
+      <!-- Organisation de cours -->
+      <article class="carte">
+        <div class="icone">🗂️</div>
+        <span class="statut chantier">En construction</span>
+        <h2>Organisation de cours</h2>
+        <p>Outil de saisie pour l'organisation des cours. Migration des données
+           en préparation.</p>
+        <a class="bouton desactive" href="#" aria-disabled="true">Bientôt disponible</a>
+      </article>
+
+    </div>
+  </main>
+
+  <footer>
+    Portail pédagogique · BTS GPN · Kerplouz —
+    espace de travail collaboratif <strong>btsgpn-kerplouz</strong>.
+  </footer>
+</body>
+</html>
