@@ -1,0 +1,24 @@
+# === Secrets — NE JAMAIS committer ===
+.env
+.env.*
+!.env.example
+
+# === Dépendances ===
+node_modules/
+
+# === Données locales de l'app organisation-cours ===
+# Règle héritée : ne jamais écraser NI committer ces données (RGPD).
+apps/organisation-cours/data/
+
+# === Réglages locaux Claude Code (propres à chaque poste) ===
+.claude/settings.local.json
+
+# === Fichiers système / éditeurs ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# === Logs ===
+*.log
+npm-debug.log*
