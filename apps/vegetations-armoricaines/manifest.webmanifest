@@ -8,8 +8,8 @@
   "display": "standalone",
   "orientation": "any",
   "lang": "fr-FR",
-  "theme_color": "#b85f3f",
-  "background_color": "#eee8dc",
+  "theme_color": "#c2662f",
+  "background_color": "#e2e7e0",
   "categories": [
     "education",
     "reference",

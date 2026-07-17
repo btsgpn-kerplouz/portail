@@ -79,16 +79,31 @@
           rnd() > 0.5 ? g.fill() : g.stroke();
         }
       }
-      else if (mode === 'classification') {    // cladogramme équilibré = arbre de classification
-        var depth = 4, rootX = w * 0.30, rightX = w - 4, seg = (rightX - rootX) / (depth + 1);
-        (function node(x, y, span, d) {
-          if (d <= 0) { g.beginPath(); g.moveTo(x, y); g.lineTo(rightX, y); g.stroke(); return; }
-          var cx = x + seg, up = y - span, dn = y + span;
-          g.beginPath(); g.moveTo(x, y); g.lineTo(cx, y); g.stroke();
-          g.beginPath(); g.moveTo(cx, up); g.lineTo(cx, dn); g.stroke();
-          node(cx, up, span / 2, d - 1);
-          node(cx, dn, span / 2, d - 1);
-        })(rootX, h / 2, h * 0.40, depth);
+      else if (mode === 'classification') {    // dendrogramme CIRCULAIRE, fondu croissant vers la droite
+        var cm = color.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        var crgb = cm ? (cm[1] + ',' + cm[2] + ',' + cm[3]) : '245,212,182';
+        var grad = g.createLinearGradient(0, 0, w, 0);
+        grad.addColorStop(0, 'rgba(' + crgb + ',0.05)');
+        grad.addColorStop(0.55, 'rgba(' + crgb + ',0.30)');
+        grad.addColorStop(1, 'rgba(' + crgb + ',0.85)');
+        g.strokeStyle = grad; g.fillStyle = grad; g.lineWidth = 1.4; g.lineCap = 'round';
+        var cs = 11, crnd = function () { cs = (cs * 1103515245 + 12345) & 0x7fffffff; return cs / 0x7fffffff; };
+        var Cx = w * 0.66, Cy = h * 2.3, cdepth = 4, rOut = h * 2.2, dstep = h * 0.21;
+        var polar = function (r, a) { return [Cx + r * Math.cos(a), Cy + r * Math.sin(a)]; };
+        var cseg = function (p, q) { g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); };
+        var carc = function (r, a1, a2) { g.beginPath(); g.arc(Cx, Cy, r, a1, a2); g.stroke(); };
+        var cdot = function (p, rr) { g.beginPath(); g.arc(p[0], p[1], rr, 0, 6.2832); g.fill(); };
+        var aUp = -Math.PI / 2, span0 = 1.5, rRoot = rOut - cdepth * dstep;
+        cseg(polar(rRoot - dstep, aUp), polar(rRoot, aUp));
+        (function node(a, r, span, d) {
+          if (d <= 0) { cdot(polar(r, a), 2.4); return; }
+          var rc = r + dstep * (0.9 + crnd() * 0.2);
+          var a1 = a - span * 0.5 * (0.8 + crnd() * 0.4), a2 = a + span * 0.5 * (0.8 + crnd() * 0.4);
+          carc(rc, a1, a2);
+          cseg(polar(r, a), polar(rc, a));
+          node(a1, rc, span * 0.5, d - 1);
+          node(a2, rc, span * 0.5, d - 1);
+        })(aUp, rRoot, span0, cdepth);
       }
     }
 

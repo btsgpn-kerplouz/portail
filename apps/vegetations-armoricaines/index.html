@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="description" content="Application de consultation de la classification physionomique et phytosociologique des végétations du CBNB : arborescence, fiches descriptives, géographie et gradients d’Ellenberg." />
-<meta name="theme-color" content="#2f6f4e" />
+<meta name="theme-color" content="#c2662f" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="CBNB Végétations" />
@@ -15,14 +15,24 @@
 <!-- Carte géographique intégrée depuis Carte3régions.svg fourni par l’utilisateur ; chemins simplifiés pour affichage responsive. -->
 <title>Classification physionomique et phytosociologique des végétations (CBNB)</title>
 <style>
+/* Polices Atlas embarquées (charte commune : shared/fonts/). App déployée
+   séparément → recopiées localement dans apps/vegetations-armoricaines/fonts/. */
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
+
 :root {
-  --bg: #f6f8f5; --panel: #ffffff; --panel2: #f1f5ef; --ink: #1f2a24; --muted: #5f6d64;
-  --line: #dce5dc; --accent: #2f6f4e; --accent2: #224936; --soft: #e4efe6;
-  --shadow: 0 12px 30px rgba(22, 42, 30, .10); --radius: 18px;
+  /* Charte « Atlas naturaliste » — couleur d'app : OCRE #b56a1c (cf. portail) */
+  --bg: #e2e7e0; --panel: #fbfcf9; --panel2: #eef1ea; --ink: #141d17; --muted: #55605a;
+  --line: #d0d9ce; --accent: #c2662f; --accent2: #8f4a1f; --soft: #f4e5dc;
+  --shadow: 0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09); --radius: 16px;
+  --sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-body { line-height: 1.45; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+body { line-height: 1.6; text-align: left; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button, input, select { font: inherit; } button { cursor: pointer; }
 .app-header { position: sticky; top: 0; z-index: 40; padding: 14px 18px; border-bottom: 1px solid var(--line); background: rgba(246,248,245,.94); backdrop-filter: blur(10px); }
 .header-inner { max-width: 1440px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
@@ -52,7 +62,7 @@ input[type="search"], select { width: 100%; border: 1px solid var(--line); borde
 .toggler { width: 24px; height: 24px; border: 1px solid transparent; background: transparent; border-radius: 8px; color: var(--muted); }
 .toggler:hover { border-color: var(--line); background: #fff; }
 .badge { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--panel2); border-radius: 999px; padding: 3px 8px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-.badge.rank { color: var(--accent2); background: var(--soft); border-color: #c8dbc9; font-weight: 700; }
+.badge.rank { color: var(--accent2); background: var(--soft); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); font-weight: 700; }
 .content { min-width: 0; }
 .detail { padding: clamp(15px, 2vw, 24px); }
 .detail-head { display: grid; gap: 9px; border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 18px; }
@@ -67,7 +77,7 @@ input[type="search"], select { width: 100%; border: 1px solid var(--line); borde
 .text-block { white-space: pre-wrap; overflow-wrap: anywhere; color: #2d382f; }
 .muted { color: var(--muted); }
 .species-cloud { display: flex; flex-wrap: wrap; gap: 7px; }
-.species-chip { border: 1px solid #d9e5da; background: #f7fbf7; border-radius: 999px; padding: 6px 9px; font-style: italic; font-size: 13px; }
+.species-chip { border: 1px solid var(--line); background: var(--panel2); border-radius: 999px; padding: 6px 9px; font-style: italic; font-size: 13px; }
 
 .species-link { color: var(--accent2); text-decoration: none; font-style: italic; text-underline-offset: 2px; }
 .species-link:hover, .species-link:focus { text-decoration: underline; }
@@ -137,7 +147,7 @@ mark { background: #fff1a6; color: inherit; border-radius: 3px; padding: 0 .1em;
 .node-line:hover { background:transparent; }
 .node-card { --rank-color:#6b7280; display:grid; grid-template-columns:auto minmax(180px, 1fr) auto; gap:8px; align-items:center; width:100%; min-width:300px; max-width:520px; border:1px solid #d7e2d7; border-left:6px solid var(--rank-color); background:#fff; border-radius:14px; padding:9px 10px; box-shadow:0 4px 14px rgba(22,42,30,.07); text-align:left; transition:transform .08s ease, border-color .12s ease, box-shadow .12s ease; }
 .node-card:hover { transform:translateY(-1px); border-color:#b9cfbd; box-shadow:0 8px 18px rgba(22,42,30,.10); }
-.node-card.active { outline:3px solid rgba(47,111,78,.16); border-color:#9ab99e; background:#fbfffb; }
+.node-card.active { outline:3px solid color-mix(in srgb, var(--accent) 16%, transparent); border-color:color-mix(in srgb, var(--accent) 40%, var(--line)); background:#fffdf9; }
 .toggler { flex:0 0 auto; width:28px; height:28px; margin-top:7px; border:1px solid #d4dfd4; background:#fff; border-radius:10px; color:#526258; font-weight:800; }
 .toggler:hover { border-color:#9fb79f; background:#f5faf5; }
 .node-title { display:block; color:#17251c; font-weight:800; line-height:1.18; white-space:normal; overflow-wrap:anywhere; }
@@ -200,14 +210,14 @@ mark { background: #fff1a6; color: inherit; border-radius: 3px; padding: 0 .1em;
 .node-title { font-size:13px; line-height:1.18; white-space:normal; overflow-wrap:anywhere; }
 .rank-chip { font-size:10px; line-height:1; padding:5px 7px; letter-spacing:.035em; }
 .rank-CL .node-card { background:#f1f5f9; }
-.rank-CL .node-title { font-family:Georgia, 'Times New Roman', serif; font-weight:900; text-transform:uppercase; letter-spacing:.055em; font-size:13px; }
-.rank-S-CL .node-title { font-family:Georgia, 'Times New Roman', serif; font-weight:800; text-transform:uppercase; letter-spacing:.035em; font-size:12.5px; }
+.rank-CL .node-title { font-family:var(--sans); font-weight:900; text-transform:uppercase; letter-spacing:.055em; font-size:13px; }
+.rank-S-CL .node-title { font-family:var(--sans); font-weight:800; text-transform:uppercase; letter-spacing:.035em; font-size:12.5px; }
 .rank-F .node-title { font-weight:900; font-size:13.5px; }
 .rank-D .node-title { font-weight:850; font-size:13px; }
 .rank-M .node-title { font-weight:760; font-size:12.8px; }
-.rank-G .node-title, .rank-S-G .node-title { font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-weight:740; font-size:12.8px; }
-.rank-AL .node-title, .rank-S-AL .node-title { font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-weight:680; font-size:12.4px; }
-.rank-As .node-title { font-family:Georgia, 'Times New Roman', serif; font-style:italic; font-weight:560; font-size:12px; }
+.rank-G .node-title, .rank-S-G .node-title { font-family:var(--sans); font-style:italic; font-weight:740; font-size:12.8px; }
+.rank-AL .node-title, .rank-S-AL .node-title { font-family:var(--sans); font-style:italic; font-weight:680; font-size:12.4px; }
+.rank-As .node-title { font-family:var(--sans); font-style:italic; font-weight:560; font-size:12px; }
 .hidden-children { margin-left:34px; max-width:100%; background:#fafcf9; }
 .metric-row { grid-template-columns:minmax(130px,185px) minmax(0,1fr); align-items:start; padding:10px 0; }
 .track { height:30px; border-radius:12px; border:1px solid rgba(31,42,36,.22); overflow:visible; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); }
@@ -251,44 +261,58 @@ mark { background: #fff1a6; color: inherit; border-radius: 3px; padding: 0 .1em;
 @media (max-width: 760px) { .geo-map-card { grid-template-columns:1fr; } .geo-region-svg { max-width:440px; } }
 
 
-/* V1.6 - accueil simplifié sans sous-titre redondant */
+/* ===== Charte « Atlas naturaliste » — habillage ocre (remplace le thème V1.6 terracotta) ===== */
 :root {
-  --bg:#eee8dc; --panel:#fffdf7; --panel2:#f3eee5; --ink:#262421; --muted:#6d665d;
-  --line:#d8cfc1; --accent:#b85f3f; --accent2:#2f2b28; --soft:#efe1d8;
-  --sage:#6d8a58; --sage-dark:#315a42; --taupe:#aaa69b;
-  --shadow:0 18px 45px rgba(54,47,38,.12); --radius:22px;
+  --radius-sm:11px;
+  /* Secondaires « nature » repointés dans la famille ocre (app monochrome) */
+  --sage:#8a6d3d; --sage-dark:var(--accent2); --taupe:#b8ad98;
 }
-body { background: radial-gradient(circle at top left, rgba(184,95,63,.12), transparent 32rem), linear-gradient(180deg,#f8f4ed 0%, var(--bg) 58%, #f1eee7 100%); }
-.app-header { background:linear-gradient(135deg,#b85f3f 0%,#c56d4b 62%,#aaa69b 62%,#aaa69b 100%); border-bottom:0; color:#fff; box-shadow:0 10px 28px rgba(54,47,38,.18); }
-.brand h1 { color:#fff; letter-spacing:-.025em; font-family:Georgia,'Times New Roman',serif; font-weight:800; }
-.brand p { color:rgba(255,255,255,.84); }
+body { background: var(--bg); }
+/* En-tête sticky = barre neutre claire (le bandeau Atlas foncé est au-dessus) */
+.app-header { background:rgba(242,245,239,.94); border-bottom:1px solid var(--line); color:var(--ink); box-shadow:0 1px 0 rgba(20,30,20,.04); }
+.brand h1 { color:var(--ink); letter-spacing:-.015em; font-family:var(--sans); font-weight:700; }
+.brand p { color:var(--muted); }
 .header-actions { gap:7px; }
-.app-header .tab-button, .app-header .secondary { border-color:rgba(255,255,255,.34); background:rgba(255,255,255,.16); color:#fff; box-shadow:none; }
-.app-header .tab-button.active, .app-header .primary { background:#fff; color:#2f2b28; border-color:#fff; }
+.app-header .tab-button, .app-header .secondary { border-color:var(--line); background:var(--panel); color:var(--ink); box-shadow:none; }
+.app-header .tab-button.active, .app-header .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
 .update-button { min-height:36px; padding:7px 11px; font-size:12px; }
-.version-pill { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:7px 10px; min-height:36px; font-size:12px; font-weight:800; white-space:nowrap; border:1px solid rgba(47,43,40,.18); background:#fffdf7; color:#2f2b28; }
-.panel { border-color:rgba(70,60,48,.15); box-shadow:var(--shadow); }
-.sidebar { border-top:5px solid var(--accent); }
+.version-pill { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:7px 10px; min-height:36px; font-size:12px; font-weight:700; white-space:nowrap; border:1px solid var(--line); background:var(--panel); color:var(--ink); font-family:var(--mono); }
+.panel { border-color:var(--line); box-shadow:var(--shadow); }
+.sidebar { border-top:4px solid var(--accent); }
 .content.panel { overflow:hidden; }
-.card { border-color:rgba(70,60,48,.15); background:linear-gradient(180deg,#fffdf8,#fff9f1); }
-.node-card { border-color:rgba(70,60,48,.16); background:#fffdf7; }
-.node-card.active { background:#fffaf4; outline-color:rgba(184,95,63,.18); }
+.card { border-color:var(--line); background:var(--panel); }
+.node-card { border-color:var(--line); background:var(--panel); }
+.node-card.active { background:var(--soft); outline-color:color-mix(in srgb, var(--accent) 22%, transparent); }
 .home-view { min-height:100%; }
-.home-hero { position:relative; overflow:hidden; padding:clamp(24px,4vw,46px); background:linear-gradient(135deg,#b85f3f 0%,#bf6748 72%,#aaa69b 72.2%,#aaa69b 100%); color:#fff; border-radius:0 0 28px 28px; }
-.home-hero::before { content:""; position:absolute; inset:auto auto -38px -46px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,.11); }
-.home-kicker { position:relative; z-index:1; margin:0 0 14px; text-transform:uppercase; letter-spacing:.12em; font-size:12px; font-weight:850; color:rgba(255,255,255,.86); }
-.home-title { position:relative; z-index:1; margin:0; max-width:900px; font-family:Georgia,'Times New Roman',serif; font-size:clamp(28px,4.6vw,52px); line-height:1.08; letter-spacing:.005em; text-align:left; text-shadow:0 2px 12px rgba(0,0,0,.08); }
-.home-actions { position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start; margin-top:24px; }
-.home-actions a, .home-actions button { border-radius:999px; padding:10px 15px; min-height:42px; border:1px solid rgba(47,43,40,.20); background:rgba(255,255,255,.92); color:#2f2b28; text-decoration:none; font-weight:780; }
-.home-actions a.primary-link { background:#252323; color:#fff; border-color:#252323; }
+/* Accueil : bandeau clair « papier de terrain » (une seule couleur foncée = le bandeau Atlas du haut) */
+.home-hero { position:relative; overflow:visible; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:clamp(18px,3vw,36px); align-items:center; padding:clamp(20px,3.5vw,38px); background:var(--panel); border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:var(--radius); box-shadow:var(--shadow); }
+.home-hero::before { content:none; }
+.home-kicker { position:relative; z-index:1; margin:0 0 12px; font-family:var(--mono); text-transform:uppercase; letter-spacing:.1em; font-size:12px; font-weight:700; color:var(--accent); }
+.home-title { position:relative; z-index:1; margin:0; max-width:44ch; font-family:var(--sans); font-weight:700; font-size:clamp(20px,2.8vw,30px); line-height:1.16; letter-spacing:-.01em; text-align:left; color:var(--ink); }
+/* ===== Lot B — couverture « ouvrage » + référence ===== */
+.home-hero-text { min-width:0; }
+.book { position:relative; display:flex; flex-direction:column; align-items:center; gap:9px; text-decoration:none; transform:rotate(-2.4deg); transition:transform .18s ease; justify-self:center; }
+.book img { display:block; width:clamp(150px,18vw,200px); height:auto; border-radius:2px 8px 8px 2px; border-left:5px solid rgba(0,0,0,.28); box-shadow:0 16px 32px rgba(20,30,20,.32), 0 3px 8px rgba(20,30,20,.20); }
+.book:hover, .book:focus-visible { transform:rotate(0deg) translateY(-4px); outline:none; }
+.book-dl { font-family:var(--mono); font-size:.7rem; letter-spacing:.02em; font-weight:700; color:var(--accent); white-space:nowrap; }
+.book:hover .book-dl, .book:focus-visible .book-dl { text-decoration:underline; text-underline-offset:2px; }
+.home-reference { padding:16px; border-top:1px solid var(--line); margin-top:6px; }
+.ref-label { font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; font-size:.66rem; color:var(--accent); font-weight:700; margin:0 0 6px; }
+.ref-cite { margin:0; font-size:13px; line-height:1.55; color:var(--ink); max-width:none; }
+.ref-cite em { font-style:italic; }
+.ref-credit { margin:8px 0 0; font-size:12px; color:var(--muted); max-width:none; }
+@media (max-width:760px){ .home-hero { grid-template-columns:1fr; } .book { margin-top:4px; } }
+.home-actions { position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start; margin-top:22px; }
+.home-actions a, .home-actions button { border-radius:var(--radius-sm); padding:10px 15px; min-height:42px; border:1px solid var(--accent); background:#fff; color:var(--accent); text-decoration:none; font-weight:700; }
+.home-actions a.primary-link { background:var(--accent); color:#fff; border-color:var(--accent); }
 .home-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; align-items:start; }
 .home-intro { max-width:860px; }
-.home-intro p { margin:0; color:#3e3832; }
+.home-intro p { margin:0; color:var(--ink); }
 .home-maintenance { max-width:860px; border-left:5px solid var(--accent); }
 .home-maintenance-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
-.home-maintenance .update-button { background:#2f2b28; border-color:#2f2b28; color:#fff; }
+.home-maintenance .update-button { background:var(--accent); border-color:var(--accent); color:#fff; }
 @media (max-width: 980px) { .home-grid { padding:12px; } }
-@media (max-width: 600px) { .header-actions { grid-template-columns:1fr 1fr 1fr; } .home-hero { border-radius:0 0 22px 22px; padding:22px 16px; } .home-actions { display:grid; } .home-actions a, .home-actions button { text-align:center; } }
+@media (max-width: 600px) { .header-actions { grid-template-columns:1fr 1fr 1fr; } .home-hero { padding:20px 15px; } .home-actions { display:grid; } .home-actions a, .home-actions button { text-align:center; } }
 
 
 /* ============ Lot 0 — correctifs express (session 2026-07-06) ============ */
@@ -322,7 +346,7 @@ body { background: radial-gradient(circle at top left, rgba(184,95,63,.12), tran
 .eco-portrait.aggregated { border-left-color:#b08b3a; }
 .eco-portrait-label { flex:0 0 auto; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--sage-dark); background:#fff; border:1px solid var(--line); border-radius:999px; padding:3px 9px; }
 .eco-traits { display:flex; flex-wrap:wrap; gap:6px; }
-.eco-trait { font-size:13px; padding:4px 10px; border-radius:999px; border:1px solid #cdddc2; background:#eef4e8; color:#2c3a2f; }
+.eco-trait { font-size:13px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); }
 .eco-trait.tone-water { border-color:#bcd6e6; background:#e7f0f6; color:#1f3a4a; }
 .eco-trait.tone-salt { border-color:#c9d0d5; background:#eef1f3; color:#2a3238; }
 .eco-portrait-note { margin:0; font-size:13px; color:var(--muted); }
@@ -336,14 +360,125 @@ body { background: radial-gradient(circle at top left, rgba(184,95,63,.12), tran
 .explore-view.home-mode .workspace { grid-template-columns:1fr; }
 .explore-view.home-mode .content.panel { background:transparent; border:0; box-shadow:none; overflow:visible; }
 .help-btn { min-width:42px; padding:9px 0; font-weight:850; }
-.home-lede { position:relative; z-index:1; max-width:60ch; margin:14px 0 0; color:rgba(255,255,255,.9); font-size:15px; line-height:1.5; }
-.home-actions .primary-link { background:#252323; color:#fff; border-color:#252323; cursor:pointer; }
-.home-actions .ghost-link { border-radius:999px; padding:10px 15px; min-height:42px; border:1px solid rgba(255,255,255,.5); background:transparent; color:#fff; font-weight:700; cursor:pointer; }
-.home-actions .ghost-link:hover { background:rgba(255,255,255,.14); }
+.home-lede { position:relative; z-index:1; max-width:60ch; margin:14px 0 0; color:var(--muted); font-size:15px; line-height:1.5; }
+.home-actions .primary-link { background:var(--accent); color:#fff; border-color:var(--accent); cursor:pointer; }
+.home-actions .ghost-link { border-radius:var(--radius-sm); padding:10px 15px; min-height:42px; border:1px solid var(--accent); background:#fff; color:var(--accent); font-weight:700; cursor:pointer; }
+.home-actions .ghost-link:hover { background:var(--soft); }
 .portes-section { padding:22px 16px 4px; }
 .portes-title { font-size:17px; margin:0 0 14px; color:var(--accent2); }
-.portes { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; }
-.porte { display:flex; flex-direction:column; align-items:center; text-align:center; gap:9px; padding:20px 12px 15px; border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg,#fffdf8,#fdf6ec); box-shadow:0 6px 16px rgba(54,47,38,.06); cursor:pointer; transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+.portes { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(260px,100%),1fr)); gap:12px; }
+/* ===== Lot C — grands types en bandeaux-photos (étiquette en coin, code couleur conservé) ===== */
+.porte-photo { position:relative; display:block; width:100%; aspect-ratio:12/5; border:1px solid var(--line); border-radius:14px; overflow:hidden; padding:0; cursor:pointer; background:var(--panel); box-shadow:0 6px 16px rgba(20,30,20,.06); transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+.porte-photo:hover { transform:translateY(-3px); box-shadow:0 12px 26px rgba(20,30,20,.14); border-color:color-mix(in srgb, var(--porte-accent) 45%, var(--line)); }
+.porte-photo:focus-visible { outline:2px solid var(--porte-accent); outline-offset:2px; }
+.porte-photo::after { content:""; position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--porte-accent); }
+.porte-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.porte-tag { position:absolute; top:9px; left:9px; z-index:1; display:inline-flex; align-items:center; gap:6px; max-width:calc(100% - 18px); padding:5px 10px 5px 8px; border-radius:999px; background:rgba(255,255,255,.93); color:#1a2b1f; font-weight:800; font-size:13px; line-height:1.15; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+.porte-dot { width:10px; height:10px; border-radius:50%; background:var(--porte-accent); box-shadow:0 0 0 2px rgba(255,255,255,.6); flex:0 0 auto; }
+.porte-count2 { position:absolute; right:9px; bottom:11px; z-index:1; font-family:var(--mono); font-size:11px; font-weight:600; color:#fff; background:rgba(20,30,20,.55); padding:2px 8px; border-radius:999px; letter-spacing:.02em; }
+
+/* ===== Lot D1 — barre de modes + recherche globale + entrées d'accueil ===== */
+.mode-bar { max-width:1440px; margin:0 auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.backhome, .help-btn { flex:0 0 auto; }
+.global-search { position:relative; flex:1 1 240px; min-width:170px; display:flex; align-items:center; }
+.global-search .gs-icon { position:absolute; left:11px; width:16px; height:16px; color:var(--muted); pointer-events:none; }
+.global-search input { width:100%; padding:9px 34px; min-height:40px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--ink); }
+.global-search input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.global-search .gs-clear { position:absolute; right:6px; width:26px; height:26px; border:0; background:transparent; color:var(--muted); font-size:19px; line-height:1; border-radius:50%; cursor:pointer; }
+.global-search .gs-clear:hover { color:var(--ink); background:var(--soft); }
+.modes { display:flex; gap:7px; flex-wrap:wrap; }
+.tab-button.is-soon { opacity:.55; cursor:default; }
+.soon-badge { font-family:var(--mono); font-size:.56rem; text-transform:uppercase; letter-spacing:.05em; background:var(--soft); color:var(--accent2); border-radius:999px; padding:1px 6px; margin-left:6px; }
+@media (max-width:720px){ .global-search { order:3; flex-basis:100%; } }
+
+/* Accueil — entrées d'exploration */
+.entries { padding:6px 16px 4px; }
+.entries-title { font-size:17px; margin:0 0 12px; color:var(--accent2); }
+.entry-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(260px,100%),1fr)); gap:12px; margin-bottom:20px; }
+.entry { text-align:left; border:1px solid var(--line); border-radius:16px; background:var(--panel); padding:15px 16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 4px 12px rgba(20,30,20,.05); }
+.entry-head { display:flex; align-items:center; gap:9px; font-size:16px; }
+.entry-head b { color:var(--ink); }
+.entry-ico { font-size:20px; line-height:1; }
+.entry > p { margin:0; color:var(--muted); font-size:13.5px; }
+.entry-search { border-left:4px solid var(--accent); }
+.entry-search-row { display:flex; gap:8px; margin-top:2px; }
+.entry-search-row input { flex:1 1 auto; min-width:0; padding:9px 12px; min-height:42px; border:1px solid var(--line); border-radius:11px; background:#fff; color:var(--ink); }
+.entry-search-row input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.btn-search { flex:0 0 auto; border:1px solid var(--accent); background:var(--accent); color:#fff; font-weight:700; border-radius:11px; padding:9px 14px; cursor:pointer; }
+.btn-search:hover { filter:brightness(.94); }
+.entry-soon { border-left:4px solid #b7bfb5; opacity:.85; }
+.all-tree { margin:14px 0 2px; }
+.all-tree .linklike { font-weight:700; }
+
+/* Bas d'accueil — logo CBNB + référence côte à côte */
+.home-reference { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+.cbnb-logo { flex:0 0 auto; display:block; }
+.cbnb-logo img { width:clamp(96px,12vw,132px); height:auto; display:block; }
+.ref-body { flex:1 1 320px; min-width:0; }
+
+/* ===== Lot D1.1 — vue Recherche (onglet) + schémas CBNB + entrées ordonnées ===== */
+.help-btn { margin-left:auto; }
+.entries-intro { margin:0 0 8px; color:var(--ink); font-size:14px; max-width:82ch; }
+.levels-chain { margin:0 0 14px; font-size:12px; color:var(--muted); font-family:var(--mono); line-height:1.75; }
+.schema-figs { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(300px,100%),1fr)); gap:14px; margin:0 0 22px; }
+.schema-fig { margin:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
+.schema-fig a { display:block; }
+.schema-fig img { display:block; width:100%; height:auto; }
+.schema-fig figcaption { padding:7px 11px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); }
+.entry-block { margin:0 0 18px; }
+.entry-block-head { display:flex; align-items:center; gap:9px; margin:0 0 4px; }
+.entry-block-head h4 { margin:0; font-size:16px; color:var(--ink); }
+.entry-block-desc { margin:0 0 12px; color:var(--muted); font-size:13.5px; }
+.entry-duo { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(260px,100%),1fr)); gap:12px; margin-bottom:18px; }
+
+.search-view { display:none; }
+.search-view.active { display:block; }
+.search-view-inner { max-width:1000px; margin:0 auto; padding:clamp(12px,3vw,22px) 4px; }
+.search-field { position:relative; display:flex; align-items:center; margin-bottom:16px; }
+.search-field .gs-icon { position:absolute; left:14px; width:18px; height:18px; color:var(--muted); pointer-events:none; }
+.search-field input { width:100%; padding:13px 42px; min-height:50px; font-size:16px; border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); }
+.search-field input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.search-field .gs-clear { position:absolute; right:8px; width:30px; height:30px; border:0; background:transparent; color:var(--muted); font-size:22px; line-height:1; border-radius:50%; cursor:pointer; }
+.search-field .gs-clear:hover { color:var(--ink); background:var(--soft); }
+.search-hint { color:var(--muted); font-size:14px; padding:8px 2px; }
+.search-count { color:var(--muted); font-size:12px; font-family:var(--mono); margin:0 0 10px; }
+.search-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(280px,100%),1fr)); gap:10px; }
+.search-list .result-title { font-weight:800; }
+.search-list .result-excerpt { color:var(--muted); font-size:12px; }
+
+/* ===== Lot D1.2 — bandeau fusionné (couverture) + « comment ça marche » + entrées empilées ===== */
+.atlas-banner { overflow:visible; }
+.atlas-banner .subtitle { display:none; }
+body.is-home .atlas-banner { min-height:210px; }
+body.is-home .atlas-banner .subtitle, body.is-home .atlas-banner .banner-series { display:block; }
+.atlas-banner .banner-series { display:none; margin:.4rem 0 0; font-family:var(--mono); font-size:.62rem; letter-spacing:.02em; line-height:1.35; color:rgba(246,241,233,.72); }
+body.is-home .atlas-banner .banner-inner { padding-right:clamp(0px,15vw,190px); }
+.banner-book { display:none; }
+body.is-home .banner-book { display:flex; flex-direction:column; align-items:center; gap:6px; position:absolute; top:18px; right:clamp(14px,4vw,44px); width:clamp(126px,16vw,188px); text-decoration:none; z-index:3; }
+.banner-book img { display:block; width:100%; height:auto; border-radius:2px 7px 7px 2px; border-left:4px solid rgba(0,0,0,.32); box-shadow:0 16px 30px rgba(0,0,0,.42); transform:rotate(-2deg); transition:transform .18s ease; }
+.banner-book:hover img, .banner-book:focus-visible img { transform:rotate(0deg) translateY(-3px); }
+.banner-book-kicker { order:-1; font-family:var(--mono); font-size:.58rem; letter-spacing:.02em; line-height:1.3; color:rgba(246,241,233,.82); text-align:center; }
+.banner-book .book-dl { font-family:var(--mono); font-size:.6rem; font-weight:700; color:#fff; }
+@media (max-width:560px){
+  body.is-home .banner-book { position:static; flex-direction:row; align-items:center; gap:10px; width:auto; margin-top:14px; }
+  body.is-home .banner-book img { width:74px; }
+  body.is-home .atlas-banner .banner-inner { padding-right:0; }
+  .banner-book-kicker { order:0; text-align:left; }
+}
+
+.how-card { display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:42px 0 22px; padding:14px 16px; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:14px; background:var(--panel); box-shadow:0 4px 12px rgba(20,30,20,.05); cursor:pointer; }
+.how-card:hover { border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow:0 8px 20px rgba(20,30,20,.10); }
+.how-ico { flex:0 0 auto; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--accent); color:#fff; font-weight:800; font-size:18px; }
+.how-text { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.how-text b { color:var(--ink); font-size:15px; }
+.how-sub { color:var(--muted); font-size:13px; }
+.how-arrow { margin-left:auto; color:var(--accent); font-weight:700; flex:0 0 auto; }
+
+.entry-wide { width:100%; margin:0 0 12px; }
+.guide-fig { margin:12px 0; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.guide-fig img { display:block; width:100%; height:auto; }
+.guide-fig figcaption { padding:6px 10px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); }
+.porte { display:flex; flex-direction:column; align-items:center; text-align:center; gap:9px; padding:20px 12px 15px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 6px 16px rgba(20,30,20,.06); cursor:pointer; transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
 .porte:hover { transform:translateY(-3px); border-color:#c9a48f; box-shadow:0 12px 26px rgba(54,47,38,.12); }
 .porte-medallion svg { width:60px; height:60px; filter:drop-shadow(0 3px 6px rgba(54,47,38,.18)); }
 .porte-disc { fill:var(--porte-accent, var(--sage-dark)); stroke:none; }
@@ -385,17 +520,49 @@ body { background: radial-gradient(circle at top left, rgba(184,95,63,.12), tran
 .child-nav:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .child-nav .rank-chip { flex:0 0 auto; }
 .child-nav-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:280px; }
-.node-card.on-path { background:#f4f9f2; border-color:#c3d5c6; }
+.node-card.on-path { background:var(--soft); border-color:color-mix(in srgb, var(--accent) 30%, var(--line)); }
+
+/* ===== Bandeau Atlas (identité de l'app · foncé + texture « classification ») ===== */
+.atlas-banner { position:relative; overflow:hidden; min-height:172px; display:flex; flex-direction:column; justify-content:center; padding:clamp(1.4rem,3.4vw,2.2rem); --acc:var(--accent); --bg1:color-mix(in srgb, var(--acc) 82%, #0a1510); background:var(--bg1); }
+.atlas-banner .banner-texture { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.atlas-banner .banner-scrim { position:absolute; inset:0; background:linear-gradient(100deg, var(--bg1) 0%, color-mix(in srgb, var(--bg1) 82%, transparent) 36%, transparent 74%); }
+.atlas-banner .banner-inner { position:relative; max-width:none; }
+.atlas-banner h1 { margin:.35rem 0 .3rem; color:#f6f2ea; text-shadow:0 1px 2px rgba(0,0,0,.22); font-family:var(--sans); font-weight:700; letter-spacing:-.015em; line-height:1.12; font-size:clamp(1.6rem,4.2vw,2.5rem); }
+.atlas-banner .subtitle { margin:0; color:rgba(245,239,230,.85); font-size:1.02rem; }
+.atlas-pastille { display:inline-flex; align-items:center; gap:.45rem; font-family:var(--mono); font-size:.72rem; letter-spacing:.03em; font-weight:500; color:rgba(246,241,233,.86); }
+.atlas-pastille .pdot { width:.58rem; height:.58rem; border-radius:50%; background:#ecac83; box-shadow:0 0 0 3px rgba(255,255,255,.12); }
+.atlas-backlink { display:inline-block; font-family:var(--mono); font-size:.68rem; letter-spacing:.05em; color:rgba(246,241,233,.72); text-decoration:none; margin-bottom:.15rem; }
+.atlas-backlink:hover { color:#fff; }
+/* Sous-titre du wordmark redondant avec le bandeau → masqué (le bandeau porte l'identité) */
+.app-header .brand p { display:none; }
+/* Accueil : on masque la barre d'onglets (le bandeau Atlas + les actions d'accueil suffisent → plus de doublons ?/Explorer) */
+body.is-home .app-header { display:none; }
 </style>
 </head>
 <body>
-<header class="app-header"><div class="header-inner"><div class="brand"><h1>Végétations du Massif armoricain</h1><p>Application HTML autonome : arborescence, fiches descriptives, gradients d’Ellenberg et comparateur.</p></div><nav class="header-actions" aria-label="Modules"><button class="tab-button help-btn" data-open-guide type="button" aria-label="Guide d’utilisation" title="Comment lire l’application ?">?</button><button class="tab-button active" data-home>Accueil</button><button class="tab-button" data-view="explore">Explorer</button><button class="tab-button" data-view="compare">Comparer <span id="compareCount" class="badge">0</span></button></nav></div></header>
+<header class="atlas-banner">
+  <canvas class="banner-texture" data-texture="classification" data-tint="rgba(248,214,186,.5)" aria-hidden="true"></canvas>
+  <div class="banner-scrim"></div>
+  <div class="banner-inner">
+    <a class="atlas-backlink" href="https://portail-btsgpn-kerplouz.netlify.app/">‹ Portail</a>
+    <span class="atlas-pastille"><span class="pdot"></span>btsgpn-kerplouz</span>
+    <h1>Végétations du massif armoricain</h1>
+    <p class="subtitle banner-doc">Classification physionomique et phytosociologique des végétations de Basse-Normandie, Bretagne et Pays de la Loire</p>
+    <p class="banner-series">Les cahiers scientifiques et techniques — CBN de Brest</p>
+  </div>
+  <a class="banner-book" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Delassus_complet_2014_57068.pdf" target="_blank" rel="noopener" title="Ouvrir le cahier technique (PDF) sur le site du CBN de Brest">
+    <img src="./documents/couverture.webp" width="634" height="900" alt="Couverture du cahier technique du CBN de Brest" loading="lazy">
+    <span class="book-dl">Télécharger le PDF ↗</span>
+  </a>
+</header>
+<header class="app-header"><div class="mode-bar"><button class="tab-button backhome" data-home type="button">‹ Accueil</button><nav class="modes" aria-label="Modes d’exploration"><button class="tab-button" data-view="explore" type="button">Classification</button><button class="tab-button is-soon" type="button" disabled title="Bientôt disponible">Carte mentale<span class="soon-badge">bientôt</span></button><button class="tab-button" data-view="search" type="button">Recherche</button><button class="tab-button" data-view="compare" type="button">Comparer <span id="compareCount" class="badge">0</span></button></nav><button class="tab-button help-btn" data-open-guide type="button" aria-label="Guide d’utilisation" title="Comment lire l’application ?">?</button></div></header>
 <main class="container">
   <section id="exploreView" class="explore-view active"><div class="workspace">
-    <aside class="panel sidebar" aria-label="Navigation de la classification"><div class="search-block"><div><div class="sidebar-title">Arborescence de classification</div><div class="meta-line"><span id="globalMeta"></span></div></div><div class="search-row"><input id="searchInput" type="search" placeholder="Rechercher : prairie humide, Salicornia, As…" autocomplete="off" /><button id="clearSearch" class="secondary" title="Réinitialiser la recherche">Effacer</button></div><div class="filters"><select id="rankFilter" aria-label="Filtrer par rang"></select><select id="speciesFilter" aria-label="Filtrer par disponibilité Ellenberg"><option value="all">Toutes les fiches</option><option value="species">Avec espèces citées</option><option value="ellenberg">Avec moyennes Ellenberg</option><option value="geo">Avec géographie</option></select></div><div class="tree-tools"><select id="rootFilter" aria-label="Choisir une racine de classification"></select><select id="depthFilter" aria-label="Profondeur d’affichage"><option value="4">Division · 4 niveaux</option><option value="5">Macro-groupe · 5 niveaux</option><option value="6">Groupe · 6 niveaux</option><option value="7">Sous-groupe · 7 niveaux</option><option value="8">Alliance · 8 niveaux</option><option value="9">Sous-alliance · 9 niveaux</option><option value="10">Association · 10 niveaux</option><option value="99" selected>Complète</option></select></div><div class="tree-actions"><button id="expandVisible" class="secondary" type="button">Déplier visible</button><button id="collapseTree" class="secondary" type="button">Replier</button></div><div id="rankLegend" class="rank-legend" aria-label="Légende des rangs"></div><div class="meta-line"><span id="searchMeta"></span></div></div><div id="resultsPanel" class="results"></div><div class="tree-wrap"><ul id="tree" class="tree"></ul></div></aside>
+    <aside class="panel sidebar" aria-label="Navigation de la classification"><div class="search-block"><div><div class="sidebar-title">Arborescence de classification</div><div class="meta-line"><span id="globalMeta"></span></div></div><div class="filters"><select id="rankFilter" aria-label="Filtrer par rang"></select><select id="speciesFilter" aria-label="Filtrer par disponibilité Ellenberg"><option value="all">Toutes les fiches</option><option value="species">Avec espèces citées</option><option value="ellenberg">Avec moyennes Ellenberg</option><option value="geo">Avec géographie</option></select></div><div class="tree-tools"><select id="rootFilter" aria-label="Choisir une racine de classification"></select><select id="depthFilter" aria-label="Profondeur d’affichage"><option value="4">Division · 4 niveaux</option><option value="5">Macro-groupe · 5 niveaux</option><option value="6">Groupe · 6 niveaux</option><option value="7">Sous-groupe · 7 niveaux</option><option value="8">Alliance · 8 niveaux</option><option value="9">Sous-alliance · 9 niveaux</option><option value="10">Association · 10 niveaux</option><option value="99" selected>Complète</option></select></div><div class="tree-actions"><button id="expandVisible" class="secondary" type="button">Déplier visible</button><button id="collapseTree" class="secondary" type="button">Replier</button></div><div id="rankLegend" class="rank-legend" aria-label="Légende des rangs"></div><div class="meta-line"><span id="searchMeta"></span></div></div><div id="resultsPanel" class="results"></div><div class="tree-wrap"><ul id="tree" class="tree"></ul></div></aside>
     <section class="panel content" id="detailPanel" aria-live="polite"></section>
   </div></section>
   <section id="compareView" class="compare-view"><div class="compare-grid"><aside class="panel compare-tools"><h2 style="margin:0 0 10px;font-size:20px;">Ajouter une végétation</h2><input id="compareSearch" type="search" placeholder="Rechercher une formation à comparer…" autocomplete="off" /><div id="compareSearchResults" class="add-results"></div><div class="footer-note">Le comparateur reprend les descriptions, espèces citées, géographie et synthèses Ellenberg des fiches sélectionnées.</div></aside><section class="panel compare-main" id="comparePanel"></section></div></section>
+  <section id="searchView" class="search-view"><div class="search-view-inner"><div class="search-field"><svg class="gs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="searchInput" type="search" placeholder="Rechercher une espèce, un syntaxon, une caractéristique écologique…" autocomplete="off" aria-label="Rechercher" /><button id="clearSearch" class="gs-clear" type="button" aria-label="Effacer la recherche">×</button></div><div id="searchResults" class="search-results"></div></div></section>
 </main>
 <script>
 window.addEventListener('error', function(e){
@@ -413,6 +580,7 @@ const METRICS = APP_DATA.metrics;
 const APP_VERSION = '1.12';
 const SOURCE_PDF_URL = 'https://www.cbnbrest.fr/pmb_pdf/CBNB_Delassus_complet_2014_57068.pdf';
 const SOURCE_DOC_TITLE = 'Classification physionomique et phytosociologique des végétations de Basse-Normandie, Bretagne et Pays de la Loire';
+const SOURCE_REF_AUTHORS = 'Delassus L., Magnanon S., Colasse V., Glémarec E., Guitton H., Laurent É., Thomassin G., Bioret F., Catteau E., Clément B., Diquelou S., Felzines J.-C., Foucault B. de, Gauberville C., Gaudillat V., Guillevic Y., Haury J., Royer J.-M., Vallet J., Geslin J., Goret M., Hardegen M., Lacroix P., Reimringer K., Waymel J., Zambettakis C.';
 const DATA = APP_DATA.vegetations;
 const STATS = APP_DATA.stats;
 const byId = new Map(DATA.map(d => [d.id, d]));
@@ -433,7 +601,7 @@ if (selectedId && !byId.has(selectedId)) selectedId = null;
 if (selectedId && byId.has(selectedId)) expandPath(byId.get(selectedId));
 let compareIds = loadCompareIds();
 const els = {
-  tree: document.getElementById('tree'), detail: document.getElementById('detailPanel'), searchInput: document.getElementById('searchInput'), rankFilter: document.getElementById('rankFilter'), speciesFilter: document.getElementById('speciesFilter'), rootFilter: document.getElementById('rootFilter'), depthFilter: document.getElementById('depthFilter'), expandVisible: document.getElementById('expandVisible'), collapseTree: document.getElementById('collapseTree'), rankLegend: document.getElementById('rankLegend'), resultsPanel: document.getElementById('resultsPanel'), searchMeta: document.getElementById('searchMeta'), globalMeta: document.getElementById('globalMeta'), clearSearch: document.getElementById('clearSearch'), compareCount: document.getElementById('compareCount'), comparePanel: document.getElementById('comparePanel'), compareSearch: document.getElementById('compareSearch'), compareSearchResults: document.getElementById('compareSearchResults'), exploreView: document.getElementById('exploreView'), compareView: document.getElementById('compareView')
+  tree: document.getElementById('tree'), detail: document.getElementById('detailPanel'), searchInput: document.getElementById('searchInput'), rankFilter: document.getElementById('rankFilter'), speciesFilter: document.getElementById('speciesFilter'), rootFilter: document.getElementById('rootFilter'), depthFilter: document.getElementById('depthFilter'), expandVisible: document.getElementById('expandVisible'), collapseTree: document.getElementById('collapseTree'), rankLegend: document.getElementById('rankLegend'), resultsPanel: document.getElementById('resultsPanel'), searchMeta: document.getElementById('searchMeta'), globalMeta: document.getElementById('globalMeta'), clearSearch: document.getElementById('clearSearch'), compareCount: document.getElementById('compareCount'), comparePanel: document.getElementById('comparePanel'), compareSearch: document.getElementById('compareSearch'), compareSearchResults: document.getElementById('compareSearchResults'), exploreView: document.getElementById('exploreView'), compareView: document.getElementById('compareView'), searchView: document.getElementById('searchView'), searchResults: document.getElementById('searchResults')
 };
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function norm(s) { return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -730,6 +898,14 @@ const PORTE_COLORS = {
   fourres_arbustifs: '#7a6a34', // marron / vert marron
   forets: '#2f5d3a'             // vert profond
 };
+// Photos par grand type (compressées en WebP dans ./documents/).
+const PORTE_PHOTOS = {
+  aquatiques: './documents/photo-aquatiques.webp',
+  herbacees: './documents/photo-herbacees.webp',
+  fourres_nains: './documents/photo-fourres-nains.webp',
+  fourres_arbustifs: './documents/photo-fourres-arbustifs.webp',
+  forets: './documents/photo-forets.webp'
+};
 function porteKey(name) {
   const n = norm(name);
   if (n.includes('aquatique')) return 'aquatiques';
@@ -745,7 +921,8 @@ function renderPortes() {
     const key = porteKey(r.name);
     const icon = PORTE_ICONS[key] || '';
     const accent = PORTE_COLORS[key] || 'var(--sage-dark)';
-    return `<button class="porte" data-select="${esc(r.id)}" style="--porte-accent:${accent}"><span class="porte-medallion"><svg viewBox="0 0 48 48" fill="none" stroke="#ffffff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="22" class="porte-disc"/>${icon}</svg></span><span class="porte-name">${esc(r.name)}</span><span class="porte-count">${n.toLocaleString('fr-FR')} végétations</span></button>`;
+    const photo = PORTE_PHOTOS[key] || PORTE_PHOTOS.herbacees;
+    return `<button class="porte-photo" data-select="${esc(r.id)}" style="--porte-accent:${accent}"><img class="porte-img" src="${photo}" alt="${esc(r.name)}" loading="lazy" width="1196" height="496"><span class="porte-tag"><span class="porte-dot"></span>${esc(r.name)}</span><span class="porte-count2">${n.toLocaleString('fr-FR')} végétations</span></button>`;
   }).join('');
 }
 function renderExplorePrompt() {
@@ -755,9 +932,17 @@ function guideHtml() {
   return `<div class="guide-overlay"><div class="guide-card" role="dialog" aria-modal="true" aria-label="Guide d’utilisation"><button class="guide-close" type="button" aria-label="Fermer le guide">×</button>
     <h2>Bien lire cette application</h2>
     <p>Cet outil rend consultable, milieu par milieu, la classification des végétations du Massif armoricain publiée par le CBNB — sans parcourir les 300 pages du cahier technique.</p>
+    <h3>Trois façons d’explorer</h3>
+    <ul>
+      <li><strong>Classification</strong> — parcourez l’arborescence, du grand type de milieu jusqu’à l’association ; entrez par une des cinq «&nbsp;portes&nbsp;».</li>
+      <li><strong>Carte mentale</strong> — une vue d’ensemble de la classification <em>(bientôt)</em>.</li>
+      <li><strong>Recherche</strong> — retrouvez une végétation par mot-clé : espèce, syntaxon, caractéristique écologique.</li>
+    </ul>
     <h3>1 · Du général au précis</h3>
     <p>Les végétations sont emboîtées sur dix niveaux, de la grande famille jusqu’à la communauté précise&nbsp;:</p>
     <p class="guide-ranks"><strong>Classe</strong> › Sous-classe › Formation › Division › Macro-groupe › Groupe › Sous-groupe › <strong>Alliance</strong> › Sous-alliance › <strong>Association</strong></p>
+    <figure class="guide-fig"><a href="./documents/schema-fig3.webp" target="_blank" rel="noopener" title="Agrandir la figure 3"><img src="./documents/schema-fig3.webp" alt="Figure 3 — déclinaison de la classification, exemple des forêts" loading="lazy"></a><figcaption>Fig. 3 — du critère physionomique (la classe) au critère floristique (l’association).</figcaption></figure>
+    <figure class="guide-fig"><a href="./documents/schema-tableau.webp" target="_blank" rel="noopener" title="Agrandir le tableau 2"><img src="./documents/schema-tableau.webp" alt="Tableau 2 — critères des niveaux de la classification" loading="lazy"></a><figcaption>Tab. 2 — les critères de chaque niveau (cahier CBNB, p. 22).</figcaption></figure>
     <p>Chaque nœud porte une pastille de couleur rappelant son rang (légende dans la colonne de gauche).</p>
     <h3>2 · Lire une fiche</h3>
     <ul>
@@ -787,23 +972,46 @@ function renderHome() {
   document.title = 'Classification CBNB — Accueil';
   setActiveTab('home');
   els.exploreView.classList.add('home-mode');
+  document.body.classList.add('is-home');
   els.detail.innerHTML = `<article class="home-view">
-    <section class="home-hero">
-      <p class="home-kicker">Les cahiers scientifiques et techniques du Conservatoire botanique national de Brest</p>
-      <h2 class="home-title">${esc(SOURCE_DOC_TITLE)}</h2>
-      <p class="home-lede">Explorez la classification des végétations du Massif armoricain sans ouvrir les 300 pages du cahier technique : partez d’un grand type de milieu ci-dessous, ou fouillez l’arborescence complète.</p>
-      <div class="home-actions">
-        <button class="primary-link" data-view="explore" type="button">Explorer l’arborescence</button>
-        <button class="ghost-link" data-open-guide type="button">Comment ça marche&nbsp;?</button>
+    <button class="how-card" data-open-guide type="button">
+      <span class="how-ico" aria-hidden="true">?</span>
+      <span class="how-text"><b>Comment ça marche&nbsp;?</b><span class="how-sub">Les niveaux de la classification (avec les schémas du cahier), la lecture d’une fiche, les indices d’Ellenberg.</span></span>
+      <span class="how-arrow" aria-hidden="true">→</span>
+    </button>
+    <section class="entries">
+      <h3 class="entries-title">Par où commencer&nbsp;?</h3>
+      <div class="entry-block entry-wide">
+        <div class="entry-block-head"><span class="entry-ico" aria-hidden="true">🗂️</span><h4>Parcourir la classification</h4></div>
+        <p class="entry-block-desc">Entrez par un grand type de milieu, puis descendez dans l’arborescence jusqu’à l’association. <button class="linklike" data-view="explore" type="button">Voir toute l’arborescence →</button></p>
+        <div class="portes">${renderPortes()}</div>
       </div>
+      <div class="entry entry-wide entry-soon" aria-disabled="true">
+        <div class="entry-head"><span class="entry-ico" aria-hidden="true">🕸️</span><b>Carte mentale</b><span class="soon-badge">bientôt</span></div>
+        <p>Une vue d’ensemble de la classification, en un coup d’œil. Bientôt disponible.</p>
+      </div>
+      <form class="entry entry-wide entry-search" role="search">
+        <div class="entry-head"><span class="entry-ico" aria-hidden="true">🔎</span><b>Recherche</b></div>
+        <p>Une espèce, un syntaxon, une caractéristique écologique…</p>
+        <div class="entry-search-row">
+          <input id="homeSearch" type="search" placeholder="ex. prairie humide, Salicornia, héliophile…" autocomplete="off" aria-label="Rechercher" />
+          <button class="btn-search" type="submit">Chercher</button>
+        </div>
+      </form>
     </section>
-    <section class="portes-section">
-      <h3 class="portes-title">Par où commencer&nbsp;? Choisissez un grand type de végétation</h3>
-      <div class="portes">${renderPortes()}</div>
+    <section class="home-reference">
+      <a class="cbnb-logo" href="https://www.cbnbrest.fr/" target="_blank" rel="noopener" title="Site du Conservatoire botanique national de Brest">
+        <img src="./documents/logo-cbnb.webp" width="297" height="158" alt="Conservatoire botanique national de Brest" loading="lazy">
+      </a>
+      <div class="ref-body">
+        <p class="ref-label">Référence de l’ouvrage source</p>
+        <p class="ref-cite">${SOURCE_REF_AUTHORS}, 2014 — <em>${esc(SOURCE_DOC_TITLE)}</em>. Brest : Conservatoire botanique national de Brest, 262 p. (Les cahiers scientifiques et techniques, 1). ISBN 978-2-9548899-0-0.</p>
+        <p class="ref-credit">Textes et photographies : © 2014 Conservatoire botanique national de Brest. Outil pédagogique non officiel (BTS GPN — Kerplouz).</p>
+      </div>
     </section>
     <div class="home-foot">
       <p class="home-intro-text">Chaque fiche réunit la description du cahier technique, les espèces citées, la répartition régionale et un «&nbsp;portrait écologique&nbsp;» en clair.</p>
-      <div class="home-meta"><a class="version-pill pdf-pill" href="${SOURCE_PDF_URL}" target="_blank" rel="noopener" title="Ouvrir le cahier technique original (PDF)">PDF source</a><span class="version-pill">V${APP_VERSION}</span><button class="secondary update-button" data-force-update type="button">↻ Mise à jour</button></div>
+      <div class="home-meta"><span class="version-pill">V${APP_VERSION}</span><button class="secondary update-button" data-force-update type="button">↻ Mise à jour</button></div>
     </div>
   </article>`;
 }
@@ -950,7 +1158,9 @@ window.addEventListener('resize', () => { if (glossOpenEl) hideGloss(); });
 function renderDetail() {
   if (!selectedId || !byId.has(selectedId)) { renderHome(); return; }
   setActiveTab('explore');
+  els.exploreView.classList.add('active'); els.compareView.classList.remove('active'); els.searchView.classList.remove('active');
   els.exploreView.classList.remove('home-mode');
+  document.body.classList.remove('is-home');
   const item = byId.get(selectedId);
   const viewItem = displayItem(item);
   history.replaceState(null, '', '#' + encodeURIComponent(item.id));
@@ -1098,8 +1308,21 @@ async function forceAppUpdate(button) {
     if (button) { button.textContent = original; button.disabled = false; }
   }
 }
+function renderSearch() {
+  setActiveTab('search');
+  const raw = (els.searchInput.value || '').trim();
+  const terms = norm(raw).split(/\s+/).filter(Boolean);
+  const box = els.searchResults;
+  if (!terms.length) { box.innerHTML = '<p class="search-hint">Tapez un mot-clé : une espèce (ex. <em>Salicornia</em>), un syntaxon, un rang, une caractéristique écologique (<em>héliophile</em>, <em>hygrophile</em>, <em>calcicole</em>)…</p>'; return; }
+  const matches = DATA.filter(it => { const hay = searchHaystack(it); return terms.every(t => hay.includes(t)); });
+  if (!matches.length) { box.innerHTML = `<p class="search-hint">Aucun résultat pour «&nbsp;${esc(raw)}&nbsp;».</p>`; return; }
+  const shown = matches.slice(0, 300);
+  box.innerHTML = `<p class="search-count">${matches.length.toLocaleString('fr-FR')} résultat${matches.length > 1 ? 's' : ''}${matches.length > shown.length ? ' · 300 premiers affichés' : ''}</p><div class="search-list">`
+    + shown.map(it => `<button class="result-card" data-select="${esc(it.id)}"><span class="result-title">${highlight(it.name || it.id)}</span><span class="result-excerpt">${esc(rankLabel(it.rank))}${it.sci ? ` · <em>${esc(it.sci)}</em>` : ''}</span></button>`).join('')
+    + '</div>';
+}
 function setActiveTab(mode) { document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', (mode === 'home' && b.hasAttribute('data-home')) || b.dataset.view === mode)); }
-function setView(view) { setActiveTab(view); els.exploreView.classList.toggle('active', view === 'explore'); els.compareView.classList.toggle('active', view === 'compare'); if (view === 'explore') { els.exploreView.classList.remove('home-mode'); if (!selectedId || !byId.has(selectedId)) renderExplorePrompt(); } if (view === 'compare') renderCompare(); }
+function setView(view) { setActiveTab(view); document.body.classList.remove('is-home'); els.exploreView.classList.toggle('active', view === 'explore'); els.compareView.classList.toggle('active', view === 'compare'); els.searchView.classList.toggle('active', view === 'search'); if (view === 'explore') { els.exploreView.classList.remove('home-mode'); els.searchInput.value = ''; if (!selectedId || !byId.has(selectedId)) renderExplorePrompt(); renderTree(); } if (view === 'compare') renderCompare(); if (view === 'search') { renderSearch(); els.searchInput.focus(); } }
 let searchTimer;
 function updateSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { renderTree(); }, 80); }
 document.addEventListener('click', e => {
@@ -1118,14 +1341,16 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-compare-clear]')) { clearCompare(); return; }
   const tab = e.target.closest('[data-view]'); if (tab) setView(tab.dataset.view);
 });
-els.searchInput.addEventListener('input', updateSearch);
+els.searchInput.addEventListener('input', renderSearch);
+function enterSearch(q) { document.body.classList.remove('is-home'); els.searchInput.value = q || ''; setView('search'); }
+document.addEventListener('submit', e => { const f = e.target.closest('.entry-search'); if (f) { e.preventDefault(); const inp = f.querySelector('#homeSearch'); enterSearch(inp ? inp.value : ''); } });
 els.rankFilter.addEventListener('change', renderTree);
 els.speciesFilter.addEventListener('change', renderTree);
 els.rootFilter.addEventListener('change', () => { const id = els.rootFilter.value; if (id !== '__all__' && byId.has(id)) expanded.add(id); renderTree(); });
 els.depthFilter.addEventListener('change', renderTree);
 els.expandVisible.addEventListener('click', () => { DATA.filter(matchesFilters).forEach(expandPath); roots.forEach(r => expanded.add(r.id)); renderTree(); });
 els.collapseTree.addEventListener('click', () => { expanded = new Set(); renderTree(); });
-els.clearSearch.addEventListener('click', () => { els.searchInput.value = ''; els.rankFilter.value = 'all'; els.speciesFilter.value = 'all'; els.rootFilter.value = '__all__'; renderTree(); });
+els.clearSearch.addEventListener('click', () => { els.searchInput.value = ''; renderSearch(); els.searchInput.focus(); });
 els.compareSearch.addEventListener('input', renderCompareSearch);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGuide(); });
 window.addEventListener('hashchange', () => { const raw = location.hash.slice(1); const id = raw ? decodeURIComponent(raw) : null; if (id && byId.has(id)) { selectedId = id; expandPath(byId.get(id)); renderDetail(); renderTree(); } else { selectedId = null; renderHome(); renderTree(); } });
@@ -1148,6 +1373,58 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     });
   });
 }
+</script>
+
+<!-- Moteur de textures Atlas (copie de shared/texture.js — source de vérité). Dessine le bandeau. -->
+<script>
+(function () {
+  function build(cv) {
+    var mode = cv.getAttribute('data-texture');
+    var color = cv.getAttribute('data-tint') || 'rgba(255,255,255,.15)';
+    function draw() {
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      cv.width = w * dpr; cv.height = h * dpr;
+      var g = cv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, w, h);
+      g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 1;
+      if (mode === 'classification') {
+        var cm = color.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        var crgb = cm ? (cm[1] + ',' + cm[2] + ',' + cm[3]) : '245,212,182';
+        var grad = g.createLinearGradient(0, 0, w, 0);
+        grad.addColorStop(0, 'rgba(' + crgb + ',0.05)');
+        grad.addColorStop(0.55, 'rgba(' + crgb + ',0.30)');
+        grad.addColorStop(1, 'rgba(' + crgb + ',0.85)');
+        g.strokeStyle = grad; g.fillStyle = grad; g.lineWidth = 1.4; g.lineCap = 'round';
+        var cs = 11, crnd = function () { cs = (cs * 1103515245 + 12345) & 0x7fffffff; return cs / 0x7fffffff; };
+        var Cx = w * 0.66, Cy = h * 2.3, cdepth = 4, rOut = h * 2.2, dstep = h * 0.21;
+        var polar = function (r, a) { return [Cx + r * Math.cos(a), Cy + r * Math.sin(a)]; };
+        var cseg = function (p, q) { g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); };
+        var carc = function (r, a1, a2) { g.beginPath(); g.arc(Cx, Cy, r, a1, a2); g.stroke(); };
+        var cdot = function (p, rr) { g.beginPath(); g.arc(p[0], p[1], rr, 0, 6.2832); g.fill(); };
+        var aUp = -Math.PI / 2, span0 = 1.5, rRoot = rOut - cdepth * dstep;
+        cseg(polar(rRoot - dstep, aUp), polar(rRoot, aUp));
+        (function node(a, r, span, d) {
+          if (d <= 0) { cdot(polar(r, a), 2.4); return; }
+          var rc = r + dstep * (0.9 + crnd() * 0.2);
+          var a1 = a - span * 0.5 * (0.8 + crnd() * 0.4), a2 = a + span * 0.5 * (0.8 + crnd() * 0.4);
+          carc(rc, a1, a2);
+          cseg(polar(r, a), polar(rc, a));
+          node(a1, rc, span * 0.5, d - 1);
+          node(a2, rc, span * 0.5, d - 1);
+        })(aUp, rRoot, span0, cdepth);
+      }
+    }
+    draw();
+    var t;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(draw, 120); });
+  }
+  function init() { document.querySelectorAll('canvas[data-texture]').forEach(build); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
 </script>
 </body>
 </html>

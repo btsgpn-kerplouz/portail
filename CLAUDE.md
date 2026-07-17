@@ -69,6 +69,21 @@ apps/identification-habitats/
 **une app à la fois** : Claude Code lancé dans un sous-dossier hérite quand même
 de ce `CLAUDE.md` racine.
 
+## Méthode de travail avec Claude Code
+
+- **1 conversation = 1 sujet.** On ouvre une **conversation neuve** quand on change
+  d'app ou de gros objectif — pas au milieu d'un travail cohérent. Enchaîner
+  « habiller une app » → « revoir sa mise en page » dans la même conversation est
+  **optimal** (contexte déjà chaud). Mélanger app A → portail → app B dans une seule
+  conversation **encombre** inutilement la mémoire de travail de Claude.
+- **Rien d'important ne vit dans la mémoire volatile de Claude.** L'état durable vit
+  dans ce `CLAUDE.md`, dans `.claude/` (mémoire/recaps), dans **git** et dans `shared/`.
+  → repartir d'une conversation neuve ne perd rien d'essentiel : Claude recharge
+  `CLAUDE.md` + la mémoire, et relit `git log` / `shared/`.
+- **Finir chaque session** en faisant mettre à jour la mémoire/recap (avancement, décisions).
+- Grosse exploration ponctuelle → possibilité d'un **sous-agent** (lit à la place de
+  Claude, ne renvoie que la conclusion) pour garder le contexte léger. À la demande.
+
 ## Deux canaux à ne pas confondre
 
 - **CODE** : se partage via **Git / GitHub** (clone / push / PR).

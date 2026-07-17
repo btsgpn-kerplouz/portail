@@ -16,7 +16,7 @@ MESSAGE="${1:-Mise à jour}"
 
 git add .
 git commit -m "$MESSAGE"
-git push
+git push -u origin HEAD
 
 echo ""
 echo "✅ C'est enregistré et envoyé sur GitHub."
