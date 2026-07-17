@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cbnb-vegetations-pwa-v1-12';
+const CACHE_NAME = 'cbnb-vegetations-pwa-v1-13';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,7 +8,20 @@ const APP_SHELL = [
   './icons/icon-512.png',
   './icons/maskable-192.png',
   './icons/maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './fonts/atkinson.woff2',
+  './fonts/atkinson-bold.woff2',
+  './fonts/atkinson-italic.woff2',
+  './fonts/jetbrains-mono.woff2',
+  './documents/couverture.webp',
+  './documents/photo-aquatiques.webp',
+  './documents/photo-herbacees.webp',
+  './documents/photo-forets.webp',
+  './documents/photo-fourres-nains.webp',
+  './documents/photo-fourres-arbustifs.webp',
+  './documents/logo-cbnb.webp',
+  './documents/schema-fig3.webp',
+  './documents/schema-tableau.webp'
 ];
 
 self.addEventListener('install', event => {
