@@ -28,6 +28,7 @@
       /* Charte « Atlas naturaliste » — couleur d'app : vert phytosociologue #2e7d4f */
       --bg:#e2e7e0; --panel:#fbfcf9; --ink:#141d17; --muted:#55605a; --line:#d0d9ce;
       --brand:#2e7d4f; --brandDark:#215a39; --brand2:#e6efea; --accent:#a9772a; --danger:#a4423b;
+      --warmpanel:#faf3e6; --warmline:#e8dcc4;
       --soft:#e7ebe3; --shadow:0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09); --radius:16px;
       --display:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     }
@@ -51,7 +52,7 @@
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6}
     header{padding:26px 28px 18px;background:radial-gradient(120% 130% at 0% 0%,#fffdf9 0%,#f1ece1 55%,#f6f3ed 100%);border-bottom:1px solid var(--line)}
-    h1{margin:0 0 8px;font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,2.5vw,2.3rem);letter-spacing:-.02em;line-height:1.08;font-variation-settings:"opsz" 72,"wght" 600}
+    h1{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,4.2vw,2.5rem);letter-spacing:-.015em;line-height:1.12}
     header p{margin:0;max-width:1050px;color:var(--muted)}
     .betaBadge{display:inline-block;margin-left:.7em;color:#b00020;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
     .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
@@ -59,10 +60,10 @@
     button,.button{cursor:pointer;padding:10px 13px;background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700;box-shadow:0 3px 10px rgba(47,107,62,.10);transition:transform .12s ease, box-shadow .12s ease, background .12s ease} button:hover,.button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(47,107,62,.16)}
     button.secondary{background:#fff;color:var(--brandDark);border-color:#b9cfb7}.ghost{background:transparent;color:var(--brandDark);border-color:transparent;box-shadow:none}.danger{background:var(--danger);border-color:var(--danger)}
     input,select,textarea{padding:10px 12px;min-width:0;font-size:16px} textarea{width:100%;min-height:70px;resize:vertical}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px 0}.tab{background:#fff;color:var(--muted);border-color:var(--line)}.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}.tab-admin{opacity:.66;border-style:dashed}.tab.tab-admin .ti{display:inline-flex;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}.tab-admin.active{opacity:1;border-style:solid}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px 0}.tab{background:var(--warmpanel);color:var(--muted);border-color:var(--warmline)}.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}.tab-admin{opacity:.66;border-style:dashed}.tab.tab-admin .ti{display:inline-flex;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}.tab-admin.active{opacity:1;border-style:solid}
     main{padding:22px 24px 45px;max-width:1480px;margin:0 auto}.view{display:none}.view.active{display:block}
     .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}.card h2,.card h3{margin:0 0 12px;font-family:var(--display);font-weight:600;color:var(--brandDark);letter-spacing:-.01em}.card h2{font-size:1.24rem}.card h3{font-size:1.02rem;color:var(--brand)}.muted{color:var(--muted)}.small{font-size:.86rem}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;background:var(--brand2);color:#244b2c;font-size:.82rem;font-weight:650}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field label{font-weight:650;font-size:.88rem;color:#334335}
+    .card{background:var(--warmpanel);border:1px solid var(--warmline);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}.card h2,.card h3{margin:0 0 12px;font-family:var(--display);font-weight:600;color:var(--brandDark);letter-spacing:-.01em}.card h2{font-size:1.24rem}.card h3{font-size:1.02rem;color:var(--brand)}.muted{color:var(--muted)}.small{font-size:.86rem}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;background:var(--brand2);color:#244b2c;font-size:.82rem;font-weight:650}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field label{font-weight:650;font-size:.88rem;color:#334335}
     table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}th{font-size:.82rem;color:#536055;background:#fafcf8;position:sticky;top:0;z-index:1}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}.tableWrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:14px}
     .suggestWrap{position:relative}.suggestions{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(20,40,20,.14);z-index:20;max-height:340px;overflow:auto;display:none}.suggestions.open{display:block}.suggestion{padding:10px 12px;border-bottom:1px solid #eef2eb;cursor:pointer}.suggestion:hover,.suggestion.active{background:#f0f7ec}.suggestion b{display:block}.suggestion span{font-size:.82rem;color:var(--muted)}
     .summary{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));gap:10px}.metric{background:linear-gradient(180deg,#ffffff,var(--soft));border:1px solid var(--line);border-radius:14px;padding:11px 12px}.metric .label{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em}.metric .value{font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--brandDark);margin-top:4px;letter-spacing:-.01em}
@@ -178,7 +179,7 @@
 .screen-head p{margin:7px 0 0;color:var(--muted);max-width:64ch;font-size:.92rem}
 .screen-head{margin:2px 0 18px}
 .eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
-.h-screen{font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:-.02em;line-height:1.1;margin:5px 0 0;color:var(--brandDark);font-variation-settings:"opsz" 72,"wght" 600}
+.h-screen{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:-.02em;line-height:1.1;margin:5px 0 0;color:var(--brandDark)}
 .releveBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .relSelectWrap{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 14px;box-shadow:var(--shadow)}
 .relSelectWrap::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px var(--brand2);flex:0 0 auto}
@@ -239,13 +240,13 @@ header{position:relative;padding:14px 28px 12px;background:var(--bg1);border-bot
 .banner-inner{position:relative}
 .atlas-pastille{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;font-weight:500;color:rgba(240,246,240,.86)}
 .atlas-pastille .pdot{width:.58rem;height:.58rem;border-radius:50%;background:#aaebc4;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
-.atlas-backlink{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;color:rgba(236,243,236,.68);text-decoration:none;margin-right:.6rem}
+.atlas-backlink{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;color:rgba(236,243,236,.68);text-decoration:none}
 .atlas-backlink:hover{color:#fff}
 .tabs{background:var(--panel);border-bottom:1px solid var(--line)}
-.headerTop{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:.5rem}
-.appLogo{width:72px!important;height:72px!important;border-radius:18px!important;flex:0 0 auto}
-.headerTop h1{margin:0;flex:0 0 auto;white-space:nowrap;color:#fff}
-.headerDesc{margin:0;flex:1 1 180px;min-width:0;color:rgba(255,255,255,.58);font-size:.9rem;line-height:1.34}
+.banner-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.banner-inner h1{color:#fff}
+.subtitle{display:none;margin:.3rem 0 0;color:rgba(255,255,255,.68);font-size:1.02rem}
+body.is-home .subtitle{display:block}
 .versionPill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.82);font-size:.78rem;font-weight:700;white-space:nowrap;flex:0 0 auto}
 .installBtn{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;white-space:nowrap}
 .installBtn svg{flex:0 0 auto}
@@ -265,9 +266,7 @@ header{position:relative;padding:14px 28px 12px;background:var(--bg1);border-bot
 @media(max-width:760px){
   .topbar{box-shadow:0 4px 18px rgba(0,0,0,.32)}
   header{padding:12px 14px 10px}
-  .appLogo{width:52px!important;height:52px!important;border-radius:14px!important}
-  .headerTop h1{font-size:1.2rem}
-  .headerDesc{font-size:.84rem;flex-basis:100%}
+  .subtitle{font-size:.84rem}
 }
 </style>
 <style id="wetlands-css">
@@ -360,7 +359,6 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
    >>> Pour tout ajustement du bandeau haut ou de la nav du bas sur smartphone :
        MODIFIER ICI, pas dans les blocs du dessus. <<<
    ============================================================ */
-.authToggle{display:none}
 /* Sélecteurs de relevés repliables (tous écrans ; ouverts par défaut, refermés sur mobile par script) */
 .selectorDetails{margin:0}
 .selectorDetails > summary.selectorSummary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:650;color:var(--brandDark);padding:2px 0}
@@ -385,22 +383,13 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
   /* --- P1 : header réduit à une barre fine collante (~44px) --- */
   :root{--topbar-h:46px}
   header{padding:7px 12px!important;gap:0!important;position:relative}
-  .headerTop{display:flex;align-items:center;gap:9px;width:100%;min-width:0}
-  .appLogo{width:30px!important;height:30px!important;border-radius:8px!important}
-  .headerTop h1{font-size:1.06rem!important;white-space:nowrap;flex:0 0 auto}
-  .headerDesc{display:none!important}
-  /* petite pastille version discrète, juste le numéro (ex. v43) */
+  .banner-meta{width:100%;gap:8px}
+  .banner-inner h1{font-size:1.06rem!important;margin-top:4px}
+  .subtitle{display:none!important}
+  /* petite pastille version discrète, juste le numéro (ex. v5.0) */
   .versionPill{display:inline-flex!important;padding:2px 7px;font-size:.64rem;background:rgba(255,255,255,.14);color:rgba(255,255,255,.72);flex:0 0 auto}
   .versionPill .vFull{display:none}
   .versionPill .vShort{display:inline}
-  /* bouton 👤 qui déplie la connexion */
-  .authToggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-left:auto;width:36px;height:36px;padding:0;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer}
-  .authToggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
-  .authToggle:active{background:rgba(255,255,255,.22)}
-  .authToggleCb:checked ~ .headerTop .authToggle{background:#fff;color:var(--brandDark);border-color:#fff}
-  /* connexion repliée en menu déroulant, ouverte au tap */
-  .authBar{display:none!important;position:absolute;top:100%;left:10px;right:10px;margin-top:6px;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;padding:12px;border-radius:14px;background:var(--bg1);border:1px solid rgba(255,255,255,.16);box-shadow:0 16px 36px rgba(0,0,0,.36);z-index:80}
-  .authToggleCb:checked ~ .authBar{display:flex!important}
   /* --- P2 : barre d'onglets du bas fiable — fond opaque, sans backdrop-filter, couche stabilisée --- */
   .tabs{background:var(--panel)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-top:1px solid var(--line)!important;box-shadow:0 -7px 22px rgba(20,50,30,.12)!important;transform:translateZ(0)}
   /* corrige la couleur héritée du bandeau sombre (illisible sur fond clair) */
@@ -449,8 +438,7 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
   .tabs{gap:1px!important;padding-left:2px!important;padding-right:2px!important}
   .tab{font-size:.55rem!important;padding:5px 0!important;gap:2px!important;letter-spacing:-.01em}
   .tab .ti{width:19px;height:19px}
-  .headerTop h1{font-size:1rem!important}
-  .appLogo{width:28px!important;height:28px!important}
+  .banner-inner h1{font-size:1rem!important}
 }
 </style>
 <style id="home-view-v44">
@@ -461,8 +449,24 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 @media(min-width:761px){ body.is-home .tabs{display:none} }
 @media(max-width:760px){ .tabs{grid-template-columns:repeat(6,1fr)} }
 
-.homeView > .card,.homeView > details.card,.homeView > .homeEntries,.homeView > .adminLockBtn{margin-bottom:16px}
+.homeView > details.card,.homeView > .card,.homeView > .adminLockBtn{margin-bottom:16px}
 .homeView .card-head{margin-bottom:10px}
+
+/* Rail numéroté des 3 étapes (Se connecter / Relevés / Analyser mes relevés) */
+.homeRail{display:flex;gap:14px;margin-bottom:20px}
+.railCol{width:26px;position:relative;flex:0 0 auto}
+.railCol::before{content:"";position:absolute;left:50%;top:0;bottom:-20px;width:2px;background:var(--line);transform:translateX(-50%)}
+.homeRail-last .railCol::before{display:none}
+.stepBadge{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.86rem;flex:0 0 auto;position:relative;z-index:1}
+.railContent{flex:1;min-width:0}
+.railContent > .card,.railContent > details.card,.railContent > .homeEntries{margin-bottom:16px}
+.railContent > *:last-child{margin-bottom:0}
+.railContent .entrySolo{margin-bottom:0}
+.homeEtOu{margin:6px 0 10px 4px;font-size:.76rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
+@media(max-width:760px){ .homeRail{gap:10px} .railCol{width:22px} .stepBadge{width:22px;height:22px;font-size:.78rem} }
+
+/* Séparateur neutre avant Référentiels (hors séquence numérotée) */
+.ref-divider{border-top:1px solid var(--line);padding-top:2px;margin:4px 0 16px}
 
 /* Pastille d'état de connexion, dans le bandeau */
 .authStatusPill{display:inline-flex;align-items:center;gap:6px;margin-left:auto;flex:0 0 auto;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.8rem;font-weight:650;cursor:pointer;white-space:nowrap}
@@ -495,18 +499,33 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .linklike{border:0;background:transparent;color:var(--brandDark);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
 
 /* Entrées d'accueil */
-.entries-title{font-size:1rem;margin:0 0 10px;color:var(--brandDark)}
+.entries-title{font-size:1.05rem;margin:0 0 12px;font-weight:700;color:var(--brandDark)}
 .entries-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
 .entry{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow);cursor:pointer;font:inherit;color:inherit}
 .entry:hover{border-color:var(--brand);transform:translateY(-1px)}
 .entry-head{display:flex;align-items:center;gap:9px}
-.entry-head b{color:var(--ink);font-size:1rem}
-.entry-ico{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--brand2);color:var(--brand);flex:0 0 auto}
+.entry-head b{color:var(--ink);font-size:.88rem}
+.entry-ico{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:transparent;color:var(--brandDark);flex:0 0 auto}
 .entry-ico svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;display:block}
 .entry > p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.4}
+.entry-arrow{margin-top:auto;align-self:flex-end;color:var(--brand);font-size:1.15rem;flex:0 0 auto}
 
-/* Référentiels (accueil, repliable) */
-.homeRefsBody table{margin-top:10px}
+/* Référentiels (accueil, toujours visible) */
+.homeRefsHead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+#homeRefsCard .homeRefsHead h2{color:var(--brandDark);font-size:1.05rem;margin:0}
+/* Référentiels : posé sur le fond général de l'app, sans cadre ni fond de
+   carte (comme la section référence de Végétations, .home-reference) —
+   c'est une note de bas de page, pas une action. */
+#homeRefsCard{background:transparent;border:0;box-shadow:none;padding:4px 4px 0}
+.homeRefsBody{font-size:.82rem;line-height:1.5}
+.homeRefsBody > p{margin:0 0 8px}
+.refWithLogo{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+.telabot-logo{flex:0 0 auto;display:block}
+.telabot-logo img{width:clamp(64px,9vw,92px);height:auto;display:block}
+.refWithLogoText{flex:1 1 260px;min-width:0;margin:0}
+.homeRefsBody table{margin-top:10px;font-size:.78rem}
+.homeRefsBody th,.homeRefsBody td{padding:6px 7px}
+#homeReleveCard summary h2{font-size:.88rem;font-weight:700}
 
 /* Admin (accueil, icône discrète) */
 .adminLockBtn{display:inline-flex;align-items:center;gap:7px;font-size:.86rem}
@@ -521,7 +540,7 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .authConnected{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .authConnectedWho{display:flex;align-items:center;gap:10px}
 .authConnectedWho > span:last-child{display:flex;flex-direction:column;gap:1px}
-.authWhoIcon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--brand2);color:var(--brandDark);flex:0 0 auto}
+.authWhoIcon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:transparent;color:var(--brandDark);flex:0 0 auto}
 .authWhoIcon svg{width:19px;height:19px}
 .authWhoEmail{color:var(--muted);font-size:.86rem}
 .authConnectedActions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
@@ -530,10 +549,10 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 /* Carte "Saisir un relevé" : encart compact et cliquable, distinct du grand encart "Mes relevés" */
 .entrySolo{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;border:1px solid var(--line);background:var(--panel)}
 .entrySolo:hover{border-color:var(--brand)}
-.entrySolo .entry-ico{width:38px;height:38px;border-radius:50%;background:var(--brand2);color:var(--brandDark)}
-.entrySolo .entry-ico svg{width:20px;height:20px}
+.entrySolo .entry-ico{width:38px;height:38px;background:transparent;color:var(--brandDark)}
+.entrySolo .entry-ico svg{width:22px;height:22px}
 .entrySoloText{display:flex;flex-direction:column;gap:2px}
-.entrySoloText b{font-size:1.02rem;color:var(--ink)}
+.entrySoloText b{font-size:.88rem;color:var(--ink)}
 .entrySoloArrow{margin-left:auto;color:var(--brand);font-size:1.3rem;flex:0 0 auto}
 
 /* Mes relevés : 2 colonnes (tous les relevés / sélection) */
@@ -551,33 +570,37 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 #entry > * + *{margin-top:18px}
 #entry .tableWrap{max-height:none}
 
-/* ===== Passe esthétique — hiérarchie de couleur =====
-   Le vert était utilisé partout (titres de carte, icônes, libellés) sans
-   distinguer action/contenu, d'où une impression plate et monotone. On le
-   réserve désormais aux actions, à la sélection courante et au repère de
-   navigation (titre de page) ; les titres de carte passent en encre neutre.
-   Aucune 2e couleur de marque introduite — seule la variation d'ambre déjà
-   présente (statut « attention ») est réutilisée, pour Zone humide. */
+/* ===== Passe esthétique — contraste chaud/froid =====
+   Le fond commun de la charte (gris-vert froid #e2e7e0, partagé par toutes
+   les apps du portail) absorbe un accent vert : teintes analogues, donc
+   aucun contraste, d'où l'impression de « trop de vert »/fond olive. Chez
+   Végétations, l'accent chaud (terracotta) contraste avec ce même fond
+   froid — c'est ce contraste, pas la quantité de couleur, qui fait la
+   différence. Les cartes de toute l'app passent donc sur un crème chaud
+   propre à PhytoScope (--warmpanel), qui fait écho au bandeau vert plutôt
+   que de s'y fondre. Le vert redevient un repère net porté par une puce
+   colorée sur l'icône (jamais un aplat dilué sur toute la carte) et par les
+   boutons d'action pleins. Titres de carte en encre neutre : la couleur
+   signale l'action, pas le contenu. */
 .card h2,.card h3{color:var(--ink)}
 
-/* Carte d'action principale de l'accueil : léger lavis de vert plutôt qu'un
-   bloc plat blanc, pour la distinguer visuellement des cartes de contenu. */
-.entrySolo{background:color-mix(in srgb, var(--brand) 6%, var(--panel))}
-.entrySolo:hover{background:color-mix(in srgb, var(--brand) 10%, var(--panel));box-shadow:0 10px 26px rgba(31,77,49,.14)}
+.entry,.entrySolo{background:var(--warmpanel);border-color:var(--warmline)}
+.entry:hover,.entrySolo:hover{border-color:var(--brandDark);box-shadow:0 10px 26px rgba(31,77,49,.16)}
+.entry{transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s cubic-bezier(.22,.61,.36,1),border-color .18s ease}
 
-/* Cartes d'entrée : lavis au survol au lieu d'un simple changement de bordure */
-.entry{transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s cubic-bezier(.22,.61,.36,1),background-color .18s ease,border-color .18s ease}
-.entry:hover{background:color-mix(in srgb, var(--brand) 4%, var(--panel));box-shadow:0 10px 24px rgba(31,77,49,.12)}
+/* Colonne « Sélectionnés » : même logique crème, teintée du vert de marque */
+.homeReleveColSelected{background:color-mix(in srgb, var(--brand) 10%, var(--warmpanel));border-color:var(--warmline)}
+.homeReleveColSelected .homeReleveColTitle{color:var(--brandDark)}
 
-/* Colonne « Sélectionnés » : le lavis vert relie visuellement l'état
-   sélectionné à la couleur de marque (au lieu du gris neutre générique) */
-.homeReleveColSelected{background:color-mix(in srgb, var(--brand) 7%, var(--panel));border-color:color-mix(in srgb, var(--brand) 24%, var(--line))}
+#homeAuthCard,#homeReleveCard,#homeRefsCard{border-color:var(--warmline)}
+.authWhoIcon{color:var(--brandDark)}
 
-/* Zone humide : diagnostic/alerte → réutilise l'ambre sémantique existant
-   (déjà la couleur des états « attention » ailleurs dans l'appli), pas une
-   nouvelle couleur de marque. */
-#home .entry[data-view="wetlands"] .entry-ico{background:color-mix(in srgb, var(--accent) 22%, var(--panel));color:var(--accent)}
-.entries-title{color:var(--ink)}
+/* Puce colorée : porte la couleur sur l'icône plutôt que sur la carte */
+.entry-ico,.entrySolo .entry-ico,.homeReleveIco{background:var(--brandDark);color:#fff;width:34px;height:34px;border-radius:9px}
+.entry-ico svg,.entrySolo .entry-ico svg,.homeReleveIco svg{width:19px;height:19px}
+.entry-arrow,.entrySoloArrow{color:var(--brandDark)}
+/* Titre du bandeau en crème plutôt que blanc pur, écho du crème des cartes */
+.banner-inner h1{color:var(--warmpanel)}
 </style>
 </head>
 <body class="is-home">
@@ -586,23 +609,22 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
   <canvas class="banner-texture" data-texture="scatter" data-tint="rgba(170,235,196,.5)" aria-hidden="true"></canvas>
   <div class="banner-scrim" aria-hidden="true"></div>
   <div class="banner-inner">
-    <a class="atlas-backlink" href="https://portail-btsgpn-kerplouz.netlify.app/">‹ Portail</a>
-    <span class="atlas-pastille"><span class="pdot"></span>btsgpn-kerplouz</span>
-    <div class="headerTop">
-      <img class="appLogo" src="./icons/icon.svg" alt="" aria-hidden="true">
-      <h1>PhytoScope</h1>
-      <p class="headerDesc">Application de saisie de relevés phytosociologiques et de visualisation d’indicateurs écologiques associés.</p>
+    <div class="banner-meta">
+      <a class="atlas-backlink" href="https://portail-btsgpn-kerplouz.netlify.app/">‹ Portail</a>
+      <span class="atlas-pastille"><span class="pdot"></span>btsgpn-kerplouz</span>
       <span class="versionPill" id="appVersionShort"></span>
       <button type="button" class="authStatusPill" id="authStatusPill" data-home title="Connexion">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg>
         <span id="authStatusText">Non connecté</span>
       </button>
     </div>
+    <h1>PhytoScope</h1>
+    <p class="subtitle">Application de saisie de relevés phytosociologiques et de visualisation d’indicateurs écologiques associés.</p>
   </div>
 </header>
 <nav class="tabs noPrint">
   <button class="tab" data-view="home" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tlong">Accueil</span><span class="tshort">Accueil</span></button>
-  <button class="tab" data-view="entry" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M12 20s-7-4-7-10a7 7 0 0 1 14 0c0 6-7 10-7 10Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20V9" stroke-linecap="round"/></svg><span class="tlong">Saisie du relevé</span><span class="tshort">Saisie</span></button>
+  <button class="tab" data-view="entry" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 20l1-4L15 6l3 3L8 19l-4 1Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 8l3 3" stroke-linecap="round"/></svg><span class="tlong">Saisie du relevé</span><span class="tshort">Saisie</span></button>
   <button class="tab" data-view="gradients" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg><span class="tlong">Gradients</span><span class="tshort">Gradients</span></button>
   <button class="tab" data-view="scatter" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg><span class="tlong">Ecogrammes</span><span class="tshort">Écogr.</span></button>
   <button class="tab" data-view="compare" type="button"><svg class="ti" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg><span class="tlong">Comparaison</span><span class="tshort">Comparer</span></button>
@@ -611,70 +633,96 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 </div>
 <main>
   <section id="home" class="view active homeView">
-    <div class="card" id="homeAuthCard">
-      <h2>Se connecter</h2>
-      <div id="homeAuthBar" aria-live="polite"></div>
+    <div class="homeRail">
+      <div class="railCol"><span class="stepBadge">1</span></div>
+      <div class="railContent">
+        <h3 class="entries-title">Se connecter</h3>
+        <div class="card" id="homeAuthCard">
+          <div id="homeAuthBar" aria-live="polite"></div>
+        </div>
+      </div>
     </div>
 
-    <button class="card entrySolo" type="button" data-view="entry">
-      <span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4-7-10a7 7 0 0 1 14 0c0 6-7 10-7 10Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20V9" stroke-linecap="round"/></svg></span>
-      <span class="entrySoloText"><b>Saisir un relevé</b><span class="small muted">Nouveau relevé phytosociologique, coté en Braun-Blanquet ou en %.</span></span>
-      <span class="entrySoloArrow" aria-hidden="true">→</span>
-    </button>
-
-    <div class="card" id="homeReleveCard">
-      <div class="card-head"><h2>Mes relevés</h2><span class="small muted" id="homeReleveCount"></span></div>
-      <div class="homeFilterBar noPrint">
-        <input class="panelSearch releveFilter" id="homeReleveFilter" data-kind="home" placeholder="Filtrer par nom, commune, mots-clés…">
-        <select class="authSelect" id="homeProjetFilter"><option value="">Tous les projets</option></select>
-        <div class="selectorActions">
-          <button class="ghost miniBtn" data-kind="home" data-select-action="all">Tout cocher</button>
-          <button class="ghost miniBtn" data-kind="home" data-select-action="none">Aucun</button>
-        </div>
+    <div class="homeRail">
+      <div class="railCol"><span class="stepBadge">2</span></div>
+      <div class="railContent">
+        <h3 class="entries-title">Relevés</h3>
+        <button class="card entrySolo" type="button" data-view="entry">
+          <span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L15 6l3 3L8 19l-4 1Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 8l3 3" stroke-linecap="round"/></svg></span>
+          <span class="entrySoloText"><b>Saisir un nouveau relevé</b></span>
+          <span class="entrySoloArrow" aria-hidden="true">→</span>
+        </button>
+        <p class="homeEtOu" aria-hidden="true">et/ou</p>
+        <details class="card metaCard" id="homeReleveCard">
+          <summary><span class="entry-ico homeReleveIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h2 style="display:inline">Sélectionner mes relevés</h2><span class="small muted" id="homeReleveCount"></span></summary>
+          <div class="homeFilterBar noPrint">
+            <input class="panelSearch releveFilter" id="homeReleveFilter" data-kind="home" placeholder="Filtrer par nom, commune, mots-clés…">
+            <select class="authSelect" id="homeProjetFilter"><option value="">Tous les projets</option></select>
+            <div class="selectorActions">
+              <button class="ghost miniBtn" data-kind="home" data-select-action="all">Tout cocher</button>
+              <button class="ghost miniBtn" data-kind="home" data-select-action="none">Aucun</button>
+            </div>
+          </div>
+          <div class="homeReleveSplit">
+            <div class="homeReleveCol">
+              <h3 class="homeReleveColTitle">Tous les relevés</h3>
+              <div id="homeReleveChecks" class="checkList selectableReleves"></div>
+            </div>
+            <div class="homeReleveCol homeReleveColSelected">
+              <h3 class="homeReleveColTitle">Sélectionnés</h3>
+              <div id="homeReleveSelectedList" class="checkList selectableReleves"></div>
+            </div>
+          </div>
+          <p class="small muted" style="margin:.6rem 0 0">Cochez les relevés à consulter dans Gradients, Écogrammes, Comparaison et Zone humide. Cliquez sur le nom d’un relevé pour l’ouvrir en saisie.</p>
+        </details>
       </div>
-      <div class="homeReleveSplit">
-        <div class="homeReleveCol">
-          <h3 class="homeReleveColTitle">Tous les relevés</h3>
-          <div id="homeReleveChecks" class="checkList selectableReleves"></div>
-        </div>
-        <div class="homeReleveCol homeReleveColSelected">
-          <h3 class="homeReleveColTitle">Sélectionnés</h3>
-          <div id="homeReleveSelectedList" class="checkList selectableReleves"></div>
-        </div>
-      </div>
-      <p class="small muted" style="margin:.6rem 0 0">Cochez les relevés à consulter dans Gradients, Écogrammes, Comparaison et Zone humide. Cliquez sur le nom d’un relevé pour l’ouvrir en saisie.</p>
     </div>
 
-    <section class="homeEntries">
-      <h3 class="entries-title">Analyser mes relevés</h3>
-      <div class="entries-grid">
-        <button class="entry" type="button" data-view="gradients">
-          <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg></span><b>Gradients d’Ellenberg</b></div>
-          <p>Consultez vos relevés sur les gradients écologiques (lumière, humidité, pH, trophie…).</p>
-        </button>
-        <button class="entry" type="button" data-view="scatter">
-          <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg></span><b>Écogrammes</b></div>
-          <p>Croisez deux indices pour situer espèces et relevés l’un par rapport à l’autre.</p>
-        </button>
-        <button class="entry" type="button" data-view="compare">
-          <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg></span><b>Comparaison</b></div>
-          <p>Mettez plusieurs relevés côte à côte sur les indices de votre choix.</p>
-        </button>
-        <button class="entry" type="button" data-view="wetlands">
-          <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M12 3C9.5 7.5 6 10 6 14a6 6 0 0 0 12 0c0-4-3.5-6.5-6-11z" stroke-linejoin="round" stroke-linecap="round"/><path d="M9.5 18c.5 1.2 1.5 2 2.5 2" stroke-linecap="round"/></svg></span><b>Zone humide ?</b></div>
-          <p>Vérifiez les critères floristiques et l’indicateur Ellenberg d’humidité édaphique.</p>
-        </button>
+    <div class="homeRail homeRail-last">
+      <div class="railCol"><span class="stepBadge">3</span></div>
+      <div class="railContent">
+        <section class="homeEntries">
+          <h3 class="entries-title">Analyser mes relevés</h3>
+          <div class="entries-grid">
+            <button class="entry" type="button" data-view="gradients">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg></span><b>Gradients</b></div>
+              <p>Indices écologiques d’Ellenberg.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="scatter">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg></span><b>Écogrammes</b></div>
+              <p>Croiser deux indices.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="compare">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg></span><b>Comparaison</b></div>
+              <p>Tableaux bruts.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="wetlands">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M12 3C9.5 7.5 6 10 6 14a6 6 0 0 0 12 0c0-4-3.5-6.5-6-11z" stroke-linejoin="round" stroke-linecap="round"/><path d="M9.5 18c.5 1.2 1.5 2 2.5 2" stroke-linecap="round"/></svg></span><b>Zone humide ?</b></div>
+              <p>Diagnostic floristique.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
 
-    <details class="card metaCard" id="homeRefsCard">
-      <summary><h2 style="display:inline">Référentiels</h2><span class="small muted">sources · barème de cotation</span></summary>
+    <div class="ref-divider"></div>
+    <div class="card metaCard" id="homeRefsCard">
+      <div class="homeRefsHead"><h2>Référentiels</h2></div>
       <div class="homeRefsBody">
-        <p><strong>BaseFlor</strong> — Philippe Julve, <em>« Baseflor. Index botanique, écologique et chorologique de la flore de France »</em> (programme Catminat). Fournit la nomenclature des taxons et les valeurs indicatrices écologiques (lumière, température, humidité édaphique, réaction du sol, niveau trophique, etc.) exploitées dans les gradients et les écogrammes.</p>
+        <div class="refWithLogo">
+          <a class="telabot-logo" href="https://www.tela-botanica.org/projets/phytosociologie" target="_blank" rel="noopener" title="Tela Botanica — projet Phytosociologie (Baseflor)">
+            <img src="./documents/logo-telabotanica.png" width="920" height="375" alt="Tela Botanica" loading="lazy">
+          </a>
+          <p class="refWithLogoText"><strong>BaseFlor</strong> — Philippe Julve, <em>« Baseflor. Index botanique, écologique et chorologique de la flore de France »</em> (programme Catminat). Fournit la nomenclature des taxons et les valeurs indicatrices écologiques (lumière, température, humidité édaphique, réaction du sol, niveau trophique, etc.) exploitées dans les gradients et les écogrammes. <a href="https://www.tela-botanica.org/projets/phytosociologie" target="_blank" rel="noopener">Lien</a></p>
+        </div>
         <p><strong>Échelle d’abondance-dominance de Braun-Blanquet</strong> — barème de cotation des relevés phytosociologiques utilisé à la saisie. Sa conversion en pourcentages de recouvrement est donnée ci-dessous.</p>
         <table><thead><tr><th>Coefficient</th><th class="num">Recouvrement utilisé</th><th>Interprétation</th></tr></thead><tbody><tr><td>i</td><td class="num">0,01 %</td><td>Individu isolé ; conversion arbitraire demandée.</td></tr><tr><td>r</td><td class="num">0,1 %</td><td>Très rare.</td></tr><tr><td>+</td><td class="num">0,5 %</td><td>Peu abondant, recouvrement négligeable.</td></tr><tr><td>1</td><td class="num">2,5 %</td><td>Abondant mais faible recouvrement.</td></tr><tr><td>2</td><td class="num">15 %</td><td>Recouvrement intermédiaire.</td></tr><tr><td>3</td><td class="num">37,5 %</td><td>Recouvrement important.</td></tr><tr><td>4</td><td class="num">62,5 %</td><td>Recouvrement très important.</td></tr><tr><td>5</td><td class="num">87,5 %</td><td>Recouvrement quasi continu.</td></tr></tbody></table>
       </div>
-    </details>
+    </div>
 
     <button type="button" class="ghost adminLockBtn" id="homeAdminBtn" data-view="data" title="Accès administrateur">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
@@ -922,7 +970,7 @@ const STORE_KEY = "botano_baseflor_releves_v03";
 const ADMIN_PASSWORD = "admin"; let adminUnlocked = false;
 const GOOGLE_SYNC_KEY = "botano_baseflor_google_sync_v01";
 const GOOGLE_SHEET_NAME = "Relevés botaniques - données personnelles";
-const APP_VERSION = "v43 · 2026-07-06";
+const APP_VERSION = "5.0";
 const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 const byId = new Map(TAXA.map(t => [t.id, t]));
 const byName = new Map(TAXA.map(t => [t.n, t]));
@@ -1101,7 +1149,8 @@ function renderSelectionControls(){
   }
   ["gradientsSelChecks","scatterSelChecks","compareSelChecks","wetlandsSelChecks"].forEach(cid=>{
     const b=document.getElementById(cid); if(!b)return;
-    b.innerHTML=state.releves.map(r=>checklistItemHtml(r,ids)).join("") || `<span class="small muted">Aucun relevé.</span>`;
+    const rows=state.releves.filter(r=>ids.has(r.id));
+    b.innerHTML=rows.map(r=>checklistItemHtml(r,ids)).join("") || `<span class="small muted">Aucun relevé sélectionné — choisissez-les depuis l’accueil.</span>`;
   });
   const projSel=document.getElementById("homeProjetFilter");
   if(projSel){
@@ -1815,7 +1864,7 @@ function toast(msg, kind){
   }catch(e){ console.log('toast:', msg); }
 }
 /* Numéro de version affiché dans l'en-tête (source unique : APP_VERSION) */
-(function(){try{var s=document.getElementById("appVersionShort"); if(s&&typeof APP_VERSION!=="undefined")s.textContent=APP_VERSION.split(" · ")[0];}catch(e){}})();
+(function(){try{var s=document.getElementById("appVersionShort"); if(s&&typeof APP_VERSION!=="undefined")s.textContent="V"+APP_VERSION;}catch(e){}})();
 setTimeout(function(){try{if(window.__loadCorruption&&typeof toast==="function")toast("Sauvegarde locale illisible : une copie de secours a été conservée. N\u2019ajoutez rien avant d\u2019avoir récupéré vos données.","err");}catch(e){}},900);
 /* Liaison du sélecteur Braun-Blanquet segmenté avec le select masqué #bbValue.
    Le reste de l'application continue de lire #bbValue.value : aucune logique modifiée. */
