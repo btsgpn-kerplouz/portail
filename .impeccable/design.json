@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-18T00:00:00Z",
+  "title": "Design System: btsgpn-kerplouz — Atlas naturaliste",
+  "extensions": {
+    "colorMeta": {
+      "accent": { "role": "primary", "displayName": "Couleur d'app (--acc)", "canonical": "#2b3a40", "tonalRamp": ["#0f1518", "#16232a", "#20343c", "#2b3a40", "#3f5560", "#5f7d89", "#9db4bc", "#d3dee2"] },
+      "acc-phytoscope": { "role": "primary", "displayName": "Vert phytosociologue", "canonical": "#2e7d4f", "tonalRamp": ["#0f3220", "#16472e", "#1e5d3c", "#276f47", "#2e7d4f", "#4f9a6e", "#86bd9d", "#c9e2d3"] },
+      "acc-vegetations": { "role": "primary", "displayName": "Orange brûlé", "canonical": "#c2662f", "tonalRamp": ["#3f1f0d", "#5c2f14", "#7d3f1b", "#a05226", "#c2662f", "#d5895c", "#e7b593", "#f4dcc9"] },
+      "acc-habitats-gavres": { "role": "primary", "displayName": "Bleu littoral", "canonical": "#0f7aa0", "tonalRamp": ["#062e3d", "#0a4356", "#0d5a76", "#0e6c8b", "#0f7aa0", "#3f9dbd", "#83c3da", "#c6e4ef"] },
+      "acc-habitats-landes": { "role": "primary", "displayName": "Prune de lande", "canonical": "#7d4f83", "tonalRamp": ["#2f1e32", "#432b47", "#5a3a5f", "#6c466f", "#7d4f83", "#9d739f", "#c1a3c3", "#e2d3e3" ] },
+      "acc-organisation": { "role": "primary", "displayName": "Ocre", "canonical": "#8a6d3d", "tonalRamp": ["#332714", "#4a381d", "#614a28", "#75592f", "#8a6d3d", "#a98d63", "#c9b596", "#e6dbc9"] },
+      "house-graphite": { "role": "secondary", "displayName": "Graphite du hub", "canonical": "#2b3a40", "tonalRamp": ["#0f1518", "#16232a", "#20343c", "#2b3a40", "#3f5560", "#5f7d89", "#9db4bc", "#d3dee2"] },
+      "page": { "role": "neutral", "displayName": "Papier froid (fond)", "canonical": "#e2e7e0" },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#f2f5ef" },
+      "panel": { "role": "neutral", "displayName": "Panneau", "canonical": "#fbfcf9" },
+      "ink": { "role": "neutral", "displayName": "Encre", "canonical": "#141d17" },
+      "muted": { "role": "neutral", "displayName": "Estompé", "canonical": "#55605a" },
+      "faint": { "role": "neutral", "displayName": "Ténu", "canonical": "#8a958c" },
+      "line": { "role": "neutral", "displayName": "Filet", "canonical": "#d0d9ce" },
+      "status-live": { "role": "tertiary", "displayName": "Vert « en ligne »", "canonical": "#2e7d4f" },
+      "status-wip": { "role": "tertiary", "displayName": "Ambre « en chantier »", "canonical": "#a9772a" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Titre de bandeau, blanc cassé sur l'accent foncé." },
+      "title": { "displayName": "Title", "purpose": "Titres de carte et de section." },
+      "body": { "displayName": "Body", "purpose": "Texte courant, interligne 1.6, 65–75ch." },
+      "label": { "displayName": "Label", "purpose": "Étiquettes de champ (apps de saisie)." },
+      "mono": { "displayName": "Mono", "purpose": "Micro-repères : statuts, chiffres, tags, pastille." }
+    },
+    "shadows": [
+      { "name": "rest-frame", "value": "0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09)", "purpose": "Ombre d'enveloppe très douce sur le cadre au repos." },
+      { "name": "intent-hover", "value": "0 10px 26px rgba(20,30,20,.12)", "purpose": "Levée d'une carte-lien au survol." },
+      { "name": "focus-ring", "value": "0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent)", "purpose": "Halo teinté de l'accent autour d'un champ actif." }
+    ],
+    "motion": [
+      { "name": "state", "value": "0.12s ease", "purpose": "Transitions d'état des champs et liens." },
+      { "name": "lift", "value": "0.14s ease", "purpose": "Levée des cartes au survol (transform + shadow)." },
+      { "name": "reduced-motion", "value": "transition:none; animation:none", "purpose": "Sous prefers-reduced-motion : tout mouvement neutralisé." }
+    ],
+    "breakpoints": [
+      { "name": "cards", "value": "15rem", "purpose": "Largeur mini d'une carte outil (grille auto-fill)." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton primaire",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action principale, à la couleur de l'app. Ici en vert phytosociologue à titre d'exemple.",
+      "html": "<button class=\"ds-btn-primary\">Ouvrir l'outil</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:.45rem; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.58rem 1rem; border-radius:11px; background:#2e7d4f; color:#fff; border:1px solid #2e7d4f; cursor:pointer; transition:filter .12s ease, transform .12s ease; } .ds-btn-primary:hover { filter:brightness(.93); transform:translateY(-1px); } .ds-btn-primary:focus-visible { outline:2px solid #2e7d4f; outline-offset:2px; }"
+    },
+    {
+      "name": "Bouton fantôme",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Action secondaire : contour de l'accent sur fond blanc.",
+      "html": "<button class=\"ds-btn-ghost\">Annuler</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; gap:.45rem; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.58rem 1rem; border-radius:11px; background:#fff; color:#2e7d4f; border:1px solid #2e7d4f; cursor:pointer; transition:background .12s ease; } .ds-btn-ghost:hover { background:#e7ebe3; } .ds-btn-ghost:focus-visible { outline:2px solid #2e7d4f; outline-offset:2px; }"
+    },
+    {
+      "name": "Champ de saisie",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Champ des apps de saisie ; focus = halo teinté de l'accent.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Rechercher un relevé…\">",
+      "css": ".ds-input { width:100%; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; padding:.6rem .75rem; min-height:2.6rem; background:#fff; color:#141d17; border:1px solid #d0d9ce; border-radius:11px; transition:border-color .12s ease, box-shadow .12s ease; } .ds-input::placeholder { color:#8a958c; } .ds-input:focus { outline:none; border-color:#2e7d4f; box-shadow:0 0 0 3px color-mix(in srgb, #2e7d4f 22%, transparent); }"
+    },
+    {
+      "name": "Carte outil",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Carte entièrement cliquable du portail : bandeau à l'accent + corps ; se lève au survol.",
+      "html": "<a class=\"ds-tool\" href=\"#\"><div class=\"ds-tool-band\"><h3>Phytoscope</h3><span class=\"ds-tag\">SAISIE</span></div><div class=\"ds-tool-body\"><p>Relevés phytosociologiques, multi-utilisateur.</p><span class=\"ds-go\">Ouvrir ›</span></div></a>",
+      "css": ".ds-tool { display:flex; flex-direction:column; border:1px solid #d0d9ce; border-radius:12px; overflow:hidden; background:#fbfcf9; text-decoration:none; color:inherit; transition:transform .14s ease, box-shadow .14s ease; } .ds-tool:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(20,30,20,.12); } .ds-tool-band { background:#2e7d4f; color:#fff; padding:.6rem .9rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem; } .ds-tool-band h3 { margin:0; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:1.04rem; color:#fff; } .ds-tag { font-family:'JetBrains Mono',monospace; font-size:.6rem; text-transform:uppercase; letter-spacing:.07em; opacity:.92; } .ds-tool-body { padding:.85rem .95rem 1rem; } .ds-tool-body p { margin:0 0 1rem; color:#55605a; font-size:.92rem; } .ds-go { display:inline-block; color:#2e7d4f; font-weight:700; transition:transform .12s ease; } .ds-tool:hover .ds-go { transform:translateX(3px); }"
+    },
+    {
+      "name": "Chip data",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Porte une donnée compacte en mono ; coins pilule, teinte légère de l'accent.",
+      "html": "<span class=\"ds-chip\">128 relevés</span>",
+      "css": ".ds-chip { font-family:'JetBrains Mono',monospace; font-size:.64rem; letter-spacing:.03em; color:#55605a; background:color-mix(in srgb, #2e7d4f 9%, #fff); border:1px solid color-mix(in srgb, #2e7d4f 22%, #d0d9ce); border-radius:999px; padding:.16rem .5rem; font-variant-numeric:tabular-nums; white-space:nowrap; }"
+    },
+    {
+      "name": "Statut",
+      "kind": "custom",
+      "refersTo": "status",
+      "description": "Pastille d'état sémantique (indépendante de l'accent d'app) : en ligne / en chantier.",
+      "html": "<span class=\"ds-status ds-status-live\">En ligne</span>",
+      "css": ".ds-status { display:inline-flex; align-items:center; gap:.4rem; font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.03em; text-transform:uppercase; color:#55605a; } .ds-status::before { content:''; width:.5rem; height:.5rem; border-radius:50%; background:currentColor; } .ds-status-live { color:#2e7d4f; } .ds-status-wip { color:#a9772a; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La clé de détermination",
+    "overview": "Le système se lit comme une clé de détermination : chaque écran conduit l'utilisateur, pas à pas, vers la bonne réponse. On ne cherche pas à impressionner, on cherche à faire trouver. La grammaire est identique partout ; ce qui change d'un outil à l'autre n'est jamais la structure, seulement une couleur franche et une texture thématique. L'ambiance est celle d'un papier de terrain : fond clair, contrastes francs, lisibilité au soleil. Le sérieux vient de la retenue, pas du vernis.",
+    "keyCharacteristics": [
+      "Cohérence de structure, variation de couleur (une couleur franche par app).",
+      "Papier de terrain : clair forcé, contrastes contrôlés, lisible dehors.",
+      "Inclusion posée en contrainte de conception, pas en option.",
+      "Retenue : la confiance passe par la sobriété, jamais par la décoration.",
+      "Guidage : chaque écran mène à l'action ou à l'information suivante."
+    ],
+    "rules": [
+      { "name": "La règle d'une seule voix", "body": "Une app ne porte qu'une couleur franche ; deux accents concurrents sur un même écran sont interdits.", "section": "colors" },
+      { "name": "La règle Hub ≠ App", "body": "Le portail est graphite + couleurs en légende ; une app est monochrome + sa texture + un retour ‹ Portail.", "section": "colors" },
+      { "name": "La règle du fond froid", "body": "Le fond de page est un neutre froid choisi (#e2e7e0) ; jamais de crème, beige, sable ou parchemin.", "section": "colors" },
+      { "name": "La règle « lisible d'abord »", "body": "Atkinson Hyperlegible est une contrainte d'inclusion, pas un choix esthétique : ne jamais la remplacer par une sans-serif qui réambiguïse I/l/1.", "section": "typography" },
+      { "name": "La règle « à plat au repos »", "body": "Les surfaces sont plates par défaut ; l'ombre est une réponse à un état (survol, focus), pas un signal d'importance.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do poser exactement une couleur franche par app via --acc, structure identique partout.",
+      "Do garder le fond froid papier (#e2e7e0) et le rendu clair forcé ; la chaleur vient de l'accent.",
+      "Do viser des contrastes francs : texte courant ≥ 4.5:1, placeholders compris.",
+      "Do réserver JetBrains Mono aux micro-repères et Atkinson Hyperlegible à tout le reste.",
+      "Do laisser les surfaces plates au repos ; l'ombre répond au survol/focus.",
+      "Do distinguer le hub (graphite + légende) d'une app (monochrome + texture + retour)."
+    ],
+    "donts": [
+      "Don't verser dans le SaaS/dashboard générique : dégradés violet-bleu, cartes clonées, jargon startup.",
+      "Don't produire un site institutionnel daté : menus surchargés, PDF partout.",
+      "Don't basculer vers le jouet enfantin : sur-couleur, coins trop arrondis, ton ludique.",
+      "Don't faire une page marketing tape-à-l'œil : animations partout, boutons qui crient.",
+      "Don't utiliser un fond crème/beige/sable/parchemin ; le neutre est froid et choisi.",
+      "Don't mettre deux accents concurrents, ni teinter le hub avec la couleur d'une app.",
+      "Don't remplacer Atkinson Hyperlegible par une sans-serif qui réambiguïse I/l/1 et O/0.",
+      "Don't ajouter de liseré latéral coloré (border-left/right > 1px) ni de texte en dégradé."
+    ]
+  }
+}

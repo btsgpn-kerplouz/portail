@@ -1,0 +1,7 @@
+{
+  "files": ["portail/index.html", "apps/**/*.html"],
+  "exclude": [],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cbnb-vegetations-pwa-v1-13';
+const CACHE_NAME = 'cbnb-vegetations-pwa-v3-0';
 const APP_SHELL = [
   './',
   './index.html',

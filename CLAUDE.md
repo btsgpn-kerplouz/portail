@@ -11,6 +11,19 @@ Regrouper plusieurs outils pédagogiques (BTS GPN — Kerplouz — et collègues
 enseignants) derrière **une URL unique**, où **chaque app se met à jour
 indépendamment**. Travail collaboratif via Claude Code.
 
+## Contexte design (cadrage `impeccable`)
+
+Le **cadrage design** vit dans deux fichiers versionnés à la racine, gérés via la
+skill `impeccable` (toute commande `/impeccable …` les lit d'abord) :
+
+- **`PRODUCT.md`** — le *pourquoi / pour qui* : register (`product`), utilisateurs,
+  positionnement, personnalité, anti-références, principes directeurs, accessibilité.
+- **`DESIGN.md`** — le *comment ça se voit* : palette, typographie, composants
+  (décrit `shared/theme.css`). Complété par `.impeccable/design.json`.
+
+La **source de vérité opérationnelle du CSS** reste **`shared/theme.css`** (charte
+« Atlas naturaliste ») ; `DESIGN.md` la documente, il ne la remplace pas.
+
 ## Décisions d'architecture (actées)
 
 - **Hébergement du front** : statique (HTML/CSS/JS **vanilla, sans build**) sur

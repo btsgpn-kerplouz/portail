@@ -82,28 +82,36 @@
       else if (mode === 'classification') {    // dendrogramme CIRCULAIRE, fondu croissant vers la droite
         var cm = color.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
         var crgb = cm ? (cm[1] + ',' + cm[2] + ',' + cm[3]) : '245,212,182';
-        var grad = g.createLinearGradient(0, 0, w, 0);
-        grad.addColorStop(0, 'rgba(' + crgb + ',0.05)');
-        grad.addColorStop(0.55, 'rgba(' + crgb + ',0.30)');
-        grad.addColorStop(1, 'rgba(' + crgb + ',0.85)');
-        g.strokeStyle = grad; g.fillStyle = grad; g.lineWidth = 1.4; g.lineCap = 'round';
-        var cs = 11, crnd = function () { cs = (cs * 1103515245 + 12345) & 0x7fffffff; return cs / 0x7fffffff; };
-        var Cx = w * 0.66, Cy = h * 2.3, cdepth = 4, rOut = h * 2.2, dstep = h * 0.21;
+        g.lineCap = 'round'; g.lineJoin = 'round';
+        // Centre hors bandeau (sous le bord bas, à droite) : on ne voit qu'un arc de
+        // l'éventail, comme un fragment du dendrogramme radial (onglet Dendrogramme).
+        // Uniquement des courbes — pas de points aux jonctions/feuilles : c'est ce qui
+        // faisait artefact dans les essais précédents. La ramification s'élargit vers
+        // les feuilles (2 rameaux près du tronc, un éventail plus fourni en bout de
+        // branche) pour se rapprocher d'un vrai dendrogramme plutôt que d'un arbre binaire.
+        // hEff plafonne la hauteur utilisée pour le rayon : sur un bandeau haut et
+        // étroit (mobile, bandeau accueil replié en colonne), évite un éventail démesuré.
+        var hEff = Math.min(h, w * 0.6);
+        var Cx = w * 0.80, Cy = hEff * 1.32;
+        var depth = 5, rBase = hEff * 0.32, dstep = (hEff * 1.5) / depth, aMain = -Math.PI / 2, span = 2.05;
+        var cs = 23, crnd = function () { cs = (cs * 1103515245 + 12345) & 0x7fffffff; return cs / 0x7fffffff; };
         var polar = function (r, a) { return [Cx + r * Math.cos(a), Cy + r * Math.sin(a)]; };
-        var cseg = function (p, q) { g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); };
-        var carc = function (r, a1, a2) { g.beginPath(); g.arc(Cx, Cy, r, a1, a2); g.stroke(); };
-        var cdot = function (p, rr) { g.beginPath(); g.arc(p[0], p[1], rr, 0, 6.2832); g.fill(); };
-        var aUp = -Math.PI / 2, span0 = 1.5, rRoot = rOut - cdepth * dstep;
-        cseg(polar(rRoot - dstep, aUp), polar(rRoot, aUp));
-        (function node(a, r, span, d) {
-          if (d <= 0) { cdot(polar(r, a), 2.4); return; }
-          var rc = r + dstep * (0.9 + crnd() * 0.2);
-          var a1 = a - span * 0.5 * (0.8 + crnd() * 0.4), a2 = a + span * 0.5 * (0.8 + crnd() * 0.4);
-          carc(rc, a1, a2);
-          cseg(polar(r, a), polar(rc, a));
-          node(a1, rc, span * 0.5, d - 1);
-          node(a2, rc, span * 0.5, d - 1);
-        })(aUp, rRoot, span0, cdepth);
+        var branch = function (a0, r0, a1, r1) { var p0 = polar(r0, a0), p1 = polar(r1, a1), rm = (r0 + r1) / 2, c0 = polar(rm, a0), c1 = polar(rm, a1); g.beginPath(); g.moveTo(p0[0], p0[1]); g.bezierCurveTo(c0[0], c0[1], c1[0], c1[1], p1[0], p1[1]); g.stroke(); };
+        (function walk(a0, a1, r, d) {
+          var a = (a0 + a1) / 2;
+          var t = (depth - d) / depth;
+          g.strokeStyle = 'rgba(' + crgb + ',' + (0.1 + t * 0.5).toFixed(2) + ')';
+          g.lineWidth = 1.55 - t * 0.9;
+          if (d <= 0) return;
+          var r2 = r + dstep * (0.86 + crnd() * 0.26);
+          var nb = d <= 2 ? 3 + Math.floor(crnd() * 3) : 2;
+          var step = (a1 - a0) / nb;
+          for (var i = 0; i < nb; i++) {
+            var ca0 = a0 + i * step, ca1 = ca0 + step, cmid = (ca0 + ca1) / 2;
+            branch(a, r, cmid, r2);
+            walk(ca0, ca1, r2, d - 1);
+          }
+        })(aMain - span / 2, aMain + span / 2, rBase, depth);
       }
     }
 
