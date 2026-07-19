@@ -53,9 +53,23 @@
   /* ---- COULEUR D'APP (à définir par app / par carte) -------------- */
   /* Défaut = graphite du hub. Chaque app/carte fait : style="--acc:#2e7d4f"
      Palette d'app conseillée :
-       Phytoscope #2e7d4f · Végétations #6f8f2c · Habitats-Gâvres #0f7aa0
+       Phytoscope #2e7d4f · Végétations #c2662f · Habitats-Gâvres #0f7aa0
        Habitats-Landes #7d4f83 · Organisation #8a6d3d               */
   --acc:var(--house);
+
+  /* ---- PANNEAU CHAUD (optionnel, par app) ------------------------- */
+  /* Le fond de PAGE (--page) reste TOUJOURS froid, sans exception. Mais
+     quand l'accent d'une app est dans la même famille de teinte que ce
+     froid commun (ex. le vert de Phytoscope se fait absorber par le
+     vert-gris de --page/--panel, le contraste s'aplatit), l'app PEUT
+     faire porter la chaleur par le fond de ses CARTES uniquement, via ces
+     deux tokens (non appliqués par défaut ici — à définir en local dans
+     l'app qui en a besoin, cf. apps/phytoscope/) :
+       --warmpanel:#faf3e6;  (remplace --panel sur les cartes concernées)
+       --warmline:#e8dcc4;   (remplace --line assorti)
+     Ce n'est pas un 2e accent (aucune nouvelle couleur de marque, juste un
+     panneau plus chaud) : la règle « une seule voix » reste respectée.
+     Voir DESIGN.md §2 « La règle du panneau chaud » avant d'en ajouter un. */
 }
 
 /* --- Rendu clair forcé (pas de dark auto : identité « papier de terrain ») */
@@ -147,6 +161,12 @@ a.tool:hover .go{transform:translateX(3px)}
 .staff-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
 .staff .tool{max-width:22rem}
 .tool-band{background:var(--acc);color:#fff;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+/* Logo optionnel avant le titre (seules les apps avec un logo validé s'en servent,
+   voir logo apps/phyto-cours-valides/) : icône + h3 groupés, bandeau élargi pour
+   laisser respirer l'icône (classe .has-icon sur .tool-band). */
+.tool-band.has-icon{padding-block:.7rem}
+.tool-band-title{display:flex;align-items:center;gap:.7rem;min-width:0}
+.tool-icon{width:2.3rem;height:2.3rem;flex:0 0 auto;display:block}
 .tool-band h3{margin:0;font-weight:700;font-size:1.04rem;color:#fff}
 .tool-band .tag{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;opacity:.92;white-space:nowrap}
 .tool-body{padding:.85rem .95rem 1rem;display:flex;flex-direction:column;flex-grow:1}

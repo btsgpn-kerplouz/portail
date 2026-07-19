@@ -37,8 +37,17 @@ Ressources **communes à toutes les apps** (source de vérité de l'identité vi
 </header>
 ```
 
-Palette d'app conseillée : Phytoscope `#2e7d4f` · Végétations `#6f8f2c` ·
+Palette d'app conseillée : Phytoscope `#2e7d4f` · Végétations `#c2662f` ·
 Habitats-Gâvres `#0f7aa0` · Habitats-Landes `#7d4f83` · Organisation `#8a6d3d`.
+
+### Panneau chaud (variante conditionnelle)
+
+Le fond de **page** reste toujours froid (`--page`), sans exception. Mais si
+l'accent d'une app est trop proche en teinte du froid commun pour bien s'en
+détacher (cas de Phytoscope : vert sur fond vert-gris), l'app peut faire porter
+la chaleur par le fond de ses **cartes** uniquement, via deux tokens optionnels
+`--warmpanel`/`--warmline` (voir `apps/phytoscope/` pour l'implémentation de
+référence). Détail de la règle et de sa condition d'usage dans `DESIGN.md` §2.
 
 ## ⚠ Règle de synchronisation (« vanilla sans build »)
 
