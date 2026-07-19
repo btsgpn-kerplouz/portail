@@ -18,6 +18,8 @@ colors:
   line: "#d0d9ce"
   line-soft: "#e0e6dd"
   soft: "#e7ebe3"
+  panel-warm: "#faf3e6"
+  line-warm: "#e8dcc4"
   status-live: "#2e7d4f"
   status-wip: "#a9772a"
 typography:
@@ -164,6 +166,9 @@ seule couleur franche**, choisie dans une gamme naturelle et botanique.
 - **Ténu** (#8a958c) : texte tertiaire, placeholders, désactivé.
 - **Filet** (#d0d9ce) / **filet doux** (#e0e6dd) : bordures et séparateurs.
 - **Aplat doux** (#e7ebe3) : fonds discrets (ghost survolé, désactivé).
+- **Panneau chaud** (#faf3e6) / **filet chaud** (#e8dcc4) : variante *conditionnelle*
+  du panneau, réservée aux **cartes** d'une app dont l'accent en a besoin (voir
+  Named Rules ci-dessous). Jamais la valeur par défaut, jamais sur le fond de page.
 
 ### Named Rules
 **La règle d'une seule voix.** Une app ne porte qu'**une** couleur franche.
@@ -174,9 +179,23 @@ identifier l'outil et à guider l'œil, pas à décorer.
 est monochrome + sa texture + un retour `‹ Portail`. Ne jamais teinter le hub
 avec la couleur d'une app, ni priver une app de sa couleur.
 
-**La règle du fond froid.** Le fond de page est un neutre froid choisi (#e2e7e0).
-Jamais de crème, beige, sable ou parchemin : la chaleur, s'il en faut, vient de
-l'accent d'app, pas du fond.
+**La règle du fond froid.** Le fond de **page** est un neutre froid choisi
+(#e2e7e0), **sans exception** — c'est ce qui identifie tout le système comme
+« papier de terrain ». Jamais de crème, beige, sable ou parchemin à cet endroit.
+
+**La règle du panneau chaud (exception conditionnée, cartes seulement).**
+Le fond de page ne bouge jamais, mais le fond des **cartes** d'une app peut
+passer d'un panneau froid (#fbfcf9) à un panneau chaud (#faf3e6 / filet
+#e8dcc4) **à une seule condition** : l'accent de l'app est assez proche en
+teinte de la famille froide commune pour s'y faire absorber (contraste plat,
+l'accent ne « sort » plus). Ce n'est **pas** un deuxième accent — aucune
+couleur de marque n'est ajoutée, seul le panneau se réchauffe — donc la règle
+d'une seule voix reste intacte. Premier cas d'usage : **Phytoscope**, dont le
+vert se confondait avec le vert-gris du fond froid commun (`apps/phytoscope/`,
+tokens `--warmpanel`/`--warmline`, voir `shared/theme.css`). Une app dont
+l'accent contraste déjà bien avec le froid (ex. l'orange brûlé de
+Végétations) **n'a aucune raison** d'en avoir besoin — ce n'est pas une option
+esthétique par défaut, seulement un correctif de contraste.
 
 ## 3. Typography
 
@@ -250,7 +269,10 @@ faut revoir, pas l'ombre.
 
 ### Cards / Containers
 - **Corner Style :** 12px (carte outil) ; 16px pour le cadre-enveloppe `.frame`.
-- **Background :** panneau (#fbfcf9) ; bandeau de tête à l'accent de l'app.
+- **Background :** panneau (#fbfcf9) par défaut ; bandeau de tête à l'accent de
+  l'app. Variante **panneau chaud** (#faf3e6, filet #e8dcc4) disponible par app
+  si l'accent est absorbé par le froid commun — voir « La règle du panneau
+  chaud » en §2. Exception, pas un choix esthétique libre.
 - **Shadow Strategy :** plate au repos, ombre « intention » au survol si la carte
   est un lien (voir Elevation).
 - **Border :** 1px filet (#d0d9ce). **Padding interne :** ~0.85rem 0.95rem.
@@ -304,8 +326,10 @@ traits fins : `grille` (hub), `scatter` (Phytoscope), `ondes` (Habitats-Gâvres)
   ton ludique qui casse le sérieux naturaliste.
 - **Don't** faire une **page marketing tape-à-l'œil** : animations partout,
   boutons qui crient, promesses au lieu d'informations.
-- **Don't** utiliser un **fond crème/beige/sable/parchemin** — c'est le réflexe à
-  fuir ; le neutre est froid et choisi.
+- **Don't** teinter le fond de **page** en **crème/beige/sable/parchemin** —
+  c'est le réflexe à fuir, ce neutre reste froid et choisi, sans exception.
+  (Le panneau de **carte**, lui, peut suivre la règle du panneau chaud si
+  l'accent de l'app en a besoin — voir §2.)
 - **Don't** mettre **deux accents** concurrents sur un même écran, ni teinter le
   hub avec la couleur d'une app.
 - **Don't** remplacer Atkinson Hyperlegible par une sans-serif « plus jolie » qui

@@ -69,6 +69,9 @@
     .staff-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
     .staff .tool{max-width:22rem}
     .tool-band{background:var(--acc);color:#fff;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+    .tool-band.has-icon{padding-block:.7rem}
+    .tool-band-title{display:flex;align-items:center;gap:.7rem;min-width:0}
+    .tool-icon{width:2.3rem;height:2.3rem;flex:0 0 auto;display:block}
     .tool-band h3{margin:0;font-weight:700;font-size:1.04rem;color:#fff}
     .tool-band .tag{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;opacity:.92;white-space:nowrap}
     .tool-body{padding:.85rem .95rem 1rem;display:flex;flex-direction:column;flex-grow:1}
@@ -121,7 +124,14 @@
         <div class="tools">
 
           <a class="tool" style="--acc:#2e7d4f" href="https://phytoscope-gpn.netlify.app" target="_blank" rel="noopener">
-            <div class="tool-band"><h3>PhytoScope</h3><span class="tag">saisie</span></div>
+            <div class="tool-band has-icon">
+              <div class="tool-band-title">
+                <!-- Logo validé : logo apps/phyto-cours-valides/phytoscope/phytoscope-glyph.svg -->
+                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><line x1="168" y1="140" x2="168" y2="374" stroke="#faf3e6" stroke-width="16" stroke-linecap="round"/><line x1="168" y1="374" x2="384" y2="374" stroke="#faf3e6" stroke-width="16" stroke-linecap="round"/><circle cx="238" cy="300" r="26" fill="#faf3e6"/><circle cx="280" cy="232" r="40" fill="#faf3e6"/><circle cx="324" cy="296" r="22" fill="#e6d4ab"/><circle cx="300" cy="180" r="30" fill="#e6d4ab"/><circle cx="214" cy="222" r="18" fill="#faf3e6"/><circle cx="352" cy="246" r="15" fill="#faf3e6"/><circle cx="280" cy="232" r="52" fill="none" stroke="#faf3e6" stroke-width="7" stroke-dasharray="6 10"/></svg>
+                <h3>PhytoScope</h3>
+              </div>
+              <span class="tag">saisie</span>
+            </div>
             <div class="tool-body">
               <p>Saisie de relevés phytosociologiques et visualisation d'indicateurs
                  écologiques.</p>
@@ -160,7 +170,14 @@
         <div class="staff">
           <div class="staff-label">Réservé aux enseignants</div>
           <article class="tool tool--muted" style="--acc:#737b73">
-            <div class="tool-band"><h3>Organisation de cours</h3><span class="tag">enseignants</span></div>
+            <div class="tool-band has-icon">
+              <div class="tool-band-title">
+                <!-- Logo validé : logo apps/phyto-cours-valides/cours/cours-mono.svg -->
+                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><rect x="140" y="164" width="232" height="200" rx="14" fill="none" stroke="#141d17" stroke-width="16"/><path d="M140 202 L140 178 A14 14 0 0 1 154 164 L358 164 A14 14 0 0 1 372 178 L372 202 Z" fill="#141d17"/><rect x="156" y="222" width="34" height="40" rx="6" fill="#141d17"/><rect x="156" y="276" width="34" height="54" rx="6" fill="#141d17"/><rect x="196" y="240" width="34" height="60" rx="6" fill="#141d17"/><rect x="236" y="222" width="34" height="44" rx="6" fill="#141d17"/><rect x="236" y="300" width="34" height="40" rx="6" fill="#141d17"/><rect x="276" y="250" width="34" height="70" rx="6" fill="#141d17"/><rect x="316" y="232" width="34" height="50" rx="6" fill="#141d17"/><rect x="316" y="300" width="34" height="44" rx="6" fill="#141d17"/></svg>
+                <h3>Organisation de cours</h3>
+              </div>
+              <span class="tag">enseignants</span>
+            </div>
             <div class="tool-body">
               <p>Préparation et suivi des séquences pédagogiques.</p>
               <div class="tool-foot"><span class="status wip">En chantier</span></div>

@@ -18,6 +18,8 @@
       "muted": { "role": "neutral", "displayName": "Estompé", "canonical": "#55605a" },
       "faint": { "role": "neutral", "displayName": "Ténu", "canonical": "#8a958c" },
       "line": { "role": "neutral", "displayName": "Filet", "canonical": "#d0d9ce" },
+      "panel-warm": { "role": "neutral", "displayName": "Panneau chaud (cartes, conditionnel par app)", "canonical": "#faf3e6" },
+      "line-warm": { "role": "neutral", "displayName": "Filet chaud (assorti au panneau chaud)", "canonical": "#e8dcc4" },
       "status-live": { "role": "tertiary", "displayName": "Vert « en ligne »", "canonical": "#2e7d4f" },
       "status-wip": { "role": "tertiary", "displayName": "Ambre « en chantier »", "canonical": "#a9772a" }
     },
@@ -105,7 +107,8 @@
     "rules": [
       { "name": "La règle d'une seule voix", "body": "Une app ne porte qu'une couleur franche ; deux accents concurrents sur un même écran sont interdits.", "section": "colors" },
       { "name": "La règle Hub ≠ App", "body": "Le portail est graphite + couleurs en légende ; une app est monochrome + sa texture + un retour ‹ Portail.", "section": "colors" },
-      { "name": "La règle du fond froid", "body": "Le fond de page est un neutre froid choisi (#e2e7e0) ; jamais de crème, beige, sable ou parchemin.", "section": "colors" },
+      { "name": "La règle du fond froid", "body": "Le fond de PAGE est un neutre froid choisi (#e2e7e0), sans exception ; jamais de crème, beige, sable ou parchemin à cet endroit.", "section": "colors" },
+      { "name": "La règle du panneau chaud", "body": "Exception conditionnée, cartes seulement : si l'accent d'une app est absorbé par le froid commun (même famille de teinte), ses cartes peuvent passer au panneau chaud (#faf3e6/#e8dcc4) — jamais le fond de page, jamais un 2e accent. Cas d'usage : Phytoscope (vert absorbé par le vert-gris ambiant).", "section": "colors" },
       { "name": "La règle « lisible d'abord »", "body": "Atkinson Hyperlegible est une contrainte d'inclusion, pas un choix esthétique : ne jamais la remplacer par une sans-serif qui réambiguïse I/l/1.", "section": "typography" },
       { "name": "La règle « à plat au repos »", "body": "Les surfaces sont plates par défaut ; l'ombre est une réponse à un état (survol, focus), pas un signal d'importance.", "section": "elevation" }
     ],
@@ -122,7 +125,7 @@
       "Don't produire un site institutionnel daté : menus surchargés, PDF partout.",
       "Don't basculer vers le jouet enfantin : sur-couleur, coins trop arrondis, ton ludique.",
       "Don't faire une page marketing tape-à-l'œil : animations partout, boutons qui crient.",
-      "Don't utiliser un fond crème/beige/sable/parchemin ; le neutre est froid et choisi.",
+      "Don't teinter le fond de PAGE en crème/beige/sable/parchemin ; le panneau de carte peut suivre la règle du panneau chaud si l'accent en a besoin.",
       "Don't mettre deux accents concurrents, ni teinter le hub avec la couleur d'une app.",
       "Don't remplacer Atkinson Hyperlegible par une sans-serif qui réambiguïse I/l/1 et O/0.",
       "Don't ajouter de liseré latéral coloré (border-left/right > 1px) ni de texte en dégradé."
