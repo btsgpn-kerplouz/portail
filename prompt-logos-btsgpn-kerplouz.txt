@@ -1,0 +1,61 @@
+PROMPT — DÉCLINAISONS DE LOGO « BTSGPN-KERPLOUZ »
+==================================================
+
+Créer une famille de 4 identités visuelles pour un ensemble d'outils
+pédagogiques (BTS GPN, enseignement en sciences naturalistes), partageant une
+même grammaire graphique mais chacune avec sa propre couleur. Style :
+pictogramme géométrique plat (flat vector), pas de photoréalisme, pas de
+dégradé complexe, pas de clipart générique — un symbole simple et lisible
+même à 16 px.
+
+GRAMMAIRE COMMUNE À RESPECTER DANS LES 4 DÉCLINAISONS
+------------------------------------------------------
+- Un seul symbole/pictogramme par identité, pas de texte intégré au symbole
+  (le nom de l'app est déjà affiché en toutes lettres à côté, en typographie
+  Atkinson Hyperlegible).
+- Même gabarit de composition pour les 4 (ex. un cadre/silhouette commun —
+  cercle, écusson ou forme de feuille stylisée — qui varie en couleur mais
+  garde la même géométrie de base), pour que la famille se reconnaisse au
+  premier coup d'œil.
+- Doit rester lisible en aplat monochrome (noir sur blanc), pour les usages
+  où la couleur ne passe pas (impression, fallback favicon).
+- Fond neutre gris-vert froid #e2e7e0 et encre #141d17 sont la base graphique
+  commune du portail — le symbole doit fonctionner posé dessus.
+
+LES 4 DÉCLINAISONS
+-------------------
+1. Portail (le hub) — couleur graphite neutre #2b3a40 (n'appartient à aucune
+   app, symbolise l'entrée commune). Piste : une forme de porte/portail, ou
+   un point d'entrée/carrefour reliant les 3 autres — reste neutre, ne doit
+   pas ressembler à une 5e app.
+
+2. Végétations armoricaines (consultation d'une classification
+   phytosociologique) — couleur terracotta #c2662f / rouille foncé #8f4a1f.
+   Piste : silhouette de feuille, ou motif inspiré du dendrogramme circulaire
+   déjà utilisé dans l'app (embranchements rayonnants).
+
+3. PhytoScope (saisie de relevés de terrain + indices écologiques) — couleur
+   vert #2e7d4f / vert foncé #215a39. Piste : une loupe/viseur posé sur un
+   quadrat de relevé (grille), ou un œil stylisé fondu dans une forme
+   végétale — évoque l'observation de terrain, pas juste « une feuille de
+   plus ».
+
+4. Création de cours (organisation pédagogique, pas encore mise en ligne) —
+   couleur ochre/brun #8a6d3d (couleur provisoire, à confirmer). Piste :
+   grille de calendrier/emploi du temps, ou carnet ouvert.
+
+CONTRAINTES TECHNIQUES
+------------------------
+- Livrable en SVG (vecteur, source de vérité), avec exports PNG : favicon
+  32x32 et 16x16, icônes PWA 192x192 et 512x512.
+- Pour les icônes PWA « maskable » (Android découpe en cercle/carré arrondi) :
+  garder le symbole dans une zone de sécurité centrale (~66% du cadre), pour
+  ne pas être rogné.
+- Version « lockup » bandeau : symbole + nom de l'app côte à côte, hauteur
+  alignée sur le texte du bandeau existant.
+
+À ÉVITER
+---------
+Dégradés multiples, ombres portées complexes, symboles trop détaillés qui se
+brouillent en petit format, réutiliser une même icône « feuille générique »
+pour plusieurs apps (perd la distinction), style clipart/stock.

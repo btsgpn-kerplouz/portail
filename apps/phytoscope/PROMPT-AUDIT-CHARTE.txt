@@ -1,0 +1,36 @@
+Audit de PhytoScope (apps/phytoscope/) — PAS de code à modifier, PAS de commit, PAS de push.
+Uniquement un diagnostic écrit + une proposition de plan de travail priorisé, que je lirai à mon retour.
+
+Contexte : lis d'abord CLAUDE.md (racine), PRODUCT.md, DESIGN.md, shared/theme.css et
+shared/texture.js — c'est la charte graphique « Atlas naturaliste » du portail. PhytoScope est
+l'app "modèle de référence" (déjà sur Supabase, multi-utilisateur, saisie de relevés
+phytosociologiques + calcul d'indices d'Ellenberg) mais elle n'a pas encore été alignée sur cette
+charte (contrairement à apps/vegetations-armoricaines, tout juste passée en V3.0 sur cette charte —
+sers-t'en comme exemple de référence pour comparer). CLAUDE.md note déjà un point connu :
+apps/phytoscope/fonts/ contiendrait encore les anciennes polices Inter/Fraunces à retirer — vérifie
+et complète, ne t'arrête pas à ce seul point.
+
+Deux axes à évaluer :
+
+1) Conformité à la charte graphique — compare PhytoScope à shared/theme.css/DESIGN.md : couleurs
+   (couleur d'app attendue : vert phytosociologue #2e7d4f, cf. design-tokens), typographie
+   (Atkinson Hyperlegible + JetBrains Mono attendus), composants (cartes, boutons, champs),
+   bandeau texturé thématique (le moteur shared/texture.js prévoit déjà un motif "scatter" pour
+   Phytoscope — vérifie s'il est branché). Utilise la skill impeccable déjà installée
+   (.claude/skills/impeccable/) en mode CRITIQUE/lecture seule (comme pour Végétations, qui avait
+   obtenu 26/40) — surtout pas son mode live/auto-fix.
+
+2) Clarté des objectifs pédagogiques — mets-toi à la place d'un élève de BTS GPN qui découvre
+   l'outil pour la première fois : le vocabulaire phytosociologique est-il expliqué ? Comprend-on
+   pourquoi on saisit chaque donnée et à quoi servent les indices d'Ellenberg affichés ? Les
+   messages d'aide/erreur et l'onboarding sont-ils clairs sans explication externe d'un enseignant ?
+   Attention : PhytoScope est décrite comme un modèle déjà éprouvé/validé — cherche des vrais
+   écarts, n'invente pas de problèmes qui n'existent pas.
+
+Contraintes : lecture seule stricte. Si une connexion est nécessaire pour explorer l'appli en
+conditions réelles (l'auth se fait par simple pseudo), utilise un pseudo de test et n'ajoute/ne
+modifie/ne supprime aucune vraie donnée d'élève ; nettoie toute donnée de test créée en cours de route.
+
+Livrable final : un rapport structuré (constats classés par sévérité, sur le modèle de
+.impeccable/critique/) + un plan d'action priorisé par impact/effort — proposé mais PAS exécuté.
+Termine en mettant à jour la mémoire (recap de session) avec le résumé de l'audit.

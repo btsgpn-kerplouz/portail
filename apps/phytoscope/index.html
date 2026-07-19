@@ -18,26 +18,27 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <style>
-@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/inter.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-style:italic;font-weight:100 900;font-display:swap;src:url('./fonts/inter-italic.woff2') format('woff2')}
-@font-face{font-family:'Fraunces';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/fraunces.woff2') format('woff2')}
-@font-face{font-family:'Fraunces';font-style:italic;font-weight:100 900;font-display:swap;src:url('./fonts/fraunces-italic.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
 </style>
   <style>
     :root{
-      --bg:#f6f3ed; --panel:#fffdf9; --ink:#211f1a; --muted:#6a6256; --line:#e9e2d5;
-      --brand:#3f6b4e; --brandDark:#284732; --brand2:#e7ecdb; --accent:#b15a3c; --danger:#a4423b;
-      --soft:#f1ece1; --shadow:0 1px 2px rgba(30,25,18,.05), 0 14px 34px rgba(40,30,20,.08); --radius:16px;
-      --display:"Fraunces",Georgia,"Times New Roman",serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+      /* Charte « Atlas naturaliste » — couleur d'app : vert phytosociologue #2e7d4f */
+      --bg:#e2e7e0; --panel:#fbfcf9; --ink:#141d17; --muted:#55605a; --line:#d0d9ce;
+      --brand:#2e7d4f; --brandDark:#215a39; --brand2:#e6efea; --accent:#a9772a; --danger:#a4423b;
+      --warmpanel:#faf3e6; --warmline:#e8dcc4;
+      --soft:#e7ebe3; --shadow:0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09); --radius:16px;
+      --display:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     }
 
     html, body { color-scheme: light !important; background:var(--bg) !important; }
     @media (prefers-color-scheme: dark){
       :root{
-        --bg:#f6f3ed !important; --panel:#fffdf9 !important; --ink:#211f1a !important; --muted:#6a6256 !important; --line:#e9e2d5 !important;
-        --brand:#3f6b4e !important; --brandDark:#284732 !important; --brand2:#e7ecdb !important; --accent:#b15a3c !important; --danger:#a4423b !important;
-        --soft:#f1ece1 !important; --shadow:0 1px 2px rgba(30,25,18,.05), 0 14px 34px rgba(40,30,20,.08) !important; --radius:16px !important;
+        --bg:#e2e7e0 !important; --panel:#fbfcf9 !important; --ink:#141d17 !important; --muted:#55605a !important; --line:#d0d9ce !important;
+        --brand:#2e7d4f !important; --brandDark:#215a39 !important; --brand2:#e6efea !important; --accent:#a9772a !important; --danger:#a4423b !important;
+        --soft:#e7ebe3 !important; --shadow:0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09) !important; --radius:16px !important;
       }
       body, header, main, section, .card, .gradientCard, .metric, .miniItem, .selectorPanel, .legendHelp, .syncStatus, .suggestions, input, select, textarea, button.secondary, .tab, .checkItem, table, th, td {
         color-scheme: light !important;
@@ -49,9 +50,9 @@
     .installStatus{margin-top:10px}
     .installBadge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:6px 10px;background:#edf6e8;color:#25512f;font-weight:750}
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6}
     header{padding:26px 28px 18px;background:radial-gradient(120% 130% at 0% 0%,#fffdf9 0%,#f1ece1 55%,#f6f3ed 100%);border-bottom:1px solid var(--line)}
-    h1{margin:0 0 8px;font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,2.5vw,2.3rem);letter-spacing:-.02em;line-height:1.08;font-variation-settings:"opsz" 72,"wght" 600}
+    h1{margin:0 0 8px;font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,4.2vw,2.5rem);letter-spacing:-.015em;line-height:1.12}
     header p{margin:0;max-width:1050px;color:var(--muted)}
     .betaBadge{display:inline-block;margin-left:.7em;color:#b00020;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
     .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
@@ -59,15 +60,15 @@
     button,.button{cursor:pointer;padding:10px 13px;background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700;box-shadow:0 3px 10px rgba(47,107,62,.10);transition:transform .12s ease, box-shadow .12s ease, background .12s ease} button:hover,.button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(47,107,62,.16)}
     button.secondary{background:#fff;color:var(--brandDark);border-color:#b9cfb7}.ghost{background:transparent;color:var(--brandDark);border-color:transparent;box-shadow:none}.danger{background:var(--danger);border-color:var(--danger)}
     input,select,textarea{padding:10px 12px;min-width:0;font-size:16px} textarea{width:100%;min-height:70px;resize:vertical}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px 0}.tab{background:#fff;color:var(--muted);border-color:var(--line)}.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}.tab-admin{opacity:.66;border-style:dashed}.tab.tab-admin .ti{display:inline-flex;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}.tab-admin.active{opacity:1;border-style:solid}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px 0}.tab{background:var(--warmpanel);color:var(--muted);border-color:var(--warmline)}.tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}.tab-admin{opacity:.66;border-style:dashed}.tab.tab-admin .ti{display:inline-flex;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}.tab-admin.active{opacity:1;border-style:solid}
     main{padding:22px 24px 45px;max-width:1480px;margin:0 auto}.view{display:none}.view.active{display:block}
     .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}.card h2,.card h3{margin:0 0 12px;font-family:var(--display);font-weight:600;color:var(--brandDark);letter-spacing:-.01em}.card h2{font-size:1.24rem;position:relative;padding-left:14px}.card h2::before{content:"";position:absolute;left:0;top:.18em;bottom:.18em;width:4px;border-radius:3px;background:linear-gradient(180deg,var(--brand),var(--brandDark))}.card h3{font-size:1.02rem;color:var(--brand)}.muted{color:var(--muted)}.small{font-size:.86rem}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;background:var(--brand2);color:#244b2c;font-size:.82rem;font-weight:650}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field label{font-weight:650;font-size:.88rem;color:#334335}
+    .card{background:var(--warmpanel);border:1px solid var(--warmline);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}.card h2,.card h3{margin:0 0 12px;font-family:var(--display);font-weight:600;color:var(--brandDark);letter-spacing:-.01em}.card h2{font-size:1.24rem}.card h3{font-size:1.02rem;color:var(--brand)}.muted{color:var(--muted)}.small{font-size:.86rem}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;background:var(--brand2);color:#244b2c;font-size:.82rem;font-weight:650}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field label{font-weight:650;font-size:.88rem;color:#334335}
     table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}th{font-size:.82rem;color:#536055;background:#fafcf8;position:sticky;top:0;z-index:1}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}.tableWrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:14px}
     .suggestWrap{position:relative}.suggestions{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(20,40,20,.14);z-index:20;max-height:340px;overflow:auto;display:none}.suggestions.open{display:block}.suggestion{padding:10px 12px;border-bottom:1px solid #eef2eb;cursor:pointer}.suggestion:hover,.suggestion.active{background:#f0f7ec}.suggestion b{display:block}.suggestion span{font-size:.82rem;color:var(--muted)}
     .summary{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));gap:10px}.metric{background:linear-gradient(180deg,#ffffff,var(--soft));border:1px solid var(--line);border-radius:14px;padding:11px 12px}.metric .label{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em}.metric .value{font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--brandDark);margin-top:4px;letter-spacing:-.01em}
     .gradientGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.gradientCard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px}.gradientHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:6px}.gradientHead strong{font-size:.96rem}.svgBox{width:100%;overflow:hidden}.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;color:var(--muted);font-size:.84rem}.key{display:inline-flex;align-items:center;gap:6px}.swatch{width:12px;height:12px;border-radius:50%;background:var(--brand);display:inline-block}.swatch.mean{border-radius:2px;background:#172015}.swatch.sd{border-radius:2px;background:#d9e8d4}.swatch.wmean{border-radius:0;background:var(--accent)}.selectorPanel{border:1px solid var(--line);background:#fbfcf9;border-radius:14px;padding:10px;margin:8px 0 10px}.selectorPanelHeader{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}.selectorActions{display:flex;gap:6px;flex-wrap:wrap}.miniBtn{padding:6px 9px;font-size:.78rem}.checkList{display:flex;gap:8px;flex-wrap:wrap}.checkItem{display:inline-flex;align-items:center;gap:6px;border:1px solid #e1e8de;background:#fff;border-radius:999px;padding:5px 9px;font-size:.84rem;cursor:pointer}.checkItem input{accent-color:var(--brand);min-width:auto}.colorDot{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.06)}.chartLegend{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 8px;color:var(--muted);font-size:.84rem}.legendHelp{border:1px solid #e5eadf;background:#fbfcf9;border-radius:14px;padding:8px 10px}.lineLegend{width:24px;height:0;border-top:3px solid currentColor;display:inline-block}.lineLegend.dashed{border-top-style:dashed;border-top-width:2px}.bandLegend{width:26px;height:12px;border-radius:4px;background:currentColor;opacity:.18;display:inline-block}.pointLegend{width:12px;height:12px;border-radius:50%;background:currentColor;display:inline-block;box-shadow:0 0 0 1px #fff inset}.chartTooltip{position:fixed;display:none;z-index:1000;max-width:340px;padding:9px 11px;border-radius:12px;background:#172015;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,.22);font-size:.86rem;line-height:1.35;pointer-events:none}.tipPoint{cursor:help}.tipPoint:focus{outline:none}.switch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;color:var(--ink)}.switch input{min-width:auto;accent-color:var(--brand)}
-    .notice{border-left:4px solid var(--accent);background:#fff9e9;padding:12px 14px;border-radius:12px;color:#4d3e1d}.empty{padding:24px;border:1px dashed #c6d2c2;border-radius:16px;text-align:center;color:var(--muted);background:#fbfcf9}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar>*{flex:0 0 auto}.toolbar .grow{flex:1 1 260px}
+    .notice{border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));background:#fff9e9;padding:12px 14px;border-radius:12px;color:#4d3e1d}.empty{padding:24px;border:1px dashed #c6d2c2;border-radius:16px;text-align:center;color:var(--muted);background:#fbfcf9}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar>*{flex:0 0 auto}.toolbar .grow{flex:1 1 260px}
     .split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}.miniList{display:grid;gap:8px}.miniItem{border:1px solid var(--line);border-radius:12px;padding:9px;background:#fbfcf9}.miniItem strong{display:block}
 
     .syncStatus{border:1px solid var(--line);background:#fbfcf9;border-radius:14px;padding:10px;margin:10px 0;color:var(--muted);font-size:.9rem}
@@ -131,7 +132,10 @@
     }
     @media(max-width:420px){.summary{grid-template-columns:1fr}.selectorActions{grid-template-columns:1fr}.tab{font-size:.86rem}.gradientCard .svgBox svg{min-width:690px}#scatterSvg svg{min-width:880px}}
     @media print{header,.tabs,.noPrint,button{display:none!important}main{padding:0}.card{box-shadow:none;break-inside:avoid}.view{display:block!important}.tableWrap{max-height:none;overflow:visible}}
-  
+    @media (prefers-reduced-motion: reduce){
+      *{transition:none !important;animation:none !important}
+    }
+
     /* v14 — ergonomie mobile, graphiques à colonne unique et panneaux compacts */
     .graphWorkspace{padding:14px 15px 18px}.compactToolbar{row-gap:7px}.compactSwitch{padding:5px 8px;font-size:.78rem;line-height:1}.compactSwitch input{width:13px;height:13px}.slimPanel{padding:8px 9px;margin:6px 0}.slimLegend{padding:6px 8px;margin:6px 0}.panelSearch{width:100%;margin:2px 0 8px;padding:8px 10px;border-radius:10px;background:#fff}.selectableReleves{max-height:180px;overflow:auto;align-content:flex-start}.selectableReleves .checkItem{padding:4px 7px;border-radius:12px}.relColorPicker{width:28px;height:22px;min-width:28px;padding:0;border:0;background:transparent;box-shadow:none;cursor:pointer}.gradientColumn{grid-template-columns:minmax(0,1fr)!important;gap:12px}.gradientCard{padding:0;overflow:hidden}.gradientCard>summary{list-style:none;cursor:pointer;padding:11px 13px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#ffffff,#f6faf3)}.gradientCard>summary::-webkit-details-marker{display:none}.gradientCard>summary::before{content:"▾";font-weight:900;color:var(--brand);transition:transform .15s ease}.gradientCard:not([open])>summary::before{transform:rotate(-90deg)}.gradientCardBody{padding:10px 12px 12px}.gradientActions{display:flex;gap:8px;align-items:center}.gradExportBtn{padding:5px 8px;font-size:.76rem}.settingsGrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:10px;align-items:start}.axisControlRow{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.axisControlRow label{display:flex;flex-direction:column;gap:4px;min-width:130px}.axisPicker{cursor:pointer}.axisPicker:hover{text-decoration:underline}.groupSep{border-left:1px solid #d9e4d7}.siteBadge{font-size:.78rem;color:#526358}.compareActions{display:flex;gap:8px;flex-wrap:wrap}.modernHint{border-radius:12px;background:#eef7e9;border:1px solid #d7e8d2;padding:8px 10px}.tab{border-radius:999px}.card,.selectorPanel,.gradientCard{box-shadow:0 10px 34px rgba(31,77,49,.075)}
     @media (max-width: 760px){
@@ -175,7 +179,7 @@
 .screen-head p{margin:7px 0 0;color:var(--muted);max-width:64ch;font-size:.92rem}
 .screen-head{margin:2px 0 18px}
 .eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
-.h-screen{font-family:var(--display);font-weight:600;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:-.02em;line-height:1.1;margin:5px 0 0;color:var(--brandDark);font-variation-settings:"opsz" 72,"wght" 600}
+.h-screen{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:-.02em;line-height:1.1;margin:5px 0 0;color:var(--brandDark)}
 .releveBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .relSelectWrap{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 14px;box-shadow:var(--shadow)}
 .relSelectWrap::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px var(--brand2);flex:0 0 auto}
@@ -229,22 +233,27 @@ header{display:flex;align-items:flex-start;justify-content:space-between;gap:18p
 </style>
 <style id="v42-topbar">
 :root{--topbar-h:160px}
-.topbar{position:sticky;top:0;z-index:60;background:#1e3d2c;box-shadow:0 6px 22px rgba(0,0,0,.28)}
-header{display:flex;flex-direction:column;gap:10px;padding:16px 28px 14px;background:#1e3d2c;border-bottom:0}
-.tabs{background:#1e3d2c}
-.headerTop{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.appLogo{width:72px!important;height:72px!important;border-radius:18px!important;flex:0 0 auto}
-.headerTop h1{margin:0;flex:0 0 auto;white-space:nowrap;color:#fff}
-.headerDesc{margin:0;flex:1 1 180px;min-width:0;color:rgba(255,255,255,.58);font-size:.9rem;line-height:1.34}
+.topbar{position:sticky;top:0;z-index:60;--acc:var(--brand);--bg1:color-mix(in srgb, var(--acc) 82%, #0a1510);box-shadow:0 6px 22px rgba(0,0,0,.28)}
+header{position:relative;padding:14px 28px 12px;background:var(--bg1);border-bottom:0}
+.banner-texture{position:absolute;inset:0;width:100%;height:100%;display:block}
+.banner-scrim{position:absolute;inset:0;background:linear-gradient(100deg,var(--bg1) 0%,color-mix(in srgb,var(--bg1) 82%,transparent) 36%,transparent 74%)}
+.banner-inner{position:relative}
+.atlas-pastille{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;font-weight:500;color:rgba(240,246,240,.86)}
+.atlas-pastille .pdot{width:.58rem;height:.58rem;border-radius:50%;background:#aaebc4;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.atlas-backlink{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;color:rgba(236,243,236,.68);text-decoration:none}
+.atlas-backlink:hover{color:#fff}
+.tabs{background:var(--panel);border-bottom:1px solid var(--line)}
+.banner-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.banner-inner h1{color:#fff}
+.subtitle{display:none;margin:.3rem 0 0;color:rgba(255,255,255,.68);font-size:1.02rem}
+body.is-home .subtitle{display:block}
 .versionPill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.82);font-size:.78rem;font-weight:700;white-space:nowrap;flex:0 0 auto}
 .installBtn{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;white-space:nowrap}
 .installBtn svg{flex:0 0 auto}
 .installStatusInline{font-size:.78rem;color:var(--muted);line-height:1.3;display:block;margin-top:8px}
 .installStatusInline .installBadge{padding:3px 8px;font-weight:700}
 .tabs{padding:8px 24px 10px}
-.tab{background:rgba(255,255,255,.07)!important;color:rgba(255,255,255,.62)!important;border-color:rgba(255,255,255,.12)!important}
-.tab.active{background:#fff!important;color:#1e3d2c!important;border-color:#fff!important}
-.authBar{color:rgba(255,255,255,.8)}
+.authBar{margin-top:.4rem;color:rgba(255,255,255,.8)}
 .authMuted{color:rgba(255,255,255,.52)}
 .authWho strong{color:#fff}
 .authSync{color:rgba(255,255,255,.52)}
@@ -256,10 +265,8 @@ header{display:flex;flex-direction:column;gap:10px;padding:16px 28px 14px;backgr
 .addbar{top:calc(var(--topbar-h) + 8px)}
 @media(max-width:760px){
   .topbar{box-shadow:0 4px 18px rgba(0,0,0,.32)}
-  header{padding:12px 14px 10px;gap:8px}
-  .appLogo{width:52px!important;height:52px!important;border-radius:14px!important}
-  .headerTop h1{font-size:1.2rem}
-  .headerDesc{font-size:.84rem;flex-basis:100%}
+  header{padding:12px 14px 10px}
+  .subtitle{font-size:.84rem}
 }
 </style>
 <style id="wetlands-css">
@@ -352,7 +359,6 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
    >>> Pour tout ajustement du bandeau haut ou de la nav du bas sur smartphone :
        MODIFIER ICI, pas dans les blocs du dessus. <<<
    ============================================================ */
-.authToggle{display:none}
 /* Sélecteurs de relevés repliables (tous écrans ; ouverts par défaut, refermés sur mobile par script) */
 .selectorDetails{margin:0}
 .selectorDetails > summary.selectorSummary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:650;color:var(--brandDark);padding:2px 0}
@@ -377,22 +383,13 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
   /* --- P1 : header réduit à une barre fine collante (~44px) --- */
   :root{--topbar-h:46px}
   header{padding:7px 12px!important;gap:0!important;position:relative}
-  .headerTop{display:flex;align-items:center;gap:9px;width:100%;min-width:0}
-  .appLogo{width:30px!important;height:30px!important;border-radius:8px!important}
-  .headerTop h1{font-size:1.06rem!important;white-space:nowrap;flex:0 0 auto}
-  .headerDesc{display:none!important}
-  /* petite pastille version discrète, juste le numéro (ex. v43) */
+  .banner-meta{width:100%;gap:8px}
+  .banner-inner h1{font-size:1.06rem!important;margin-top:4px}
+  .subtitle{display:none!important}
+  /* petite pastille version discrète, juste le numéro (ex. v5.0) */
   .versionPill{display:inline-flex!important;padding:2px 7px;font-size:.64rem;background:rgba(255,255,255,.14);color:rgba(255,255,255,.72);flex:0 0 auto}
   .versionPill .vFull{display:none}
   .versionPill .vShort{display:inline}
-  /* bouton 👤 qui déplie la connexion */
-  .authToggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-left:auto;width:36px;height:36px;padding:0;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer}
-  .authToggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
-  .authToggle:active{background:rgba(255,255,255,.22)}
-  .authToggleCb:checked ~ .headerTop .authToggle{background:#fff;color:#1e3d2c;border-color:#fff}
-  /* connexion repliée en menu déroulant, ouverte au tap */
-  .authBar{display:none!important;position:absolute;top:100%;left:10px;right:10px;margin-top:6px;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;padding:12px;border-radius:14px;background:#1e3d2c;border:1px solid rgba(255,255,255,.16);box-shadow:0 16px 36px rgba(0,0,0,.36);z-index:80}
-  .authToggleCb:checked ~ .authBar{display:flex!important}
   /* --- P2 : barre d'onglets du bas fiable — fond opaque, sans backdrop-filter, couche stabilisée --- */
   .tabs{background:var(--panel)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-top:1px solid var(--line)!important;box-shadow:0 -7px 22px rgba(20,50,30,.12)!important;transform:translateZ(0)}
   /* corrige la couleur héritée du bandeau sombre (illisible sur fond clair) */
@@ -441,38 +438,298 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
   .tabs{gap:1px!important;padding-left:2px!important;padding-right:2px!important}
   .tab{font-size:.55rem!important;padding:5px 0!important;gap:2px!important;letter-spacing:-.01em}
   .tab .ti{width:19px;height:19px}
-  .headerTop h1{font-size:1rem!important}
-  .appLogo{width:28px!important;height:28px!important}
+  .banner-inner h1{font-size:1rem!important}
 }
 </style>
+<style id="home-view-v44">
+/* v44 — page d'accueil (connexion, sélection globale de relevés, entrées, référentiels, admin) */
+/* Accueil : la rangée d'onglets desktop fait doublon avec les cartes d'entrée → masquée.
+   Sur mobile, la barre du bas reste un repère de navigation permanent (comme une appli native)
+   donc on la garde visible même sur l'accueil. */
+@media(min-width:761px){ body.is-home .tabs{display:none} }
+@media(max-width:760px){ .tabs{grid-template-columns:repeat(6,1fr)} }
+
+.homeView > details.card,.homeView > .card,.homeView > .adminLockBtn{margin-bottom:16px}
+.homeView .card-head{margin-bottom:10px}
+
+/* Rail numéroté des 3 étapes (Se connecter / Relevés / Analyser mes relevés) */
+.homeRail{display:flex;gap:14px;margin-bottom:20px}
+.railCol{width:26px;position:relative;flex:0 0 auto}
+.railCol::before{content:"";position:absolute;left:50%;top:0;bottom:-20px;width:2px;background:var(--line);transform:translateX(-50%)}
+.homeRail-last .railCol::before{display:none}
+.stepBadge{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.86rem;flex:0 0 auto;position:relative;z-index:1}
+.railContent{flex:1;min-width:0}
+.railContent > .card,.railContent > details.card,.railContent > .homeEntries{margin-bottom:16px}
+.railContent > *:last-child{margin-bottom:0}
+.railContent .entrySolo{margin-bottom:0}
+.homeEtOu{margin:6px 0 10px 4px;font-size:.76rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
+@media(max-width:760px){ .homeRail{gap:10px} .railCol{width:22px} .stepBadge{width:22px;height:22px;font-size:.78rem} }
+
+/* Séparateur neutre avant Référentiels (hors séquence numérotée) */
+.ref-divider{border-top:1px solid var(--line);padding-top:2px;margin:4px 0 16px}
+
+/* Pastille d'état de connexion, dans le bandeau */
+.authStatusPill{display:inline-flex;align-items:center;gap:6px;margin-left:auto;flex:0 0 auto;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.8rem;font-weight:650;cursor:pointer;white-space:nowrap}
+.authStatusPill:hover{background:rgba(255,255,255,.18)}
+.authStatusPill svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;flex:0 0 auto}
+.authStatusPill.isAuthed{background:#fff;color:var(--brandDark);border-color:#fff}
+@media(max-width:760px){
+  .authStatusPill{width:36px;height:36px;padding:0;justify-content:center;border-radius:10px}
+  .authStatusPill span{display:none}
+}
+
+/* Connexion déplacée sur l'accueil : contexte clair, on neutralise les surcharges
+   sombres héritées (elles ciblaient l'ancien formulaire dans le bandeau). */
+#homeAuthBar .authInput,#homeAuthBar .authSelect{background:#fff;color:var(--ink);border-color:var(--line)}
+#homeAuthBar .authBtn.ghost{background:transparent;color:var(--brandDark);border-color:var(--line)}
+#homeAuthBar .authMuted,#homeAuthBar .authSync,#homeAuthBar .authPreview{color:var(--muted)}
+#homeAuthBar .authWho strong{color:var(--ink)}
+#homeAuthBar{display:block!important;position:static!important}
+
+/* Sélecteur global de relevés (accueil) */
+.homeFilterBar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.homeFilterBar .releveFilter{flex:1 1 220px;min-width:0}
+.homeFilterBar select{flex:0 0 auto;background:#fff;color:var(--ink);border-color:var(--line)}
+.homeReleveItem{width:100%;justify-content:flex-start}
+.releveOpenBtn{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;line-height:1.3}
+.releveOpenBtn:hover{color:var(--brandDark);text-decoration:underline}
+
+/* Rappel de sélection dans les vues d'analyse (remplace les 4 panneaux dupliqués) */
+.selSummaryBar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:12px}
+.linklike{border:0;background:transparent;color:var(--brandDark);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
+
+/* Entrées d'accueil */
+.entries-title{font-size:1.05rem;margin:0 0 12px;font-weight:700;color:var(--brandDark)}
+.entries-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.entry{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow);cursor:pointer;font:inherit;color:inherit}
+.entry:hover{border-color:var(--brand);transform:translateY(-1px)}
+.entry-head{display:flex;align-items:center;gap:9px}
+.entry-head b{color:var(--ink);font-size:.88rem}
+.entry-ico{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:transparent;color:var(--brandDark);flex:0 0 auto}
+.entry-ico svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;display:block}
+.entry > p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.4}
+.entry-arrow{margin-top:auto;align-self:flex-end;color:var(--brand);font-size:1.15rem;flex:0 0 auto}
+
+/* Référentiels (accueil, toujours visible) */
+.homeRefsHead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+#homeRefsCard .homeRefsHead h2{color:var(--brandDark);font-size:1.05rem;margin:0}
+/* Référentiels : posé sur le fond général de l'app, sans cadre ni fond de
+   carte (comme la section référence de Végétations, .home-reference) —
+   c'est une note de bas de page, pas une action. */
+#homeRefsCard{background:transparent;border:0;box-shadow:none;padding:4px 4px 0}
+.homeRefsBody{font-size:.82rem;line-height:1.5}
+.homeRefsBody > p{margin:0 0 8px}
+.refWithLogo{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+.telabot-logo{flex:0 0 auto;display:block}
+.telabot-logo img{width:clamp(64px,9vw,92px);height:auto;display:block}
+.refWithLogoText{flex:1 1 260px;min-width:0;margin:0}
+.homeRefsBody table{margin-top:10px;font-size:.78rem}
+.homeRefsBody th,.homeRefsBody td{padding:6px 7px}
+#homeReleveCard summary h2{font-size:.88rem;font-weight:700}
+
+/* Admin (accueil, icône discrète) */
+.adminLockBtn{display:inline-flex;align-items:center;gap:7px;font-size:.86rem}
+
+@media(max-width:760px){
+  .entries-grid{grid-template-columns:1fr}
+  .homeFilterBar select,.homeFilterBar .releveFilter{width:100%;flex-basis:100%}
+  .selSummaryBar{flex-direction:column;align-items:flex-start}
+}
+
+/* État connecté (accueil) : étale identité / synchro / actions sur la largeur de l'encart */
+.authConnected{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.authConnectedWho{display:flex;align-items:center;gap:10px}
+.authConnectedWho > span:last-child{display:flex;flex-direction:column;gap:1px}
+.authWhoIcon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:transparent;color:var(--brandDark);flex:0 0 auto}
+.authWhoIcon svg{width:19px;height:19px}
+.authWhoEmail{color:var(--muted);font-size:.86rem}
+.authConnectedActions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+@media(max-width:640px){ .authConnected{flex-direction:column;align-items:flex-start} .authConnectedActions{margin-left:0;width:100%} .authConnectedActions .authBtn{flex:1 1 0}}
+
+/* Carte "Saisir un relevé" : encart compact et cliquable, distinct du grand encart "Mes relevés" */
+.entrySolo{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;border:1px solid var(--line);background:var(--panel)}
+.entrySolo:hover{border-color:var(--brand)}
+.entrySolo .entry-ico{width:38px;height:38px;background:transparent;color:var(--brandDark)}
+.entrySolo .entry-ico svg{width:22px;height:22px}
+.entrySoloText{display:flex;flex-direction:column;gap:2px}
+.entrySoloText b{font-size:.88rem;color:var(--ink)}
+.entrySoloArrow{margin-left:auto;color:var(--brand);font-size:1.3rem;flex:0 0 auto}
+
+/* Mes relevés : 2 colonnes (tous les relevés / sélection) */
+.homeReleveSplit{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+.homeReleveColTitle{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.homeReleveCol .selectableReleves{max-height:360px}
+.homeReleveColSelected{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
+.homeReleveColSelected .homeReleveColTitle{color:var(--brandDark)}
+@media(max-width:900px){ .homeReleveSplit{grid-template-columns:1fr} }
+
+/* Sélection repliable dans les 4 vues d'analyse (coche/décoche sans quitter l'onglet) */
+.inlineSelDetails{margin-bottom:10px}
+
+/* Saisie : espacement harmonisé entre les encarts + un seul scroll de page */
+#entry > * + *{margin-top:18px}
+#entry .tableWrap{max-height:none}
+
+/* ===== Passe esthétique — contraste chaud/froid =====
+   Le fond commun de la charte (gris-vert froid #e2e7e0, partagé par toutes
+   les apps du portail) absorbe un accent vert : teintes analogues, donc
+   aucun contraste, d'où l'impression de « trop de vert »/fond olive. Chez
+   Végétations, l'accent chaud (terracotta) contraste avec ce même fond
+   froid — c'est ce contraste, pas la quantité de couleur, qui fait la
+   différence. Les cartes de toute l'app passent donc sur un crème chaud
+   propre à PhytoScope (--warmpanel), qui fait écho au bandeau vert plutôt
+   que de s'y fondre. Le vert redevient un repère net porté par une puce
+   colorée sur l'icône (jamais un aplat dilué sur toute la carte) et par les
+   boutons d'action pleins. Titres de carte en encre neutre : la couleur
+   signale l'action, pas le contenu. */
+.card h2,.card h3{color:var(--ink)}
+
+.entry,.entrySolo{background:var(--warmpanel);border-color:var(--warmline)}
+.entry:hover,.entrySolo:hover{border-color:var(--brandDark);box-shadow:0 10px 26px rgba(31,77,49,.16)}
+.entry{transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s cubic-bezier(.22,.61,.36,1),border-color .18s ease}
+
+/* Colonne « Sélectionnés » : même logique crème, teintée du vert de marque */
+.homeReleveColSelected{background:color-mix(in srgb, var(--brand) 10%, var(--warmpanel));border-color:var(--warmline)}
+.homeReleveColSelected .homeReleveColTitle{color:var(--brandDark)}
+
+#homeAuthCard,#homeReleveCard,#homeRefsCard{border-color:var(--warmline)}
+.authWhoIcon{color:var(--brandDark)}
+
+/* Puce colorée : porte la couleur sur l'icône plutôt que sur la carte */
+.entry-ico,.entrySolo .entry-ico,.homeReleveIco{background:var(--brandDark);color:#fff;width:34px;height:34px;border-radius:9px}
+.entry-ico svg,.entrySolo .entry-ico svg,.homeReleveIco svg{width:19px;height:19px}
+.entry-arrow,.entrySoloArrow{color:var(--brandDark)}
+/* Titre du bandeau en crème plutôt que blanc pur, écho du crème des cartes */
+.banner-inner h1{color:var(--warmpanel)}
+</style>
 </head>
-<body>
+<body class="is-home">
 <div class="topbar">
 <header>
-  <input type="checkbox" id="authToggleCb" class="authToggleCb" hidden>
-  <div class="headerTop">
-    <img class="appLogo" src="./icons/icon.svg" alt="" aria-hidden="true">
+  <canvas class="banner-texture" data-texture="scatter" data-tint="rgba(170,235,196,.5)" aria-hidden="true"></canvas>
+  <div class="banner-scrim" aria-hidden="true"></div>
+  <div class="banner-inner">
+    <div class="banner-meta">
+      <a class="atlas-backlink" href="https://portail-btsgpn-kerplouz.netlify.app/">‹ Portail</a>
+      <span class="atlas-pastille"><span class="pdot"></span>btsgpn-kerplouz</span>
+      <span class="versionPill" id="appVersionShort"></span>
+      <button type="button" class="authStatusPill" id="authStatusPill" data-home title="Connexion">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg>
+        <span id="authStatusText">Non connecté</span>
+      </button>
+    </div>
     <h1>PhytoScope</h1>
-    <p class="headerDesc">Application de saisie de relevés phytosociologiques et de visualisation d’indicateurs écologiques associés.</p>
-    <span class="versionPill"><span class="vFull">bêta · <span id="appVersionTag"></span></span><span class="vShort" id="appVersionShort"></span></span>
-    <label for="authToggleCb" class="authToggle" role="button" tabindex="0" aria-label="Afficher la connexion" title="Connexion">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg>
-    </label>
+    <p class="subtitle">Application de saisie de relevés phytosociologiques et de visualisation d’indicateurs écologiques associés.</p>
   </div>
-  <div class="authBar" id="authBar" aria-live="polite"></div>
 </header>
 <nav class="tabs noPrint">
-  <button class="tab active" data-view="entry"><svg class="ti" viewBox="0 0 24 24"><path d="M12 20s-7-4-7-10a7 7 0 0 1 14 0c0 6-7 10-7 10Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20V9" stroke-linecap="round"/></svg><span class="tlong">Saisie du relevé</span><span class="tshort">Saisie</span></button>
-  <button class="tab" data-view="gradients"><svg class="ti" viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg><span class="tlong">Gradients</span><span class="tshort">Gradients</span></button>
-  <button class="tab" data-view="scatter"><svg class="ti" viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg><span class="tlong">Ecogrammes</span><span class="tshort">Écogr.</span></button>
-  <button class="tab" data-view="compare"><svg class="ti" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg><span class="tlong">Comparaison</span><span class="tshort">Comparer</span></button>
-  <button class="tab" data-view="wetlands"><svg class="ti" viewBox="0 0 24 24"><path d="M12 3C9.5 7.5 6 10 6 14a6 6 0 0 0 12 0c0-4-3.5-6.5-6-11z" stroke-linejoin="round" stroke-linecap="round"/><path d="M9.5 18c.5 1.2 1.5 2 2.5 2" stroke-linecap="round"/></svg><span class="tlong">Zone humide ?</span><span class="tshort">ZH ?</span></button>
-  <button class="tab" data-view="refs"><svg class="ti" viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H18v15H7.5A2.5 2.5 0 0 0 5 20.5z" stroke-linejoin="round"/><path d="M5 20.5A2.5 2.5 0 0 1 7.5 18H18" stroke-linecap="round"/></svg><span class="tlong">Référentiels</span><span class="tshort">Réf.</span></button>
-  <button class="tab tab-admin" data-view="data"><svg class="ti" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg><span class="tlong">Administrateur</span><span class="tshort">Admin</span></button>
+  <button class="tab" data-view="home" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tlong">Accueil</span><span class="tshort">Accueil</span></button>
+  <button class="tab" data-view="entry" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 20l1-4L15 6l3 3L8 19l-4 1Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 8l3 3" stroke-linecap="round"/></svg><span class="tlong">Saisie du relevé</span><span class="tshort">Saisie</span></button>
+  <button class="tab" data-view="gradients" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg><span class="tlong">Gradients</span><span class="tshort">Gradients</span></button>
+  <button class="tab" data-view="scatter" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg><span class="tlong">Ecogrammes</span><span class="tshort">Écogr.</span></button>
+  <button class="tab" data-view="compare" type="button"><svg class="ti" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg><span class="tlong">Comparaison</span><span class="tshort">Comparer</span></button>
+  <button class="tab" data-view="wetlands" type="button"><svg class="ti" viewBox="0 0 24 24"><path d="M12 3C9.5 7.5 6 10 6 14a6 6 0 0 0 12 0c0-4-3.5-6.5-6-11z" stroke-linejoin="round" stroke-linecap="round"/><path d="M9.5 18c.5 1.2 1.5 2 2.5 2" stroke-linecap="round"/></svg><span class="tlong">Zone humide ?</span><span class="tshort">ZH ?</span></button>
 </nav>
 </div>
 <main>
-  <section id="entry" class="view active">
+  <section id="home" class="view active homeView">
+    <div class="homeRail">
+      <div class="railCol"><span class="stepBadge">1</span></div>
+      <div class="railContent">
+        <h3 class="entries-title">Se connecter</h3>
+        <div class="card" id="homeAuthCard">
+          <div id="homeAuthBar" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="homeRail">
+      <div class="railCol"><span class="stepBadge">2</span></div>
+      <div class="railContent">
+        <h3 class="entries-title">Relevés</h3>
+        <button class="card entrySolo" type="button" data-view="entry">
+          <span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L15 6l3 3L8 19l-4 1Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 8l3 3" stroke-linecap="round"/></svg></span>
+          <span class="entrySoloText"><b>Saisir un nouveau relevé</b></span>
+          <span class="entrySoloArrow" aria-hidden="true">→</span>
+        </button>
+        <p class="homeEtOu" aria-hidden="true">et/ou</p>
+        <details class="card metaCard" id="homeReleveCard">
+          <summary><span class="entry-ico homeReleveIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h2 style="display:inline">Sélectionner mes relevés</h2><span class="small muted" id="homeReleveCount"></span></summary>
+          <div class="homeFilterBar noPrint">
+            <input class="panelSearch releveFilter" id="homeReleveFilter" data-kind="home" placeholder="Filtrer par nom, commune, mots-clés…">
+            <select class="authSelect" id="homeProjetFilter"><option value="">Tous les projets</option></select>
+            <div class="selectorActions">
+              <button class="ghost miniBtn" data-kind="home" data-select-action="all">Tout cocher</button>
+              <button class="ghost miniBtn" data-kind="home" data-select-action="none">Aucun</button>
+            </div>
+          </div>
+          <div class="homeReleveSplit">
+            <div class="homeReleveCol">
+              <h3 class="homeReleveColTitle">Tous les relevés</h3>
+              <div id="homeReleveChecks" class="checkList selectableReleves"></div>
+            </div>
+            <div class="homeReleveCol homeReleveColSelected">
+              <h3 class="homeReleveColTitle">Sélectionnés</h3>
+              <div id="homeReleveSelectedList" class="checkList selectableReleves"></div>
+            </div>
+          </div>
+          <p class="small muted" style="margin:.6rem 0 0">Cochez les relevés à consulter dans Gradients, Écogrammes, Comparaison et Zone humide. Cliquez sur le nom d’un relevé pour l’ouvrir en saisie.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="homeRail homeRail-last">
+      <div class="railCol"><span class="stepBadge">3</span></div>
+      <div class="railContent">
+        <section class="homeEntries">
+          <h3 class="entries-title">Analyser mes relevés</h3>
+          <div class="entries-grid">
+            <button class="entry" type="button" data-view="gradients">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 18V6M4 8h13M4 13h9M4 18h16" stroke-linecap="round"/></svg></span><b>Gradients</b></div>
+              <p>Indices écologiques d’Ellenberg.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="scatter">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M4 4v16h16" stroke-linecap="round"/><circle cx="9" cy="14" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="17" cy="13" r="1.6"/></svg></span><b>Écogrammes</b></div>
+              <p>Croiser deux indices.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="compare">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16" stroke-linecap="round"/></svg></span><b>Comparaison</b></div>
+              <p>Tableaux bruts.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="entry" type="button" data-view="wetlands">
+              <div class="entry-head"><span class="entry-ico"><svg viewBox="0 0 24 24"><path d="M12 3C9.5 7.5 6 10 6 14a6 6 0 0 0 12 0c0-4-3.5-6.5-6-11z" stroke-linejoin="round" stroke-linecap="round"/><path d="M9.5 18c.5 1.2 1.5 2 2.5 2" stroke-linecap="round"/></svg></span><b>Zone humide ?</b></div>
+              <p>Diagnostic floristique.</p>
+              <span class="entry-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="ref-divider"></div>
+    <div class="card metaCard" id="homeRefsCard">
+      <div class="homeRefsHead"><h2>Référentiels</h2></div>
+      <div class="homeRefsBody">
+        <div class="refWithLogo">
+          <a class="telabot-logo" href="https://www.tela-botanica.org/projets/phytosociologie" target="_blank" rel="noopener" title="Tela Botanica — projet Phytosociologie (Baseflor)">
+            <img src="./documents/logo-telabotanica.png" width="920" height="375" alt="Tela Botanica" loading="lazy">
+          </a>
+          <p class="refWithLogoText"><strong>BaseFlor</strong> — Philippe Julve, <em>« Baseflor. Index botanique, écologique et chorologique de la flore de France »</em> (programme Catminat). Fournit la nomenclature des taxons et les valeurs indicatrices écologiques (lumière, température, humidité édaphique, réaction du sol, niveau trophique, etc.) exploitées dans les gradients et les écogrammes. <a href="https://www.tela-botanica.org/projets/phytosociologie" target="_blank" rel="noopener">Lien</a></p>
+        </div>
+        <p><strong>Échelle d’abondance-dominance de Braun-Blanquet</strong> — barème de cotation des relevés phytosociologiques utilisé à la saisie. Sa conversion en pourcentages de recouvrement est donnée ci-dessous.</p>
+        <table><thead><tr><th>Coefficient</th><th class="num">Recouvrement utilisé</th><th>Interprétation</th></tr></thead><tbody><tr><td>i</td><td class="num">0,01 %</td><td>Individu isolé ; conversion arbitraire demandée.</td></tr><tr><td>r</td><td class="num">0,1 %</td><td>Très rare.</td></tr><tr><td>+</td><td class="num">0,5 %</td><td>Peu abondant, recouvrement négligeable.</td></tr><tr><td>1</td><td class="num">2,5 %</td><td>Abondant mais faible recouvrement.</td></tr><tr><td>2</td><td class="num">15 %</td><td>Recouvrement intermédiaire.</td></tr><tr><td>3</td><td class="num">37,5 %</td><td>Recouvrement important.</td></tr><tr><td>4</td><td class="num">62,5 %</td><td>Recouvrement très important.</td></tr><tr><td>5</td><td class="num">87,5 %</td><td>Recouvrement quasi continu.</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <button type="button" class="ghost adminLockBtn" id="homeAdminBtn" data-view="data" title="Accès administrateur">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
+      Administrateur
+    </button>
+  </section>
+  <section id="entry" class="view">
     <div class="screen-head">
       <h1 class="h-screen" id="entryTitle">Saisie du relevé</h1>
     </div>
@@ -484,15 +741,16 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
       <button class="danger" id="deleteReleve">Supprimer</button>
     </div>
 
-    <details class="card metaCard noPrint">
+    <details class="card metaCard noPrint" open>
       <summary class="metaSummary"><h2>Métadonnées du relevé</h2><span class="small muted">nom · date · site · notes</span></summary>
-      <div class="grid2" style="margin-top:14px">
+      <div class="grid3" style="margin-top:14px">
         <div class="field"><label>Nom du relevé</label><input id="relName" placeholder="Ex. Prairie humide 01"></div>
         <div class="field"><label>Date</label><input id="relDate" type="date"></div>
         <div class="field"><label>Surface</label><input id="relArea" placeholder="m²"></div>
         <div class="field"><label>Observateur</label><input id="relObserver" placeholder="Nom"></div>
         <div class="field"><label>Site</label><input id="relSite" placeholder="Ex. Vallon de Kerloc'h, parcelle A3"></div>
         <div class="field"><label>Localisation</label><input id="relLocation" placeholder="Commune, coordonnées, précision géographique"></div>
+        <div class="field"><label>Code projet</label><input id="relProjet" placeholder="Ex. TP terrain mars 2026"></div>
       </div>
       <div class="field"><label>Notes</label><textarea id="relNotes" placeholder="Contexte, physionomie, perturbations, remarques..."></textarea></div>
     </details>
@@ -542,7 +800,8 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 
     <div class="card graphWorkspace">
       <div class="toolbar compactToolbar"><div class="grow"></div><label class="small muted">Strate</label><select id="analysisStratum"></select><label class="small muted">Étiquettes</label><select id="gradientLabelMode"><option value="hover" selected>Survol / clic</option><option value="short">Abrégées</option><option value="initials">Initiales</option><option value="none">Masquées</option></select><label class="switch compactSwitch small"><input type="checkbox" class="colorBlindToggle">Daltoniens</label><button class="secondary iconBtn" id="exportGradientsPng" aria-label="Tout exporter en PNG" title="Tout exporter en PNG"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></div>
-      <div class="selectorPanel noPrint slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Relevés affichés</strong><span class="selCount"></span></summary><div class="selectorActions"><button class="ghost miniBtn" data-kind="gradient" data-select-action="active">Actif</button><button class="ghost miniBtn" data-kind="gradient" data-select-action="all">Tous</button><button class="ghost miniBtn" data-kind="gradient" data-select-action="none">Aucun</button></div><input class="panelSearch releveFilter" data-kind="gradient" placeholder="Filtrer les relevés par nom, site ou localisation…"><div id="gradientReleveChecks" class="checkList selectableReleves"></div></details></div>
+      <div class="selSummaryBar noPrint"><span class="small selSummaryCount">0 relevé(s) sélectionné(s)</span><button type="button" class="linklike" data-home>Modifier la sélection</button></div>
+      <details class="selectorDetails inlineSelDetails noPrint"><summary class="selectorSummary"><strong class="small">Cocher/décocher ici</strong></summary><div id="gradientsSelChecks" class="checkList selectableReleves"></div></details>
       <div class="legend legendHelp slimLegend"><span class="key"><span class="pointLegend" style="color:#2f6b3e"></span>Espèce</span><span class="key"><span class="lineLegend" style="color:#2f6b3e"></span>Moyenne pondérée</span><span class="key"><span class="lineLegend dashed" style="color:#2f6b3e"></span>Moyenne simple</span><span class="key"><span class="bandLegend" style="color:#2f6b3e"></span>± écart-type pondéré</span></div>
       <p class="small muted noPrint" style="margin:.2rem 0 .8rem">Chaque gradient peut être replié/déplié. Utiliser le sélecteur de couleur des relevés pour harmoniser les figures.</p>
       <div id="gradientCharts" class="gradientGrid gradientColumn" style="margin-top:10px"></div>
@@ -557,7 +816,9 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
     <div class="split">
       <div class="card graphWorkspace">
         <div class="settingsStack noPrint">
-          <div class="selectorPanel slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Relevés affichés</strong><span class="selCount"></span></summary><div class="selectorActions"><button class="ghost miniBtn" data-kind="scatter" data-select-action="active">Actif</button><button class="ghost miniBtn" data-kind="scatter" data-select-action="all">Tous</button><button class="ghost miniBtn" data-kind="scatter" data-select-action="none">Aucun</button></div><input class="panelSearch releveFilter" data-kind="scatter" placeholder="Filtrer les relevés par nom, site ou localisation…"><div id="scatterReleveChecks" class="checkList selectableReleves"></div></details></div><div class="selectorPanel slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Axes &amp; strate</strong></summary><div class="axisControlRow"><label class="small muted">Axe X<select id="xGrad"></select></label><label class="small muted">Axe Y<select id="yGrad"></select></label><label class="small muted">Strate<select id="scatterStratum"></select></label></div></details></div>
+          <div class="selSummaryBar noPrint"><span class="small selSummaryCount">0 relevé(s) sélectionné(s)</span><button type="button" class="linklike" data-home>Modifier la sélection</button></div>
+          <details class="selectorDetails inlineSelDetails noPrint"><summary class="selectorSummary"><strong class="small">Cocher/décocher ici</strong></summary><div id="scatterSelChecks" class="checkList selectableReleves"></div></details>
+          <div class="selectorPanel slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Axes &amp; strate</strong></summary><div class="axisControlRow"><label class="small muted">Axe X<select id="xGrad"></select></label><label class="small muted">Axe Y<select id="yGrad"></select></label><label class="small muted">Strate<select id="scatterStratum"></select></label></div></details></div>
           <div class="selectorPanel slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Rendu graphique</strong></summary><div class="axisControlRow"><label class="small muted">Type<select id="scatterMode"><option value="species">Espèces</option><option value="releves">Moyennes + enveloppe</option></select></label><label class="small muted">Étiquettes<select id="scatterPointLabels"><option value="hover" selected>Survol / clic</option><option value="short">Abrégées filtrées</option><option value="none">Masquées</option></select></label><label class="small muted">Enveloppe<select id="scatterEnvelopeMode"><option value="hull" selected>Bornage floristique</option><option value="sd">Dispersion ± 1 σ</option><option value="both">Bornage + dispersion</option><option value="none">Aucune</option></select></label></div><p class="small muted" style="margin:.45rem 0 0">Astuce : cliquer sur le nom des axes dans le graphique pour faire défiler les indices.</p></details></div>
         </div>
         <div class="graphActions noPrint"><button type="button" class="secondary iconBtn graphFitBtn" data-target="#scatterSvg" aria-pressed="false" aria-label="Vue d'ensemble" title="Vue d'ensemble"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button><button class="secondary iconBtn" id="exportScatterPng" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></div>
@@ -579,7 +840,8 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 
     <div class="card">
       <div class="toolbar"><div class="grow"></div><label class="small muted">Strate</label><select id="compareStratum"></select><button class="secondary miniBtn" id="exportCompareCsv">CSV</button><button class="secondary miniBtn" id="exportCompareXls">Excel</button><button class="secondary miniBtn" id="exportCompareFods">LibreOffice</button></div>
-      <div class="selectorPanel noPrint slimPanel"><details class="selectorDetails" open><summary class="selectorSummary"><strong class="small">Relevés affichés</strong><span class="selCount"></span></summary><div class="selectorActions"><button class="ghost miniBtn" data-kind="compare" data-select-action="active">Actif</button><button class="ghost miniBtn" data-kind="compare" data-select-action="all">Tous</button><button class="ghost miniBtn" data-kind="compare" data-select-action="none">Aucun</button></div><input class="panelSearch releveFilter" data-kind="compare" placeholder="Filtrer les relevés par nom, site ou localisation…"><div id="compareReleveChecks" class="checkList selectableReleves"></div></details></div>
+      <div class="selSummaryBar noPrint"><span class="small selSummaryCount">0 relevé(s) sélectionné(s)</span><button type="button" class="linklike" data-home>Modifier la sélection</button></div>
+      <details class="selectorDetails inlineSelDetails noPrint"><summary class="selectorSummary"><strong class="small">Cocher/décocher ici</strong></summary><div id="compareSelChecks" class="checkList selectableReleves"></div></details>
       <div class="selectorPanel indexSelector noPrint"><div class="filterTitle"><strong class="small">Indices affichés dans le tableau</strong><div class="selectorActions"><button class="ghost miniBtn" data-kind="compareIndex" data-select-action="all">Tout</button><button class="ghost miniBtn" data-kind="compareIndex" data-select-action="climatiques">Climatiques</button><button class="ghost miniBtn" data-kind="compareIndex" data-select-action="edaphiques">Édaphiques</button><button class="ghost miniBtn" data-kind="compareIndex" data-select-action="none">Aucun</button></div></div><div id="compareIndexChecks" class="checkList"></div></div>
       <div class="tableWrap compactTable"><table id="compareTable" class="comparisonTable"></table></div>
     </div>
@@ -595,18 +857,8 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
         <button class="secondary iconBtn" id="exportWetlandPng" aria-label="Exporter la jauge en PNG" title="Exporter la jauge en PNG"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button>
       </div>
       <p class="small muted" style="margin-top:0">Module de pré-diagnostic : indicateur Ellenberg d'humidité édaphique et critère floristique réglementaire. Les calculs restent à valider par expertise de terrain.</p>
-      <div class="selectorPanel noPrint">
-        <details class="selectorDetails" open>
-          <summary class="selectorSummary"><strong class="small">Relevés analysés</strong><span class="selCount"></span></summary>
-          <div class="selectorActions">
-            <button class="ghost miniBtn" data-kind="wetland" data-select-action="active">Actif seul</button>
-            <button class="ghost miniBtn" data-kind="wetland" data-select-action="all">Tout afficher</button>
-            <button class="ghost miniBtn" data-kind="wetland" data-select-action="none">Aucun</button>
-          </div>
-          <input class="panelSearch releveFilter" data-kind="wetland" placeholder="Filtrer par nom, site ou localisation">
-          <div id="wetlandReleveChecks" class="checkList"></div>
-        </details>
-      </div>
+      <div class="selSummaryBar noPrint"><span class="small selSummaryCount">0 relevé(s) sélectionné(s)</span><button type="button" class="linklike" data-home>Modifier la sélection</button></div>
+      <details class="selectorDetails inlineSelDetails noPrint"><summary class="selectorSummary"><strong class="small">Cocher/décocher ici</strong></summary><div id="wetlandsSelChecks" class="checkList selectableReleves"></div></details>
       <div id="wetlandSummary" class="wetlandSummary wetlandSummaryReadable"></div>
       <div class="wetlandLayout">
         <details class="card wetlandBlock wetlandBlockEllenberg wetlandSection" style="box-shadow:none">
@@ -690,21 +942,6 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
     </div>
   </section>
 
-  <section id="refs" class="view">
-    <div class="screen-head">
-      <span class="eyebrow">Référence</span>
-      <h1 class="h-screen">Référentiels</h1>
-      <p>Les sources de données et le barème de cotation utilisés par l’application.</p>
-    </div>
-
-    <div class="card">
-      <h2>Sources de référence</h2>
-      <p><strong>BaseFlor</strong> — Philippe Julve, <em>« Baseflor. Index botanique, écologique et chorologique de la flore de France »</em> (programme Catminat). Fournit la nomenclature des taxons et les valeurs indicatrices écologiques (lumière, température, humidité édaphique, réaction du sol, niveau trophique, etc.) exploitées dans les gradients et les écogrammes.</p>
-      <p><strong>Échelle d’abondance-dominance de Braun-Blanquet</strong> — barème de cotation des relevés phytosociologiques utilisé à la saisie. Sa conversion en pourcentages de recouvrement est donnée ci-dessous.</p>
-    </div>
-
-    <div class="card full"><h2>Table de conversion Braun-Blanquet</h2><table><thead><tr><th>Coefficient</th><th class="num">Recouvrement utilisé</th><th>Interprétation</th></tr></thead><tbody><tr><td>i</td><td class="num">0,01 %</td><td>Individu isolé ; conversion arbitraire demandée.</td></tr><tr><td>r</td><td class="num">0,1 %</td><td>Très rare.</td></tr><tr><td>+</td><td class="num">0,5 %</td><td>Peu abondant, recouvrement négligeable.</td></tr><tr><td>1</td><td class="num">2,5 %</td><td>Abondant mais faible recouvrement.</td></tr><tr><td>2</td><td class="num">15 %</td><td>Recouvrement intermédiaire.</td></tr><tr><td>3</td><td class="num">37,5 %</td><td>Recouvrement important.</td></tr><tr><td>4</td><td class="num">62,5 %</td><td>Recouvrement très important.</td></tr><tr><td>5</td><td class="num">87,5 %</td><td>Recouvrement quasi continu.</td></tr></tbody></table></div>
-  </section>
 </main>
 <script>
 
@@ -733,7 +970,7 @@ const STORE_KEY = "botano_baseflor_releves_v03";
 const ADMIN_PASSWORD = "admin"; let adminUnlocked = false;
 const GOOGLE_SYNC_KEY = "botano_baseflor_google_sync_v01";
 const GOOGLE_SHEET_NAME = "Relevés botaniques - données personnelles";
-const APP_VERSION = "v43 · 2026-07-06";
+const APP_VERSION = "5.0";
 const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 const byId = new Map(TAXA.map(t => [t.id, t]));
 const byName = new Map(TAXA.map(t => [t.n, t]));
@@ -742,7 +979,7 @@ function norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replac
 TAXA.forEach(t=>{t.nn=norm(t.n); t.ns=norm(t.s); t.q=(t.nn+" "+t.ns).trim();});
 function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)}
 function today(){return new Date().toISOString().slice(0,10)}
-function blankReleve(name="Nouveau relevé"){const now=new Date().toISOString();return {id:uid(),name,date:today(),observer:"",site:"",location:"",area:"",notes:"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()}}
+function blankReleve(name="Nouveau relevé"){const now=new Date().toISOString();return {id:uid(),name,date:today(),observer:"",site:"",location:"",area:"",notes:"",codeProjet:"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()}}
 let state = loadState();
 let selectedTaxon = null;
 let syncState = loadSyncState();
@@ -770,11 +1007,11 @@ function normalizeAppStateForSync(s){
   if(!s || !Array.isArray(s.releves))s={selectedId:null,releves:[]};
   s.releves.forEach(normalizeReleveForSync);
   if(!s.selectedId && s.releves[0])s.selectedId=s.releves[0].id;
-  if(!Array.isArray(s.gradientSelectedIds))s.gradientSelectedIds=s.selectedId?[s.selectedId]:[];
-  if(!Array.isArray(s.scatterSelectedIds))s.scatterSelectedIds=s.selectedId?[s.selectedId]:[];
+  if(!Array.isArray(s.selectedIds))s.selectedIds=Array.isArray(s.gradientSelectedIds)?s.gradientSelectedIds.slice():(s.selectedId?[s.selectedId]:[]);
+  delete s.gradientSelectedIds; delete s.scatterSelectedIds; delete s.compareSelectedIds; delete s.wetlandSelectedIds;
   if(!Array.isArray(s.visibleGradientKeys))s.visibleGradientKeys=GRADIENTS.map(g=>g.key);
   if(!Array.isArray(s.compareGradientKeys))s.compareGradientKeys=[];
-  if(!s._compareReset28){s.compareGradientKeys=[]; s.compareSelectedIds=[]; s._compareReset28=true;}
+  if(!s._compareReset28){s.compareGradientKeys=[]; s._compareReset28=true;}
   if(!s.releveColors || typeof s.releveColors!=="object")s.releveColors={};
   if(!s.releveFilters || typeof s.releveFilters!=="object")s.releveFilters={};
   return s;
@@ -814,10 +1051,8 @@ function mergeAppStates(local, remote){
   const out=stateClone(local);
   out.releves=[...merged.values()].sort((a,b)=>(a.name||"").localeCompare(b.name||"", "fr"));
   out.selectedId=(local.selectedId && out.releves.some(r=>r.id===local.selectedId))?local.selectedId:(out.releves[0]?.id||null);
-  out.gradientSelectedIds=(local.gradientSelectedIds||[]).filter(id=>out.releves.some(r=>r.id===id));
-  out.scatterSelectedIds=(local.scatterSelectedIds||[]).filter(id=>out.releves.some(r=>r.id===id));
-  if(!out.gradientSelectedIds.length && out.selectedId)out.gradientSelectedIds=[out.selectedId];
-  if(!out.scatterSelectedIds.length && out.selectedId)out.scatterSelectedIds=[out.selectedId];
+  out.selectedIds=(local.selectedIds||[]).filter(id=>out.releves.some(r=>r.id===id));
+  if(!out.selectedIds.length && out.selectedId)out.selectedIds=[out.selectedId];
   out._last_merge_conflicts=conflicts;
   return out;
 }
@@ -877,16 +1112,56 @@ function activePalette(){return state.colorBlind?RELEVE_PALETTE_CB:RELEVE_PALETT
 function releveIndex(rel){const i=state.releves.findIndex(r=>r.id===rel.id); return i<0?0:i;}
 function colorFor(i){const pal=activePalette(); return pal[((i%pal.length)+pal.length)%pal.length];}
 function releveColor(rel){return (state.releveColors&&state.releveColors[rel.id]) || colorFor(releveIndex(rel));}
-function ensureSelections(){["gradient","scatter","wetland"].forEach(kind=>{const key=kind+"SelectedIds"; if(!Array.isArray(state[key]))state[key]=state.selectedId?[state.selectedId]:(state.releves[0]?[state.releves[0].id]:[]); const before=state[key].length; const valid=new Set(state.releves.map(r=>r.id)); state[key]=state[key].filter(id=>valid.has(id)); if(before>0 && state[key].length===0 && state.releves.length)state[key]=[state.selectedId||state.releves[0].id];});}
-function selectedReleves(kind){ensureSelections(); const ids=new Set(state[kind+"SelectedIds"]||[]); return state.releves.filter(r=>ids.has(r.id));}
+function ensureSelections(){
+  if(!Array.isArray(state.selectedIds))state.selectedIds=state.selectedId?[state.selectedId]:(state.releves[0]?[state.releves[0].id]:[]);
+  const before=state.selectedIds.length;
+  const valid=new Set(state.releves.map(r=>r.id));
+  state.selectedIds=state.selectedIds.filter(id=>valid.has(id));
+  if(before>0 && state.selectedIds.length===0 && state.releves.length)state.selectedIds=[state.selectedId||state.releves[0].id];
+}
+function selectedReleves(){ensureSelections(); const ids=new Set(state.selectedIds||[]); return state.releves.filter(r=>ids.has(r.id));}
 function syncColorBlindToggles(){document.querySelectorAll(".colorBlindToggle").forEach(ch=>{ch.checked=!!state.colorBlind;});}
-function renderSelectionControls(){ensureSelections(); renderSelectionControl("gradient","gradientReleveChecks"); renderSelectionControl("scatter","scatterReleveChecks"); renderSelectionControl("compare","compareReleveChecks"); renderSelectionControl("wetland","wetlandReleveChecks"); document.querySelectorAll(".releveFilter").forEach(inp=>{inp.value=(state.releveFilters&&state.releveFilters[inp.dataset.kind])||"";});}
-function renderSelectionControl(kind,boxId){
-  const box=document.getElementById(boxId); if(!box)return;
-  const ids=new Set(state[kind+"SelectedIds"]||[]);
-  const query=norm((state.releveFilters&&state.releveFilters[kind])||"");
-  const rows=state.releves.filter(r=>!query || norm(`${r.name||""} ${r.site||""} ${r.location||""}`).includes(query));
-  box.innerHTML=rows.map((r,i)=>`<label class="checkItem releveChoice"><input class="releveCheck" type="checkbox" data-kind="${kind}" value="${r.id}" ${ids.has(r.id)?"checked":""}><span class="colorDot" style="background:${releveColor(r)}"></span><span>${esc(releveLabel(r))}${r.site?`<br><span class="siteBadge">${esc(r.site)}</span>`:""}</span><input class="relColorPicker" type="color" title="Couleur du relevé" data-releve-color="${r.id}" value="${esc(releveColor(r))}"></label>`).join("") || `<span class="small muted">Aucun relevé correspondant.</span>`;
+function homeProjectCodes(){return [...new Set(state.releves.map(r=>r.codeProjet).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));}
+function checklistItemHtml(r,ids){
+  return `<div class="checkItem releveChoice homeReleveItem"><input class="releveCheck" type="checkbox" data-kind="home" value="${r.id}" ${ids.has(r.id)?"checked":""}><span class="colorDot" style="background:${releveColor(r)}"></span><button type="button" class="releveOpenBtn" data-open-releve="${r.id}">${esc(releveLabel(r))}<br><span class="siteBadge">${esc([r.codeProjet,r.site,r.date].filter(Boolean).join(" · ")||"—")}</span></button><input class="relColorPicker" type="color" title="Couleur du relevé" data-releve-color="${r.id}" value="${esc(releveColor(r))}"></div>`;
+}
+function filteredHomeReleves(){
+  const query=norm((state.releveFilters&&state.releveFilters.home)||"");
+  const projet=(state.releveFilters&&state.releveFilters.homeProjet)||"";
+  return state.releves.filter(r=>{
+    if(projet && (r.codeProjet||"")!==projet)return false;
+    if(query && !norm(`${r.name||""} ${r.site||""} ${r.location||""} ${r.observer||""} ${r.notes||""} ${r.codeProjet||""}`).includes(query))return false;
+    return true;
+  });
+}
+function renderSelectionControls(){
+  ensureSelections();
+  const ids=new Set(state.selectedIds||[]);
+  const box=document.getElementById("homeReleveChecks");
+  if(box){
+    const rows=filteredHomeReleves();
+    box.innerHTML=rows.map(r=>checklistItemHtml(r,ids)).join("") || `<span class="small muted">Aucun relevé correspondant.</span>`;
+  }
+  const selBox=document.getElementById("homeReleveSelectedList");
+  if(selBox){
+    const selRows=state.releves.filter(r=>ids.has(r.id));
+    selBox.innerHTML=selRows.map(r=>checklistItemHtml(r,ids)).join("") || `<span class="small muted">Aucun relevé sélectionné pour l’instant.</span>`;
+  }
+  ["gradientsSelChecks","scatterSelChecks","compareSelChecks","wetlandsSelChecks"].forEach(cid=>{
+    const b=document.getElementById(cid); if(!b)return;
+    const rows=state.releves.filter(r=>ids.has(r.id));
+    b.innerHTML=rows.map(r=>checklistItemHtml(r,ids)).join("") || `<span class="small muted">Aucun relevé sélectionné — choisissez-les depuis l’accueil.</span>`;
+  });
+  const projSel=document.getElementById("homeProjetFilter");
+  if(projSel){
+    const codes=homeProjectCodes(), cur=projSel.value;
+    projSel.innerHTML=`<option value="">Tous les projets</option>`+codes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+    projSel.value=codes.includes(cur)?cur:"";
+  }
+  document.querySelectorAll(".releveFilter").forEach(inp=>{inp.value=(state.releveFilters&&state.releveFilters[inp.dataset.kind])||"";});
+  const countEl=document.getElementById("homeReleveCount");
+  if(countEl)countEl.textContent=state.releves.length?`${state.selectedIds.length}/${state.releves.length} sélectionné(s)`:"";
+  document.querySelectorAll(".selSummaryCount").forEach(el=>{el.textContent=`${state.selectedIds.length} relevé(s) sélectionné(s)`;});
 }
 function gradientIndexDefaults(kind){return kind==="common"?["lumiere","humidite_edaphique","reaction_sol_ph","niveau_trophique"]:GRADIENTS.map(g=>g.key);}
 function selectedGradientIndices(keyName){
@@ -905,7 +1180,7 @@ function legendFor(groups){return groups.map(grp=>`<span class="key"><span class
 function tipAttr(txt){return `class="tipPoint" tabindex="0" data-tip="${esc(String(txt||"").replace(/\s+/g," "))}"`;}
 
 function setEntryTitle(r){const el=document.getElementById("entryTitle"); if(!el)return; const nm=(r&&r.name&&r.name.trim())?r.name.trim():"Relevé sans nom"; el.textContent=nm;}
-function renderMeta(){const r=current(); relName.value=r.name||""; relDate.value=r.date||""; relObserver.value=r.observer||""; if(window.relSite)relSite.value=r.site||""; relLocation.value=r.location||""; relArea.value=r.area||""; relNotes.value=r.notes||""; setEntryTitle(r);}
+function renderMeta(){const r=current(); relName.value=r.name||""; relDate.value=r.date||""; relObserver.value=r.observer||""; if(window.relSite)relSite.value=r.site||""; relLocation.value=r.location||""; relArea.value=r.area||""; relNotes.value=r.notes||""; if(window.relProjet)relProjet.value=r.codeProjet||""; setEntryTitle(r);}
 function sciHtml(name){name=(name||"").trim(); if(!name)return ""; if(/^(sol nu|sans végétation)$/i.test(name))return esc(name); const ranks=new Set(["subsp.","ssp.","var.","f.","cv."]); return name.split(/\s+/).map((w,i,a)=>{let it=false; if(i===0)it=true; else if(i===1&&/^[a-zà-ÿ×]/.test(w))it=true; else if(ranks.has(a[i-1])&&/^[a-zà-ÿ]/.test(w))it=true; return it?`<i>${esc(w)}</i>`:esc(w);}).join(" ");}
 function renderRows(){const r=current(); const table=document.getElementById("rowsTable");
   if(!r.rows.length){table.innerHTML=`<tbody><tr><td><div class="empty">Aucune espèce saisie pour ce relevé.</div></td></tr></tbody>`;return;}
@@ -1008,7 +1283,7 @@ function renderCompare(){
   const head1=`<thead><tr><th rowspan="2" class="relCell">Relevé</th><th rowspan="2" class="num">Taxons</th>`+indices.map(i=>`<th colspan="4" class="num groupSep">${esc(GRADIENTS[i].short)} · ${esc(GRADIENTS[i].label)}</th>`).join("")+`</tr>`;
   const head2=`<tr>`+indices.map(()=>`<th class="num groupSep" title="Moyenne simple">Moy.</th><th class="num" title="Moyenne pondérée par recouvrement">Pond.</th><th class="num" title="Écart-type simple">σ</th><th class="num" title="Écart-type pondéré">σp</th>`).join("")+`</tr></thead>`;
   const chosenReleves=selectedReleves("compare");
-  if(!chosenReleves.length){table.innerHTML=`<tbody><tr><td><div class="empty">Aucun relevé sélectionné — choisissez les relevés à comparer ci-dessus.</div></td></tr></tbody>`;return;}
+  if(!chosenReleves.length){table.innerHTML=`<tbody><tr><td><div class="empty">Aucun relevé sélectionné — choisissez les relevés à comparer depuis l’accueil.</div></td></tr></tbody>`;return;}
   const body=chosenReleves.map(r=>{
     const st=stats(r,filter);
     return `<tr><td class="relCell"><strong>${esc(r.name||"Sans nom")}</strong><br><span class="small muted">${esc([r.site,r.location].filter(Boolean).join(" · "))}</span></td><td class="num">${rowsWithTaxa(r,filter).length}</td>`+indices.map(i=>{const x=st[i]; return `<td class="num groupSep">${fmt(x.mean)}</td><td class="num"><strong>${fmt(x.wmean)}</strong></td><td class="num">${fmt(x.sd)}</td><td class="num">${fmt(x.wsd)}</td>`;}).join("")+`</tr>`;
@@ -1021,9 +1296,9 @@ function selectTaxon(id){selectedTaxon=byId.get(Number(id)); if(!selectedTaxon)r
 function addSelected(){if(!selectedTaxon && norm(speciesSearch.value)==="sol nu")selectedTaxon=byId.get(-1); if(!selectedTaxon){toast("Sélectionner une espèce ou « sol nu » dans la liste de recherche.");return;} const r=current(); const mode=coverMode.value; const cover=mode==="pct"?parseFloat(pctValue.value||0):bbValue.value; const stratum=selectedTaxon.id===-1?"Sans végétation":rowStratum.value; r.rows.push({line_id:uid(),tid:selectedTaxon.id,name:selectedTaxon.n,stratum,mode,cover}); touchReleve(r); selectedTaxon=null; speciesSearch.value=""; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; save(); renderAll();}
 window.removeRow=function(idx){const r=current(); r.rows.splice(idx,1); touchReleve(r); save(); renderAll();}
 window.moveRow=function(idx,delta){const r=current(); const rows=r.rows; const j=idx+delta; if(j<0||j>=rows.length)return; [rows[idx],rows[j]]=[rows[j],rows[idx]]; touchReleve(r); save(); renderAll();}
-function updateMeta(){const r=current(); r.name=relName.value; r.date=relDate.value; r.observer=relObserver.value; r.site=(window.relSite?relSite.value:""); r.location=relLocation.value; r.area=relArea.value; r.notes=relNotes.value; touchReleve(r); save(); renderReleveSelect(); renderSummary(); renderCompare(); renderScatter(); setEntryTitle(r);}
+function updateMeta(){const r=current(); r.name=relName.value; r.date=relDate.value; r.observer=relObserver.value; r.site=(window.relSite?relSite.value:""); r.location=relLocation.value; r.area=relArea.value; r.notes=relNotes.value; r.codeProjet=(window.relProjet?relProjet.value:""); touchReleve(r); save(); renderReleveSelect(); renderSummary(); renderCompare(); renderScatter(); renderSelectionControls(); setEntryTitle(r);}
 function download(filename, text, mime="application/json"){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function rowsCsv(){const lines=[["releve_id","releve_nom","site","date","observateur","localisation","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)]]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.date,r.observer,r.location,r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+function rowsCsv(){const lines=[["releve_id","releve_nom","site","code_projet","date","observateur","localisation","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)]]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
 
 
 function safeDate(s){try{return new Date(s).toLocaleString("fr-FR");}catch(e){return s||"—";}}
@@ -1107,8 +1382,8 @@ async function ensureGoogleSheetLinked(createIfMissing=true){
   renderSyncPanel();
   return file.id;
 }
-function sheetRowsReleves(src=state){return [["releve_id","nom","site","date","observateur","localisation","surface","notes","nb_lignes","created_at","updated_at","device_id"]].concat((src.releves||[]).map(r=>[r.id,r.name||"",r.site||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.notes||"",(r.rows||[]).length,r.created_at||"",r.updated_at||"",r.device_id||""]));}
-function sheetRowsLignes(src=state){const rows=[["ligne_id","releve_id","releve_nom","taxon_id","taxon","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule","sol_nu",...GRADIENTS.map(g=>g.label)]]; (src.releves||[]).forEach(r=>(r.rows||[]).forEach((row,i)=>{const t=taxonOf(row)||{n:"",s:"",v:[]}; rows.push([row.line_id||`${r.id}:${i+1}`,r.id,r.name||"",row.tid??"",t.n||"",t.s||"",row.stratum||"",row.mode||"",row.cover??"",pct(row),row.tid===-1?"oui":"",...GRADIENTS.map((g,j)=>t.v?.[j]??"")]);})); return rows;}
+function sheetRowsReleves(src=state){return [["releve_id","nom","site","code_projet","date","observateur","localisation","surface","notes","nb_lignes","created_at","updated_at","device_id"]].concat((src.releves||[]).map(r=>[r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.notes||"",(r.rows||[]).length,r.created_at||"",r.updated_at||"",r.device_id||""]));}
+function sheetRowsLignes(src=state){const rows=[["ligne_id","releve_id","releve_nom","code_projet","taxon_id","taxon","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule","sol_nu",...GRADIENTS.map(g=>g.label)]]; (src.releves||[]).forEach(r=>(r.rows||[]).forEach((row,i)=>{const t=taxonOf(row)||{n:"",s:"",v:[]}; rows.push([row.line_id||`${r.id}:${i+1}`,r.id,r.name||"",r.codeProjet||"",row.tid??"",t.n||"",t.s||"",row.stratum||"",row.mode||"",row.cover??"",pct(row),row.tid===-1?"oui":"",...GRADIENTS.map((g,j)=>t.v?.[j]??"")]);})); return rows;}
 function sheetRowsSynthese(){const rows=[["releve_id","releve_nom","strate","gradient","code","moyenne_simple","moyenne_ponderee","ecart_type_simple","ecart_type_pondere","nb_taxons_utilises","nb_taxons_sans_indice","recouvrement_utilise"]]; state.releves.forEach(r=>stats(r,"Toutes strates").forEach(x=>rows.push([r.id,r.name||"","Toutes strates",x.g.label,x.g.short,x.mean??"",x.wmean??"",x.sd??"",x.wsd??"",x.n,x.missing,x.sw??""]))); return rows;}
 function sheetRowsParametres(){return [["cle","valeur"],["version_application",APP_VERSION],["source_indices","Baseflor simplifiée"],["mode_synchronisation","fusion_non_destructive_par_releve_id_et_updated_at"],["conversion_i","0.01"],["conversion_r","0.1"],["conversion_+","0.5"],["conversion_1","2.5"],["conversion_2","15"],["conversion_3","37.5"],["conversion_4","62.5"],["conversion_5","87.5"],["exporte_le",new Date().toISOString()]];}
 function sheetRowsEtat(src=state){const json=JSON.stringify(remoteJsonSnapshot(src)); const size=35000; const chunks=[]; for(let i=0;i<json.length;i+=size)chunks.push(json.slice(i,i+size)); return [["chunk_index","chunk_count","json_chunk"]].concat(chunks.map((c,i)=>[i+1,chunks.length,c]));}
@@ -1230,21 +1505,44 @@ function exportRelevesXlsFile(){if(!(state.releves||[]).length){toast("Aucun rel
 function exportRelevesFodsFile(){if(!(state.releves||[]).length){toast("Aucun relevé à exporter.");return;} download(`mes_releves_${new Date().toISOString().slice(0,10)}.fods`, sheetsToFods(relevesSheets()), "application/vnd.oasis.opendocument.spreadsheet-flat-xml;charset=utf-8");}
 async function exportSingleSvgPng(svg,filename){if(!svg){toast("Graphique introuvable.");return;} const img=await imageFromSvg(svg); const vb=(svg.getAttribute("viewBox")||"0 0 800 300").split(/\s+/).map(Number); const w=vb[2]||800,h=vb[3]||300,scale=2,pad=24; const canvas=document.createElement("canvas"); canvas.width=(w+pad*2)*scale; canvas.height=(h+pad*2)*scale; const ctx=canvas.getContext("2d"); ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,pad*scale,pad*scale,w*scale,h*scale); const a=document.createElement("a"); a.href=canvas.toDataURL("image/png"); a.download=filename; a.click();}
 
+function showView(id){
+  if(id==="data" && !adminUnlocked){
+    const pw=prompt("Accès administrateur — mot de passe :");
+    if(pw===null) return;
+    if(pw!==ADMIN_PASSWORD){ toast("Mot de passe incorrect.","err"); return; }
+    adminUnlocked=true;
+  }
+  const section=document.getElementById(id); if(!section)return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  const tabBtn=document.querySelector(`.tab[data-view="${id}"]`);
+  if(tabBtn)tabBtn.classList.add("active");
+  section.classList.add("active");
+  document.body.classList.toggle("is-home", id==="home");
+  window.scrollTo(0,0);
+  renderAll();
+}
 function bind(){
- document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.view==="data" && !adminUnlocked){ const pw=prompt("Accès administrateur — mot de passe :"); if(pw===null) return; if(pw!==ADMIN_PASSWORD){ toast("Mot de passe incorrect.","err"); return; } adminUnlocked=true; } document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.view).classList.add("active"); renderAll();}));
+ document.addEventListener("click",e=>{
+   const home=e.target.closest("[data-home]");
+   if(home){ e.preventDefault(); showView("home"); return; }
+   const v=e.target.closest("[data-view]");
+   if(v){ showView(v.dataset.view); }
+ });
  releveSelect.addEventListener("change",e=>{state.selectedId=e.target.value; save(); renderAll();});
- newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); state.releves.push(r); state.selectedId=r.id; state.gradientSelectedIds=[r.id]; state.scatterSelectedIds=[r.id]; state.wetlandSelectedIds=[r.id]; save(); renderAll();});
- duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.gradientSelectedIds=[src.id]; state.scatterSelectedIds=[src.id]; save(); renderAll();});
+ newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); state.releves.push(r); state.selectedId=r.id; state.selectedIds=[r.id]; save(); renderAll();});
+ duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
  deleteReleve.addEventListener("click",()=>{if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;} if(confirm("Supprimer le relevé actif ?")){if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(state.selectedId); state.releves=state.releves.filter(r=>r.id!==state.selectedId); state.selectedId=state.releves[0].id; save(); renderAll();}});
- [relName,relDate,relObserver,window.relSite,relLocation,relArea,relNotes].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
+ [relName,relDate,relObserver,window.relSite,relLocation,relArea,relNotes,window.relProjet].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
  speciesSearch.addEventListener("input",e=>{selectedTaxon=null; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; showSuggestions(searchTaxa(e.target.value));});
  suggestions.addEventListener("click",e=>{const item=e.target.closest(".suggestion"); if(item)selectTaxon(item.dataset.id);});
  document.addEventListener("click",e=>{if(!e.target.closest(".suggestWrap"))suggestions.classList.remove("open")});
  coverMode.addEventListener("change",()=>{bbField.style.display=coverMode.value==="bb"?"block":"none"; pctField.style.display=coverMode.value==="pct"?"block":"none";});
  addSpecies.addEventListener("click",addSelected); speciesSearch.addEventListener("keydown",e=>{if(e.key==="Enter"){const first=suggestions.querySelector(".suggestion"); if(first){selectTaxon(first.dataset.id); e.preventDefault();}}});
  [analysisStratum,gradientLabelMode,scatterMode,xGrad,yGrad,scatterStratum,scatterPointLabels,scatterEnvelopeMode,compareStratum,wetlandStratum].filter(Boolean).forEach(el=>el.addEventListener("change",renderAll));
- document.addEventListener("change",e=>{if(e.target.classList?.contains("releveCheck")){const kind=e.target.dataset.kind; state[kind+"SelectedIds"]=[...document.querySelectorAll(`.releveCheck[data-kind="${kind}"]:checked`)].map(x=>x.value); save(); renderAll();}});
- document.addEventListener("click",e=>{const btn=e.target.closest?.("[data-select-action]"); if(!btn)return; const kind=btn.dataset.kind, action=btn.dataset.selectAction; if(kind==="gradientIndex"||kind==="compareIndex")return; if(action==="all")state[kind+"SelectedIds"]=state.releves.map(r=>r.id); else if(action==="active")state[kind+"SelectedIds"]=[state.selectedId]; else if(action==="none")state[kind+"SelectedIds"]=[]; save(); renderAll();});
+ document.addEventListener("change",e=>{if(e.target.classList?.contains("releveCheck")){const set=new Set(state.selectedIds||[]); if(e.target.checked)set.add(e.target.value); else set.delete(e.target.value); state.selectedIds=[...set]; save(); renderAll();}});
+ document.addEventListener("click",e=>{const btn=e.target.closest?.("[data-select-action]"); if(!btn)return; const kind=btn.dataset.kind, action=btn.dataset.selectAction; if(kind==="gradientIndex"||kind==="compareIndex")return; if(action==="all")state.selectedIds=state.releves.map(r=>r.id); else if(action==="none")state.selectedIds=[]; save(); renderAll();});
+ document.addEventListener("click",e=>{const openBtn=e.target.closest?.("[data-open-releve]"); if(!openBtn)return; state.selectedId=openBtn.dataset.openReleve; save(); showView("entry");});
 
  document.addEventListener("change",e=>{if(e.target.classList?.contains("indexCheck")){const keyName=e.target.dataset.keyname; const values=[...document.querySelectorAll(`.indexCheck[data-keyname="${keyName}"]:checked`)].map(x=>x.value); state[keyName]=values; save(); renderAll();}});
  document.addEventListener("click",e=>{const btn=e.target.closest?.("[data-kind='gradientIndex'],[data-kind='compareIndex']"); if(!btn)return; const keyName=btn.dataset.kind==="gradientIndex"?"visibleGradientKeys":"compareGradientKeys"; const action=btn.dataset.selectAction; if(action==="all")state[keyName]=GRADIENTS.map(g=>g.key); else if(action==="common")state[keyName]=gradientIndexDefaults("common"); else if(action==="climatiques")state[keyName]=INDEX_CATEGORIES.climatiques.slice(); else if(action==="edaphiques")state[keyName]=INDEX_CATEGORIES.edaphiques.slice(); else if(action==="none")state[keyName]=[]; save(); renderAll();});
@@ -1556,7 +1854,7 @@ initStatic(); bind(); initTooltip(); renderAll(); registerPwaServiceWorker();
 function toast(msg, kind){
   try{
     var host = document.getElementById('toastHost');
-    if(!host){ host = document.createElement('div'); host.id = 'toastHost'; host.className = 'toastHost'; document.body.appendChild(host); }
+    if(!host){ host = document.createElement('div'); host.id = 'toastHost'; host.className = 'toastHost'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
     var el = document.createElement('div');
     el.className = 'toast' + (kind ? (' ' + kind) : '');
     el.textContent = String(msg);
@@ -1566,7 +1864,7 @@ function toast(msg, kind){
   }catch(e){ console.log('toast:', msg); }
 }
 /* Numéro de version affiché dans l'en-tête (source unique : APP_VERSION) */
-(function(){try{var t=document.getElementById("appVersionTag"); if(t&&typeof APP_VERSION!=="undefined")t.textContent=APP_VERSION; var s=document.getElementById("appVersionShort"); if(s&&typeof APP_VERSION!=="undefined")s.textContent=APP_VERSION.split(" · ")[0];}catch(e){}})();
+(function(){try{var s=document.getElementById("appVersionShort"); if(s&&typeof APP_VERSION!=="undefined")s.textContent="V"+APP_VERSION;}catch(e){}})();
 setTimeout(function(){try{if(window.__loadCorruption&&typeof toast==="function")toast("Sauvegarde locale illisible : une copie de secours a été conservée. N\u2019ajoutez rien avant d\u2019avoir récupéré vos données.","err");}catch(e){}},900);
 /* Liaison du sélecteur Braun-Blanquet segmenté avec le select masqué #bbValue.
    Le reste de l'application continue de lire #bbValue.value : aucune logique modifiée. */
@@ -1627,9 +1925,23 @@ setTimeout(function(){try{if(window.__loadCorruption&&typeof toast==="function")
       },100);
     });
   }
-  function bar(){ return document.getElementById("authBar"); }
+  function bar(){ return document.getElementById("homeAuthBar"); }
+
+  function updateAuthStatusPill(){
+    const pill=document.getElementById("authStatusPill"), txt=document.getElementById("authStatusText");
+    if(!txt)return;
+    if(currentUser){
+      const label=(currentUser.email||"").replace(/@phytoscope\.local$/,"") || "compte";
+      txt.textContent="Connecté · "+label;
+      if(pill)pill.classList.add("isAuthed");
+    }else{
+      txt.textContent="Non connecté";
+      if(pill)pill.classList.remove("isAuthed");
+    }
+  }
 
   function renderAuthBar(){
+    updateAuthStatusPill();
     const el=bar(); if(!el) return;
     if(!configured()){
       el.innerHTML = '<span class="authMuted">Connexion au compte : non configurée</span>';
@@ -1637,10 +1949,17 @@ setTimeout(function(){try{if(window.__loadCorruption&&typeof toast==="function")
     }
     if(currentUser){
       el.innerHTML =
-        '<span class="authWho" title="'+esc(currentUser.email||"")+'">Connecté : <strong>'+esc(currentUser.email||"compte")+'</strong></span>'+
-        '<span class="authSync" id="authSyncStatus">'+esc(syncStatusText())+'</span>'+
-        '<button class="authBtn" id="authSyncBtn">Synchroniser</button>'+
-        '<button class="authBtn ghost" id="authSignOut">Se déconnecter</button>';
+        '<div class="authConnected">'+
+          '<div class="authConnectedWho">'+
+            '<span class="authWhoIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span>'+
+            '<span><strong>Connecté</strong><span class="authWhoEmail" title="'+esc(currentUser.email||"")+'">'+esc(currentUser.email||"compte")+'</span></span>'+
+          '</div>'+
+          '<span class="authSync" id="authSyncStatus">'+esc(syncStatusText())+'</span>'+
+          '<div class="authConnectedActions">'+
+            '<button class="authBtn" id="authSyncBtn">Synchroniser</button>'+
+            '<button class="authBtn ghost" id="authSignOut">Se déconnecter</button>'+
+          '</div>'+
+        '</div>';
       const s=document.getElementById("authSyncBtn");
       if(s) s.addEventListener("click", ()=>supaSyncNow(false));
       const b=document.getElementById("authSignOut");
@@ -1903,6 +2222,43 @@ setTimeout(function(){try{if(window.__loadCorruption&&typeof toast==="function")
     var lab = btn.querySelector('.fitLabel');
     if(lab) lab.textContent = fit ? 'Détail' : "Vue d'ensemble";
   });
+})();
+</script>
+
+<!-- Moteur de textures Atlas (copie de shared/texture.js — source de vérité). Dessine le bandeau. -->
+<script>
+(function () {
+  function build(cv) {
+    var mode = cv.getAttribute('data-texture');
+    var color = cv.getAttribute('data-tint') || 'rgba(255,255,255,.15)';
+    function draw() {
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      cv.width = w * dpr; cv.height = h * dpr;
+      var g = cv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, w, h);
+      g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 1;
+      if (mode === 'scatter') {           // nuage d'ordination + axes
+        g.save(); g.globalAlpha = 0.5;
+        g.beginPath(); g.moveTo(30, h - 22); g.lineTo(w - 14, h - 22); g.moveTo(30, 14); g.lineTo(30, h - 22); g.stroke();
+        g.restore();
+        var s = 42; function rnd() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+        for (var p = 0; p < 48; p++) {
+          var qx = 34 + rnd() * (w - 56), qy = 16 + rnd() * (h - 46), rad = 1.6 + rnd() * 2.4;
+          g.beginPath(); g.arc(qx, qy, rad, 0, 6.2832);
+          rnd() > 0.5 ? g.fill() : g.stroke();
+        }
+      }
+    }
+    draw();
+    var t;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(draw, 120); });
+  }
+  function init() { document.querySelectorAll('canvas[data-texture]').forEach(build); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 </body>
