@@ -158,7 +158,9 @@ window.OC_SYNC = {
     await ecrireBlocs(s, "oc_blocs_partages", CLES_PARTAGEES, snapshot.blocsPartages, state,
       (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid }), erreurs);
 
-    return { lastSavedAt: new Date().toISOString(), erreurs };
+    // En cas d'échec (même partiel), on ne fait pas croire à une sauvegarde
+    // fraîche : l'horodatage affiché reste celui du dernier succès réel.
+    return { lastSavedAt: erreurs.length ? state.lastSavedAt : new Date().toISOString(), erreurs };
   },
 };
 
@@ -176,9 +178,18 @@ async function ecrireEntites(s, uid, type, table, spec, entites, erreurs) {
   await Promise.all(aEcrire.map(async (item) => {
     const ligne = { id: item.id, ...item.colonnes };
     if (item.estNouveau) ligne.cree_par = uid;
-    const { error } = await s.from(table).upsert(ligne);
-    if (error) erreurs.push(`${table} #${item.id} : ${error.message}`);
-    else snap.set(item.id, item.fp);
+    try {
+      // .select('id') est ce qui permet de distinguer un succès d'un refus
+      // SILENCIEUX de la RLS : sans lui, upsert() ne renvoie pas d'erreur
+      // quand la policy exclut la ligne (elle est simplement filtrée, comme
+      // un WHERE), donc "pas d'erreur" ne veut pas dire "écrit".
+      const { data, error } = await s.from(table).upsert(ligne).select("id");
+      if (error) erreurs.push(`${table} #${item.id} : ${error.message}`);
+      else if (!data?.length) erreurs.push(`${table} #${item.id} : modification refusée (droits insuffisants ?).`);
+      else snap.set(item.id, item.fp);
+    } catch (e) {
+      erreurs.push(`${table} #${item.id} : ${e.message || "erreur réseau."}`);
+    }
   }));
 }
 
@@ -186,12 +197,21 @@ async function supprimerRegistre(s, type, table, erreurs) {
   const ids = [...registreSuppression[type]];
   if (!ids.length) return;
   await Promise.all(ids.map(async (id) => {
-    const { error } = await s.from(table).delete().eq("id", id);
-    if (error) {
-      erreurs.push(`${table} #${id} (suppression) : ${error.message}`);
-    } else {
-      registreSuppression[type].delete(id);
-      snapshot[type].delete(id);
+    try {
+      const { error } = await s.from(table).delete().eq("id", id);
+      if (error) {
+        erreurs.push(`${table} #${id} (suppression) : ${error.message}`);
+      } else {
+        // 0 ligne touchée (déjà supprimée) ou 1 ligne réellement effacée :
+        // dans les deux cas plus rien à refaire pour cet id. Un DELETE
+        // refusé par la RLS ne lève pas d'erreur non plus (ligne simplement
+        // filtrée) ; retenter en boucle n'aiderait pas — cf. étape 7 pour
+        // distinguer proprement ce cas une fois le partage réel en place.
+        registreSuppression[type].delete(id);
+        snapshot[type].delete(id);
+      }
+    } catch (e) {
+      erreurs.push(`${table} #${id} (suppression) : ${e.message || "erreur réseau."}`);
     }
   }));
 }
@@ -205,8 +225,13 @@ async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs
   }
   if (!aEcrire.length) return;
   await Promise.all(aEcrire.map(async ({ cle, valeur, fp }) => {
-    const { error } = await s.from(table).upsert(construireLigne(cle, valeur));
-    if (error) erreurs.push(`${table} « ${cle} » : ${error.message}`);
-    else snap.set(cle, fp);
+    try {
+      const { data, error } = await s.from(table).upsert(construireLigne(cle, valeur)).select();
+      if (error) erreurs.push(`${table} « ${cle} » : ${error.message}`);
+      else if (!data?.length) erreurs.push(`${table} « ${cle} » : modification refusée (droits insuffisants ?).`);
+      else snap.set(cle, fp);
+    } catch (e) {
+      erreurs.push(`${table} « ${cle} » : ${e.message || "erreur réseau."}`);
+    }
   }));
 }

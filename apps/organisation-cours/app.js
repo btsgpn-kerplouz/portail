@@ -428,19 +428,30 @@ async function saveData(message = 'Enregistré', { rerender = true } = {}) {
   state.version = '4.2.0';
   const resultat = await window.OC_SYNC.enregistrer(state);
   state.lastSavedAt = resultat.lastSavedAt;
-  setSaveStatus(resultat.erreurs?.length ? resultat.erreurs[0] : message);
+  // Étape 4 — indicateur persistant : un échec (réseau coupé, droits refusés…)
+  // ne doit pas s'effacer après 2,4s comme un message de succès normal, sinon
+  // il passe inaperçu. window.OC_SYNC réessaiera de lui-même au prochain
+  // enregistrer() (le snapshot n'avance que sur écriture réussie) ; ce
+  // bandeau reste visible jusqu'à ce qu'un enregistrement reparte sans erreur.
+  if (resultat.erreurs?.length) {
+    const suffixe = resultat.erreurs.length > 1 ? ` (+${resultat.erreurs.length - 1} autre(s))` : '';
+    setSaveStatus(`⚠ Non enregistré : ${resultat.erreurs[0]}${suffixe}`, { persistant: true });
+  } else {
+    setSaveStatus(message);
+  }
 }
 
 let saveToastTimer = null;
-function setSaveStatus(text) {
+function setSaveStatus(text, { persistant = false } = {}) {
   const el = $('#saveStatus');
   if (!el) return;
   // N5 — toast discret : l'heure suffit (le message est transitoire).
   const suffix = state?.lastSavedAt ? ` · ${new Date(state.lastSavedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : '';
   el.textContent = text + suffix;
   el.classList.add('is-visible');
+  el.classList.toggle('is-error', persistant);
   clearTimeout(saveToastTimer);
-  saveToastTimer = setTimeout(() => el.classList.remove('is-visible'), 2400);
+  if (!persistant) saveToastTimer = setTimeout(() => el.classList.remove('is-visible'), 2400);
 }
 
 /* ===== Export / import des données (sauvegarde manuelle, transfert entre postes) ===== */
@@ -813,8 +824,19 @@ async function importDataFromFile(file) {
     window.alert('Ce fichier ne ressemble pas à un export du portail (UE, séquences ou séances introuvables).');
     return;
   }
-  const counts = `${(parsed.ues || []).length} UE, ${(parsed.sequences || []).length} séquences, ${(parsed.sessions || []).length} séances`;
-  if (!window.confirm(`Importer ces données (${counts}) ?\n\nCela REMPLACERA toutes les données actuellement enregistrées dans le portail. Pensez à exporter d’abord si besoin.`)) return;
+  // Étape 4 — garde-fou renforcé : depuis le passage à Supabase (js/sync.js),
+  // un import ne remplace plus un simple fichier local mais LA base partagée,
+  // visible de tous les enseignants actifs. Afficher les deux comptages
+  // (en ligne vs fichier importé) aide à repérer un fichier périmé avant
+  // de valider, plutôt qu'après coup.
+  const compter = (d) => `${(d?.ues || []).length} UE, ${(d?.sequences || []).length} séquences, ${(d?.sessions || []).length} séances`;
+  const actuel = compter(state);
+  const importe = compter(parsed);
+  if (!window.confirm(
+    `Importer ce fichier (${importe}) ?\n\n` +
+    `Actuellement enregistré EN LIGNE (Supabase, partagé) : ${actuel}.\n\n` +
+    `Cela REMPLACERA les données en ligne — visibles de tous les enseignants actifs, pas seulement sur cet ordinateur. Exportez d’abord une sauvegarde si vous n’êtes pas sûr·e du fichier.`
+  )) return;
   state = normalizeData(parsed);
   if (!state.weeks.length) bootstrapWeeks();
   selectedWeek = state.weeks.find(w => w.id === selectedWeek)?.id || state.weeks[0]?.id || selectedWeek;

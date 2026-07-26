@@ -298,6 +298,9 @@ input::placeholder, textarea::placeholder { color: #9aa494; }
   transition: opacity .25s ease, transform .25s ease;
 }
 .save-toast.is-visible { opacity: 1; transform: translateY(0); }
+/* Étape 4 — persiste (pas de fondu automatique) tant qu'un enregistrement
+   n'est pas reparti sans erreur : sinon un échec réseau passerait inaperçu. */
+.save-toast.is-error { background: var(--danger); color: #fff; }
 
 main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1640px; margin: 0 auto; }
 .view { display: none; }
