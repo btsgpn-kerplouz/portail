@@ -29,11 +29,15 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
    au lieu de les détruire.
 5. `004-durcissement-enseignants.sql` — restreint la lecture du
    trombinoscope : un compte inactif ne voit plus que sa propre ligne.
-6. `seed-weeks.sql` — peuple `oc_weeks` avec les 40 semaines ISO de l'année
+6. `005-fix-recursion-is-active-teacher.sql` — **indispensable juste après
+   `004`** : sans lui, toute lecture déclenche une récursion infinie
+   ("stack depth limit exceeded") — `004` fait que la policy de
+   `oc_enseignants` appelle une fonction qui relit `oc_enseignants`.
+7. `seed-weeks.sql` — peuple `oc_weeks` avec les 40 semaines ISO de l'année
    2026-2027, générées par le même algorithme que le front
    (`buildAcademicWeeks()` dans `app.js`) pour que les ids concordent au
    caractère près.
-7. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+8. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
    dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth
