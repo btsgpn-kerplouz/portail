@@ -2085,3 +2085,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .auth-card .hint { color: var(--muted); font-size: .88rem; }
 .auth-card .erreur { color: var(--danger); font-size: .88rem; margin-top: var(--sp-2); }
 .auth-card label { display: block; margin: var(--sp-3) 0; font-weight: 600; font-size: .92rem; }
+.auth-card .lien {
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .85em;
+  padding: 0 var(--sp-1);
+}
+.auth-card .lien:hover { color: var(--ink); }

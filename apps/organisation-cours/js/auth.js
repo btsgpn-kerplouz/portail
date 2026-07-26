@@ -149,12 +149,36 @@ function brancherDeconnexion() {
   });
 }
 
+async function modifierInitiales(nouvellesInitiales) {
+  const initiales = nouvellesInitiales.trim().toUpperCase();
+  if (!initiales) throw new Error("Les initiales ne peuvent pas être vides.");
+  const { data, error } = await sb
+    .from("oc_enseignants")
+    .update({ initiales })
+    .eq("user_id", utilisateurCourant.user.id)
+    .select("user_id, actif, nom, prenom, initiales")
+    .single();
+  if (error) throw error;
+  utilisateurCourant.profil = data;
+  return data;
+}
+
 function afficherEtatActif(profil) {
   elCarte.innerHTML = `
     <h2>Connecté</h2>
-    <p>Bonjour <strong>${profil.prenom} ${profil.nom}</strong> (${profil.initiales}).</p>
+    <p>Bonjour <strong>${profil.prenom} ${profil.nom}</strong>
+      (<span id="initiales-affichees">${profil.initiales}</span>
+      <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>).</p>
     <button id="btn-deconnexion" class="secondary">Se déconnecter</button>
   `;
+  document.getElementById("btn-modifier-initiales").addEventListener("click", () => {
+    const actuelles = utilisateurCourant.profil.initiales;
+    const saisie = window.prompt("Initiales affichées dans les pastilles (2-4 lettres) :", actuelles);
+    if (saisie == null || saisie.trim() === actuelles) return;
+    modifierInitiales(saisie)
+      .then((p) => afficherEtatActif(p))
+      .catch((e) => window.alert(e.message || "Échec de la modification des initiales."));
+  });
   brancherDeconnexion();
   elAppShell.hidden = false;
   window.OC_APP.demarrer();

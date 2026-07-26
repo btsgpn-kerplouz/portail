@@ -1,8 +1,10 @@
-# Supabase — organisation-cours (étape 1 : schéma + RLS)
+# Supabase — organisation-cours (étapes 1 et 2 : schéma + RLS + blobs)
 
-Cœur pédagogique uniquement (enseignants, calendrier, UE, séquences, séances +
-partage). Frais kilométriques, réunions, trames et notes libres sont reportés
-à une étape ultérieure — voir `../AUDIT-RGPD.md`.
+Cœur pédagogique en tables relationnelles (enseignants, calendrier, UE,
+séquences, séances + partage) ; frais kilométriques, réunions, trames et
+notes libres en blobs jsonb (`002-blobs.sql`) — ce sont les modules les plus
+nominatifs identifiés par l'audit RGPD, désormais strictement personnels
+(`oc_blocs_perso`) plutôt qu'écartés.
 
 ## Projet Supabase ciblé
 
@@ -20,7 +22,18 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
 1. `schema.sql` — crée les tables `oc_*`.
 2. `policies.sql` — active la RLS, crée les policies et la fonction
    `oc_is_active_teacher()`.
-3. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+3. `002-blobs.sql` — tables `oc_blocs_perso` / `oc_blocs_partages` (notes,
+   frais, réunions, trames, ruban...).
+4. `003-fk-detacher.sql` — corrige `oc_sequences.ue_id` (`on delete cascade`
+   → `on delete set null`), pour que supprimer une UE détache ses séquences
+   au lieu de les détruire.
+5. `004-durcissement-enseignants.sql` — restreint la lecture du
+   trombinoscope : un compte inactif ne voit plus que sa propre ligne.
+6. `seed-weeks.sql` — peuple `oc_weeks` avec les 40 semaines ISO de l'année
+   2026-2027, générées par le même algorithme que le front
+   (`buildAcademicWeeks()` dans `app.js`) pour que les ids concordent au
+   caractère près.
+7. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
    dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth
