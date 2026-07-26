@@ -19,7 +19,7 @@ import { getClient, estConfigure } from "./supabase-client.js";
 const DOMAINE_EMAIL = "@organisation-cours.local";
 
 const elCarte = document.getElementById("auth-card");
-const elPlaceholder = document.getElementById("app-placeholder");
+const elAppShell = document.getElementById("app-shell");
 
 let sb = null;
 let utilisateurCourant = null; // { user, profil } | null
@@ -143,7 +143,8 @@ function brancherDeconnexion() {
   document.getElementById("btn-deconnexion").addEventListener("click", async () => {
     await sb.auth.signOut();
     utilisateurCourant = null;
-    elPlaceholder.hidden = true;
+    elAppShell.hidden = true;
+    window.OC_APP?.arreter();
     afficherFormulaire();
   });
 }
@@ -155,7 +156,8 @@ function afficherEtatActif(profil) {
     <button id="btn-deconnexion" class="secondary">Se déconnecter</button>
   `;
   brancherDeconnexion();
-  elPlaceholder.hidden = false;
+  elAppShell.hidden = false;
+  window.OC_APP.demarrer();
 }
 
 function afficherEtatEnAttente(profil) {
@@ -166,7 +168,7 @@ function afficherEtatEnAttente(profil) {
     <button id="btn-deconnexion" class="secondary">Se déconnecter</button>
   `;
   brancherDeconnexion();
-  elPlaceholder.hidden = true;
+  elAppShell.hidden = true;
 }
 
 function afficherEtat() {
@@ -200,7 +202,8 @@ async function init() {
   sb.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
       utilisateurCourant = null;
-      elPlaceholder.hidden = true;
+      elAppShell.hidden = true;
+      window.OC_APP?.arreter();
       afficherEtat();
     }
   });

@@ -1,0 +1,2087 @@
+/* =====================================================================
+   PORTAIL PLANNING BTS GPN — V1.6
+   Système de design « carnet de terrain » : sobre, lisible, dense mais
+   respirable. Une seule source de vérité (pas de surcouches par version).
+   ===================================================================== */
+
+/* ---------- 1. Design tokens ---------- */
+:root {
+  /* Couleurs neutres */
+  --ink: #202b22;
+  --ink-soft: #4d5a4c;
+  --muted: #6b7569;
+  --paper: #eef1e8;
+  --surface: #ffffff;
+  --surface-alt: #f6f7f1;
+  --line: #dde2d3;
+  --line-strong: #c4cbb6;
+
+  /* Couleurs de marque */
+  --moss: #3e6b52;
+  --moss-dark: #2a4d3a;
+  --moss-soft: #e3ede4;
+  --moss-line: #bcd2c1;
+
+  /* Accents fonctionnels */
+  --clay: #b8602f;
+  --clay-soft: #f4e2d3;
+  --water: #2c7a93;
+  --water-soft: #dcedf1;
+  --amber: #b1842a;
+  --amber-soft: #f4ead0;
+  --plum: #6e4f82;
+  --plum-soft: #ece4f0;
+  --danger: #a8392b;
+  --danger-soft: #f5ded9;
+  --success: #3e6b52;
+  --success-soft: #e3ede4;
+
+  /* Typographie */
+  --font-display: "Iowan Old Style", "Sitka Text", Georgia, "Source Serif Pro", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  /* Échelle d'espacement (base 4px) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+
+  /* Rayons & ombres */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(32, 43, 34, .07);
+  --shadow-md: 0 6px 20px rgba(32, 43, 34, .10);
+  --shadow-lg: 0 16px 40px rgba(32, 43, 34, .16);
+
+  /* Couleurs de groupe (promotions) */
+  --gpn1: var(--clay);
+  --gpn1-soft: var(--clay-soft);
+  --gpn2: var(--water);
+  --gpn2-soft: var(--water-soft);
+}
+
+/* ---------- 2. Reset & base ---------- */
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5 { margin: 0; font-weight: 600; color: var(--ink); }
+h2 { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: -0.01em; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+h4 { font-size: .95rem; font-weight: 700; }
+p { margin: 0 0 .5em; }
+a { color: var(--moss-dark); }
+::selection { background: var(--moss-soft); }
+
+:focus-visible {
+  outline: 2.5px solid var(--water);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Barre de défilement discrète (Webkit) */
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 3. Utilitaires fonctionnels (ne pas styler visuellement) ---------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important;
+  overflow: hidden !important; clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important; border: 0 !important;
+}
+.hidden-control,
+.redundant-title,
+.redundant-toolbar,
+.session-prediction-hidden,
+.session-field-hidden {
+  display: none !important;
+}
+
+/* ---------- 4. Boutons ---------- */
+button, .button {
+  font: inherit;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  padding: .6rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .9rem;
+  background: var(--moss);
+  color: #fff;
+  transition: background .12s ease, border-color .12s ease, transform .05s ease;
+  line-height: 1.2;
+}
+button:hover { background: var(--moss-dark); }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+button.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+button.secondary:hover { background: var(--surface-alt); border-color: var(--moss-line); }
+
+button.danger { background: var(--surface); color: var(--danger); border-color: #e0bcb3; }
+button.danger:hover { background: var(--danger-soft); }
+
+button.small { padding: .35rem .6rem; font-size: .78rem; border-radius: var(--r-sm); }
+button.icon-button {
+  background: transparent; color: var(--muted); border: 0;
+  font-size: 1.5rem; line-height: 1; padding: .1rem .5rem; font-weight: 400;
+}
+button.icon-button:hover { background: var(--surface-alt); color: var(--ink); border-radius: var(--r-sm); }
+
+/* ---------- 5. Champs de formulaire ---------- */
+label {
+  display: flex; flex-direction: column; gap: .3rem;
+  font-weight: 600; font-size: .82rem; color: var(--ink-soft);
+}
+input, select, textarea {
+  width: 100%;
+  font: inherit; font-size: .9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: .55rem .65rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+input:focus, select:focus, textarea:focus { border-color: var(--water); }
+textarea { resize: vertical; min-height: 5.5em; line-height: 1.4; }
+input::placeholder, textarea::placeholder { color: #9aa494; }
+
+/* ---------- 6. Coquille / layout ---------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: .85rem var(--sp-6);
+  background: var(--moss-dark);
+  color: #f1f5ef;
+  /* N6 — bandeau titre fixe : reste visible pendant le défilement de la page. */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+.app-header > div:first-child { flex: 0 0 auto; }
+.eyebrow {
+  margin: 0 0 .15rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #aecbb6;
+}
+.app-header h1 {
+  font-family: var(--font-display);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.app-subtitle {
+  margin: .15rem 0 0;
+  font-size: .82rem;
+  font-weight: 500;
+  color: #c7dccb;
+  letter-spacing: .01em;
+}
+.version-badge {
+  margin-left: .55rem;
+  padding: .12rem .5rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  color: #d9ecdf;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  vertical-align: middle;
+}
+.header-tabs {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem var(--sp-1);
+  justify-content: center;
+}
+.tab {
+  background: transparent;
+  border: 0;
+  color: #cfe0d4;
+  padding: .5rem .7rem;
+  border-radius: var(--r-sm);
+  font-size: .85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  position: relative;
+}
+.tab:hover { background: rgba(255,255,255,.08); color: #fff; }
+.tab.active { background: rgba(255,255,255,.12); color: #fff; }
+.tab.active::after {
+  content: "";
+  position: absolute; left: .7rem; right: .7rem; bottom: .28rem;
+  height: 2px; background: #fff; border-radius: 1px;
+}
+/* N4 — actions « données » (export/import) discrètes, dans le Tableau de bord. */
+.data-actions { flex: 0 0 auto; display: flex; align-items: center; gap: .35rem; }
+.data-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: .3rem .55rem;
+  border-radius: var(--r-sm);
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.data-btn:hover { color: var(--ink); border-color: var(--line-strong); background: var(--surface-alt); }
+
+/* N5 — message d'enregistrement : toast discret et transitoire (coin bas-droit),
+   au lieu d'un texte permanent dans le bandeau titre. */
+.save-toast {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: 200;
+  max-width: min(70vw, 24rem);
+  padding: .5rem .8rem;
+  border-radius: var(--r-md);
+  background: var(--moss-dark);
+  color: #eef5ee;
+  font-size: .8rem;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0,0,0,.22);
+  opacity: 0;
+  transform: translateY(.4rem);
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.save-toast.is-visible { opacity: 1; transform: translateY(0); }
+
+main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1640px; margin: 0 auto; }
+.view { display: none; }
+.active-view { display: block; }
+
+.page-title { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-4); flex-wrap: wrap; }
+.page-title h2 { margin-bottom: .2rem; }
+.page-title p { margin: 0; color: var(--muted); font-size: .88rem; max-width: 70ch; }
+.toolbar { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+
+/* ---------- 7. Panels génériques ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+.panel h3 { margin-bottom: .15rem; }
+.panel-heading-inline { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+.panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--sp-4); }
+/* Tableau de bord — grille 2 colonnes UNIQUE pour tous les encarts du bas
+   (À faire, Bugs, Séances à placer, Vacances/examens, Frais) : chaque encart
+   occupe une demi-page et l'espacement entre encarts est harmonisé par un gap
+   unique (horizontal ET vertical). align-items:start évite qu'un panneau
+   déplié n'étire son voisin. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+.dashboard-grid > .todo-panel { margin-bottom: 0; }
+@media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+/* Panneau repliable (dashboard) : en-tête cliquable avec chevron, corps masqué quand fermé. */
+.panel-collapsible { padding: 0; }
+.panel-collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-4); border-radius: inherit; }
+.panel-collapsible > summary::-webkit-details-marker { display: none; }
+.panel-collapsible > summary::before { content: '▸'; color: var(--muted); font-size: .8rem; transition: transform .15s ease; }
+.panel-collapsible[open] > summary::before { transform: rotate(90deg); }
+.panel-collapsible > summary h3 { margin: 0; }
+.panel-collapsible > summary .panel-heading-inline { flex: 1; margin: 0; }
+.panel-collapsible > *:not(summary) { padding: 0 var(--sp-4) var(--sp-4); }
+.filters-panel { margin-bottom: var(--sp-4); }
+.filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
+.compact-filter-panel { padding: var(--sp-3) var(--sp-4); }
+.field-block { display: flex; flex-direction: column; gap: .35rem; }
+.field-label { font-size: .8rem; font-weight: 600; color: var(--ink-soft); }
+.field-wide { grid-column: span 2; }
+.inline-field { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.inline-field input { flex: 1; min-width: 220px; }
+.inline-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.spacer { flex: 1; }
+.meta, .muted { color: var(--muted); font-size: .85rem; }
+.tight { margin-top: .2rem; }
+
+/* Listes simples (tableau de bord) */
+.list, .backlog-list { display: flex; flex-direction: column; gap: .55rem; }
+.list-item {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: .6rem .75rem;
+  background: var(--surface-alt);
+  cursor: pointer;
+}
+.list-item:hover { border-color: var(--moss-line); background: var(--moss-soft); }
+.constraint-list-item strong { font-size: .92rem; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
+
+/* Notes libres « À faire » sur le tableau de bord */
+.todo-panel { margin-bottom: var(--sp-4); }
+.todo-actions { display: flex; align-items: center; gap: var(--sp-2); }
+.todo-status { font-size: .76rem; }
+.todo-status.has-todo { color: var(--clay); font-weight: 600; }
+.todo-notes {
+  width: 100%; min-height: 96px; resize: vertical; margin-top: var(--sp-2);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--surface-alt); padding: .6rem .7rem;
+  font: inherit; font-size: .9rem; line-height: 1.5; color: var(--ink);
+}
+.todo-notes:focus { outline: 2px solid var(--moss-soft); border-color: var(--moss-line); background: var(--surface); }
+.todo-alert {
+  display: flex; align-items: center; gap: .5rem;
+  background: var(--amber-soft, #fdf3df); border: 1px solid var(--amber, #e0b24d);
+  color: var(--ink); border-radius: var(--r-md); padding: .5rem .75rem;
+  margin-bottom: var(--sp-3); font-size: .86rem; cursor: pointer;
+}
+.todo-alert[hidden] { display: none; }
+.todo-alert-ico { font-size: 1rem; }
+.todo-alert-text { flex: 1; }
+.todo-alert-close {
+  border: 0; background: transparent; color: var(--muted); font-size: 1.2rem; line-height: 1;
+  cursor: pointer; padding: 0 .25rem; border-radius: var(--r-sm);
+}
+.todo-alert-close:hover { color: var(--ink); background: rgba(0,0,0,.06); }
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+.kpi-card strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--moss-dark);
+  line-height: 1.1;
+  margin-bottom: .15rem;
+}
+.kpi-card span { color: var(--muted); font-size: .82rem; font-weight: 600; }
+
+/* ---------- 8. Code badges (signature graphique) ---------- */
+/* Utilisés pour tout repère structuré : codes UE, capacités, semaines, durées. */
+.code-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  padding: .1rem .42rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-alt);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------- 9. Responsive de base ---------- */
+@media (max-width: 900px) {
+  .app-header { flex-wrap: wrap; }
+  .header-tabs { order: 3; justify-content: flex-start; width: 100%; }
+  .page-title { flex-direction: column; }
+  .field-wide { grid-column: auto; }
+}
+
+/* ---------- 10. Impression ---------- */
+@media print {
+  body { background: #fff; }
+  .app-header, .tabs, .header-tabs, .header-actions, .toolbar,
+  .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title { display: none !important; }
+  main { max-width: none; padding: .4rem; }
+  .view { display: block; }
+  .panel, .kpi-card { box-shadow: none; }
+}
+
+/* =====================================================================
+   MODALES & FORMULAIRES
+   ===================================================================== */
+.modal {
+  width: min(900px, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  border: 0;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+}
+.modal.large-modal { width: min(1080px, calc(100vw - 2rem)); }
+.modal::backdrop { background: rgba(32, 43, 34, .45); }
+.modal form { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); max-height: calc(100vh - 3rem); overflow: auto; }
+
+.modal-header, .modal-footer {
+  display: flex; align-items: center; gap: var(--sp-3);
+  position: sticky; background: var(--surface); z-index: 1;
+}
+.modal-header {
+  justify-content: space-between;
+  top: 0;
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.modal-header h3 { font-family: var(--font-display); font-size: 1.15rem; }
+.modal-footer {
+  bottom: 0;
+  margin: var(--sp-3) calc(var(--sp-4) * -1) calc(var(--sp-4) * -1);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.form-section {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+  margin: var(--sp-2) 0;
+  background: var(--surface-alt);
+}
+.form-section legend {
+  padding: 0 .4rem;
+  font-weight: 700;
+  font-size: .8rem;
+  letter-spacing: .02em;
+  color: var(--moss-dark);
+}
+.form-section h4 { margin-bottom: .45rem; }
+.readonly-section { background: var(--moss-soft); border-color: var(--moss-line); }
+.form-help { margin: .35rem 0 .55rem; color: var(--muted); font-size: .8rem; }
+.form-help.tight { margin-top: .25rem; margin-bottom: 0; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.form-grid.compact-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.two-column-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.sequence-period-field { grid-column: 1 / -1; }
+.period-grid { display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-2); }
+
+.placement-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-3); }
+.placement-subpanel {
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+}
+.placement-subpanel h4 { margin-bottom: var(--sp-2); font-size: .85rem; }
+
+.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: .5rem; margin-bottom: .6rem; }
+.checkbox-item {
+  display: grid; grid-template-columns: auto 1fr; align-items: start; gap: .55rem;
+  padding: .55rem .6rem; border: 1px solid var(--line); background: var(--surface);
+  border-radius: var(--r-sm); font-size: .85rem;
+}
+.checkbox-item input { width: auto; margin-top: .2rem; }
+.checkbox-item strong { color: var(--moss-dark); font-family: var(--font-mono); font-size: .82rem; }
+.checkbox-item span { color: var(--ink-soft); }
+
+.checkbox-row { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+.checkbox-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  padding: .3rem .6rem; background: var(--surface); font-size: .8rem; font-weight: 600;
+}
+.checkbox-chip input { width: 13px; height: 13px; }
+.scrollable-choice-row { max-height: none; overflow: visible; }
+.compact-ue-picker .ue-choice { padding: .2rem .5rem; }
+.ue-choice { border-color: color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong)); }
+.ue-choice span { font-family: var(--font-mono); font-size: .76rem; }
+
+.capacity-list { display: flex; flex-direction: column; gap: .4rem; }
+.capacity-item {
+  display: grid; grid-template-columns: auto 1fr; gap: .55rem; align-items: start;
+  padding: .45rem .6rem; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+}
+.capacity-code { font-family: var(--font-mono); font-weight: 700; font-size: .78rem; color: var(--moss-dark); }
+.capacity-title { color: var(--ink-soft); font-size: .85rem; }
+.capacity-pills { display: flex; flex-wrap: wrap; gap: .3rem; margin: .3rem 0; }
+.capacity-pill {
+  font-family: var(--font-mono); font-size: .74rem; font-weight: 600;
+  padding: .12rem .45rem; border-radius: var(--r-sm);
+  background: var(--moss-soft); color: var(--moss-dark); border: 1px solid var(--moss-line);
+  cursor: pointer;
+}
+.ue-capacity-block { margin-top: .5rem; padding-top: .5rem; border-top: 1px dashed var(--line-strong); }
+
+@media (max-width: 760px) {
+  .checkbox-grid, .period-grid, .two-column-form { grid-template-columns: 1fr; }
+}
+
+/* =====================================================================
+   CARTES ENTITÉ — UE / Séquence / Séance (arborescence pédagogique)
+   Règle commune : le bandeau (summary) montre l'identité + un seul
+   indicateur de statut. Tout le reste vit dans le corps déplié.
+   ===================================================================== */
+.entity-card { position: relative; }
+.collapsible-entity,
+.entity-card {
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  margin: 0 0 var(--sp-2);
+  overflow: hidden;
+}
+.entity-card > summary,
+.promo-group > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .75rem;
+  border-left: 4px solid var(--ue-color, var(--moss));
+}
+.entity-card > summary::-webkit-details-marker,
+.promo-group > summary::-webkit-details-marker { display: none; }
+.entity-card > summary:hover { background: var(--ue-soft, var(--surface-alt)); }
+
+.entity-chevron {
+  flex: 0 0 auto;
+  width: 1em;
+  color: var(--ue-color, var(--moss));
+  font-size: .72rem;
+  transition: transform .12s ease;
+}
+.entity-card[open] > summary .entity-chevron { transform: rotate(90deg); }
+
+.entity-level-label {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: .01em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--ue-color, var(--moss)) 75%, var(--ink-soft));
+  white-space: nowrap;
+}
+.entity-code {
+  flex: 0 0 auto;
+  color: var(--ue-color, var(--moss-dark));
+  border-color: color-mix(in srgb, var(--ue-color, var(--moss)) 40%, var(--line-strong));
+}
+.entity-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: .98rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entity-ue > summary .entity-title { font-size: 1.02rem; }
+.entity-sequence > summary .entity-title { font-size: .92rem; }
+.entity-tag { flex: 0 0 auto; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.entity-count {
+  flex: 0 0 auto;
+  font-size: .76rem;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.entity-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); border-top: 1px solid var(--line); }
+.entity-description { margin: .4rem 0; font-size: .87rem; color: var(--ink-soft); line-height: 1.45; }
+.entity-description strong { color: var(--ink); }
+
+/* Grille d'information : étiquette + valeur, n'affiche que les champs renseignés.
+   auto-fit + 1fr : les colonnes se répartissent toute la largeur disponible au
+   lieu de laisser un grand vide à droite quand il y a peu de champs. */
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .3rem .9rem; margin-bottom: .35rem; }
+.info-row { display: flex; align-items: baseline; gap: .35rem; font-size: .82rem; min-width: 0; }
+.info-row span { color: var(--muted); font-weight: 600; flex: 0 0 auto; }
+.info-row strong { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.info-row-plain strong { color: var(--ink-soft); font-weight: 600; }
+
+.keyword-row { display: flex; flex-wrap: wrap; gap: .3rem; margin: .35rem 0; }
+.keyword-chip {
+  display: inline-flex; align-items: center;
+  font-size: .72rem; font-weight: 600;
+  padding: .12rem .5rem; border-radius: 999px;
+  background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Pastilles de statut */
+.status-pill {
+  flex: 0 0 auto;
+  font-size: .72rem; font-weight: 700;
+  padding: .12rem .55rem; border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.status-prevue, .status-a-placer { background: var(--amber-soft); color: #7a5b16; }
+.status-en-construction, .status-a-arbitrer, .status-a-confirmer { background: var(--plum-soft); color: var(--plum); }
+.status-en-cours { background: var(--water-soft); color: var(--water); }
+.status-terminee, .status-definitif-edt, .status-realisee { background: var(--moss-soft); color: var(--moss-dark); }
+.status-reportee { background: var(--amber-soft); color: #7a5b16; }
+.status-annulee { background: var(--danger-soft); color: var(--danger); }
+
+.card-actions {
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin: .6rem 0 0; padding-top: .55rem;
+  border-top: 1px dashed var(--line-strong);
+}
+.card-actions .spacer-grow { flex: 1; }
+.action-separator { width: 1px; align-self: stretch; background: var(--line-strong); margin: 0 .2rem; }
+
+.nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
+.nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
+
+/* Séquence : un ton plus discret que l'UE, toujours rattachée visuellement */
+.entity-sequence { margin-left: var(--sp-3); border-style: solid; }
+.entity-sequence > summary { border-left-width: 3px; padding: .5rem .7rem; }
+
+/* Séance : volontairement une ligne plate (.row-item.session-row, voir plus
+   bas), pas une carte — pour qu'on ne confonde pas ce niveau avec UE/séquence. */
+
+.promo-group {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-alt);
+  margin-bottom: var(--sp-3);
+  overflow: hidden;
+}
+.promo-group > summary {
+  padding: .65rem var(--sp-4);
+  border-left: 0;
+  font-weight: 700;
+}
+.promo-group > summary span:first-child { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: .5rem; }
+.promo-group > summary strong { font-size: 1rem; color: var(--ink); }
+.promo-group > summary em { margin-left: auto; font-style: normal; color: var(--muted); font-size: .8rem; }
+.ue-tree { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+@media (max-width: 760px) {
+  .entity-card > summary { flex-wrap: wrap; }
+  .entity-tag, .entity-count { margin-left: 1.6rem; }
+}
+
+/* =====================================================================
+   TYPES DE SÉANCE — palette partagée (grille semaine, frise, dépôt)
+   ===================================================================== */
+.type-tp        { --type-bg: #dcedf1; --type-fg: #1f5e72; }
+.type-terrain   { --type-bg: #e3ede4; --type-fg: #2a4d3a; }
+.type-pluri     { --type-bg: #ece4f0; --type-fg: #5b3d70; }
+.type-autonomie { --type-bg: #eceee7; --type-fg: #5b6657; }
+.type-projet    { --type-bg: #dde4f3; --type-fg: #34518c; }
+.type-theme     { --type-bg: #f4ead0; --type-fg: #7a5b16; }
+.type-eval      { --type-bg: #f5ded9; --type-fg: #8a2f22; }
+
+/* =====================================================================
+   TABLEAU DE BORD — listes compactes (séances à placer, contraintes)
+   ===================================================================== */
+.row-item {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: .5rem .65rem;
+  background: var(--surface-alt);
+  cursor: pointer;
+}
+.row-item:hover { border-color: var(--moss-line); background: var(--moss-soft); }
+.row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+
+/* Ligne meta inline (encarts UE/séquence dépliés) : valeurs séparées par un
+   point médian, sans étiquette de catégorie. */
+.meta-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .15rem; margin: .1rem 0 .45rem; }
+.meta-item { font-size: .84rem; color: var(--ink-soft); font-weight: 600; }
+.meta-item + .meta-item::before { content: "·"; margin: 0 .4rem 0 .25rem; color: var(--line-strong); font-weight: 400; }
+.entity-keywords { color: var(--ink-soft); }
+
+/* Grille de fiches « séance » dans une séquence dépliée : petits rectangles
+   verticaux qui évoquent des feuilles, numérotés. */
+.session-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.session-card {
+  display: flex; flex-direction: column; gap: .3rem;
+  border: 1px solid var(--line-strong);
+  border-top: 4px solid var(--ue-color, var(--moss));
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  padding: .5rem .6rem .55rem;
+  box-shadow: var(--shadow-sm);
+  min-height: 132px;
+}
+.session-card-head { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+.session-card-number {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ue-color, var(--moss)); color: #fff;
+  font-family: var(--font-mono); font-size: .76rem; font-weight: 700;
+}
+.session-card-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; line-height: 1.2; color: var(--ink); }
+.session-card-type {
+  align-self: flex-start;
+  font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: .08rem .4rem; border-radius: var(--r-sm);
+  background: var(--type-bg, var(--surface-alt)); color: var(--type-fg, var(--ink-soft));
+}
+.session-card-meta { margin: 0; font-size: .76rem; color: var(--ink-soft); }
+.session-card-keywords { margin: 0; font-size: .72rem; color: var(--muted); line-height: 1.25; }
+.session-card-foot { margin-top: auto; padding-top: .35rem; }
+.session-card-foot button { width: 100%; }
+.row-title {
+  font-weight: 650; font-size: .87rem; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row-meta {
+  font-size: .76rem; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* =====================================================================
+   CONCEPTION PÉDAGOGIQUE — réserve de séances (planning semaine)
+   ===================================================================== */
+.backlog-heading { display: flex; justify-content: space-between; gap: var(--sp-3); align-items: flex-start; margin-bottom: var(--sp-3); flex-wrap: wrap; }
+.backlog-controls { display: flex; gap: .6rem; flex-wrap: wrap; }
+.backlog-controls label { min-width: 160px; }
+.backlog-count { font-size: .78rem; color: var(--muted); font-weight: 600; padding: 0 0 .4rem; }
+.backlog-ue-group, .backlog-seq-group {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+  margin-bottom: .5rem;
+  overflow: hidden;
+}
+.backlog-ue-group > summary, .backlog-seq-group > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .65rem; font-weight: 650; font-size: .85rem;
+}
+.backlog-ue-group > summary::-webkit-details-marker,
+.backlog-seq-group > summary::-webkit-details-marker { display: none; }
+.backlog-seq-group > summary { font-weight: 600; font-size: .82rem; color: var(--ink-soft); background: var(--surface); }
+.backlog-ue-group > summary span, .backlog-seq-group > summary span {
+  margin-left: auto; color: var(--muted); font-size: .76rem; font-weight: 600;
+}
+.backlog-item {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem .65rem .4rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.backlog-item:hover { background: var(--moss-soft); }
+.backlog-item .row-item { flex: 1; border: 0; background: transparent; padding: .15rem 0; cursor: grab; }
+.backlog-item .row-item:hover { background: transparent; }
+.draggable-backlog:active { cursor: grabbing; }
+.draggable-backlog.is-dragging { opacity: .5; }
+
+/* =====================================================================
+   CONTRAINTES (vacances, examens, sorties…)
+   ===================================================================== */
+.constraint-pill {
+  display: inline-flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--plum);
+  border-radius: var(--r-sm);
+  background: var(--plum-soft);
+  color: #432a55;
+  padding: .25rem .5rem;
+  font-size: .74rem;
+  cursor: pointer;
+  text-align: left;
+  margin: .1rem .15rem .1rem 0;
+}
+.constraint-pill strong { font-size: .78rem; }
+.constraint-pill span { opacity: .8; }
+.constraint-vacances { border-left-color: var(--muted); background: var(--surface-alt); color: var(--ink-soft); }
+.constraint-stage { border-left-color: var(--water); background: var(--water-soft); color: #154a5c; }
+.constraint-examen-ccf, .constraint-evaluation { border-left-color: var(--clay); background: var(--clay-soft); color: #6b3013; }
+.constraint-semaine-thematique { border-left-color: var(--plum); background: var(--plum-soft); color: #432a55; }
+.constraint-sortie-terrain { border-left-color: var(--moss); background: var(--moss-soft); color: var(--moss-dark); }
+.constraint-jour-ferie, .constraint-absence { border-left-color: var(--amber); background: var(--amber-soft); color: #6b4f12; }
+.constraint-evenement-etablissement { border-left-color: var(--water); background: var(--water-soft); color: #154a5c; }
+
+/* =====================================================================
+   DIAGRAMME SEMESTRE — frise hebdomadaire par UE
+   TOUTE la frise est une seule grille CSS (.timeline-grid). Les bandeaux
+   mois / semaines / séquences / jours sont des cellules de cette même grille,
+   donc les colonnes de semaines restent parfaitement alignées sur toutes les
+   lignes, à n'importe quelle largeur de fenêtre. La colonne d'étiquettes (à
+   gauche) est "sticky" pour rester visible au défilement horizontal.
+   ===================================================================== */
+.timeline-panel { margin-top: var(--sp-3); }
+.timeline-heading { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.semester-timeline { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
+.timeline-card {
+  --timeline-label-col: 54px;
+  --timeline-week-min: 60px;
+  --timeline-row-min: 30px;
+  border: 1px solid color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong));
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.timeline-title {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  padding: .55rem .8rem;
+  border-bottom: 1px solid var(--line);
+  border-left: 6px solid var(--ue-color, var(--moss));
+  background: var(--ue-soft, var(--surface-alt));
+}
+.timeline-title h4 { font-family: var(--font-display); font-size: 1rem; margin-bottom: .1rem; }
+.timeline-title p { margin: 0; color: var(--ink-soft); font-size: .76rem; }
+
+/* Conteneur scrollable horizontal : la grille interne peut dépasser. */
+.timeline-scroll { overflow-x: auto; }
+.timeline-grid {
+  display: grid;
+  /* grid-template-columns est posé inline (dépend du nombre de semaines). */
+  align-items: stretch;
+  min-width: max-content;
+}
+/* Étiquettes de ligne + coins : collés à gauche. */
+.timeline-row-label, .timeline-corner {
+  position: sticky; left: 0; z-index: 3;
+  background: var(--surface-alt);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+}
+.timeline-row-label {
+  min-height: var(--timeline-row-min); padding: .3rem .5rem;
+  font-weight: 650; font-size: .72rem; color: var(--ink-soft);
+  display: flex; align-items: center;
+}
+.header-label, .sequence-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+/* Ligne MOIS */
+.timeline-corner-month { background: var(--moss-dark); border-bottom-color: rgba(255,255,255,.12); }
+.timeline-month {
+  padding: .3rem .4rem; text-align: center;
+  font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: capitalize;
+  color: #e3ede4; background: var(--moss-dark);
+  border-right: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid var(--line);
+}
+
+/* Ligne SEMAINES */
+.timeline-week-head {
+  min-height: 42px; padding: .3rem .25rem; text-align: center;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.timeline-week-head strong { display: block; font-size: .74rem; }
+.timeline-week-head span { display: block; font-size: .62rem; color: var(--muted); }
+.timeline-week-head em { display: block; font-size: .58rem; font-style: normal; color: var(--clay); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-week-head.has-constraint { background: var(--clay-soft); }
+.timeline-week-head.blocked-week,
+.timeline-day-cell.blocked-week {
+  background: repeating-linear-gradient(135deg, var(--surface-alt) 0 6px, var(--line) 6px 12px);
+}
+/* D1 — semaine « prise » par une EIL/semaine thématique d'une autre UE :
+   hachures AMBRÉES (et non grises) pour la distinguer d'un « sans cours ». */
+.timeline-day-cell.thematic-week {
+  background: repeating-linear-gradient(135deg, #f9f2df 0 7px, #eddcb4 7px 14px);
+}
+.timeline-day-cell.thematic-week .timeline-blocked-label { color: #7a5b16; font-weight: 600; letter-spacing: .02em; }
+/* D2 — jour férié affiché DANS la colonne-jour (et non en bande de séquence) :
+   fond « jour off » discret + pastille cliquable pour éditer la contrainte. */
+.timeline-day-cell.is-holiday { background: repeating-linear-gradient(135deg, var(--surface) 0 6px, var(--surface-alt) 6px 12px); }
+.timeline-holiday-chip {
+  display: inline-block; max-width: 100%; margin: 1px; padding: 1px 5px;
+  border: 1px solid var(--line-strong); border-left: 3px solid var(--amber);
+  border-radius: var(--r-sm); background: var(--amber-soft); color: #6b4f12;
+  font-size: .58rem; font-weight: 600; line-height: 1.25; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.timeline-holiday-chip:hover { filter: brightness(.97); }
+/* Lot U — variantes selon le type (examen / période / bloquant) ; le bloquant &
+   le férié gardent la teinte ambre de base. Mêmes couleurs que les pastilles du
+   Planning hebdo pour la cohérence. */
+.timeline-holiday-chip.is-exam { border-left-color: var(--clay); background: var(--clay-soft); color: #6b3013; }
+.timeline-holiday-chip.is-period { border-left-color: var(--moss); background: var(--moss-soft); color: #2f5d33; }
+/* D1 — info EIL d'une AUTRE promo dans l'entête de semaine : discrète, non
+   bloquante (au contraire, marge pour caler des cours avec cette promo). */
+.timeline-week-head.has-eil-info { box-shadow: inset 3px 0 0 #d9b75a; }
+.timeline-week-eil { display: block; font-size: .56rem; font-style: normal; font-weight: 600; color: #7a5b16; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Ligne SÉQUENCES : une piste unique sur toute la largeur des semaines, qui
+   contient sa propre sous-grille calée sur le même nombre de colonnes. La
+   sous-grille hérite des colonnes de semaines via subgrid quand c'est
+   supporté, sinon repeat() identique. */
+.timeline-sequence-row .sequence-label { border-bottom: 1px solid var(--line); }
+.timeline-sequence-track {
+  display: grid;
+  grid-template-columns: subgrid;
+  /* Un couloir (lane) par ligne : hauteur régulière, extensible si le contenu
+     déborde. Les bandes reçoivent leur grid-row explicite en JS. */
+  grid-auto-rows: minmax(34px, auto);
+  /* Teinte chaude mais discrète : distingue la lecture HORIZONTALE de cette
+     ligne séquences de la lecture VERTICALE des journées, sans crier. */
+  background: color-mix(in srgb, var(--amber-soft) 42%, var(--surface));
+  border-bottom: 1px solid var(--line);
+  min-height: 38px; align-items: center;
+  position: relative;
+}
+/* Fond de colonne (une par semaine), derrière les bandes : maillage vertical
+   léger + hachures « sans cours » pour les semaines bloquées (vacances, fériés). */
+.timeline-seq-bg {
+  align-self: stretch; justify-self: stretch;
+  border-right: 1px dashed color-mix(in srgb, var(--line-strong) 45%, transparent);
+  pointer-events: none;
+}
+.timeline-seq-bg.is-blocked {
+  background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--line-strong) 50%, transparent) 6px 12px);
+}
+/* Lot K — fond de colonne AMBRÉ pour une semaine thématique / EIL (cohérent avec
+   le hachurage ambré des cellules-jour .thematic-week). */
+.timeline-seq-bg.is-thematic {
+  background: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, #d9b75a 55%, transparent) 7px 14px);
+}
+/* Filet sous la zone réservée aux périodes/contraintes (couloir(s) du haut). */
+.timeline-seq-zone {
+  align-self: stretch; justify-self: stretch;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
+  pointer-events: none;
+}
+.timeline-sequence-band, .timeline-constraint-band { position: relative; z-index: 1; }
+@supports not (grid-template-columns: subgrid) {
+  /* Repli pour les navigateurs sans subgrid : la piste reprend exactement le
+     même patron de colonnes que la grille principale (posé inline en JS via
+     une variable identique), garantissant le même alignement. */
+  .timeline-sequence-track { grid-template-columns: repeat(var(--timeline-week-count, 1), minmax(var(--timeline-week-min), 1fr)); }
+}
+.timeline-sequence-band, .timeline-constraint-band {
+  min-height: 30px; margin: 3px; border-radius: var(--r-sm);
+  padding: .2rem .45rem; text-align: left; overflow: hidden;
+  border: 1px solid #e7d39e; background: #fbf3df; color: #6b4f12;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.timeline-sequence-band span, .timeline-constraint-band span {
+  font-size: .56rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; opacity: .8;
+}
+.timeline-sequence-band strong, .timeline-constraint-band strong {
+  font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.timeline-sequence-band em, .timeline-constraint-band em {
+  font-style: normal; font-size: .6rem; opacity: .85;
+}
+.timeline-sequence-band { cursor: grab; }
+.timeline-sequence-band.has-blocked-week { opacity: .55; }
+/* Bande de séquence colorée par la couleur de la séquence (famille UE).
+   La même teinte est reprise par les séances associées dans les lignes jours. */
+.timeline-sequence-band.seq-colored {
+  background: var(--ue-soft, #fbf3df);
+  border-color: var(--ue-color, #e7d39e);
+  border-left: 4px solid var(--ue-color, #e7d39e);
+  color: var(--ink);
+}
+.timeline-sequence-band.seq-colored span,
+.timeline-sequence-band.seq-colored em { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
+.timeline-sequence-band.seq-colored strong { color: var(--ink); }
+/* Mots-clés (B1) sous le titre de la bande de séquence, clampés à 2 lignes. */
+.timeline-sequence-band .timeline-band-keywords {
+  font-size: .56rem; line-height: 1.15; margin-top: 1px;
+  color: var(--ink-soft); opacity: .9;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Pastilles d'initiales d'enseignants (B2) en bas de la bande de séquence. */
+.timeline-sequence-band .timeline-band-teachers {
+  display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px;
+}
+.timeline-sequence-band.seq-colored .teacher-pip {
+  font-size: .55rem; font-weight: 700; line-height: 1;
+  text-transform: none; letter-spacing: 0; opacity: 1;
+  padding: 2px 5px; border-radius: 999px; white-space: nowrap;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ue-color, var(--moss)) 20%, #fff);
+  border: 1px solid color-mix(in srgb, var(--ue-color, var(--moss)) 45%, transparent);
+}
+/* Séance dont le fond reprend la teinte de sa séquence. */
+.timeline-session.seq-tinted {
+  background: var(--ue-soft, var(--surface-alt));
+  border-color: color-mix(in srgb, var(--ue-color, var(--muted)) 35%, transparent);
+  border-left: 3px solid var(--ue-color, var(--moss));
+  color: var(--ink);
+}
+.timeline-session.seq-tinted .timeline-session-type { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
+.timeline-constraint-band {
+  background: repeating-linear-gradient(135deg, var(--surface-alt) 0 6px, var(--line) 6px 12px);
+  border-color: var(--line-strong); color: var(--ink-soft);
+}
+.timeline-no-sequence { color: var(--muted); padding: .4rem; font-size: .76rem; }
+
+/* Lignes JOURS */
+.timeline-day-cell {
+  min-height: var(--timeline-row-min); padding: .2rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: .2rem;
+}
+.timeline-day-cell.is-empty-day { color: var(--line-strong); }
+.timeline-empty { color: var(--line-strong); align-self: center; font-size: .8rem; }
+.timeline-blocked-label { font-size: .62rem; color: var(--muted); align-self: center; }
+
+/* Carte de séance dans la frise : petite fiche verticale */
+.timeline-session {
+  width: 100%; text-align: left; border: 1px solid color-mix(in srgb, var(--type-fg, var(--muted)) 28%, transparent);
+  border-left: 3px solid var(--ue-color, var(--type-fg, var(--moss)));
+  border-radius: var(--r-sm);
+  padding: .25rem .4rem; cursor: pointer;
+  background: var(--type-bg, var(--surface-alt)); color: var(--type-fg, var(--ink-soft));
+  display: flex; flex-direction: column; gap: .05rem;
+}
+.timeline-session:hover { filter: brightness(.97); }
+.timeline-session-type { font-size: .58rem; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; opacity: .75; }
+.timeline-session-title { font-size: .74rem; line-height: 1.15; font-weight: 650; }
+.timeline-session-meta { font-style: normal; font-size: .64rem; opacity: .9; }
+.timeline-session-keywords { font-size: .6rem; opacity: .72; line-height: 1.1; }
+
+.timeline-compact { --timeline-row-min: 28px; }
+.timeline-compact .timeline-session { padding: .2rem .35rem; }
+.timeline-comfort { --timeline-row-min: 44px; }
+
+@media print {
+  .timeline-card { break-inside: avoid; }
+  .timeline-scroll { overflow: visible; }
+}
+
+/* =====================================================================
+   PLANNING SEMAINE — grille horaire opérationnelle
+   ===================================================================== */
+.week-toolbar { gap: .5rem; }
+.week-picker-inline { position: relative; }
+.week-calendar-panel {
+  margin: 0 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: var(--sp-3);
+  box-shadow: var(--shadow-lg);
+  display: none;
+  width: 340px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.week-calendar-panel.is-open { display: block; }
+/* Calendrier « ancré » : toujours déplié, à gauche, sur la même ligne que
+   « Séances à placer ». Les flèches ← → de la barre d'outils restent la nav rapide. */
+.week-plan-top { display: flex; gap: var(--sp-3); align-items: flex-start; flex-wrap: wrap; margin: 0 0 var(--sp-3); }
+.week-plan-top .week-calendar-panel.week-calendar-docked { display: block; margin: 0; flex: 0 0 340px; max-width: 100%; }
+.week-plan-top .backlog-panel { flex: 1 1 340px; min-width: 0; margin: 0; }
+.week-picker-inline { display: none; }
+.period-weeks-hint { display: block; margin: .2rem 0 .1rem; font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--moss-dark); }
+.week-calendar-title { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; }
+.week-calendar-title strong { font-size: 1rem; }
+.week-calendar-title span { color: var(--muted); font-size: .85rem; }
+.week-calendar-title em { font-style: normal; margin-left: auto; font-size: .76rem; color: var(--muted); }
+.week-chip-row { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+/* Sélecteur compact mono-mois */
+.week-cal-compact { display: flex; flex-direction: column; gap: var(--sp-2); }
+.week-cal-header { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: var(--sp-1); }
+.week-cal-nav {
+  width: 36px; height: 36px; border-radius: var(--r-sm); border: 1px solid var(--line-strong);
+  background: var(--surface-alt); color: var(--moss-dark); font-size: 1.3rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.week-cal-nav:hover:not(:disabled) { background: var(--moss-soft); border-color: var(--moss-line); }
+.week-cal-nav:disabled { opacity: .35; cursor: default; }
+.week-cal-monthlabel { text-align: center; font-weight: 700; font-size: .95rem; color: var(--moss-dark); text-transform: capitalize; }
+.week-cal-weeknav { display: grid; grid-template-columns: 36px 1fr 36px; align-items: stretch; gap: var(--sp-1); }
+.week-cal-weeknav .week-cal-selected { margin: 0; }
+.week-cal-selected {
+  display: flex; align-items: baseline; gap: .5rem; justify-content: center;
+  background: var(--moss-soft); border: 1px solid var(--moss-line); border-radius: var(--r-sm); padding: .35rem .6rem;
+}
+.week-cal-selected strong { font-family: var(--font-mono); font-size: .9rem; color: var(--moss-dark); }
+.week-cal-selected span { font-size: .78rem; color: var(--ink-soft); }
+.week-cal-hint { margin: 0; font-size: .72rem; color: var(--muted); text-align: center; }
+.cal-month.single { border: 0; background: transparent; padding: 0; }
+/* Hauteur FIGÉE : 1 ligne d'entête + 6 lignes de semaines réservées, quel que
+   soit le mois (4 à 6 lignes) → la grille ne change plus de taille et ne
+   décale plus les encarts/plannings en dessous. */
+.cal-month.single .cal-grid.cal-grid-wk { grid-template-columns: 1.5rem repeat(5, 1fr) 0.82fr 0.82fr; grid-template-rows: auto repeat(6, 30px); gap: 3px; }
+.cal-month.single .cal-dow { font-size: .7rem; }
+.cal-month.single .cal-day {
+  aspect-ratio: auto; height: 30px; min-height: 0; width: 100%;
+  font-size: .82rem; border-radius: var(--r-sm); box-sizing: border-box;
+}
+.cal-month.single .cal-wk { font-size: .62rem; }
+
+/* Bouton d'ouverture : affiche la semaine courante */
+#weekPickerToggle { display: inline-flex; align-items: center; gap: .4rem; }
+#weekPickerToggle .wp-caret { font-size: .7rem; opacity: .7; }
+#weekPickerToggle .wp-cal-ico { font-size: .85rem; }
+
+
+/* Calendrier mensuel du planning semaine */
+.week-calendar-months {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--sp-3);
+}
+.cal-month { border: 1px solid var(--line); border-radius: var(--r-md); padding: .5rem .6rem; background: var(--surface-alt); }
+.cal-month-label { font-weight: 650; font-size: .82rem; text-transform: capitalize; margin-bottom: .35rem; color: var(--moss-dark); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-grid.cal-grid-wk { grid-template-columns: 1.6rem repeat(7, 1fr); }
+.cal-dow { text-align: center; font-size: .6rem; color: var(--muted); font-weight: 700; min-width: 0; }
+.cal-wk {
+  display: flex; align-items: center; justify-content: center; min-width: 0;
+  font-family: var(--font-mono); font-size: .58rem; font-weight: 700; color: var(--muted);
+  border-right: 1px solid var(--line); padding-right: 1px;
+}
+.cal-wk-head { font-size: .5rem; text-transform: uppercase; letter-spacing: .02em; border-right-color: transparent; }
+.cal-day {
+  aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; min-width: 0;
+  font-size: .72rem; border-radius: var(--r-sm); border: 1px solid transparent; box-sizing: border-box;
+}
+.cal-empty { visibility: hidden; }
+.cal-off { color: var(--line-strong); }
+.cal-active {
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  border: 1px solid var(--line-strong);
+}
+.cal-active:hover { background: var(--water-soft, #e3eef2); border-color: var(--water, #4f7cac); }
+.cal-selected, .cal-selected:hover { background: var(--moss); border-color: var(--moss-dark); color: #fff; font-weight: 700; }
+/* D3-bis Étape 2 — sélection de plage dans le calendrier de la modale séquence */
+.cal-in-range, .cal-in-range:hover { background: var(--moss-soft); border-color: var(--moss-line); color: var(--moss-dark); }
+.cal-range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cal-range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.sequence-calendar { max-width: 340px; border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .65rem; background: var(--surface-alt); box-sizing: border-box; margin-bottom: var(--sp-2); }
+/* Bloc période en 2 colonnes : calendrier à gauche, champs à droite (optimise l'espace) */
+.sequence-period-layout { display: flex; gap: var(--sp-4); align-items: flex-start; flex-wrap: wrap; }
+.sequence-period-layout .sequence-calendar { flex: 0 0 340px; margin-bottom: 0; }
+.sequence-period-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: var(--sp-2); }
+.sequence-period-side .period-weeks-hint { margin: 0; }
+.sequence-period-side label { display: flex; flex-direction: column; }
+.sequence-calendar .week-cal-compact.seq-cal { gap: var(--sp-1); }
+.sequence-calendar .week-cal-hint { margin-top: .1rem; }
+.week-nav-chip {
+  background: var(--surface-alt); color: var(--ink); border: 1px solid var(--line-strong);
+  padding: .35rem .55rem; border-radius: var(--r-sm); text-align: center; min-width: 64px;
+}
+.week-nav-chip strong { display: block; font-family: var(--font-mono); font-size: .8rem; }
+.week-nav-chip span { display: block; font-size: .64rem; color: var(--muted); }
+.week-nav-chip.active { background: var(--moss); border-color: var(--moss-dark); color: #fff; }
+.week-nav-chip.active span { color: #d9ecdf; }
+
+/* Sous-formulaire examen dans la modale contrainte */
+.exam-subform { background: var(--surface-alt); border: 1px dashed var(--line-strong); border-radius: var(--r-md); }
+.exam-subform legend { font-weight: 650; color: var(--clay, var(--moss-dark)); }
+.tight-section { border: 1px solid var(--line); border-radius: var(--r-sm); padding: .5rem .6rem; margin-top: .4rem; }
+.tight-section legend { font-size: .82rem; }
+.constraint-pill .exam-flag, .timeline-constraint-band .exam-flag {
+  display: inline-block; font-size: .58rem; font-weight: 700; margin-left: .3rem;
+  padding: 0 .3rem; border-radius: 999px; background: var(--clay, #b56952); color: #fff;
+}
+
+.schedule-section {
+  margin-bottom: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.schedule-title {
+  padding: .5rem .8rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+.schedule-title.gpn1 { background: var(--gpn1-soft); color: #6b3013; }
+.schedule-title.gpn2 { background: var(--gpn2-soft); color: #154a5c; }
+/* Lot R — teinte du bandeau de promo selon la période (spécificité 2 classes > base). */
+.schedule-title.period-autumn.gpn1 { background: #dbe8f5; color: #1d466b; box-shadow: inset 4px 0 0 #3a76ad; }
+.schedule-title.period-autumn.gpn2 { background: #f4dede; color: #7a2b2b; box-shadow: inset 4px 0 0 #b04a4a; }
+.schedule-title.period-spring.gpn1 { background: #f5edcb; color: #6b5510; box-shadow: inset 4px 0 0 #e0a526; }
+.schedule-title.period-spring.gpn2 { background: #dcecd7; color: #2f5d33; box-shadow: inset 4px 0 0 #5a9c5f; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+/* Lot S(d) — largeurs de colonnes FIXES : la colonne horaire (1re) est calée à
+   92px, les 5 colonnes de jours se partagent le reste à parts égales. Comme les
+   deux tableaux (GPN1 / GPN2) ont la même largeur et la même géométrie fixe,
+   leurs colonnes de journées s'alignent verticalement (fini l'élargissement au
+   contenu qui décalait un planning par rapport à l'autre). */
+.schedule-table { table-layout: fixed; min-width: 840px; }
+.schedule-table th, .schedule-table td {
+  border: 1px solid var(--line); height: 58px;
+  vertical-align: middle; text-align: center; overflow-wrap: anywhere;
+}
+.schedule-table th { background: var(--surface-alt); font-weight: 700; font-size: .82rem; }
+.schedule-table th:first-child, .schedule-table td.time-cell {
+  width: 92px; background: var(--surface-alt);
+  font-weight: 650; font-size: .8rem; color: var(--ink-soft);
+}
+.lunch-cell { background: var(--line) !important; color: var(--ink-soft); font-weight: 650; height: 26px !important; font-size: .76rem; }
+.break-cell { height: 14px !important; padding: 0 !important; font-size: .68rem !important; color: var(--muted); text-transform: lowercase; }
+.empty-slot { background: var(--surface); cursor: pointer; }
+.empty-slot:hover { background: var(--moss-soft); }
+.drop-hint {
+  display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+}
+.empty-slot:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
+
+.event-cell {
+  position: relative; cursor: pointer; vertical-align: top !important;
+  padding: .3rem .35rem; color: var(--type-fg, var(--ink));
+  /* Lot L (retour utilisateur) — la case est ENTIÈREMENT teintée à la couleur de
+     la séquence/séance, avec une légère transparence (la même couleur identifie
+     une séance dans la frise, la Conception et le Planning hebdo). */
+  background: color-mix(in srgb, var(--seq-color, var(--type-bg, var(--moss))) 34%, transparent);
+}
+.event-cell:hover { outline: 2px solid color-mix(in srgb, var(--type-fg, var(--moss)) 45%, transparent); outline-offset: -2px; }
+.event-ue { font-family: var(--font-mono); font-size: .68rem; font-weight: 700; opacity: .8; }
+.event-session-title { font-weight: 700; font-size: .8rem; line-height: 1.18; margin-top: .1rem; }
+.event-title { font-size: .72rem; opacity: .85; line-height: 1.15; }
+.event-details { margin-top: .2rem; font-size: .68rem; opacity: .85; line-height: 1.15; }
+.event-keywords { margin-top: .15rem; font-size: .64rem; opacity: .7; line-height: 1.1; }
+/* Type de séance en texte simple (après enseignant/lieu, avant les mots-clés). */
+.event-type { margin-top: .15rem; font-size: .66rem; font-weight: 600; opacity: .85; line-height: 1.15; }
+.demi-col .event-type { font-size: .6rem; }
+
+.overlap-cell { background: var(--clay-soft) !important; padding: .2rem !important; }
+.overlap-warning { font-size: .66rem; font-weight: 700; color: #6b3013; margin-bottom: .15rem; }
+.overlap-event {
+  border: 1px solid rgba(0,0,0,.14); border-radius: var(--r-sm);
+  padding: .2rem; margin: .12rem 0; background: rgba(255,255,255,.7); cursor: pointer;
+}
+.overlap-event:hover { outline: 2px solid var(--clay); }
+
+/* Lot V — demi-groupes côte à côte dans une même case de créneau (½A / ½B). */
+/* Le <td> conteneur ne doit PAS ajouter sa propre teinte (sinon elle se cumule
+   avec celle, semi-transparente, de chaque demi-colonne → plus foncé qu'une case
+   pleine). Seules les .demi-col portent la couleur, sur le même fond neutre. */
+.demi-cell { padding: 0 !important; vertical-align: top !important; background: none !important; }
+.demi-split { display: flex; align-items: stretch; height: 100%; min-height: 56px; }
+.demi-col {
+  position: relative; flex: 1 1 0; min-width: 0; cursor: pointer;
+  padding: .28rem .3rem; color: var(--type-fg, var(--ink));
+  background: color-mix(in srgb, var(--seq-color, var(--type-bg, var(--moss))) 34%, transparent);
+}
+.demi-col + .demi-col { border-left: 2px dashed rgba(0,0,0,.22); }
+.demi-col:hover { outline: 2px solid color-mix(in srgb, var(--type-fg, var(--moss)) 45%, transparent); outline-offset: -2px; }
+.demi-col.demi-empty {
+  display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(45deg, var(--surface) 0 6px, var(--surface-alt) 6px 12px);
+  color: var(--muted);
+}
+.demi-col.demi-empty .drop-hint { width: auto; height: auto; padding: .1rem .45rem; border-radius: 999px; font-size: .66rem; }
+/* Badge ½A / ½B, réutilisé dans le planning et la frise. */
+.demi-badge {
+  display: inline-block; margin-right: .25rem; padding: 0 .28rem;
+  border-radius: 999px; font-size: .6rem; font-weight: 800; line-height: 1.5;
+  background: rgba(0,0,0,.14); color: inherit; vertical-align: baseline;
+}
+.demi-badge.demi-a { background: color-mix(in srgb, var(--water) 32%, transparent); }
+.demi-badge.demi-b { background: color-mix(in srgb, var(--clay) 32%, transparent); }
+/* Pastille sur la MÊME ligne que l'UE (après le code) → marge à gauche. */
+.demi-badge.demi-inline { margin-right: 0; margin-left: .3rem; vertical-align: middle; }
+/* Colonne demi-groupe étroite : texte resserré + clipping pour éviter le chevauchement. */
+.demi-col { overflow: hidden; }
+.demi-col .event-ue { font-size: .64rem; }
+.demi-col .event-session-title { font-size: .72rem; line-height: 1.12; margin-top: .05rem; }
+.demi-col .event-details { font-size: .6rem; margin-top: .08rem; }
+
+.drop-slot { transition: background .12s ease, outline .12s ease; }
+.drop-slot.drop-hover { background: var(--water-soft) !important; outline: 2px solid var(--water); outline-offset: -2px; }
+
+/* C1 — bouton « ressortir » une séance placée vers la zone d'attente */
+.overlap-event { position: relative; }
+.unplace-btn {
+  position: absolute; top: 2px; right: 2px; z-index: 2;
+  width: 18px; height: 18px; padding: 0; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid rgba(0,0,0,.16);
+  background: rgba(255,255,255,.82); color: #444;
+  font-size: .72rem; cursor: pointer;
+  opacity: 0; transition: opacity .12s ease, background .12s ease, transform .12s ease;
+}
+.event-cell:hover .unplace-btn, .overlap-event:hover .unplace-btn, .demi-col:hover .unplace-btn, .unplace-btn:focus-visible { opacity: 1; }
+.unplace-btn:hover { background: var(--clay-soft); border-color: var(--clay); color: #6b3013; transform: scale(1.08); }
+@media (hover: none) { .unplace-btn { opacity: .85; } }
+
+/* C1 — la zone « Séances à placer » accepte le dépôt d'une séance à ressortir */
+.backlog-list.backlog-drop-hover {
+  outline: 2px dashed var(--clay); outline-offset: 3px;
+  background: color-mix(in srgb, var(--clay-soft) 55%, transparent); border-radius: var(--r-sm);
+}
+
+/* C2 — ligne « Périodes » : contraintes/examens/jours fériés par jour */
+.day-constraint-row td { height: auto; padding: .2rem .25rem; background: var(--surface-alt); }
+.day-constraint-legend { font-size: .72rem !important; text-transform: uppercase; letter-spacing: .04em; }
+.day-constraint-cell { vertical-align: top; text-align: left; }
+.day-constraint-cell.day-blocked { background: repeating-linear-gradient(135deg, var(--surface-alt), var(--surface-alt) 6px, var(--line) 6px, var(--line) 7px); }
+.day-constraint-chip {
+  display: inline-flex; align-items: center; gap: .2rem; max-width: 100%;
+  margin: .1rem .12rem 0 0; padding: .12rem .35rem;
+  border: 1px solid var(--line-strong); border-left: 3px solid var(--plum);
+  border-radius: var(--r-sm); background: var(--plum-soft); color: #432a55;
+  font-size: .68rem; font-weight: 600; line-height: 1.2; cursor: pointer; text-align: left;
+}
+.day-constraint-chip .dcc-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-constraint-chip.is-exam { border-left-color: var(--clay); background: var(--clay-soft); color: #6b3013; }
+.day-constraint-chip.is-blocked { border-left-color: var(--amber); background: var(--amber-soft); color: #6b4f12; }
+.day-constraint-chip:hover { filter: brightness(.97); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+/* C2 — créneaux grisés des jours « sans cours » (vacances/stage/férié) */
+.empty-slot.day-off-slot {
+  background: repeating-linear-gradient(135deg, var(--surface), var(--surface) 7px, var(--surface-alt) 7px, var(--surface-alt) 9px);
+  cursor: pointer;
+}
+.empty-slot.day-off-slot .drop-hint { opacity: .35; }
+
+/* D1b — bannière EIL / semaine thématique en tête de planning hebdo. */
+.eil-banner-row td { padding: .28rem .5rem; }
+.eil-banner-row .time-cell { font-size: .7rem; font-weight: 700; letter-spacing: .04em; }
+.eil-banner { display: inline-block; font-size: .74rem; font-weight: 600; line-height: 1.25; }
+.eil-banner-row.is-self { background: repeating-linear-gradient(135deg, #f9f2df 0 9px, #eddcb4 9px 18px); }
+.eil-banner-row.is-self .eil-banner { color: #7a5b16; }
+.eil-banner-row.is-info { background: #fbf6e9; }
+.eil-banner-row.is-info .eil-banner { color: #8a6d1f; font-weight: 500; }
+
+.notes-panel { margin-top: var(--sp-3); }
+.notes-panel textarea { margin-bottom: .5rem; }
+
+@media (max-width: 900px) {
+  .backlog-heading, .week-toolbar { flex-direction: column; align-items: stretch; }
+}
+
+@media print {
+  .schedule-section { break-inside: avoid; }
+}
+
+/* =====================================================================
+   RÉFÉRENTIEL — capacités structurées + texte intégral des PDF
+   ===================================================================== */
+.reference-mode-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+.reference-mode-switch button {
+  background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .8rem;
+  border-radius: 999px; font-size: .82rem;
+}
+.reference-mode-switch button.active { background: var(--moss); color: #fff; }
+.reference-mode-panel { display: none; }
+.reference-mode-panel.active-mode { display: block; }
+
+/* ---- Créneaux de cours type (planning hebdo type) ---- */
+.creneaux-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+.creneaux-toolbar .meta { margin: 0; flex: 1 1 320px; }
+.creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+.creneaux-period-switch button {
+  background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .9rem;
+  border-radius: 999px; font-size: .82rem; cursor: pointer;
+}
+.creneaux-period-switch button.active { background: var(--moss); color: #fff; }
+.creneaux-grids { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: var(--sp-4); align-items: start; }
+.tpl-grid-wrap { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); padding: .6rem .7rem; overflow-x: auto; }
+.tpl-grid-head { display: flex; align-items: baseline; gap: .6rem; margin: 0 0 .5rem; }
+.tpl-grid-head h3 { margin: 0; font-size: 1rem; }
+.tpl-grid { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 400px; }
+.tpl-grid th, .tpl-grid td { border: 1px solid var(--line); height: 42px; text-align: center; vertical-align: middle; font-size: .8rem; }
+.tpl-grid th { background: var(--surface-alt); font-weight: 700; font-size: .78rem; padding: .25rem; }
+.tpl-grid td.time-cell, .tpl-grid th.tpl-corner { width: 78px; background: var(--surface-alt); color: var(--ink-soft); font-weight: 650; font-size: .72rem; }
+.tpl-grid .tpl-lunch td { background: var(--line); color: var(--ink-soft); font-weight: 650; height: 22px; font-size: .72rem; }
+.tpl-grid tr.tpl-after-break > td { border-top: 2px solid var(--line-strong); }
+.tpl-empty { background: var(--surface); cursor: pointer; }
+.tpl-empty:hover { background: var(--moss-soft); }
+.tpl-empty .drop-hint {
+  display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+}
+.tpl-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
+.tpl-cell {
+  position: relative; cursor: pointer; vertical-align: top; padding: .3rem .3rem .25rem;
+  background: color-mix(in srgb, var(--seq-color, var(--moss)) 30%, transparent);
+}
+.tpl-cell:hover { outline: 2px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent); outline-offset: -2px; }
+.tpl-cell .tpl-ue { font-family: var(--font-mono); font-size: .72rem; font-weight: 700; }
+.tpl-cell .tpl-title { font-size: .74rem; line-height: 1.15; margin-top: .1rem; }
+.tpl-cell .tpl-teacher { font-size: .68rem; color: var(--ink-soft); margin-top: .1rem; }
+/* Cellule scindée gauche/droite (2 créneaux sur la même plage). Le conteneur est
+   en absolu inset:0 pour remplir toute la hauteur de la case (rowspan) — sinon le
+   contenu se rétrécissait au centre. */
+.tpl-split-cell { padding: 0 !important; background: transparent !important; position: relative; }
+.tpl-split { position: absolute; inset: 0; display: flex; }
+.tpl-split .tpl-col {
+  position: relative; flex: 1 1 50%; min-width: 0; cursor: pointer; overflow: hidden;
+  padding: .3rem .32rem .25rem;
+  background: color-mix(in srgb, var(--seq-color, var(--moss)) 30%, transparent);
+}
+.tpl-split .tpl-col + .tpl-col { border-left: 1px solid var(--line-strong); }
+.tpl-split .tpl-col:hover { outline: 2px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent); outline-offset: -2px; }
+.tpl-col.tpl-half-empty { background: var(--surface); display: flex; align-items: center; justify-content: center; }
+.tpl-col.tpl-half-empty:hover { background: var(--moss-soft); }
+.tpl-col.tpl-half-empty .drop-hint {
+  width: auto; height: auto; padding: .1rem .4rem; border-radius: 999px; font-size: .66rem;
+  border: 1px dashed var(--line-strong); color: var(--line-strong);
+}
+.tpl-col.tpl-half-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); }
+.tpl-overlap { vertical-align: top; padding: .2rem; display: flex; flex-direction: column; gap: .15rem; }
+.tpl-overlap-item {
+  position: relative; font-size: .72rem; padding: .12rem .3rem; border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--seq-color, var(--moss)) 30%, transparent);
+}
+.tpl-del {
+  position: absolute; top: 1px; right: 1px; width: 18px; height: 18px; line-height: 1;
+  border: 0; background: transparent; color: var(--ink-soft); font-size: .95rem; cursor: pointer;
+  opacity: 0; border-radius: var(--r-sm);
+}
+.tpl-cell:hover .tpl-del { opacity: .8; }
+.tpl-del:hover { opacity: 1 !important; color: var(--danger); background: var(--surface); }
+.template-context { margin: 0 0 .6rem; font-weight: 600; }
+
+/* ---- Masque « créneaux type » sur le Planning hebdo (sobre, gris, lignes marquées) ---- */
+.mask-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; color: var(--ink-soft); cursor: pointer; }
+.mask-toggle input { cursor: pointer; }
+/* Contours nets par bloc : côtés marqués partout, haut sur mask-head, bas sur
+   mask-foot ; les cases internes fusionnent (pas de bord haut/bas). */
+td.empty-slot.mask-slot {
+  background: rgba(96, 104, 118, 0.10);
+  border-left: 2px solid rgba(66, 74, 92, 0.66) !important;
+  border-right: 2px solid rgba(66, 74, 92, 0.66) !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+td.empty-slot.mask-head { border-top: 2px solid rgba(66, 74, 92, 0.66) !important; }
+td.empty-slot.mask-foot { border-bottom: 2px solid rgba(66, 74, 92, 0.66) !important; }
+td.empty-slot.mask-slot:hover { background: rgba(96, 104, 118, 0.18); }
+.mask-slot .mask-label {
+  display: block; font-family: var(--font-mono); font-size: .7rem; font-weight: 700;
+  letter-spacing: .02em; color: rgba(52, 58, 74, 0.9); text-transform: uppercase; line-height: 1.1;
+}
+.mask-slot .drop-hint { display: none; }
+.mask-slot:hover .drop-hint { display: inline-flex; }
+/* Masque scindé (2 créneaux type côte à côte) */
+td.empty-slot.mask-slot.mask-split { padding: 0; }
+.mask-split .mask-split-inner { display: flex; height: 100%; min-height: 20px; }
+.mask-split .mask-half { flex: 1 1 50%; min-width: 0; padding: .18rem .2rem; }
+.mask-split .mask-half + .mask-half { border-left: 2px solid rgba(66, 74, 92, 0.5); }
+
+.reference-layout, .interactive-reference-layout { display: grid; grid-template-columns: minmax(360px, .95fr) minmax(420px, 1.1fr); gap: var(--sp-4); align-items: start; }
+.reference-tree-panel, .reference-detail-panel { max-height: 78vh; overflow: auto; }
+.reference-tree { display: flex; flex-direction: column; gap: .5rem; }
+.reference-root {
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-alt); padding: .35rem;
+}
+.reference-root > summary {
+  cursor: pointer; list-style: none;
+  display: flex; gap: .5rem; justify-content: space-between; align-items: center;
+  padding: .35rem .5rem; font-size: .9rem; font-weight: 650;
+}
+.reference-root > summary::-webkit-details-marker { display: none; }
+.reference-capacity-card {
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface); padding: .5rem .6rem; margin: .35rem 0;
+}
+.reference-capacity-card > div:first-child { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; }
+.capacity-link-title {
+  background: transparent !important; border: 0; padding: 0; text-align: left;
+  color: var(--moss-dark); font-weight: 650; font-size: .85rem; cursor: pointer;
+}
+.capacity-link-title:hover { text-decoration: underline; }
+.reference-section-preview { margin-top: .35rem; color: var(--ink-soft); font-size: .82rem; }
+.reference-section-preview strong { color: var(--ink); }
+
+.reference-selected-card { display: flex; flex-direction: column; gap: .5rem; }
+.reference-selected-card h4 { font-family: var(--font-display); font-size: 1.05rem; color: var(--moss-dark); }
+.reference-main-text { font-weight: 600; color: var(--ink-soft); }
+.reference-children { display: flex; gap: .3rem; flex-wrap: wrap; }
+.reference-structured-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+.reference-info-block { border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-alt); padding: .55rem .65rem; }
+.reference-info-block h5 { margin-bottom: .35rem; font-size: .78rem; color: var(--moss-dark); }
+.reference-info-block ul { margin: 0; padding-left: 1.1rem; }
+.reference-info-block li { margin: .15rem 0; font-size: .8rem; line-height: 1.32; color: var(--ink-soft); }
+.reference-chip-block div { display: flex; flex-wrap: wrap; gap: .25rem; }
+.reference-chip-block span {
+  display: inline-flex; border: 1px solid var(--water-soft); background: var(--water-soft);
+  color: #154a5c; border-radius: 999px; padding: .1rem .5rem; font-size: .74rem; font-weight: 650;
+}
+.reference-raw-source, .inline-reference-section, .reference-source-drawer {
+  border: 1px dashed var(--line-strong); border-radius: var(--r-sm); padding: .4rem .6rem; margin-top: .4rem;
+}
+.reference-raw-source > summary, .inline-reference-section > summary, .reference-source-drawer > summary {
+  cursor: pointer; font-size: .78rem; font-weight: 650; color: var(--ink-soft); list-style: none;
+}
+.reference-detail-section pre, .reference-page pre {
+  white-space: pre-wrap; margin: .4rem 0 0; font-family: var(--font-body); font-size: .8rem;
+  line-height: 1.45; color: var(--ink-soft);
+}
+.reference-source-line { background: var(--surface-alt); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .5rem .6rem; font-size: .82rem; }
+.reference-source-line a { margin-left: .5rem; }
+
+.reference-docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .5rem; }
+.reference-doc-card {
+  display: flex; flex-direction: column; gap: .1rem; padding: .55rem .65rem;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-alt);
+  color: var(--ink); text-decoration: none;
+}
+.reference-doc-card:hover { background: var(--moss-soft); border-color: var(--moss-line); }
+.reference-doc-card strong { font-size: .82rem; }
+.reference-doc-card span { color: var(--muted); font-size: .74rem; }
+
+.reference-full-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.reference-full-toolbar label { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; color: var(--muted); font-weight: 600; flex: 1 1 320px; }
+.reference-full-toolbar #referencePdfOpen { flex: 0 0 auto; align-self: center; white-space: nowrap; }
+.reference-pdf-panel { padding: var(--sp-2); }
+.reference-pdf-frame { width: 100%; height: 78vh; min-height: 520px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-alt); }
+.reference-pdf-fallback { margin-top: .5rem; }
+
+@media (max-width: 980px) {
+  .reference-layout, .interactive-reference-layout, .reference-full-toolbar { grid-template-columns: 1fr; }
+  .reference-structured-grid { grid-template-columns: 1fr; }
+  .reference-tree-panel, .reference-detail-panel { max-height: none; }
+}
+
+/* Modale référentiel (ouverte depuis une pastille de capacité) */
+.reference-modal-body { display: flex; flex-direction: column; gap: var(--sp-2); }
+.reference-detail-section {
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-alt);
+  padding: .55rem .65rem;
+}
+.reference-detail-section h4 { margin-bottom: .3rem; font-size: .85rem; color: var(--moss-dark); }
+
+/* Détails de capacités affichés dans la modale séquence (critères/savoirs) */
+.reference-capacity-details { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
+.sequence-reference-card {
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-alt);
+  padding: .55rem .65rem;
+}
+.sequence-reference-card h5 { margin-bottom: .4rem; font-size: .82rem; color: var(--moss-dark); }
+.sequence-reference-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: var(--sp-3); }
+.sequence-reference-grid section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .45rem .55rem; }
+.sequence-reference-grid strong { display: block; margin-bottom: .3rem; font-size: .76rem; color: var(--ink-soft); }
+.sequence-reference-grid ul { margin: 0; padding-left: 1.1rem; font-size: .78rem; line-height: 1.35; }
+.sequence-reference-grid li { margin: 0 0 .2rem; }
+
+.compact-section { padding: .65rem .8rem; }
+
+/* Sélecteur de poids/jours pour le positionnement de séquence (non utilisé
+   par défaut, conservé pour compatibilité de données existantes) */
+.week-chip {
+  display: grid; grid-template-columns: auto 1fr; gap: .1rem .4rem; align-items: center;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: .3rem; background: var(--surface);
+  cursor: pointer; font-size: .76rem;
+}
+.week-chip input { width: 13px; height: 13px; margin: 0; }
+.week-chip small { grid-column: 2; color: var(--muted); }
+.week-chip.selected { border-color: var(--moss); background: var(--moss-soft); }
+
+@media (max-width: 760px) {
+  .sequence-reference-grid { grid-template-columns: 1fr; }
+}
+
+/* Formulaire séance : un seul sous-panneau de placement visible à la fois,
+   piloté par data-mode (posé en JS selon le statut de placement choisi). */
+#sessionPlacementSection[data-mode="fictive"] .definitive-fields { display: none; }
+#sessionPlacementSection[data-mode="definitive"] .fictive-fields { display: none; }
+#sessionPlacementSection[data-mode="fictive"] { border-left: 3px solid var(--amber); }
+#sessionPlacementSection[data-mode="definitive"] { border-left: 3px solid var(--moss); }
+
+/* Frise semestre : bandeau de contrainte coloré par type (même logique que
+   les pastilles de contraintes du tableau de bord). */
+.timeline-constraint-band.period-vacances { background: var(--surface-alt); border-color: var(--line-strong); color: var(--ink-soft); }
+.timeline-constraint-band.period-stage { background: var(--water-soft); border-color: #a9d2dd; color: #154a5c; }
+.timeline-constraint-band.period-examen-ccf { background: var(--clay-soft); border-color: #e0b08e; color: #6b3013; }
+.timeline-constraint-band.period-semaine-thematique { background: var(--plum-soft); border-color: #d2bfdd; color: #432a55; }
+.timeline-constraint-band.period-sortie-terrain { background: var(--moss-soft); border-color: var(--moss-line); color: var(--moss-dark); }
+.timeline-constraint-band.period-jour-ferie,
+.timeline-constraint-band.period-absence { background: var(--amber-soft); border-color: #e7d39e; color: #6b4f12; }
+.timeline-constraint-band.period-evenement-etablissement { background: var(--water-soft); border-color: #a9d2dd; color: #154a5c; }
+
+/* =====================================================================
+   RÉFÉRENTIEL V1.9 — tags, finalité, couverture maquette
+   ===================================================================== */
+.reference-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .4rem; }
+.reference-tag {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: .12rem .45rem; border-radius: 999px; background: var(--moss-soft, #e3ece0); color: var(--moss-dark);
+}
+.reference-finality { font-size: .82rem; color: var(--ink-soft); margin-bottom: .5rem; }
+
+.reference-coverage {
+  margin-top: var(--sp-2); border-top: 1px solid var(--line); padding-top: .6rem;
+}
+.reference-coverage h5 { font-size: .8rem; color: var(--moss-dark); margin-bottom: .4rem; }
+.reference-coverage-empty { color: var(--muted); }
+.coverage-row { display: flex; gap: .5rem; align-items: flex-start; margin-bottom: .35rem; }
+.coverage-label {
+  flex: 0 0 auto; font-size: .64rem; font-weight: 700; color: var(--muted);
+  min-width: 80px; padding-top: .2rem;
+}
+.coverage-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+.coverage-chip {
+  font-size: .7rem; padding: .2rem .5rem; border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); background: var(--surface-alt); color: var(--ink); cursor: pointer;
+}
+.coverage-chip:hover { background: var(--water-soft, #e3eef2); border-color: var(--water, #4f7cac); }
+.coverage-ue { border-left: 3px solid var(--moss); }
+.coverage-seq { border-left: 3px solid var(--clay, #b56952); }
+.coverage-session { border-left: 3px solid var(--water, #4f7cac); }
+
+.reference-card-criteria { margin: .3rem 0; padding-left: 1rem; font-size: .72rem; color: var(--ink-soft); }
+.reference-card-criteria li { margin-bottom: .1rem; }
+.reference-card-coverage { font-size: .66rem; color: var(--moss-dark); font-weight: 600; margin: .25rem 0; }
+.reference-card-coverage.meta { color: var(--muted); font-weight: 400; }
+
+/* ============================================================
+   Référentiel — consultation interactive par module (accordéon)
+   ============================================================ */
+.refmod-toolbar { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.refmod-modtabs { display: inline-flex; gap: 4px; flex-wrap: nowrap; background: var(--surface-alt); border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px; }
+.refmod-modtab {
+  border: 0; background: transparent; color: var(--ink-soft);
+  padding: .3rem .6rem; border-radius: 999px; font-weight: 700; font-size: .8rem; cursor: pointer;
+  min-width: 2.4rem; text-align: center; letter-spacing: .01em;
+  transition: background .12s, color .12s;
+}
+.refmod-modtab:hover { background: var(--moss-soft); color: var(--moss-dark); }
+.refmod-modtab.active { background: var(--moss); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.refmod-search {
+  flex: 0 0 auto; width: 200px; max-width: 100%; margin-left: auto; display: flex; align-items: center; gap: .4rem;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: .28rem .6rem;
+}
+.refmod-search span { opacity: .7; font-size: .85rem; }
+.refmod-search input { border: 0; background: transparent; outline: 0; width: 100%; font: inherit; font-size: .85rem; color: var(--ink); }
+.refmod-actions { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; }
+.refmod-count { font-size: .8rem; color: var(--muted); padding: 0 .35rem; min-width: 5ch; }
+.refmod-panel { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+.refmod-content { margin-top: 0; }
+
+/* En-tête de module */
+.rm-head { margin-bottom: var(--sp-3); }
+.rm-kicker { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--moss); font-weight: 800; }
+.rm-title { font-family: var(--font-display); font-size: 1.5rem; margin: .2rem 0 .3rem; color: var(--moss-dark); }
+.rm-source { font-size: .8rem; color: var(--muted); margin: 0; }
+.rm-pdf { color: var(--water); font-weight: 650; }
+
+/* Accordéons imbriqués */
+.refmod-content details { margin: 0 0 .55rem; }
+.refmod-content summary {
+  cursor: pointer; list-style: none; position: relative; display: flex; align-items: center; gap: .7rem;
+}
+.refmod-content summary::-webkit-details-marker { display: none; }
+.refmod-content summary::before {
+  content: "+"; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 1rem; line-height: 1;
+}
+.refmod-content details[open] > summary::before { content: "\2212"; }
+
+/* Racine (1. Général / 2. Précisions par capacités) */
+.rm-root > summary {
+  background: var(--moss); color: #fff; border-radius: var(--r-md); padding: .85rem 1rem;
+  font-size: 1.18rem; font-weight: 800; box-shadow: var(--shadow-sm);
+}
+.rm-root > summary::before { background: #f3f7f0; color: var(--moss-dark); }
+.rm-rootpanel {
+  background: var(--surface-alt); border: 1px solid var(--line); border-top: 0;
+  border-radius: 0 0 var(--r-md) var(--r-md); padding: .8rem .9rem .4rem;
+}
+
+/* Parties (déclinaison, blocs, références, sections générales) */
+.rm-part > summary {
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: .7rem .85rem; font-size: 1rem; font-weight: 700; color: var(--moss-dark);
+}
+.rm-part > summary::before { background: var(--moss-soft); color: var(--moss-dark); }
+.rm-panel { padding: .7rem .4rem .3rem 1.1rem; }
+
+/* Capacités (C4.1, C5.2, …) */
+.rm-cap > summary {
+  background: var(--amber-soft); border: 2px solid var(--amber); border-radius: var(--r-sm);
+  padding: .75rem .85rem; font-size: 1.02rem; font-weight: 800; color: var(--moss-dark);
+}
+.rm-cap > summary::before { background: #fff; color: var(--clay); }
+.rm-capcode { font-family: var(--font-mono); color: var(--clay); font-weight: 900; }
+.rm-cappanel { padding: .7rem .4rem .3rem 1rem; }
+
+/* Sous-blocs thématiques */
+.rm-sub > summary {
+  background: var(--moss-dark); color: #fff; border: 1px solid var(--moss-dark); border-radius: var(--r-sm);
+  padding: .6rem .8rem; font-size: .96rem; font-weight: 750; margin-top: .5rem;
+}
+.rm-sub > summary::before { background: var(--moss-soft); color: var(--moss-dark); }
+.rm-subpanel { padding: .55rem 0 .4rem .9rem; }
+
+/* Feuilles (sous-sections, catégories de biblio/sito) */
+.rm-leaf > summary {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: .55rem .75rem; font-size: .92rem; font-weight: 650; color: var(--ink); margin-top: .45rem;
+}
+.rm-leaf > summary::before { width: 20px; height: 20px; background: var(--surface-alt); color: var(--clay); }
+.rm-leafpanel { border-left: 2px solid var(--line); margin-left: .65rem; padding: .5rem .6rem .2rem .9rem; }
+
+/* Cartes de contenu */
+.rm-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: .8rem .95rem; box-shadow: var(--shadow-sm);
+}
+.rm-card.rm-compact { padding: .65rem .8rem; margin-bottom: .6rem; }
+.refmod-content p { margin: .35rem 0 .7rem; line-height: 1.55; }
+.refmod-content ul { margin: .3rem 0 .7rem 1.1rem; padding: 0; }
+.refmod-content li { margin: .2rem 0; }
+.rm-blocktitle {
+  font-size: .73rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+  font-weight: 800; margin: .3rem 0 .5rem;
+}
+
+/* Tableau d'évaluation */
+.rm-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); margin-bottom: .7rem; }
+table.rm-eval { width: 100%; border-collapse: collapse; min-width: 720px; }
+table.rm-eval th { background: var(--moss-soft); color: var(--moss-dark); text-align: left; padding: .6rem .7rem; border-right: 1px solid var(--line); font-size: .82rem; }
+table.rm-eval td { vertical-align: top; padding: .65rem .7rem; border-top: 1px solid var(--line); border-right: 1px solid var(--line); font-size: .86rem; }
+table.rm-eval th:last-child, table.rm-eval td:last-child { border-right: 0; }
+table.rm-eval ul { margin: .1rem 0 .1rem .9rem; }
+
+/* Conditions (vert) / Précisions (ocre) */
+.rm-conditions { border-left: 4px solid var(--moss); background: var(--moss-soft); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: .7rem .85rem; margin-bottom: .7rem; }
+.rm-precision { border-left: 4px solid var(--clay); background: var(--clay-soft); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: .7rem .85rem; margin-bottom: .7rem; }
+.rm-conditions h4, .rm-precision h4 { margin: 0 0 .4rem; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--moss-dark); }
+/* Titres (gras) et sous-titres (non gras) encadrés des modules 1-3 */
+.rm-modhead { margin: 1.1rem 0 .35rem; color: var(--moss-dark); font-size: .96rem; padding-left: .5rem; border-left: 3px solid var(--moss-line); }
+.rm-subhead { margin: .85rem 0 .25rem; color: var(--ink); font-size: .9rem; }
+.rm-modhead:first-child, .rm-subhead:first-child { margin-top: 0; }
+.rm-reflist { margin: .3rem 0 .6rem; padding-left: 1.1rem; }
+.rm-reflist li { margin-bottom: .3rem; }
+
+/* Grilles biblio / sitographie */
+.rm-refgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: .5rem; }
+.rm-refentry { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .6rem .7rem; font-size: .82rem; line-height: 1.42; }
+.rm-linkentry .rm-reflabel { display: block; font-weight: 700; color: var(--moss-dark); margin-bottom: .2rem; }
+.rm-linkentry a { word-break: break-word; }
+
+/* Surlignage de recherche */
+mark.rm-mark { background: var(--amber-soft); color: var(--ink); border-radius: 3px; padding: 0 .08em; box-shadow: inset 0 -2px 0 var(--amber); }
+
+/* Annexes du référentiel (même niveau que les capacités, accent « eau ») */
+.rm-annexe > summary {
+  background: var(--water-soft); border: 2px solid var(--water); color: var(--moss-dark);
+}
+.rm-annexe > summary::before { background: #fff; color: var(--water); }
+.rm-annexe-tag {
+  font-family: var(--font-mono); color: var(--water); font-weight: 900; text-transform: uppercase;
+  font-size: .82rem; letter-spacing: .04em;
+}
+.rm-srcnote { font-size: .82rem; color: var(--muted); border-top: 1px dashed var(--line-strong); padding-top: .5rem; margin-top: .4rem; }
+table.rm-annexe-table th[scope], table.rm-annexe-table tbody th {
+  background: var(--surface-alt); color: var(--moss-dark); text-align: left; font-size: .82rem;
+  padding: .6rem .7rem; border-top: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: top; width: 16%;
+}
+table.rm-annexe-table td { font-size: .84rem; }
+table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
+.refmod-content ol { margin: .3rem 0 .7rem 1.2rem; padding: 0; }
+.refmod-content ol li { margin: .25rem 0; }
+
+/* ================= Ruban pédagogique ================= */
+.ruban-toolbar { display: flex; align-items: end; gap: var(--sp-3); flex-wrap: wrap; }
+.ruban-filter { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; color: var(--muted); font-weight: 600; }
+.ruban-filter select { min-width: 200px; }
+.ruban-search { flex: 0 1 240px; max-width: 240px; }
+.ruban-count { font-size: .8rem; color: var(--moss-dark); font-weight: 600; }
+
+.ruban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: start; }
+.ruban-col { display: flex; flex-direction: column; gap: var(--sp-2); }
+.ruban-col-head {
+  background: var(--moss); color: #fff; font-weight: 700; font-size: .9rem;
+  text-align: center; padding: .45rem .5rem; border-radius: 999px; letter-spacing: .01em;
+}
+/* Lot R (harmonisation ruban) — bandeau de semestre aux mêmes tons que le planning. */
+.ruban-col.sem-s1 .ruban-col-head { background: #3a76ad; } /* GPN1 automne — bleu */
+.ruban-col.sem-s2 .ruban-col-head { background: #e0a526; color: #4a3806; } /* GPN1 printemps — jaune vif (texte foncé pour le contraste) */
+.ruban-col.sem-s3 .ruban-col-head { background: #b04a4a; } /* GPN2 automne — rouge */
+.ruban-col.sem-s4 .ruban-col-head { background: #5a9c5f; } /* GPN2 printemps — vert */
+.ruban-ue {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--moss);
+  border-radius: var(--r-md); padding: .6rem .7rem; box-shadow: var(--shadow-sm);
+  transition: opacity .15s;
+}
+.ruban-ue.is-dim { opacity: .42; }
+/* Lot R (harmonisation ruban) — liseré gauche par semestre, mêmes tons que les
+   bandeaux de promo du planning. Placé AVANT .is-modified (amber) pour qu'une UE
+   éditée conserve son liseré ambré prioritaire. */
+.ruban-ue.sem-s1 { border-left-color: #3a76ad; } /* GPN1 automne — bleu */
+.ruban-ue.sem-s2 { border-left-color: #e0a526; } /* GPN1 printemps — jaune */
+.ruban-ue.sem-s3 { border-left-color: #b04a4a; } /* GPN2 automne — rouge */
+.ruban-ue.sem-s4 { border-left-color: #5a9c5f; } /* GPN2 printemps — vert */
+.ruban-ue-head { display: flex; flex-direction: column; gap: .1rem; margin-bottom: .25rem; }
+.ruban-ue-code { font-size: .72rem; font-weight: 700; color: var(--moss-dark); letter-spacing: .03em; }
+.ruban-ue-head strong { font-size: .92rem; color: var(--ink); }
+.ruban-ue-resume { font-size: .76rem; color: var(--muted); margin: 0 0 .45rem; line-height: 1.35; }
+.ruban-cap-list { display: flex; flex-direction: column; gap: .3rem; }
+.ruban-cap {
+  display: flex; align-items: baseline; gap: .4rem; text-align: left; width: 100%;
+  border: 1px solid var(--line-strong); background: var(--surface-alt); color: var(--ink);
+  border-radius: var(--r-sm); padding: .35rem .5rem; cursor: pointer; font: inherit;
+  transition: background .12s, border-color .12s, opacity .12s;
+}
+.ruban-cap:hover { background: var(--water-soft); border-color: var(--water); }
+.ruban-cap.has-ref { border-left: 3px solid var(--water); }
+.ruban-cap.is-static { cursor: default; background: var(--surface); }
+.ruban-cap.is-static:hover { background: var(--surface); border-color: var(--line-strong); }
+.ruban-cap.is-dim { opacity: .35; }
+.ruban-cap-code { font-family: var(--font-mono); font-size: .74rem; font-weight: 700; color: var(--water); white-space: nowrap; }
+.ruban-cap.has-ref .ruban-cap-code::after { content: " ↗"; font-size: .7rem; opacity: .7; }
+.ruban-cap-title { font-size: .78rem; line-height: 1.3; }
+
+/* Tableau détaillé */
+.ruban-table-wrap { overflow-x: auto; }
+.ruban-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.ruban-table th, .ruban-table td { text-align: left; padding: .45rem .55rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ruban-table thead th { background: var(--surface-alt); color: var(--moss-dark); font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; position: sticky; top: 0; }
+.ruban-table tbody tr:hover { background: var(--surface-alt); }
+.ruban-td-sem { font-weight: 700; color: var(--moss-dark); white-space: nowrap; }
+.ruban-cap-link { border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: .82rem; padding: 0; }
+.ruban-cap-link:hover { color: var(--water); text-decoration: underline; }
+.ruban-cap-link.has-ref strong { color: var(--water); }
+.ruban-mark { background: var(--amber-soft); color: #6b4f12; padding: 0 .2rem; border-radius: 3px; font-weight: 700; }
+
+/* Modale de détail capacité */
+.ruban-cap-modal { max-width: 520px; }
+.ruban-cap-modal-body { padding: var(--sp-1) 0; }
+.ruban-cap-context { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.ruban-cap-dl { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .8rem; margin: 0; }
+.ruban-cap-dl dt { font-weight: 700; color: var(--moss-dark); font-size: .82rem; }
+.ruban-cap-dl dd { margin: 0; font-size: .86rem; }
+
+@media (max-width: 1080px) {
+  .ruban-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .ruban-grid { grid-template-columns: 1fr; }
+}
+
+/* Ruban — édition des affectations (enseignants / évaluateurs) */
+.ruban-cap-plain strong { color: var(--ink); }
+.ruban-edit {
+  width: 100%; min-width: 90px; border: 1px solid transparent; background: transparent;
+  border-radius: var(--r-sm); padding: .2rem .35rem; font: inherit; font-size: .82rem; color: var(--ink);
+}
+.ruban-edit:hover { border-color: var(--line); background: var(--surface-alt); }
+.ruban-edit:focus { outline: 0; border-color: var(--water); background: var(--surface); box-shadow: 0 0 0 2px var(--water-soft); }
+.ruban-table tr.is-modified { background: var(--amber-soft); }
+.ruban-table tr.is-modified td { border-bottom-color: #e7d39e; }
+.ruban-td-reset { width: 2rem; text-align: center; }
+.ruban-reset {
+  border: 0; background: transparent; color: var(--clay); cursor: pointer; font-size: 1rem; line-height: 1;
+  border-radius: var(--r-sm); padding: .1rem .3rem;
+}
+.ruban-reset:hover { background: rgba(0,0,0,.06); }
+.ruban-edit-hint { margin-top: .6rem; }
+
+/* ---------- Lot E — Frais de déplacement ---------- */
+.checkbox-inline { display: flex; align-items: center; gap: .5rem; font-size: .9rem; cursor: pointer; }
+.checkbox-inline input { width: auto; margin: 0; }
+.checkbox-inline.span-full { grid-column: 1 / -1; }
+/* Lot T(a) — case « déplacement » discrète : plus petite et atténuée, avec un
+   sous-libellé encore plus effacé. */
+.checkbox-inline.checkbox-discreet { font-size: .78rem; color: var(--muted); }
+.checkbox-inline.checkbox-discreet input { transform: scale(.9); }
+.checkbox-inline.checkbox-discreet small { color: var(--muted); opacity: .75; font-size: .92em; }
+/* Ligne compacte : Salle/lieu + Couleur de la séance + case Déplacement alignées. */
+.session-inline-row { display: flex; gap: var(--sp-3); align-items: flex-end; flex-wrap: wrap; }
+.session-inline-row > label { flex: 0 1 auto; margin: 0; }
+.session-inline-row > label:first-child { flex: 1 1 12rem; }
+.session-inline-row .checkbox-inline { flex: 1 1 13rem; padding-bottom: .4rem; }
+.page-title-actions { display: flex; align-items: center; gap: var(--sp-2); }
+.empty-hint { color: var(--muted); font-style: italic; padding: var(--sp-4); text-align: center; }
+
+.frais-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.frais-filters { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+.frais-filters label { display: flex; flex-direction: column; font-size: .78rem; color: var(--muted); gap: .2rem; }
+.frais-export { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; }
+.frais-export .meta { margin-right: .3rem; }
+
+.frais-totals { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-bottom: var(--sp-2); font-size: .92rem; }
+.frais-table-wrap { }
+.frais-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.frais-table th, .frais-table td { padding: .5rem .6rem; border-bottom: 1px solid var(--line); text-align: left; }
+.frais-table thead th { background: var(--surface-alt); font-size: .74rem; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); border-bottom: 1px solid var(--line-strong); }
+.frais-table td.num, .frais-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.frais-table tbody tr[data-edit-deplacement] { cursor: pointer; }
+.frais-table tbody tr:hover { background: var(--moss-soft); }
+.frais-row-actions { text-align: right; width: 2.4rem; }
+.frais-link { opacity: .7; font-size: .8rem; }
+
+.frais-status { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .74rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.frais-status.is-todo { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
+.frais-status.is-progress { background: var(--water-soft); color: var(--water); border-color: var(--water); }
+.frais-status.is-done { background: var(--success-soft); color: var(--success); border-color: var(--moss-line); }
+
+.frais-line-total { margin: var(--sp-3) 0 0; font-size: .95rem; }
+.frais-line-total strong { font-size: 1.05rem; color: var(--moss-dark); }
+
+/* Badge du panneau Frais (visible même replié) */
+.frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); }
+.frais-badge.has-pending { color: #fff; background: var(--amber); border-radius: 999px; padding: .1rem .55rem; }
+.frais-panel .frais-toolbar { margin-top: var(--sp-2); }
+
+/* ---------- Lot F — édition composition d'UE (Ruban) ---------- */
+.ruban-ue { position: relative; }
+/* Le liseré gauche est réservé au code semestre/période (harmonisation) ;
+   une UE éditée ne le colore plus en ambré. */
+.ruban-ue-head { padding-right: 1.6rem; }
+.ruban-ue-edit {
+  position: absolute; top: .4rem; right: .4rem; border: 0; background: transparent; cursor: pointer;
+  color: var(--muted); font-size: .95rem; line-height: 1; padding: .15rem .3rem; border-radius: var(--r-sm);
+}
+.ruban-ue-edit:hover { background: var(--moss-soft); color: var(--moss-dark); }
+.ruban-cap-empty { margin: .2rem 0 0; font-style: italic; }
+.ruban-reset { border: 0; background: transparent; color: var(--clay); cursor: pointer; font-size: 1rem; padding: .1rem .3rem; border-radius: var(--r-sm); }
+.ruban-reset:hover { background: rgba(0,0,0,.06); }
+
+.ue-caps-head, .ue-cap-row { display: grid; grid-template-columns: 5.5rem 1.7fr 1fr 1fr 1fr 2rem; gap: .4rem; align-items: center; }
+.ue-caps-head { margin: .4rem 0 .3rem; font-size: .7rem; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); font-weight: 700; }
+.ue-caps-rows { display: flex; flex-direction: column; gap: .4rem; max-height: 52vh; overflow-y: auto; }
+.ue-cap-row input { width: 100%; box-sizing: border-box; }
+.ue-cap-remove { justify-self: center; }
+@media (max-width: 720px) {
+  .ue-caps-head { display: none; }
+  .ue-cap-row { grid-template-columns: 1fr 1fr; }
+}
+
+/* Mots-clés dans les encarts « séances à placer » (tableau de bord + planning hebdo) */
+.row-keywords { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }
+.kw-chip {
+  display: inline-flex; align-items: center; font-size: .66rem; font-weight: 600;
+  padding: .04rem .4rem; border-radius: 999px; background: var(--amber-soft); color: #7a5b16;
+  border: 1px solid #e7d39e; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---------- Lot L — sélecteur de couleur de séquence ---------- */
+.seq-color-field { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.seq-color-field input[type="color"] {
+  width: 44px; height: 30px; padding: 2px; cursor: pointer;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface);
+}
+.seq-color-field .meta { flex: 1 1 12rem; }
+
+/* ---------- Lot K — détail d'une semaine thématique / EIL (Conception) ---------- */
+.eil-detail-group { margin-top: var(--sp-3); border-top: 1px dashed var(--line-strong); padding-top: var(--sp-2); }
+.eil-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.eil-detail-head .entity-level-label {
+  background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
+  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.eil-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
+
+/* Séances rattachées à l'UE sans séquence : même structure que le bloc EIL,
+   badge neutre pour les distinguer des semaines thématiques. */
+.loose-detail-group { margin-top: var(--sp-3); border-top: 1px dashed var(--line-strong); padding-top: var(--sp-2); }
+.loose-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.loose-detail-head .entity-level-label {
+  background: var(--line); color: var(--ink-soft); border: 1px solid var(--line-strong);
+  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em; font-style: normal;
+}
+.loose-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
+
+/* Conception — glisser-déposer des séances (rattacher à une séquence / détacher) */
+#ueTree .session-card[draggable="true"] { cursor: grab; }
+#ueTree .session-card.is-dragging { opacity: .45; }
+.entity-sequence.seq-drop-hover { outline: 2px dashed var(--ue-color, var(--moss)); outline-offset: 2px; }
+.loose-detail-group.loose-drop-hover { background: color-mix(in srgb, var(--moss) 9%, transparent); border-radius: var(--r-md); }
+.loose-empty { display: none; } /* bloc vide masqué hors glissement */
+#ueTree.dragging-session .loose-empty { display: block; }
+.loose-empty-hint {
+  margin: 0; padding: var(--sp-2) var(--sp-3); text-align: center;
+  border: 1px dashed var(--line-strong); border-radius: var(--r-md);
+  color: var(--ink-soft); font-size: .82rem; font-style: italic;
+}
+
+/* Lot K — encart « adopter une séquence » dans la contrainte thématique */
+.eil-adopt { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px dashed var(--amber); border-radius: var(--r-md); background: var(--amber-soft); }
+.eil-adopt .form-help { margin: 0 0 var(--sp-2); }
+.eil-adopt .inline-field { align-items: end; gap: var(--sp-2); }
+
+/* Lot L — créneaux du samedi (rares) : ligne « Samedi » conditionnelle en bas du
+   planning hebdo + alerte en tête de colonne dans la frise. Aucune 6e colonne. */
+.saturday-row td { height: auto; padding: .3rem .4rem; background: var(--surface-alt); border-top: 2px solid var(--border, #d0d4c0); }
+.saturday-legend { font-weight: 700; font-size: .78rem; color: var(--ink); white-space: nowrap; }
+/* NB : pas de display:flex sur le <td> (ça neutraliserait le colspan et rétrécirait
+   la cellule sous le lundi). On garde une cellule de tableau normale (colspan actif =
+   toute la largeur lundi→vendredi) et les pastilles coulent en ligne + retour auto. */
+.saturday-cell { text-align: left; line-height: 1.9; }
+.saturday-cell > * { margin-right: .4rem; vertical-align: middle; }
+.saturday-session {
+  display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .55rem;
+  border-radius: 999px; font-size: .74rem; font-weight: 600; color: var(--ink);
+  background: color-mix(in srgb, var(--seq-color, var(--moss)) 34%, transparent);
+  border: 1px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent);
+}
+.saturday-session .unplace-btn { position: static; }
+.timeline-week-head.has-sat { box-shadow: inset 0 -2px 0 #2f6f8f; }
+.timeline-week-sat { display: block; font-size: .56rem; font-style: normal; font-weight: 700; color: #2f6f8f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Lot M — Réunions (journal du Tableau de bord) ---- */
+.form-grid .span-full { grid-column: 1 / -1; }
+.reunions-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
+.reunions-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.reunion-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .75rem; background: var(--surface-alt); cursor: pointer; }
+.reunion-card:hover { border-color: var(--moss-line); background: var(--moss-soft); }
+.reunion-card-head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.reunion-date { font-weight: 600; font-family: var(--font-mono); font-size: .82rem; }
+.reunion-lieu { color: var(--muted); font-size: .85rem; }
+.reunion-lieu::before { content: "· "; }
+.reunion-vehicle { font-size: .78rem; color: var(--moss); font-weight: 600; white-space: nowrap; }
+.reunion-card .reunion-edit { margin-left: auto; }
+.reunion-participants { margin: .35rem 0 0; font-size: .85rem; }
+.reunion-label { color: var(--muted); }
+.reunion-sujets { margin: .3rem 0 0; font-size: .85rem; white-space: pre-wrap; }
+
+/* ---- Écran de connexion (avant que l'app ne soit visible) ----
+   Réutilise les tokens du système de design ci-dessus plutôt que des couleurs
+   ad hoc, pour que l'écran de connexion ait le même aspect que le reste. */
+.auth-shell {
+  max-width: 420px;
+  margin: var(--sp-8) auto;
+  padding: 0 var(--sp-4);
+}
+.auth-backlink {
+  display: inline-block;
+  margin-bottom: var(--sp-4);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .85rem;
+}
+.auth-backlink:hover { color: var(--ink); }
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--sp-6);
+}
+.auth-card h2 { margin-top: 0; font-family: var(--font-display); }
+.auth-card .hint { color: var(--muted); font-size: .88rem; }
+.auth-card .erreur { color: var(--danger); font-size: .88rem; margin-top: var(--sp-2); }
+.auth-card label { display: block; margin: var(--sp-3) 0; font-weight: 600; font-size: .92rem; }
