@@ -222,6 +222,28 @@ input::placeholder, textarea::placeholder { color: #9aa494; }
   gap: .2rem var(--sp-1);
   justify-content: center;
 }
+/* Indicateur de connexion, discret, dans le bandeau titre : remplace la
+   grande carte "Connecté" qui s'affichait au-dessus de toute l'app (peu
+   ergonomique — retour utilisateur). */
+.auth-compact {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .82rem;
+  color: #dcece0;
+  white-space: nowrap;
+}
+.auth-compact .lien {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 .2rem;
+  font-size: .95em;
+  opacity: .85;
+}
+.auth-compact .lien:hover { opacity: 1; color: #fff; }
 .tab {
   background: transparent;
   border: 0;

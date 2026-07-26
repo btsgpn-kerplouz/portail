@@ -20,6 +20,8 @@ const DOMAINE_EMAIL = "@organisation-cours.local";
 
 const elCarte = document.getElementById("auth-card");
 const elAppShell = document.getElementById("app-shell");
+const elAuthShell = document.querySelector(".auth-shell");
+const elAuthCompact = document.getElementById("auth-compact");
 
 let sb = null;
 let utilisateurCourant = null; // { user, profil } | null
@@ -106,6 +108,8 @@ async function connecterOuCreer(nom, prenom, motDePasse) {
 }
 
 function afficherFormulaire(erreur) {
+  elAuthShell.hidden = false;
+  elAuthCompact.innerHTML = "";
   elCarte.innerHTML = `
     <h2>Connexion</h2>
     <p class="hint">L'identifiant est construit automatiquement à partir du nom et du prénom.
@@ -163,13 +167,16 @@ async function modifierInitiales(nouvellesInitiales) {
   return data;
 }
 
+// Après connexion, la grande carte de connexion disparaît complètement (elle
+// prenait toute la largeur au-dessus du bandeau titre — retour utilisateur) :
+// il ne reste qu'un indicateur discret dans le bandeau, à côté des onglets.
 function afficherEtatActif(profil) {
-  elCarte.innerHTML = `
-    <h2>Connecté</h2>
-    <p>Bonjour <strong>${profil.prenom} ${profil.nom}</strong>
-      (<span id="initiales-affichees">${profil.initiales}</span>
-      <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>).</p>
-    <button id="btn-deconnexion" class="secondary">Se déconnecter</button>
+  elAuthShell.hidden = true;
+  elCarte.innerHTML = "";
+  elAuthCompact.innerHTML = `
+    <span id="initiales-affichees" title="${escapeAttrLocal(profil.prenom)} ${escapeAttrLocal(profil.nom)}">${escapeAttrLocal(profil.initiales)}</span>
+    <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>
+    <button type="button" id="btn-deconnexion" class="lien" title="Se déconnecter">Déconnexion</button>
   `;
   document.getElementById("btn-modifier-initiales").addEventListener("click", () => {
     const actuelles = utilisateurCourant.profil.initiales;
@@ -184,7 +191,11 @@ function afficherEtatActif(profil) {
   window.OC_APP.demarrer();
 }
 
+// Compte créé mais pas encore activé : l'app reste inaccessible (RLS), donc
+// la page dédiée reste pertinente ici — rien à cacher derrière un indicateur.
 function afficherEtatEnAttente(profil) {
+  elAuthShell.hidden = false;
+  elAuthCompact.innerHTML = "";
   elCarte.innerHTML = `
     <h2>Compte en attente d'activation</h2>
     <p>Bonjour <strong>${profil.prenom} ${profil.nom}</strong>. Le compte a bien été créé, mais
@@ -193,6 +204,10 @@ function afficherEtatEnAttente(profil) {
   `;
   brancherDeconnexion();
   elAppShell.hidden = true;
+}
+
+function escapeAttrLocal(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
 function afficherEtat() {
