@@ -37,18 +37,26 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
    2026-2027, générées par le même algorithme que le front
    (`buildAcademicWeeks()` dans `app.js`) pour que les ids concordent au
    caractère près.
-8. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
-   dans une transaction annulée (`rollback`), ne modifie rien en base.
+8. `006-constraints-contenu.sql` — colonne `contenu jsonb` sur `oc_constraints`
+   (texte libre pour les contraintes, même principe que les autres tables).
+9. `007-alias-initiales.sql` — table `oc_alias_initiales` (jetons `teacher`
+   legacy qui ne correspondent pas exactement aux initiales d'un compte).
+10. `008-identifiant-non-unique.sql` — l'`identifiant` n'a plus besoin d'être
+    unique depuis que la connexion se fait par e-mail (voir plus bas).
+11. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+    dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth
 
 Dans **Authentication → Providers → Email**, désactiver **« Confirm email »**.
 
-Pourquoi : l'étape 2 (authentification, à venir) reprend le modèle PhytoScope
-— `signInWithPassword`, et en cas d'échec `signUp` automatique à la première
-connexion. Si la confirmation par e-mail reste active, ce `signUp` ne connecte
-pas immédiatement l'utilisateur (email de confirmation jamais reçu, l'adresse
-étant une adresse synthétique `@organisation-cours.local`).
+Pourquoi : `js/auth.js` fait `signInWithPassword`, et en cas d'échec `signUp`
+automatique à la première connexion, avec l'adresse e-mail **professionnelle
+réelle** saisie par l'enseignant. Si la confirmation par e-mail reste active,
+ce `signUp` ne connecte pas immédiatement l'utilisateur (il faudrait un écran
+« vérifiez votre boîte mail », pas encore construit) — le garde-fou réel contre
+les inscriptions non désirées reste `actif = false` par défaut, pas la
+confirmation d'e-mail.
 
 ## Activer un compte enseignant
 
@@ -59,13 +67,28 @@ le **SQL Editor**, en tant que `postgres` (donc RLS non appliquée, pas besoin
 de la clé `service_role`) :
 
 ```sql
-update oc_enseignants set actif = true where identifiant = 'diraisonm';
+update oc_enseignants set actif = true
+where user_id = (select id from auth.users where email = 'prenom.nom@etablissement.fr');
 ```
 
-(remplacer par l'`identifiant` réel de l'enseignant concerné). Le flag `actif`
-est verrouillé par un trigger côté client (un enseignant ne peut pas se
+(remplacer par l'adresse e-mail réelle de l'enseignant concerné). Le flag
+`actif` est verrouillé par un trigger côté client (un enseignant ne peut pas se
 l'attribuer lui-même) — seule cette voie (SQL Editor / `service_role`)
 fonctionne.
+
+## Mot de passe oublié
+
+Autonome depuis `008` : chaque enseignant peut cliquer « Mot de passe oublié ? »
+sur l'écran de connexion (déclenche `resetPasswordForEmail`, lien envoyé par
+Supabase à l'adresse saisie). Aucune intervention de Martin nécessaire dans le
+cas courant. En dépannage seulement, un mot de passe peut aussi être forcé
+directement en SQL Editor :
+
+```sql
+update auth.users
+set encrypted_password = crypt('nouveau-mot-de-passe', gen_salt('bf'))
+where email = 'prenom.nom@etablissement.fr';
+```
 
 ## Ce qui n'est PAS dans ce dossier
 
