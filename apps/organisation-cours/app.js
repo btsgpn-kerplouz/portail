@@ -419,14 +419,14 @@ async function loadData() {
   setSaveStatus('Données chargées');
 }
 
-async function saveData(message = 'Enregistré', { rerender = true } = {}) {
+async function saveData(message = 'Enregistré', { rerender = true, forcer = false } = {}) {
   // Rendu optimiste : l'état local fait foi immédiatement, l'enregistrement
   // réseau (Supabase) arrive ensuite — sinon chaque action figerait l'écran
   // le temps de l'aller-retour.
   if (rerender) renderAll(false);
   setSaveStatus('Sauvegarde…');
   state.version = '4.2.0';
-  const resultat = await window.OC_SYNC.enregistrer(state);
+  const resultat = await window.OC_SYNC.enregistrer(state, { forcer });
   state.lastSavedAt = resultat.lastSavedAt;
   // Étape 4 — indicateur persistant : un échec (réseau coupé, droits refusés…)
   // ne doit pas s'effacer après 2,4s comme un message de succès normal, sinon
@@ -436,6 +436,9 @@ async function saveData(message = 'Enregistré', { rerender = true } = {}) {
   if (resultat.erreurs?.length) {
     const suffixe = resultat.erreurs.length > 1 ? ` (+${resultat.erreurs.length - 1} autre(s))` : '';
     setSaveStatus(`⚠ Non enregistré : ${resultat.erreurs[0]}${suffixe}`, { persistant: true });
+    // Le bandeau ne montre que le premier message + un compteur (place limitée) —
+    // la liste complète va dans la console pour le diagnostic.
+    console.error('[organisation-cours] erreurs de sauvegarde :', resultat.erreurs);
   } else {
     setSaveStatus(message);
   }
@@ -842,7 +845,15 @@ async function importDataFromFile(file) {
   selectedWeek = state.weeks.find(w => w.id === selectedWeek)?.id || state.weeks[0]?.id || selectedWeek;
   hydrateSelectors();
   try {
-    await saveData('Données importées');
+    // forcer: true — un import promet de REMPLACER les données en ligne (cf.
+    // confirm() ci-dessus). Sans ce drapeau, une entité dont l'empreinte
+    // coïncide avec le snapshot en mémoire est sautée à l'écriture — y
+    // compris si elle a été supprimée de la base entre-temps (SQL Editor,
+    // autre session) sans rechargement de page. Un import doit réécrire
+    // inconditionnellement, pour garantir que chaque UE référencée par une
+    // séquence existe réellement avant l'écriture des séquences (sinon :
+    // violation de clé étrangère "oc_sequences_ue_id_fkey" et assimilées).
+    await saveData('Données importées', { forcer: true });
   } catch (e) {
     setSaveStatus('Import affiché, mais erreur d’enregistrement');
   }

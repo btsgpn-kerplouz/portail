@@ -48,6 +48,35 @@ import * as enseignants from "./enseignants.js";
 const CLES_PERSO = ["todoNotes", "devNotes", "deplacements", "reunions"];
 const CLES_PARTAGEES = ["weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
 
+// Bug trouvé le 27/07/2026 (import d'un gros volume, ~150 écritures dans le
+// même enregistrer()) : envoyées TOUTES en une seule fois via Promise.all,
+// une bonne partie revenait en 403 "new row violates row-level security
+// policy" — y compris pour des lignes déjà écrites avec succès juste avant
+// (mêmes droits, même utilisateur). Le lot le plus TÔT dans l'ordre
+// (constraints, premier type traité) échouait intégralement, les suivants
+// partiellement : signature d'une salve de requêtes concurrentes trop large
+// pour le pool de connexions Supabase (offre gratuite), pas d'une erreur de
+// logique — RLS retourne ce message quand le contexte d'authentification
+// d'une requête individuelle n'a pas pu s'établir correctement sous charge.
+// Limiter le nombre de requêtes HTTP simultanées par lot résout ceci sans
+// perdre la résilience "un échec isolé n'affecte pas les autres lignes" (une
+// grosse upsert unique par tableau serait atomique et perdrait cette
+// propriété — cf. règles de conception en tête de fichier).
+const CONCURRENCE_MAX = 6;
+
+async function executerAvecLimite(items, tache, limite = CONCURRENCE_MAX) {
+  const resultats = new Array(items.length);
+  let curseur = 0;
+  async function worker() {
+    while (curseur < items.length) {
+      const i = curseur++;
+      resultats[i] = await tache(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limite, items.length) }, worker));
+  return resultats;
+}
+
 // table de jointure + colonne id par type d'entité porteuse d'un `teacher`.
 const JOINTURES_TEACHER = {
   ues: { table: "oc_ue_enseignants", colonne: "ue_id" },
@@ -71,6 +100,17 @@ async function utilisateurId() {
 let snapshot = creerSnapshotVide();
 // ids explicitement marqués supprimés par app.js, en attente d'un DELETE réussi.
 let registreSuppression = creerRegistreVide();
+// Bug trouvé le 27/07/2026 : ids RÉELLEMENT présents en base au dernier
+// charger(), constaté directement sur les lignes reçues de Supabase — à ne
+// JAMAIS confondre avec `snapshot`, qui fige l'empreinte de `state` côté
+// app.js APRÈS normalizeData()/mergeReferenceUes(). Cette dernière fonction
+// reconstruit en mémoire les 11 UE du référentiel officiel MÊME quand la
+// table oc_ues est vide (aucune n'a jamais été écrite) : si `estNouveau`
+// s'appuyait sur `snapshot`, ces UE "connues côté client" ne recevraient
+// jamais `cree_par` à l'écriture, et la policy d'INSERT (qui l'exige) les
+// rejetterait indéfiniment — exactement le bug observé (seule l'UE au id
+// non référentiel, donc absente de cette reconstruction, s'enregistrait).
+let idsExistants = creerRegistreVide();
 
 function creerSnapshotVide() {
   return {
@@ -159,6 +199,7 @@ window.OC_SYNC = {
     // réutiliserait par erreur l'état d'un précédent utilisateur.
     snapshot = creerSnapshotVide();
     registreSuppression = creerRegistreVide();
+    idsExistants = creerRegistreVide();
 
     const s = await client();
     await enseignants.rafraichir();
@@ -182,6 +223,14 @@ window.OC_SYNC = {
     }
     const [weeks, ues, sequences, sessions, constraints, blocsPerso, blocsPartages, joinUes, joinSequences, joinSessions] =
       resultats.map((r) => r.data || []);
+
+    // Constaté sur les lignes BRUTES reçues de Supabase, avant toute
+    // reconstruction côté app.js (mergeReferenceUes et consorts) — voir le
+    // commentaire sur la déclaration d'idsExistants ci-dessus.
+    idsExistants.ues = new Set(ues.map((r) => r.id));
+    idsExistants.sequences = new Set(sequences.map((r) => r.id));
+    idsExistants.sessions = new Set(sessions.map((r) => r.id));
+    idsExistants.constraints = new Set(constraints.map((r) => r.id));
 
     const blocsPersoParCle = new Map(blocsPerso.map((r) => [r.cle, r.contenu]));
     const blocsPartagesParCle = new Map(blocsPartages.map((r) => [r.cle, r.contenu]));
@@ -226,7 +275,18 @@ window.OC_SYNC = {
     registreSuppression[type]?.add(id);
   },
 
-  async enregistrer(state) {
+  // `forcer` (étape 4bis — bug d'import trouvé le 27/07/2026) : réécrit
+  // chaque entité même si son empreinte est identique à celle du snapshot.
+  // Nécessaire pour importDataFromFile(), qui promet à l'utilisateur que
+  // l'import REMPLACE les données en ligne : sans ce drapeau, une entité dont
+  // l'empreinte "semble" déjà connue est purement et simplement SAUTÉE — y
+  // compris si elle a disparu de la table entre-temps (reset via le SQL
+  // Editor, ou une autre session, sans rechargement de page). Une ue ainsi
+  // sautée n'existe alors plus réellement en base, et toute séquence qui la
+  // référence échoue avec une violation de clé étrangère à l'écriture
+  // suivante. `estNouveau` (donc `cree_par`) n'est PAS affecté par `forcer` :
+  // seul le fait d'ÉCRIRE est forcé, pas l'attribution de la création.
+  async enregistrer(state, { forcer = false } = {}) {
     const erreurs = [];
     let s;
     try {
@@ -247,10 +307,10 @@ window.OC_SYNC = {
       erreurs.push("Liste des enseignants indisponible : " + (e.message || "erreur réseau."));
     }
 
-    await ecrireEntites(s, uid, "constraints", "oc_constraints", SPEC_CONSTRAINTS, state.constraints, erreurs);
-    await ecrireEntites(s, uid, "ues", "oc_ues", SPEC_UES, state.ues, erreurs);
-    await ecrireEntites(s, uid, "sequences", "oc_sequences", SPEC_SEQUENCES, state.sequences, erreurs);
-    await ecrireEntites(s, uid, "sessions", "oc_sessions", SPEC_SESSIONS, state.sessions, erreurs);
+    await ecrireEntites(s, uid, "constraints", "oc_constraints", SPEC_CONSTRAINTS, state.constraints, erreurs, forcer);
+    await ecrireEntites(s, uid, "ues", "oc_ues", SPEC_UES, state.ues, erreurs, forcer);
+    await ecrireEntites(s, uid, "sequences", "oc_sequences", SPEC_SEQUENCES, state.sequences, erreurs, forcer);
+    await ecrireEntites(s, uid, "sessions", "oc_sessions", SPEC_SESSIONS, state.sessions, erreurs, forcer);
 
     // Jointures `teacher` : indépendant du diff des lignes ci-dessus (cf.
     // en-tête du fichier) — tourne à chaque enregistrement, pas seulement
@@ -266,9 +326,9 @@ window.OC_SYNC = {
     await supprimerRegistre(s, "constraints", "oc_constraints", erreurs);
 
     await ecrireBlocs(s, "oc_blocs_perso", CLES_PERSO, snapshot.blocsPerso, state,
-      (cle, valeur) => ({ user_id: uid, cle, contenu: valeur ?? null }), erreurs);
+      (cle, valeur) => ({ user_id: uid, cle, contenu: valeur ?? null }), erreurs, forcer);
     await ecrireBlocs(s, "oc_blocs_partages", CLES_PARTAGEES, snapshot.blocsPartages, state,
-      (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid }), erreurs);
+      (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid }), erreurs, forcer);
 
     // En cas d'échec (même partiel), on ne fait pas croire à une sauvegarde
     // fraîche : l'horodatage affiché reste celui du dernier succès réel.
@@ -276,7 +336,7 @@ window.OC_SYNC = {
   },
 };
 
-async function ecrireEntites(s, uid, type, table, spec, entites, erreurs) {
+async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer = false) {
   const snap = snapshot[type];
   const avecTeacher = Boolean(JOINTURES_TEACHER[type]);
   const aEcrire = [];
@@ -287,28 +347,40 @@ async function ecrireEntites(s, uid, type, table, spec, entites, erreurs) {
     // celle figée par memoriserSnapshot(), donc la comparaison reste valable
     // même si separerTeacher() en fait une copie amputée juste après.
     const fp = empreinte(entite);
-    if (snap.get(entite.id) !== fp) {
+    if (forcer || snap.get(entite.id) !== fp) {
       const source = avecTeacher ? separerTeacher(entite).entite : entite;
-      aEcrire.push({ id: entite.id, fp, estNouveau: !snap.has(entite.id), colonnes: versLigne(spec, source) });
+      aEcrire.push({ id: entite.id, fp, estNouveau: !idsExistants[type].has(entite.id), colonnes: versLigne(spec, source) });
     }
   }
   if (!aEcrire.length) return;
-  await Promise.all(aEcrire.map(async (item) => {
-    const ligne = { id: item.id, ...item.colonnes };
-    if (item.estNouveau) ligne.cree_par = uid;
+  await executerAvecLimite(aEcrire, async (item) => {
     try {
+      // Bug trouvé le 27/07/2026 : un .upsert() unique pour "créer OU
+      // mettre à jour" ne convient pas ici. Sous RLS, `insert ... on
+      // conflict do update` reste soumis à la policy d'INSERT (qui exige
+      // `cree_par = auth.uid()`) même quand la ligne existe déjà et que
+      // l'issue réelle est une mise à jour inoffensive — omettre `cree_par`
+      // (le cas normal pour une ligne existante, volontairement, pour ne
+      // pas écraser le vrai créateur) faisait alors rejeter jusqu'à des
+      // lignes déjà correctement enregistrées. Séparer insert (nouvelle
+      // ligne, cree_par envoyé) et update (ligne existante, cree_par jamais
+      // touché) lève l'ambiguïté : chacun n'est jugé que par sa propre
+      // policy.
       // .select('id') est ce qui permet de distinguer un succès d'un refus
-      // SILENCIEUX de la RLS : sans lui, upsert() ne renvoie pas d'erreur
-      // quand la policy exclut la ligne (elle est simplement filtrée, comme
-      // un WHERE), donc "pas d'erreur" ne veut pas dire "écrit".
-      const { data, error } = await s.from(table).upsert(ligne).select("id");
+      // SILENCIEUX de la RLS : sans lui, une écriture filtrée par la policy
+      // ne renvoie pas d'erreur (comme un WHERE qui ne matche rien), donc
+      // "pas d'erreur" ne veut pas dire "écrit".
+      const requete = item.estNouveau
+        ? s.from(table).insert({ id: item.id, ...item.colonnes, cree_par: uid }).select("id")
+        : s.from(table).update(item.colonnes).eq("id", item.id).select("id");
+      const { data, error } = await requete;
       if (error) erreurs.push(`${table} #${item.id} : ${error.message}`);
       else if (!data?.length) erreurs.push(`${table} #${item.id} : modification refusée (droits insuffisants ?).`);
-      else snap.set(item.id, item.fp);
+      else { snap.set(item.id, item.fp); idsExistants[type].add(item.id); }
     } catch (e) {
       erreurs.push(`${table} #${item.id} : ${e.message || "erreur réseau."}`);
     }
-  }));
+  });
 }
 
 const SNAPSHOT_TEACHER_PAR_TYPE = { ues: "teacherUes", sequences: "teacherSequences", sessions: "teacherSessions" };
@@ -317,7 +389,7 @@ async function supprimerRegistre(s, type, table, erreurs) {
   const ids = [...registreSuppression[type]];
   if (!ids.length) return;
   const cleTeacher = SNAPSHOT_TEACHER_PAR_TYPE[type];
-  await Promise.all(ids.map(async (id) => {
+  await executerAvecLimite(ids, async (id) => {
     try {
       const { error } = await s.from(table).delete().eq("id", id);
       if (error) {
@@ -330,6 +402,7 @@ async function supprimerRegistre(s, type, table, erreurs) {
         // distinguer proprement ce cas une fois le partage réel en place.
         registreSuppression[type].delete(id);
         snapshot[type].delete(id);
+        idsExistants[type]?.delete(id);
         // Les jointures teacher de l'id supprimé disparaissent en cascade
         // côté base (cf. schema.sql) : juste du ménage côté snapshot ici.
         if (cleTeacher) snapshot[cleTeacher].delete(id);
@@ -337,7 +410,7 @@ async function supprimerRegistre(s, type, table, erreurs) {
     } catch (e) {
       erreurs.push(`${table} #${id} (suppression) : ${e.message || "erreur réseau."}`);
     }
-  }));
+  });
 }
 
 // Fait converger les tables oc_*_enseignants vers ce qu'implique la chaîne
@@ -356,7 +429,7 @@ async function synchroniserEnseignants(s, table, colonne, snap, entites, erreurs
     if (aAjouter.length || aRetirer.length) taches.push({ id: entite.id, voulu, aAjouter, aRetirer });
   }
   if (!taches.length) return;
-  await Promise.all(taches.map(async (t) => {
+  await executerAvecLimite(taches, async (t) => {
     try {
       if (t.aAjouter.length) {
         // Un INSERT refusé par la RLS (with check) lève toujours une erreur
@@ -378,18 +451,18 @@ async function synchroniserEnseignants(s, table, colonne, snap, entites, erreurs
     } catch (e) {
       erreurs.push(`${table} #${t.id} : ${e.message || "erreur réseau."}`);
     }
-  }));
+  });
 }
 
-async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs) {
+async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs, forcer = false) {
   const aEcrire = [];
   for (const cle of cles) {
     const valeur = state[cle];
     const fp = empreinte(valeur ?? null);
-    if (snap.get(cle) !== fp) aEcrire.push({ cle, valeur, fp });
+    if (forcer || snap.get(cle) !== fp) aEcrire.push({ cle, valeur, fp });
   }
   if (!aEcrire.length) return;
-  await Promise.all(aEcrire.map(async ({ cle, valeur, fp }) => {
+  await executerAvecLimite(aEcrire, async ({ cle, valeur, fp }) => {
     try {
       const { data, error } = await s.from(table).upsert(construireLigne(cle, valeur)).select();
       if (error) erreurs.push(`${table} « ${cle} » : ${error.message}`);
@@ -398,5 +471,5 @@ async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs
     } catch (e) {
       erreurs.push(`${table} « ${cle} » : ${e.message || "erreur réseau."}`);
     }
-  }));
+  });
 }
