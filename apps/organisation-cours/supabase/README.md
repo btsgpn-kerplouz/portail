@@ -58,7 +58,11 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     ("infinite recursion detected in policy for relation oc_reunions"), même
     cause que `005` (les policies SELECT de `oc_reunions` et
     `oc_reunion_enseignants` s'interrogent mutuellement).
-14. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+14. `012-emails-autorises.sql` — pour la mise en ligne V5.0 : seule une
+    adresse e-mail présente dans une liste blanche peut créer un profil
+    `oc_enseignants` (donc utiliser l'app) ; voir « Liste blanche d'e-mails
+    autorisés » plus bas pour la gérer.
+15. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
     dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth
@@ -103,6 +107,35 @@ directement en SQL Editor :
 update auth.users
 set encrypted_password = crypt('nouveau-mot-de-passe', gen_salt('bf'))
 where email = 'prenom.nom@etablissement.fr';
+```
+
+## Liste blanche d'e-mails autorisés (mise en ligne V5.0)
+
+Depuis `012-emails-autorises.sql`, seule une adresse e-mail présente dans
+`oc_emails_autorises` peut créer un profil `oc_enseignants` — donc utiliser
+l'app. Chaque enseignant garde son propre mot de passe (rien ne change côté
+`js/auth.js`) ; c'est la **création du compte** qui est protégée, pas un écran
+supplémentaire devant l'app. Une adresse hors liste peut encore, techniquement,
+créer un compte Supabase "brut" (`auth.users`) — mais n'obtiendra jamais de
+ligne `oc_enseignants`, donc jamais d'accès réel à quoi que ce soit.
+
+Volontairement, ce n'est **pas** un déclencheur sur `auth.users` (le schéma
+de comptes géré par Supabase, commun à tout le projet "portail" — de futures
+apps Habitats pourraient vouloir s'y inscrire librement) : le verrou reste
+local à notre propre table `oc_enseignants`, via sa policy RLS d'insertion.
+
+La liste n'est **jamais** commitée (adresses réelles = données personnelles,
+dépôt public) : à gérer exclusivement dans le **SQL Editor**, dans une
+**nouvelle requête** (pas dans `012-emails-autorises.sql` lui-même, qui ne
+contient aucune adresse) :
+
+```sql
+-- Autoriser une adresse
+insert into oc_emails_autorises (email) values (lower('prenom.nom@etablissement.fr'))
+on conflict (email) do nothing;
+
+-- Retirer une adresse (ne désactive pas un compte déjà créé : voir `actif` plus haut)
+delete from oc_emails_autorises where email = lower('prenom.nom@etablissement.fr');
 ```
 
 ## Ce qui n'est PAS dans ce dossier

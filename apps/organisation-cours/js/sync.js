@@ -117,6 +117,12 @@ function creerSnapshotVide() {
   return {
     ues: new Map(), sequences: new Map(), sessions: new Map(), constraints: new Map(), reunions: new Map(),
     blocsPerso: new Map(), blocsPartages: new Map(),
+    // Étape 8 — contrôle optimiste : `updated_at` connu de chaque clé
+    // partagée, tel que lu au dernier chargement réussi (ou après notre
+    // propre dernière écriture réussie). Sert de filtre WHERE à l'écriture
+    // (voir ecrireBlocs) pour détecter qu'un collègue a modifié la même clé
+    // entre-temps, plutôt que d'écraser silencieusement (cf. 002-blobs.sql).
+    blocsPartagesUpdatedAt: new Map(),
     // id d'entité -> Set(user_id) déjà en jointure, tel que lu au chargement.
     teacherUes: new Map(), teacherSequences: new Map(), teacherSessions: new Map(), teacherReunions: new Map(),
   };
@@ -249,6 +255,7 @@ window.OC_SYNC = {
 
     const blocsPersoParCle = new Map(blocsPerso.map((r) => [r.cle, r.contenu]));
     const blocsPartagesParCle = new Map(blocsPartages.map((r) => [r.cle, r.contenu]));
+    snapshot.blocsPartagesUpdatedAt = new Map(blocsPartages.map((r) => [r.cle, r.updated_at]));
 
     // Jointures telles que lues en base : servent à la fois à reconstruire
     // `teacher` ci-dessous ET de snapshot de départ pour enregistrer().
@@ -346,8 +353,12 @@ window.OC_SYNC = {
 
     await ecrireBlocs(s, "oc_blocs_perso", CLES_PERSO, snapshot.blocsPerso, state,
       (cle, valeur) => ({ user_id: uid, cle, contenu: valeur ?? null }), erreurs, forcer);
+    // oc_blocs_partages : contrôle optimiste (étape 8), voir ecrireBlocs et
+    // snapshot.blocsPartagesUpdatedAt — sans objet pour oc_blocs_perso, privé
+    // par construction (jamais touché que par son propre compte).
     await ecrireBlocs(s, "oc_blocs_partages", CLES_PARTAGEES, snapshot.blocsPartages, state,
-      (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid }), erreurs, forcer);
+      (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid, updated_at: new Date().toISOString() }),
+      erreurs, forcer, snapshot.blocsPartagesUpdatedAt);
 
     // En cas d'échec (même partiel), on ne fait pas croire à une sauvegarde
     // fraîche : l'horodatage affiché reste celui du dernier succès réel.
@@ -473,7 +484,14 @@ async function synchroniserEnseignants(s, table, colonne, snap, entites, erreurs
   });
 }
 
-async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs, forcer = false) {
+// `updatedAtSnap` (étape 8, seulement pour oc_blocs_partages) : quand fourni
+// et que la clé était déjà connue, l'écriture se fait via un UPDATE filtré
+// sur l'`updated_at` lu au dernier chargement plutôt qu'un upsert nu. Si un
+// collègue a réenregistré cette même clé entre-temps, la ligne en base ne
+// matche plus ce filtre : 0 ligne modifiée, on le détecte et on prévient au
+// lieu d'écraser silencieusement son écriture (dernier écrivain "bloqué",
+// pas "gagnant").
+async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs, forcer = false, updatedAtSnap = null) {
   const aEcrire = [];
   for (const cle of cles) {
     const valeur = state[cle];
@@ -483,10 +501,24 @@ async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs
   if (!aEcrire.length) return;
   await executerAvecLimite(aEcrire, async ({ cle, valeur, fp }) => {
     try {
-      const { data, error } = await s.from(table).upsert(construireLigne(cle, valeur)).select();
+      const ligne = construireLigne(cle, valeur);
+      const connu = updatedAtSnap?.get(cle);
+      let data, error;
+      if (updatedAtSnap && connu) {
+        ({ data, error } = await s.from(table).update(ligne).eq("cle", cle).eq("updated_at", connu).select());
+        if (!error && !data?.length) {
+          erreurs.push(`${table} « ${cle} » : quelqu'un d'autre a modifié cette donnée entre-temps — rechargez (⟳) avant de réessayer.`);
+          return;
+        }
+      } else {
+        ({ data, error } = await s.from(table).upsert(ligne).select());
+      }
       if (error) erreurs.push(`${table} « ${cle} » : ${error.message}`);
       else if (!data?.length) erreurs.push(`${table} « ${cle} » : modification refusée (droits insuffisants ?).`);
-      else snap.set(cle, fp);
+      else {
+        snap.set(cle, fp);
+        if (updatedAtSnap) updatedAtSnap.set(cle, data[0].updated_at);
+      }
     } catch (e) {
       erreurs.push(`${table} « ${cle} » : ${e.message || "erreur réseau."}`);
     }

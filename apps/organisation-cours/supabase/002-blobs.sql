@@ -18,8 +18,11 @@
 --                          schoolYear, weekNotes — decision Martin : notes de
 --                          semaine communes pour l'instant).
 --
--- Limite assumée : un bloc partagé est en "dernier écrivain gagnant" — cf.
--- js/sync.js (étape 3) et étape 8 (contrôle optimiste).
+-- Un bloc partagé aurait pu être en "dernier écrivain gagnant" (deux comptes
+-- réenregistrant la même clé à quelques secondes d'écart, le second écrasant
+-- le premier sans avertissement) : contrôle optimiste ajouté côté js/sync.js
+-- (étape 8, sur la colonne `updated_at` ci-dessous) — pas de changement de
+-- schéma nécessaire pour ça.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -72,8 +75,9 @@ create table if not exists oc_blocs_partages (
 
 comment on table oc_blocs_partages is
   'Blobs jsonb communs (weekTemplates, rubanOverrides, rubanUeCaps, promotions, '
-  'schoolYear, weekNotes). Dernier écrivain gagnant : voir étape 8 pour un contrôle '
-  'optimiste sur updated_at.';
+  'schoolYear, weekNotes). Contrôle optimiste côté js/sync.js sur updated_at '
+  '(étape 8) : une écriture dont updated_at ne correspond plus à ce qui a été '
+  'lu au chargement est refusée plutôt que d''écraser un collègue.';
 
 alter table oc_blocs_partages enable row level security;
 

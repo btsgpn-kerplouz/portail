@@ -127,10 +127,9 @@ let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneau
 let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
 
-// Filtre de visibilité par enseignant (voir estVisiblePourMoi ci-dessous) :
-// initiales transmises par js/auth.js via OC_APP.demarrer(initiales).
+// initiales transmises par js/auth.js via OC_APP.demarrer(initiales) — sert
+// au périmètre strictement personnel du Tableau de bord (voir estVisiblePourMoi).
 let moiInitiales = '';
-let visibiliteFiltree = true;   // désactivable via la case « Tout afficher »
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -141,7 +140,7 @@ function uid(prefix = 'id') {
 
 function normalizeData(data) {
   const normalized = {
-    version: '4.2.0',
+    version: '5.0.0',
     schoolYear: data.schoolYear || '2026-2027',
     promotions: data.promotions || DEFAULT_PROMOTIONS,
     weeks: data.weeks || [],
@@ -432,7 +431,7 @@ async function saveData(message = 'Enregistré', { rerender = true, forcer = fal
   // le temps de l'aller-retour.
   if (rerender) renderAll(false);
   setSaveStatus('Sauvegarde…');
-  state.version = '4.2.0';
+  state.version = '5.0.0';
   const resultat = await window.OC_SYNC.enregistrer(state, { forcer });
   state.lastSavedAt = resultat.lastSavedAt;
   // Étape 4 — indicateur persistant : un échec (réseau coupé, droits refusés…)
@@ -848,6 +847,14 @@ async function importDataFromFile(file) {
     `Actuellement enregistré EN LIGNE (Supabase, partagé) : ${actuel}.\n\n` +
     `Cela REMPLACERA les données en ligne — visibles de tous les enseignants actifs, pas seulement sur cet ordinateur. Exportez d’abord une sauvegarde si vous n’êtes pas sûr·e du fichier.`
   )) return;
+  // Étape 8 — verrouillage : un import remplace les données de TOUT LE MONDE,
+  // un simple OK est trop facile à valider par réflexe (double-clic, geste
+  // habituel). On exige de retaper un mot pour confirmer une seconde fois.
+  const saisie = window.prompt('Pour confirmer le remplacement des données en ligne, tapez REMPLACER :');
+  if ((saisie || '').trim().toUpperCase() !== 'REMPLACER') {
+    setSaveStatus('Import annulé');
+    return;
+  }
   state = normalizeData(parsed);
   if (!state.weeks.length) bootstrapWeeks();
   selectedWeek = state.weeks.find(w => w.id === selectedWeek)?.id || state.weeks[0]?.id || selectedWeek;
@@ -937,7 +944,6 @@ function hydrateSelectors() {
   setOptions('#designPromotionFilter', promoOptionsWithAll, designPromotionFilter);
   setOptions('#designSemesterFilter', semesterOptionsWithAll, designSemesterFilter);
   refreshTeacherFilters();
-  refreshVisibiliteChoices();
   setOptions('#semesterPromotionFilter', promoOptions, semesterPromotionFilter);
   setOptions('#semesterFilter', semesterOptions, semesterFilter);
   setOptions('#ganttPromotionFilter', promoOptionsWithAll, ganttPromotionFilter);
@@ -1075,58 +1081,27 @@ function matchesCreneauxTeacherFilter(slot) {
   return tokens.some(t => t.toLowerCase() === (creneauxTeacherFilter || '').toLowerCase());
 }
 
-/* Filtre de visibilité par enseignant (distinct de matchesTeacherFilter
+/* Périmètre strictement personnel (distinct de matchesTeacherFilter
    ci-dessus, qui est un filtre manuel mono-sélection propre à l'onglet
-   Conception). Deux niveaux, cf. retour terrain multi-utilisateurs :
-     - estVisiblePourMoi(entity) : l'entité me concerne-t-elle DIRECTEMENT
-       (mes initiales dans `teacher`) ? Sert (1) au Tableau de bord, dont les
-       encarts personnels (séances à placer, à faire, frais, réunions) restent
-       strictement les miens, et (2) à GRISER, une fois affiché, ce qui n'est
-       pas directement le mien (cf. ci-dessous).
-     - ueEstVisible/sequenceEstVisible : périmètre élargi (Référentiel,
-       Planning, Gantt, Semaine, tables promo, exports) — une UE entière entre
-       dans mon périmètre si elle-même OU au moins une de ses séquences/séances
-       me concerne directement (container promotion), ou si je travaille sur
-       cette UE par ailleurs. Une fois l'UE dans le périmètre, TOUT son contenu
-       s'affiche (y compris les séances qu'un collègue donne seul), mais ce qui
-       n'est pas directement le mien apparaît grisé (classe CSS "not-mine",
-       posée via estVisiblePourMoi côté rendu) — pour ne jamais faire croire
-       qu'un créneau déjà occupé par un collègue est libre.
-   Une entité sans enseignant assigné (teacher vide) reste visible de tous :
-   rien à cacher tant que personne ne se l'est appropriée.
-   « Tout afficher » (visibiliteFiltree = false) lève ce périmètre entièrement
-   (échappatoire globale, ex. besoin ponctuel de coordination). */
+   Conception) : l'entité me concerne-t-elle DIRECTEMENT (mes initiales dans
+   `teacher`) ? Sert au Tableau de bord, dont les encarts personnels (séances
+   à placer, à faire, frais, réunions) restent strictement les miens. Une
+   entité sans enseignant assigné (teacher vide) est comptée comme mienne :
+   rien à exclure tant que personne ne se l'est appropriée.
+   Référentiel/Planning/Gantt/Semaine restent volontairement non filtrés par
+   enseignant (tout le monde y voit tout) — l'ancien filtre de visibilité par
+   UE (grisé + bouton « Visibilité ») a été retiré à la demande de Martin. */
 function estVisiblePourMoi(entity) {
-  if (!visibiliteFiltree || !moiInitiales) return true;
+  if (!moiInitiales) return true;
   const tokens = teacherTokens(entity?.teacher).map(teacherInitialsOf).filter(Boolean);
   if (!tokens.length) return true;
   return tokens.includes(moiInitiales);
 }
 
-function ueEstVisible(ue) {
-  if (!visibiliteFiltree || !moiInitiales) return true;
-  if (estVisiblePourMoi(ue)) return true;
-  const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
-  if (sequences.some(estVisiblePourMoi)) return true;
-  const sessions = state.sessions.filter(s => s.ueId === ue.id || sequences.some(seq => seq.id === s.sequenceId));
-  return sessions.some(estVisiblePourMoi);
-}
-
-function sequenceEstVisible(seq) {
-  if (!visibiliteFiltree || !moiInitiales) return true;
-  if (estVisiblePourMoi(seq)) return true;
-  return state.sessions.filter(s => s.sequenceId === seq.id).some(estVisiblePourMoi);
-}
-
-function visibleUes() { return state.ues.filter(ueEstVisible); }
-function visibleSequences() { return state.sequences.filter(sequenceEstVisible); }
 // Périmètre strictement personnel (Tableau de bord, backlog de placement).
+function visibleUes() { return state.ues.filter(estVisiblePourMoi); }
+function visibleSequences() { return state.sequences.filter(estVisiblePourMoi); }
 function visibleSessions() { return state.sessions.filter(estVisiblePourMoi); }
-
-function refreshVisibiliteChoices() {
-  const toutAfficher = $('#visibiliteToutAfficher');
-  if (toutAfficher) toutAfficher.checked = !visibiliteFiltree;
-}
 
 function refreshSessionSequenceSelect(preferredValue = '') {
   const ueId = $('#sessionUe')?.value || '';
@@ -1251,7 +1226,7 @@ function renderDesign() {
     const haystack = [ue.code, ue.title, ue.description, ue.promotion, ue.semester, ue.teacher, capacityHaystack, ...sequences.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' ')), ...sessions.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' '))].join(' ').toLowerCase();
     const matchesSearch = !search || haystack.includes(search);
     const matchesTeacher = matchesTeacherFilter(ue, [...sequences, ...sessions]);
-    return matchesPromotion && matchesSemester && matchesSearch && matchesTeacher && ueEstVisible(ue);
+    return matchesPromotion && matchesSemester && matchesSearch && matchesTeacher;
   });
 
   renderDesignUeChoices(eligibleUes);
@@ -1290,7 +1265,7 @@ function renderDesignUeChoices(eligibleUes = []) {
 
 function renderDesignReferenceSummary() {
   const bySemester = SEMESTERS.map(sem => {
-    const ues = state.ues.filter(ue => ue.semester === sem && ueEstVisible(ue));
+    const ues = state.ues.filter(ue => ue.semester === sem);
     const count = ues.reduce((sum, ue) => sum + ueCapacities(ue).length, 0);
     return `<span class="reference-chip"><strong>${escapeHtml(sem)}</strong> ${ues.length} UE · ${count} capacité(s)</span>`;
   }).join('');
@@ -1298,10 +1273,6 @@ function renderDesignReferenceSummary() {
 }
 
 function renderUeCard(ue) {
-  // Une fois l'UE dans mon périmètre (ueEstVisible, décidé par l'appelant),
-  // TOUT son contenu s'affiche — y compris les séquences/séances qui ne me
-  // concernent pas directement (un collègue seul dessus) : elles apparaissent
-  // simplement grisées, cf. renderSessionCard / renderSequenceCard.
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
   const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
@@ -1486,9 +1457,6 @@ function compactUeCode(code = '') {
 }
 
 function renderSequenceCard(seq) {
-  // Séquence déjà dans mon périmètre (sequenceEstVisible, décidé par
-  // l'appelant) : toutes ses séances s'affichent, grisées si elles ne me
-  // concernent pas directement (cf. renderSessionCard).
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
   const fictiveCount = sessions.filter(isFictiveSession).length;
   const definitiveCount = sessions.filter(isDefinitiveSession).length;
@@ -1552,7 +1520,7 @@ function renderSessionCard(s, number) {
     ? [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ')
     : [weekLabel(s.weekId), DAY_NAMES[s.day], slotLabel(s.startSlot)].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 4);
-  return `<article class="session-card ${typeClass(s.type)}${estVisiblePourMoi(s) ? '' : ' not-mine'}" draggable="true" style="--ue-color:${color}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  return `<article class="session-card ${typeClass(s.type)}" draggable="true" style="--ue-color:${color}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
       <span class="status-pill ${isFictiveSession(s) ? 'status-a-placer' : 'status-definitif-edt'}">${isFictiveSession(s) ? 'À placer' : 'EDT'}</span>
@@ -1621,7 +1589,7 @@ function renderGantt() {
   if (!$('#ganttTimeline')) return;
   if (!ganttSemesterFilters.length) ganttSemesterFilters = ['Semestre 1'];
   const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  const ues = state.ues.filter(ue => (ganttPromotionFilter === 'Tous' || ue.promotion === ganttPromotionFilter) && ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)) && ueEstVisible(ue));
+  const ues = state.ues.filter(ue => (ganttPromotionFilter === 'Tous' || ue.promotion === ganttPromotionFilter) && ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)));
   renderGanttUeChoices(ues);
   const selectedUes = selectedTimelineUes(ues);
   renderGanttTimeline(selectedUes, weeks);
@@ -1690,9 +1658,6 @@ function assignBandLanes(bands, laneOffset = 0) {
 }
 
 function renderOneUeTimeline(ue, visibleWeeks, index = 0) {
-  // UE déjà dans mon périmètre (ueEstVisible, décidé par l'appelant) : toutes
-  // ses séquences/séances s'affichent, grisées si elles ne me concernent pas
-  // directement (cf. timelineSessionCard).
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => firstSequenceWeekIndex(a, visibleWeeks) - firstSequenceWeekIndex(b, visibleWeeks));
   const sessions = state.sessions.filter(s => s.ueId === ue.id);
   const promotion = ue.promotion;
@@ -1875,7 +1840,7 @@ function timelineSessionCard(session) {
   const keywords = compactKeywords(session.keywords, 4);
   const color = sessionTint(session);
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
-  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}${estVisiblePourMoi(session) ? '' : ' not-mine'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
+  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
     <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
     <strong class="timeline-session-title">${escapeHtml(session.title)}</strong>
     ${meta ? `<em class="timeline-session-meta">${escapeHtml(meta)}</em>` : ''}
@@ -2369,11 +2334,7 @@ function sessionTooltip(session) {
 }
 
 function renderPromotionTable(promotion) {
-  // Toutes les séances placées d'une UE dans mon périmètre s'affichent (pas
-  // seulement les miennes) : celles d'un collègue seul apparaissent grisées
-  // (cf. les classes "not-mine" posées ci-dessous) — évite qu'un créneau déjà
-  // occupé par un collègue paraisse libre.
-  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s) && (!s.ueId || ueEstVisible(findUe(s.ueId))));
+  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s));
   const week = state.weeks.find(w => w.id === selectedWeek);
   const dayDates = dayDatesForWeek(week);
   const dayConstraints = dayDates.map(d => constraintsForDate(d, promotion));
@@ -2425,7 +2386,7 @@ function renderPromotionTable(promotion) {
             const inner = isHead
               ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(sess.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(sess, rowspan, true)}`
               : '';
-            return `<div class="demi-col drop-slot ${typeClass(sess.type)}${estVisiblePourMoi(sess) ? '' : ' not-mine'}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
+            return `<div class="demi-col drop-slot ${typeClass(sess.type)}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
           };
           return `<td class="event-cell demi-cell${contClass}" rowspan="${rowspan}"><div class="demi-split">${halfCol(halfA[0], 'A')}${halfCol(halfB[0], 'B')}</div></td>`;
         }
@@ -2435,11 +2396,11 @@ function renderPromotionTable(promotion) {
           const inner = isHead
             ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan)}`
             : '';
-          return `<td class="event-cell drop-slot ${cls}${contClass}${estVisiblePourMoi(session) ? '' : ' not-mine'}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
+          return `<td class="event-cell drop-slot ${cls}${contClass}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
         }
         return `<td class="event-cell overlap-cell drop-slot${contClass}" rowspan="${rowspan}" data-drop-target='${escapeAttr(contextJson)}' title="${starting.length} séances en chevauchement">
           <div class="overlap-warning">${starting.length} séances superposées</div>
-          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}${estVisiblePourMoi(session) ? '' : ' not-mine'}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
+          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
         </td>`;
       }
       const contextJson = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
@@ -2482,7 +2443,7 @@ function renderPromotionTable(promotion) {
   const satSessions = sessions.filter(s => Number(s.day) === 5);
   const satConstraints = saturdayDate ? constraintsForDate(saturdayDate, promotion).filter(c => !isThematicConstraint(c)) : [];
   const saturdayRow = (satSessions.length || satConstraints.length)
-    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}${estVisiblePourMoi(s) ? '' : ' not-mine'}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
+    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
     : '';
   const eilRow = eilBannerRow(eilSelf, eilOther, DAYS.length);
 
@@ -3043,8 +3004,6 @@ function hexToRgba(hex, alpha = 1) {
 
 function exportUeProgressionPrint(ue) {
   if (!ue) return;
-  // UE déjà dans mon périmètre (bouton accessible seulement pour une UE
-  // ueEstVisible) : l'export imprime tout son contenu, comme à l'écran.
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => firstSequenceWeekIndex(a, state.weeks) - firstSequenceWeekIndex(b, state.weeks));
   const rows = sequences.length ? sequences.map(seq => {
     const sessions = state.sessions.filter(s => s.sequenceId === seq.id).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
@@ -4021,12 +3980,6 @@ function bindEvents() {
   $('#designPromotionFilter').addEventListener('change', e => { designPromotionFilter = e.target.value; renderDesign(); });
   $('#designSemesterFilter').addEventListener('change', e => { designSemesterFilter = e.target.value; renderDesign(); });
   $('#designTeacherFilter')?.addEventListener('change', e => { designTeacherFilter = e.target.value; renderDesign(); });
-  $('#visibiliteToutAfficher')?.addEventListener('change', e => { visibiliteFiltree = !e.target.checked; renderAll(); });
-  // <details> ne se ferme pas tout seul au clic en dehors : on le fait à la main.
-  document.addEventListener('click', e => {
-    const details = $('#visibiliteFiltre');
-    if (details?.open && !details.contains(e.target)) details.open = false;
-  });
   $('#designSearch').addEventListener('input', () => renderDesign());
   $('#designUeChoices')?.addEventListener('change', (event) => {
     const checkbox = event.target.closest('input[type="checkbox"]');
@@ -5300,5 +5253,16 @@ window.OC_APP = {
   },
   arreter() {
     state = null;
+  },
+  // Étape 8 — pas de synchronisation temps réel : sans ce bouton, les
+  // modifications d'un collègue ne remontent qu'au prochain F5 (rechargement
+  // complet de la page). Recharger() relit Supabase et re-rend sans ça.
+  recharger() {
+    setSaveStatus('Rechargement…');
+    return loadData().catch(error => {
+      console.error(error);
+      setSaveStatus('Erreur de rechargement');
+      alert(error.message);
+    });
   }
 };
