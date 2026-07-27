@@ -14,9 +14,14 @@
 
 -- ----------------------------------------------------------------------------
 -- Fonction utilitaire : l'appelant est-il un enseignant actif ?
--- SECURITY INVOKER (par défaut) : inutile de s'octroyer plus de droits, la
--- policy SELECT de oc_enseignants ci-dessous est de toute façon ouverte à
--- tout authentifié.
+-- Définie ici en SECURITY INVOKER (le défaut) : à ce stade la policy SELECT
+-- de oc_enseignants ci-dessous est encore ouverte à tout authentifié
+-- (`using (true)`), donc l'appel interne à oc_enseignants ne boucle pas.
+-- ATTENTION : 004-durcissement-enseignants.sql resserre cette policy pour
+-- qu'elle appelle elle-même oc_is_active_teacher() — ce qui provoque alors
+-- une récursion infinie ("stack depth limit exceeded"). 005-fix-recursion-
+-- is-active-teacher.sql corrige en repassant cette fonction en SECURITY
+-- DEFINER. Les deux fichiers sont à appliquer dans cet ordre après celui-ci.
 -- ----------------------------------------------------------------------------
 create or replace function oc_is_active_teacher()
 returns boolean

@@ -1,9 +1,10 @@
 -- ============================================================================
--- organisation-cours — scénarios de vérification RLS (étape 1)
+-- organisation-cours — scénarios de vérification RLS (étapes 1 et 2)
 -- ============================================================================
--- À exécuter dans le SQL Editor du projet Supabase "portail", APRÈS schema.sql
--- et policies.sql. Tout est fait dans une transaction annulée à la fin
--- (`rollback`) : rien de ce test n'est conservé en base.
+-- À exécuter dans le SQL Editor du projet Supabase "portail", APRÈS
+-- schema.sql, policies.sql, 002-blobs.sql, 003-fk-detacher.sql et
+-- 004-durcissement-enseignants.sql. Tout est fait dans une transaction
+-- annulée à la fin (`rollback`) : rien de ce test n'est conservé en base.
 --
 -- Technique : `set local role authenticated` bascule réellement sur le rôle
 -- Postgres "authenticated" (le rôle "postgres"/superuser du SQL Editor
@@ -54,8 +55,9 @@ begin
   values ('test-session-1', 'Séance test', 'test-ue-1', 'GPN1', '00000000-0000-0000-0000-00000000000a');
 
   -- --------------------------------------------------------------------------
-  -- Scénario 1 — un compte INACTIF (C) ne lit aucune donnée pédagogique, mais
-  -- voit quand même la liste des enseignants (nécessaire pour les filtres).
+  -- Scénario 1 — un compte INACTIF (C) ne lit aucune donnée pédagogique, et
+  -- (durcissement 004) ne voit plus que SA PROPRE ligne dans oc_enseignants —
+  -- avant 004, la liste complète était visible dès l'inscription self-service.
   -- --------------------------------------------------------------------------
   set local role authenticated;
   set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}';
@@ -67,7 +69,7 @@ begin
   raise notice '1b. C : nb UE visibles                 attendu=0      obtenu=%', v_count;
 
   select count(*) into v_count from oc_enseignants;
-  raise notice '1c. C : nb enseignants visibles (liste) attendu=3      obtenu=%', v_count;
+  raise notice '1c. C : nb enseignants visibles (liste, durci) attendu=1  obtenu=%', v_count;
 
   reset role;
 
@@ -154,6 +156,67 @@ begin
   raise notice '6.  C tente de s''auto-activer -> actif attendu=false  obtenu=%', v_bool;
 
   reset role;
+
+  -- --------------------------------------------------------------------------
+  -- Scénario 7 — oc_blocs_perso : A écrit son bloc, B (actif) ne le voit pas.
+  -- --------------------------------------------------------------------------
+  set local role authenticated;
+  set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+
+  insert into oc_blocs_perso (user_id, cle, contenu)
+  values ('00000000-0000-0000-0000-00000000000a', 'todoNotes', '{"texte":"test"}');
+
+  reset role;
+
+  set local role authenticated;
+  set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}';
+
+  select count(*) into v_count from oc_blocs_perso where user_id = '00000000-0000-0000-0000-00000000000a';
+  raise notice '7.  B lit le bloc perso de A            attendu=0      obtenu=%', v_count;
+
+  reset role;
+
+  -- --------------------------------------------------------------------------
+  -- Scénario 8 — oc_blocs_partages : commun, dernier écrivain gagnant.
+  -- --------------------------------------------------------------------------
+  set local role authenticated;
+  set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+
+  insert into oc_blocs_partages (cle, contenu, updated_par)
+  values ('weekNotes', '{"texte":"note de A"}', '00000000-0000-0000-0000-00000000000a');
+
+  reset role;
+
+  set local role authenticated;
+  set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}';
+
+  update oc_blocs_partages set contenu = '{"texte":"note de B"}', updated_par = '00000000-0000-0000-0000-00000000000b'
+    where cle = 'weekNotes';
+  select count(*) into v_count from oc_blocs_partages where cle = 'weekNotes' and contenu->>'texte' = 'note de B';
+  raise notice '8.  B écrase le bloc partagé de A       attendu=1      obtenu=%', v_count;
+
+  reset role;
+
+  -- --------------------------------------------------------------------------
+  -- Scénario 9 — supprimer une UE détache ses séquences au lieu de les
+  -- détruire (correctif 003-fk-detacher.sql ; app.js promet "conservées mais
+  -- détachées").
+  -- --------------------------------------------------------------------------
+  insert into oc_sequences (id, ue_id, title, promotion, cree_par)
+  values ('test-sequence-1', 'test-ue-1', 'Séquence test', 'GPN1', '00000000-0000-0000-0000-00000000000a');
+
+  set local role authenticated;
+  set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';
+
+  delete from oc_ues where id = 'test-ue-1';
+
+  reset role;
+
+  select count(*) into v_count from oc_sequences where id = 'test-sequence-1';
+  raise notice '9a. Séquence toujours présente après suppression de l''UE  attendu=1  obtenu=%', v_count;
+
+  select ue_id into v_room from oc_sequences where id = 'test-sequence-1';
+  raise notice '9b. ue_id de la séquence détachée       attendu=NULL   obtenu=%', coalesce(v_room, 'NULL');
 end $$;
 
 -- Rien de tout ceci n'est conservé.

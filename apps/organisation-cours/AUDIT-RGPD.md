@@ -48,12 +48,16 @@ disciplines, publiable) et **données identifiantes** (qui enseigne/évalue quoi
 ## Modules reportés (hors périmètre de l'étape 1, données les plus nominatives)
 
 - **Frais kilométriques** (`deplacements` : `conducteur`, `lieu`, `date`, montants) — données
-  professionnelles nominatives.
+  professionnelles nominatives. Reste dans `oc_blocs_perso` (strictement privé par compte,
+  jamais visible d'un autre enseignant).
 - **Réunions** (`reunions.participants`) — noms complets en texte libre, pas des initiales.
+  Migré depuis en table relationnelle `oc_reunions` (voir
+  `supabase/010-reunions-relationnelles.sql`), avec la réflexion RLS dédiée alors annoncée :
+  lecture restreinte au créateur et aux enseignants tagués « présents », jamais ouverte à tout
+  enseignant actif comme les autres tables partagées (ue/séquences/séances).
 
-Ces deux modules sont volontairement exclus du schéma de l'étape 1 (voir
-`supabase/schema.sql`) ; leur migration nécessitera une réflexion RLS dédiée avant d'être
-rouverte.
+Le module Frais reste volontairement exclu du schéma relationnel (voir `supabase/schema.sql`) ;
+sa migration nécessiterait la même réflexion RLS dédiée avant d'être rouverte.
 
 ## Conclusion
 

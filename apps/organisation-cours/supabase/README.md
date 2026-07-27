@@ -1,8 +1,10 @@
-# Supabase — organisation-cours (étape 1 : schéma + RLS)
+# Supabase — organisation-cours (étapes 1 et 2 : schéma + RLS + blobs)
 
-Cœur pédagogique uniquement (enseignants, calendrier, UE, séquences, séances +
-partage). Frais kilométriques, réunions, trames et notes libres sont reportés
-à une étape ultérieure — voir `../AUDIT-RGPD.md`.
+Cœur pédagogique en tables relationnelles (enseignants, calendrier, UE,
+séquences, séances + partage) ; frais kilométriques, réunions, trames et
+notes libres en blobs jsonb (`002-blobs.sql`) — ce sont les modules les plus
+nominatifs identifiés par l'audit RGPD, désormais strictement personnels
+(`oc_blocs_perso`) plutôt qu'écartés.
 
 ## Projet Supabase ciblé
 
@@ -20,18 +22,60 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
 1. `schema.sql` — crée les tables `oc_*`.
 2. `policies.sql` — active la RLS, crée les policies et la fonction
    `oc_is_active_teacher()`.
-3. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
-   dans une transaction annulée (`rollback`), ne modifie rien en base.
+3. `002-blobs.sql` — tables `oc_blocs_perso` / `oc_blocs_partages` (notes,
+   frais, trames, ruban...). Voir `009`/`010` : `devNotes` et `reunions` en
+   sont ressortis depuis.
+4. `003-fk-detacher.sql` — corrige `oc_sequences.ue_id` (`on delete cascade`
+   → `on delete set null`), pour que supprimer une UE détache ses séquences
+   au lieu de les détruire.
+5. `004-durcissement-enseignants.sql` — restreint la lecture du
+   trombinoscope : un compte inactif ne voit plus que sa propre ligne.
+6. `005-fix-recursion-is-active-teacher.sql` — **indispensable juste après
+   `004`** : sans lui, toute lecture déclenche une récursion infinie
+   ("stack depth limit exceeded") — `004` fait que la policy de
+   `oc_enseignants` appelle une fonction qui relit `oc_enseignants`.
+7. `seed-weeks.sql` — peuple `oc_weeks` avec les 40 semaines ISO de l'année
+   2026-2027, générées par le même algorithme que le front
+   (`buildAcademicWeeks()` dans `app.js`) pour que les ids concordent au
+   caractère près.
+8. `006-constraints-contenu.sql` — colonne `contenu jsonb` sur `oc_constraints`
+   (texte libre pour les contraintes, même principe que les autres tables).
+9. `007-alias-initiales.sql` — table `oc_alias_initiales` (jetons `teacher`
+   legacy qui ne correspondent pas exactement aux initiales d'un compte).
+10. `008-identifiant-non-unique.sql` — l'`identifiant` n'a plus besoin d'être
+    unique depuis que la connexion se fait par e-mail (voir plus bas).
+11. `009-devnotes-partage.sql` — « Bugs & améliorations » (`devNotes`) passe de
+    `oc_blocs_perso` (privé) à `oc_blocs_partages` (commun à tous les comptes
+    actifs) ; `todoNotes` (« À faire ») reste privé, lui.
+12. `010-reunions-relationnelles.sql` — `reunions` sort de `oc_blocs_perso`
+    (strictement privé) pour devenir une table relationnelle `oc_reunions` +
+    jointure `oc_reunion_enseignants` : une réunion n'est visible que de son
+    créateur et des enseignants tagués « présents » (pas de tout le monde,
+    contrairement aux ue/séquences/séances — cf. AUDIT-RGPD.md sur les noms
+    complets du champ `participants`). Migre les réunions déjà enregistrées.
+13. `011-fix-recursion-reunions.sql` — **indispensable juste après `010`** :
+    sans lui, tout chargement déclenche une récursion infinie
+    ("infinite recursion detected in policy for relation oc_reunions"), même
+    cause que `005` (les policies SELECT de `oc_reunions` et
+    `oc_reunion_enseignants` s'interrogent mutuellement).
+14. `012-emails-autorises.sql` — pour la mise en ligne V5.0 : seule une
+    adresse e-mail présente dans une liste blanche peut créer un profil
+    `oc_enseignants` (donc utiliser l'app) ; voir « Liste blanche d'e-mails
+    autorisés » plus bas pour la gérer.
+15. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+    dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth
 
 Dans **Authentication → Providers → Email**, désactiver **« Confirm email »**.
 
-Pourquoi : l'étape 2 (authentification, à venir) reprend le modèle PhytoScope
-— `signInWithPassword`, et en cas d'échec `signUp` automatique à la première
-connexion. Si la confirmation par e-mail reste active, ce `signUp` ne connecte
-pas immédiatement l'utilisateur (email de confirmation jamais reçu, l'adresse
-étant une adresse synthétique `@organisation-cours.local`).
+Pourquoi : `js/auth.js` fait `signInWithPassword`, et en cas d'échec `signUp`
+automatique à la première connexion, avec l'adresse e-mail **professionnelle
+réelle** saisie par l'enseignant. Si la confirmation par e-mail reste active,
+ce `signUp` ne connecte pas immédiatement l'utilisateur (il faudrait un écran
+« vérifiez votre boîte mail », pas encore construit) — le garde-fou réel contre
+les inscriptions non désirées reste `actif = false` par défaut, pas la
+confirmation d'e-mail.
 
 ## Activer un compte enseignant
 
@@ -42,13 +86,57 @@ le **SQL Editor**, en tant que `postgres` (donc RLS non appliquée, pas besoin
 de la clé `service_role`) :
 
 ```sql
-update oc_enseignants set actif = true where identifiant = 'diraisonm';
+update oc_enseignants set actif = true
+where user_id = (select id from auth.users where email = 'prenom.nom@etablissement.fr');
 ```
 
-(remplacer par l'`identifiant` réel de l'enseignant concerné). Le flag `actif`
-est verrouillé par un trigger côté client (un enseignant ne peut pas se
+(remplacer par l'adresse e-mail réelle de l'enseignant concerné). Le flag
+`actif` est verrouillé par un trigger côté client (un enseignant ne peut pas se
 l'attribuer lui-même) — seule cette voie (SQL Editor / `service_role`)
 fonctionne.
+
+## Mot de passe oublié
+
+Autonome depuis `008` : chaque enseignant peut cliquer « Mot de passe oublié ? »
+sur l'écran de connexion (déclenche `resetPasswordForEmail`, lien envoyé par
+Supabase à l'adresse saisie). Aucune intervention de Martin nécessaire dans le
+cas courant. En dépannage seulement, un mot de passe peut aussi être forcé
+directement en SQL Editor :
+
+```sql
+update auth.users
+set encrypted_password = crypt('nouveau-mot-de-passe', gen_salt('bf'))
+where email = 'prenom.nom@etablissement.fr';
+```
+
+## Liste blanche d'e-mails autorisés (mise en ligne V5.0)
+
+Depuis `012-emails-autorises.sql`, seule une adresse e-mail présente dans
+`oc_emails_autorises` peut créer un profil `oc_enseignants` — donc utiliser
+l'app. Chaque enseignant garde son propre mot de passe (rien ne change côté
+`js/auth.js`) ; c'est la **création du compte** qui est protégée, pas un écran
+supplémentaire devant l'app. Une adresse hors liste peut encore, techniquement,
+créer un compte Supabase "brut" (`auth.users`) — mais n'obtiendra jamais de
+ligne `oc_enseignants`, donc jamais d'accès réel à quoi que ce soit.
+
+Volontairement, ce n'est **pas** un déclencheur sur `auth.users` (le schéma
+de comptes géré par Supabase, commun à tout le projet "portail" — de futures
+apps Habitats pourraient vouloir s'y inscrire librement) : le verrou reste
+local à notre propre table `oc_enseignants`, via sa policy RLS d'insertion.
+
+La liste n'est **jamais** commitée (adresses réelles = données personnelles,
+dépôt public) : à gérer exclusivement dans le **SQL Editor**, dans une
+**nouvelle requête** (pas dans `012-emails-autorises.sql` lui-même, qui ne
+contient aucune adresse) :
+
+```sql
+-- Autoriser une adresse
+insert into oc_emails_autorises (email) values (lower('prenom.nom@etablissement.fr'))
+on conflict (email) do nothing;
+
+-- Retirer une adresse (ne désactive pas un compte déjà créé : voir `actif` plus haut)
+delete from oc_emails_autorises where email = lower('prenom.nom@etablissement.fr');
+```
 
 ## Ce qui n'est PAS dans ce dossier
 
