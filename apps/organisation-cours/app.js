@@ -124,7 +124,13 @@ let selectedReferenceModule = 'm4';
 let rubanTeacher = 'Tous';
 let rubanMode = 'ruban';
 let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneaux type
+let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
+
+// Filtre de visibilité par enseignant (voir estVisiblePourMoi ci-dessous) :
+// initiales transmises par js/auth.js via OC_APP.demarrer(initiales).
+let moiInitiales = '';
+let visibiliteFiltree = true;   // désactivable via la case « Tout afficher »
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -242,7 +248,8 @@ function normalizeData(data) {
     lieu: r.lieu || '',
     participants: r.participants || '',
     sujets: r.sujets || '',
-    personalVehicle: !!r.personalVehicle
+    personalVehicle: !!r.personalVehicle,
+    teacher: r.teacher || '' // enseignant(s) présents : détermine la visibilité (RLS oc_reunions)
   }));
 
   normalized.constraints = normalized.constraints.map(c => ({
@@ -719,6 +726,7 @@ function openReunionModal(reunion = null) {
   $('#reunionLieu').value = reunion?.lieu || '';
   $('#reunionParticipants').value = reunion?.participants || '';
   $('#reunionSujets').value = reunion?.sujets || '';
+  $('#reunionTeacher').value = reunion?.teacher || '';
   $('#reunionVehicle').checked = !!reunion?.personalVehicle;
   const dep = reunion ? reunionDeplacement(reunion) : null;
   $('#reunionFraisHint').hidden = !dep;
@@ -929,6 +937,7 @@ function hydrateSelectors() {
   setOptions('#designPromotionFilter', promoOptionsWithAll, designPromotionFilter);
   setOptions('#designSemesterFilter', semesterOptionsWithAll, designSemesterFilter);
   refreshTeacherFilters();
+  refreshVisibiliteChoices();
   setOptions('#semesterPromotionFilter', promoOptions, semesterPromotionFilter);
   setOptions('#semesterFilter', semesterOptions, semesterFilter);
   setOptions('#ganttPromotionFilter', promoOptionsWithAll, ganttPromotionFilter);
@@ -1024,6 +1033,7 @@ function allTeachers() {
   state?.ues?.forEach(ue => teacherTokens(ue.teacher).forEach(t => set.add(t)));
   state?.sequences?.forEach(seq => teacherTokens(seq.teacher).forEach(t => set.add(t)));
   state?.sessions?.forEach(session => teacherTokens(session.teacher).forEach(t => set.add(t)));
+  state?.weekTemplates?.forEach(slot => teacherTokens(slot.teacher).forEach(t => set.add(t)));
   return [...set].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
@@ -1038,6 +1048,84 @@ function matchesTeacherFilter(entity, related = []) {
   const tokens = [];
   [entity, ...related].forEach(x => teacherTokens(x?.teacher).forEach(t => tokens.push(t)));
   return tokens.some(t => t.toLowerCase() === designTeacherFilter.toLowerCase());
+}
+
+/* Référentiel & Ruban → Créneaux type : par défaut, seuls MES créneaux
+   s'affichent (comme pour les ue/séquences/séances, un créneau sans
+   enseignant assigné reste visible de tous). Sélecteur pour voir "Tous" ou
+   ceux d'un collègue précis. */
+function refreshCreneauxTeacherFilter() {
+  const select = $('#creneauxTeacherFilter');
+  if (!select) return;
+  if (!creneauxTeacherFilter) creneauxTeacherFilter = moiInitiales || 'Tous';
+  const autres = allTeachers().filter(t => t.toLowerCase() !== moiInitiales.toLowerCase());
+  const options = [
+    moiInitiales ? `<option value="${escapeAttr(moiInitiales)}">Mes créneaux (${escapeHtml(moiInitiales)})</option>` : '',
+    '<option value="Tous">Tous les enseignants</option>',
+    ...autres.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`)
+  ].filter(Boolean).join('');
+  setOptions('#creneauxTeacherFilter', options, creneauxTeacherFilter);
+  if (![...select.options].some(o => o.value === creneauxTeacherFilter)) creneauxTeacherFilter = 'Tous';
+}
+
+function matchesCreneauxTeacherFilter(slot) {
+  if (creneauxTeacherFilter === 'Tous') return true;
+  const tokens = teacherTokens(slot?.teacher);
+  if (!tokens.length) return true;
+  return tokens.some(t => t.toLowerCase() === (creneauxTeacherFilter || '').toLowerCase());
+}
+
+/* Filtre de visibilité par enseignant (distinct de matchesTeacherFilter
+   ci-dessus, qui est un filtre manuel mono-sélection propre à l'onglet
+   Conception). Deux niveaux, cf. retour terrain multi-utilisateurs :
+     - estVisiblePourMoi(entity) : l'entité me concerne-t-elle DIRECTEMENT
+       (mes initiales dans `teacher`) ? Sert (1) au Tableau de bord, dont les
+       encarts personnels (séances à placer, à faire, frais, réunions) restent
+       strictement les miens, et (2) à GRISER, une fois affiché, ce qui n'est
+       pas directement le mien (cf. ci-dessous).
+     - ueEstVisible/sequenceEstVisible : périmètre élargi (Référentiel,
+       Planning, Gantt, Semaine, tables promo, exports) — une UE entière entre
+       dans mon périmètre si elle-même OU au moins une de ses séquences/séances
+       me concerne directement (container promotion), ou si je travaille sur
+       cette UE par ailleurs. Une fois l'UE dans le périmètre, TOUT son contenu
+       s'affiche (y compris les séances qu'un collègue donne seul), mais ce qui
+       n'est pas directement le mien apparaît grisé (classe CSS "not-mine",
+       posée via estVisiblePourMoi côté rendu) — pour ne jamais faire croire
+       qu'un créneau déjà occupé par un collègue est libre.
+   Une entité sans enseignant assigné (teacher vide) reste visible de tous :
+   rien à cacher tant que personne ne se l'est appropriée.
+   « Tout afficher » (visibiliteFiltree = false) lève ce périmètre entièrement
+   (échappatoire globale, ex. besoin ponctuel de coordination). */
+function estVisiblePourMoi(entity) {
+  if (!visibiliteFiltree || !moiInitiales) return true;
+  const tokens = teacherTokens(entity?.teacher).map(teacherInitialsOf).filter(Boolean);
+  if (!tokens.length) return true;
+  return tokens.includes(moiInitiales);
+}
+
+function ueEstVisible(ue) {
+  if (!visibiliteFiltree || !moiInitiales) return true;
+  if (estVisiblePourMoi(ue)) return true;
+  const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
+  if (sequences.some(estVisiblePourMoi)) return true;
+  const sessions = state.sessions.filter(s => s.ueId === ue.id || sequences.some(seq => seq.id === s.sequenceId));
+  return sessions.some(estVisiblePourMoi);
+}
+
+function sequenceEstVisible(seq) {
+  if (!visibiliteFiltree || !moiInitiales) return true;
+  if (estVisiblePourMoi(seq)) return true;
+  return state.sessions.filter(s => s.sequenceId === seq.id).some(estVisiblePourMoi);
+}
+
+function visibleUes() { return state.ues.filter(ueEstVisible); }
+function visibleSequences() { return state.sequences.filter(sequenceEstVisible); }
+// Périmètre strictement personnel (Tableau de bord, backlog de placement).
+function visibleSessions() { return state.sessions.filter(estVisiblePourMoi); }
+
+function refreshVisibiliteChoices() {
+  const toutAfficher = $('#visibiliteToutAfficher');
+  if (toutAfficher) toutAfficher.checked = !visibiliteFiltree;
 }
 
 function refreshSessionSequenceSelect(preferredValue = '') {
@@ -1091,18 +1179,19 @@ function restoreOpenKeys(root, keys) {
 }
 
 function renderDashboard() {
-  const definitive = state.sessions.filter(isDefinitiveSession);
-  const fictive = state.sessions.filter(isFictiveSession);
+  const mesSessions = visibleSessions();
+  const definitive = mesSessions.filter(isDefinitiveSession);
+  const fictive = mesSessions.filter(isFictiveSession);
   const plannedHours = definitive.reduce((sum, session) => sum + sessionDurationSlots(session) * 55 / 60, 0);
-  const linkedSessions = state.sessions.filter(s => s.sequenceId && s.ueId).length;
+  const linkedSessions = mesSessions.filter(s => s.sequenceId && s.ueId).length;
 
   $('#kpiGrid').innerHTML = [
-    ['UE', state.ues.length, 'Nombre d’unités d’enseignement'],
-    ['Séquences', state.sequences.length, 'Nombre de séquences pédagogiques'],
+    ['UE', visibleUes().length, 'Nombre d’unités d’enseignement'],
+    ['Séquences', visibleSequences().length, 'Nombre de séquences pédagogiques'],
     ['Séances à placer', fictive.length, 'Séances non encore posées dans un emploi du temps'],
     ['Plages définitives EDT', definitive.length, 'Séances posées sur un créneau du Planning hebdo'],
     ['Heures placées', plannedHours.toFixed(1).replace('.', ',') + ' h', 'Total des heures des séances posées dans l’EDT'],
-    ['Séances rattachées', `${linkedSessions}/${state.sessions.length}`, 'Séances liées à la fois à une UE et à une séquence, sur le total des séances (une séance « rattachée » a donc une UE et une séquence de rattachement).']
+    ['Séances rattachées', `${linkedSessions}/${mesSessions.length}`, 'Séances liées à la fois à une UE et à une séquence, sur le total des séances (une séance « rattachée » a donc une UE et une séquence de rattachement).']
   ].map(([label, value, tip]) => `<article class="kpi-card"${tip ? ` title="${escapeAttr(tip)}"` : ''}><strong>${value}</strong><span>${label}</span></article>`).join('');
 
   $('#dashboardBacklog').innerHTML = fictive.length
@@ -1162,7 +1251,7 @@ function renderDesign() {
     const haystack = [ue.code, ue.title, ue.description, ue.promotion, ue.semester, ue.teacher, capacityHaystack, ...sequences.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' ')), ...sessions.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' '))].join(' ').toLowerCase();
     const matchesSearch = !search || haystack.includes(search);
     const matchesTeacher = matchesTeacherFilter(ue, [...sequences, ...sessions]);
-    return matchesPromotion && matchesSemester && matchesSearch && matchesTeacher;
+    return matchesPromotion && matchesSemester && matchesSearch && matchesTeacher && ueEstVisible(ue);
   });
 
   renderDesignUeChoices(eligibleUes);
@@ -1201,7 +1290,7 @@ function renderDesignUeChoices(eligibleUes = []) {
 
 function renderDesignReferenceSummary() {
   const bySemester = SEMESTERS.map(sem => {
-    const ues = state.ues.filter(ue => ue.semester === sem);
+    const ues = state.ues.filter(ue => ue.semester === sem && ueEstVisible(ue));
     const count = ues.reduce((sum, ue) => sum + ueCapacities(ue).length, 0);
     return `<span class="reference-chip"><strong>${escapeHtml(sem)}</strong> ${ues.length} UE · ${count} capacité(s)</span>`;
   }).join('');
@@ -1209,6 +1298,10 @@ function renderDesignReferenceSummary() {
 }
 
 function renderUeCard(ue) {
+  // Une fois l'UE dans mon périmètre (ueEstVisible, décidé par l'appelant),
+  // TOUT son contenu s'affiche — y compris les séquences/séances qui ne me
+  // concernent pas directement (un collègue seul dessus) : elles apparaissent
+  // simplement grisées, cf. renderSessionCard / renderSequenceCard.
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
   const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
@@ -1393,6 +1486,9 @@ function compactUeCode(code = '') {
 }
 
 function renderSequenceCard(seq) {
+  // Séquence déjà dans mon périmètre (sequenceEstVisible, décidé par
+  // l'appelant) : toutes ses séances s'affichent, grisées si elles ne me
+  // concernent pas directement (cf. renderSessionCard).
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
   const fictiveCount = sessions.filter(isFictiveSession).length;
   const definitiveCount = sessions.filter(isDefinitiveSession).length;
@@ -1456,7 +1552,7 @@ function renderSessionCard(s, number) {
     ? [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ')
     : [weekLabel(s.weekId), DAY_NAMES[s.day], slotLabel(s.startSlot)].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 4);
-  return `<article class="session-card ${typeClass(s.type)}" draggable="true" style="--ue-color:${color}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  return `<article class="session-card ${typeClass(s.type)}${estVisiblePourMoi(s) ? '' : ' not-mine'}" draggable="true" style="--ue-color:${color}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
       <span class="status-pill ${isFictiveSession(s) ? 'status-a-placer' : 'status-definitif-edt'}">${isFictiveSession(s) ? 'À placer' : 'EDT'}</span>
@@ -1525,7 +1621,7 @@ function renderGantt() {
   if (!$('#ganttTimeline')) return;
   if (!ganttSemesterFilters.length) ganttSemesterFilters = ['Semestre 1'];
   const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  const ues = state.ues.filter(ue => (ganttPromotionFilter === 'Tous' || ue.promotion === ganttPromotionFilter) && ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)));
+  const ues = state.ues.filter(ue => (ganttPromotionFilter === 'Tous' || ue.promotion === ganttPromotionFilter) && ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)) && ueEstVisible(ue));
   renderGanttUeChoices(ues);
   const selectedUes = selectedTimelineUes(ues);
   renderGanttTimeline(selectedUes, weeks);
@@ -1594,6 +1690,9 @@ function assignBandLanes(bands, laneOffset = 0) {
 }
 
 function renderOneUeTimeline(ue, visibleWeeks, index = 0) {
+  // UE déjà dans mon périmètre (ueEstVisible, décidé par l'appelant) : toutes
+  // ses séquences/séances s'affichent, grisées si elles ne me concernent pas
+  // directement (cf. timelineSessionCard).
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => firstSequenceWeekIndex(a, visibleWeeks) - firstSequenceWeekIndex(b, visibleWeeks));
   const sessions = state.sessions.filter(s => s.ueId === ue.id);
   const promotion = ue.promotion;
@@ -1776,7 +1875,7 @@ function timelineSessionCard(session) {
   const keywords = compactKeywords(session.keywords, 4);
   const color = sessionTint(session);
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
-  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
+  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}${estVisiblePourMoi(session) ? '' : ' not-mine'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
     <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
     <strong class="timeline-session-title">${escapeHtml(session.title)}</strong>
     ${meta ? `<em class="timeline-session-meta">${escapeHtml(meta)}</em>` : ''}
@@ -2204,6 +2303,7 @@ function renderWeekBacklog() {
   const selectedSequence = weekBacklogSequenceFilter;
   const sessions = state.sessions
     .filter(s => isFictiveSession(s))
+    .filter(estVisiblePourMoi)
     .filter(s => weekBacklogScope === 'all' || s.targetWeekId === selectedWeek || !s.targetWeekId)
     .filter(s => selectedUe === 'Tous' || s.ueId === selectedUe)
     .filter(s => selectedSequence === 'Tous' || s.sequenceId === selectedSequence)
@@ -2269,7 +2369,11 @@ function sessionTooltip(session) {
 }
 
 function renderPromotionTable(promotion) {
-  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s));
+  // Toutes les séances placées d'une UE dans mon périmètre s'affichent (pas
+  // seulement les miennes) : celles d'un collègue seul apparaissent grisées
+  // (cf. les classes "not-mine" posées ci-dessous) — évite qu'un créneau déjà
+  // occupé par un collègue paraisse libre.
+  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s) && (!s.ueId || ueEstVisible(findUe(s.ueId))));
   const week = state.weeks.find(w => w.id === selectedWeek);
   const dayDates = dayDatesForWeek(week);
   const dayConstraints = dayDates.map(d => constraintsForDate(d, promotion));
@@ -2321,7 +2425,7 @@ function renderPromotionTable(promotion) {
             const inner = isHead
               ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(sess.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(sess, rowspan, true)}`
               : '';
-            return `<div class="demi-col drop-slot ${typeClass(sess.type)}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
+            return `<div class="demi-col drop-slot ${typeClass(sess.type)}${estVisiblePourMoi(sess) ? '' : ' not-mine'}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
           };
           return `<td class="event-cell demi-cell${contClass}" rowspan="${rowspan}"><div class="demi-split">${halfCol(halfA[0], 'A')}${halfCol(halfB[0], 'B')}</div></td>`;
         }
@@ -2331,11 +2435,11 @@ function renderPromotionTable(promotion) {
           const inner = isHead
             ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan)}`
             : '';
-          return `<td class="event-cell drop-slot ${cls}${contClass}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
+          return `<td class="event-cell drop-slot ${cls}${contClass}${estVisiblePourMoi(session) ? '' : ' not-mine'}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
         }
         return `<td class="event-cell overlap-cell drop-slot${contClass}" rowspan="${rowspan}" data-drop-target='${escapeAttr(contextJson)}' title="${starting.length} séances en chevauchement">
           <div class="overlap-warning">${starting.length} séances superposées</div>
-          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
+          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}${estVisiblePourMoi(session) ? '' : ' not-mine'}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
         </td>`;
       }
       const contextJson = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
@@ -2378,7 +2482,7 @@ function renderPromotionTable(promotion) {
   const satSessions = sessions.filter(s => Number(s.day) === 5);
   const satConstraints = saturdayDate ? constraintsForDate(saturdayDate, promotion).filter(c => !isThematicConstraint(c)) : [];
   const saturdayRow = (satSessions.length || satConstraints.length)
-    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
+    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}${estVisiblePourMoi(s) ? '' : ' not-mine'}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
     : '';
   const eilRow = eilBannerRow(eilSelf, eilOther, DAYS.length);
 
@@ -2939,6 +3043,8 @@ function hexToRgba(hex, alpha = 1) {
 
 function exportUeProgressionPrint(ue) {
   if (!ue) return;
+  // UE déjà dans mon périmètre (bouton accessible seulement pour une UE
+  // ueEstVisible) : l'export imprime tout son contenu, comme à l'écran.
   const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => firstSequenceWeekIndex(a, state.weeks) - firstSequenceWeekIndex(b, state.weeks));
   const rows = sequences.length ? sequences.map(seq => {
     const sessions = state.sessions.filter(s => s.sequenceId === seq.id).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
@@ -2975,6 +3081,7 @@ function exportUeProgressionPrint(ue) {
 function exportSequencePrint(seq) {
   if (!seq) return;
   const ue = findUe(seq.ueId) || {};
+  // Séquence déjà dans mon périmètre : l'export imprime toutes ses séances.
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
   const rows = sessions.length ? sessions.map((s, i) => `<tr>
     <td>${i + 1}</td>
@@ -3490,6 +3597,7 @@ function renderRubanPdf() {
 function renderCreneaux() {
   const container = $('#creneauxGrids');
   if (!container) return;
+  refreshCreneauxTeacherFilter();
   $$('[data-creneaux-period]').forEach(b => b.classList.toggle('active', b.dataset.creneauxPeriod === creneauxPeriod));
   const period = TEMPLATE_PERIODS.find(p => p.key === creneauxPeriod) || TEMPLATE_PERIODS[0];
   container.innerHTML = renderTemplateGrid(period);
@@ -3499,7 +3607,7 @@ function renderCreneaux() {
    (distinguées par le n° d'UE et la couleur). La promo d'un créneau est portée
    par son semestre de stockage. */
 function renderTemplateGrid(period) {
-  const slots = (state.weekTemplates || []).filter(t => periodOfSemester(t.semester) === period.key);
+  const slots = (state.weekTemplates || []).filter(t => periodOfSemester(t.semester) === period.key && matchesCreneauxTeacherFilter(t));
   const skip = new Set();
   const rows = SLOTS.map((slotLbl, slotIndex) => {
     if (slotIndex === 4) {
@@ -3700,6 +3808,7 @@ function bindEvents() {
     creneauxPeriod = btn.dataset.creneauxPeriod;
     renderCreneaux();
   }));
+  $('#creneauxTeacherFilter')?.addEventListener('change', e => { creneauxTeacherFilter = e.target.value; renderCreneaux(); });
   $('#creneauxGrids')?.addEventListener('click', async (event) => {
     const del = event.target.closest('[data-del-template]');
     if (del) {
@@ -3912,6 +4021,12 @@ function bindEvents() {
   $('#designPromotionFilter').addEventListener('change', e => { designPromotionFilter = e.target.value; renderDesign(); });
   $('#designSemesterFilter').addEventListener('change', e => { designSemesterFilter = e.target.value; renderDesign(); });
   $('#designTeacherFilter')?.addEventListener('change', e => { designTeacherFilter = e.target.value; renderDesign(); });
+  $('#visibiliteToutAfficher')?.addEventListener('change', e => { visibiliteFiltree = !e.target.checked; renderAll(); });
+  // <details> ne se ferme pas tout seul au clic en dehors : on le fait à la main.
+  document.addEventListener('click', e => {
+    const details = $('#visibiliteFiltre');
+    if (details?.open && !details.contains(e.target)) details.open = false;
+  });
   $('#designSearch').addEventListener('input', () => renderDesign());
   $('#designUeChoices')?.addEventListener('change', (event) => {
     const checkbox = event.target.closest('input[type="checkbox"]');
@@ -4470,6 +4585,7 @@ function bindModalActions() {
       lieu: $('#reunionLieu').value.trim(),
       participants: $('#reunionParticipants').value.trim(),
       sujets: $('#reunionSujets').value.trim(),
+      teacher: $('#reunionTeacher').value.trim(),
       personalVehicle: $('#reunionVehicle').checked
     };
     const idx = state.reunions.findIndex(r => r.id === id);
@@ -5170,7 +5286,8 @@ function truncate(value, max) { const text = String(value || ''); return text.le
 // écouteurs d'événements une deuxième fois.
 let ocAppDemarre = false;
 window.OC_APP = {
-  demarrer() {
+  demarrer(initiales = '') {
+    moiInitiales = String(initiales || '').toUpperCase();
     if (!ocAppDemarre) {
       ocAppDemarre = true;
       bindEvents();

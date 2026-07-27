@@ -259,7 +259,7 @@ function afficherEtatActif(profil) {
   });
   brancherDeconnexion();
   elAppShell.hidden = false;
-  window.OC_APP.demarrer();
+  window.OC_APP.demarrer(profil.initiales);
 }
 
 // Compte créé mais pas encore activé : l'app reste inaccessible (RLS), donc

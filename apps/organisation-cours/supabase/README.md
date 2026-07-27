@@ -23,7 +23,8 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
 2. `policies.sql` — active la RLS, crée les policies et la fonction
    `oc_is_active_teacher()`.
 3. `002-blobs.sql` — tables `oc_blocs_perso` / `oc_blocs_partages` (notes,
-   frais, réunions, trames, ruban...).
+   frais, trames, ruban...). Voir `009`/`010` : `devNotes` et `reunions` en
+   sont ressortis depuis.
 4. `003-fk-detacher.sql` — corrige `oc_sequences.ue_id` (`on delete cascade`
    → `on delete set null`), pour que supprimer une UE détache ses séquences
    au lieu de les détruire.
@@ -43,7 +44,21 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
    legacy qui ne correspondent pas exactement aux initiales d'un compte).
 10. `008-identifiant-non-unique.sql` — l'`identifiant` n'a plus besoin d'être
     unique depuis que la connexion se fait par e-mail (voir plus bas).
-11. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
+11. `009-devnotes-partage.sql` — « Bugs & améliorations » (`devNotes`) passe de
+    `oc_blocs_perso` (privé) à `oc_blocs_partages` (commun à tous les comptes
+    actifs) ; `todoNotes` (« À faire ») reste privé, lui.
+12. `010-reunions-relationnelles.sql` — `reunions` sort de `oc_blocs_perso`
+    (strictement privé) pour devenir une table relationnelle `oc_reunions` +
+    jointure `oc_reunion_enseignants` : une réunion n'est visible que de son
+    créateur et des enseignants tagués « présents » (pas de tout le monde,
+    contrairement aux ue/séquences/séances — cf. AUDIT-RGPD.md sur les noms
+    complets du champ `participants`). Migre les réunions déjà enregistrées.
+13. `011-fix-recursion-reunions.sql` — **indispensable juste après `010`** :
+    sans lui, tout chargement déclenche une récursion infinie
+    ("infinite recursion detected in policy for relation oc_reunions"), même
+    cause que `005` (les policies SELECT de `oc_reunions` et
+    `oc_reunion_enseignants` s'interrogent mutuellement).
+14. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
     dans une transaction annulée (`rollback`), ne modifie rien en base.
 
 ## Réglage obligatoire côté Auth

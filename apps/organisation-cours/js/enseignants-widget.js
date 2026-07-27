@@ -29,6 +29,7 @@ const CIBLES = [
   { dialog: "templateDialog", input: "templateTeacher", cases: "templateTeacherChoices", residu: "templateTeacherResidu" },
   { dialog: "sequenceDialog", input: "sequenceTeacher", cases: "sequenceTeacherChoices", residu: "sequenceTeacherResidu" },
   { dialog: "sessionDialog", input: "sessionTeacher", cases: "sessionTeacherChoices", residu: "sessionTeacherResidu" },
+  { dialog: "reunionDialog", input: "reunionTeacher", cases: "reunionTeacherChoices", residu: "reunionTeacherResidu" },
 ];
 
 // Même grammaire que teacherTokens() dans app.js — dupliquée volontairement

@@ -40,13 +40,13 @@
 
 import { getClient } from "./supabase-client.js";
 import {
-  SPEC_UES, SPEC_SEQUENCES, SPEC_SESSIONS, SPEC_CONSTRAINTS,
+  SPEC_UES, SPEC_SEQUENCES, SPEC_SESSIONS, SPEC_CONSTRAINTS, SPEC_REUNIONS,
   versLigne, depuisLigne, empreinte,
 } from "./mapping.js";
 import * as enseignants from "./enseignants.js";
 
-const CLES_PERSO = ["todoNotes", "devNotes", "deplacements", "reunions"];
-const CLES_PARTAGEES = ["weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
+const CLES_PERSO = ["todoNotes", "deplacements"];
+const CLES_PARTAGEES = ["devNotes", "weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
 
 // Bug trouvé le 27/07/2026 (import d'un gros volume, ~150 écritures dans le
 // même enregistrer()) : envoyées TOUTES en une seule fois via Promise.all,
@@ -82,6 +82,7 @@ const JOINTURES_TEACHER = {
   ues: { table: "oc_ue_enseignants", colonne: "ue_id" },
   sequences: { table: "oc_sequence_enseignants", colonne: "sequence_id" },
   sessions: { table: "oc_session_enseignants", colonne: "session_id" },
+  reunions: { table: "oc_reunion_enseignants", colonne: "reunion_id" },
 };
 
 let sb = null;
@@ -114,14 +115,14 @@ let idsExistants = creerRegistreVide();
 
 function creerSnapshotVide() {
   return {
-    ues: new Map(), sequences: new Map(), sessions: new Map(), constraints: new Map(),
+    ues: new Map(), sequences: new Map(), sessions: new Map(), constraints: new Map(), reunions: new Map(),
     blocsPerso: new Map(), blocsPartages: new Map(),
     // id d'entité -> Set(user_id) déjà en jointure, tel que lu au chargement.
-    teacherUes: new Map(), teacherSequences: new Map(), teacherSessions: new Map(),
+    teacherUes: new Map(), teacherSequences: new Map(), teacherSessions: new Map(), teacherReunions: new Map(),
   };
 }
 function creerRegistreVide() {
-  return { ues: new Set(), sequences: new Set(), sessions: new Set(), constraints: new Set() };
+  return { ues: new Set(), sequences: new Set(), sessions: new Set(), constraints: new Set(), reunions: new Set() };
 }
 
 function construireWeeks(lignes) {
@@ -194,13 +195,6 @@ function separerTeacher(entite) {
 
 window.OC_SYNC = {
   async charger() {
-    // Nouvelle session (démarrer() après une connexion) : on repart d'un
-    // snapshot vierge, sinon un changement de compte sur la même page
-    // réutiliserait par erreur l'état d'un précédent utilisateur.
-    snapshot = creerSnapshotVide();
-    registreSuppression = creerRegistreVide();
-    idsExistants = creerRegistreVide();
-
     const s = await client();
     await enseignants.rafraichir();
     const resultats = await Promise.all([
@@ -209,20 +203,40 @@ window.OC_SYNC = {
       s.from("oc_sequences").select("*"),
       s.from("oc_sessions").select("*"),
       s.from("oc_constraints").select("*"),
+      s.from("oc_reunions").select("*"),
       s.from("oc_blocs_perso").select("*"),
       s.from("oc_blocs_partages").select("*"),
       s.from("oc_ue_enseignants").select("ue_id, enseignant_id"),
       s.from("oc_sequence_enseignants").select("sequence_id, enseignant_id"),
       s.from("oc_session_enseignants").select("session_id, enseignant_id"),
+      s.from("oc_reunion_enseignants").select("reunion_id, enseignant_id"),
     ]);
     const enErreur = resultats.find((r) => r.error);
     if (enErreur) {
+      // Bug trouvé le 27/07/2026 : si le snapshot/idsExistants était remis à
+      // vide AVANT ces requêtes (comme précédemment), un charger() en échec
+      // (ex. la récursion RLS de oc_reunions ci-avant) laissait idsExistants
+      // vide — alors qu'app.js reste utilisable (bindEvents() a déjà tourné).
+      // Un import de sauvegarde déclenché juste après voyait alors TOUTE
+      // entité comme "nouvelle" (idsExistants vide), tentait un INSERT même
+      // pour des lignes déjà en base -> "duplicate key value violates unique
+      // constraint" en masse. En ne réinitialisant qu'après un chargement
+      // RÉUSSI (ci-dessous), un échec laisse l'état précédent (mieux qu'un
+      // vide, qui garantit que tout paraîtra "nouveau").
       const message = "Chargement des données impossible : " + enErreur.error.message;
       window.alert(message);
       throw new Error(message);
     }
-    const [weeks, ues, sequences, sessions, constraints, blocsPerso, blocsPartages, joinUes, joinSequences, joinSessions] =
+    const [weeks, ues, sequences, sessions, constraints, reunions, blocsPerso, blocsPartages, joinUes, joinSequences, joinSessions, joinReunions] =
       resultats.map((r) => r.data || []);
+
+    // Nouvelle session (démarrer() après une connexion) : on repart d'un
+    // snapshot vierge, sinon un changement de compte sur la même page
+    // réutiliserait par erreur l'état d'un précédent utilisateur. Fait
+    // seulement ICI (chargement réussi), cf. commentaire ci-dessus.
+    snapshot = creerSnapshotVide();
+    registreSuppression = creerRegistreVide();
+    idsExistants = creerRegistreVide();
 
     // Constaté sur les lignes BRUTES reçues de Supabase, avant toute
     // reconstruction côté app.js (mergeReferenceUes et consorts) — voir le
@@ -231,6 +245,7 @@ window.OC_SYNC = {
     idsExistants.sequences = new Set(sequences.map((r) => r.id));
     idsExistants.sessions = new Set(sessions.map((r) => r.id));
     idsExistants.constraints = new Set(constraints.map((r) => r.id));
+    idsExistants.reunions = new Set(reunions.map((r) => r.id));
 
     const blocsPersoParCle = new Map(blocsPerso.map((r) => [r.cle, r.contenu]));
     const blocsPartagesParCle = new Map(blocsPartages.map((r) => [r.cle, r.contenu]));
@@ -240,6 +255,7 @@ window.OC_SYNC = {
     snapshot.teacherUes = agregerJointure(joinUes, "ue_id");
     snapshot.teacherSequences = agregerJointure(joinSequences, "sequence_id");
     snapshot.teacherSessions = agregerJointure(joinSessions, "session_id");
+    snapshot.teacherReunions = agregerJointure(joinReunions, "reunion_id");
 
     return {
       weeks: construireWeeks(weeks),
@@ -247,10 +263,10 @@ window.OC_SYNC = {
       sequences: sequences.map((r) => completerTeacher(depuisLigne(SPEC_SEQUENCES, r), snapshot.teacherSequences.get(r.id))),
       sessions: sessions.map((r) => completerTeacher(depuisLigne(SPEC_SESSIONS, r), snapshot.teacherSessions.get(r.id))),
       constraints: constraints.map((r) => depuisLigne(SPEC_CONSTRAINTS, r)),
+      reunions: reunions.map((r) => completerTeacher(depuisLigne(SPEC_REUNIONS, r), snapshot.teacherReunions.get(r.id))),
       todoNotes: blocsPersoParCle.get("todoNotes"),
-      devNotes: blocsPersoParCle.get("devNotes"),
+      devNotes: blocsPartagesParCle.get("devNotes"),
       deplacements: blocsPersoParCle.get("deplacements"),
-      reunions: blocsPersoParCle.get("reunions"),
       weekTemplates: blocsPartagesParCle.get("weekTemplates"),
       rubanOverrides: blocsPartagesParCle.get("rubanOverrides"),
       rubanUeCaps: blocsPartagesParCle.get("rubanUeCaps"),
@@ -264,7 +280,7 @@ window.OC_SYNC = {
   // après normalizeData côté app.js) : c'est la référence à laquelle
   // enregistrer() comparera l'état courant pour savoir quoi (ré)écrire.
   memoriserSnapshot(state) {
-    for (const type of ["ues", "sequences", "sessions", "constraints"]) {
+    for (const type of ["ues", "sequences", "sessions", "constraints", "reunions"]) {
       snapshot[type] = new Map((state[type] || []).map((e) => [e.id, empreinte(e)]));
     }
     snapshot.blocsPerso = new Map(CLES_PERSO.map((cle) => [cle, empreinte(state[cle] ?? null)]));
@@ -311,6 +327,7 @@ window.OC_SYNC = {
     await ecrireEntites(s, uid, "ues", "oc_ues", SPEC_UES, state.ues, erreurs, forcer);
     await ecrireEntites(s, uid, "sequences", "oc_sequences", SPEC_SEQUENCES, state.sequences, erreurs, forcer);
     await ecrireEntites(s, uid, "sessions", "oc_sessions", SPEC_SESSIONS, state.sessions, erreurs, forcer);
+    await ecrireEntites(s, uid, "reunions", "oc_reunions", SPEC_REUNIONS, state.reunions, erreurs, forcer);
 
     // Jointures `teacher` : indépendant du diff des lignes ci-dessus (cf.
     // en-tête du fichier) — tourne à chaque enregistrement, pas seulement
@@ -318,12 +335,14 @@ window.OC_SYNC = {
     await synchroniserEnseignants(s, "oc_ue_enseignants", "ue_id", snapshot.teacherUes, state.ues, erreurs);
     await synchroniserEnseignants(s, "oc_sequence_enseignants", "sequence_id", snapshot.teacherSequences, state.sequences, erreurs);
     await synchroniserEnseignants(s, "oc_session_enseignants", "session_id", snapshot.teacherSessions, state.sessions, erreurs);
+    await synchroniserEnseignants(s, "oc_reunion_enseignants", "reunion_id", snapshot.teacherReunions, state.reunions, erreurs);
 
     // Suppressions dans l'ordre inverse des écritures ci-dessus.
     await supprimerRegistre(s, "sessions", "oc_sessions", erreurs);
     await supprimerRegistre(s, "sequences", "oc_sequences", erreurs);
     await supprimerRegistre(s, "ues", "oc_ues", erreurs);
     await supprimerRegistre(s, "constraints", "oc_constraints", erreurs);
+    await supprimerRegistre(s, "reunions", "oc_reunions", erreurs);
 
     await ecrireBlocs(s, "oc_blocs_perso", CLES_PERSO, snapshot.blocsPerso, state,
       (cle, valeur) => ({ user_id: uid, cle, contenu: valeur ?? null }), erreurs, forcer);
@@ -383,7 +402,7 @@ async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer
   });
 }
 
-const SNAPSHOT_TEACHER_PAR_TYPE = { ues: "teacherUes", sequences: "teacherSequences", sessions: "teacherSessions" };
+const SNAPSHOT_TEACHER_PAR_TYPE = { ues: "teacherUes", sequences: "teacherSequences", sessions: "teacherSessions", reunions: "teacherReunions" };
 
 async function supprimerRegistre(s, type, table, erreurs) {
   const ids = [...registreSuppression[type]];

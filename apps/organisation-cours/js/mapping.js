@@ -64,6 +64,18 @@ export const SPEC_CONSTRAINTS = [
   ['notes', 'notes', 'text'],
 ];
 
+// Réunions — table relationnelle (et non plus un blob oc_blocs_perso) : une
+// réunion doit pouvoir être visible d'un collègue tagué comme participant
+// (cf. mémoire Claude Code organisation-cours-multiuser-plan). `participants`
+// (noms complets en texte libre, cf. AUDIT-RGPD.md) reste hors liste blanche
+// et tombe donc dans `contenu` jsonb, comme n'importe quel champ non listé.
+export const SPEC_REUNIONS = [
+  ['date', 'date', 'text'],
+  ['lieu', 'lieu', 'text'],
+  ['sujets', 'sujets', 'text'],
+  ['personalVehicle', 'personal_vehicle', 'bool'],
+];
+
 function versColonne(nature, valeur) {
   switch (nature) {
     case 'fk':

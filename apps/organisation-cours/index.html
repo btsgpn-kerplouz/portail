@@ -26,6 +26,13 @@
       <button class="tab" data-view="week">Planning hebdo</button>
       <button class="tab" data-view="ruban">Référentiel &amp; Ruban</button>
     </nav>
+    <details id="visibiliteFiltre" class="visibilite-filtre">
+      <summary>👁 Visibilité</summary>
+      <div class="visibilite-panel">
+        <p class="hint">Vous voyez vos UE et celles où vous partagez au moins une séquence/séance avec un collègue — les cours d'un collègue seul y apparaissent grisés. Le reste (à faire, séances à placer, frais, réunions non partagées) reste strictement personnel.</p>
+        <label class="checkbox-chip"><input type="checkbox" id="visibiliteToutAfficher"><span>Tout afficher (y compris les UE sans lien avec vous)</span></label>
+      </div>
+    </details>
     <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
   </header>
 
@@ -67,6 +74,7 @@
             <button type="button" id="clearDevNotes" class="small secondary">Effacer</button>
           </div>
         </div>
+        <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
         <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
       </section>
       <details class="panel panel-collapsible">
@@ -307,6 +315,9 @@
               <button type="button" data-creneaux-period="autumn" class="active">Septembre – décembre</button>
               <button type="button" data-creneaux-period="spring">Janvier – mai</button>
             </div>
+            <label>Créneaux affichés
+              <select id="creneauxTeacherFilter"></select>
+            </label>
             <p class="meta">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
           </div>
         </section>
@@ -942,6 +953,13 @@
         <label class="span-full">Participants
           <input id="reunionParticipants" placeholder="Qui était présent : personnes, organismes…" />
         </label>
+      </div>
+      <div class="field-block">
+        <span class="field-label">Enseignant(s) présent(s)</span>
+        <p class="form-help tight">Détermine qui, parmi les comptes, voit cette réunion (en plus de vous). Le champ « Participants » ci-dessus reste du texte libre pour les personnes/organismes externes.</p>
+        <div id="reunionTeacherChoices" class="checkbox-row"></div>
+        <input type="hidden" id="reunionTeacher" />
+        <input id="reunionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
       </div>
       <label class="field-block">Sujets abordés
         <textarea id="reunionSujets" rows="4" placeholder="Ordre du jour, points évoqués, décisions prises…"></textarea>
