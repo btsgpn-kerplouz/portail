@@ -391,9 +391,12 @@
         <label>Période
           <input id="uePeriod" placeholder="Ex. septembre-décembre" />
         </label>
-        <label>Enseignant(s) référent(s)
-          <input id="ueTeacher" placeholder="Initiales séparées par virgules : AB, CD…" />
-        </label>
+        <div class="field-block span-full">
+          <span class="field-label">Enseignant(s) référent(s)</span>
+          <div id="ueTeacherChoices" class="checkbox-row"></div>
+          <input type="hidden" id="ueTeacher" />
+          <input id="ueTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+        </div>
         <label>Volume cible / remarque horaire
           <input id="ueHoursTarget" placeholder="Ex. à préciser, 36h prévues, arbitrage en cours…" />
         </label>
@@ -453,9 +456,12 @@
         <label>Intitulé
           <input id="templateTitle" placeholder="Ex. Génie écologique, Animation nature…" />
         </label>
-        <label>Enseignant(s)
-          <input id="templateTeacher" placeholder="Initiales ou noms : AB, CD…" />
-        </label>
+        <div class="field-block span-full">
+          <span class="field-label">Enseignant(s)</span>
+          <div id="templateTeacherChoices" class="checkbox-row"></div>
+          <input type="hidden" id="templateTeacher" />
+          <input id="templateTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+        </div>
         <label>Couleur
           <span class="seq-color-field">
             <input type="color" id="templateColor" value="#9aa0ad" />
@@ -538,9 +544,12 @@
               <span class="meta">Les séances héritent de cette couleur (Conception, Progression semestre, Planning hebdo).</span>
             </span>
           </label>
-          <label>Enseignant(s) impliqué(s)
-            <input id="sequenceTeacher" placeholder="Initiales séparées par virgules : AB, CD…" />
-          </label>
+          <div class="field-block span-full">
+            <span class="field-label">Enseignant(s) impliqué(s)</span>
+            <div id="sequenceTeacherChoices" class="checkbox-row"></div>
+            <input type="hidden" id="sequenceTeacher" />
+            <input id="sequenceTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+          </div>
         </div>
       </fieldset>
       <fieldset class="form-section">
@@ -643,9 +652,12 @@
               <option value="B">Groupe B</option>
             </select>
           </label>
-          <label>Enseignant(s)
-            <input id="sessionTeacher" placeholder="Initiales ou noms" />
-          </label>
+          <div class="field-block span-full">
+            <span class="field-label">Enseignant(s)</span>
+            <div id="sessionTeacherChoices" class="checkbox-row"></div>
+            <input type="hidden" id="sessionTeacher" />
+            <input id="sessionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+          </div>
           <label>Statut pédagogique
             <select id="sessionStatus">
               <option>Prévue</option>
@@ -980,6 +992,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="./js/supabase-client.js"></script>
   <script type="module" src="./js/sync.js"></script>
+  <script type="module" src="./js/enseignants-widget.js"></script>
   <script type="module" src="./js/auth.js"></script>
 </body>
 </html>

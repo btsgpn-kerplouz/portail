@@ -1,10 +1,10 @@
 // Cache des comptes enseignants actifs + résolution des jetons "teacher"
-// legacy — étape 5 du plan multi-utilisateurs (voir mémoire Claude Code :
-// organisation-cours-multiuser-plan, et humming-singing-canyon.md).
+// legacy — étapes 5 et 6 du plan multi-utilisateurs (voir mémoire Claude
+// Code : organisation-cours-multiuser-plan, et humming-singing-canyon.md).
 //
-// Utilisé uniquement par sync.js, en coulisse : aucune modification
-// d'interface à cette étape (le widget de multi-sélection, qui remplacera
-// les 4 champs texte libres, est l'étape 6).
+// Utilisé par sync.js (résolution jeton -> compte, en coulisse) ET par
+// js/enseignants-widget.js (étape 6 : cases à cocher des comptes actifs, à
+// la place des 4 champs texte libres).
 //
 // Résolution d'un jeton legacy ("TZ", "Tanguy Zorro"...) vers un compte réel :
 //   1. table oc_alias_initiales (déclaration explicite "je suis aussi TZ") ;
@@ -40,6 +40,12 @@ export async function rafraichir() {
 
 export function initialesDe(userId) {
   return parId.get(userId)?.initiales || "";
+}
+
+// Comptes actifs, pour le widget de multi-sélection (étape 6) : cases à
+// cocher à la place des 4 champs texte libres legacy.
+export function listerActifs() {
+  return [...parId.values()].sort((a, b) => (a.initiales || "").localeCompare(b.initiales || ""));
 }
 
 export function resoudre(jeton) {
