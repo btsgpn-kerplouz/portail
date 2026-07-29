@@ -40,12 +40,13 @@
     /* Cadre + bandeau */
     .frame{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
     .frame-body{padding:clamp(1.2rem,3vw,1.7rem);border-top:1px solid var(--line-2)}
-    .banner{position:relative;overflow:hidden;min-height:190px;display:flex;flex-direction:column;justify-content:center;padding:clamp(1.6rem,3.6vw,2.4rem);--bg1:color-mix(in srgb,var(--acc) 82%,#0a1510);background:var(--bg1)}
+    .banner{position:relative;overflow:hidden;min-height:164px;display:flex;flex-direction:column;justify-content:center;padding:clamp(1.4rem,3.2vw,2.1rem);--bg1:color-mix(in srgb,var(--acc) 82%,#0a1510);background:var(--bg1)}
     .banner.hub{--acc:var(--house)}
     .banner-texture{position:absolute;inset:0;width:100%;height:100%;display:block}
     .banner-scrim{position:absolute;inset:0;background:linear-gradient(100deg,var(--bg1) 0%,color-mix(in srgb,var(--bg1) 82%,transparent) 36%,transparent 74%)}
     .banner-inner{position:relative;max-width:56ch}
-    .banner h1{margin:.5rem 0 .4rem;color:#f4f8f4;text-shadow:0 1px 2px rgba(0,0,0,.22);font-size:clamp(1.8rem,4.6vw,2.7rem)}
+    .banner h1{margin:.5rem 0 .4rem;color:#f4f8f4;text-shadow:0 1px 2px rgba(0,0,0,.22);font-size:clamp(1.8rem,4.6vw,2.7rem);max-width:none;white-space:nowrap}
+    @media (max-width:640px){.banner h1{white-space:normal}}
     .banner .subtitle{margin:0;color:rgba(238,244,238,.84);font-size:1.04rem}
 
     /* Pastille (légende = hub) */
@@ -60,9 +61,15 @@
     a.tool{text-decoration:none;color:inherit;cursor:pointer}
     a.tool:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
     a.tool:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-    .tool--muted{opacity:.9}
-    .tool--muted .tool-band{background:#e6eae3;color:var(--muted)}
-    .tool--muted .tool-band h3{color:var(--ink)}
+    /* En chantier : pastel, effacé — se distingue au premier coup d'œil des tuiles actives */
+    .tool--wip{border-style:dashed;background:color-mix(in srgb,var(--acc) 6%,var(--panel));--wip-band:color-mix(in srgb,var(--acc) 20%,var(--surface))}
+    .tool--wip .tool-band{background:var(--wip-band);color:var(--acc)}
+    .tool--wip .tool-band h3{color:color-mix(in srgb,var(--acc) 48%,var(--wip-band))}
+    .tool--wip .tool-body p{color:var(--faint)}
+
+    /* Couleurs inversées : bandeau sombre, réservé aux enseignants */
+    .tool--invert .tool-band{background:var(--ink);color:#f4f8f4}
+    .tool--invert .tool-band h3{color:#f4f8f4}
     .go{display:inline-block;color:var(--acc);font-weight:700;transition:transform .12s ease}
     a.tool:hover .go{transform:translateX(3px)}
     .staff{margin-top:1.4rem;padding-top:1.1rem;border-top:1px dashed var(--line)}
@@ -89,11 +96,13 @@
     .open.disabled{color:var(--faint);pointer-events:none}
 
     /* Mise en page de la page */
-    .wrap{max-width:1060px;margin:0 auto;padding:clamp(1.4rem,4vw,2.4rem) clamp(1rem,4vw,2rem) 0}
-    .page-foot{max-width:1060px;margin:0 auto;padding:2rem clamp(1rem,4vw,2rem) 3rem;color:var(--muted);font-size:.88rem;text-align:center}
-    .page-foot strong{color:var(--ink)}
-    .page-foot .pastille{justify-content:center;color:var(--muted);margin-top:.6rem}
+    .wrap{max-width:1280px;margin:0 auto;padding:clamp(1.2rem,3.4vw,2rem) clamp(1rem,4vw,2rem) 0}
+    .page-foot{max-width:1280px;margin:0 auto;padding:1.3rem clamp(1rem,4vw,2rem) 1.6rem;color:var(--muted);font-size:.88rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem .7rem}
+    .page-foot .pastille{color:var(--muted)}
     .page-foot .pastille .dot{box-shadow:0 0 0 2px rgba(0,0,0,.05)}
+    .foot-contact{color:var(--acc);font-weight:700;text-decoration:none}
+    .foot-contact:hover{text-decoration:underline;text-underline-offset:2px}
+    .foot-contact:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
 
     @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
   </style>
@@ -114,9 +123,8 @@
             </span>
             btsgpn-kerplouz
           </span>
-          <h1>Portail d'outils pédagogiques</h1>
-          <p class="subtitle">Le hub — tous les outils du BTS Gestion et Protection de la Nature,
-             en classe comme sur le terrain.</p>
+          <h1>Portail des outils numériques</h1>
+          <p class="subtitle">Applis du BTS GPN de Kerplouz.</p>
         </div>
       </header>
 
@@ -140,7 +148,14 @@
           </a>
 
           <a class="tool" style="--acc:#c2662f" href="https://vegetations-massif-armoricain.kerplouz.workers.dev" target="_blank" rel="noopener">
-            <div class="tool-band"><h3>Végétations du massif armoricain</h3><span class="tag">consultation</span></div>
+            <div class="tool-band has-icon">
+              <div class="tool-band-title">
+                <!-- Icône reprise de l'onglet Dendrogramme, apps/vegetations-armoricaines/index.html -->
+                <svg class="tool-icon" viewBox="-6 -6 36 36" fill="none" stroke="#faf3e6" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="18.5" cy="6" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/><circle cx="18.5" cy="18" r="1.9"/><path d="M6.9 12h3.3M10.2 12V6.4a.6.6 0 0 1 .6-.6h5.8M10.2 12h6.4M10.2 12v5.6a.6.6 0 0 0 .6.6h5.8"/></svg>
+                <h3>Végétations du massif armoricain</h3>
+              </div>
+              <span class="tag">consultation</span>
+            </div>
             <div class="tool-body">
               <p>Consultation de la classification physionomique et phytosociologique des
                  végétations du massif armoricain du CBNB.</p>
@@ -148,7 +163,7 @@
             </div>
           </a>
 
-          <article class="tool" style="--acc:#0f7aa0">
+          <article class="tool tool--wip" style="--acc:#0f7aa0">
             <div class="tool-band"><h3>Habitats — Gâvres</h3><span class="tag">clé</span></div>
             <div class="tool-body">
               <p>Aide à l'identification des habitats naturels de la Petite Mer de Gâvres.</p>
@@ -156,7 +171,7 @@
             </div>
           </article>
 
-          <article class="tool" style="--acc:#7d4f83">
+          <article class="tool tool--wip" style="--acc:#7d4f83">
             <div class="tool-band"><h3>Habitats — Landes</h3><span class="tag">clé</span></div>
             <div class="tool-body">
               <p>Aide à l'identification des habitats de landes.</p>
@@ -169,17 +184,17 @@
 
         <div class="staff">
           <div class="staff-label">Réservé aux enseignants</div>
-          <a class="tool tool--muted" style="--acc:#737b73" href="https://organisation-cours-gpn.kerplouz.workers.dev" target="_blank" rel="noopener">
+          <a class="tool tool--invert" style="--acc:#737b73" href="https://organisation-cours-gpn.kerplouz.workers.dev" target="_blank" rel="noopener">
             <div class="tool-band has-icon">
               <div class="tool-band-title">
-                <!-- Logo validé : logo apps/phyto-cours-valides/cours/cours-mono.svg -->
-                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><rect x="140" y="164" width="232" height="200" rx="14" fill="none" stroke="#141d17" stroke-width="16"/><path d="M140 202 L140 178 A14 14 0 0 1 154 164 L358 164 A14 14 0 0 1 372 178 L372 202 Z" fill="#141d17"/><rect x="156" y="222" width="34" height="40" rx="6" fill="#141d17"/><rect x="156" y="276" width="34" height="54" rx="6" fill="#141d17"/><rect x="196" y="240" width="34" height="60" rx="6" fill="#141d17"/><rect x="236" y="222" width="34" height="44" rx="6" fill="#141d17"/><rect x="236" y="300" width="34" height="40" rx="6" fill="#141d17"/><rect x="276" y="250" width="34" height="70" rx="6" fill="#141d17"/><rect x="316" y="232" width="34" height="50" rx="6" fill="#141d17"/><rect x="316" y="300" width="34" height="44" rx="6" fill="#141d17"/></svg>
+                <!-- Logo validé : logo apps/phyto-cours-valides/cours/cours-mono.svg (couleurs inversées pour fond sombre) -->
+                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><rect x="140" y="164" width="232" height="200" rx="14" fill="none" stroke="#f4f8f4" stroke-width="16"/><path d="M140 202 L140 178 A14 14 0 0 1 154 164 L358 164 A14 14 0 0 1 372 178 L372 202 Z" fill="#f4f8f4"/><rect x="156" y="222" width="34" height="40" rx="6" fill="#f4f8f4"/><rect x="156" y="276" width="34" height="54" rx="6" fill="#f4f8f4"/><rect x="196" y="240" width="34" height="60" rx="6" fill="#f4f8f4"/><rect x="236" y="222" width="34" height="44" rx="6" fill="#f4f8f4"/><rect x="236" y="300" width="34" height="40" rx="6" fill="#f4f8f4"/><rect x="276" y="250" width="34" height="70" rx="6" fill="#f4f8f4"/><rect x="316" y="232" width="34" height="50" rx="6" fill="#f4f8f4"/><rect x="316" y="300" width="34" height="44" rx="6" fill="#f4f8f4"/></svg>
                 <h3>Organisation de cours</h3>
               </div>
               <span class="tag">enseignants</span>
             </div>
             <div class="tool-body">
-              <p>Préparation et suivi des séquences pédagogiques.</p>
+              <p>Préparation et suivi des séquences de cours.</p>
               <div class="tool-foot"><span class="status live">En service</span><span class="go">→</span></div>
             </div>
           </a>
@@ -189,17 +204,16 @@
   </main>
 
   <footer class="page-foot">
-    Portail pédagogique · BTS GPN · Kerplouz — espace de travail collaboratif
-    <strong>btsgpn-kerplouz</strong>.
-    <span class="pastille legend">
+    <span>Portail pédagogique · BTS GPN · Kerplouz</span>
+    <span class="pastille legend" aria-hidden="true">
       <span class="dots">
         <span class="dot" style="--dot:#2e7d4f"></span>
         <span class="dot" style="--dot:#c2662f"></span>
         <span class="dot" style="--dot:#0f7aa0"></span>
         <span class="dot" style="--dot:#7d4f83"></span>
       </span>
-      btsgpn-kerplouz
     </span>
+    <a class="foot-contact" href="mailto:martin.diraison@kerplouz.com">Contact</a>
   </footer>
 
   <!-- Moteur de textures (copie de shared/texture.js — source de vérité) -->
