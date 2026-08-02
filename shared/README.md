@@ -5,7 +5,7 @@ Ressources **communes à toutes les apps** (source de vérité de l'identité vi
 - **`theme.css`** — la charte **« Atlas naturaliste »** : couleurs, typographie,
   bandeau, cartes, boutons, champs, statuts. Tokens sémantiques.
 - **`texture.js`** — le moteur de **textures de bandeau** (canvas) : `grille`,
-  `scatter`, `ondes`, `relief`, `classification`.
+  `scatter`, `ondes`, `relief`, `classification`, `ruban`.
 - **`fonts/`** — polices embarquées : **Atkinson Hyperlegible** (lecture, inclusive)
   + **JetBrains Mono** (chiffres & repères).
 
