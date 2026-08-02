@@ -2139,6 +2139,10 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-table th, .frais-table td { padding: .5rem .6rem; border-bottom: 1px solid var(--line); text-align: left; }
 .frais-table thead th { background: var(--surface-alt); font-size: .74rem; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); border-bottom: 1px solid var(--line-strong); }
 .frais-table td.num, .frais-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* Le tableau vit maintenant dans une demi-largeur : un nombre ou une date coupés
+   en deux lignes se lisent mal et déforment la ligne. Ce sont les colonnes
+   étroites — le texte libre (lieu, mots-clés) continue de se replier. */
+.frais-table td.num, .frais-table td:first-child { white-space: nowrap; }
 .frais-table tbody tr[data-edit-deplacement] { cursor: pointer; }
 .frais-table tbody tr:hover { background: var(--moss-soft); }
 .frais-row-actions { text-align: right; width: 2.4rem; }
@@ -2360,20 +2364,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 /* Zone mensuelle sur DEUX colonnes (lot A [20]) : repliées, ces quatre barres
    ne portent qu'un titre et un badge — les mettre en pile gaspillait la moitié
-   de la largeur. Réserve mesurée : « Frais » et « Réunions » portent un tableau
-   large, ils reprennent donc toute la largeur UNE FOIS DÉPLIÉS. */
+   de la largeur. Les encarts gardent leur position MÊME DÉPLIÉS : plutôt que de
+   rendre la pleine largeur à « Frais », on a raccourci son tableau (Classe, UE
+   et Taux retirés de l'affichage, voir renderFrais()). */
 #dashboard .zone-basse-lignes {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 var(--sp-5); align-items: start;
 }
 #dashboard .zone-basse-lignes > * { min-width: 0; }
-#dashboard .zone-basse-lignes > details[open].frais-panel,
-#dashboard .zone-basse-lignes > details[open].reunions-panel { grid-column: 1 / -1; }
 /* Même filet de séparation qu'en zone haute : deux colonnes de barres côte à
-   côte sans limite se lisaient comme une seule liste en désordre. Il ne
-   s'applique qu'à la colonne de droite — et pas à un encart passé pleine
-   largeur, qui n'a plus de voisin à sa gauche. */
-#dashboard .zone-basse-lignes > :nth-child(even):not([open].frais-panel):not([open].reunions-panel) {
+   côte sans limite se lisaient comme une seule liste en désordre. */
+#dashboard .zone-basse-lignes > :nth-child(even) {
   border-left: 1px solid var(--line-strong);
   padding-left: var(--sp-5);
 }

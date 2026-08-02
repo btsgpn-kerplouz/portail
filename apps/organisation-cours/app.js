@@ -770,11 +770,8 @@ function renderFrais() {
       <td>${escapeHtml(d.date ? formatDateFr(d.date) : '—')}</td>
       <td>${escapeHtml(d.lieu || '—')}${(linkedSession || linkedReunion) ? ` <span class="frais-link" title="${escapeAttr(linkTitle)}">🔗</span>` : ''}</td>
       <td>${escapeHtml(d.conducteur || '—')}</td>
-      <td>${escapeHtml(d.classe || '')}</td>
-      <td>${escapeHtml(d.ue || '—')}</td>
       <td title="${escapeAttr(d.keywords || '')}">${escapeHtml(d.keywords ? truncate(d.keywords, 32) : '—')}</td>
       <td class="num">${Number(d.kmAR) || 0}</td>
-      <td class="num">${escapeHtml(deplacementTaux(d).toLocaleString('fr-FR', { minimumFractionDigits: 2 }))}</td>
       <td class="num">${escapeHtml(fmtEuro(deplacementTotal(d)))}</td>
       <td><span class="frais-status ${statusClass(d.statut)}">${escapeHtml(d.statut)}</span></td>
       <td class="frais-row-actions"><button type="button" class="icon-button small" data-edit-deplacement="${escapeAttr(d.id)}" title="Modifier">✎</button></td>
@@ -787,8 +784,12 @@ function renderFrais() {
     <div class="frais-totals">${totalsLine}</div>
     <div class="table-scroll">
       <table class="frais-table">
-        <thead><tr><th>Date</th><th>Lieu</th><th>Conducteur</th><th>Classe</th><th>UE</th><th>Mots-clés</th><th class="num">Km A/R</th><th class="num">Taux</th><th class="num">Total</th><th>Statut</th><th aria-label="Actions"></th></tr></thead>
-        <tbody>${body || `<tr><td colspan="11" class="empty-hint">Aucun déplacement pour ce filtre.</td></tr>`}</tbody>
+        <!-- Classe, UE et Taux ne sont plus affichés ici : ils allongeaient le
+             tableau au point d'exiger la pleine largeur, alors que l'encart doit
+             tenir dans sa colonne. Ils restent saisissables dans la fiche et
+             présents dans les exports, qui eux vont à l'administration. -->
+        <thead><tr><th>Date</th><th>Lieu</th><th>Conducteur</th><th>Mots-clés</th><th class="num">Km A/R</th><th class="num">Total</th><th>Statut</th><th aria-label="Actions"></th></tr></thead>
+        <tbody>${body || `<tr><td colspan="8" class="empty-hint">Aucun déplacement pour ce filtre.</td></tr>`}</tbody>
       </table>
     </div>`;
 }
