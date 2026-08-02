@@ -9,6 +9,7 @@
      ondes           → Habitats-Gâvres   (lignes de marée = littoral)
      relief          → Habitats-Landes   (anneaux = courbes de niveau)
      classification  → Végétations       (cladogramme = arbre phytosociologique)
+     ruban           → Organisation      (blocs de créneaux = ruban pédagogique)
 
    Usage (HTML) :
      <canvas class="banner-texture"
@@ -112,6 +113,29 @@
             walk(ca0, ca1, r2, d - 1);
           }
         })(aMain - span / 2, aMain + span / 2, rBase, depth);
+      }
+      else if (mode === 'ruban') {          // blocs de créneaux sur une grille de semaines (ruban pédagogique)
+        var wcols = Math.max(6, Math.round(w / 46));
+        g.globalAlpha = 0.28;
+        for (var wc = 0; wc <= wcols; wc++) {
+          var wx = (wc / wcols) * w;
+          g.beginPath(); g.moveTo(wx, 0); g.lineTo(wx, h); g.stroke();
+        }
+        g.globalAlpha = 1;
+        var rrows = 5, rowH = h / rrows;
+        var sd = 71; function srnd() { sd = (sd * 1103515245 + 12345) & 0x7fffffff; return sd / 0x7fffffff; }
+        for (var ry = 0; ry < rrows; ry++) {
+          var by = ry * rowH + rowH * 0.22, bh = rowH * 0.56;
+          var bx = srnd() * w * 0.14;
+          while (bx < w - 6) {
+            var bw = w * (0.045 + srnd() * 0.11);
+            g.globalAlpha = 0.32 + srnd() * 0.5;
+            g.beginPath(); g.rect(bx, by, bw, bh);
+            srnd() > 0.42 ? g.fill() : g.stroke();
+            bx += bw + w * (0.018 + srnd() * 0.045);
+          }
+        }
+        g.globalAlpha = 1;
       }
     }
 

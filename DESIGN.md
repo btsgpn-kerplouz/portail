@@ -8,7 +8,7 @@ colors:
   acc-vegetations: "#c2662f"
   acc-habitats-gavres: "#0f7aa0"
   acc-habitats-landes: "#7d4f83"
-  acc-organisation: "#8a6d3d"
+  acc-organisation: "#23458c"
   page: "#e2e7e0"
   surface: "#f2f5ef"
   panel: "#fbfcf9"
@@ -144,7 +144,7 @@ seule couleur franche**, choisie dans une gamme naturelle et botanique.
   les liens, les bandeaux de carte, l'anneau de focus. **Une app = une seule
   couleur.** Le roster actuel : Phytoscope vert phytosociologue (#2e7d4f),
   Végétations orange brûlé (#c2662f), Habitats-Gâvres bleu littoral (#0f7aa0),
-  Habitats-Landes prune de lande (#7d4f83), Organisation ocre (#8a6d3d).
+  Habitats-Landes prune de lande (#7d4f83), Organisation bleu d'encre (#23458c).
 
 ### Secondary
 - **Graphite du hub (`--house`)** (#2b3a40) : le neutre du **portail** uniquement.

@@ -3,22 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Organisation des enseignements — BTS GPN</title>
+  <title>Organisation des cours — BTS GPN</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="auth-shell">
-    <a class="auth-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
+    <a class="atlas-backlink-light" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
+    <span class="atlas-pastille-light"><span class="pdot"></span>btsgpn-kerplouz</span>
     <section id="auth-card" class="auth-card" aria-live="polite"></section>
   </div>
 
   <div id="app-shell" hidden>
-  <header class="app-header">
-    <div>
-      <a class="auth-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
-      <h1>Organisation des enseignements <span class="version-badge">V5.0</span></h1>
-      <p class="app-subtitle">BTS Gestion et Protection de la Nature</p>
-    </div>
+  <div class="app-sticky-header">
+    <header class="banner">
+      <div class="banner-inner">
+        <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
+        <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
+        <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
+      </div>
+    </header>
     <nav class="tabs header-tabs" aria-label="Navigation principale">
       <button class="tab active" data-view="dashboard">Tableau de bord</button>
       <button class="tab" data-view="design">Conception pédagogique</button>
@@ -26,59 +29,75 @@
       <button class="tab" data-view="week">Planning hebdo</button>
       <button class="tab" data-view="ruban">Référentiel &amp; Ruban</button>
     </nav>
-    <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
-  </header>
+  </div>
 
   <main>
     <section id="dashboard" class="view active-view">
-      <div class="page-title">
-        <div>
-          <h2>Tableau de bord</h2>
-          <p>Pilotage synthétique : UE, séquences, séances à placer, séances définitivement placées et contraintes.</p>
-        </div>
-        <div class="data-actions" aria-label="Sauvegarde des données">
-          <button type="button" id="exportDataBtn" class="data-btn" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)">⬇ Exporter</button>
-          <button type="button" id="importDataBtn" class="data-btn" title="Restaurer vos données depuis un fichier JSON exporté">⬆ Importer</button>
-          <input type="file" id="importDataInput" accept="application/json,.json" hidden />
-        </div>
+      <div class="dash-actions" aria-label="Sauvegarde des données">
+        <button type="button" id="exportDataBtn" class="data-btn" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)">⬇ Exporter</button>
+        <button type="button" id="importDataBtn" class="data-btn" title="Restaurer vos données depuis un fichier JSON exporté">⬆ Importer</button>
+        <input type="file" id="importDataInput" accept="application/json,.json" hidden />
       </div>
-      <div id="todoAlert" class="todo-alert" hidden role="status">
-        <span class="todo-alert-ico" aria-hidden="true">📝</span>
-        <span class="todo-alert-text">Il reste des notes dans « À faire ».</span>
-        <button type="button" id="todoAlertDismiss" class="todo-alert-close" aria-label="Masquer ce rappel">×</button>
+
+      <!-- Zone hebdomadaire : ce qu'on vient regarder tous les jours.
+           « Ma semaine » et « Prochainement » sont rendus par renderDashboard(). -->
+      <div class="zone-haute">
+        <section class="panel bande-bloc" id="dashSemaine"></section>
+        <section class="panel bande-bloc" id="dashProchainement"></section>
+
+        <div class="ligne-trois">
+          <section class="panel todo-panel priority-panel" id="todoPriorityPanel">
+            <div class="panel-heading-inline">
+              <h3>À faire</h3>
+              <div class="todo-actions">
+                <span class="todo-status meta" id="todoNotesStatus"></span>
+                <button type="button" id="clearTodoNotes" class="small secondary">Effacer</button>
+              </div>
+            </div>
+            <textarea id="todoNotes" class="todo-notes" rows="4" placeholder="Noter rapidement ce qu'il reste à faire… (enregistré automatiquement)"></textarea>
+          </section>
+          <details class="panel panel-collapsible rooms-panel" id="roomsPanel" data-open-key="dash:rooms">
+            <summary>
+              <div class="panel-heading-inline">
+                <h3>À réserver</h3>
+                <span id="roomsSummaryBadge" class="frais-badge"></span>
+              </div>
+            </summary>
+            <label class="checkbox-inline checkbox-discreet">
+              <input type="checkbox" id="showBookedRoomsToggle" />
+              <span>Afficher les salles déjà réservées</span>
+            </label>
+            <div id="roomsList" class="list"></div>
+            <div class="rooms-export">
+              <span class="meta">Exporter :</span>
+              <button type="button" class="small secondary" data-export-rooms="csv">CSV</button>
+              <button type="button" class="small secondary" data-export-rooms="xls">Excel (.xls)</button>
+              <button type="button" class="small secondary" data-export-rooms="ods">LibreOffice (.fods)</button>
+            </div>
+            <p class="meta tight">Salle informatique ou amphithéâtre : à réserver auprès du référent, idéalement 15 jours à l'avance. Cochez « Réservée » une fois la demande faite — la ligne se retire d'elle-même.</p>
+          </details>
+        </div>
+
+        <details class="panel panel-collapsible" data-open-key="dash:backlog">
+          <summary>
+            <div class="panel-heading-inline">
+              <h3>Séances à placer</h3>
+              <span class="badge-groupe" id="backlogBadges"></span>
+            </div>
+          </summary>
+          <div id="dashboardBacklog" class="list"></div>
+        </details>
       </div>
-      <div class="kpi-grid" id="kpiGrid"></div>
-      <div class="dashboard-grid">
-      <section class="panel todo-panel">
-        <div class="panel-heading-inline">
-          <h3>À faire</h3>
-          <div class="todo-actions">
-            <span class="todo-status meta" id="todoNotesStatus"></span>
-            <button type="button" id="clearTodoNotes" class="small secondary">Effacer</button>
-          </div>
-        </div>
-        <textarea id="todoNotes" class="todo-notes" rows="4" placeholder="Noter rapidement ce qu'il reste à faire… (enregistré automatiquement)"></textarea>
-      </section>
-      <section class="panel todo-panel dev-panel">
-        <div class="panel-heading-inline">
-          <h3>Bugs &amp; améliorations de l'appli</h3>
-          <div class="todo-actions">
-            <span class="todo-status meta" id="devNotesStatus"></span>
-            <button type="button" id="clearDevNotes" class="small secondary">Effacer</button>
-          </div>
-        </div>
-        <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
-      </section>
-      <details class="panel panel-collapsible">
-        <summary><h3>Séances à placer</h3></summary>
-        <div id="dashboardBacklog" class="list"></div>
-      </details>
-      <details class="panel panel-collapsible">
+
+      <!-- Zone mensuelle : le rangement administratif, en barres repliées. -->
+      <div class="zone-basse">
+        <h4 class="zone-titre">Une fois par mois environ</h4>
+        <div class="zone-basse-lignes">
+      <details class="panel panel-collapsible" data-open-key="dash:constraints">
         <summary><div class="panel-heading-inline"><h3>Vacances, stages &amp; examens</h3><button id="addConstraintDashboardButton" class="small secondary">+ Période</button></div></summary>
         <div id="constraintsList" class="list"></div>
       </details>
-      <details class="panel panel-collapsible frais-panel" id="fraisPanel">
+      <details class="panel panel-collapsible frais-panel" id="fraisPanel" data-open-key="dash:frais">
         <summary>
           <div class="panel-heading-inline">
             <h3>Frais de déplacement</h3>
@@ -114,7 +133,7 @@
         </div>
         <div id="fraisTableWrap" class="frais-table-wrap"></div>
       </details>
-      <details class="panel panel-collapsible reunions-panel" id="reunionsPanel">
+      <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
         <summary>
           <div class="panel-heading-inline">
             <h3>Réunions</h3>
@@ -127,6 +146,21 @@
         </div>
         <div id="reunionsList" class="list reunions-list"></div>
       </details>
+      <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
+        <summary>
+          <div class="panel-heading-inline">
+            <h3>Bugs &amp; améliorations de l'appli</h3>
+            <span id="devNotesBadge" class="frais-badge"></span>
+          </div>
+        </summary>
+        <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
+        <div class="todo-actions">
+          <span class="todo-status meta" id="devNotesStatus"></span>
+          <button type="button" id="clearDevNotes" class="small secondary">Effacer</button>
+        </div>
+        <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
+      </details>
+        </div>
       </div>
     </section>
 
@@ -142,7 +176,11 @@
           <button id="addConstraintGlobalButton" class="secondary">Ajouter période / contrainte</button>
         </div>
       </div>
-      <section class="panel filters-panel compact-filter-panel">
+      <details class="panel panel-collapsible filters-panel design-filters" id="designFiltersPanel" data-open-key="design:filters">
+        <summary>
+          <span id="designFilterSummary">Filtres</span>
+          <span id="designFilterActiveCount" class="filter-active-count" hidden></span>
+        </summary>
         <div class="filter-grid">
           <label>Promotion
             <select id="designPromotionFilter"></select>
@@ -161,7 +199,14 @@
           <span class="field-label">UE à afficher (parmi celles qui correspondent aux filtres ci-dessus)</span>
           <div id="designUeChoices" class="checkbox-row"></div>
         </div>
-      </section>
+        <div class="design-filters-actions">
+          <button type="button" id="designResetFilters" class="small secondary">Réinitialiser les filtres</button>
+        </div>
+      </details>
+      <div class="tree-toolbar">
+        <button type="button" class="secondary small" id="designExpandAll">Tout déplier</button>
+        <button type="button" class="secondary small" id="designCollapseAll">Tout replier</button>
+      </div>
       <div id="ueTree" class="ue-tree"></div>
     </section>
 
@@ -185,10 +230,10 @@
             <span class="field-label">UE à afficher</span>
             <div id="ganttUeChoices" class="checkbox-row scrollable-choice-row"></div>
           </div>
-          <label class="hidden-control">Densité frise
+          <label>Densité de la frise
             <select id="ganttDensity">
-              <option value="compact">Compacte</option>
-              <option value="comfort">Confort</option>
+              <option value="compact">Compacte — le semestre entier à l'écran</option>
+              <option value="comfort">Confort — titres de séquence plus lisibles</option>
             </select>
           </label>
         </div>
@@ -221,38 +266,36 @@
           <button id="printWeekButton" class="secondary">Exporter semaine PDF</button>
           <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel &amp; Ruban) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
-            <span>Masque créneaux type</span>
+            <span>Afficher ma trame de créneaux</span>
           </label>
         </div>
       </div>
       <div id="weekMeta" class="week-meta visually-hidden"></div>
       <div class="week-plan-top">
-      <div id="weekCalendar" class="week-calendar-panel week-calendar-docked"></div>
-      <section class="panel backlog-panel">
-        <div class="backlog-heading">
-          <div>
-            <h3>Séances à placer</h3>
-            <p class="meta">Glisser une séance vers une cellule vide du planning. Les séances sans semaine cible restent disponibles si le filtre ci-dessous est activé.</p>
+      <aside class="week-sidebar">
+        <div id="weekCalendar" class="week-calendar-panel week-calendar-docked"></div>
+        <section class="panel backlog-panel">
+          <div class="backlog-heading">
+            <div>
+              <h3>Séances à placer</h3>
+            </div>
+            <div class="backlog-controls">
+              <label>Source
+                <select id="weekBacklogScope">
+                  <option value="week">Semaine sélectionnée</option>
+                  <option value="all">Toutes les séances à placer</option>
+                </select>
+              </label>
+              <label>UE
+                <select id="weekBacklogUeFilter"></select>
+              </label>
+            </div>
           </div>
-          <div class="backlog-controls">
-            <label>Source
-              <select id="weekBacklogScope">
-                <option value="week">Semaine sélectionnée</option>
-                <option value="all">Toutes les séances à placer</option>
-              </select>
-            </label>
-            <label>UE
-              <select id="weekBacklogUeFilter"></select>
-            </label>
-            <label>Séquence
-              <select id="weekBacklogSequenceFilter"></select>
-            </label>
-          </div>
-        </div>
-        <div id="weekBacklog" class="backlog-list"></div>
-      </section>
+          <div id="weekBacklog" class="backlog-list"></div>
+        </section>
+      </aside>
+      <div id="planningContainer" class="week-planning-main"></div>
       </div>
-      <div id="planningContainer"></div>
       <section class="panel notes-panel">
         <div class="panel-heading-inline">
           <h3>Notes de semaine</h3>
@@ -269,12 +312,12 @@
           <h2>Référentiel &amp; Ruban pédagogique</h2>
           <p>Ruban de semestrialisation (UE, capacités, disciplines, enseignants, évaluateurs) et référentiel interactif des modules M1–M8, réunis. Éditer la composition d'une UE avec ✎ ; cliquer une capacité M1–M8 pour l'ouvrir dans le référentiel.</p>
         </div>
-        <div class="reference-mode-switch" role="tablist" aria-label="Mode d'affichage">
-          <button type="button" class="active" data-ruban-mode="ruban">Ruban</button>
-          <button type="button" data-ruban-mode="table">Tableau détaillé</button>
-          <button type="button" data-ruban-mode="creneaux">Créneaux type</button>
-          <button type="button" data-ruban-mode="reference">Référentiel (M1–M8)</button>
-          <button type="button" data-ruban-mode="pdf">PDF d'origine</button>
+        <div class="reference-mode-switch" aria-label="Mode d'affichage">
+          <button type="button" class="active" aria-pressed="true" data-ruban-mode="ruban">Ruban</button>
+          <button type="button" aria-pressed="false" data-ruban-mode="table">Tableau détaillé</button>
+          <button type="button" aria-pressed="false" data-ruban-mode="creneaux">Créneaux type</button>
+          <button type="button" aria-pressed="false" data-ruban-mode="reference">Référentiel (M1–M8)</button>
+          <button type="button" aria-pressed="false" data-ruban-mode="pdf">PDF d'origine</button>
         </div>
       </div>
 
@@ -304,9 +347,9 @@
       <div id="rubanModeCreneaux" class="reference-mode-panel">
         <section class="panel filters-panel compact-filter-panel">
           <div class="creneaux-toolbar">
-            <div class="creneaux-period-switch" role="tablist" aria-label="Période de l'année">
-              <button type="button" data-creneaux-period="autumn" class="active">Septembre – décembre</button>
-              <button type="button" data-creneaux-period="spring">Janvier – mai</button>
+            <div class="creneaux-period-switch" aria-label="Période de l'année">
+              <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre – décembre</button>
+              <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier – mai</button>
             </div>
             <label>Créneaux affichés
               <select id="creneauxTeacherFilter"></select>
@@ -320,15 +363,15 @@
       <div id="rubanModeReference" class="reference-mode-panel">
         <section class="panel filters-panel compact-filter-panel">
           <div class="refmod-toolbar">
-            <div class="refmod-modtabs" role="tablist" aria-label="Module du référentiel">
-              <button type="button" class="refmod-modtab" data-ref-module="m1" title="M1 · Inscription dans le monde d'aujourd'hui" aria-label="M1 · Inscription dans le monde d'aujourd'hui">M1</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m2" title="M2 · Construction du projet personnel et professionnel" aria-label="M2 · Construction du projet personnel et professionnel">M2</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m3" title="M3 · Communication" aria-label="M3 · Communication">M3</button>
-              <button type="button" class="refmod-modtab active" data-ref-module="m4" title="M4 · Expertise naturaliste" aria-label="M4 · Expertise naturaliste">M4</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m5" title="M5 · Opérations de gestion environnementale" aria-label="M5 · Opérations de gestion environnementale">M5</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m6" title="M6 · Éducation à l'environnement et médiation scientifique" aria-label="M6 · Éducation à l'environnement et médiation scientifique">M6</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m7" title="M7 · Montage de projet de gestion environnementale" aria-label="M7 · Montage de projet de gestion environnementale">M7</button>
-              <button type="button" class="refmod-modtab" data-ref-module="m8" title="M8 · Concertation territoriale et communication" aria-label="M8 · Concertation territoriale et communication">M8</button>
+            <div class="refmod-modtabs" aria-label="Module du référentiel">
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m1" title="M1 · Inscription dans le monde d'aujourd'hui" aria-label="M1 · Inscription dans le monde d'aujourd'hui">M1</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m2" title="M2 · Construction du projet personnel et professionnel" aria-label="M2 · Construction du projet personnel et professionnel">M2</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m3" title="M3 · Communication" aria-label="M3 · Communication">M3</button>
+              <button type="button" class="refmod-modtab active" aria-pressed="true" data-ref-module="m4" title="M4 · Expertise naturaliste" aria-label="M4 · Expertise naturaliste">M4</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m5" title="M5 · Opérations de gestion environnementale" aria-label="M5 · Opérations de gestion environnementale">M5</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m6" title="M6 · Éducation à l'environnement et médiation scientifique" aria-label="M6 · Éducation à l'environnement et médiation scientifique">M6</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m7" title="M7 · Montage de projet de gestion environnementale" aria-label="M7 · Montage de projet de gestion environnementale">M7</button>
+              <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m8" title="M8 · Concertation territoriale et communication" aria-label="M8 · Concertation territoriale et communication">M8</button>
             </div>
             <label class="refmod-search">
               <span aria-hidden="true">🔎</span>
@@ -675,6 +718,13 @@
             <label>Salle / lieu
               <input id="sessionRoom" placeholder="Salle, labo, terrain, salle info…" />
             </label>
+            <label>Salle à réserver
+              <select id="sessionRoomToBook">
+                <option value="">Aucune</option>
+                <option value="info">Salle informatique</option>
+                <option value="amphi">Amphithéâtre</option>
+              </select>
+            </label>
             <label>Couleur de la séance
               <span class="seq-color-field">
                 <input type="color" id="sessionColorInput" value="#2f6f73" />
@@ -693,15 +743,16 @@
         <div class="placement-choice">
           <label>Statut de placement
             <select id="sessionPlacementStatus">
-              <option>Fictif à placer</option>
-              <option>Définitif EDT</option>
+              <option value="fictif">Pas encore placée</option>
+              <option value="definitif">Placée à l'emploi du temps</option>
             </select>
           </label>
-          <label>Semaine cible / réelle
+          <label>Semaine visée
             <select id="sessionWeek"></select>
           </label>
           <label>Durée prévue
             <input id="sessionExpectedDuration" placeholder="Ex. 55 min, 2h, demi-journée" />
+            <small class="field-hint">Ajuste automatiquement la fin du créneau ci-dessous.</small>
           </label>
         </div>
         <div class="placement-subpanel fictive-fields session-prediction-hidden" aria-hidden="true">
@@ -717,7 +768,7 @@
           <input id="sessionFictiveSlot" />
         </div>
         <div class="placement-subpanel definitive-fields">
-          <h4>Placement EDT définitif</h4>
+          <h4>Jour et horaire précis</h4>
           <div class="form-grid compact-grid">
             <label>Jour
               <select id="sessionDay"></select>
@@ -742,6 +793,8 @@
       </fieldset>
       <fieldset class="form-section">
         <legend>3. Capacités travaillées</legend>
+        <p class="form-help">Cocher les capacités effectivement travaillées ; pré-cochées d’après la séquence rattachée.</p>
+        <p class="form-help tight" id="sessionCapacityResetHint" hidden>L'UE a changé : votre sélection de capacités n'était plus valide, elle a été remplacée par celle de la nouvelle séquence.</p>
         <div id="sessionCapacityChoices" class="checkbox-grid"></div>
       </fieldset>
       <fieldset class="form-section">
