@@ -883,19 +883,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .entity-headline .meta-line { margin: 0; flex: 1 1 12rem; min-width: 0; }
 .entity-actions { display: flex; align-items: center; gap: .3rem; margin-left: auto; }
 
-/* Le corps de carte d'UE EST le bouton « Modifier ». On l'annonce discrètement
-   au survol — sans quoi rien ne dit qu'il est cliquable — mais les zones
-   imbriquées (séquences, séances) gardent leur curseur normal : ce n'est pas
-   l'UE qu'on y ouvre. Les séquences, elles, ont retrouvé un bouton
-   « Modifier » explicite : leur corps n'est plus cliquable, et leur bandeau
-   sommaire redevient sans ambiguïté le déplier/replier. */
-.entity-body[data-edit-ue] { cursor: pointer; }
-.entity-body[data-edit-ue]:hover {
-  background: color-mix(in srgb, var(--ue-color, var(--acc)) 5%, transparent);
-}
-.entity-body:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
-.entity-body [data-noedit], .entity-body .entity-actions { cursor: auto; }
-.entity-body [data-noedit] .session-card { cursor: pointer; }
+/* UE et séquences ont chacune un bouton « Modifier » explicite : aucun corps de
+   carte n'est cliquable. Le bandeau sommaire ne fait donc qu'une chose,
+   déplier/replier, et rien n'a besoin d'être neutralisé à l'intérieur. */
 
 /* Tuile d'ajout : le gabarit d'une tuile de séance, mais en creux — trait
    pointillé, pas de bandeau de couleur, pas d'ombre. Elle se lit comme une

@@ -1958,7 +1958,7 @@ function renderDesign() {
   const tree = $('#ueTree');
   const openKeys = captureOpenKeys(tree);
   tree.innerHTML = byPromotion.length
-    ? byPromotion.map(group => `<details class="promo-group tree-row-group" open data-open-key="promo:${escapeAttr(group.promo)}"><summary><span>Promotion</span><strong>${escapeHtml(group.promo)}</strong><em>${group.ues.length} UE</em></summary>${group.ues.map(renderUeCard).join('')}<button type="button" class="add-band" data-new-ue="${escapeAttr(group.promo)}"><span aria-hidden="true">+</span> UE</button></details>`).join('')
+    ? byPromotion.map(group => `<details class="promo-group tree-row-group" open data-open-key="promo:${escapeAttr(group.promo)}"><summary><span>Promotion</span><strong>${escapeHtml(group.promo)}</strong><em>${group.ues.length} UE</em></summary>${group.ues.map(renderUeCard).join('')}</details>`).join('')
     : '<section class="panel"><p class="meta">Aucune UE ne correspond aux filtres.</p></section>';
   restoreOpenKeys(tree, openKeys);
 }
@@ -2023,7 +2023,7 @@ function renderUeCard(ue) {
   const eilBlock = Object.entries(eilGroups).map(([cid, list]) => {
     const c = findConstraint(cid);
     const ordered = [...list].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-    return `<div class="eil-detail-group" data-noedit title=""><div class="eil-detail-head"><span class="entity-level-label">EIL</span><strong>${escapeHtml(c ? c.label : 'Semaine thématique')}</strong></div><div class="session-card-grid">${ordered.map((s, i) => renderSessionCard(s, i + 1)).join('')}${renderAddTile(`data-new-eil-session="${escapeAttr(cid)}" data-eil-ue="${escapeAttr(ue.id)}"`, 'Séance')}</div></div>`;
+    return `<div class="eil-detail-group"><div class="eil-detail-head"><span class="entity-level-label">EIL</span><strong>${escapeHtml(c ? c.label : 'Semaine thématique')}</strong></div><div class="session-card-grid">${ordered.map((s, i) => renderSessionCard(s, i + 1)).join('')}${renderAddTile(`data-new-eil-session="${escapeAttr(cid)}" data-eil-ue="${escapeAttr(ue.id)}"`, 'Séance')}</div></div>`;
   }).join('');
   // Séances rattachées à l'UE mais à AUCUNE séquence (et hors semaine thématique
   // EIL) : sinon elles n'apparaissaient nulle part dans l'arbre de conception.
@@ -2040,7 +2040,7 @@ function renderUeCard(ue) {
   const looseInner = looseSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
     + renderAddTile(`data-new-session-ue="${escapeAttr(ue.id)}"`, 'Séance');
   const looseMasque = !looseSessions.length && !sansSequence;
-  const looseBlock = `<div class="loose-detail-group${looseMasque ? ' loose-empty' : ''}" data-noedit title="" data-loose-drop="${escapeAttr(ue.id)}"><div class="loose-detail-head"><span class="entity-level-label">Sans séquence</span><strong>Séances rattachées directement à l’UE</strong></div><div class="session-card-grid">${looseInner}</div></div>`;
+  const looseBlock = `<div class="loose-detail-group${looseMasque ? ' loose-empty' : ''}" data-loose-drop="${escapeAttr(ue.id)}"><div class="loose-detail-head"><span class="entity-level-label">Sans séquence</span><strong>Séances rattachées directement à l’UE</strong></div><div class="session-card-grid">${looseInner}</div></div>`;
   const color = ueColor(ue.id);
   const capCodes = ueCapacities(ue).map(c => c.code).join(', ');
   const metaLine = renderMetaLine([
@@ -2058,16 +2058,16 @@ function renderUeCard(ue) {
       <span class="entity-tag">${escapeHtml(ue.promotion)} · ${escapeHtml(shortSemester(ue.semester))}</span>
       <span class="entity-count">${sequences.length} séq. · ${sessionCount} séance(s)</span>
     </summary>
-    <div class="entity-body" data-edit-ue="${escapeAttr(ue.id)}" tabindex="0" role="button" aria-label="Modifier l’UE ${escapeAttr(ue.code)}" title="Cliquer pour modifier cette UE">
+    <div class="entity-body">
       <div class="entity-headline">
         ${metaLine}
         <div class="entity-actions">
           <button class="icon-button small" data-export-ue="${escapeAttr(ue.id)}" title="Exporter la progression de cette UE" aria-label="Exporter la progression de l’UE ${escapeAttr(ue.code)}">⎙</button>
-          <button class="small" data-new-sequence-ue="${escapeAttr(ue.id)}">+ Séquence</button>
+          <button class="small secondary" data-edit-ue="${escapeAttr(ue.id)}">Modifier</button>
         </div>
       </div>
       ${ue.description ? `<p class="entity-description">${escapeHtml(ue.description)}</p>` : ''}
-      <div class="nested-list" data-noedit title="">${sequences.length ? sequences.map(renderSequenceCard).join('') : '<p class="meta">Aucune séquence créée dans cette UE pour l’instant.</p>'}</div>
+      <div class="nested-list">${sequences.map(renderSequenceCard).join('')}${renderAddBand(`data-new-sequence-ue="${escapeAttr(ue.id)}"`, 'Séquence')}</div>
       ${eilBlock}
       ${looseBlock}
     </div>
@@ -2242,7 +2242,7 @@ function renderSequenceCard(seq) {
       ${seq.periodNote ? `<p class="entity-description">${escapeHtml(seq.periodNote)}</p>` : ''}
       ${seq.objectives ? `<p class="entity-description"><strong>Objectifs —</strong> ${escapeHtml(truncate(seq.objectives, 280))}</p>` : ''}
       ${keywords.length ? `<p class="entity-description entity-keywords"><strong>Mots-clés —</strong> ${escapeHtml(keywords.join(', '))}</p>` : ''}
-      <div class="session-card-grid" data-noedit title="">
+      <div class="session-card-grid">
         ${orderedSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')}
         ${renderAddTile(`data-new-session-sequence="${escapeAttr(seq.id)}"`, 'Séance')}
       </div>
@@ -2282,6 +2282,13 @@ function renderAddTile(attrs, label) {
     <span class="add-card-plus" aria-hidden="true">+</span>
     <span class="add-card-label">${escapeHtml(label)}</span>
   </button>`;
+}
+
+/* Même idée, en bande : les séquences sont des bandeaux pleine largeur, pas des
+   tuiles — une carte de 210 px isolée en bout de colonne aurait flotté. La
+   bande ferme la liste des séquences, juste avant le bloc « Sans séquence ». */
+function renderAddBand(attrs, label) {
+  return `<button type="button" class="add-band" ${attrs}><span aria-hidden="true">+</span> ${escapeHtml(label)}</button>`;
 }
 
 function renderSessionCard(s, number) {
@@ -4927,19 +4934,18 @@ function bindEvents() {
       carte.click();
     });
   });
-  /* Lot C [11] — le bouton « Modifier » a disparu des UE et des séquences : le
-     corps de la carte est devenu la zone cliquable (la bande sommaire reste
-     réservée au déplier/replier). Comme les cartes s'emboîtent (séance dans
-     séquence dans UE), on ne teste plus les attributs dans un ordre figé : on
-     cherche l'ancêtre le PLUS PROCHE, si bien qu'une séance ouvre sa séance et
-     pas l'UE qui la contient. `data-noedit` marque les zones neutres (listes
-     imbriquées, grilles de séances) où un clic ne doit rien ouvrir. */
-  const CIBLES_ARBRE = '[data-noedit],[data-edit-session],[data-edit-sequence],[data-edit-ue],[data-new-ue],[data-new-sequence-ue],[data-new-session-ue],[data-new-session-sequence],[data-new-eil-session],[data-export-ue],[data-export-sequence]';
+  /* Lot C — UE et séquences ont chacune un bouton « Modifier » explicite en tête
+     de corps ; le bandeau sommaire ne fait que déplier/replier, et les créations
+     passent par des tuiles/bandes en creux placées là où elles ont du sens.
+     Comme les cartes s'emboîtent (séance dans séquence dans UE), on ne teste pas
+     les attributs dans un ordre figé : on cherche l'ancêtre le PLUS PROCHE, si
+     bien qu'une tuile « + Séance » d'une séquence ne se confonde jamais avec la
+     bande « + Séquence » de l'UE qui la contient. */
+  const CIBLES_ARBRE = '[data-edit-session],[data-edit-sequence],[data-edit-ue],[data-new-sequence-ue],[data-new-session-ue],[data-new-session-sequence],[data-new-eil-session],[data-export-ue],[data-export-sequence]';
   $('#ueTree').addEventListener('click', (event) => {
     const cible = event.target.closest(CIBLES_ARBRE);
     if (!cible) return;
     const d = cible.dataset;
-    if (d.newUe) return openUeModal(null, { promotion: d.newUe });
     if (d.exportUe) return exportUeProgressionPrint(findUe(d.exportUe));
     if (d.exportSequence) return exportSequencePrint(findSequence(d.exportSequence));
     if (d.newSequenceUe) return openSequenceModal(null, { ueId: d.newSequenceUe });
@@ -4957,17 +4963,10 @@ function bindEvents() {
     if (d.editUe) return openUeModal(findUe(d.editUe));
   });
 
-  /* Le clavier suit le même chemin que la souris : le corps de carte est
-     focusable, Entrée ou Espace l'ouvre. On n'intercepte que si le focus est
-     SUR le corps lui-même — sinon on volerait la touche Espace à un bouton ou
-     à un champ situé à l'intérieur. */
-  $('#ueTree').addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    const corps = event.target.closest?.('.entity-body[data-edit-ue], .entity-body[data-edit-sequence]');
-    if (!corps || corps !== event.target) return;
-    event.preventDefault();
-    corps.click();
-  });
+  /* Plus de gestionnaire clavier ici : « Modifier », l'export et les tuiles
+     d'ajout sont de vrais <button>, donc déjà atteignables au Tab et
+     activables à l'Entrée. Seules les tuiles de séance gardent le leur, posé
+     globalement sur .session-card. */
 
   // Conception — glisser une séance vers une séquence (rattachement) ou vers le
   // bloc « Sans séquence » d'une UE (détachement). Miroir du DnD de la frise.
