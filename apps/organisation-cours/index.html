@@ -214,19 +214,16 @@
           <h2>Diagramme semestre</h2>
         </div>
       </div>
+      <!-- Lot D [17] — le filtre « Promotion » a disparu : choisir S1/S2 c'est
+           déjà choisir GPN1, et S3/S4 GPN2. Les semestres sont donc groupés par
+           promotion, ce qui rend le doublon visible et inutile. [18] — les trois
+           boutons de création rejoignent cet encart, la frise n'a plus de barre
+           d'outils à elle. -->
       <section class="panel filters-panel">
         <div class="filter-grid">
-          <label>Promotion
-            <select id="ganttPromotionFilter"></select>
-          </label>
-          <div class="field-block">
-            <span class="field-label">Semestres à visualiser</span>
-            <div id="ganttSemesterChoices" class="checkbox-row"></div>
-            <p class="form-help tight">Cocher S1 et S3 pour afficher simultanément septembre-décembre GPN1 et GPN2.</p>
-          </div>
-          <div class="field-block field-wide compact-ue-picker">
-            <span class="field-label">UE à afficher</span>
-            <div id="ganttUeChoices" class="checkbox-row scrollable-choice-row"></div>
+          <div class="field-block field-wide">
+            <span class="field-label" id="ganttSemesterLabel">Semestres à visualiser</span>
+            <div id="ganttSemesterChoices" class="semester-pairs" role="group" aria-labelledby="ganttSemesterLabel"></div>
           </div>
           <label>Densité de la frise
             <select id="ganttDensity">
@@ -234,17 +231,18 @@
               <option value="comfort">Confort — titres de séquence plus lisibles</option>
             </select>
           </label>
-        </div>
-      </section>
-      <section class="panel timeline-panel">
-        <div class="timeline-heading">
-          <div class="redundant-title">
-            <h3>Frise semestrielle détaillée</h3>
+          <div class="field-block field-wide compact-ue-picker">
+            <span class="field-label">UE à afficher</span>
+            <div id="ganttUeChoices" class="checkbox-row scrollable-choice-row"></div>
           </div>
+        </div>
+        <div class="filter-actions">
           <button id="addSequenceGanttButton" class="small">+ Séquence</button>
           <button id="addSessionGanttButton" class="small">+ Séance</button>
           <button id="addConstraintGanttButton" class="small secondary">+ Vacances / période / contrainte</button>
         </div>
+      </section>
+      <section class="panel timeline-panel">
         <div id="ganttTimeline" class="semester-timeline"></div>
       </section>
     </section>
@@ -1038,14 +1036,17 @@
         <button type="button" class="icon-button" id="closeUeCapsModal">×</button>
       </header>
       <input type="hidden" id="ueCapsCode" />
-      <p class="form-help tight">Ajoutez, retirez ou modifiez les capacités évaluées de cette UE (disciplines et initiales séparées par des virgules). « Réinitialiser » rétablit la répartition d'origine (PDF).</p>
+      <p class="form-help tight">Ajoutez, retirez ou modifiez les capacités évaluées de cette UE (disciplines et initiales séparées par des virgules). C'est ici que se saisissent les enseignants et évaluateurs : le Tableau détaillé les affiche.</p>
       <div class="ue-caps-head">
         <span>Code</span><span>Intitulé</span><span>Disciplines</span><span>Enseignants</span><span>Évaluateurs</span><span></span>
       </div>
       <div id="ueCapsRows" class="ue-caps-rows"></div>
       <button type="button" id="addUeCapRow" class="small secondary">+ Ajouter une capacité</button>
+      <!-- Le bouton « Réinitialiser » a été retiré : rétablir la composition
+           d'origine effaçait du même geste TOUTES les initiales saisies dans
+           l'UE (le fichier d'origine livre ces colonnes vides), pour tous les
+           comptes. Rien ne peut plus vider une UE d'un seul clic. -->
       <footer class="modal-footer">
-        <button type="button" id="resetUeCapsButton" class="danger">Réinitialiser</button>
         <span class="spacer"></span>
         <button type="button" class="secondary" id="cancelUeCapsButton">Annuler</button>
         <button type="submit">Enregistrer</button>

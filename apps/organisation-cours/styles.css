@@ -469,6 +469,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
+/* Lot D [18] — les créations de la frise (séquence, séance, période) tiennent
+   au pied de l'encart de filtres : la frise n'a plus de barre d'outils à elle,
+   c'est une ligne horizontale de gagnée avant la première semaine. */
+.filter-actions {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem;
+  margin-top: var(--sp-3); padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
 .compact-filter-panel { padding: var(--sp-3) var(--sp-4); }
 .field-block { display: flex; flex-direction: column; gap: .35rem; }
 .field-label { font-size: .8rem; font-weight: 600; color: var(--ink-soft); }
@@ -725,7 +733,20 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .checkbox-chip input { width: 13px; height: 13px; }
 .scrollable-choice-row { max-height: none; overflow: visible; }
 .compact-ue-picker .ue-choice { padding: .2rem .5rem; }
+
+/* Lot D [17] — Progressions semestres : les 4 semestres rangés en 2 binômes de
+   promotion. C'est le groupe qui porte l'information « GPN1 / GPN2 », ce qui a
+   permis de retirer le filtre « Promotion » qui la donnait une seconde fois. */
+.semester-pairs { display: flex; flex-wrap: wrap; gap: .45rem var(--sp-4); align-items: center; }
+.semester-pair { display: inline-flex; align-items: center; gap: .45rem; }
+.semester-pair-label {
+  font-family: var(--font-mono); font-size: .74rem; font-weight: 700;
+  letter-spacing: .04em; color: var(--ink-soft);
+}
 .ue-choice { border-color: color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong)); }
+/* Lot D [16] — pourquoi ces UE-là sont cochées : sans cette phrase, un cochage
+   par défaut passe pour une erreur de l'app. Occupe toute la ligne sous les cases. */
+.choice-row-note { flex: 1 0 100%; margin: .15rem 0 0; font-size: .78rem; line-height: 1.35; }
 .ue-choice span { font-family: var(--font-mono); font-size: .76rem; }
 
 .capacity-list { display: flex; flex-direction: column; gap: .4rem; }
@@ -1198,7 +1219,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    gauche) est "sticky" pour rester visible au défilement horizontal.
    ===================================================================== */
 .timeline-panel { margin-top: var(--sp-3); }
-.timeline-heading { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-2); }
 .semester-timeline { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
 .timeline-card {
   --timeline-label-col: 54px;
@@ -2287,22 +2307,14 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   .ruban-grid { grid-template-columns: 1fr; }
 }
 
-/* Ruban — édition des affectations (enseignants / évaluateurs) */
+/* Ruban — Tableau détaillé : affichage des affectations. La saisie se fait
+   uniquement par ✎ dans l'onglet Ruban (le tableau était éditable, deux voies
+   pour la même donnée entretenaient la confusion). */
 .ruban-cap-plain strong { color: var(--ink); }
-.ruban-edit {
-  width: 100%; min-width: 90px; border: 1px solid transparent; background: transparent;
-  border-radius: var(--r-sm); padding: .2rem .35rem; font: inherit; font-size: .82rem; color: var(--ink);
-}
-.ruban-edit:hover { border-color: var(--line); background: var(--surface-alt); }
-.ruban-edit:focus { outline: 0; border-color: var(--water); background: var(--surface); box-shadow: 0 0 0 2px var(--water-soft); }
+.ruban-initiales { font-family: var(--font-mono); font-size: .8rem; }
+.ruban-vide { color: var(--muted); }
 .ruban-table tr.is-modified { background: var(--amber-soft); }
 .ruban-table tr.is-modified td { border-bottom-color: #e7d39e; }
-.ruban-td-reset { width: 2rem; text-align: center; }
-.ruban-reset {
-  border: 0; background: transparent; color: var(--clay); cursor: pointer; font-size: 1rem; line-height: 1;
-  border-radius: var(--r-sm); padding: .1rem .3rem;
-}
-.ruban-reset:hover { background: rgba(0,0,0,.06); }
 .ruban-edit-hint { margin-top: .6rem; }
 
 /* ---------- Lot E — Frais de déplacement ---------- */
@@ -2378,8 +2390,6 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    .unplace-btn (crayon mesuré à 22×20px, onze occurrences par ruban). */
 .ruban-ue-edit::before { content: ''; position: absolute; inset: -6px; }
 .ruban-cap-empty { margin: .2rem 0 0; font-style: italic; }
-.ruban-reset { border: 0; background: transparent; color: var(--clay); cursor: pointer; font-size: 1rem; padding: .1rem .3rem; border-radius: var(--r-sm); }
-.ruban-reset:hover { background: rgba(0,0,0,.06); }
 
 .ue-caps-head, .ue-cap-row { display: grid; grid-template-columns: 5.5rem 1.7fr 1fr 1fr 1fr 2rem; gap: .4rem; align-items: center; }
 .ue-caps-head { margin: .4rem 0 .3rem; font-size: .7rem; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); font-weight: 700; }

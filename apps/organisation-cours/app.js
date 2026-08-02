@@ -113,12 +113,12 @@ let weekPickerMonthKey = null; // AAAA-MM du mois affiché dans le sélecteur co
 let seqCalMonthKey = null; // AAAA-MM du mois affiché dans le calendrier de la modale séquence
 let designPromotionFilter = 'Tous';
 let designSemesterFilter = 'Tous';
-let semesterPromotionFilter = 'GPN1';
-let semesterFilter = 'Semestre 1';
-let ganttPromotionFilter = 'Tous';
-let ganttSemesterFilters = ['Semestre 1', 'Semestre 3'];
-let ganttFocusedUeId = 'ue_21';
-let ganttFocusedUeIds = ['ue_21'];
+/* Lot D [16] — la frise s'ouvre sur le binôme de semestres de la SAISON en
+   cours, et sur MES UE. Les deux sont des défauts calculés une fois les données
+   chargées (les semaines n'existent pas encore ici) : `null` = « pas encore
+   décidé », une liste vide reste un choix délibéré de l'utilisateur. */
+let ganttSemesterFilters = null;
+let ganttFocusedUeIds = null;
 let ganttDensity = 'compact';
 let weekBacklogScope = 'week';
 let weekBacklogUeFilter = 'Tous';
@@ -1213,7 +1213,6 @@ function formatDateShort(date) {
 
 function hydrateSelectors() {
   const promoOptions = state.promotions.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
-  const promoOptionsWithAll = `<option value="Tous">Toutes</option>${promoOptions}`;
   const semesterOptions = SEMESTERS.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('');
   const weekOptions = state.weeks.map(w => `<option value="${escapeAttr(w.id)}">${escapeHtml(w.label)} · ${escapeHtml(w.dateRange)}</option>`).join('');
   // Lot T(b) — menu « Semaine » de la modale séance : n° seul (S37, S38…) sans les dates.
@@ -1229,9 +1228,6 @@ function hydrateSelectors() {
   setOptions('#designPromotionFilter', `<option value="Tous">Toutes promotions</option>${promoOptions}`, designPromotionFilter);
   setOptions('#designSemesterFilter', `<option value="Tous">Tous semestres</option>${semesterOptions}`, designSemesterFilter);
   refreshTeacherFilters();
-  setOptions('#semesterPromotionFilter', promoOptions, semesterPromotionFilter);
-  setOptions('#semesterFilter', semesterOptions, semesterFilter);
-  setOptions('#ganttPromotionFilter', promoOptionsWithAll, ganttPromotionFilter);
   renderGanttSemesterChoices();
 
   setOptions('#uePromotion', promoOptions, state.promotions[0] || 'GPN1');
@@ -1259,21 +1255,40 @@ function setOptions(selector, html, value) {
   if ([...el.options].some(o => o.value === previous)) el.value = previous;
 }
 
+/* Lot D [17] — les 4 semestres rangés en 2 binômes de promotion. GPN1 fait sa
+   première année sur S1 puis S2, GPN2 sa deuxième sur S3 puis S4 : la promotion
+   se lit donc dans le semestre coché, d'où la suppression du filtre « Promotion »
+   qui en était le doublon. Le mapping vient de semesterPair(), qui portait déjà
+   cette paire pour les UE à cheval sur deux semestres. */
+const SEMESTER_PAIRS = [
+  { promotion: 'GPN1', semesters: semesterPair('Semestre 1') },
+  { promotion: 'GPN2', semesters: semesterPair('Semestre 3') }
+];
+
+/* Lot D [16] — le binôme de semestres de la saison où l'on consulte l'app :
+   septembre-décembre, ce sont les deux premiers semestres de chaque promo
+   (S1 + S3) ; le reste de l'année, les deux seconds (S2 + S4).
+   On interroge d'abord les VRAIES semaines (weeksForSemester connaît les bornes
+   de l'année scolaire en cours) ; le repli sur le mois ne sert qu'en dehors,
+   l'été, où août compte déjà pour la rentrée qu'on prépare. */
+function semestresDeLaSaison() {
+  const semaineDuJour = currentWeekId();
+  const dansLaSaison = sem => weeksForSemester(sem).some(w => w.id === semaineDuJour);
+  if (dansLaSaison('Semestre 1') || dansLaSaison('Semestre 3')) return ['Semestre 1', 'Semestre 3'];
+  if (dansLaSaison('Semestre 2') || dansLaSaison('Semestre 4')) return ['Semestre 2', 'Semestre 4'];
+  const mois = new Date().getMonth() + 1;
+  return mois >= 8 ? ['Semestre 1', 'Semestre 3'] : ['Semestre 2', 'Semestre 4'];
+}
+
 function renderGanttSemesterChoices() {
   const container = $('#ganttSemesterChoices');
   if (!container) return;
+  if (!ganttSemesterFilters) ganttSemesterFilters = semestresDeLaSaison();
   const selected = new Set(ganttSemesterFilters);
-  container.innerHTML = SEMESTERS.map(sem => `<label class="checkbox-chip"><input type="checkbox" value="${escapeAttr(sem)}" ${selected.has(sem) ? 'checked' : ''}><span>${escapeHtml(sem.replace('Semestre ', 'S'))}</span></label>`).join('');
-}
-
-function renderGanttUeFocusOptions(ues = []) {
-  const select = $('#ganttUeFocus');
-  if (!select) return;
-  const sorted = [...ues].sort((a, b) => `${a.semester}-${a.promotion}-${a.code}`.localeCompare(`${b.semester}-${b.promotion}-${b.code}`));
-  const options = sorted.map(ue => `<option value="${escapeAttr(ue.id)}">${escapeHtml(ue.code)} · ${escapeHtml(ue.title)} · ${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester.replace('Semestre ', 'S'))}</option>`).join('');
-  select.innerHTML = options || '<option value="">Aucune UE disponible</option>';
-  if (!sorted.some(ue => ue.id === ganttFocusedUeId)) ganttFocusedUeId = sorted[0]?.id || '';
-  select.value = ganttFocusedUeId;
+  container.innerHTML = SEMESTER_PAIRS.map(pair => `<div class="semester-pair">
+    <span class="semester-pair-label">${escapeHtml(pair.promotion)}</span>
+    ${pair.semesters.map(sem => `<label class="checkbox-chip"><input type="checkbox" value="${escapeAttr(sem)}" ${selected.has(sem) ? 'checked' : ''}><span>${escapeHtml(sem.replace('Semestre ', 'S'))}</span></label>`).join('')}
+  </div>`).join('');
 }
 
 function renderConstraintPromotionChoices(selectedPromotions = state?.promotions || DEFAULT_PROMOTIONS) {
@@ -1403,7 +1418,6 @@ function renderAll(resetSelectors = true) {
   if (resetSelectors) hydrateSelectors();
   renderDashboard();
   renderDesign();
-  if ($('#semesterTable')) renderSemester();
   renderGantt();
   renderPlanning();
   if ($('#referenceModuleContent')) renderReference();
@@ -2321,27 +2335,6 @@ function renderBacklogSessionTile(s) {
   </article>`;
 }
 
-function renderSemester() {
-  const ues = state.ues.filter(ue => ue.promotion === semesterPromotionFilter && ueInSemester(ue, semesterFilter));
-  const weeks = weeksForSemester(semesterFilter);
-  const header = `<tr><th class="semester-week">Semaine</th><th>Dates</th><th>Périodes / contraintes</th>${ues.map(ue => `<th><span class="th-ue-code">${escapeHtml(ue.code)}</span><br><span>${escapeHtml(ue.title)}</span></th>`).join('')}</tr>`;
-  const rows = weeks.map(week => {
-    const constraints = constraintsForWeek(week, semesterPromotionFilter);
-    return `<tr>
-      <td class="semester-week"><strong>${escapeHtml(week.label)}</strong></td>
-      <td class="date-cell">${escapeHtml(week.dateRange)}</td>
-      <td class="constraints-cell">${constraints.length ? constraints.map(renderConstraintPill).join('') : '<span class="meta">Aucune période renseignée</span>'}</td>
-      ${ues.map(ue => `<td class="semester-cell">${renderSemesterCell(ue, week)}</td>`).join('')}
-    </tr>`;
-  }).join('');
-  $('#semesterTable').innerHTML = `<thead>${header}</thead><tbody>${rows}</tbody>`;
-}
-
-function renderConstraintPill(c) {
-  const examFlag = c.exam ? '<span class="exam-flag" title="Détails examen / jaquette renseignés">jaquette</span>' : '';
-  return `<button class="constraint-pill constraint-${typeSlug(c.type)}" data-edit-constraint="${escapeAttr(c.id)}" title="${escapeAttr(examConstraintTooltip(c) || c.notes || c.type)}"><strong>${escapeHtml(c.label)}${examFlag}</strong><span>${escapeHtml(c.type)}</span></button>`;
-}
-
 /* Infobulle synthétique pour une contrainte d'examen renseignée. */
 function examConstraintTooltip(c) {
   if (!c.exam) return '';
@@ -2356,47 +2349,88 @@ function examConstraintTooltip(c) {
   return parts.join(' · ');
 }
 
-function renderSemesterCell(ue, week) {
-  const sequences = state.sequences.filter(seq => seq.ueId === ue.id && sequenceMatchesWeek(seq, week));
-  const sessions = state.sessions.filter(s => s.ueId === ue.id && (s.targetWeekId === week.id || s.weekId === week.id));
-  const blocks = [];
-  sequences.forEach(seq => {
-    const count = state.sessions.filter(s => s.sequenceId === seq.id).length;
-    // Lot C-bis — le statut de séquence n'est plus modifiable : l'afficher
-    // encore montrerait une valeur figée qu'on ne peut plus corriger.
-    blocks.push(`<div class="semester-block semester-seq" data-edit-sequence="${escapeAttr(seq.id)}"><span class="block-kind">Séquence</span><strong>${escapeHtml(seq.title)}</strong><div class="meta">${escapeHtml(seq.hoursEstimate || 'Volume ?')} · ${count} séance(s)</div>${renderCapacityPills(seq.capacityCodes || [])}</div>`);
-  });
-  sessions.forEach(s => {
-    blocks.push(`<div class="semester-block semester-session ${isFictiveSession(s) ? 'fictif' : 'definitif'}" data-edit-session="${escapeAttr(s.id)}"><span class="block-kind">Séance ${isFictiveSession(s) ? 'à placer' : 'EDT'}</span><strong>${escapeHtml(s.title)}</strong><div class="meta">${escapeHtml(s.type || '')}${isFictiveSession(s) ? ` · ${escapeHtml(s.expectedDuration || '')} · ${escapeHtml(s.fictiveSlot || '')}` : ` · ${DAY_NAMES[s.day]} ${slotLabel(s.startSlot)}`}</div></div>`);
-  });
-  return blocks.length ? blocks.join('') : '<span class="meta">—</span>';
-}
-
 function renderGantt() {
   if (!$('#ganttTimeline')) return;
-  if (!ganttSemesterFilters.length) ganttSemesterFilters = ['Semestre 1'];
+  if (!ganttSemesterFilters) ganttSemesterFilters = semestresDeLaSaison();
+  // Tout décocher n'a pas de sens ici (une frise sans semaines) : on retombe sur
+  // S1, et les cases doivent le DIRE — sinon elles affichent un état faux.
+  if (!ganttSemesterFilters.length) {
+    ganttSemesterFilters = ['Semestre 1'];
+    renderGanttSemesterChoices();
+  }
   const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  const ues = state.ues.filter(ue => (ganttPromotionFilter === 'Tous' || ue.promotion === ganttPromotionFilter) && ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)));
+  // Lot D [17] — plus de filtre « Promotion » : les semestres cochés le disent déjà.
+  const ues = state.ues.filter(ue => ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)));
   renderGanttUeChoices(ues);
   const selectedUes = selectedTimelineUes(ues);
   renderGanttTimeline(selectedUes, weeks);
+}
+
+/* Codes d'UE : le Ruban les écrit sans espace (« UE1.1 »), les UE du planning
+   avec (« UE 1.1 »). Toute comparaison entre les deux mondes passe par ici. */
+function ueCodeCompact(code) { return String(code || '').replace(/\s+/g, '').toUpperCase(); }
+
+/* Lot D [16] — QUI enseigne une UE ? La réponse vit dans le RUBAN (onglet
+   « Référentiel & Ruban » → Tableau détaillé), colonne « Enseignants »,
+   renseignée capacité par capacité : c'est la seule source que l'enseignant
+   tient à jour. Le champ « Enseignant » de la fiche d'UE ne compte que comme
+   appoint (union), il est souvent laissé vide.
+   ⚠️ Les colonnes du Ruban sont livrées VIDES dans ruban-pedagogique.js (dépôt
+   public, aucune donnée nominative) : tant qu'elles ne sont pas remplies dans
+   l'app, aucune UE ne « me » revient — d'où le message de repli plus bas. */
+function enseignantsDeLUe(ue) {
+  const cible = ueCodeCompact(ue?.code);
+  const initiales = new Set(teacherTokens(ue?.teacher).map(teacherInitialsOf).filter(Boolean));
+  (rubanData()?.semestres || []).forEach(s => (s.ues || []).forEach(u => {
+    if (ueCodeCompact(u.code) !== cible) return;
+    rubanUeCapacities(u).forEach(c => (c.enseignants || []).forEach(t => {
+      const initiale = String(t).trim().toUpperCase();
+      if (initiale) initiales.add(initiale);
+    }));
+  }));
+  return [...initiales];
+}
+
+/* Cochage d'office : les UE que j'enseigne. Repli sur les deux premières quand
+   rien ne me revient — accompagné d'un message, sinon on croit à une erreur
+   (c'est exactement ce qui s'est produit : 1.1 et 1.2 cochées sans raison
+   visible). Le message est consommé par renderGanttUeChoices. */
+let ganttDefautMessage = '';
+function mesUesParDefaut(ues = []) {
+  const miennes = moiInitiales ? ues.filter(ue => enseignantsDeLUe(ue).includes(moiInitiales)) : [];
+  if (miennes.length) {
+    ganttDefautMessage = '';
+    return miennes;
+  }
+  ganttDefautMessage = moiInitiales
+    ? `Aucune UE de ces semestres ne porte vos initiales (${moiInitiales}) dans le Ruban : sélection par défaut. Renseigner la colonne « Enseignants » du Tableau détaillé (onglet Référentiel & Ruban) pour que la frise s'ouvre sur vos UE.`
+    : '';
+  return ues.slice(0, 2);
 }
 
 function renderGanttUeChoices(ues = []) {
   const container = $('#ganttUeChoices');
   if (!container) return;
   const sorted = [...ues].sort((a, b) => `${a.semester}-${a.promotion}-${a.code}`.localeCompare(`${b.semester}-${b.promotion}-${b.code}`));
-  if (!ganttFocusedUeIds.length && ganttFocusedUeId) ganttFocusedUeIds = [ganttFocusedUeId];
-  if (!sorted.some(ue => ganttFocusedUeIds.includes(ue.id))) ganttFocusedUeIds = sorted.slice(0, 2).map(ue => ue.id);
+  // Le message de repli ne vaut que pour un cochage d'office : dès que
+  // l'utilisateur compose sa propre sélection, il n'a plus rien à expliquer.
+  if (!ganttFocusedUeIds || !sorted.some(ue => ganttFocusedUeIds.includes(ue.id))) {
+    ganttFocusedUeIds = mesUesParDefaut(sorted).map(ue => ue.id);
+  } else {
+    ganttDefautMessage = '';
+  }
   const selected = new Set(ganttFocusedUeIds);
-  container.innerHTML = sorted.length ? sorted.map(ue => {
+  const cases = sorted.map(ue => {
     const color = ueColor(ue.id);
     return `<label class="checkbox-chip ue-choice" style="--ue-color:${color};--ue-soft:${hexToRgba(color,.12)}"><input type="checkbox" value="${escapeAttr(ue.id)}" ${selected.has(ue.id) ? 'checked' : ''}><span title="${escapeAttr(ue.title)}">${escapeHtml(ue.code.replace('UE ', ''))}</span></label>`;
-  }).join('') : '<p class="meta">Aucune UE disponible avec ces filtres.</p>';
+  }).join('');
+  container.innerHTML = sorted.length
+    ? cases + (ganttDefautMessage ? `<p class="choice-row-note meta">${escapeHtml(ganttDefautMessage)}</p>` : '')
+    : '<p class="meta">Aucune UE disponible avec ces filtres.</p>';
 }
 
 function selectedTimelineUes(ues = []) {
-  const ids = new Set(ganttFocusedUeIds);
+  const ids = new Set(ganttFocusedUeIds || []);
   const selected = ues.filter(ue => ids.has(ue.id));
   return selected.length ? selected : ues.slice(0, 1);
 }
@@ -4266,14 +4300,6 @@ function isUeModified(u) {
   if (state?.rubanUeCaps?.[u.code]) return true;
   return (u.capacites || []).some(c => rubanOverride(c.code));
 }
-/* Bascule une UE vers le modèle éditable (snapshot de l'effectif courant). */
-function materializeUe(ueCode) {
-  state.rubanUeCaps = state.rubanUeCaps || {};
-  if (!Array.isArray(state.rubanUeCaps[ueCode])) {
-    state.rubanUeCaps[ueCode] = rubanStaticUeCaps(ueCode);
-  }
-  return state.rubanUeCaps[ueCode];
-}
 /* Si l'override d'une UE redevient identique au statique, on le supprime. */
 function cleanupUeOverride(ueCode) {
   const cur = state.rubanUeCaps?.[ueCode];
@@ -4358,50 +4384,31 @@ function renderRubanTable(matchCap) {
       const capCell = hasRef
         ? `<button type="button" class="ruban-cap-link has-ref" data-ruban-cap="${escapeAttr(c.code)}" title="Ouvrir dans le référentiel"><strong>${escapeHtml(c.code)}</strong> ${escapeHtml(c.title)}</button>`
         : `<span class="ruban-cap-plain"><strong>${escapeHtml(c.code)}</strong> ${escapeHtml(c.title)}</span>`;
-      const editCell = (field, vals) => `<input class="ruban-edit" type="text" value="${escapeAttr(vals.join(', '))}"`
-        + ` data-ruban-edit-ue="${escapeAttr(u.code)}" data-ruban-edit-code="${escapeAttr(c.code)}" data-ruban-edit-field="${field}"`
-        + ` aria-label="${field === 'enseignants' ? 'Enseignants' : 'Évaluateurs'} de ${escapeAttr(c.code)}" placeholder="—" />`;
+      // Le Tableau détaillé AFFICHE, il ne modifie plus : la composition d'une UE
+      // (capacités, enseignants, évaluateurs) se saisit au seul endroit ✎ de
+      // l'onglet Ruban. Deux voies d'édition pour la même donnée entretenaient la
+      // confusion sur l'endroit où l'information vit vraiment.
+      const initialesCell = vals => vals.length
+        ? `<span class="ruban-initiales">${vals.map(escapeHtml).join(', ')}</span>`
+        : '<span class="ruban-vide" title="Non renseigné — à saisir avec ✎ dans l’onglet Ruban">—</span>';
       rows.push(`<tr class="${modified ? 'is-modified' : ''}">`
         + `<td class="ruban-td-sem">${escapeHtml(s.label.replace('Semestre ', 'S'))}</td>`
         + `<td>${escapeHtml(u.code)}</td>`
         + `<td>${capCell}</td>`
         + `<td>${(c.disciplines || []).map(escapeHtml).join(', ')}</td>`
-        + `<td>${editCell('enseignants', c.enseignants)}</td>`
-        + `<td>${editCell('evaluateurs', c.evaluateurs)}</td>`
-        + `<td class="ruban-td-reset">${modified ? `<button type="button" class="ruban-reset" data-ruban-reset-ue="${escapeAttr(u.code)}" title="Rétablir les capacités d'origine (PDF) de ${escapeAttr(u.code)}">↺</button>` : ''}</td>`
+        + `<td>${initialesCell(c.enseignants)}</td>`
+        + `<td>${initialesCell(c.evaluateurs)}</td>`
         + `</tr>`);
     });
   }));
   target.innerHTML = rows.length
-    ? `<table class="ruban-table"><thead><tr><th>Sem.</th><th>UE</th><th>Capacité</th><th>Disciplines</th><th>Enseignants</th><th>Évaluateurs</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>`
-      + `<p class="ruban-edit-hint meta">Les colonnes <strong>Enseignants</strong> et <strong>Évaluateurs</strong> sont modifiables (initiales séparées par des virgules) ; enregistrement automatique. Pour ajouter/retirer une capacité, utiliser ✎ dans l'onglet <strong>Ruban</strong>. ↺ rétablit l'UE d'origine.</p>`
+    ? `<table class="ruban-table"><thead><tr><th>Sem.</th><th>UE</th><th>Capacité</th><th>Disciplines</th><th>Enseignants</th><th>Évaluateurs</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
+      + `<p class="ruban-edit-hint meta">Vue d'ensemble. Pour modifier une UE — capacités, <strong>enseignants</strong>, <strong>évaluateurs</strong> — utiliser <strong>✎</strong> sur sa carte dans l'onglet <strong>Ruban</strong>. Les affectations renseignées ici décident des UE ouvertes par défaut dans <strong>Progressions semestres</strong>.</p>`
     : '<p class="meta">Aucune capacité ne correspond aux filtres.</p>';
 }
 
 function parseInitials(text) {
   return String(text || '').split(',').map(t => t.trim()).filter(Boolean);
-}
-
-/* Édition inline (Tableau) d'un champ enseignants/évaluateurs : passe par le
-   modèle éditable (materialize) pour rester cohérent avec la modale de composition. */
-async function rubanUpdateCapField(ueCode, capCode, field, text) {
-  if (!state) return;
-  const list = materializeUe(ueCode);
-  const cap = list.find(c => c.code === capCode);
-  if (!cap) return;
-  cap[field] = parseInitials(text);
-  cleanupUeOverride(ueCode);
-  try { await saveData('Affectation enregistrée'); } catch (e) { setSaveStatus('Erreur d’enregistrement'); }
-}
-
-/* Rétablit une UE à sa composition d'origine (PDF) : supprime l'override complet
-   ET les anciens overrides par capacité de cette UE. */
-async function rubanResetUe(ueCode) {
-  if (!state) return;
-  if (state.rubanUeCaps) delete state.rubanUeCaps[ueCode];
-  const u = findRubanUe(ueCode);
-  (u?.capacites || []).forEach(c => { if (state.rubanOverrides) delete state.rubanOverrides[c.code]; });
-  try { await saveData('Capacités rétablies'); } catch (e) { setSaveStatus('Erreur d’enregistrement'); }
 }
 
 /* ---- Modale de composition d'une UE ---- */
@@ -4438,7 +4445,6 @@ function openUeCapsModal(ueCode) {
   $('#ueCapsCode').value = ueCode;
   $('#ueCapsModalTitle').textContent = `Capacités — ${u.code} · ${u.title}`;
   renderUeCapsRows(rubanUeCapacities(u));
-  $('#resetUeCapsButton').hidden = !isUeModified(u);
   $('#ueCapsDialog').showModal();
 }
 
@@ -4749,24 +4755,12 @@ function bindEvents() {
   $('#ruban')?.addEventListener('click', (event) => {
     const editUe = event.target.closest('[data-edit-ue]');
     if (editUe) { event.preventDefault(); openUeCapsModal(editUe.dataset.editUe); return; }
-    const resetUe = event.target.closest('[data-ruban-reset-ue]');
-    if (resetUe) {
-      event.preventDefault();
-      if (confirm('Rétablir les capacités d’origine (PDF) de cette UE ?')) rubanResetUe(resetUe.dataset.rubanResetUe);
-      return;
-    }
     const cap = event.target.closest('[data-ruban-cap]');
     if (!cap) return;
     event.preventDefault();
     openReferenceModuleForCapacity(cap.dataset.rubanCap);
   });
-  // Édition inline des enseignants / évaluateurs (enregistrement sur "change" ou Entrée).
-  document.body.addEventListener('change', (event) => {
-    const input = event.target.closest('.ruban-edit');
-    if (!input) return;
-    rubanUpdateCapField(input.dataset.rubanEditUe, input.dataset.rubanEditCode, input.dataset.rubanEditField, input.value);
-  });
-  // Modale de composition d'une UE.
+  // Modale de composition d'une UE — seule voie de modification du Ruban.
   $('#addUeCapRow')?.addEventListener('click', () => $('#ueCapsRows')?.insertAdjacentHTML('beforeend', ueCapRowHtml({})));
   $('#ueCapsRows')?.addEventListener('click', (event) => {
     const rm = event.target.closest('[data-remove-cap-row]');
@@ -4782,18 +4776,8 @@ function bindEvents() {
     $('#ueCapsDialog').close();
     await saveData('Capacités de l’UE enregistrées');
   });
-  $('#resetUeCapsButton')?.addEventListener('click', async () => {
-    const ueCode = $('#ueCapsCode').value;
-    if (!ueCode || !confirm('Rétablir les capacités d’origine (PDF) de cette UE ?')) return;
-    await rubanResetUe(ueCode);
-    $('#ueCapsDialog').close();
-  });
   $('#cancelUeCapsButton')?.addEventListener('click', () => $('#ueCapsDialog').close());
   $('#closeUeCapsModal')?.addEventListener('click', () => $('#ueCapsDialog').close());
-  document.body.addEventListener('keydown', (event) => {
-    const input = event.target.closest('.ruban-edit');
-    if (input && event.key === 'Enter') { event.preventDefault(); input.blur(); }
-  });
 
   $('#printButton')?.addEventListener('click', () => window.print());
   $('#exportDataBtn')?.addEventListener('click', () => exportData());
@@ -4899,12 +4883,9 @@ function bindEvents() {
     const pop = $('#designUePop');
     if (pop?.open && !pop.contains(event.target)) pop.open = false;
   });
-  $('#semesterPromotionFilter')?.addEventListener('change', e => { semesterPromotionFilter = e.target.value; renderSemester(); });
-  $('#semesterFilter')?.addEventListener('change', e => { semesterFilter = e.target.value; renderSemester(); });
-  $('#ganttPromotionFilter').addEventListener('change', e => { ganttPromotionFilter = e.target.value; renderGantt(); });
-    $('#ganttDensity')?.addEventListener('change', e => { ganttDensity = e.target.value; renderGantt(); });
-  $('#ganttUeChoices')?.addEventListener('change', () => { ganttFocusedUeIds = $$('#ganttUeChoices input[type="checkbox"]:checked').map(input => input.value); ganttFocusedUeId = ganttFocusedUeIds[0] || ''; renderGantt(); });
-  $('#ganttSemesterChoices').addEventListener('change', () => {
+  $('#ganttDensity')?.addEventListener('change', e => { ganttDensity = e.target.value; renderGantt(); });
+  $('#ganttUeChoices')?.addEventListener('change', () => { ganttFocusedUeIds = $$('#ganttUeChoices input[type="checkbox"]:checked').map(input => input.value); renderGantt(); });
+  $('#ganttSemesterChoices')?.addEventListener('change', () => {
     ganttSemesterFilters = $$('#ganttSemesterChoices input[type="checkbox"]:checked').map(input => input.value);
     renderGantt();
   });
@@ -5031,16 +5012,6 @@ function bindEvents() {
     if (target.dataset.looseDrop) return detachSessionFromSequence(session, target.dataset.looseDrop);
   });
 
-  $('#semesterTable')?.addEventListener('click', (event) => {
-    const printUe = event.target.closest('[data-print-timeline-ue]');
-    if (printUe) return printTimelineUe(printUe.dataset.printTimelineUe);
-    const constraintEl = event.target.closest('[data-edit-constraint]');
-    if (constraintEl) return openConstraintModal(findConstraint(constraintEl.dataset.editConstraint));
-    const sessionEl = event.target.closest('[data-edit-session]');
-    if (sessionEl) return openSessionModal(findSession(sessionEl.dataset.editSession));
-    const seqEl = event.target.closest('[data-edit-sequence]');
-    if (seqEl) return openSequenceModal(findSequence(seqEl.dataset.editSequence));
-  });
 
   $('#ganttTimeline')?.addEventListener('click', (event) => {
     const printUe = event.target.closest('[data-print-timeline-ue]');
@@ -5706,11 +5677,6 @@ function findUeByCode(code = '') {
 function renderCapacityList(capacities = [], compact = false) {
   if (!capacities.length) return '<p class="meta">Aucune capacité référencée.</p>';
   return `<div class="capacity-list ${compact ? 'compact' : ''}">${capacities.map(cap => `<button type="button" class="capacity-item" data-capacity-code="${escapeAttr(cap.code)}"><span class="capacity-code">${escapeHtml(cap.code)}</span><span class="capacity-title">${escapeHtml(cap.title)}</span></button>`).join('')}</div>`;
-}
-
-function renderCapacityPills(codes = []) {
-  if (!codes || !codes.length) return '';
-  return `<div class="capacity-pills">${codes.map(code => `<button type="button" class="capacity-pill" data-capacity-code="${escapeAttr(code)}">${escapeHtml(code)}</button>`).join('')}</div>`;
 }
 
 function renderCapacityCheckboxes(containerSelector, capacities = [], selectedCodes = [], ue = null) {
