@@ -19,6 +19,15 @@
       <div class="banner-inner">
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
         <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
+        <!-- Sauvegarde des données : dans le bandeau, à côté de ⟳ (lot A [8]).
+             Elle ne concerne pas le seul tableau de bord — sa place était une
+             ligne de boutons en haut d'un onglet, elle est désormais toujours
+             sous la main sans coûter de hauteur. -->
+        <div class="banner-data" aria-label="Sauvegarde des données">
+          <button type="button" id="exportDataBtn" class="lien" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)" aria-label="Exporter les données">⬇</button>
+          <button type="button" id="importDataBtn" class="lien" title="Restaurer vos données depuis un fichier JSON exporté" aria-label="Importer des données">⬆</button>
+          <input type="file" id="importDataInput" accept="application/json,.json" hidden />
+        </div>
         <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
       </div>
     </header>
@@ -33,12 +42,6 @@
 
   <main>
     <section id="dashboard" class="view active-view">
-      <div class="dash-actions" aria-label="Sauvegarde des données">
-        <button type="button" id="exportDataBtn" class="data-btn" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)">⬇ Exporter</button>
-        <button type="button" id="importDataBtn" class="data-btn" title="Restaurer vos données depuis un fichier JSON exporté">⬆ Importer</button>
-        <input type="file" id="importDataInput" accept="application/json,.json" hidden />
-      </div>
-
       <!-- Zone hebdomadaire : ce qu'on vient regarder tous les jours.
            « Ma semaine » et « Prochainement » sont rendus par renderDashboard(). -->
       <div class="zone-haute">
@@ -49,10 +52,6 @@
           <section class="panel todo-panel priority-panel" id="todoPriorityPanel">
             <div class="panel-heading-inline">
               <h3>À faire</h3>
-              <div class="todo-actions">
-                <span class="todo-status meta" id="todoNotesStatus"></span>
-                <button type="button" id="clearTodoNotes" class="small secondary">Effacer</button>
-              </div>
             </div>
             <textarea id="todoNotes" class="todo-notes" rows="4" placeholder="Noter rapidement ce qu'il reste à faire… (enregistré automatiquement)"></textarea>
           </section>
@@ -76,6 +75,19 @@
             </div>
             <p class="meta tight">Salle informatique ou amphithéâtre : à réserver auprès du référent, idéalement 15 jours à l'avance. Cochez « Réservée » une fois la demande faite — la ligne se retire d'elle-même.</p>
           </details>
+          <!-- Troisième colonne, posée au lot A même vide : sa place dans la
+               charpente est décidée maintenant, son contenu (ordres de mission,
+               réservation de véhicule) arrive au lot B. Cet encart ne listera
+               PAS les frais — ceux-ci se consultent une fois par mois, en bas. -->
+          <details class="panel panel-collapsible deplacements-panel" id="deplacementsPanel" data-open-key="dash:deplacements">
+            <summary>
+              <div class="panel-heading-inline">
+                <h3>Déplacements</h3>
+                <span id="deplacementsSummaryBadge" class="frais-badge"></span>
+              </div>
+            </summary>
+            <div id="deplacementsList" class="list"></div>
+          </details>
         </div>
 
         <details class="panel panel-collapsible" data-open-key="dash:backlog">
@@ -85,7 +97,7 @@
               <span class="badge-groupe" id="backlogBadges"></span>
             </div>
           </summary>
-          <div id="dashboardBacklog" class="list"></div>
+          <div id="dashboardBacklog" class="session-card-grid"></div>
         </details>
       </div>
 
@@ -154,10 +166,6 @@
           </div>
         </summary>
         <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <div class="todo-actions">
-          <span class="todo-status meta" id="devNotesStatus"></span>
-          <button type="button" id="clearDevNotes" class="small secondary">Effacer</button>
-        </div>
         <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
       </details>
         </div>

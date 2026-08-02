@@ -584,6 +584,18 @@ function ensureDeplacementForSession(session) {
    du tableau de bord. roomToBook/roomBooked vivent dans la colonne `contenu`
    jsonb de la séance comme tout champ non mappé : aucune migration Supabase. */
 
+/* Salle à réserver d'une séance, y compris pour l'existant (lot A [6]).
+   Le pré-remplissage de `roomToBook` n'agit qu'à la saisie : les séances de type
+   « Cours en salle informatique » créées AVANT l'ajout du champ n'ont rien de
+   stocké et n'apparaissaient donc jamais dans « À réserver ». On déduit ici la
+   valeur au lieu d'écrire en base : rien à migrer, et le jour où la séance est
+   rouverte et enregistrée, la valeur déduite devient la valeur stockée. */
+function sessionRoomToBook(s) {
+  if (!s) return '';
+  if (s.roomToBook) return s.roomToBook;
+  return s.type === 'Cours en salle informatique' ? 'info' : '';
+}
+
 /* Date approximative d'une séance pour le suivi de réservation : même calcul
    que « Frais de déplacement » (sessionIsoDate) — définitive = date réelle,
    à placer = lundi de la semaine cible (approximatif, assumé). */
@@ -603,7 +615,7 @@ function roomBookingDaysUntil(date) {
    dernier). */
 function roomBookingRows() {
   return (state.sessions || [])
-    .filter(s => s.roomToBook)
+    .filter(s => sessionRoomToBook(s))
     .map(s => {
       const date = roomBookingDate(s);
       return { session: s, date, daysUntil: roomBookingDaysUntil(date) };
@@ -662,7 +674,7 @@ function renderRooms() {
         return `<div class="row-item room-row${s.roomBooked ? ' room-row-booked' : ''}">
           <div class="row-main">
             <strong class="row-title">${escapeHtml(s.title)}</strong>
-            <span class="row-meta">${escapeHtml(dateLabel)} · ${escapeHtml(ROOM_TO_BOOK_LABELS[s.roomToBook] || s.roomToBook)}${s.promotion ? ' · ' + escapeHtml(s.promotion) : ''}</span>
+            <span class="row-meta">${escapeHtml(dateLabel)} · ${escapeHtml(ROOM_TO_BOOK_LABELS[sessionRoomToBook(s)] || sessionRoomToBook(s))}${s.promotion ? ' · ' + escapeHtml(s.promotion) : ''}</span>
           </div>
           ${!s.roomBooked && urgent && daysLabel ? `<span class="status-pill room-urgent">${escapeHtml(daysLabel)}</span>` : ''}
           <label class="room-booked-check">
@@ -685,7 +697,7 @@ function roomsStringMatrix() {
     return [
       r.date ? r.date.toLocaleDateString('fr-FR') : '',
       r.daysUntil === null ? '' : String(r.daysUntil),
-      ROOM_TO_BOOK_LABELS[s.roomToBook] || s.roomToBook || '',
+      ROOM_TO_BOOK_LABELS[sessionRoomToBook(s)] || sessionRoomToBook(s) || '',
       s.title || '',
       s.promotion || '',
       findUe(s.ueId)?.code || '',
@@ -850,12 +862,18 @@ function ensureDeplacementForReunion(reunion) {
   });
 }
 
-/* Badge du panneau : nombre de réunions enregistrées. */
+/* Badge du panneau : réunions À VENIR seulement (lot A [4]). Compter tout
+   l'historique donnait un nombre qui ne cessait de grossir sans rien dire de ce
+   qui reste à faire. La liste dépliée, elle, garde bien tout l'historique. */
 function updateReunionsBadge() {
   const badge = $('#reunionsSummaryBadge');
   if (!badge) return;
-  const n = (state.reunions || []).length;
-  badge.textContent = n ? `${n} réunion${n > 1 ? 's' : ''}` : '';
+  const today = dashAujourdhui();
+  const n = (state.reunions || []).filter(r => {
+    const d = parseIsoDate(r.date);
+    return d && d >= today;
+  }).length;
+  badge.textContent = n ? `${n} à venir` : '';
 }
 
 function renderReunions() {
@@ -1437,10 +1455,11 @@ function dashActionsDeSeance(s, date) {
   const out = [];
   const j = dashJoursEntre(date);
   if (isFictiveSession(s)) out.push({ cle: 'placer', texte: 'À placer' });
-  if (s.roomToBook && !s.roomBooked) {
+  const salle = sessionRoomToBook(s);
+  if (salle && !s.roomBooked) {
     out.push({
       cle: 'salle',
-      texte: `${ROOM_TO_BOOK_LABELS[s.roomToBook] || 'Salle'} à réserver`,
+      texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`,
       urgent: j !== null && j <= ROOM_ALERT_DAYS
     });
   }
@@ -1693,15 +1712,29 @@ function renderDashBacklogBadges() {
     + (nonRatt ? `<span class="frais-badge has-pending">${nonRatt} à rattacher</span>` : '');
 }
 
+/* Encart « Déplacements » — charpente posée au lot A, contenu au lot B (ordres
+   de mission à établir, véhicules à réserver). Il ne listera pas les frais. */
+function renderDashDeplacements() {
+  const hote = $('#deplacementsList');
+  if (!hote) return;
+  hote.innerHTML = '<p class="empty-hint">Ordres de mission et réservations de véhicule : suivi en cours de mise en place. Les frais restent dans « Frais de déplacement », plus bas.</p>';
+  const badge = $('#deplacementsSummaryBadge');
+  if (badge) badge.textContent = '';
+}
+
 function renderDashboard() {
   const fictive = visibleSessions().filter(isFictiveSession);
 
   renderDashSemaine();
   renderDashProchainement();
   renderDashBacklogBadges();
+  renderDashDeplacements();
 
+  // Lot A [7] — mêmes tuiles qu'en Conception pédagogique et qu'au Planning
+  // hebdo (renderBacklogSessionTile), au lieu des lignes de liste : une séance à
+  // placer se reconnaît à sa couleur d'UE, et se glisse depuis les trois vues.
   $('#dashboardBacklog').innerHTML = fictive.length
-    ? fictive.slice(0, 12).map(s => sessionListItem(s)).join('')
+    ? fictive.slice(0, 12).map(s => renderBacklogSessionTile(s)).join('')
     : '<p class="meta">Aucune séance à placer en attente.</p>';
 
   $('#constraintsList').innerHTML = state.constraints.length
@@ -1718,23 +1751,16 @@ function renderDashboard() {
   updateDevStatus();
 }
 
+/* Lot A [3] — l'étiquette « Notes en attente / Vide » a été retirée : le texte
+   saisi est sous les yeux, l'annoncer était redondant. Seule reste la classe
+   qui signale l'encart rempli. */
 function updateTodoStatus() {
-  const status = $('#todoNotesStatus');
   const value = ($('#todoNotes')?.value ?? state?.todoNotes ?? '').trim();
-  if (status) {
-    status.textContent = value ? 'Notes en attente' : 'Vide';
-    status.classList.toggle('has-todo', !!value);
-  }
   $('#todoPriorityPanel')?.classList.toggle('has-pending', !!value);
 }
 
 function updateDevStatus() {
   const value = ($('#devNotes')?.value ?? state?.devNotes ?? '').trim();
-  const status = $('#devNotesStatus');
-  if (status) {
-    status.textContent = value ? 'Notes en attente' : 'Vide';
-    status.classList.toggle('has-todo', !!value);
-  }
   // Lot 9 (Q5) — badge « 1 note » sur le résumé replié, pour que le contenu ne
   // passe pas inaperçu une fois le panneau fermé par défaut.
   const badge = $('#devNotesBadge');
@@ -4594,14 +4620,6 @@ function bindEvents() {
     todoTimer = setTimeout(persistTodo, 800);
   });
   $('#todoNotes')?.addEventListener('blur', () => { clearTimeout(todoTimer); persistTodo(); });
-  $('#clearTodoNotes')?.addEventListener('click', async () => {
-    if (!($('#todoNotes')?.value || '').trim()) return;
-    if (!window.confirm('Effacer toutes les notes « À faire » ?')) return;
-    $('#todoNotes').value = '';
-    state.todoNotes = '';
-    updateTodoStatus();
-    await saveData('Notes « À faire » effacées');
-  });
 
   // Notes libres « Bugs & améliorations » — même mécanique que « À faire »
   let devTimer;
@@ -4618,14 +4636,6 @@ function bindEvents() {
     devTimer = setTimeout(persistDev, 800);
   });
   $('#devNotes')?.addEventListener('blur', () => { clearTimeout(devTimer); persistDev(); });
-  $('#clearDevNotes')?.addEventListener('click', async () => {
-    if (!($('#devNotes')?.value || '').trim()) return;
-    if (!window.confirm('Effacer toutes les notes « Bugs & améliorations » ?')) return;
-    $('#devNotes').value = '';
-    state.devNotes = '';
-    updateDevStatus();
-    await saveData('Notes « Bugs & améliorations » effacées');
-  });
 
   $('#weekBacklogScope')?.addEventListener('change', e => { weekBacklogScope = e.target.value; renderWeekBacklog(); });
   $('#weekBacklogUeFilter')?.addEventListener('change', e => { weekBacklogUeFilter = e.target.value; renderWeekBacklog(); });

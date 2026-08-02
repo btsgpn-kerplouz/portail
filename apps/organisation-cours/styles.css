@@ -269,6 +269,22 @@ html { scroll-padding-top: 6.4rem; }
 .auth-compact .lien:hover { opacity: 1; color: #fff; }
 .auth-compact .lien:disabled { opacity: .4; cursor: default; }
 
+/* Export / import dans le bandeau (lot A [8]). `margin-left:auto` ici : c'est ce
+   bloc qui pousse tout le groupe de droite, `.auth-compact` se range à sa suite.
+   Réduits à leur icône — le bandeau doit rester sur UNE ligne jusqu'à 390 px. */
+.banner-data {
+  display: flex; align-items: center; gap: .1rem;
+  margin-left: auto; white-space: nowrap;
+  color: rgba(255,255,255,.85);
+}
+.banner-data + .auth-compact { margin-left: .35rem; }
+.banner-data .lien {
+  border: none; background: none; color: inherit; cursor: pointer;
+  padding: .1rem .3rem; font-size: .95rem; line-height: 1; opacity: .85;
+}
+.banner-data .lien:hover { opacity: 1; color: #fff; }
+.banner-data .lien:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
 .tabs.header-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -292,20 +308,8 @@ html { scroll-padding-top: 6.4rem; }
 }
 .tab:hover { background: var(--moss-soft); color: var(--moss-dark); }
 .tab.active { background: var(--moss); color: #fff; }
-/* N4 — actions « données » (export/import) discrètes, dans le Tableau de bord. */
-.data-actions { flex: 0 0 auto; display: flex; align-items: center; gap: .35rem; }
-.data-btn {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  padding: .3rem .55rem;
-  border-radius: var(--r-sm);
-  font-size: .78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color .15s ease, border-color .15s ease, background .15s ease;
-}
-.data-btn:hover { color: var(--ink); border-color: var(--line-strong); background: var(--surface-alt); }
+/* Les actions « données » (export/import) ont quitté le Tableau de bord pour le
+   bandeau titre au lot A [8] — voir `.banner-data`. */
 
 /* N5 — message d'enregistrement : toast discret et transitoire (coin bas-droit),
    au lieu d'un texte permanent dans le bandeau titre. */
@@ -2345,26 +2349,55 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   --bleu-titre: var(--acc);/* « Aujourd'hui », blanc dessus : 9,1 */
 }
 
-/* ---- Barre d'actions (le titre de page a été retiré : l'onglet suffit) ---- */
-#dashboard > .dash-actions {
-  display: flex; justify-content: flex-end; gap: var(--sp-2);
-  margin-bottom: var(--sp-3); flex-wrap: wrap;
-}
-
-/* ---- Charpente : zone hebdomadaire puis zone mensuelle ---- */
+/* ---- Charpente : zone hebdomadaire puis zone mensuelle ----
+   Ni titre de page (l'onglet suffit) ni barre d'actions (export/import sont
+   passés dans le bandeau) : la vue commence par « Ma semaine ». ---- */
 #dashboard .zone-haute { display: flex; flex-direction: column; gap: var(--sp-5); margin-bottom: var(--sp-6); }
 #dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-3); }
 #dashboard .zone-titre {
   margin: 0 0 var(--sp-3); font-size: .6875rem; font-weight: 700;
   letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
-#dashboard .zone-basse-lignes { display: flex; flex-direction: column; gap: var(--sp-2); }
+/* Zone mensuelle sur DEUX colonnes (lot A [20]) : repliées, ces quatre barres
+   ne portent qu'un titre et un badge — les mettre en pile gaspillait la moitié
+   de la largeur. Réserve mesurée : « Frais » et « Réunions » portent un tableau
+   large, ils reprennent donc toute la largeur UNE FOIS DÉPLIÉS. */
+#dashboard .zone-basse-lignes {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--sp-5); align-items: start;
+}
+#dashboard .zone-basse-lignes > * { min-width: 0; }
+#dashboard .zone-basse-lignes > details[open].frais-panel,
+#dashboard .zone-basse-lignes > details[open].reunions-panel { grid-column: 1 / -1; }
+/* Même filet de séparation qu'en zone haute : deux colonnes de barres côte à
+   côte sans limite se lisaient comme une seule liste en désordre. Il ne
+   s'applique qu'à la colonne de droite — et pas à un encart passé pleine
+   largeur, qui n'a plus de voisin à sa gauche. */
+#dashboard .zone-basse-lignes > :nth-child(even):not([open].frais-panel):not([open].reunions-panel) {
+  border-left: 1px solid var(--line-strong);
+  padding-left: var(--sp-5);
+}
+@media (max-width: 700px) {
+  #dashboard .zone-basse-lignes { grid-template-columns: 1fr; }
+  #dashboard .zone-basse-lignes > * { border-left: 0; padding-left: 0; }
+}
 
-/* ---- Un bloc n'est plus une boîte : un titre sur un trait, et du contenu ---- */
+/* ---- Un bloc n'est plus une boîte : un titre sur un trait, et du contenu.
+   Lot A [2] — le bloc est aussi FERMÉ en bas par un filet fin. Ouvert des deux
+   côtés, on ne voyait plus où un espace de travail finissait et où le suivant
+   commençait ; c'est ce que « pas clairement identifiables » désignait. ---- */
 #dashboard .bande-bloc {
   background: transparent; border: 0; border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
   border-radius: 0; box-shadow: none; padding: 0; margin-bottom: 0; overflow: hidden;
 }
+
+/* [9] Les titres d'encart prennent le bleu du bandeau : un repère de début de
+   bloc qui se lit de loin, sans surface colorée (on reste à ~1,5 % de couleur). */
+#dashboard .bloc-tete h3,
+#dashboard .ligne-trois h3,
+#dashboard .zone-basse-lignes h3,
+#dashboard .zone-haute > .panel-collapsible h3 { color: var(--bleu-titre); }
 #dashboard .bande-bloc[hidden] { display: none; }
 #dashboard .bloc-tete { padding: var(--sp-3) 0 var(--sp-2); }
 #dashboard .bloc-tete h3 { font-size: 1.05rem; margin: 0; }
@@ -2473,14 +2506,34 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .bande-audela { margin: 0; padding: .5rem 0 .7rem; border-top: 1px solid var(--line); font-size: .75rem; color: var(--muted); }
 #dashboard .bande-audela strong { color: var(--ink-soft); }
 
-/* ---- Ligne des encarts de travail. auto-fit : deux aujourd'hui, trois
-   quand « Déplacements » arrivera, sans retoucher cette règle.
+/* ---- Ligne des encarts de travail : « À faire », « À réserver »,
+   « Déplacements ». Paliers explicites depuis le lot A — avec trois encarts,
+   `auto-fit` produisait à largeur moyenne un 3e élément seul sur une deuxième
+   ligne, que les filets de séparation ci-dessous auraient mal habillé.
    align-items:start — un encart déplié n'étire pas ses voisins. ---- */
 #dashboard .ligne-trois {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-4); align-items: start;
 }
 #dashboard .ligne-trois > * { min-width: 0; margin-bottom: 0; }
+
+/* [2] Chaque encart est un ESPACE DE TRAVAIL, pas un bloc de texte qui flotte :
+   un filet vertical fin le sépare de son voisin et le rend dénombrable d'un
+   coup d'œil. C'est la réponse à « trop sobre » — une limite, pas une couleur. */
+#dashboard .ligne-trois > * + * {
+  border-left: 1px solid var(--line-strong);
+  padding-left: var(--sp-4);
+}
+@media (max-width: 1000px) {
+  #dashboard .ligne-trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* À deux colonnes, seul l'encart de droite porte le filet : celui qui passe à
+     la ligne redevient un début de rangée. */
+  #dashboard .ligne-trois > :nth-child(odd) { border-left: 0; padding-left: 0; }
+}
+@media (max-width: 700px) {
+  #dashboard .ligne-trois { grid-template-columns: 1fr; gap: 0; }
+  #dashboard .ligne-trois > * { border-left: 0; padding-left: 0; }
+}
 #dashboard .ligne-trois h3 { font-size: 1.05rem; }
 #dashboard .ligne-trois > .panel-collapsible,
 #dashboard .ligne-trois > .priority-panel {
