@@ -122,6 +122,12 @@ let ganttFocusedUeIds = null;
 let ganttDensity = 'compact';
 let weekBacklogScope = 'week';
 let weekBacklogUeFilter = 'Tous';
+/* Lot G — mémoire de travail de la modale de séance : les capacités cochées,
+   rangées par UE, le temps que la modale reste ouverte. Changer d'UE puis
+   revenir retrouve donc sa sélection au lieu de la perdre. Vidée à chaque
+   ouverture (openSessionModal). */
+let capacitesParUe = {};
+let ueCapacitesPrecedente = '';
 let designTeacherFilter = 'Tous';
 /* Lot C [10] — « paramétrage de base = rien de coché ». On garde donc la liste
    des UE CHOISIES (et non plus celle des UE masquées) : vide au démarrage, ce
@@ -2323,13 +2329,23 @@ function renderSessionCard(s, number) {
 // hebdo : la pastille « À placer » et le bouton dédié sont redondants avec
 // l'emplacement (déjà « à placer » par nature) ; la tuile entière est
 // cliquable, comme les cartes de Conception pédagogique.
+// Lot E [19] — elle reprend la silhouette de `renderSessionCard` telle que le
+// lot C-bis l'a redessinée : tête foncée portant le type, corps pastel, titre
+// encré. Elle en garde deux différences volontaires : pas de numéro (la
+// réserve ne montre QUE les séances à placer d'une séquence, un « 1, 2 » y
+// désignerait d'autres séances que dans la Conception) et pas de marqueur de
+// placement (ici, aucune n'est placée — le signe serait le même partout).
 function renderBacklogSessionTile(s) {
   const color = sessionTint(s);
   const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 3);
-  return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .16)}; --ue-ink:${inkColor(color, mixHex(color, '#fbfcf9', .16))}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  const pastel = hexToRgba(color, .13);
+  const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
+  return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+    <header class="session-card-head">
+      <span class="session-card-headtype" title="${escapeAttr(s.type || '')}">${escapeHtml(s.type || 'Séance')}</span>
+    </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
-    ${s.type ? `<span class="session-card-type">${escapeHtml(s.type)}</span>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
   </article>`;
@@ -2932,11 +2948,13 @@ function renderPlanning() {
 function renderWeekCalendar() {
   const container = $('#weekCalendar');
   const week = state.weeks.find(w => w.id === selectedWeek);
-  // Libellé du bouton d'ouverture : toujours afficher la semaine courante.
-  const toggle = $('#weekPickerToggle');
-  if (toggle) {
-    const lbl = week ? `${escapeHtml(week.label.replace('S0', 'S'))} · ${escapeHtml(compactDateRange(week.dateRange))}` : 'Choisir la semaine';
-    toggle.innerHTML = `<span class="wp-cal-ico" aria-hidden="true">📅</span><span class="wp-label">${lbl}</span><span class="wp-caret" aria-hidden="true">▾</span>`;
+  // Lot E [19] — le rappel de la semaine vit dans la barre collante : c'est le
+  // seul endroit qui reste lisible une fois qu'on a défilé dans la grille.
+  const rappel = $('#weekBarLabel');
+  if (rappel) {
+    rappel.innerHTML = week
+      ? `<strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong> <span>${escapeHtml(compactDateRange(week.dateRange))}</span>`
+      : '<span>Aucune semaine</span>';
   }
   if (!container) return;
 
@@ -2979,12 +2997,12 @@ function renderWeekCalendar() {
     <div class="week-cal-monthlabel">${escapeHtml(monthLabel)}</div>
     <button type="button" class="week-cal-nav" data-cal-nav="next"${atLast ? ' disabled' : ''} aria-label="Mois suivant">›</button>
   </div>`;
-  const selectedLine = week
-    ? `<div class="week-cal-weeknav"><button type="button" class="week-cal-nav" data-week-nav="prev" aria-label="Semaine précédente">‹</button><div class="week-cal-selected"><strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong><span>${escapeHtml(week.dateRange || '')}</span></div><button type="button" class="week-cal-nav" data-week-nav="next" aria-label="Semaine suivante">›</button></div>`
-    : '';
+  // La ligne « ‹ S39 21/09 – 25/09 › » qui vivait ici a rejoint la barre
+  // collante : elle y disait la même chose, à 40 px de distance, et elle y
+  // reste lisible en défilant. Le calendrier garde ses mois et ses jours.
   const grid = renderCalendarMonth(shown, mondayToWeek, selectedMondayKey, false);
 
-  container.innerHTML = `<div class="week-cal-compact">${header}${selectedLine}${grid}</div>`;
+  container.innerHTML = `<div class="week-cal-compact">${header}${grid}</div>`;
 }
 
 /* Décale le mois affiché dans le sélecteur compact (sans changer la semaine). */
@@ -3609,6 +3627,8 @@ function openSessionModal(session = null, context = {}) {
     syncDeplacementFields('session');
   }
   if ($('#sessionCapacityResetHint')) $('#sessionCapacityResetHint').hidden = true;
+  capacitesParUe = {}; // mémoire propre à chaque ouverture de la modale
+  ueCapacitesPrecedente = $('#sessionUe')?.value || '';
   renderSessionCapacityChoices(session?.capacityCodes || [], ue, seq);
   $('#sessionObjectives').value = session?.objectives || '';
   $('#sessionKeywords').value = session?.keywords || '';
@@ -4035,7 +4055,7 @@ function printWeekPlanning() {
   const html = $('#planningContainer')?.innerHTML || '';
   const css = [...document.styleSheets].map(sheet => { try { return [...sheet.cssRules].map(rule => rule.cssText).join('\n'); } catch (e) { return ''; } }).join('\n');
   const win = window.open('', '_blank');
-  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.week-bar,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
   win.document.close();
   win.focus();
 }
@@ -4365,9 +4385,11 @@ function renderRuban() {
 
   renderRubanTable(matchCap);
 
+  // Lot F [5] — « correspondante(s) » redisait ce que la barre montre déjà (le
+  // filtre est à 30 px de là) et poussait la case de recherche à la ligne.
   const countEl = $('#rubanCount');
   if (countEl) countEl.textContent = (q || teacher !== 'Tous')
-    ? `${shown} capacité${shown > 1 ? 's' : ''} correspondante${shown > 1 ? 's' : ''}`
+    ? `${shown} capacité${shown > 1 ? 's' : ''}`
     : '';
 }
 
@@ -4806,7 +4828,14 @@ function bindEvents() {
     $('#weekCalendar')?.classList.remove('is-open');
     renderPlanning();
   });
-  $('#weekPickerToggle')?.addEventListener('click', () => $('#weekCalendar')?.classList.toggle('is-open'));
+  // Lot E [19] — les flèches de semaine ont quitté le calendrier pour la barre
+  // collante. Écouteur limité à `.week-bar` (et non posé sur <body>) : la leçon
+  // du lot C, où un écouteur délégué trop large happait les clics d'une autre
+  // vue.
+  document.querySelector('.week-bar')?.addEventListener('click', (event) => {
+    const nav = event.target.closest('[data-week-nav]');
+    if (nav) moveWeek(nav.dataset.weekNav === 'prev' ? -1 : 1);
+  });
   $('#weekMaskToggle')?.addEventListener('change', (event) => {
     weekMaskActive = event.target.checked;
     renderPlanning();
@@ -5174,9 +5203,25 @@ function bindEvents() {
   };
   $('#sessionExpectedDuration').addEventListener('input', syncSessionEndFromDuration);
   $('#sessionStart').addEventListener('change', syncSessionEndFromDuration);
+  /* Lot G — changer d'UE vidait les capacités cochées EN SILENCE. Remettre à
+     zéro est juste (les codes de l'ancienne UE n'existent pas dans la nouvelle),
+     mais le faire sans un mot se lit comme une perte de saisie — même leçon
+     qu'au lot D avec le repli silencieux des UE par défaut. On prévient donc,
+     et on garde la sélection de côté : revenir à l'UE précédente la retrouve,
+     le temps que la modale reste ouverte. */
   $('#sessionUe').addEventListener('change', () => {
+    const cochees = selectedCheckboxValues('#sessionCapacityChoices');
+    if (ueCapacitesPrecedente && cochees.length) capacitesParUe[ueCapacitesPrecedente] = cochees;
+    const nouvelleUe = $('#sessionUe').value;
+    const retrouvees = capacitesParUe[nouvelleUe] || [];
+    const resetHint = $('#sessionCapacityResetHint');
+    if (resetHint) {
+      resetHint.hidden = !(cochees.length && !retrouvees.length);
+      resetHint.textContent = 'Les capacités cochées appartenaient à l’UE précédente : elles ont été décochées. Revenir à cette UE les retrouvera.';
+    }
+    ueCapacitesPrecedente = nouvelleUe;
     refreshSessionSequenceSelect('');
-    renderSessionCapacityChoices([], findUe($('#sessionUe').value));
+    renderSessionCapacityChoices(retrouvees, findUe(nouvelleUe));
   });
   $('#sessionSequence').addEventListener('change', () => {
     const val = $('#sessionSequence').value;
@@ -5203,7 +5248,10 @@ function bindEvents() {
     $('#sessionPromotion').value = seq.promotion;
     refreshSessionSequenceSelect(seq.id);
     const resetHint = $('#sessionCapacityResetHint');
-    if (resetHint) resetHint.hidden = !ueChanges;
+    if (resetHint) {
+      resetHint.hidden = !ueChanges;
+      resetHint.textContent = 'Cette séquence relève d’une autre UE : votre sélection de capacités n’y était plus valide, elle a été remplacée par celle de la séquence.';
+    }
     renderSessionCapacityChoices(keptCodes.length ? keptCodes : (seq.capacityCodes || []), findUe(seq.ueId), seq);
   });
 

@@ -15,6 +15,10 @@ apps/organisation-cours/data/
 # PUBLIC — ce dossier reste local, décision de Martin (02/08/2026).
 apps/organisation-cours/retours/
 
+# Aperçu local fabriqué par retours/preview.js (copie de l'app sans Supabase) :
+# jetable, régénérable, jamais à committer.
+apps/organisation-cours/__preview.html
+
 # === Réglages locaux Claude Code (propres à chaque poste) ===
 .claude/settings.local.json
 

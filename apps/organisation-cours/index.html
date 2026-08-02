@@ -248,43 +248,53 @@
     </section>
 
     <section id="week" class="view">
-      <div class="page-title">
-        <div>
-          <h2>Planning hebdomadaire</h2>
-          <p>Conversion opérationnelle des séances dans des créneaux horaires précis. Les cellules affichent titre, UE, objectifs, mots-clés et lieu.</p>
+      <!-- Lot E [19] — même patron que la Conception : le titre de page et sa
+           description partent (l'onglet les dit déjà), et tout ce qui pilote la
+           vue tient sur une seule barre collée sous les onglets. Elle porte en
+           plus le rappel de la semaine affichée : une fois qu'on défile dans la
+           grille, c'était la seule information qu'on ne pouvait plus lire. -->
+      <div class="week-bar" role="toolbar" aria-label="Semaine affichée et actions du planning">
+        <div class="week-bar-group week-bar-semaine">
+          <button type="button" class="icon-button small" data-week-nav="prev" aria-label="Semaine précédente">‹</button>
+          <span class="week-bar-label" id="weekBarLabel"></span>
+          <button type="button" class="icon-button small" data-week-nav="next" aria-label="Semaine suivante">›</button>
+          <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
         </div>
-        <div class="toolbar week-toolbar">
-          <div class="week-picker-inline">
-            <button id="weekPickerToggle" class="secondary" type="button">Choisir la semaine</button>
-            <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
-          </div>
-          <button id="addSessionButton">+ Séance</button>
-          <button id="printWeekButton" class="secondary">Exporter semaine PDF</button>
+        <div class="week-bar-group week-bar-actions">
           <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel &amp; Ruban) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
-            <span>Afficher ma trame de créneaux</span>
+            <span>Ma trame de créneaux</span>
           </label>
+          <button id="addSessionButton" class="small">+ Séance</button>
+          <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
         </div>
       </div>
       <div id="weekMeta" class="week-meta visually-hidden"></div>
       <div class="week-plan-top">
       <aside class="week-sidebar">
         <div id="weekCalendar" class="week-calendar-panel week-calendar-docked"></div>
+        <!-- [19] — les notes remontent du pied de page à la colonne : elles
+             parlent de la semaine affichée, elles se lisent donc à côté d'elle
+             et non après deux grilles horaires (≈ 1 500 px de défilement). -->
+        <section class="panel notes-panel">
+          <div class="panel-heading-inline">
+            <h3>Notes de semaine</h3>
+            <span class="todo-status meta" id="weekNotesStatus"></span>
+          </div>
+          <textarea id="weekNotes" rows="3" placeholder="Ex. collecte de sang, semaine EIL, absences de groupe, sortie terrain… (enregistré automatiquement)"></textarea>
+        </section>
         <section class="panel backlog-panel">
           <div class="backlog-heading">
-            <div>
-              <h3>Séances à placer</h3>
-            </div>
+            <h3>Séances à placer</h3>
+            <!-- Menus sans étiquette, comme dans la barre de la Conception :
+                 leur option « tout » la porte. Dans une colonne de 340 px, deux
+                 étiquettes coûtaient deux lignes entières. -->
             <div class="backlog-controls">
-              <label>Source
-                <select id="weekBacklogScope">
-                  <option value="week">Semaine sélectionnée</option>
-                  <option value="all">Toutes les séances à placer</option>
-                </select>
-              </label>
-              <label>UE
-                <select id="weekBacklogUeFilter"></select>
-              </label>
+              <select id="weekBacklogScope" title="Quelles séances à placer afficher" aria-label="Séances à placer affichées">
+                <option value="week">Cette semaine</option>
+                <option value="all">Toutes les semaines</option>
+              </select>
+              <select id="weekBacklogUeFilter" title="Filtrer par UE" aria-label="Filtrer les séances à placer par UE"></select>
             </div>
           </div>
           <div id="weekBacklog" class="backlog-list"></div>
@@ -292,45 +302,39 @@
       </aside>
       <div id="planningContainer" class="week-planning-main"></div>
       </div>
-      <section class="panel notes-panel">
-        <div class="panel-heading-inline">
-          <h3>Notes de semaine</h3>
-          <span class="todo-status meta" id="weekNotesStatus"></span>
-        </div>
-        <textarea id="weekNotes" rows="4" placeholder="Ex. collecte de sang, semaine EIL, absences de groupe, sortie terrain… (enregistré automatiquement)"></textarea>
-      </section>
     </section>
 
 
     <section id="ruban" class="view">
-      <div class="page-title">
-        <div>
-          <h2>Référentiel &amp; Ruban pédagogique</h2>
-          <p>Ruban de semestrialisation (UE, capacités, disciplines, enseignants, évaluateurs) et référentiel interactif des modules M1–M8, réunis. Éditer la composition d'une UE avec ✎ ; cliquer une capacité M1–M8 pour l'ouvrir dans le référentiel.</p>
-        </div>
-        <div class="reference-mode-switch" aria-label="Mode d'affichage">
+      <!-- Lot F [5] — quatrième vue au même patron que la Conception, les
+           Progressions et le Planning : titre et description retirés (l'onglet
+           les dit), modes d'affichage et filtres réunis sur une seule barre
+           collée sous les onglets. La case de recherche y devient ce qui était
+           demandé : « longue mais pas haute ». -->
+      <div class="ruban-bar" role="toolbar" aria-label="Mode d'affichage et filtres du référentiel">
+        <div class="ruban-bar-group reference-mode-switch" aria-label="Mode d'affichage">
           <button type="button" class="active" aria-pressed="true" data-ruban-mode="ruban">Ruban</button>
           <button type="button" aria-pressed="false" data-ruban-mode="table">Tableau détaillé</button>
           <button type="button" aria-pressed="false" data-ruban-mode="creneaux">Créneaux type</button>
           <button type="button" aria-pressed="false" data-ruban-mode="reference">Référentiel (M1–M8)</button>
           <button type="button" aria-pressed="false" data-ruban-mode="pdf">PDF d'origine</button>
         </div>
-      </div>
-
-      <section class="panel filters-panel compact-filter-panel" id="rubanFilters">
-        <div class="ruban-toolbar">
-          <label class="ruban-filter">Enseignant / évaluateur
-            <select id="rubanTeacherFilter"></select>
-          </label>
+        <!-- `#rubanFilters` garde son identifiant : setRubanMode() le masque déjà
+             par l'attribut `hidden` hors des modes Ruban et Tableau. -->
+        <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
+          <select id="rubanTeacherFilter" title="Enseignant / évaluateur" aria-label="Filtrer par enseignant ou évaluateur"></select>
           <label class="refmod-search ruban-search">
             <span aria-hidden="true">🔎</span>
             <input id="rubanSearch" type="search" placeholder="Rechercher (capacité, UE, mot-clé)…" aria-label="Rechercher dans le ruban" />
           </label>
           <span class="ruban-count meta" id="rubanCount"></span>
         </div>
-      </section>
+      </div>
 
       <div id="rubanModeRuban" class="reference-mode-panel active-mode">
+        <!-- Les deux gestes de cette vue ne se devinent pas : ils restent écrits,
+             mais sur une ligne et seulement dans le mode concerné. -->
+        <p class="meta tight ruban-gestes">✎ pour modifier la composition d'une UE · cliquer une capacité pour l'ouvrir dans le référentiel.</p>
         <div id="rubanGrid" class="ruban-grid"></div>
       </div>
 
@@ -788,32 +792,34 @@
       <fieldset class="form-section">
         <legend>3. Capacités travaillées</legend>
         <p class="form-help">Cocher les capacités effectivement travaillées ; pré-cochées d’après la séquence rattachée.</p>
-        <p class="form-help tight" id="sessionCapacityResetHint" hidden>L'UE a changé : votre sélection de capacités n'était plus valide, elle a été remplacée par celle de la nouvelle séquence.</p>
+        <!-- Lot G — le message est écrit en JS selon le cas : changer d'UE et
+             changer de séquence ne vident pas la sélection pour la même raison. -->
+        <p class="form-help tight" id="sessionCapacityResetHint" hidden></p>
         <div id="sessionCapacityChoices" class="checkbox-grid"></div>
       </fieldset>
       <fieldset class="form-section">
         <legend>4. Contenu de séance</legend>
         <div class="two-column-form">
           <label>Objectifs de séance
-            <textarea id="sessionObjectives" rows="4"></textarea>
+            <textarea id="sessionObjectives" rows="3"></textarea>
           </label>
           <label>Mots-clefs
-            <textarea id="sessionKeywords" rows="4" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
+            <textarea id="sessionKeywords" rows="3" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
           </label>
           <label>Déroulé
-            <textarea id="sessionActivities" rows="5"></textarea>
+            <textarea id="sessionActivities" rows="3"></textarea>
           </label>
           <label>Notions abordées
-            <textarea id="sessionNotions" rows="5"></textarea>
+            <textarea id="sessionNotions" rows="3"></textarea>
           </label>
           <label>Besoins matériels
-            <textarea id="sessionMaterials" rows="5"></textarea>
+            <textarea id="sessionMaterials" rows="3"></textarea>
           </label>
           <label class="session-field-hidden">Évaluation / trace attendue
-            <textarea id="sessionAssessment" rows="4"></textarea>
+            <textarea id="sessionAssessment" rows="3"></textarea>
           </label>
           <label class="session-field-hidden">Travail maison / suite
-            <textarea id="sessionHomework" rows="4"></textarea>
+            <textarea id="sessionHomework" rows="3"></textarea>
           </label>
           <label>Points de vigilance
             <textarea id="sessionDifferentiation" rows="4"></textarea>
@@ -821,7 +827,7 @@
         </div>
       </fieldset>
       <label>Notes internes
-        <textarea id="sessionNotes" rows="4"></textarea>
+        <textarea id="sessionNotes" rows="3"></textarea>
       </label>
       <footer class="modal-footer">
         <button type="button" id="deleteSessionButton" class="danger">Supprimer</button>

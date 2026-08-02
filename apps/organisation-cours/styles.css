@@ -177,7 +177,20 @@ label {
    trois cases (Réservée, Déplacement en véhicule personnel, Masque créneaux
    type), qui ne devrait plus se reproduire sur un futur formulaire. */
 label:has(> input[type="checkbox"]) { flex-direction: row; align-items: center; }
-label:has(> input[type="checkbox"]) input[type="checkbox"] { width: auto; flex: 0 0 auto; }
+/* ⚠️ `width: auto` doit rester : c'est lui qui annule le `width: 100%` des
+   champs. Mais il l'emporte aussi sur toute règle de taille moins spécifique —
+   la dimension des cases se fixe donc ICI, pas plus bas. */
+label:has(> input[type="checkbox"]) input[type="checkbox"] { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; }
+/* Lot G — cibles tactiles. Mesuré sur les 5 vues : les boutons sont à 32 px,
+   au-dessus du minimum AA (24 px, WCAG 2.5.8) ; les seules cibles réellement
+   sous le seuil étaient les cases à cocher, à leur taille native de 12-13 px
+   (« Réservée », « Afficher les salles réservées », « Ma trame de créneaux »,
+   les filtres d'UE…). On les monte à 17 px et on donne 24 px de hauteur au
+   label qui les porte — c'est lui la vraie cible, puisque cliquer le texte
+   coche la case. On ne vise pas les 44 px du niveau AAA : ils feraient enfler
+   les listes de capacités, qui alignent des dizaines de cases. */
+input[type="checkbox"], input[type="radio"] { width: 1.05rem; height: 1.05rem; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 24px; }
 input, select, textarea {
   width: 100%;
   font: inherit; font-size: .9rem;
@@ -394,8 +407,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    titre de page, la ligne de boutons, l'encart de filtres dépliable et la
    barre « Tout déplier » : quatre bandes horizontales devenues une.
    `--hauteur-collante` est mesurée en JS (mesurerBandeauCollant) parce que les
-   onglets passent sur deux lignes quand la fenêtre rétrécit. */
-.design-bar {
+   onglets passent sur deux lignes quand la fenêtre rétrécit.
+   Lot E [19] puis lot F [5] — le Planning hebdo (`.week-bar`) et le Référentiel
+   (`.ruban-bar`) reprennent le même patron : mêmes règles de collage, contenu
+   différent. Quatre vues sur cinq ont ainsi la même grammaire, une barre par
+   onglet, toujours au même endroit. */
+.design-bar,
+.week-bar,
+.ruban-bar {
   position: sticky;
   /* Un pixel de recouvrement : sans lui, l'arrondi du sous-pixel laisse
      apparaître un liseré de contenu qui défile entre l'en-tête et la barre. */
@@ -463,9 +482,15 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    d'un écran court coûteraient plus qu'elles ne rendent. Les menus se serrent
    à deux par ligne au lieu d'une chacun. */
 @media (max-width: 700px) {
-  .design-bar { position: static; gap: .35rem; }
+  .design-bar, .week-bar, .ruban-bar { position: static; gap: .35rem; }
+  /* Les cinq boutons de mode occupent déjà deux lignes sur téléphone : les
+     filtres repassent dessous, alignés à gauche, plutôt que serrés à droite. */
+  .ruban-bar-filtres { margin-left: 0; }
   .design-bar select { flex: 1 1 8rem; max-width: none; }
   .design-bar input[type="search"] { flex: 1 1 7rem; max-width: none; }
+  /* La barre du planning n'a que deux groupes : ils se rangent l'un sous
+     l'autre plutôt que de laisser le second à demi vide à droite. */
+  .week-bar-actions { margin-left: 0; }
 }
 
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
@@ -632,7 +657,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 @media print {
   body { background: #fff; }
   .banner, .tabs, .header-tabs, .header-actions, .toolbar,
-  .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title { display: none !important; }
+  .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title,
+  .design-bar, .week-bar, .ruban-bar { display: none !important; }
   main { max-width: none; padding: .4rem; }
   .view { display: block; }
   .panel, .kpi-strip { box-shadow: none; }
@@ -697,6 +723,17 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .form-help { margin: .35rem 0 .55rem; color: var(--muted); font-size: .8rem; }
 .form-help.tight { margin-top: .25rem; margin-bottom: 0; }
 .field-hint { display: block; margin-top: .25rem; color: var(--muted); font-size: .74rem; font-weight: 400; }
+
+/* Lot G — question 8 de l'audit : « la modale de séance est trop haute »
+   (1 495 px de contenu pour 765 visibles).
+   ⚠️ PISTE ESSAYÉE ET REJETÉE, mesures à l'appui : mettre les quatre sections
+   côte à côte en deux colonnes fait passer le formulaire à 1 768 px, soit PIRE.
+   Raison : chaque `.form-section` contient déjà une `.form-grid` en
+   `auto-fit minmax(210px)` ; en divisant la largeur par deux, on divise par deux
+   le nombre de colonnes internes et on double la hauteur de chaque section. Un
+   conteneur déjà multi-colonnes ne gagne rien à être mis en colonnes.
+   Ce qui fait vraiment la hauteur, c'est la section « Contenu de séance » et ses
+   neuf zones de texte : c'est donc leur hauteur qu'on réduit, ci-dessous. */
 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
 .form-grid.compact-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -1142,9 +1179,18 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* =====================================================================
    CONCEPTION PÉDAGOGIQUE — réserve de séances (planning semaine)
    ===================================================================== */
-.backlog-heading { display: flex; justify-content: space-between; gap: var(--sp-3); align-items: flex-start; margin-bottom: var(--sp-3); flex-wrap: wrap; }
-.backlog-controls { display: flex; gap: .6rem; flex-wrap: wrap; }
-.backlog-controls label { min-width: 160px; }
+.backlog-heading { display: flex; justify-content: space-between; gap: var(--sp-3); align-items: flex-start; margin-bottom: var(--sp-2); flex-wrap: wrap; }
+/* Lot E [19] — les deux menus tiennent sur une ligne, sans étiquette : dans une
+   colonne de 340 px, « Source » et « UE » coûtaient deux lignes pour deux mots
+   que l'option « tout » de chaque menu redit déjà. */
+.backlog-controls { display: flex; gap: .35rem; flex-wrap: wrap; width: 100%; }
+.backlog-controls select {
+  width: auto; flex: 1 1 9rem; min-width: 0; max-width: 100%;
+  height: 2rem; padding: 0 .45rem;
+  font-size: .78rem; font-family: inherit;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--ink);
+}
 .backlog-count { font-size: .78rem; color: var(--muted); font-weight: 600; padding: 0 0 .4rem; }
 .backlog-ue-group, .backlog-seq-group {
   border: 1px solid var(--line);
@@ -1166,17 +1212,26 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 /* Lot 10 — tuile « séance à placer » : plus de pastille « À placer » ni de
    bouton dédié (l'emplacement dit déjà tout), la tuile entière se clique et
-   se glisse, colorée comme dans Conception pédagogique. */
+   se glisse, colorée comme dans Conception pédagogique.
+   Lot E [19] — elle reprend la silhouette redessinée au lot C-bis : tête
+   foncée, corps pastel, titre encré. Le liseré épais de gauche disparaît (la
+   charte du projet le bannit, et la tête colorée dit déjà l'UE) ; ne restent
+   que les écarts de densité propres à une colonne étroite. */
 .backlog-seq-group .backlog-session-tile { margin: .4rem .5rem; }
 .backlog-session-tile {
   gap: .15rem;
   min-height: 0;
-  padding: .4rem .6rem;
-  border-left: 4px solid var(--ue-color, var(--moss));
+  padding: 0 0 .4rem;
   background: var(--ue-soft, var(--surface));
   cursor: grab;
 }
-.backlog-session-tile > * { margin-left: 0; margin-right: 0; }
+.backlog-session-tile > *:not(.session-card-head) { margin-left: .5rem; margin-right: .5rem; }
+.backlog-session-tile .session-card-head { padding: .28rem .5rem; }
+/* La colonne est étroite mais la tuile y est seule sur sa ligne : le type peut
+   donc repasser au-dessus de 11 px, contrairement à la grille de la Conception
+   où il partage la tête avec le numéro et le marqueur de placement. */
+.backlog-session-tile .session-card-headtype { font-size: .7rem; }
+.backlog-session-tile .session-card-title { margin-top: .3rem; }
 .backlog-session-tile:hover { filter: brightness(.98); }
 .backlog-session-tile:active { cursor: grabbing; }
 .backlog-session-tile.is-dragging { opacity: .5; }
@@ -1482,8 +1537,23 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* =====================================================================
    PLANNING SEMAINE — grille horaire opérationnelle
    ===================================================================== */
+/* ---------- Barre du Planning hebdo (lot E [19]) ----------
+   Elle hérite du collage et de l'habillage de `.design-bar` (voir plus haut) et
+   n'ajoute ici que son contenu propre : le rappel de la semaine à gauche, les
+   actions à droite. */
+.week-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.week-bar-semaine { gap: .15rem; }
+.week-bar-actions { margin-left: auto; gap: .5rem; }
+.week-bar-label {
+  display: inline-flex; align-items: baseline; gap: .4rem;
+  padding: 0 .35rem; min-width: 9rem;
+  font-size: .84rem; color: var(--ink);
+}
+.week-bar-label strong { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
+.week-bar-label span { font-size: .78rem; color: var(--muted); }
+.week-bar .mask-toggle { white-space: nowrap; }
+
 .week-toolbar { gap: .5rem; }
-.week-picker-inline { position: relative; }
 .week-calendar-panel {
   margin: 0 0 var(--sp-3);
   border: 1px solid var(--line-strong);
@@ -1505,8 +1575,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .week-sidebar { display: flex; flex-direction: column; gap: var(--sp-3); flex: 0 0 340px; max-width: 100%; min-width: 0; }
 .week-plan-top .week-calendar-panel.week-calendar-docked { display: block; margin: 0; max-width: 100%; }
 .week-plan-top .backlog-panel { flex: 1 1 auto; min-width: 0; margin: 0; }
+.week-plan-top .notes-panel { margin: 0; }
 .week-plan-top .week-planning-main { flex: 1 1 640px; min-width: 0; }
-.week-picker-inline { display: none; }
 .period-weeks-hint { display: block; margin: .2rem 0 .1rem; font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--moss-dark); }
 .week-calendar-title { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; }
 .week-calendar-title strong { font-size: 1rem; }
@@ -1525,14 +1595,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .week-cal-nav:hover:not(:disabled) { background: var(--moss-soft); border-color: var(--moss-line); }
 .week-cal-nav:disabled { opacity: .35; cursor: default; }
 .week-cal-monthlabel { text-align: center; font-weight: 700; font-size: .95rem; color: var(--moss-dark); text-transform: capitalize; }
-.week-cal-weeknav { display: grid; grid-template-columns: 36px 1fr 36px; align-items: stretch; gap: var(--sp-1); }
-.week-cal-weeknav .week-cal-selected { margin: 0; }
-.week-cal-selected {
-  display: flex; align-items: baseline; gap: .5rem; justify-content: center;
-  background: var(--moss-soft); border: 1px solid var(--moss-line); border-radius: var(--r-sm); padding: .35rem .6rem;
-}
-.week-cal-selected strong { font-family: var(--font-mono); font-size: .9rem; color: var(--moss-dark); }
-.week-cal-selected span { font-size: .78rem; color: var(--ink-soft); }
+/* `.week-cal-weeknav` / `.week-cal-selected` : supprimés au lot E [19] — la
+   ligne « ‹ S39 21/09 – 25/09 › » du calendrier a rejoint la barre collante. */
 .week-cal-hint { margin: 0; font-size: .72rem; color: var(--muted); text-align: center; }
 .cal-month.single { border: 0; background: transparent; padding: 0; }
 /* Hauteur FIGÉE : 1 ligne d'entête + 6 lignes de semaines réservées, quel que
@@ -1546,11 +1610,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 .cal-month.single .cal-wk { font-size: .62rem; }
 
-/* Bouton d'ouverture : affiche la semaine courante */
-#weekPickerToggle { display: inline-flex; align-items: center; gap: .4rem; }
-#weekPickerToggle .wp-caret { font-size: .7rem; opacity: .7; }
-#weekPickerToggle .wp-cal-ico { font-size: .85rem; }
-
+/* `#weekPickerToggle` : supprimé au lot E [19] — le calendrier est ancré dans
+   la colonne depuis le lot 4, il n'a plus de bouton d'ouverture. */
 
 /* Calendrier mensuel du planning semaine */
 .week-calendar-months {
@@ -1797,6 +1858,28 @@ table { border-collapse: collapse; width: 100%; }
 /* =====================================================================
    RÉFÉRENTIEL — capacités structurées + texte intégral des PDF
    ===================================================================== */
+/* ---------- Barre du Référentiel & Ruban (lot F [5]) ----------
+   Quatrième vue à reprendre le patron de `.design-bar` (voir le bloc de collage
+   plus haut) : modes d'affichage à gauche, filtres à droite, une seule ligne
+   collée sous les onglets. Ces règles sont posées AVANT `.reference-mode-switch`
+   pour que la pilule des modes garde son fond et son `gap` propres. */
+.ruban-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.ruban-bar-filtres { flex: 1 1 20rem; min-width: 0; margin-left: auto; gap: .4rem; }
+/* ⚠️ setRubanMode() masque ce groupe par l'attribut `hidden` : sans cette règle,
+   le `display:flex` ci-dessus (règle d'auteur) l'emporterait sur le
+   `display:none` que l'UA applique à `[hidden]`. 5e occurrence du piège. */
+.ruban-bar-filtres[hidden] { display: none; }
+.ruban-bar select {
+  width: auto; flex: 0 1 auto; max-width: 12rem;
+  height: 2rem; padding: 0 .45rem;
+  font-size: .8rem; font-family: inherit;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--ink);
+}
+/* La consigne des deux gestes (✎, clic sur capacité) : une ligne, dans le seul
+   mode qui les propose. */
+.ruban-gestes { margin: 0 0 var(--sp-2); }
+
 .reference-mode-switch { display: inline-flex; flex-wrap: wrap; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
 .reference-mode-switch button {
   background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .8rem;
@@ -2082,12 +2165,22 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 }
 .refmod-modtab:hover { background: var(--moss-soft); color: var(--moss-dark); }
 .refmod-modtab.active { background: var(--moss); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+/* Lot F [5] — ⚠️ `flex-direction: row` n'est PAS décoratif : cette classe est
+   posée sur un <label>, et la règle `label` (voir « Champs de formulaire ») met
+   `flex-direction: column`. Sans ce mot-clé, la loupe se plaçait AU-DESSUS du
+   champ : la case faisait 73 px de haut pour 148 de large, avec un texte tronqué
+   — exactement le contraire de « longue mais pas haute ». C'est le piège déjà
+   documenté à la règle `label:has(> input[type="checkbox"])`, 4e occurrence. */
 .refmod-search {
-  flex: 0 0 auto; width: 148px; max-width: 100%; margin-left: auto; display: flex; align-items: center; gap: .35rem;
+  flex: 1 1 12rem; max-width: 20rem; margin-left: auto;
+  display: flex; flex-direction: row; align-items: center; gap: .35rem;
   background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: .22rem .55rem;
 }
 .refmod-search span { opacity: .7; font-size: .8rem; }
-.refmod-search input { border: 0; background: transparent; outline: 0; width: 100%; font: inherit; font-size: .8rem; color: var(--ink); }
+/* Le `padding: .55rem .65rem` de la règle générale des champs ajoutait 13 px de
+   haut à une case qui n'a ni bordure ni fond propres : c'est la pilule qui
+   porte l'espacement. Sans ça, la case reste plus haute que le menu voisin. */
+.refmod-search input { border: 0; background: transparent; outline: 0; width: 100%; padding: .1rem 0; font: inherit; font-size: .8rem; color: var(--ink); }
 .refmod-actions { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; }
 /* Lot 6 — même intention que .refmod-actions, pour la Conception pédagogique. */
 /* .tree-toolbar (« Tout déplier / Tout replier ») a rejoint la barre collante
@@ -2230,10 +2323,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .refmod-content ol li { margin: .25rem 0; }
 
 /* ================= Ruban pédagogique ================= */
-.ruban-toolbar { display: flex; align-items: end; gap: var(--sp-3); flex-wrap: wrap; }
-.ruban-filter { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; color: var(--muted); font-weight: 600; }
-.ruban-filter select { min-width: 200px; }
-.ruban-search { flex: 0 1 168px; max-width: 168px; }
+/* `.ruban-toolbar` et `.ruban-filter` : supprimées au lot F [5] — l'encart de
+   filtres a fondu dans la barre, et l'étiquette « Enseignant / évaluateur »
+   empilée au-dessus du menu avec elle (le menu la porte en `title`). */
+/* La case du Ruban est la plus sollicitée des deux : on lui laisse plus de
+   longueur qu'à celle du Référentiel M1–M8. */
+.ruban-search { flex: 1 1 16rem; max-width: 26rem; margin-left: 0; }
 .ruban-count { font-size: .8rem; color: var(--moss-dark); font-weight: 600; }
 
 .ruban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: start; }
@@ -2325,12 +2420,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    resteraient visibles quel que soit le mode choisi. */
 .checkbox-inline[hidden] { display: none; }
 .session-inline-row[hidden] { display: none; }
-.checkbox-inline input { width: auto; margin: 0; }
+/* Lot G — même dimension que les cases portées par un <label> : 1,05rem, et
+   24 px de haut pour la ligne entière, qui est la vraie cible (cliquer le texte
+   coche la case). */
+.checkbox-inline { min-height: 24px; }
+.checkbox-inline input { width: 1.05rem; height: 1.05rem; margin: 0; }
 .checkbox-inline.span-full { grid-column: 1 / -1; }
 /* Lot T(a) — case « déplacement » discrète : plus petite et atténuée, avec un
    sous-libellé encore plus effacé. */
 .checkbox-inline.checkbox-discreet { font-size: .78rem; color: var(--muted); }
-.checkbox-inline.checkbox-discreet input { transform: scale(.9); }
+/* Le `transform: scale(.9)` qui rapetissait cette case a été retiré au lot G :
+   la discrétion vient de la taille du texte, pas d'une cible plus petite. */
 .checkbox-inline.checkbox-discreet small { color: var(--muted); opacity: .75; font-size: .92em; }
 /* Ligne compacte : Salle/lieu + Couleur de la séance + case Déplacement alignées. */
 .session-inline-row { display: flex; gap: var(--sp-3); align-items: flex-end; flex-wrap: wrap; }
