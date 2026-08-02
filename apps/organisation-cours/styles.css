@@ -397,7 +397,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    onglets passent sur deux lignes quand la fenêtre rétrécit. */
 .design-bar {
   position: sticky;
-  top: var(--hauteur-collante, 6.4rem);
+  /* Un pixel de recouvrement : sans lui, l'arrondi du sous-pixel laisse
+     apparaître un liseré de contenu qui défile entre l'en-tête et la barre. */
+  top: calc(var(--hauteur-collante, 6.4rem) - 1px);
   z-index: 60;
   display: flex; flex-wrap: wrap; align-items: center;
   gap: .4rem var(--sp-4);
@@ -881,17 +883,50 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .entity-headline .meta-line { margin: 0; flex: 1 1 12rem; min-width: 0; }
 .entity-actions { display: flex; align-items: center; gap: .3rem; margin-left: auto; }
 
-/* Le corps de carte EST le bouton « Modifier ». On l'annonce discrètement au
-   survol — sans quoi rien ne dit qu'il est cliquable — mais les zones
+/* Le corps de carte d'UE EST le bouton « Modifier ». On l'annonce discrètement
+   au survol — sans quoi rien ne dit qu'il est cliquable — mais les zones
    imbriquées (séquences, séances) gardent leur curseur normal : ce n'est pas
-   l'UE qu'on y ouvre. */
-.entity-body[data-edit-ue], .entity-body[data-edit-sequence] { cursor: pointer; }
-.entity-body[data-edit-ue]:hover, .entity-body[data-edit-sequence]:hover {
+   l'UE qu'on y ouvre. Les séquences, elles, ont retrouvé un bouton
+   « Modifier » explicite : leur corps n'est plus cliquable, et leur bandeau
+   sommaire redevient sans ambiguïté le déplier/replier. */
+.entity-body[data-edit-ue] { cursor: pointer; }
+.entity-body[data-edit-ue]:hover {
   background: color-mix(in srgb, var(--ue-color, var(--acc)) 5%, transparent);
 }
 .entity-body:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
 .entity-body [data-noedit], .entity-body .entity-actions { cursor: auto; }
 .entity-body [data-noedit] .session-card { cursor: pointer; }
+
+/* Tuile d'ajout : le gabarit d'une tuile de séance, mais en creux — trait
+   pointillé, pas de bandeau de couleur, pas d'ombre. Elle se lit comme une
+   place vide qui attend, et non comme une séance de plus. */
+.session-card.add-card {
+  align-items: center; justify-content: center; gap: .25rem;
+  padding: .5rem;
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font: inherit; font-size: .82rem; font-weight: 600;
+}
+.session-card.add-card:hover {
+  border-color: var(--acc); color: var(--acc);
+  background: color-mix(in srgb, var(--acc) 4%, transparent);
+}
+.session-card.add-card:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.add-card-plus { font-size: 1.5rem; line-height: 1; font-weight: 400; }
+
+/* Même idée, en bande : « + UE » ferme un groupe de promotion, dont les
+   enfants sont des bandeaux horizontaux et non des tuiles. */
+.add-band {
+  display: flex; align-items: center; justify-content: center; gap: .35rem;
+  width: 100%; min-height: 44px; margin-top: var(--sp-2);
+  border: 1px dashed var(--line-strong); border-radius: var(--r-sm);
+  background: transparent; color: var(--muted);
+  font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+}
+.add-band:hover { border-color: var(--acc); color: var(--acc); background: color-mix(in srgb, var(--acc) 4%, transparent); }
+.add-band span { font-size: 1.1rem; line-height: 1; }
 
 .nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }

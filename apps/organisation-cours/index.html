@@ -180,12 +180,11 @@
            leur option « tout » la porte (« Toutes promotions », « Tous
            semestres », « Tous enseignants »), ce qui tient sur une ligne. -->
       <div class="design-bar" role="toolbar" aria-label="Actions et filtres de la conception pédagogique">
-        <div class="design-bar-group design-bar-creer">
-          <button type="button" id="addUeButton" class="small">+ UE</button>
-          <button type="button" id="addSequenceButton" class="small">+ Séquence</button>
-          <button type="button" id="addFictiveSessionButton" class="small">+ Séance</button>
-          <button type="button" id="addConstraintGlobalButton" class="small secondary">+ Période</button>
-        </div>
+        <!-- Les boutons « + » ont quitté cette barre : chaque création se fait
+             désormais là où elle a du sens (tuile « + Séance » en fin de
+             séquence, « + Séquence » dans la carte d'UE, bande « + UE » en fin
+             de promotion). « + Période » reste accessible depuis le Tableau de
+             bord, les Progressions semestres et le Diagramme. -->
         <div class="design-bar-group design-bar-filtres">
           <select id="designPromotionFilter" title="Promotion" aria-label="Filtrer par promotion"></select>
           <select id="designSemesterFilter" title="Semestre" aria-label="Filtrer par semestre"></select>
