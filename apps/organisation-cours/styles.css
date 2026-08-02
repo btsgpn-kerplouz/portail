@@ -2112,6 +2112,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 
 /* ---------- Lot E — Frais de déplacement ---------- */
 .checkbox-inline { display: flex; align-items: center; gap: .5rem; font-size: .9rem; cursor: pointer; }
+/* Même piège que .auth-shell (voir plus bas) : `display:flex` d'auteur bat le
+   `display:none` que le navigateur applique à [hidden]. Ces deux classes sont
+   masquées par JS (les cases du déplacement, lot B) — sans ces règles, elles
+   resteraient visibles quel que soit le mode choisi. */
+.checkbox-inline[hidden] { display: none; }
+.session-inline-row[hidden] { display: none; }
 .checkbox-inline input { width: auto; margin: 0; }
 .checkbox-inline.span-full { grid-column: 1 / -1; }
 /* Lot T(a) — case « déplacement » discrète : plus petite et atténuée, avec un
@@ -2579,6 +2585,19 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .row-item:hover { background: var(--surface-alt); border-color: var(--line); }
 /* Une réservation à moins de 15 jours est rouge — demande de l'enseignant. */
 #dashboard .status-pill.room-urgent { background: var(--niv-retard); color: #fff; border-radius: 999px; padding: .1rem .5rem; }
+/* Lot B — lignes de l'encart « Déplacements » : un ordre de mission à demander
+   s'ouvre d'un clic sur la séance ou la réunion d'origine, comme les cartes.
+   Les pastilles « Véhicule à réserver » / « Ordre de mission » n'ont pas de
+   couleur propre : c'est le DÉLAI qui les teinte, règle commune à toutes. */
+/* Dans une colonne étroite, « 22/09/2026 · Véhicule de l'établissement · GPN1 »
+   ne tient pas sur une ligne et l'ellipse mangeait justement ce qu'on cherche à
+   lire : QUOI réserver. Ici la ligne se replie plutôt que de se couper. */
+#dashboard .room-row .row-meta,
+#dashboard .om-row .row-meta { white-space: normal; overflow: visible; line-height: 1.35; }
+
+#dashboard .om-row { cursor: pointer; min-height: 44px; }
+#dashboard .om-row:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+
 #dashboard .empty-hint { padding: var(--sp-3) 0; text-align: left; }
 #dashboard .rooms-panel > .meta.tight { margin-top: var(--sp-3); }
 

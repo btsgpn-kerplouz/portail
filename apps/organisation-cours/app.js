@@ -18,6 +18,7 @@ const DEFAULT_PROMOTIONS = ['GPN1', 'GPN2'];
 const DEPLACEMENT_STATUSES = ['Demande à faire', 'En cours', 'Terminée'];
 const DEFAULT_TAUX = 0.55;
 const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre' };
+const VEHICULE_LABEL = 'Véhicule de l’établissement';
 const ROOM_ALERT_DAYS = 15;
 const DAY_LANES = [
   { key: 'd0', day: 0, part: 'day', label: 'Lundi' },
@@ -156,6 +157,39 @@ function normalizePlacementStatus(value) {
   return '';
 }
 
+/* ---- Lot B — LE DÉPLACEMENT, DE BOUT EN BOUT ----------------------------
+   Règle métier : une séance ou une réunion HORS ÉTABLISSEMENT demande un
+   véhicule, et la suite dépend duquel.
+     ''              pas de déplacement
+     'etablissement' véhicule de l'établissement → à RÉSERVER (alerte 15 j,
+                     exactement comme une salle informatique). Ni ordre de
+                     mission, ni frais.
+     'personnel'     véhicule personnel → ORDRE DE MISSION avant, FRAIS après.
+   Ordre de mission et frais ne sont donc pas deux modules : ce sont les deux
+   étapes du MÊME déplacement.
+
+   L'ancienne case à cocher `personalVehicle` ne distinguait pas « véhicule de
+   l'établissement » de « pas de déplacement ». Elle est conservée et tenue à
+   jour, jamais lue comme source de vérité : c'est une colonne Supabase dédiée
+   côté réunions (`personal_vehicle`), et un poste resté sur une version
+   antérieure du front doit continuer à y lire une valeur juste. Les trois
+   nouveaux champs tombent dans `contenu` jsonb → aucune migration. */
+const DEPLACEMENT_MODES = ['', 'etablissement', 'personnel'];
+
+function normalizeDeplacementFields(entity) {
+  const mode = DEPLACEMENT_MODES.includes(entity?.deplacement)
+    ? entity.deplacement
+    : (entity?.personalVehicle ? 'personnel' : '');
+  return {
+    deplacement: mode,
+    personalVehicle: mode === 'personnel',
+    // Ces deux-là n'ont de sens que dans leur branche : les y borner évite
+    // qu'un ancien « réservé » ressorte si le mode change plus tard.
+    vehicleBooked: mode === 'etablissement' && !!entity?.vehicleBooked,
+    ordreMission: mode === 'personnel' && !!entity?.ordreMission
+  };
+}
+
 function normalizeData(data) {
   const normalized = {
     version: '5.0.0',
@@ -237,7 +271,7 @@ function normalizeData(data) {
     teacher: s.teacher || '',
     status: s.status || 'Prévue',
     constraintId: s.constraintId || '', // Lot K — rattachement à une semaine thématique (EIL)
-    personalVehicle: !!s.personalVehicle,
+    ...normalizeDeplacementFields(s),                      // Lot B — '' | 'etablissement' | 'personnel'
     demiGroupe: normalizeDemiGroupe(s.demiGroupe, s.group) // Lot V — '' | 'A' | 'B'
   }));
 
@@ -265,7 +299,7 @@ function normalizeData(data) {
     lieu: r.lieu || '',
     participants: r.participants || '',
     sujets: r.sujets || '',
-    personalVehicle: !!r.personalVehicle,
+    ...normalizeDeplacementFields(r),                      // Lot B
     teacher: r.teacher || '' // enseignant(s) présents : détermine la visibilité (RLS oc_reunions)
   }));
 
@@ -551,9 +585,28 @@ function sessionIsoDate(session) {
   return date ? isoKey(date) : '';
 }
 
-/* Crée (si absent) le déplacement lié à une séance cochée « véhicule perso ».
-   Ne supprime jamais : décocher la case laisse le déplacement en place, il se
-   gère ensuite dans l'onglet Frais (préservation des saisies). */
+/* ---- Lot B — le RETOUR de la relation séance/réunion ⇄ frais.
+   `ensureDeplacementForSession` ne fait que l'aller : la source crée la ligne de
+   frais. Supprimer cette ligne laissait la séance cochée « véhicule personnel »,
+   alors qu'il ne restait plus rien à rembourser — l'étiquette « Ordre de
+   mission » continuait même de s'afficher. Les frais et l'ordre de mission sont
+   deux étapes du MÊME déplacement : supprimer les frais, c'est dire qu'il n'y a
+   pas eu de déplacement en véhicule personnel. On repose donc la relation au
+   lieu de colmater l'affichage. */
+function clearDeplacementSource(dep) {
+  if (!dep || !state) return null;
+  const source = dep.sessionId
+    ? (state.sessions || []).find(s => s.id === dep.sessionId)
+    : (dep.reunionId ? (state.reunions || []).find(r => r.id === dep.reunionId) : null);
+  if (!source || source.deplacement !== 'personnel') return null;
+  Object.assign(source, normalizeDeplacementFields({ deplacement: '' }));
+  return source;
+}
+
+/* Crée (si absent) le déplacement lié à une séance en véhicule personnel.
+   Ne supprime jamais depuis ce sens-ci : décocher la case laisse la ligne de
+   frais en place, elle se gère ensuite dans l'encart Frais (préservation des
+   saisies). C'est la suppression de la ligne qui, elle, remonte à la source. */
 function ensureDeplacementForSession(session) {
   if (!session || !state) return;
   const existing = state.deplacements.find(d => d.sessionId === session.id);
@@ -611,27 +664,54 @@ function roomBookingDaysUntil(date) {
   return Math.round((d - today) / 86400000);
 }
 
-/* Toutes les séances avec une salle à réserver, triées par date (sans date en
-   dernier). */
-function roomBookingRows() {
-  return (state.sessions || [])
-    .filter(s => sessionRoomToBook(s))
-    .map(s => {
-      const date = roomBookingDate(s);
-      return { session: s, date, daysUntil: roomBookingDaysUntil(date) };
-    })
-    .sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return a.date - b.date;
+/* Tout ce qui est à réserver, trié par date (sans date en dernier).
+   Lot B — l'encart ne porte plus seulement des salles : un VÉHICULE DE
+   L'ÉTABLISSEMENT se réserve exactement de la même façon (même délai de 15 j,
+   même case « Réservée »), et il peut être demandé par une réunion autant que
+   par une séance. Une ligne décrit donc « quoi réserver, pour quoi », et non
+   plus « une séance ». Une même séance peut produire deux lignes (salle ET
+   véhicule) : ce sont deux démarches distinctes auprès de deux personnes. */
+function reservationRows() {
+  const rows = [];
+  const pousser = (kind, source, entity, label, booked, date, titre, detail) => {
+    rows.push({
+      kind, source, entity, label, booked,
+      id: entity.id, titre, detail,
+      date, daysUntil: roomBookingDaysUntil(date)
     });
+  };
+
+  (state.sessions || []).forEach(s => {
+    const salle = sessionRoomToBook(s);
+    const date = roomBookingDate(s);
+    if (salle) {
+      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked,
+        date, s.title || 'Séance sans titre', s.promotion || '');
+    }
+    if (s.deplacement === 'etablissement') {
+      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked,
+        date, s.title || 'Séance sans titre', s.promotion || '');
+    }
+  });
+
+  (state.reunions || []).forEach(r => {
+    if (r.deplacement !== 'etablissement') return;
+    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked,
+      parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
+  });
+
+  return rows.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date - b.date;
+  });
 }
 
 /* Lignes « actives » de l'encart : ni réservées, ni passées (délestage
    demandé en revue — au fil de l'eau, et automatique une fois la date passée). */
 function activeRoomBookingRows() {
-  return roomBookingRows().filter(r => !r.session.roomBooked && (r.daysUntil === null || r.daysUntil >= 0));
+  return reservationRows().filter(r => !r.booked && (r.daysUntil === null || r.daysUntil >= 0));
 }
 
 /* Case « Afficher les salles déjà réservées » : garde-fou ajouté avec
@@ -640,15 +720,15 @@ function activeRoomBookingRows() {
    séances passées, lui, reste automatique et non désactivable. */
 let showBookedRooms = false;
 function roomsDisplayRows() {
-  const rows = roomBookingRows().filter(r => r.daysUntil === null || r.daysUntil >= 0);
-  return showBookedRooms ? rows : rows.filter(r => !r.session.roomBooked);
+  const rows = reservationRows().filter(r => r.daysUntil === null || r.daysUntil >= 0);
+  return showBookedRooms ? rows : rows.filter(r => !r.booked);
 }
 
 function updateRoomsBadge() {
   const badge = $('#roomsSummaryBadge');
   if (!badge) return;
   const active = activeRoomBookingRows();
-  badge.textContent = active.length ? `${active.length} à réserver` : (roomBookingRows().length ? 'à jour' : '');
+  badge.textContent = active.length ? `${active.length} à réserver` : (reservationRows().length ? 'à jour' : '');
   badge.classList.toggle('has-pending', active.length > 0);
 }
 
@@ -667,18 +747,17 @@ function renderRooms() {
   if (wrap) {
     wrap.innerHTML = display.length
       ? display.map(r => {
-        const s = r.session;
         const dateLabel = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date non définie';
         const urgent = r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
         const daysLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'Cette semaine' : `Dans ${r.daysUntil} j`);
-        return `<div class="row-item room-row${s.roomBooked ? ' room-row-booked' : ''}">
+        return `<div class="row-item room-row${r.booked ? ' room-row-booked' : ''}">
           <div class="row-main">
-            <strong class="row-title">${escapeHtml(s.title)}</strong>
-            <span class="row-meta">${escapeHtml(dateLabel)} · ${escapeHtml(ROOM_TO_BOOK_LABELS[sessionRoomToBook(s)] || sessionRoomToBook(s))}${s.promotion ? ' · ' + escapeHtml(s.promotion) : ''}</span>
+            <strong class="row-title">${escapeHtml(r.titre)}</strong>
+            <span class="row-meta">${escapeHtml(dateLabel)} · ${escapeHtml(r.label)}${r.detail ? ' · ' + escapeHtml(r.detail) : ''}</span>
           </div>
-          ${!s.roomBooked && urgent && daysLabel ? `<span class="status-pill room-urgent">${escapeHtml(daysLabel)}</span>` : ''}
+          ${!r.booked && urgent && daysLabel ? `<span class="status-pill room-urgent">${escapeHtml(daysLabel)}</span>` : ''}
           <label class="room-booked-check">
-            <input type="checkbox" data-room-booked="${escapeAttr(s.id)}"${s.roomBooked ? ' checked' : ''}>
+            <input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"${r.booked ? ' checked' : ''}>
             <span>Réservée</span>
           </label>
         </div>`;
@@ -690,20 +769,19 @@ function renderRooms() {
      réservation à moins de ROOM_ALERT_DAYS jours s'affiche en rouge. */
 }
 
+/* L'export part au référent : « À réserver » nomme maintenant salles ET
+   véhicules, la colonne s'appelle donc « À réserver » et non plus « Salle ». */
 function roomsStringMatrix() {
-  const header = ['Date', 'Jours restants', 'Salle', 'Titre', 'Promotion', 'UE', 'Statut'];
-  const rows = roomBookingRows().map(r => {
-    const s = r.session;
-    return [
-      r.date ? r.date.toLocaleDateString('fr-FR') : '',
-      r.daysUntil === null ? '' : String(r.daysUntil),
-      ROOM_TO_BOOK_LABELS[sessionRoomToBook(s)] || sessionRoomToBook(s) || '',
-      s.title || '',
-      s.promotion || '',
-      findUe(s.ueId)?.code || '',
-      s.roomBooked ? 'Réservée' : 'À réserver'
-    ];
-  });
+  const header = ['Date', 'Jours restants', 'À réserver', 'Pour', 'Promotion / lieu', 'UE', 'Statut'];
+  const rows = reservationRows().map(r => [
+    r.date ? r.date.toLocaleDateString('fr-FR') : '',
+    r.daysUntil === null ? '' : String(r.daysUntil),
+    r.label,
+    r.titre,
+    r.detail || '',
+    r.source === 'session' ? (findUe(r.entity.ueId)?.code || '') : '',
+    r.booked ? 'Réservée' : 'À réserver'
+  ]);
   return { header, rows };
 }
 
@@ -889,13 +967,18 @@ function renderReunions() {
     return;
   }
   wrap.innerHTML = list.map(r => {
-    const dep = r.personalVehicle ? reunionDeplacement(r) : null;
+    const dep = r.deplacement === 'personnel' ? reunionDeplacement(r) : null;
     const depTxt = dep && Number(dep.kmAR) ? ' ' + fmtEuro(deplacementTotal(dep)) : '';
+    // Lot B — la voiture dit maintenant LEQUEL des deux véhicules, et l'infobulle
+    // ce qu'il reste à faire : réserver, ou demander l'ordre de mission.
+    const vehiculeTitre = r.deplacement === 'etablissement'
+      ? (r.vehicleBooked ? 'Véhicule de l’établissement — réservé' : 'Véhicule de l’établissement — à réserver')
+      : (r.ordreMission ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)' : 'Véhicule personnel — ordre de mission à demander');
     return `<article class="reunion-card" data-edit-reunion="${escapeAttr(r.id)}">
       <div class="reunion-card-head">
         <span class="reunion-date">${escapeHtml(r.date ? formatDateFr(r.date) : 'Date à préciser')}</span>
         ${r.lieu ? `<span class="reunion-lieu">${escapeHtml(r.lieu)}</span>` : ''}
-        ${r.personalVehicle ? `<span class="reunion-vehicle" title="Déplacement en véhicule personnel (voir Frais de déplacement)">🚗${escapeHtml(depTxt)}</span>` : ''}
+        ${r.deplacement ? `<span class="reunion-vehicle" title="${escapeAttr(vehiculeTitre)}">${r.deplacement === 'etablissement' ? '🚐' : '🚗'}${escapeHtml(depTxt)}</span>` : ''}
         <button type="button" class="icon-button small reunion-edit" data-edit-reunion="${escapeAttr(r.id)}" title="Modifier">✎</button>
       </div>
       ${r.participants ? `<p class="reunion-participants"><span class="reunion-label">Participants :</span> ${escapeHtml(r.participants)}</p>` : ''}
@@ -913,7 +996,12 @@ function openReunionModal(reunion = null) {
   $('#reunionParticipants').value = reunion?.participants || '';
   $('#reunionSujets').value = reunion?.sujets || '';
   $('#reunionTeacher').value = reunion?.teacher || '';
-  $('#reunionVehicle').checked = !!reunion?.personalVehicle;
+  if ($('#reunionDeplacement')) {
+    $('#reunionDeplacement').value = reunion?.deplacement || '';
+    if ($('#reunionVehicleBooked')) $('#reunionVehicleBooked').checked = !!reunion?.vehicleBooked;
+    if ($('#reunionOrdreMission')) $('#reunionOrdreMission').checked = !!reunion?.ordreMission;
+    syncDeplacementFields('reunion');
+  }
   const dep = reunion ? reunionDeplacement(reunion) : null;
   $('#reunionFraisHint').hidden = !dep;
   $('#deleteReunionButton').hidden = isNew;
@@ -1464,6 +1552,23 @@ function dashActionsDeSeance(s, date) {
       urgent: j !== null && j <= ROOM_ALERT_DAYS
     });
   }
+  // Lot B — les deux étiquettes du déplacement. Un véhicule de l'établissement
+  // se réserve (même urgence qu'une salle) ; un véhicule personnel demande un
+  // ordre de mission AVANT le départ — c'est donc aussi une échéance.
+  if (s.deplacement === 'etablissement' && !s.vehicleBooked) {
+    out.push({
+      cle: 'vehicule',
+      texte: 'Véhicule à réserver',
+      urgent: j !== null && j <= ROOM_ALERT_DAYS
+    });
+  }
+  if (s.deplacement === 'personnel' && !s.ordreMission) {
+    out.push({
+      cle: 'mission',
+      texte: 'Ordre de mission',
+      urgent: j !== null && j <= ROOM_ALERT_DAYS
+    });
+  }
   if (!s.sequenceId || !s.ueId) out.push({ cle: 'rattacher', texte: 'À rattacher' });
   return out;
 }
@@ -1713,14 +1818,62 @@ function renderDashBacklogBadges() {
     + (nonRatt ? `<span class="frais-badge has-pending">${nonRatt} à rattacher</span>` : '');
 }
 
-/* Encart « Déplacements » — charpente posée au lot A, contenu au lot B (ordres
-   de mission à établir, véhicules à réserver). Il ne listera pas les frais. */
+/* Les ordres de mission à établir : séances et réunions en véhicule PERSONNEL
+   dont l'ordre de mission n'est pas encore demandé, et qui n'ont pas eu lieu.
+   Triés par date, les plus proches en tête — c'est une échéance. */
+function ordresDeMissionAFaire() {
+  const out = [];
+  (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
+    if (s.deplacement !== 'personnel' || s.ordreMission) return;
+    const iso = sessionIsoDate(s);
+    out.push({ source: 'session', id: s.id, titre: s.title || 'Séance sans titre',
+      date: iso ? parseIsoDate(iso) : null, detail: s.promotion || '' });
+  });
+  (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
+    if (r.deplacement !== 'personnel' || r.ordreMission) return;
+    out.push({ source: 'reunion', id: r.id, titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
+      date: parseIsoDate(r.date), detail: r.lieu || '' });
+  });
+  return out
+    .filter(o => !o.date || dashJoursEntre(o.date) >= 0)
+    .sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return a.date - b.date;
+    });
+}
+
+/* Encart « Déplacements » — les ORDRES DE MISSION à établir, et rien d'autre.
+   Volontairement PAS les frais : ceux-ci se consultent une fois par mois dans
+   leur encart dédié, en bas de page (choix explicite en revue). Les véhicules
+   à réserver vivent, eux, dans « À réserver », avec les salles : même démarche,
+   même délai de 15 jours. */
 function renderDashDeplacements() {
   const hote = $('#deplacementsList');
   if (!hote) return;
-  hote.innerHTML = '<p class="empty-hint">Ordres de mission et réservations de véhicule : suivi en cours de mise en place. Les frais restent dans « Frais de déplacement », plus bas.</p>';
+  const list = ordresDeMissionAFaire();
+  hote.innerHTML = list.length
+    ? list.map(o => {
+      const j = o.date ? dashJoursEntre(o.date) : null;
+      const urgent = j !== null && j <= ROOM_ALERT_DAYS;
+      const quand = o.date ? o.date.toLocaleDateString('fr-FR') : 'Date à préciser';
+      const delai = j === null ? '' : (j <= 0 ? 'Cette semaine' : `Dans ${j} j`);
+      const attr = o.source === 'reunion' ? 'data-edit-reunion' : 'data-edit-session';
+      return `<div class="row-item om-row" ${attr}="${escapeAttr(o.id)}" tabindex="0" role="button">
+        <div class="row-main">
+          <strong class="row-title">${escapeHtml(o.titre)}</strong>
+          <span class="row-meta">${escapeHtml(quand)}${o.detail ? ' · ' + escapeHtml(o.detail) : ''}</span>
+        </div>
+        ${urgent && delai ? `<span class="status-pill room-urgent">${escapeHtml(delai)}</span>` : ''}
+      </div>`;
+    }).join('')
+    : '<p class="empty-hint">Aucun ordre de mission à demander. Les frais à déclarer se consultent dans « Frais de déplacement », plus bas.</p>';
   const badge = $('#deplacementsSummaryBadge');
-  if (badge) badge.textContent = '';
+  if (badge) {
+    badge.textContent = list.length ? `${list.length} à demander` : '';
+    badge.classList.toggle('has-pending', list.length > 0);
+  }
 }
 
 function renderDashboard() {
@@ -3309,6 +3462,21 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceDialog')._dirty = false;
 }
 
+/* N'affiche que la suite qui correspond au mode choisi : une réservation de
+   véhicule pour l'établissement, un ordre de mission pour le véhicule personnel.
+   Même fonction pour les deux modales — les identifiants ne diffèrent que par le
+   préfixe. */
+function syncDeplacementFields(prefixe) {
+  const p = prefixe === 'reunion' ? 'reunion' : 'session';
+  const mode = $(`#${p}Deplacement`)?.value || '';
+  const suite = $('#sessionDeplacementSuite');
+  const vehicule = $(`#${p}VehicleBookedField`);
+  const mission = $(`#${p}OrdreMissionField`);
+  if (vehicule) vehicule.hidden = mode !== 'etablissement';
+  if (mission) mission.hidden = mode !== 'personnel';
+  if (p === 'session' && suite) suite.hidden = !mode;
+}
+
 function openSessionModal(session = null, context = {}) {
   const isNew = !session;
   const seq = session ? findSequence(session.sequenceId) : findSequence(context.sequenceId);
@@ -3362,7 +3530,12 @@ function openSessionModal(session = null, context = {}) {
     sessColorInput.value = custom ? session.color : inherited;
     sessColorInput.dataset.custom = custom ? '1' : '0';
   }
-  if ($('#sessionPersonalVehicle')) $('#sessionPersonalVehicle').checked = !!session?.personalVehicle;
+  if ($('#sessionDeplacement')) {
+    $('#sessionDeplacement').value = session?.deplacement || '';
+    if ($('#sessionVehicleBooked')) $('#sessionVehicleBooked').checked = !!session?.vehicleBooked;
+    if ($('#sessionOrdreMission')) $('#sessionOrdreMission').checked = !!session?.ordreMission;
+    syncDeplacementFields('session');
+  }
   if ($('#sessionCapacityResetHint')) $('#sessionCapacityResetHint').hidden = true;
   renderSessionCapacityChoices(session?.capacityCodes || [], ue, seq);
   $('#sessionObjectives').value = session?.objectives || '';
@@ -3541,8 +3714,11 @@ async function duplicateSession(source) {
   copy.title = `${source.title || 'Séance'} (copie)`;
   copy.order = Date.now();
   copy.capacityCodes = Array.isArray(source.capacityCodes) ? [...source.capacityCodes] : [];
-  copy.personalVehicle = false; // ne pas recopier un frais de déplacement lié
-  copy.roomBooked = false; // une copie n'hérite jamais d'une réservation déjà faite
+  // Lot B — une copie n'hérite d'aucune démarche déjà engagée : ni frais liés,
+  // ni ordre de mission, ni réservation (de salle comme de véhicule). Le MODE de
+  // déplacement, lui, est une caractéristique de la séance et se recopie.
+  Object.assign(copy, normalizeDeplacementFields({ deplacement: source.deplacement || '' }));
+  copy.roomBooked = false;
   copy.placementStatus = 'fictif';
   copy.weekId = '';
   copy.day = null;
@@ -4689,7 +4865,9 @@ function bindEvents() {
      ligne de retard déplie l'encart concerné. Deux écouteurs ciblés plutôt
      qu'un seul sur #dashboard, pour ne pas doubler ceux qui existent déjà sur
      #constraintsList et #dashboardBacklog. */
-  ['#dashSemaine', '#dashProchainement'].forEach(sel => {
+  // #deplacementsList (lot B) rejoint la liste : ses lignes ouvrent la séance ou
+  // la réunion d'origine, c'est là que la case « ordre de mission » se coche.
+  ['#dashSemaine', '#dashProchainement', '#deplacementsList'].forEach(sel => {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
@@ -4709,7 +4887,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const carte = event.target.closest('.carte, .retard-liste li');
+      const carte = event.target.closest('.carte, .retard-liste li, .om-row');
       if (!carte) return;
       event.preventDefault();
       carte.click();
@@ -5170,7 +5348,13 @@ function bindModalActions() {
       homework: $('#sessionHomework').value.trim(),
       differentiation: $('#sessionDifferentiation').value.trim(),
       notes: $('#sessionNotes').value.trim(),
-      personalVehicle: $('#sessionPersonalVehicle')?.checked || false
+      // Lot B — normalizeDeplacementFields borne les deux cases à leur branche et
+      // tient `personalVehicle` à jour pour la compatibilité.
+      ...normalizeDeplacementFields({
+        deplacement: $('#sessionDeplacement')?.value || '',
+        vehicleBooked: $('#sessionVehicleBooked')?.checked || false,
+        ordreMission: $('#sessionOrdreMission')?.checked || false
+      })
     };
     // Lot 3.2 — rejouer les mêmes contrôles que le glisser-déposer quand la
     // séance est enregistrée « Placée à l'emploi du temps » depuis le formulaire : jusqu'ici
@@ -5188,7 +5372,9 @@ function bindModalActions() {
     const index = state.sessions.findIndex(s => s.id === id);
     if (index >= 0) state.sessions[index] = session; else state.sessions.push(session);
     if (session.weekId) selectedWeek = session.weekId;
-    if (session.personalVehicle) ensureDeplacementForSession(session);
+    // Seul le véhicule PERSONNEL ouvre des frais. Le véhicule de l'établissement
+    // se réserve et s'arrête là : ni ordre de mission, ni remboursement.
+    if (session.deplacement === 'personnel') ensureDeplacementForSession(session);
     $('#sessionDialog').close();
     await saveData('Séance enregistrée');
   });
@@ -5209,6 +5395,10 @@ function bindModalActions() {
     $('#sessionDialog').close();
     await duplicateSession(source);
   });
+  // Lot B — changer de mode de déplacement change la suite à afficher.
+  $('#sessionDeplacement')?.addEventListener('change', () => syncDeplacementFields('session'));
+  $('#reunionDeplacement')?.addEventListener('change', () => syncDeplacementFields('reunion'));
+
   // Lot L — couleur propre d'une séance : modification manuelle = couleur choisie ;
   // Auto = couleur héritée (séquence si rattachée, sinon UE).
   $('#sessionColorInput')?.addEventListener('input', (event) => { event.target.dataset.custom = '1'; });
@@ -5246,13 +5436,21 @@ function bindModalActions() {
     else if (fmt === 'xls') exportRoomsXls();
     else exportRoomsOds();
   }));
+  /* Lot B — la case « Réservée » porte désormais sur deux natures (salle,
+     véhicule) et deux origines (séance, réunion) : c'est la ligne qui dit dans
+     quel champ écrire, plus le seul identifiant de séance. */
   $('#roomsList')?.addEventListener('change', (event) => {
-    const cb = event.target.closest('[data-room-booked]');
+    const cb = event.target.closest('[data-reservation-id]');
     if (!cb) return;
-    const s = findSession(cb.dataset.roomBooked);
-    if (!s) return;
-    s.roomBooked = cb.checked;
-    saveData(cb.checked ? 'Salle marquée réservée' : 'Salle marquée non réservée');
+    const { reservationKind, reservationSource, reservationId } = cb.dataset;
+    const entity = reservationSource === 'reunion'
+      ? (state.reunions || []).find(r => r.id === reservationId)
+      : findSession(reservationId);
+    if (!entity) return;
+    if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
+    else entity.roomBooked = cb.checked;
+    const quoi = reservationKind === 'vehicule' ? 'Véhicule' : 'Salle';
+    saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
   });
   $('#showBookedRoomsToggle')?.addEventListener('change', (event) => {
     showBookedRooms = event.target.checked;
@@ -5293,10 +5491,19 @@ function bindModalActions() {
   });
   $('#deleteDeplacementButton')?.addEventListener('click', async () => {
     const id = $('#deplacementId').value;
-    if (!id || !confirm('Supprimer ce déplacement ?')) return;
+    const dep = (state.deplacements || []).find(d => d.id === id);
+    // Lot B [15] — prévenir avant de supprimer : la séance ou la réunion
+    // d'origine repassera à « pas de déplacement ». C'est la même démarche,
+    // pas deux enregistrements indépendants.
+    const lie = dep && (dep.sessionId || dep.reunionId);
+    const question = lie
+      ? 'Supprimer ce déplacement ? La séance ou la réunion d’origine repassera à « pas de déplacement ».'
+      : 'Supprimer ce déplacement ?';
+    if (!id || !confirm(question)) return;
+    const source = clearDeplacementSource(dep);
     state.deplacements = state.deplacements.filter(d => d.id !== id);
     $('#deplacementDialog').close();
-    await saveData('Déplacement supprimé');
+    await saveData(source ? 'Déplacement supprimé (origine remise à zéro)' : 'Déplacement supprimé');
   });
 
   // ---- Réunions (Lot M — journal du Tableau de bord) ----
@@ -5319,12 +5526,17 @@ function bindModalActions() {
       participants: $('#reunionParticipants').value.trim(),
       sujets: $('#reunionSujets').value.trim(),
       teacher: $('#reunionTeacher').value.trim(),
-      personalVehicle: $('#reunionVehicle').checked
+      ...normalizeDeplacementFields({
+        deplacement: $('#reunionDeplacement')?.value || '',
+        vehicleBooked: $('#reunionVehicleBooked')?.checked || false,
+        ordreMission: $('#reunionOrdreMission')?.checked || false
+      })
     };
     const idx = state.reunions.findIndex(r => r.id === id);
     if (idx >= 0) state.reunions[idx] = reunion; else state.reunions.push(reunion);
-    // Coché → garantit une ligne dans Frais (jamais supprimée si décoché ensuite).
-    if (reunion.personalVehicle) ensureDeplacementForReunion(reunion);
+    // Véhicule personnel → garantit une ligne dans Frais (jamais supprimée si le
+    // mode change ensuite ; c'est la suppression de la ligne qui remonte, [15]).
+    if (reunion.deplacement === 'personnel') ensureDeplacementForReunion(reunion);
     $('#reunionDialog').close();
     await saveData('Réunion enregistrée');
   });

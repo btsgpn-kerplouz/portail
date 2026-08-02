@@ -739,9 +739,25 @@
                 <button type="button" id="sessionColorAuto" class="small secondary" title="Revenir à la couleur héritée de la séquence">Auto</button>
               </span>
             </label>
-            <label class="checkbox-inline checkbox-discreet">
-              <input type="checkbox" id="sessionPersonalVehicle" />
-              <span>Déplacement en véhicule personnel <small>→ ligne dans « Frais de déplacement »</small></span>
+            <!-- Lot B — trois états, parce que la suite en dépend : véhicule de
+                 l'établissement = une réservation ; véhicule personnel = un ordre
+                 de mission avant, des frais après. -->
+            <label>Déplacement
+              <select id="sessionDeplacement">
+                <option value="">Aucun (sur place)</option>
+                <option value="etablissement">Véhicule de l'établissement</option>
+                <option value="personnel">Véhicule personnel</option>
+              </select>
+            </label>
+          </div>
+          <div class="span-full session-inline-row" id="sessionDeplacementSuite" hidden>
+            <label class="checkbox-inline checkbox-discreet" id="sessionVehicleBookedField" hidden>
+              <input type="checkbox" id="sessionVehicleBooked" />
+              <span>Véhicule réservé <small>→ sinon il reste dans « À réserver », alerte à 15 jours</small></span>
+            </label>
+            <label class="checkbox-inline checkbox-discreet" id="sessionOrdreMissionField" hidden>
+              <input type="checkbox" id="sessionOrdreMission" />
+              <span>Ordre de mission demandé <small>→ à faire avant le départ ; les frais se déclarent après</small></span>
             </label>
           </div>
         </div>
@@ -1018,9 +1034,20 @@
       <label class="field-block">Sujets abordés
         <textarea id="reunionSujets" rows="4" placeholder="Ordre du jour, points évoqués, décisions prises…"></textarea>
       </label>
-      <label class="checkbox-inline">
-        <input type="checkbox" id="reunionVehicle" />
-        <span>Déplacement en véhicule personnel (crée une ligne dans « Frais de déplacement »)</span>
+      <label>Déplacement
+        <select id="reunionDeplacement">
+          <option value="">Aucun (sur place)</option>
+          <option value="etablissement">Véhicule de l'établissement</option>
+          <option value="personnel">Véhicule personnel</option>
+        </select>
+      </label>
+      <label class="checkbox-inline" id="reunionVehicleBookedField" hidden>
+        <input type="checkbox" id="reunionVehicleBooked" />
+        <span>Véhicule réservé (sinon il reste dans « À réserver », alerte à 15 jours)</span>
+      </label>
+      <label class="checkbox-inline" id="reunionOrdreMissionField" hidden>
+        <input type="checkbox" id="reunionOrdreMission" />
+        <span>Ordre de mission demandé (à faire avant le départ ; les frais se déclarent après)</span>
       </label>
       <p class="form-help tight" id="reunionFraisHint" hidden>Un déplacement lié à cette réunion existe dans « Frais de déplacement » : complétez-y km, taux et statut.</p>
       <footer class="modal-footer">
