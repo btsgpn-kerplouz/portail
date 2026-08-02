@@ -865,12 +865,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border: 1px solid transparent;
   white-space: nowrap;
 }
-.status-prevue, .status-a-placer { background: var(--amber-soft); color: #7a5b16; }
-.status-en-construction, .status-a-arbitrer, .status-a-confirmer { background: var(--plum-soft); color: var(--plum); }
-.status-en-cours { background: var(--water-soft); color: var(--water); }
-.status-terminee, .status-definitif-edt, .status-realisee { background: var(--moss-soft); color: var(--moss-dark); }
-.status-reportee { background: var(--amber-soft); color: #7a5b16; }
-.status-annulee { background: var(--danger-soft); color: var(--danger); }
+/* Lot C-bis — les déclinaisons par statut (prevue, terminee, annulee…) ont été
+   retirées avec `statusSlug()` : plus aucun statut n'est affiché. `.status-pill`
+   ci-dessus reste utile pour la seule pastille survivante, `room-urgent`
+   (un délai calculé, pas un statut) — voir #dashboard plus bas. */
 
 /* Lot C [11] — la ligne de boutons en pied de carte (.card-actions) a disparu :
    « Modifier » est devenu le clic sur le corps de la carte, et ce qui restait
@@ -920,6 +918,43 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 
 .nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
+
+/* =====================================================================
+   Lot C-bis — TROIS NIVEAUX, TROIS DENSITÉS DE COULEUR
+   Jusqu'ici UE et séquence portaient le même bandeau clair à pastille : seule
+   l'étiquette « UE »/« Séquence » les séparait, et le lot C a supprimé leur
+   dernière différence de contenu (les deux portent « Modifier »). On rend donc
+   la hiérarchie à la couleur, du plus dense au plus dilué :
+     1. UE       — aplat FONCÉ, écriture blanche (--ue-deep, garanti 4,5:1).
+     2. Séquence — bandeau clair à pastille de couleur (inchangé, l'échelon
+                   intermédiaire ne bouge pas : c'est lui qui donne l'écart).
+     3. Séance   — bandeau clair, titre encré, corps PASTEL (plus bas).
+   Les trois vont ensemble : colorer l'UE sans diluer la tuile de séance les
+   aurait rapprochées au lieu de les séparer.
+   ===================================================================== */
+.entity-ue > summary {
+  background: var(--ue-deep, var(--moss-dark));
+  padding: .6rem .75rem;
+}
+/* La pastille ronde disait « voici la couleur de cette UE » : sur un aplat de
+   cette même couleur, elle ne dit plus rien. */
+.entity-ue > summary::before { display: none; }
+.entity-ue > summary:hover { background: color-mix(in srgb, var(--ue-deep, var(--moss-dark)) 88%, #fff); }
+.entity-ue > summary .entity-chevron,
+.entity-ue > summary .entity-title { color: #fff; }
+/* Mentions secondaires : atténuées, mais pas au point de descendre sous 4,5:1 —
+   à .72rem elles restent du « petit texte » aux yeux du WCAG. C'est la marge
+   prise par deepColor (5,5) qui rend ce 88 % possible. */
+.entity-ue > summary .entity-level-label,
+.entity-ue > summary .entity-tag,
+.entity-ue > summary .entity-count { color: rgba(255, 255, 255, .88); }
+.entity-ue > summary .entity-code {
+  /* Blanc PUR : à 94 % la pastille se teintait du fond foncé et le code passait
+     sous le seuil sur les 4 teintes les plus claires de la palette. */
+  background: #fff;
+  color: var(--ue-deep, var(--moss-dark));
+  border-color: transparent;
+}
 
 /* Séquence : un ton plus discret que l'UE, toujours rattachée visuellement */
 .entity-sequence { margin-left: var(--sp-3); border-style: solid; }
@@ -997,11 +1032,15 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
+/* Lot C-bis — la tuile portait un aplat de couleur en tête, exactement comme
+   l'UE en porte un désormais : les deux niveaux se seraient confondus. La
+   couleur y est donc DILUÉE — corps pastel, titre encré — et la tête redevient
+   claire, simple porte-numéro/porte-statut. */
 .session-card {
   display: flex; flex-direction: column; gap: .3rem;
-  border: 1px solid var(--line-strong);
+  border: 1px solid color-mix(in srgb, var(--ue-color, var(--line-strong)) 40%, var(--line-strong));
   border-radius: var(--r-sm);
-  background: var(--surface);
+  background: var(--ue-soft, var(--surface));
   padding: 0 0 .5rem;
   box-shadow: var(--shadow-sm);
   min-height: 132px;
@@ -1009,19 +1048,59 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   cursor: pointer; /* Lot 8 — la carte entière est cliquable, plus de bouton « Modifier » isolé */
 }
 .session-card > *:not(.session-card-head) { margin-left: .6rem; margin-right: .6rem; }
+/* Lot C-bis — la tête reprend un aplat, mais FONCÉ (le même --ue-deep que le
+   bandeau d'UE) et non plus la couleur vive. Elle ne se confond pas avec l'UE
+   pour autant : l'UE est un bandeau pleine largeur, la tuile un rectangle de
+   210 px. C'est la forme qui sépare ces deux niveaux, pas la teinte. */
 .session-card-head {
   display: flex; align-items: center; justify-content: space-between; gap: .4rem;
-  background: var(--ue-color, var(--moss));
+  background: var(--ue-deep, var(--moss-dark));
   padding: .38rem .55rem;
 }
 .session-card-number {
   display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
   width: 20px; height: 20px; border-radius: 50%;
-  /* Lot 5 — encre : le numéro dans le rond blanc tombait à 1,89 (illisible). */
-  background: rgba(255, 255, 255, .95); color: var(--ue-ink, var(--moss-dark));
+  /* Lot 5 — encre : le numéro dans le rond blanc tombait à 1,89 (illisible).
+     Lot C-bis — le rond redevient blanc PUR sur l'aplat foncé : --ue-deep étant
+     garanti à 5,5:1 sous du blanc, le chiffre l'est aussi par symétrie. */
+  background: #fff; color: var(--ue-deep, var(--moss-dark));
   font-family: var(--font-mono); font-size: .72rem; font-weight: 700;
 }
-.session-card-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; line-height: 1.2; color: var(--ink); }
+/* Le type de séance occupe le vide entre le numéro et la pastille — cette place
+   ne servait à rien. Il quitte donc le corps de la tuile, où il tenait une ligne
+   entière. Contrepartie assumée : en blanc sur l'aplat, il perd la couleur qui
+   lui est propre ailleurs (frise, grille semaine, réserve du Planning hebdo). */
+.session-card-headtype {
+  flex: 1 1 auto; min-width: 0;
+  font-size: .62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: rgba(255, 255, 255, .92);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Lot C-bis — le titre EST la couleur de la séance (l'encre garantit 4,5:1 sur
+   le pastel, cf. inkColor/mixHex dans app.js). */
+/* Lot C-bis — marqueur de placement : un SIGNE, pas une pastille. Deux états
+   seulement, dont un ordinaire ; une pastille pleine pour chacun pesait plus
+   lourd que l'information. La coche dit « validé à l'emploi du temps », le
+   « ? » dit « pas encore placé précisément ». */
+.placement-flag {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.05rem; height: 1.05rem;
+  font-family: var(--font-mono); font-size: .86rem; font-weight: 700; line-height: 1;
+}
+/* Sur fond clair (listes du tableau de bord) : c'est la couleur qui porte le sens. */
+.placement-flag.is-placed { color: var(--moss-dark); }
+.placement-flag.is-unplaced { color: #7a5b16; }
+/* Sur la tête foncée d'une tuile : blanc. Le « ? » reste un cran en retrait, mais
+   pas plus de 88 % — mesuré : en dessous, il tombe sous 4,5:1 sur 6 des 11
+   couleurs d'UE. La discrétion vient de la disparition de la pastille pleine,
+   pas d'une opacité qu'on pousserait jusqu'à l'illisible. */
+.session-card-head .placement-flag.is-placed { color: #fff; }
+.session-card-head .placement-flag.is-unplaced { color: rgba(255, 255, 255, .88); }
+
+.session-card-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; line-height: 1.2; color: var(--ue-ink, var(--ink)); }
 .session-card-type {
   align-self: flex-start;
   font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;

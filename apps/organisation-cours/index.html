@@ -562,26 +562,13 @@
               </div>
             </div>
           </div>
-          <label>Type de séquence
-            <select id="sequenceType">
-              <option value="">Standard</option>
-              <option value="TP">TP</option>
-              <option value="Terrain / sortie">Terrain / sortie</option>
-              <option value="Pluridisciplinaire">Pluridisciplinaire</option>
-              <option value="Projet">Projet</option>
-              <option value="Autonomie">Autonomie</option>
-              <option value="Évaluation">Évaluation</option>
-            </select>
-          </label>
-          <label>Statut
-            <select id="sequenceStatus">
-              <option>Prévue</option>
-              <option>En construction</option>
-              <option>À arbitrer</option>
-              <option>En cours</option>
-              <option>Terminée</option>
-            </select>
-          </label>
+          <!-- Lot C-bis — « Type de séquence » et « Statut » retirés du formulaire.
+               Le statut ne pilotait rien, il ne faisait que s'afficher. Le type ne
+               servait plus qu'à teinter la bande de frise, et seulement quand il
+               était renseigné (le cas « Standard » retombait déjà sur le titre).
+               Les valeurs déjà enregistrées sont CONSERVÉES telles quelles (voir
+               `existingSeqType` / `existingSeqStatus` dans app.js) : les frises
+               existantes gardent donc leur couleur. -->
           <label>Couleur de la séquence
             <span class="seq-color-field">
               <input type="color" id="sequenceColorInput" value="#2f6f73" />
@@ -703,15 +690,10 @@
             <input type="hidden" id="sessionTeacher" />
             <input id="sessionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
           </div>
-          <label>Statut pédagogique
-            <select id="sessionStatus">
-              <option>Prévue</option>
-              <option>À confirmer</option>
-              <option>Réalisée</option>
-              <option>Reportée</option>
-              <option>Annulée</option>
-            </select>
-          </label>
+          <!-- Lot C-bis — champ « Statut pédagogique » retiré : il était saisi ici
+               mais affiché nulle part (la pastille de la tuile montre le PLACEMENT,
+               qui est une autre information). La donnée déjà enregistrée est
+               conservée à l'identique, cf. `existingStatus` dans app.js. -->
           <div class="span-full session-inline-row">
             <label>Salle / lieu
               <input id="sessionRoom" placeholder="Salle, labo, terrain, salle info…" />

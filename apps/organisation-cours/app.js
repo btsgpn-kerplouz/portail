@@ -2049,7 +2049,7 @@ function renderUeCard(ue) {
     compactTeacherInitials(ue.teacher),
     capCodes
   ]);
-  return `<details class="entity-card entity-ue" data-open-key="ue:${escapeAttr(ue.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .14)}; --ue-ink:${inkColor(color)}">
+  return `<details class="entity-card entity-ue" data-open-key="ue:${escapeAttr(ue.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .14)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}">
     <summary>
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">UE</span>
@@ -2228,7 +2228,6 @@ function renderSequenceCard(seq) {
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">Séquence</span>
       <span class="entity-title">${escapeHtml(seq.title)}</span>
-      <span class="status-pill ${statusSlug(seq.status)}">${escapeHtml(seq.status || 'Prévue')}</span>
       <span class="entity-count">${fictiveCount} à placer · ${definitiveCount} EDT</span>
     </summary>
     <div class="entity-body sequence-body">
@@ -2250,20 +2249,11 @@ function renderSequenceCard(seq) {
   </details>`;
 }
 
-/* Associe un statut texte libre (séquence ou séance) à une classe de pastille.
-   Les libellés viennent des formulaires : on normalise juste pour le style. */
-function statusSlug(status = '') {
-  const slug = typeSlug(status);
-  if (slug.includes('arbitrer')) return 'status-a-arbitrer';
-  if (slug.includes('construction')) return 'status-en-construction';
-  if (slug.includes('confirmer')) return 'status-a-confirmer';
-  if (slug.includes('cours')) return 'status-en-cours';
-  if (slug.includes('terminee')) return 'status-terminee';
-  if (slug.includes('realisee')) return 'status-realisee';
-  if (slug.includes('reportee')) return 'status-reportee';
-  if (slug.includes('annulee')) return 'status-annulee';
-  return 'status-prevue';
-}
+/* Lot C-bis — `statusSlug()` a été supprimée : elle traduisait un statut en
+   classe de pastille, et plus aucun statut n'est affiché (celui de la séance
+   comme celui de la séquence ont quitté les formulaires). Seule subsiste la
+   pastille `room-urgent` du tableau de bord, qui n'est pas un statut mais un
+   délai calculé. */
 
 /* Carte de séance « format fiche » : petit rectangle vertical (évoque une
    feuille A4), numéroté à partir de 1 dans la séquence. La carte entière est
@@ -2297,13 +2287,18 @@ function renderSessionCard(s, number) {
     ? [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ')
     : [weekLabel(s.weekId), DAY_NAMES[s.day], slotLabel(s.startSlot)].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 4);
-  return `<article class="session-card ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-ink:${inkColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  // Lot C-bis — la tuile n'est plus coiffée d'un aplat vif : son CORPS devient
+  // pastel et son titre prend la couleur. L'encre est donc calculée sur le
+  // pastel réellement obtenu, pas sur la surface nue.
+  const pastel = hexToRgba(color, .13);
+  const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
+  return `<article class="session-card ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
-      <span class="status-pill ${isFictiveSession(s) ? 'status-a-placer' : 'status-definitif-edt'}">${isFictiveSession(s) ? 'À placer' : 'EDT'}</span>
+      ${s.type ? `<span class="session-card-headtype" title="${escapeAttr(s.type)}">${escapeHtml(s.type)}</span>` : '<span class="session-card-headtype"></span>'}
+      ${placementFlag(s)}
     </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
-    ${s.type ? `<span class="session-card-type">${escapeHtml(s.type)}</span>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
     ${s.room ? `<p class="session-card-meta">${escapeHtml(s.room)}</p>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
@@ -2318,7 +2313,7 @@ function renderBacklogSessionTile(s) {
   const color = sessionTint(s);
   const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 3);
-  return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .16)}; --ue-ink:${inkColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .16)}; --ue-ink:${inkColor(color, mixHex(color, '#fbfcf9', .16))}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
     ${s.type ? `<span class="session-card-type">${escapeHtml(s.type)}</span>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
@@ -2367,7 +2362,9 @@ function renderSemesterCell(ue, week) {
   const blocks = [];
   sequences.forEach(seq => {
     const count = state.sessions.filter(s => s.sequenceId === seq.id).length;
-    blocks.push(`<div class="semester-block semester-seq" data-edit-sequence="${escapeAttr(seq.id)}"><span class="block-kind">Séquence</span><strong>${escapeHtml(seq.title)}</strong><div class="meta">${escapeHtml(seq.status || '')} · ${escapeHtml(seq.hoursEstimate || 'Volume ?')} · ${count} séance(s)</div>${renderCapacityPills(seq.capacityCodes || [])}</div>`);
+    // Lot C-bis — le statut de séquence n'est plus modifiable : l'afficher
+    // encore montrerait une valeur figée qu'on ne peut plus corriger.
+    blocks.push(`<div class="semester-block semester-seq" data-edit-sequence="${escapeAttr(seq.id)}"><span class="block-kind">Séquence</span><strong>${escapeHtml(seq.title)}</strong><div class="meta">${escapeHtml(seq.hoursEstimate || 'Volume ?')} · ${count} séance(s)</div>${renderCapacityPills(seq.capacityCodes || [])}</div>`);
   });
   sessions.forEach(s => {
     blocks.push(`<div class="semester-block semester-session ${isFictiveSession(s) ? 'fictif' : 'definitif'}" data-edit-session="${escapeAttr(s.id)}"><span class="block-kind">Séance ${isFictiveSession(s) ? 'à placer' : 'EDT'}</span><strong>${escapeHtml(s.title)}</strong><div class="meta">${escapeHtml(s.type || '')}${isFictiveSession(s) ? ` · ${escapeHtml(s.expectedDuration || '')} · ${escapeHtml(s.fictiveSlot || '')}` : ` · ${DAY_NAMES[s.day]} ${slotLabel(s.startSlot)}`}</div></div>`);
@@ -3470,8 +3467,10 @@ function openSequenceModal(sequence = null, context = {}) {
     }
   }
   $('#sequenceHours').value = sequence?.hoursEstimate || '';
-  $('#sequenceType').value = sequence?.sequenceType || '';
-  $('#sequenceStatus').value = sequence?.status || 'Prévue';
+  // Lot C-bis — champs retirés du formulaire (voir la note à l'enregistrement) ;
+  // le `?.` garde ces lignes inoffensives s'ils venaient à revenir.
+  if ($('#sequenceType')) $('#sequenceType').value = sequence?.sequenceType || '';
+  if ($('#sequenceStatus')) $('#sequenceStatus').value = sequence?.status || 'Prévue';
   const seqColorInput = $('#sequenceColorInput');
   if (seqColorInput) {
     const custom = isValidHexColor(sequence?.color);
@@ -3559,7 +3558,9 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionTeacher').value = session?.teacher || '';
   $('#sessionRoom').value = session?.room || '';
   if ($('#sessionRoomToBook')) $('#sessionRoomToBook').value = session?.roomToBook || (($('#sessionType').value === 'Cours en salle informatique') ? 'info' : '');
-  $('#sessionStatus').value = session?.status || 'Prévue';
+  // Lot C-bis — plus de champ « Statut pédagogique » dans la modale (voir la note
+  // à l'enregistrement). Le `?.` garde la ligne inoffensive si le champ revenait.
+  if ($('#sessionStatus')) $('#sessionStatus').value = session?.status || 'Prévue';
   const sessColorInput = $('#sessionColorInput');
   if (sessColorInput) {
     const custom = isValidHexColor(session?.color);
@@ -3830,6 +3831,31 @@ function shiftColor(hex, hueDeg = 0, lightPct = 0, satPct = 0) {
   return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
 }
 
+/* Lot C-bis — aplat de la même couleur, mais APLATI (mélangé au fond) : donne
+   la valeur hex réelle d'un `--ue-soft` posé en rgba, ce qui permet de calculer
+   une encre lisible PAR-DESSUS le pastel et non par-dessus la surface nue. */
+function mixHex(hex, baseHex, ratio = .13) {
+  const parse = h => {
+    const c = String(h || '#000000').replace('#', '');
+    const n = parseInt(c.length === 3 ? c.split('').map(x => x + x).join('') : c, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const [r1, g1, b1] = parse(hex);
+  const [r2, g2, b2] = parse(baseHex);
+  const mix = (a, b) => Math.round(a * ratio + b * (1 - ratio));
+  const toHex = v => v.toString(16).padStart(2, '0');
+  return `#${toHex(mix(r1, r2))}${toHex(mix(g1, g2))}${toHex(mix(b1, b2))}`;
+}
+
+/* Lot C-bis — teinte d'aplat FONCÉ pour le bandeau d'UE : la palette d'UE va du
+   sombre (#2f6f73) au doré clair (#b08a2e) ; on l'assombrit juste ce qu'il faut
+   pour écrire en blanc dessus, sinon les UE claires deviendraient illisibles.
+   Même mécanique qu'inkColor, cible inversée (fond au lieu d'encre).
+   Seuil visé 5,5 et non 4,5 : le bandeau ne porte pas que du blanc pur, il porte
+   aussi des mentions atténuées (étiquette, promotion, compteur). S'arrêter à 4,5
+   les faisait tomber à 3,7 — la marge est là pour elles. */
+function deepColor(hex) { return inkColor(hex, '#ffffff', 5.5); }
+
 function hexToRgba(hex, alpha = 1) {
   const clean = String(hex || '#000000').replace('#', '');
   const n = parseInt(clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean, 16);
@@ -3861,12 +3887,12 @@ function contrastRatio(hexA, hexB) {
    atteindre 4.5:1 sur onHex (fond clair par défaut : --surface). Les aplats
    (bandeau de tuile, bande de frise, pastille) restent en --ue-color ; seule
    cette « encre » sert à écrire par-dessus. */
-function inkColor(hex, onHex = '#fbfcf9') {
+function inkColor(hex, onHex = '#fbfcf9', seuil = 4.5) {
   const [h, s] = hexToHsl(hex);
   let l = hexToHsl(hex)[2];
   let candidate = hex;
   let steps = 0;
-  while (contrastRatio(candidate, onHex) < 4.5 && l > 0 && steps < 40) {
+  while (contrastRatio(candidate, onHex) < seuil && l > 0 && steps < 40) {
     l = Math.max(0, l - 3);
     candidate = hslToHex(h, s, l);
     steps++;
@@ -3886,7 +3912,6 @@ function exportUeProgressionPrint(ue) {
       <td>${escapeHtml(seq.periodNote || seq.targetWeeks || '')}</td>
       <td>${escapeHtml(seq.targetWeeks || '')}</td>
       <td>${escapeHtml(seq.hoursEstimate || '')}</td>
-      <td>${escapeHtml(seq.status || '')}</td>
       <td>${escapeHtml(seq.teacher || '')}</td>
       <td>${escapeHtml((seq.capacityCodes || []).join(', '))}</td>
       <td>${escapeHtml(seq.objectives || '')}</td>
@@ -3903,7 +3928,7 @@ function exportUeProgressionPrint(ue) {
   const capacities = ueCapacities(ue).map(c => `${c.code} — ${c.title}`).join(' ; ');
   const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</title><style>
     @page{size:A3 landscape;margin:8mm;}body{font-family:Arial,sans-serif;margin:18px;color:#111827;font-size:9.5px} h1{font-size:18px;margin:0 0 4px} .meta{color:#4b5563;margin:2px 0 10px} table{border-collapse:collapse;width:100%;table-layout:fixed;margin-top:10px} th,td{border:1px solid #444;padding:4px;vertical-align:top;word-wrap:break-word} th{background:#f3f4f6} small,.muted{color:#4b5563} .cap{border:1px solid #d1d5db;background:#f9fafb;padding:6px;margin-top:8px} @media print{body{margin:0} button{display:none}}
-  </style></head><body><button onclick="window.print()">Imprimer / enregistrer en PDF</button><h1>Progression UE — ${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</h1><p class="meta">${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)} · ${escapeHtml(ue.period || '')} · ${escapeHtml(ue.startWeekId ? `de ${weekLabel(ue.startWeekId)}` : '')} ${escapeHtml(ue.endWeekId ? `à ${weekLabel(ue.endWeekId)}` : '')}</p><div class="cap"><strong>Capacités de l’UE :</strong> ${escapeHtml(capacities || '')}</div><table><thead><tr><th>Titre de séquence</th><th>Période envisagée</th><th>Semaines</th><th>Volume horaire estimatif</th><th>Statut</th><th>Enseignant(s) impliqué(s)</th><th>Capacités cochées</th><th>Objectifs de la séquence</th><th>Apprentissages à réaliser / savoir-faire visés</th><th>Prérequis</th><th>Mots-clés / notions structurantes</th><th>Point de vigilance</th><th>Évaluation prévue</th><th>Production attendue / traces élèves</th><th>Notes internes</th><th>Séances rattachées</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  </style></head><body><button onclick="window.print()">Imprimer / enregistrer en PDF</button><h1>Progression UE — ${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</h1><p class="meta">${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)} · ${escapeHtml(ue.period || '')} · ${escapeHtml(ue.startWeekId ? `de ${weekLabel(ue.startWeekId)}` : '')} ${escapeHtml(ue.endWeekId ? `à ${weekLabel(ue.endWeekId)}` : '')}</p><div class="cap"><strong>Capacités de l’UE :</strong> ${escapeHtml(capacities || '')}</div><table><thead><tr><th>Titre de séquence</th><th>Période envisagée</th><th>Semaines</th><th>Volume horaire estimatif</th><th>Enseignant(s) impliqué(s)</th><th>Capacités cochées</th><th>Objectifs de la séquence</th><th>Apprentissages à réaliser / savoir-faire visés</th><th>Prérequis</th><th>Mots-clés / notions structurantes</th><th>Point de vigilance</th><th>Évaluation prévue</th><th>Production attendue / traces élèves</th><th>Notes internes</th><th>Séances rattachées</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
@@ -3922,7 +3947,6 @@ function exportSequencePrint(seq) {
     <td>${escapeHtml(s.group || '')}</td>
     <td>${escapeHtml(s.teacher || '')}</td>
     <td>${escapeHtml(s.room || '')}</td>
-    <td>${escapeHtml(s.status || '')}</td>
     <td>${escapeHtml([s.expectedDuration || '', s.customStart && s.customEnd ? `${s.customStart}–${s.customEnd}` : ''].filter(Boolean).join(' · '))}</td>
     <td>${escapeHtml((s.capacityCodes || []).join(', '))}</td>
     <td>${escapeHtml(s.objectives || '')}</td>
@@ -3941,7 +3965,6 @@ function exportSequencePrint(seq) {
     <div class="meta">Période envisagée : ${escapeHtml(seq.periodNote || seq.targetWeeks || '')} · Semaines : ${escapeHtml(seq.targetWeeks || '')} · Volume horaire estimatif : ${escapeHtml(seq.hoursEstimate || '')} · Enseignant(s) impliqué(s) : ${escapeHtml(seq.teacher || '')}</div>
     <div class="meta">Capacités cochées : ${escapeHtml((seq.capacityCodes || []).join(', '))}</div>
     <h2>Champs de séquence</h2>
-    <p><strong>Statut :</strong> ${escapeHtml(seq.status || '')}</p>
     <p><strong>Objectifs de la séquence :</strong> ${escapeHtml(seq.objectives || '')}</p>
     <p><strong>Apprentissages à réaliser / savoir-faire visés :</strong> ${escapeHtml(seq.learningOutcomes || '')}</p>
     <p><strong>Prérequis :</strong> ${escapeHtml(seq.prerequisites || '')}</p>
@@ -3950,7 +3973,7 @@ function exportSequencePrint(seq) {
     <p><strong>Évaluation prévue :</strong> ${escapeHtml(seq.assessment || '')}</p>
     <p><strong>Production attendue / traces élèves :</strong> ${escapeHtml(seq.deliverables || '')}</p>
     <p><strong>Notes internes :</strong> ${escapeHtml(seq.notes || '')}</p>
-    <h2>Séances</h2><table><thead><tr><th>N°</th><th>Titre de séance</th><th>Type</th><th>Groupe</th><th>Enseignant(s)</th><th>Salle / lieu</th><th>Statut pédagogique</th><th>Durée prévue</th><th>Capacités cochées</th><th>Objectifs de séance</th><th>Notions abordées</th><th>Déroulé</th><th>Besoins matériels</th><th>Points de vigilance</th><th>Mots-clefs</th><th>Notes internes</th></tr></thead><tbody>${rows}</tbody></table>
+    <h2>Séances</h2><table><thead><tr><th>N°</th><th>Titre de séance</th><th>Type</th><th>Groupe</th><th>Enseignant(s)</th><th>Salle / lieu</th><th>Durée prévue</th><th>Capacités cochées</th><th>Objectifs de séance</th><th>Notions abordées</th><th>Déroulé</th><th>Besoins matériels</th><th>Points de vigilance</th><th>Mots-clefs</th><th>Notes internes</th></tr></thead><tbody>${rows}</tbody></table>
   </body></html>`;
   const win = window.open('', '_blank');
   win.document.write(html);
@@ -5283,6 +5306,13 @@ function bindModalActions() {
   $('#sequenceForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = $('#sequenceId').value || uid('sequence');
+    // Lot C-bis — « Type de séquence » et « Statut » ont quitté le formulaire.
+    // On recopie les valeurs déjà enregistrées au lieu de les écraser : sans ça,
+    // le premier enregistrement d'une séquence ancienne effacerait son type et
+    // ferait décrocher la couleur de sa bande dans la frise.
+    const existing = findSequence(id);
+    const existingSeqType = existing?.sequenceType || '';
+    const existingSeqStatus = existing?.status || 'Prévue';
     const sequence = {
       id,
       ueId: $('#sequenceUe').value,
@@ -5292,8 +5322,8 @@ function bindModalActions() {
       targetWeeks: getSequencePeriodValue(),
       periodNote: $('#sequencePeriodNote').value.trim(),
       hoursEstimate: $('#sequenceHours').value.trim(),
-      sequenceType: $('#sequenceType').value || '',
-      status: $('#sequenceStatus').value,
+      sequenceType: existingSeqType,
+      status: existingSeqStatus,
       color: getSequenceColorFieldValue(),
       teacher: $('#sequenceTeacher').value.trim(),
       capacityCodes: selectedCheckboxValues('#sequenceCapacityChoices'),
@@ -5357,6 +5387,12 @@ function bindModalActions() {
     // roomBooked se coche depuis l'encart « Salles à réserver » du tableau de
     // bord, jamais dans ce formulaire : on le préserve tel quel à l'édition.
     const existingRoomBooked = findSession(id)?.roomBooked || false;
+    // Lot C-bis — le champ « Statut pédagogique » a quitté la modale : il était
+    // saisi mais affiché NULLE PART (seul un export le sortait), pendant que la
+    // pastille de la tuile montre le PLACEMENT, qui est autre chose. La donnée
+    // déjà saisie est conservée telle quelle — on ne l'écrase pas au premier
+    // enregistrement qui suit. Même motif que roomBooked ci-dessus.
+    const existingStatus = findSession(id)?.status || 'Prévue';
     const session = {
       id,
       title: $('#sessionTitle').value.trim(),
@@ -5386,7 +5422,7 @@ function bindModalActions() {
       room: $('#sessionRoom').value.trim(),
       roomToBook: $('#sessionRoomToBook')?.value || '',
       roomBooked: existingRoomBooked,
-      status: $('#sessionStatus').value,
+      status: existingStatus,
       objectives: $('#sessionObjectives').value.trim(),
       keywords: $('#sessionKeywords').value.trim(),
       activities: $('#sessionActivities').value.trim(),
@@ -5962,11 +5998,22 @@ function sessionListItem(s) {
       <span class="row-meta">${escapeHtml(meta)}</span>
       ${kwHtml}
     </div>
-    <span class="status-pill ${isFictiveSession(s) ? 'status-a-placer' : 'status-definitif-edt'}">${isFictiveSession(s) ? 'À placer' : 'EDT'}</span>
+    ${placementFlag(s)}
   </div>`;
 }
 
 function displayPlacementStatus(value) { return value === 'fictif' ? 'À placer' : (value || ''); }
+/* Lot C-bis (3e passe) — le placement n'a que deux états, et l'un des deux est
+   le cas ordinaire : deux pastilles pleines criaient plus fort que
+   l'information qu'elles portaient. Un signe suffit — coche = validée à
+   l'emploi du temps, « ? » = pas encore placée précisément. Le mot entier reste
+   dans title/aria-label : le symbole seul ne se lit pas au lecteur d'écran. */
+function placementFlag(s) {
+  const fictive = isFictiveSession(s);
+  const label = fictive ? 'Pas encore placée à l’emploi du temps' : 'Placée à l’emploi du temps';
+  return `<span class="placement-flag ${fictive ? 'is-unplaced' : 'is-placed'}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${fictive ? '?' : '✓'}</span>`;
+}
+
 function isFictiveSession(s) { return s.placementStatus === 'fictif' || !s.weekId; }
 function isDefinitiveSession(s) { return s.placementStatus === 'definitif' && !!s.weekId; }
 
