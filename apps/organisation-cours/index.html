@@ -173,47 +173,38 @@
     </section>
 
     <section id="design" class="view">
-      <div class="page-title design-action-title">
-        <div>
-          <h2>Conception pédagogique</h2>
+      <!-- Lot C [11] — une SEULE barre, fixée sous les onglets : créations,
+           filtres compactés et pliage de l'arbre. Elle remplace à elle seule le
+           titre de page, la ligne de boutons, l'encart de filtres dépliable et
+           la barre « Tout déplier ». Les menus n'ont plus d'étiquette visible :
+           leur option « tout » la porte (« Toutes promotions », « Tous
+           semestres », « Tous enseignants »), ce qui tient sur une ligne. -->
+      <div class="design-bar" role="toolbar" aria-label="Actions et filtres de la conception pédagogique">
+        <div class="design-bar-group design-bar-creer">
+          <button type="button" id="addUeButton" class="small">+ UE</button>
+          <button type="button" id="addSequenceButton" class="small">+ Séquence</button>
+          <button type="button" id="addFictiveSessionButton" class="small">+ Séance</button>
+          <button type="button" id="addConstraintGlobalButton" class="small secondary">+ Période</button>
         </div>
-        <div class="toolbar design-main-actions">
-          <button id="addUeButton">Créer une UE</button>
-          <button id="addSequenceButton">Créer une séquence</button>
-          <button id="addFictiveSessionButton">Créer une séance</button>
-          <button id="addConstraintGlobalButton" class="secondary">Ajouter période / contrainte</button>
+        <div class="design-bar-group design-bar-filtres">
+          <select id="designPromotionFilter" title="Promotion" aria-label="Filtrer par promotion"></select>
+          <select id="designSemesterFilter" title="Semestre" aria-label="Filtrer par semestre"></select>
+          <select id="designTeacherFilter" title="Enseignant" aria-label="Filtrer par enseignant"></select>
+          <!-- Les UE restent nombreuses : elles vivent dans un petit menu déroulant
+               plutôt que d'occuper une deuxième ligne collante en permanence. -->
+          <details class="filter-pop" id="designUePop">
+            <summary title="Choisir les UE à afficher">UE<span id="designUeCount" class="filter-pop-count" hidden></span></summary>
+            <div class="filter-pop-body">
+              <p class="meta tight">Cocher des UE pour n’afficher que celles-là.</p>
+              <div id="designUeChoices" class="checkbox-row"></div>
+            </div>
+          </details>
+          <input id="designSearch" type="search" placeholder="Rechercher…" aria-label="Rechercher une UE, une capacité, une séquence, une séance ou un mot-clé" />
         </div>
-      </div>
-      <details class="panel panel-collapsible filters-panel design-filters" id="designFiltersPanel" data-open-key="design:filters">
-        <summary>
-          <span id="designFilterSummary">Filtres</span>
-          <span id="designFilterActiveCount" class="filter-active-count" hidden></span>
-        </summary>
-        <div class="filter-grid">
-          <label>Promotion
-            <select id="designPromotionFilter"></select>
-          </label>
-          <label>Semestre
-            <select id="designSemesterFilter"></select>
-          </label>
-          <label>Enseignant / intervenant
-            <select id="designTeacherFilter"></select>
-          </label>
-          <label>Recherche
-            <input id="designSearch" placeholder="UE, capacité, séquence, séance, mot-clé…" />
-          </label>
+        <div class="design-bar-group design-bar-arbre">
+          <button type="button" class="icon-button small" id="designExpandAll" title="Tout déplier" aria-label="Tout déplier">⊞</button>
+          <button type="button" class="icon-button small" id="designCollapseAll" title="Tout replier" aria-label="Tout replier">⊟</button>
         </div>
-        <div class="field-block tight">
-          <span class="field-label">UE à afficher (parmi celles qui correspondent aux filtres ci-dessus)</span>
-          <div id="designUeChoices" class="checkbox-row"></div>
-        </div>
-        <div class="design-filters-actions">
-          <button type="button" id="designResetFilters" class="small secondary">Réinitialiser les filtres</button>
-        </div>
-      </details>
-      <div class="tree-toolbar">
-        <button type="button" class="secondary small" id="designExpandAll">Tout déplier</button>
-        <button type="button" class="secondary small" id="designCollapseAll">Tout replier</button>
       </div>
       <div id="ueTree" class="ue-tree"></div>
     </section>

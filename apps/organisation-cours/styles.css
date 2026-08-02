@@ -384,13 +384,88 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .panel-collapsible > summary .panel-heading-inline { flex: 1; margin: 0; }
 .panel-collapsible > *:not(summary) { padding: 0 var(--sp-4) var(--sp-4); }
 .filters-panel { margin-bottom: var(--sp-4); }
-/* Lot 8 (Q7) — résumé du bloc de filtres replié (Conception pédagogique). */
-.design-filters > summary #designFilterSummary { flex: 1; font-weight: 600; font-size: .86rem; }
 .filter-active-count {
   font-size: .74rem; font-weight: 600; color: #154a5c; background: var(--water-soft);
   border-radius: 999px; padding: .15rem .6rem; white-space: nowrap;
 }
-.design-filters-actions { display: flex; justify-content: flex-end; padding-top: var(--sp-2); }
+
+/* ---------- Barre de la Conception pédagogique (lot C [11]) ----------
+   Une seule ligne, collée sous le bandeau et les onglets. Elle remplace le
+   titre de page, la ligne de boutons, l'encart de filtres dépliable et la
+   barre « Tout déplier » : quatre bandes horizontales devenues une.
+   `--hauteur-collante` est mesurée en JS (mesurerBandeauCollant) parce que les
+   onglets passent sur deux lignes quand la fenêtre rétrécit. */
+.design-bar {
+  position: sticky;
+  top: var(--hauteur-collante, 6.4rem);
+  z-index: 60;
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: .4rem var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: .45rem var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-bottom-color: var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+}
+.design-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.design-bar-filtres { flex: 1 1 22rem; min-width: 0; }
+.design-bar-arbre { margin-left: auto; }
+/* `width: 100%` est le défaut des champs de formulaire de cette app : ici on le
+   reprend, sinon chaque menu occuperait une ligne entière et la barre ne
+   tiendrait plus sur une seule. */
+.design-bar select,
+.design-bar input[type="search"] {
+  width: auto; flex: 0 1 auto;
+  height: 1.9rem; padding: 0 .45rem;
+  font-size: .8rem; font-family: inherit;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--ink);
+  max-width: 11rem;
+}
+.design-bar input[type="search"] { flex: 1 1 8rem; min-width: 6rem; max-width: 18rem; }
+/* Un filtre qui s'écarte de « tout » se voit : sinon, une fois l'étiquette
+   retirée, on cherche longtemps pourquoi une UE a disparu de l'arbre. */
+.design-bar select[data-actif] { border-color: var(--acc); font-weight: 600; color: var(--acc); }
+
+/* Menu « UE » : les UE sont trop nombreuses pour une barre d'une ligne, elles
+   vivent dans un petit volet flottant plutôt que sur une deuxième ligne. */
+.filter-pop { position: relative; }
+.filter-pop > summary {
+  display: flex; align-items: center; gap: .25rem;
+  height: 1.9rem; padding: 0 .5rem;
+  font-size: .8rem; font-weight: 600; color: var(--ink-soft);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  cursor: pointer; list-style: none; white-space: nowrap;
+}
+.filter-pop > summary::-webkit-details-marker { display: none; }
+.filter-pop > summary::after { content: '▾'; font-size: .7rem; color: var(--muted); }
+.filter-pop.has-selection > summary { border-color: var(--acc); color: var(--acc); }
+.filter-pop-count {
+  font-size: .68rem; font-weight: 700; line-height: 1;
+  color: #fff; background: var(--acc);
+  border-radius: 999px; padding: .12rem .35rem;
+}
+.filter-pop-count[hidden] { display: none; }
+.filter-pop-body {
+  position: absolute; top: calc(100% + .3rem); left: 0; z-index: 5;
+  min-width: 16rem; max-width: min(30rem, 90vw);
+  max-height: 50vh; overflow-y: auto;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(0,0,0,.14));
+}
+/* Sur téléphone la barre cesse d'être collante : trois lignes figées en haut
+   d'un écran court coûteraient plus qu'elles ne rendent. Les menus se serrent
+   à deux par ligne au lieu d'une chacun. */
+@media (max-width: 700px) {
+  .design-bar { position: static; gap: .35rem; }
+  .design-bar select { flex: 1 1 8rem; max-width: none; }
+  .design-bar input[type="search"] { flex: 1 1 7rem; max-width: none; }
+}
+
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
 .compact-filter-panel { padding: var(--sp-3) var(--sp-4); }
 .field-block { display: flex; flex-direction: column; gap: .35rem; }
@@ -795,13 +870,28 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .status-reportee { background: var(--amber-soft); color: #7a5b16; }
 .status-annulee { background: var(--danger-soft); color: var(--danger); }
 
-.card-actions {
-  display: flex; flex-wrap: wrap; gap: .4rem;
-  margin: .6rem 0 0; padding-top: .55rem;
-  border-top: 1px dashed var(--line-strong);
+/* Lot C [11] — la ligne de boutons en pied de carte (.card-actions) a disparu :
+   « Modifier » est devenu le clic sur le corps de la carte, et ce qui restait
+   (export + création) a rejoint la ligne d'informations, à droite, juste sous
+   le compteur du sommaire. Une ligne entière de gagnée par carte. */
+.entity-headline {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3); flex-wrap: wrap;
 }
-.card-actions .spacer-grow { flex: 1; }
-.action-separator { width: 1px; align-self: stretch; background: var(--line-strong); margin: 0 .2rem; }
+.entity-headline .meta-line { margin: 0; flex: 1 1 12rem; min-width: 0; }
+.entity-actions { display: flex; align-items: center; gap: .3rem; margin-left: auto; }
+
+/* Le corps de carte EST le bouton « Modifier ». On l'annonce discrètement au
+   survol — sans quoi rien ne dit qu'il est cliquable — mais les zones
+   imbriquées (séquences, séances) gardent leur curseur normal : ce n'est pas
+   l'UE qu'on y ouvre. */
+.entity-body[data-edit-ue], .entity-body[data-edit-sequence] { cursor: pointer; }
+.entity-body[data-edit-ue]:hover, .entity-body[data-edit-sequence]:hover {
+  background: color-mix(in srgb, var(--ue-color, var(--acc)) 5%, transparent);
+}
+.entity-body:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+.entity-body [data-noedit], .entity-body .entity-actions { cursor: auto; }
+.entity-body [data-noedit] .session-card { cursor: pointer; }
 
 .nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
@@ -1876,7 +1966,8 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-search input { border: 0; background: transparent; outline: 0; width: 100%; font: inherit; font-size: .8rem; color: var(--ink); }
 .refmod-actions { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; }
 /* Lot 6 — même intention que .refmod-actions, pour la Conception pédagogique. */
-.tree-toolbar { display: flex; gap: var(--sp-1); margin: 0 0 var(--sp-2); flex-wrap: wrap; }
+/* .tree-toolbar (« Tout déplier / Tout replier ») a rejoint la barre collante
+   au lot C [11] : elle ne coûte plus une ligne à elle seule. */
 .refmod-count { font-size: .8rem; color: var(--muted); padding: 0 .35rem; min-width: 5ch; }
 .refmod-panel { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
 .refmod-content { margin-top: 0; }

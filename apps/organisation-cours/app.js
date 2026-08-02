@@ -123,7 +123,10 @@ let ganttDensity = 'compact';
 let weekBacklogScope = 'week';
 let weekBacklogUeFilter = 'Tous';
 let designTeacherFilter = 'Tous';
-let designHiddenUeIds = [];
+/* Lot C [10] — « paramétrage de base = rien de coché ». On garde donc la liste
+   des UE CHOISIES (et non plus celle des UE masquées) : vide au démarrage, ce
+   qui affiche tout. Cocher une UE devient un geste d'affinage volontaire. */
+let designSelectedUeIds = [];
 let selectedReferenceCode = 'C4.2';
 let selectedReferenceModule = 'm4';
 let rubanTeacher = 'Tous';
@@ -1212,7 +1215,6 @@ function hydrateSelectors() {
   const promoOptions = state.promotions.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
   const promoOptionsWithAll = `<option value="Tous">Toutes</option>${promoOptions}`;
   const semesterOptions = SEMESTERS.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('');
-  const semesterOptionsWithAll = `<option value="Tous">Tous</option>${semesterOptions}`;
   const weekOptions = state.weeks.map(w => `<option value="${escapeAttr(w.id)}">${escapeHtml(w.label)} · ${escapeHtml(w.dateRange)}</option>`).join('');
   // Lot T(b) — menu « Semaine » de la modale séance : n° seul (S37, S38…) sans les dates.
   const weekOptionsShort = state.weeks.map(w => `<option value="${escapeAttr(w.id)}">${escapeHtml(w.label)}</option>`).join('');
@@ -1222,8 +1224,10 @@ function hydrateSelectors() {
   setOptions('#ueStartWeek', `<option value="">À préciser</option>${weekOptions}`, $('#ueStartWeek')?.value || '');
   setOptions('#ueEndWeek', `<option value="">À préciser</option>${weekOptions}`, $('#ueEndWeek')?.value || '');
 
-  setOptions('#designPromotionFilter', promoOptionsWithAll, designPromotionFilter);
-  setOptions('#designSemesterFilter', semesterOptionsWithAll, designSemesterFilter);
+  // Lot C [11] — dans la barre de la Conception, les menus n'ont plus
+  // d'étiquette à côté d'eux : leur option « tout » doit donc se suffire.
+  setOptions('#designPromotionFilter', `<option value="Tous">Toutes promotions</option>${promoOptions}`, designPromotionFilter);
+  setOptions('#designSemesterFilter', `<option value="Tous">Tous semestres</option>${semesterOptions}`, designSemesterFilter);
   refreshTeacherFilters();
   setOptions('#semesterPromotionFilter', promoOptions, semesterPromotionFilter);
   setOptions('#semesterFilter', semesterOptions, semesterFilter);
@@ -1313,7 +1317,9 @@ function allTeachers() {
 }
 
 function refreshTeacherFilters() {
-  const options = ['<option value="Tous">Tous les contenus</option>'].concat(allTeachers().map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`)).join('');
+  // Lot C [14] — « Enseignant / intervenant » simplifié en « Enseignant » :
+  // le libellé vit maintenant dans l'option « tout », faute d'étiquette visible.
+  const options = ['<option value="Tous">Tous enseignants</option>'].concat(allTeachers().map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`)).join('');
   setOptions('#designTeacherFilter', options, designTeacherFilter);
   if (!$('#designTeacherFilter') || ![...$('#designTeacherFilter').options].some(o => o.value === designTeacherFilter)) designTeacherFilter = 'Tous';
 }
@@ -1944,9 +1950,9 @@ function renderDesign() {
   });
 
   renderDesignUeChoices(eligibleUes);
-  const hidden = new Set(designHiddenUeIds);
-  const ues = eligibleUes.filter(ue => !hidden.has(ue.id));
-  updateDesignFilterSummary(ues.length);
+  const choisies = new Set(designSelectedUeIds);
+  const ues = choisies.size ? eligibleUes.filter(ue => choisies.has(ue.id)) : eligibleUes;
+  updateDesignUeCount();
 
   const byPromotion = state.promotions.map(promo => ({ promo, ues: ues.filter(ue => ue.promotion === promo) })).filter(group => group.ues.length);
   const tree = $('#ueTree');
@@ -1957,38 +1963,37 @@ function renderDesign() {
   restoreOpenKeys(tree, openKeys);
 }
 
-/* Lot 8 (Q7) — le bloc de filtres de la Conception occupait ~178px sur
-   ordinateur et ~490px sur téléphone en permanence, même sans filtre posé.
-   Replié derrière un résumé cliquable ; réouverture automatique dès qu'un
-   filtre s'écarte de son défaut (jamais de fermeture automatique en retour,
-   pour ne pas contredire un choix manuel de l'utilisateur). */
-function updateDesignFilterSummary(visibleUeCount) {
-  const panel = $('#designFiltersPanel');
-  if (!panel) return;
-  const search = ($('#designSearch')?.value || '').trim();
-  const activeCount = [designPromotionFilter !== 'Tous', designSemesterFilter !== 'Tous', designTeacherFilter !== 'Tous', !!search].filter(Boolean).length;
-  const summary = $('#designFilterSummary');
-  if (summary) {
-    const promoLabel = designPromotionFilter === 'Tous' ? 'Toutes promotions' : designPromotionFilter;
-    const semLabel = designSemesterFilter === 'Tous' ? 'Tous semestres' : shortSemester(designSemesterFilter);
-    summary.textContent = `Filtres — ${promoLabel} · ${semLabel} · ${visibleUeCount} UE affichée${visibleUeCount > 1 ? 's' : ''}`;
+/* Lot C [11] — l'encart de filtres dépliable a disparu au profit de la barre
+   collante : il n'y a plus de résumé à écrire, seulement un compteur discret
+   sur le menu « UE » pour signaler qu'un tri y est posé, sans quoi une
+   sélection oubliée resterait invisible une fois le menu refermé. */
+function updateDesignUeCount() {
+  const badge = $('#designUeCount');
+  if (badge) {
+    const n = designSelectedUeIds.length;
+    badge.hidden = !n;
+    badge.textContent = n ? String(n) : '';
+    $('#designUePop')?.classList.toggle('has-selection', !!n);
   }
-  const countEl = $('#designFilterActiveCount');
-  if (countEl) {
-    countEl.hidden = !activeCount;
-    countEl.textContent = activeCount ? `${activeCount} filtre${activeCount > 1 ? 's' : ''} actif${activeCount > 1 ? 's' : ''}` : '';
-  }
-  if (activeCount) panel.open = true; // filet de sécurité : jamais l'inverse
+  // Un menu resté sur autre chose que « tout » se signale (bordure d'accent) :
+  // sans étiquette à côté de lui, c'est le seul indice qu'un tri est en place.
+  [['#designPromotionFilter', designPromotionFilter],
+   ['#designSemesterFilter', designSemesterFilter],
+   ['#designTeacherFilter', designTeacherFilter]].forEach(([sel, valeur]) => {
+    const el = $(sel);
+    if (el) el.toggleAttribute('data-actif', valeur !== 'Tous');
+  });
 }
 
 /* Case à cocher par UE, limitée aux UE déjà éligibles selon Promotion /
    Semestre / Enseignant / Recherche : on affine encore l'affichage sans
-   perdre la sélection faite via les autres filtres. */
+   perdre la sélection faite via les autres filtres. Lot C [10] — cocher
+   RESTREINT à ces UE ; ne rien cocher les affiche toutes. */
 function renderDesignUeChoices(eligibleUes = []) {
   const container = $('#designUeChoices');
   if (!container) return;
-  designHiddenUeIds = designHiddenUeIds.filter(id => eligibleUes.some(ue => ue.id === id));
-  const hidden = new Set(designHiddenUeIds);
+  designSelectedUeIds = designSelectedUeIds.filter(id => eligibleUes.some(ue => ue.id === id));
+  const choisies = new Set(designSelectedUeIds);
   if (!eligibleUes.length) {
     container.innerHTML = '<p class="meta tight">Aucune UE disponible avec ces filtres.</p>';
     return;
@@ -1996,23 +2001,18 @@ function renderDesignUeChoices(eligibleUes = []) {
   container.innerHTML = eligibleUes.map(ue => {
     const color = ueColor(ue.id);
     return `<label class="checkbox-chip ue-choice" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .14)}" title="${escapeAttr(ue.title)}">
-      <input type="checkbox" value="${escapeAttr(ue.id)}" ${hidden.has(ue.id) ? '' : 'checked'}>
+      <input type="checkbox" value="${escapeAttr(ue.id)}" ${choisies.has(ue.id) ? 'checked' : ''}>
       <span>${escapeHtml(compactUeCode(ue.code))}</span>
     </label>`;
   }).join('');
 }
 
-function renderDesignReferenceSummary() {
-  const bySemester = SEMESTERS.map(sem => {
-    const ues = state.ues.filter(ue => ue.semester === sem);
-    const count = ues.reduce((sum, ue) => sum + ueCapacities(ue).length, 0);
-    return `<span class="reference-chip"><strong>${escapeHtml(sem)}</strong> ${ues.length} UE · ${count} capacité(s)</span>`;
-  }).join('');
-  $('#designReferenceSummary').innerHTML = bySemester;
-}
-
 function renderUeCard(ue) {
-  const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
+  // Lot C [12] — les séquences se lisent dans l'ordre du calendrier, la
+  // première en haut, et non plus dans leur ordre de création.
+  const sequences = state.sequences
+    .filter(seq => seq.ueId === ue.id)
+    .sort((a, b) => sequenceSortKey(a).localeCompare(sequenceSortKey(b)));
   const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
   // UE : regroupées par contrainte thématique, sous les séquences.
@@ -2023,7 +2023,7 @@ function renderUeCard(ue) {
   const eilBlock = Object.entries(eilGroups).map(([cid, list]) => {
     const c = findConstraint(cid);
     const ordered = [...list].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-    return `<div class="eil-detail-group"><div class="eil-detail-head"><span class="entity-level-label">EIL</span><strong>${escapeHtml(c ? c.label : 'Semaine thématique')}</strong><button class="small" data-new-eil-session="${escapeAttr(cid)}" data-eil-ue="${escapeAttr(ue.id)}">+ Séance</button></div><div class="session-card-grid">${ordered.map((s, i) => renderSessionCard(s, i + 1)).join('')}</div></div>`;
+    return `<div class="eil-detail-group" data-noedit title=""><div class="eil-detail-head"><span class="entity-level-label">EIL</span><strong>${escapeHtml(c ? c.label : 'Semaine thématique')}</strong><button class="small" data-new-eil-session="${escapeAttr(cid)}" data-eil-ue="${escapeAttr(ue.id)}">+ Séance</button></div><div class="session-card-grid">${ordered.map((s, i) => renderSessionCard(s, i + 1)).join('')}</div></div>`;
   }).join('');
   // Séances rattachées à l'UE mais à AUCUNE séquence (et hors semaine thématique
   // EIL) : sinon elles n'apparaissaient nulle part dans l'arbre de conception.
@@ -2036,7 +2036,7 @@ function renderUeCard(ue) {
   const looseInner = looseSessions.length
     ? looseSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
     : '<p class="loose-empty-hint">Glissez une séance ici pour la détacher de sa séquence.</p>';
-  const looseBlock = `<div class="loose-detail-group${looseSessions.length ? '' : ' loose-empty'}" data-loose-drop="${escapeAttr(ue.id)}"><div class="loose-detail-head"><span class="entity-level-label">Sans séquence</span><strong>Séances rattachées directement à l’UE</strong><button class="small" data-new-session-ue="${escapeAttr(ue.id)}">+ Séance</button></div><div class="session-card-grid">${looseInner}</div></div>`;
+  const looseBlock = `<div class="loose-detail-group${looseSessions.length ? '' : ' loose-empty'}" data-noedit title="" data-loose-drop="${escapeAttr(ue.id)}"><div class="loose-detail-head"><span class="entity-level-label">Sans séquence</span><strong>Séances rattachées directement à l’UE</strong><button class="small" data-new-session-ue="${escapeAttr(ue.id)}">+ Séance</button></div><div class="session-card-grid">${looseInner}</div></div>`;
   const color = ueColor(ue.id);
   const capCodes = ueCapacities(ue).map(c => c.code).join(', ');
   const metaLine = renderMetaLine([
@@ -2054,16 +2054,16 @@ function renderUeCard(ue) {
       <span class="entity-tag">${escapeHtml(ue.promotion)} · ${escapeHtml(shortSemester(ue.semester))}</span>
       <span class="entity-count">${sequences.length} séq. · ${sessionCount} séance(s)</span>
     </summary>
-    <div class="entity-body">
-      ${metaLine}
-      ${ue.description ? `<p class="entity-description">${escapeHtml(ue.description)}</p>` : ''}
-      <div class="card-actions">
-        <button class="small secondary" data-edit-ue="${escapeAttr(ue.id)}">Modifier</button>
-        <button class="small secondary" data-export-ue="${escapeAttr(ue.id)}">Exporter</button>
-        <span class="action-separator"></span>
-        <button class="small" data-new-sequence-ue="${escapeAttr(ue.id)}">+ Séquence</button>
+    <div class="entity-body" data-edit-ue="${escapeAttr(ue.id)}" tabindex="0" role="button" aria-label="Modifier l’UE ${escapeAttr(ue.code)}" title="Cliquer pour modifier cette UE">
+      <div class="entity-headline">
+        ${metaLine}
+        <div class="entity-actions">
+          <button class="icon-button small" data-export-ue="${escapeAttr(ue.id)}" title="Exporter la progression de cette UE" aria-label="Exporter la progression de l’UE ${escapeAttr(ue.code)}">⎙</button>
+          <button class="small" data-new-sequence-ue="${escapeAttr(ue.id)}">+ Séquence</button>
+        </div>
       </div>
-      <div class="nested-list">${sequences.length ? sequences.map(renderSequenceCard).join('') : '<p class="meta">Aucune séquence créée dans cette UE pour l’instant.</p>'}</div>
+      ${ue.description ? `<p class="entity-description">${escapeHtml(ue.description)}</p>` : ''}
+      <div class="nested-list" data-noedit title="">${sequences.length ? sequences.map(renderSequenceCard).join('') : '<p class="meta">Aucune séquence créée dans cette UE pour l’instant.</p>'}</div>
       ${eilBlock}
       ${looseBlock}
     </div>
@@ -2151,6 +2151,17 @@ function firstWeekIdOfSequence(seq) {
   return (span.find(w => weekNumberOf(w) === Number(n)) || {}).id || '';
 }
 
+/* Lot C [12] — clé de tri CHRONOLOGIQUE d'une séquence : rang de sa première
+   semaine dans le calendrier de l'année (et non le numéro de semaine brut, qui
+   repartirait à 1 en janvier et remonterait janvier avant septembre). Une
+   séquence sans semaine cible n'a pas de place dans le calendrier : elle passe
+   en fin de liste plutôt que de s'intercaler au hasard. */
+function sequenceSortKey(seq) {
+  const weekId = firstWeekIdOfSequence(seq);
+  const index = weekId ? weekChronoIndex(weekId) : 999;
+  return `${String(index).padStart(3, '0')}-${String(seq?.order || '').padStart(8, '0')}-${seq?.title || ''}`;
+}
+
 /* Initiales d'UN seul enseignant (déjà des initiales si saisi ainsi, sinon
    premières lettres de chaque mot du nom). */
 function teacherInitialsOf(token = '') {
@@ -2216,18 +2227,18 @@ function renderSequenceCard(seq) {
       <span class="status-pill ${statusSlug(seq.status)}">${escapeHtml(seq.status || 'Prévue')}</span>
       <span class="entity-count">${fictiveCount} à placer · ${definitiveCount} EDT</span>
     </summary>
-    <div class="entity-body sequence-body">
-      ${metaLine}
+    <div class="entity-body sequence-body" data-edit-sequence="${escapeAttr(seq.id)}" tabindex="0" role="button" aria-label="Modifier la séquence « ${escapeAttr(seq.title)} »" title="Cliquer pour modifier cette séquence">
+      <div class="entity-headline">
+        ${metaLine}
+        <div class="entity-actions">
+          <button class="icon-button small" data-export-sequence="${escapeAttr(seq.id)}" title="Exporter cette séquence" aria-label="Exporter la séquence « ${escapeAttr(seq.title)} »">⎙</button>
+          <button class="small" data-new-session-sequence="${escapeAttr(seq.id)}">+ Séance</button>
+        </div>
+      </div>
       ${seq.periodNote ? `<p class="entity-description">${escapeHtml(seq.periodNote)}</p>` : ''}
       ${seq.objectives ? `<p class="entity-description"><strong>Objectifs —</strong> ${escapeHtml(truncate(seq.objectives, 280))}</p>` : ''}
       ${keywords.length ? `<p class="entity-description entity-keywords"><strong>Mots-clés —</strong> ${escapeHtml(keywords.join(', '))}</p>` : ''}
-      <div class="card-actions">
-        <button class="small secondary" data-edit-sequence="${escapeAttr(seq.id)}">Modifier</button>
-        <button class="small secondary" data-export-sequence="${escapeAttr(seq.id)}">Exporter</button>
-        <span class="action-separator"></span>
-        <button class="small" data-new-session-sequence="${escapeAttr(seq.id)}">+ Séance</button>
-      </div>
-      <div class="session-card-grid">
+      <div class="session-card-grid" data-noedit title="">
         ${orderedSessions.length ? orderedSessions.map((s, i) => renderSessionCard(s, i + 1)).join('') : '<p class="meta">Aucune séance rattachée pour l’instant.</p>'}
       </div>
     </div>
@@ -4613,6 +4624,7 @@ function bindEvents() {
   });
   $('#refmodExpand')?.addEventListener('click', refmodExpandAll);
   $('#refmodCollapse')?.addEventListener('click', refmodCollapseAll);
+  mesurerBandeauCollant();
   // Lot 6 — même geste que dans le Référentiel, pour la Conception pédagogique.
   $('#designExpandAll')?.addEventListener('click', () => { $('#ueTree')?.querySelectorAll('details').forEach(d => { d.open = true; }); });
   $('#designCollapseAll')?.addEventListener('click', () => { $('#ueTree')?.querySelectorAll('details').forEach(d => { d.open = false; }); });
@@ -4825,16 +4837,14 @@ function bindEvents() {
     const checkbox = event.target.closest('input[type="checkbox"]');
     if (!checkbox) return;
     const id = checkbox.value;
-    designHiddenUeIds = checkbox.checked ? designHiddenUeIds.filter(x => x !== id) : [...designHiddenUeIds, id];
+    designSelectedUeIds = checkbox.checked ? [...designSelectedUeIds, id] : designSelectedUeIds.filter(x => x !== id);
     renderDesign();
   });
-  $('#designResetFilters')?.addEventListener('click', () => {
-    designPromotionFilter = 'Tous'; designSemesterFilter = 'Tous'; designTeacherFilter = 'Tous'; designHiddenUeIds = [];
-    $('#designPromotionFilter').value = 'Tous';
-    $('#designSemesterFilter').value = 'Tous';
-    if ($('#designTeacherFilter')) $('#designTeacherFilter').value = 'Tous';
-    $('#designSearch').value = '';
-    renderDesign();
+  /* Le menu « UE » est un <details> : sans cela il resterait ouvert après le
+     choix, en recouvrant l'arbre qu'on vient justement de filtrer. */
+  document.addEventListener('click', (event) => {
+    const pop = $('#designUePop');
+    if (pop?.open && !pop.contains(event.target)) pop.open = false;
   });
   $('#semesterPromotionFilter')?.addEventListener('change', e => { semesterPromotionFilter = e.target.value; renderSemester(); });
   $('#semesterFilter')?.addEventListener('change', e => { semesterFilter = e.target.value; renderSemester(); });
@@ -4893,31 +4903,45 @@ function bindEvents() {
       carte.click();
     });
   });
+  /* Lot C [11] — le bouton « Modifier » a disparu des UE et des séquences : le
+     corps de la carte est devenu la zone cliquable (la bande sommaire reste
+     réservée au déplier/replier). Comme les cartes s'emboîtent (séance dans
+     séquence dans UE), on ne teste plus les attributs dans un ordre figé : on
+     cherche l'ancêtre le PLUS PROCHE, si bien qu'une séance ouvre sa séance et
+     pas l'UE qui la contient. `data-noedit` marque les zones neutres (listes
+     imbriquées, grilles de séances) où un clic ne doit rien ouvrir. */
+  const CIBLES_ARBRE = '[data-noedit],[data-edit-session],[data-edit-sequence],[data-edit-ue],[data-new-sequence-ue],[data-new-session-ue],[data-new-session-sequence],[data-new-eil-session],[data-export-ue],[data-export-sequence]';
   $('#ueTree').addEventListener('click', (event) => {
-    const editUe = event.target.closest('[data-edit-ue]');
-    if (editUe) return openUeModal(findUe(editUe.dataset.editUe));
-    const newSeq = event.target.closest('[data-new-sequence-ue]');
-    if (newSeq) return openSequenceModal(null, { ueId: newSeq.dataset.newSequenceUe });
-    const newSessionUe = event.target.closest('[data-new-session-ue]');
-    if (newSessionUe) return openSessionModal(null, { ueId: newSessionUe.dataset.newSessionUe, placementStatus: 'fictif' });
-    const exportUe = event.target.closest('[data-export-ue]');
-    if (exportUe) return exportUeProgressionPrint(findUe(exportUe.dataset.exportUe));
-    const exportSeq = event.target.closest('[data-export-sequence]');
-    if (exportSeq) return exportSequencePrint(findSequence(exportSeq.dataset.exportSequence));
-    const editSession = event.target.closest('[data-edit-session]');
-    if (editSession) return openSessionModal(findSession(editSession.dataset.editSession));
-    const editSeq = event.target.closest('[data-edit-sequence]');
-    if (editSeq) return openSequenceModal(findSequence(editSeq.dataset.editSequence));
-    const newSessionSeq = event.target.closest('[data-new-session-sequence]');
-    if (newSessionSeq) {
-      const seq = findSequence(newSessionSeq.dataset.newSessionSequence);
+    const cible = event.target.closest(CIBLES_ARBRE);
+    if (!cible) return;
+    const d = cible.dataset;
+    if (d.exportUe) return exportUeProgressionPrint(findUe(d.exportUe));
+    if (d.exportSequence) return exportSequencePrint(findSequence(d.exportSequence));
+    if (d.newSequenceUe) return openSequenceModal(null, { ueId: d.newSequenceUe });
+    if (d.newSessionUe) return openSessionModal(null, { ueId: d.newSessionUe, placementStatus: 'fictif' });
+    if (d.newSessionSequence) {
+      const seq = findSequence(d.newSessionSequence);
       return openSessionModal(null, { sequenceId: seq.id, ueId: seq.ueId, placementStatus: 'fictif' });
     }
-    const newEilSession = event.target.closest('[data-new-eil-session]');
-    if (newEilSession) {
-      const c = findConstraint(newEilSession.dataset.newEilSession);
-      return openSessionModal(null, { constraintId: newEilSession.dataset.newEilSession, ueId: newEilSession.dataset.eilUe, promotion: (c?.promotions || [])[0] || '', placementStatus: 'fictif' });
+    if (d.newEilSession) {
+      const c = findConstraint(d.newEilSession);
+      return openSessionModal(null, { constraintId: d.newEilSession, ueId: d.eilUe, promotion: (c?.promotions || [])[0] || '', placementStatus: 'fictif' });
     }
+    if (d.editSession) return openSessionModal(findSession(d.editSession));
+    if (d.editSequence) return openSequenceModal(findSequence(d.editSequence));
+    if (d.editUe) return openUeModal(findUe(d.editUe));
+  });
+
+  /* Le clavier suit le même chemin que la souris : le corps de carte est
+     focusable, Entrée ou Espace l'ouvre. On n'intercepte que si le focus est
+     SUR le corps lui-même — sinon on volerait la touche Espace à un bouton ou
+     à un champ situé à l'intérieur. */
+  $('#ueTree').addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const corps = event.target.closest?.('.entity-body[data-edit-ue], .entity-body[data-edit-sequence]');
+    if (!corps || corps !== event.target) return;
+    event.preventDefault();
+    corps.click();
   });
 
   // Conception — glisser une séance vers une séquence (rattachement) ou vers le
@@ -6231,6 +6255,22 @@ function formatDateFr(value) {
 function escapeHtml(value) { return String(value ?? '').replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function escapeAttr(value) { return escapeHtml(value).replace(/'/g, '&#39;'); }
 function truncate(value, max) { const text = String(value || ''); return text.length > max ? text.slice(0, max - 1) + '…' : text; }
+
+/* Lot C [11] — la barre de la Conception se colle SOUS le bandeau + les
+   onglets. Cette hauteur n'est pas constante : les onglets passent sur deux
+   lignes dès que la fenêtre rétrécit. On la mesure donc au lieu de la coder en
+   dur, et on la publie dans --hauteur-collante, que le CSS consomme. */
+function mesurerBandeauCollant() {
+  const entete = document.querySelector('.app-sticky-header');
+  if (!entete) return;
+  const appliquer = () => {
+    const h = Math.round(entete.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty('--hauteur-collante', `${h}px`);
+  };
+  appliquer();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(appliquer).observe(entete);
+  else window.addEventListener('resize', appliquer);
+}
 
 // Démarrage piloté depuis js/auth.js : l'app ne se lance qu'après connexion
 // (compte actif). bindEvents() ne doit s'exécuter qu'une fois par page — une
