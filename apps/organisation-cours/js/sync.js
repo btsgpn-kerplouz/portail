@@ -464,8 +464,15 @@ async function synchroniserEnseignants(s, table, colonne, snap, entites, erreurs
       if (t.aAjouter.length) {
         // Un INSERT refusé par la RLS (with check) lève toujours une erreur
         // (contrairement à UPDATE/DELETE, qui filtrent silencieusement) :
-        // pas de vérification supplémentaire nécessaire ici.
-        const { error } = await s.from(table).insert(t.aAjouter.map((eid) => ({ [colonne]: t.id, enseignant_id: eid })));
+        // pas de vérification supplémentaire nécessaire ici. `upsert` avec
+        // `ignoreDuplicates` évite le "duplicate key" quand un autre compte
+        // a déjà inséré la même paire entre le chargement du snapshot local
+        // et cet appel (deux comptes ouverts en même temps).
+        const { error } = await s.from(table)
+          .upsert(t.aAjouter.map((eid) => ({ [colonne]: t.id, enseignant_id: eid })), {
+            onConflict: `${colonne},enseignant_id`,
+            ignoreDuplicates: true,
+          });
         if (error) { erreurs.push(`${table} #${t.id} : ${error.message}`); return; }
       }
       if (t.aRetirer.length) {
