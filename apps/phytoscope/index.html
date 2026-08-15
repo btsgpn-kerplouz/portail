@@ -472,7 +472,7 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .psFacetCount{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
 
 .psLibList{flex:1 1 auto;min-height:160px;max-height:520px;overflow:auto}
-.psLibHead{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:9px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label)}
+.psLibHead{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:9px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label);position:sticky;top:0;z-index:2}
 .psLibHead .num{text-align:right}
 .psLibSortBtn{all:unset;display:block;width:100%;box-sizing:border-box;cursor:pointer;color:inherit}
 .psLibSortBtn:hover{color:var(--ink)}
@@ -661,6 +661,12 @@ body.bbHelpOpen #bbHelpModal{display:flex;flex-direction:column;position:fixed;t
 .psEntryBody{display:flex;align-items:flex-start;gap:20px}
 .psEntrySide{width:340px;flex:0 0 auto;background:var(--panel);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:12px}
 .psEntrySide .field{margin-bottom:0}
+.psGpsRow{display:flex;gap:6px}
+.psGpsRow input{flex:1;min-width:0}
+.psGpsBtn{flex:0 0 auto;width:38px;padding:0;border:1px solid var(--line);background:var(--panel);cursor:pointer;color:var(--label);display:inline-flex;align-items:center;justify-content:center;box-shadow:none}
+.psGpsBtn svg{flex:0 0 auto}
+.psGpsBtn:hover{border-color:var(--brand);color:var(--brand);transform:none;box-shadow:none}
+.psGpsBtn:disabled{opacity:.5;cursor:wait}
 .psEntryMetaLabel{font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--label)}
 .psEntrySheetHead{display:none}
 .psEntrySideActions{display:flex;gap:8px;margin-top:6px}
@@ -989,6 +995,7 @@ body.bbHelpOpen #bbHelpModal{display:flex;flex-direction:column;position:fixed;t
         <div class="field"><label>Code projet</label><input id="relProjet" placeholder="Ex. TP terrain mars 2026"></div>
         <div class="field"><label>Site</label><input id="relSite" placeholder="Ex. Vallon de Kerloc'h, parcelle A3"></div>
         <div class="field"><label>Localisation (Commune)</label><input id="relLocation" placeholder="Commune, coordonnées, précision géographique"></div>
+        <div class="field"><label>Coordonnées GPS</label><div class="psGpsRow"><input id="relCoords" placeholder="Ex. 47.7412, -3.1988"><button type="button" id="relCoordsGps" class="psGpsBtn" title="Utiliser ma position" aria-label="Utiliser ma position GPS"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-7.5 7-12a7 7 0 0 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></button></div></div>
         <div class="field"><label>Date</label><input id="relDate" type="date"></div>
         <div class="field"><label>Surface</label><input id="relArea" placeholder="m²"></div>
         <div class="field"><label>Observateur</label><input id="relObserver" placeholder="Nom"></div>
@@ -1346,7 +1353,7 @@ function norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replac
 TAXA.forEach(t=>{t.nn=norm(t.n); t.ns=norm(t.s); t.q=(t.nn+" "+t.ns).trim();});
 function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)}
 function today(){return new Date().toISOString().slice(0,10)}
-function blankReleve(name="Nouveau relevé"){const now=new Date().toISOString();return {id:uid(),name,date:today(),observer:"",site:"",location:"",area:"",notes:"",codeProjet:"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()}}
+function blankReleve(name="Nouveau relevé"){const now=new Date().toISOString();return {id:uid(),name,date:today(),observer:"",site:"",location:"",coords:"",area:"",notes:"",codeProjet:"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()}}
 let state = loadState();
 let selectedTaxon = null;
 let syncState = loadSyncState();
@@ -1446,7 +1453,9 @@ let lastSavedAt=Date.now();
 function save(){state=normalizeAppStateForSync(state); localStorage.setItem(STORE_KEY, JSON.stringify(state)); markUnsynced(); lastSavedAt=Date.now(); updateSavedIndicator(); if(typeof window.__supaOnLocalSave==="function")window.__supaOnLocalSave();}
 function updateSavedIndicator(){const el=document.getElementById("entrySavedAt"); if(!el)return; const s=Math.max(0,Math.round((Date.now()-lastSavedAt)/1000)); el.textContent = s<2?"enregistré à l’instant":s<60?`enregistré il y a ${s} s`:`enregistré il y a ${Math.round(s/60)} min`;}
 setInterval(updateSavedIndicator,1000);
-function current(){let r=state.releves.find(x=>x.id===state.selectedId); if(!r){r=state.releves[0]||blankReleve("Relevé 1"); if(!state.releves.length)state.releves.push(r); state.selectedId=r.id;} return r;}
+let draftReleve=null;
+function current(){if(draftReleve && draftReleve.id===state.selectedId)return draftReleve; let r=state.releves.find(x=>x.id===state.selectedId); if(!r){r=state.releves[0]||blankReleve("Relevé 1"); if(!state.releves.length)state.releves.push(r); state.selectedId=r.id;} return r;}
+function promoteDraftIfCurrent(){if(draftReleve && draftReleve.id===state.selectedId){state.releves.push(draftReleve); draftReleve=null; return true;} return false;}
 function esc(s){return (s??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
 function fmt(x,d=2){return x==null||Number.isNaN(x)?"—":Number(x).toLocaleString("fr-FR",{maximumFractionDigits:d,minimumFractionDigits:0});}
 function pct(row){return row.mode==="pct"?Math.max(0,Math.min(100,parseFloat(row.cover)||0)):(BB[row.cover]??0);}
@@ -1815,7 +1824,7 @@ function legendFor(groups){return groups.map(grp=>`<span class="key"><span class
 function tipAttr(txt){return `class="tipPoint" tabindex="0" data-tip="${esc(String(txt||"").replace(/\s+/g," "))}"`;}
 
 function setEntryTitle(r){const el=document.getElementById("entryTitle"); if(!el)return; const nm=(r&&r.name&&r.name.trim())?r.name.trim():"Relevé sans nom"; el.textContent=r?`${releveCode(r)} · ${nm}`:nm;}
-function renderMeta(){const r=current(); relName.value=r.name||""; relDate.value=r.date||""; relObserver.value=r.observer||""; if(window.relSite)relSite.value=r.site||""; relLocation.value=r.location||""; relArea.value=r.area||""; relNotes.value=r.notes||""; if(window.relProjet)relProjet.value=r.codeProjet||""; setEntryTitle(r); renderEntryMobileMeta(r);}
+function renderMeta(){const r=current(); relName.value=r.name||""; relDate.value=r.date||""; relObserver.value=r.observer||""; if(window.relSite)relSite.value=r.site||""; relLocation.value=r.location||""; if(window.relCoords)relCoords.value=r.coords||""; relArea.value=r.area||""; relNotes.value=r.notes||""; if(window.relProjet)relProjet.value=r.codeProjet||""; setEntryTitle(r); renderEntryMobileMeta(r);}
 function renderEntryMobileMeta(r){const el=document.getElementById("entryMobileMetaText"); if(!el)return; const parts=[r.location,r.date,r.area?r.area+" m²":"",r.observer].filter(Boolean); el.textContent=parts.join(" · ")||"Aucune métadonnée renseignée";}
 function previousReleve(){const list=state.releves||[]; const cur=current(); const i=list.findIndex(x=>x.id===cur.id); return i>0?list[i-1]:null;}
 function renderPrevChips(){
@@ -2079,12 +2088,32 @@ function showSuggestions(result,rawQuery){
   box.classList.add("open");
 }
 function selectTaxon(id){selectedTaxon=byId.get(Number(id)); if(!selectedTaxon)return; speciesSearch.value=selectedTaxon.n; if(selectedTaxon.id===-1 && rowStratum)rowStratum.value="Sans végétation"; document.getElementById("selectedTaxon").innerHTML=`Taxon sélectionné : <strong>${sciHtml(selectedTaxon.n)}</strong> <span class="muted">${selectedTaxon.s?sciHtml(selectedTaxon.s):""}</span>`; suggestions.classList.remove("open");}
-function addSelected(){if(!selectedTaxon && norm(speciesSearch.value)==="sol nu")selectedTaxon=byId.get(-1); if(!selectedTaxon){toast("Sélectionner une espèce ou « sol nu » dans la liste de recherche.");return;} const r=current(); const mode=coverMode.value; const cover=mode==="pct"?parseFloat(pctValue.value||0):bbValue.value; const stratum=selectedTaxon.id===-1?"Sans végétation":rowStratum.value; r.rows.push({line_id:uid(),tid:selectedTaxon.id,name:selectedTaxon.n,stratum,mode,cover}); touchReleve(r); selectedTaxon=null; speciesSearch.value=""; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; save(); renderAll();}
+function addSelected(){if(!selectedTaxon && norm(speciesSearch.value)==="sol nu")selectedTaxon=byId.get(-1); if(!selectedTaxon){toast("Sélectionner une espèce ou « sol nu » dans la liste de recherche.");return;} promoteDraftIfCurrent(); const r=current(); const mode=coverMode.value; const cover=mode==="pct"?parseFloat(pctValue.value||0):bbValue.value; const stratum=selectedTaxon.id===-1?"Sans végétation":rowStratum.value; r.rows.push({line_id:uid(),tid:selectedTaxon.id,name:selectedTaxon.n,stratum,mode,cover}); touchReleve(r); selectedTaxon=null; speciesSearch.value=""; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; save(); renderAll();}
 window.removeRow=function(idx){const r=current(); r.rows.splice(idx,1); touchReleve(r); save(); renderAll();}
 window.setRowCover=function(idx,val){const r=current(); const row=r.rows[idx]; if(!row||row.mode!=="bb")return; row.cover=val; touchReleve(r); save(); renderAll();}
-function updateMeta(){const r=current(); r.name=relName.value; r.date=relDate.value; r.observer=relObserver.value; r.site=(window.relSite?relSite.value:""); r.location=relLocation.value; r.area=relArea.value; r.notes=relNotes.value; r.codeProjet=(window.relProjet?relProjet.value:""); touchReleve(r); save(); renderReleveSelect(); renderSummary(); renderCompare(); renderScatter(); renderSelectionControls(); setEntryTitle(r);}
+function updateMeta(){promoteDraftIfCurrent(); const r=current(); r.name=relName.value; r.date=relDate.value; r.observer=relObserver.value; r.site=(window.relSite?relSite.value:""); r.location=relLocation.value; r.coords=(window.relCoords?relCoords.value:""); r.area=relArea.value; r.notes=relNotes.value; r.codeProjet=(window.relProjet?relProjet.value:""); touchReleve(r); save(); renderReleveSelect(); renderSummary(); renderCompare(); renderScatter(); renderSelectionControls(); setEntryTitle(r);}
+function useGpsPosition(){
+  const btn=document.getElementById("relCoordsGps");
+  if(!navigator.geolocation){toast("Géolocalisation non disponible sur cet appareil."); return;}
+  if(btn)btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      if(btn)btn.disabled=false;
+      const lat=pos.coords.latitude.toFixed(4), lon=pos.coords.longitude.toFixed(4);
+      relCoords.value=`${lat}, ${lon}`;
+      updateMeta();
+      toast("Position récupérée.");
+    },
+    err=>{
+      if(btn)btn.disabled=false;
+      const msg=err.code===err.PERMISSION_DENIED?"Géolocalisation refusée — autorise l'accès à la position dans le navigateur.":"Impossible de récupérer la position.";
+      toast(msg);
+    },
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
 function download(filename, text, mime="application/json"){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function rowsCsv(){const lines=[["releve_id","releve_nom","site","code_projet","date","observateur","localisation","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)]]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+function rowsCsv(){const lines=[["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)]]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
 
 
 function safeDate(s){try{return new Date(s).toLocaleString("fr-FR");}catch(e){return s||"—";}}
@@ -2168,7 +2197,7 @@ async function ensureGoogleSheetLinked(createIfMissing=true){
   renderSyncPanel();
   return file.id;
 }
-function sheetRowsReleves(src=state){return [["releve_id","nom","site","code_projet","date","observateur","localisation","surface","notes","nb_lignes","created_at","updated_at","device_id"]].concat((src.releves||[]).map(r=>[r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.notes||"",(r.rows||[]).length,r.created_at||"",r.updated_at||"",r.device_id||""]));}
+function sheetRowsReleves(src=state){return [["releve_id","nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","notes","nb_lignes","created_at","updated_at","device_id"]].concat((src.releves||[]).map(r=>[r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.coords||"",r.area||"",r.notes||"",(r.rows||[]).length,r.created_at||"",r.updated_at||"",r.device_id||""]));}
 function sheetRowsLignes(src=state){const rows=[["ligne_id","releve_id","releve_nom","code_projet","taxon_id","taxon","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule","sol_nu",...GRADIENTS.map(g=>g.label)]]; (src.releves||[]).forEach(r=>(r.rows||[]).forEach((row,i)=>{const t=taxonOf(row)||{n:"",s:"",v:[]}; rows.push([row.line_id||`${r.id}:${i+1}`,r.id,r.name||"",r.codeProjet||"",row.tid??"",t.n||"",t.s||"",row.stratum||"",row.mode||"",row.cover??"",pct(row),row.tid===-1?"oui":"",...GRADIENTS.map((g,j)=>t.v?.[j]??"")]);})); return rows;}
 function sheetRowsSynthese(){const rows=[["releve_id","releve_nom","strate","gradient","code","moyenne_simple","moyenne_ponderee","ecart_type_simple","ecart_type_pondere","nb_taxons_utilises","nb_taxons_sans_indice","recouvrement_utilise"]]; state.releves.forEach(r=>stats(r,"Toutes strates").forEach(x=>rows.push([r.id,r.name||"","Toutes strates",x.g.label,x.g.short,x.mean??"",x.wmean??"",x.sd??"",x.wsd??"",x.n,x.missing,x.sw??""]))); return rows;}
 function sheetRowsParametres(){return [["cle","valeur"],["version_application",APP_VERSION],["source_indices","Baseflor simplifiée"],["mode_synchronisation","fusion_non_destructive_par_releve_id_et_updated_at"],["conversion_i","0.01"],["conversion_r","0.1"],["conversion_+","0.5"],["conversion_1","2.5"],["conversion_2","15"],["conversion_3","37.5"],["conversion_4","62.5"],["conversion_5","87.5"],["exporte_le",new Date().toISOString()]];}
@@ -2349,7 +2378,7 @@ function bind(){
  const homeImportBtn=document.getElementById("homeImportBtn");
  if(homeImportBtn)homeImportBtn.addEventListener("click",()=>toast("Import de relevés : à venir."));
  const homeNewReleveBtn=document.getElementById("homeNewReleveBtn");
- if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); state.releves.push(r); state.selectedId=r.id; state.selectedIds=[r.id]; save();});
+ if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
  const navToggle=document.getElementById("navToggle");
  if(navToggle)navToggle.addEventListener("click",()=>document.body.classList.toggle("navSheetOpen"));
  const navSheetClose=document.getElementById("navSheetClose");
@@ -2391,10 +2420,16 @@ function bind(){
  if(bbHelpModalClose)bbHelpModalClose.addEventListener("click",closeBbHelp);
  document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("bbHelpOpen"))closeBbHelp();});
  releveSelect.addEventListener("change",e=>{state.selectedId=e.target.value; save(); renderAll();});
- newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); state.releves.push(r); state.selectedId=r.id; state.selectedIds=[r.id]; save(); renderAll();});
+ newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
- deleteReleve.addEventListener("click",()=>{if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;} if(confirm("Supprimer le relevé actif ?")){if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(state.selectedId); state.releves=state.releves.filter(r=>r.id!==state.selectedId); state.selectedId=state.releves[0].id; save(); renderAll();}});
- [relName,relDate,relObserver,window.relSite,relLocation,relArea,relNotes,window.relProjet].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
+ deleteReleve.addEventListener("click",()=>{
+   if(draftReleve && draftReleve.id===state.selectedId){draftReleve=null; showView("home"); return;}
+   if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;}
+   if(confirm("Supprimer le relevé actif ?")){if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(state.selectedId); state.releves=state.releves.filter(r=>r.id!==state.selectedId); state.selectedId=state.releves[0].id; save(); renderAll();}
+ });
+ [relName,relDate,relObserver,window.relSite,relLocation,window.relCoords,relArea,relNotes,window.relProjet].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
+ const relCoordsGps=document.getElementById("relCoordsGps");
+ if(relCoordsGps)relCoordsGps.addEventListener("click",useGpsPosition);
  speciesSearch.addEventListener("input",e=>{selectedTaxon=null; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; showSuggestions(searchTaxa(e.target.value),e.target.value);});
  suggestions.addEventListener("click",e=>{const item=e.target.closest(".suggestion"); if(item)selectTaxon(item.dataset.id);});
  document.addEventListener("click",e=>{if(!e.target.closest(".suggestWrap"))suggestions.classList.remove("open")});
