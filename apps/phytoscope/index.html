@@ -149,6 +149,9 @@
    .ti/.tshort qui n'existent plus sur les nouveaux boutons d'onglet. */
 /* Sélecteur Braun-Blanquet segmenté (pilote le select masqué #bbValue) */
 .bbSelectHidden{position:absolute!important;width:1px;height:1px;opacity:0;pointer-events:none;clip:rect(0 0 0 0);overflow:hidden}
+.fileInputHidden{position:absolute!important;width:1px;height:1px;opacity:0;pointer-events:none;clip:rect(0 0 0 0);overflow:hidden}
+.button.secondary{background:#fff;color:var(--brandDark);border-color:#b9cfb7}
+.filePicker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bbSeg{display:inline-flex;gap:4px;flex-wrap:wrap;margin-top:2px}
 .bbSegBtn{min-width:32px;padding:7px 9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:0;font-family:var(--mono);font-size:.85rem;font-weight:600;line-height:1;cursor:pointer;transition:background .12s ease,border-color .12s ease}
 .bbSegBtn:hover{border-color:var(--brand)}
@@ -622,6 +625,9 @@ body.bbHelpOpen #bbHelpOverlay{display:block;position:fixed;inset:0;background:r
 body.bbHelpOpen #bbHelpModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,900px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
 .bbHelpModalGrid{padding:18px;overflow:auto}
 .bbHelpModalGrid .refTableWrap{margin-top:0}
+body.importOpen #importModalOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
+body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,560px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
+.importModalGrid{padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
 .refLightboxHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--linesoft);flex:0 0 auto}
 .refLightboxHead h2{margin:0;font-size:1.02rem;font-family:var(--display);font-weight:600}
 .refLightboxClose{all:unset;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);padding:4px}
@@ -889,6 +895,22 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
   </nav>
   <a class="psNavSheetPortail" href="https://portail-gpn.kerplouz.workers.dev/">‹ Retour au portail</a>
   <div class="psNavSheetIdentityWrap" id="navSheetIdentitySlot"></div>
+</div>
+<div class="refLightboxOverlay noPrint" id="importModalOverlay"></div>
+<div class="refLightbox noPrint importModal" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+  <div class="refLightboxHead">
+    <h2 id="importModalTitle">Importer des relevés</h2>
+    <button type="button" class="refLightboxClose" id="importModalClose" aria-label="Fermer">✕</button>
+  </div>
+  <div class="refLightboxGrid importModalGrid">
+    <p class="muted">Import d’un fichier CSV rempli à partir du gabarit ci-dessous (une ligne par taxon observé). Chaque relevé du fichier est ajouté comme <strong>nouveau relevé</strong> — jamais de fusion avec un relevé existant.</p>
+    <div class="row"><button type="button" class="secondary" id="downloadImportTemplate">Télécharger le gabarit CSV</button></div>
+    <div class="filePicker">
+      <label class="button secondary" for="importCsvReleves">Choisir un fichier CSV…</label>
+      <span class="muted" id="importCsvFileName">Aucun fichier sélectionné</span>
+    </div>
+    <input type="file" id="importCsvReleves" accept=".csv,text/csv" class="fileInputHidden">
+  </div>
 </div>
 <main>
   <section id="home" class="view active homeView">
@@ -1568,6 +1590,8 @@ function renderReferentiels(){
 }
 function openBbHelp(){document.body.classList.add("bbHelpOpen");}
 function closeBbHelp(){document.body.classList.remove("bbHelpOpen");}
+function openImportModal(){document.body.classList.add("importOpen");}
+function closeImportModal(){document.body.classList.remove("importOpen");}
 function openRefLightbox(code){
   const title=document.getElementById("refLightboxTitle"), grid=document.getElementById("refLightboxGrid");
   if(!title||!grid||!BB_TILE_LEVELS[code])return;
@@ -2167,7 +2191,26 @@ function useGpsPosition(){
   );
 }
 function download(filename, text, mime="application/json"){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function rowsCsv(){const lines=[["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)]]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)];
+function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+function downloadImportTemplate(){
+  const pad=()=>GRADIENTS.map(()=>"");
+  const rel1=["REL-EX1","Exemple — schorre moyen","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Schorre moyen","47.680, -3.350","25"];
+  const rel2=["REL-EX2","Exemple — haut schorre","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Haut schorre","47.681, -3.352","16"];
+  const examples=[
+    [...rel1,3109,"Halimione portulacoides (L.) Aellen","","Herbacée","bb","2","",...pad()],
+    [...rel1,"","Puccinellia distans (Jacq.) Parl.","","Herbacée","pct","15","",...pad()],
+    [...rel1,6050,"Salicornia europaea L.","","Herbacée","bb","+","",...pad()],
+    [...rel1,-1,"Sol nu","","Sans végétation","bb","1","",...pad()],
+    [...rel2,786,"Tripolium pannonicum (Jacq.) Dobrocz. subsp. pannonicum","","Herbacée","bb","1","",...pad()],
+    [...rel2,"","Limonium vulgare Mill.","","Herbacée","pct","5","",...pad()],
+  ];
+  const lines=[CSV_LIGNES_HEADERS,...examples];
+  download(`gabarit_import_releves_${new Date().toISOString().slice(0,10)}.csv`, lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n"), "text/csv;charset=utf-8");
+}
+function parseCsvLines(text){const rows=[]; let row=[],cell="",inQuotes=false; const s=text.replace(/^﻿/,""); for(let i=0;i<s.length;i++){const c=s[i]; if(inQuotes){if(c==='"'){if(s[i+1]==='"'){cell+='"'; i++;}else inQuotes=false;}else cell+=c;} else if(c==='"')inQuotes=true; else if(c===";"){row.push(cell); cell="";} else if(c==="\n"||c==="\r"){if(c==="\r"&&s[i+1]==="\n")i++; row.push(cell); rows.push(row); row=[]; cell="";} else cell+=c;} if(cell!==""||row.length){row.push(cell); rows.push(row);} return rows.filter(r=>r.some(c=>c!=="")); }
+function resolveImportTaxon(taxonIdRaw,nomRaw){const tid=parseInt(taxonIdRaw,10); if(!Number.isNaN(tid)&&byId.has(tid))return byId.get(tid); const nom=(nomRaw||"").toString().trim(); if(nom&&byName.has(nom))return byName.get(nom); const n=norm(nom); if(!n)return null; return TAXA.find(t=>t.nn===n)||TAXA.find(t=>t.ns===n)||null;}
+function buildRelevesFromCsvRows(rows){if(!rows.length)return{releves:[],warnings:[],relevesCount:0,lignesCount:0}; const header=rows[0].map(h=>norm(h)); const idx=name=>header.indexOf(norm(name)); const iId=idx("releve_id"),iNom=idx("releve_nom"),iSite=idx("site"),iProjet=idx("code_projet"),iDate=idx("date"),iObs=idx("observateur"),iLoc=idx("localisation"),iCoords=idx("coordonnees_gps"),iSurf=idx("surface"),iTid=idx("taxon_id"),iTaxon=idx("nom_scientifique"),iStrate=idx("strate"),iMode=idx("mode_recouvrement"),iCover=idx("recouvrement_saisi"); const stratesValides=STRATA.filter(s=>s!=="Toutes strates"); const stratesNorm=new Map(stratesValides.map(s=>[norm(s),s])); const groups=new Map(); const order=[]; const warnings=[]; let lignesCount=0; for(let li=1;li<rows.length;li++){const cells=rows[li]; if(!cells||!cells.some(c=>(c||"").toString().trim()!==""))continue; const releveId=(cells[iId]||"").toString().trim(); const releveNom=(cells[iNom]||"").toString().trim(); const key=releveId||releveNom; if(!key){warnings.push({ligne:li+1,motif:"ni releve_id ni releve_nom : ligne ignorée"}); continue;} if(!groups.has(key)){groups.set(key,{meta:{name:releveNom||"Relevé importé",site:(cells[iSite]||"").toString().trim(),codeProjet:(cells[iProjet]||"").toString().trim(),date:(cells[iDate]||"").toString().trim()||today(),observer:(cells[iObs]||"").toString().trim(),location:(cells[iLoc]||"").toString().trim(),coords:(cells[iCoords]||"").toString().trim(),area:(cells[iSurf]||"").toString().trim()},rows:[]}); order.push(key);} const g=groups.get(key); const taxon=resolveImportTaxon(cells[iTid],cells[iTaxon]); if(!taxon){warnings.push({ligne:li+1,motif:`taxon non reconnu : "${(cells[iTaxon]||"").toString().trim()}"`}); continue;} const strateRaw=(cells[iStrate]||"").toString().trim(); const strate=stratesValides.includes(strateRaw)?strateRaw:stratesNorm.get(norm(strateRaw)); if(!strate){warnings.push({ligne:li+1,motif:`strate non reconnue : "${strateRaw}"`}); continue;} const mode=(cells[iMode]||"").toString().trim().toLowerCase(); const coverRaw=(cells[iCover]||"").toString().trim(); let cover; if(mode==="bb"){if(!(coverRaw in BB)){warnings.push({ligne:li+1,motif:`coefficient Braun-Blanquet invalide : "${coverRaw}"`}); continue;} cover=coverRaw;} else if(mode==="pct"){const n=parseFloat(coverRaw.replace(",",".")); if(Number.isNaN(n)){warnings.push({ligne:li+1,motif:`recouvrement % invalide : "${coverRaw}"`}); continue;} cover=Math.max(0,Math.min(100,n));} else {warnings.push({ligne:li+1,motif:`mode_recouvrement invalide (attendu "bb" ou "pct") : "${mode}"`}); continue;} g.rows.push({line_id:uid(),tid:taxon.id,name:taxon.n,stratum:strate,mode,cover}); lignesCount++;} const releves=order.map(key=>{const g=groups.get(key); const r=blankReleve(g.meta.name); Object.assign(r,g.meta); r.rows=g.rows; return r;}).filter(r=>r.rows.length); return{releves,warnings,relevesCount:releves.length,lignesCount};}
 
 
 function safeDate(s){try{return new Date(s).toLocaleString("fr-FR");}catch(e){return s||"—";}}
@@ -2442,7 +2485,7 @@ function bind(){
    save(); renderAll();
  });
  const homeImportBtn=document.getElementById("homeImportBtn");
- if(homeImportBtn)homeImportBtn.addEventListener("click",()=>toast("Import de relevés : à venir."));
+ if(homeImportBtn)homeImportBtn.addEventListener("click",openImportModal);
  const homeNewReleveBtn=document.getElementById("homeNewReleveBtn");
  if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
  const navToggle=document.getElementById("navToggle");
@@ -2485,6 +2528,11 @@ function bind(){
  const bbHelpModalClose=document.getElementById("bbHelpModalClose");
  if(bbHelpModalClose)bbHelpModalClose.addEventListener("click",closeBbHelp);
  document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("bbHelpOpen"))closeBbHelp();});
+ const importModalOverlay=document.getElementById("importModalOverlay");
+ if(importModalOverlay)importModalOverlay.addEventListener("click",closeImportModal);
+ const importModalClose=document.getElementById("importModalClose");
+ if(importModalClose)importModalClose.addEventListener("click",closeImportModal);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("importOpen"))closeImportModal();});
  releveSelect.addEventListener("change",e=>{state.selectedId=e.target.value; save(); renderAll();});
  newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
@@ -2586,6 +2634,10 @@ function bind(){
  if(window.exportCompareXls)exportCompareXls.addEventListener("click",exportCompareXlsFile);
  if(window.exportCompareFods)exportCompareFods.addEventListener("click",exportCompareFodsFile);
  importJson.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; try{const txt=await file.text(); const obj=JSON.parse(txt); if(!obj.releves||!Array.isArray(obj.releves))throw new Error("Format non reconnu"); if(confirm("Remplacer les relevés stockés par le contenu du fichier JSON ?")){state=obj; if(!state.selectedId && state.releves[0])state.selectedId=state.releves[0].id; save(); renderAll();}}catch(err){toast("Import impossible : "+err.message)}});
+ document.getElementById("downloadImportTemplate").addEventListener("click",downloadImportTemplate);
+ const importCsvFileName=document.getElementById("importCsvFileName");
+ function resetImportCsvFileName(){if(importCsvFileName)importCsvFileName.textContent="Aucun fichier sélectionné";}
+ importCsvReleves.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; if(importCsvFileName)importCsvFileName.textContent=file.name; try{const txt=await file.text(); const rows=parseCsvLines(txt); const{releves,warnings,relevesCount,lignesCount}=buildRelevesFromCsvRows(rows); if(!relevesCount){toast("Aucun relevé valide dans ce fichier."+(warnings.length?` (${warnings.length} ligne(s) ignorée(s))`:"")); e.target.value=""; resetImportCsvFileName(); return;} let msg=`Importer ${relevesCount} relevé(s), ${lignesCount} ligne(s) ?`; if(warnings.length){msg+=`\n\n${warnings.length} ligne(s) ignorée(s) :\n`+warnings.slice(0,5).map(w=>`- ligne ${w.ligne} : ${w.motif}`).join("\n")+(warnings.length>5?`\n… et ${warnings.length-5} autre(s)`:"");} if(confirm(msg)){state.releves.push(...releves); save(); renderAll(); toast(`${relevesCount} relevé(s) importé(s).`); closeImportModal();} e.target.value=""; resetImportCsvFileName();}catch(err){toast("Import impossible : "+err.message); e.target.value=""; resetImportCsvFileName();}});
  if(window.saveGoogleClientId)saveGoogleClientId.addEventListener("click",()=>handleGoogleAction("saveClient"));
  if(window.googleSignIn)googleSignIn.addEventListener("click",()=>handleGoogleAction("signin"));
  if(window.googleEnsureSheet)googleEnsureSheet.addEventListener("click",()=>handleGoogleAction("ensure"));
