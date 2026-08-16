@@ -1,47 +1,44 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-18T00:00:00Z",
-  "title": "Design System: btsgpn-kerplouz — Atlas naturaliste",
+  "generatedAt": "2026-08-16T00:00:00Z",
+  "title": "Design System: btsgpn-kerplouz — Papier technique froid",
   "extensions": {
     "colorMeta": {
-      "accent": { "role": "primary", "displayName": "Couleur d'app (--acc)", "canonical": "#2b3a40", "tonalRamp": ["#0f1518", "#16232a", "#20343c", "#2b3a40", "#3f5560", "#5f7d89", "#9db4bc", "#d3dee2"] },
-      "acc-phytoscope": { "role": "primary", "displayName": "Vert phytosociologue", "canonical": "#2e7d4f", "tonalRamp": ["#0f3220", "#16472e", "#1e5d3c", "#276f47", "#2e7d4f", "#4f9a6e", "#86bd9d", "#c9e2d3"] },
-      "acc-vegetations": { "role": "primary", "displayName": "Orange brûlé", "canonical": "#c2662f", "tonalRamp": ["#3f1f0d", "#5c2f14", "#7d3f1b", "#a05226", "#c2662f", "#d5895c", "#e7b593", "#f4dcc9"] },
-      "acc-habitats-gavres": { "role": "primary", "displayName": "Bleu littoral", "canonical": "#0f7aa0", "tonalRamp": ["#062e3d", "#0a4356", "#0d5a76", "#0e6c8b", "#0f7aa0", "#3f9dbd", "#83c3da", "#c6e4ef"] },
-      "acc-habitats-landes": { "role": "primary", "displayName": "Prune de lande", "canonical": "#7d4f83", "tonalRamp": ["#2f1e32", "#432b47", "#5a3a5f", "#6c466f", "#7d4f83", "#9d739f", "#c1a3c3", "#e2d3e3" ] },
-      "acc-organisation": { "role": "primary", "displayName": "Ocre", "canonical": "#8a6d3d", "tonalRamp": ["#332714", "#4a381d", "#614a28", "#75592f", "#8a6d3d", "#a98d63", "#c9b596", "#e6dbc9"] },
-      "house-graphite": { "role": "secondary", "displayName": "Graphite du hub", "canonical": "#2b3a40", "tonalRamp": ["#0f1518", "#16232a", "#20343c", "#2b3a40", "#3f5560", "#5f7d89", "#9db4bc", "#d3dee2"] },
-      "page": { "role": "neutral", "displayName": "Papier froid (fond)", "canonical": "#e2e7e0" },
-      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#f2f5ef" },
-      "panel": { "role": "neutral", "displayName": "Panneau", "canonical": "#fbfcf9" },
-      "ink": { "role": "neutral", "displayName": "Encre", "canonical": "#141d17" },
-      "muted": { "role": "neutral", "displayName": "Estompé", "canonical": "#55605a" },
-      "faint": { "role": "neutral", "displayName": "Ténu", "canonical": "#8a958c" },
-      "line": { "role": "neutral", "displayName": "Filet", "canonical": "#d0d9ce" },
-      "panel-warm": { "role": "neutral", "displayName": "Panneau chaud (cartes, conditionnel par app)", "canonical": "#faf3e6" },
-      "line-warm": { "role": "neutral", "displayName": "Filet chaud (assorti au panneau chaud)", "canonical": "#e8dcc4" },
-      "status-live": { "role": "tertiary", "displayName": "Vert « en ligne »", "canonical": "#2e7d4f" },
-      "status-wip": { "role": "tertiary", "displayName": "Ambre « en chantier »", "canonical": "#a9772a" }
+      "ink": { "role": "primary", "displayName": "Encre", "canonical": "#191b16", "tonalRamp": ["#0a0b08", "#12140f", "#191b16", "#343830", "#565a4e", "#6b6a5e", "#8a958c", "#d8d4c6"] },
+      "acc-phytoscope": { "role": "primary", "displayName": "Vert PhytoScope", "canonical": "#1f6b45", "tonalRamp": ["#0d2c1c", "#164a2f", "#1f6b45", "#2f8a5c", "#4f9a6e", "#86bd9d", "#c9e2d3", "#eaf3ee"] },
+      "acc-vegetations": { "role": "primary", "displayName": "Ocre Végétations", "canonical": "#b5651d", "tonalRamp": ["#3f2308", "#5c330c", "#8a4c15", "#a05719", "#b5651d", "#cc8a4f", "#e2b389", "#f4dcc9"] },
+      "acc-habitats-gavres": { "role": "primary", "displayName": "Sarcelle Habitats-Gâvres", "canonical": "#0b5f7d", "tonalRamp": ["#052430", "#083a4d", "#0a4f66", "#0b5f7d", "#3f8ba3", "#83c3da", "#c6e4ef", "#e6f4f8"] },
+      "acc-habitats-landes": { "role": "primary", "displayName": "Mauve Habitats-Landes", "canonical": "#6f4478", "tonalRamp": ["#2a1a2d", "#3d2841", "#563660", "#6f4478", "#8e6396", "#b192b9", "#d6c1db", "#eee2f0"] },
+      "acc-organisation": { "role": "primary", "displayName": "Bleu Organisation des cours", "canonical": "#23458c", "tonalRamp": ["#0e1c38", "#152b53", "#1c3970", "#23458c", "#4262a6", "#7e94c4", "#b9c6e0", "#e4e9f4"] },
+      "page": { "role": "neutral", "displayName": "Fond papier (page)", "canonical": "#f4f2ec" },
+      "page-chantier": { "role": "neutral", "displayName": "Fond chantier (n'existe pas encore)", "canonical": "#f7f5ee" },
+      "card": { "role": "neutral", "displayName": "Carte", "canonical": "#fffefb" },
+      "neutre-sombre": { "role": "neutral", "displayName": "Neutre sombre (bloc à part, hors couleur d'app)", "canonical": "#343830" },
+      "line": { "role": "neutral", "displayName": "Filet", "canonical": "#d8d4c6" },
+      "line-soft": { "role": "neutral", "displayName": "Filet interne", "canonical": "#ece8db" },
+      "line-chantier": { "role": "neutral", "displayName": "Filet chantier (pointillé)", "canonical": "#c2beac" },
+      "text-2": { "role": "neutral", "displayName": "Texte secondaire", "canonical": "#565a4e" },
+      "text-3": { "role": "neutral", "displayName": "Texte tertiaire", "canonical": "#6b6a5e" },
+      "text-4": { "role": "neutral", "displayName": "Texte ténu / placeholder", "canonical": "#8a958c" },
+      "status-chantier": { "role": "tertiary", "displayName": "Ambre « en chantier »", "canonical": "#8a5f17" },
+      "status-valide": { "role": "tertiary", "displayName": "Vert « validé / cohérent »", "canonical": "#1f7a5c" },
+      "status-invalide": { "role": "tertiary", "displayName": "Brique « non validé / incohérent »", "canonical": "#c0562b" },
+      "status-reserve": { "role": "tertiary", "displayName": "Ambre foncé « incertain / avertissement »", "canonical": "#7a5b16" }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Titre de bandeau, blanc cassé sur l'accent foncé." },
-      "title": { "displayName": "Title", "purpose": "Titres de carte et de section." },
-      "body": { "displayName": "Body", "purpose": "Texte courant, interligne 1.6, 65–75ch." },
-      "label": { "displayName": "Label", "purpose": "Étiquettes de champ (apps de saisie)." },
-      "mono": { "displayName": "Mono", "purpose": "Micro-repères : statuts, chiffres, tags, pastille." }
+      "serif": { "displayName": "Serif (titres)", "purpose": "IBM Plex Serif — titres de bandeau, nom d'app, titre de carte. Absente des apps qui n'en ont pas besoin (organisation-cours)." },
+      "sans": { "displayName": "Sans (interface)", "purpose": "IBM Plex Sans — interface, paragraphes, boutons. La police de tous les jours." },
+      "mono": { "displayName": "Mono (repères)", "purpose": "JetBrains Mono — statuts, chiffres, étiquettes, décomptes. Jamais du texte courant." }
     },
     "shadows": [
-      { "name": "rest-frame", "value": "0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09)", "purpose": "Ombre d'enveloppe très douce sur le cadre au repos." },
-      { "name": "intent-hover", "value": "0 10px 26px rgba(20,30,20,.12)", "purpose": "Levée d'une carte-lien au survol." },
-      { "name": "focus-ring", "value": "0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent)", "purpose": "Halo teinté de l'accent autour d'un champ actif." }
+      { "name": "focus-ring", "value": "0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent)", "purpose": "Seule ombre tolérée dans tout le système : halo de focus clavier, signal d'accessibilité." }
     ],
     "motion": [
-      { "name": "state", "value": "0.12s ease", "purpose": "Transitions d'état des champs et liens." },
-      { "name": "lift", "value": "0.14s ease", "purpose": "Levée des cartes au survol (transform + shadow)." },
+      { "name": "state", "value": "0.12s ease", "purpose": "Transitions d'état des champs et liens (couleur, filet — jamais de lever/ombre)." },
       { "name": "reduced-motion", "value": "transition:none; animation:none", "purpose": "Sous prefers-reduced-motion : tout mouvement neutralisé." }
     ],
     "breakpoints": [
-      { "name": "cards", "value": "15rem", "purpose": "Largeur mini d'une carte outil (grille auto-fill)." }
+      { "name": "cards", "value": "900px", "purpose": "Repli des mises en page à colonnes (sidebar, grille de tuiles) en une colonne." }
     ]
   },
   "components": [
@@ -49,9 +46,9 @@
       "name": "Bouton primaire",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Action principale, à la couleur de l'app. Ici en vert phytosociologue à titre d'exemple.",
+      "description": "Action principale, à la couleur de l'app. Ici en vert PhytoScope à titre d'exemple.",
       "html": "<button class=\"ds-btn-primary\">Ouvrir l'outil</button>",
-      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:.45rem; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.58rem 1rem; border-radius:11px; background:#2e7d4f; color:#fff; border:1px solid #2e7d4f; cursor:pointer; transition:filter .12s ease, transform .12s ease; } .ds-btn-primary:hover { filter:brightness(.93); transform:translateY(-1px); } .ds-btn-primary:focus-visible { outline:2px solid #2e7d4f; outline-offset:2px; }"
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:.45rem; font-family:'IBM Plex Sans',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.6rem 1rem; border-radius:0; background:#1f6b45; color:#fff; border:1px solid #1f6b45; cursor:pointer; transition:filter .12s ease; } .ds-btn-primary:hover { filter:brightness(.9); } .ds-btn-primary:focus-visible { outline:2px solid #1f6b45; outline-offset:2px; }"
     },
     {
       "name": "Bouton fantôme",
@@ -59,76 +56,72 @@
       "refersTo": "button-ghost",
       "description": "Action secondaire : contour de l'accent sur fond blanc.",
       "html": "<button class=\"ds-btn-ghost\">Annuler</button>",
-      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; gap:.45rem; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.58rem 1rem; border-radius:11px; background:#fff; color:#2e7d4f; border:1px solid #2e7d4f; cursor:pointer; transition:background .12s ease; } .ds-btn-ghost:hover { background:#e7ebe3; } .ds-btn-ghost:focus-visible { outline:2px solid #2e7d4f; outline-offset:2px; }"
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; gap:.45rem; font-family:'IBM Plex Sans',system-ui,sans-serif; font-weight:700; font-size:.94rem; padding:.6rem 1rem; border-radius:0; background:#fff; color:#1f6b45; border:1px solid #1f6b45; cursor:pointer; transition:background .12s ease; } .ds-btn-ghost:hover { background:#f4f2ec; } .ds-btn-ghost:focus-visible { outline:2px solid #1f6b45; outline-offset:2px; }"
     },
     {
       "name": "Champ de saisie",
       "kind": "input",
       "refersTo": "input",
-      "description": "Champ des apps de saisie ; focus = halo teinté de l'accent.",
+      "description": "Champ des apps de saisie ; focus = halo teinté de l'accent, seule ombre du système.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Rechercher un relevé…\">",
-      "css": ".ds-input { width:100%; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-size:1rem; padding:.6rem .75rem; min-height:2.6rem; background:#fff; color:#141d17; border:1px solid #d0d9ce; border-radius:11px; transition:border-color .12s ease, box-shadow .12s ease; } .ds-input::placeholder { color:#8a958c; } .ds-input:focus { outline:none; border-color:#2e7d4f; box-shadow:0 0 0 3px color-mix(in srgb, #2e7d4f 22%, transparent); }"
+      "css": ".ds-input { width:100%; font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:1rem; padding:.6rem .75rem; min-height:2.6rem; background:#fff; color:#191b16; border:1px solid #d8d4c6; border-radius:0; transition:border-color .12s ease, box-shadow .12s ease; } .ds-input::placeholder { color:#8a958c; } .ds-input:focus { outline:none; border-color:#1f6b45; box-shadow:0 0 0 3px color-mix(in srgb, #1f6b45 22%, transparent); }"
     },
     {
-      "name": "Carte outil",
+      "name": "Carte",
       "kind": "card",
       "refersTo": "card",
-      "description": "Carte entièrement cliquable du portail : bandeau à l'accent + corps ; se lève au survol.",
-      "html": "<a class=\"ds-tool\" href=\"#\"><div class=\"ds-tool-band\"><h3>Phytoscope</h3><span class=\"ds-tag\">SAISIE</span></div><div class=\"ds-tool-body\"><p>Relevés phytosociologiques, multi-utilisateur.</p><span class=\"ds-go\">Ouvrir ›</span></div></a>",
-      "css": ".ds-tool { display:flex; flex-direction:column; border:1px solid #d0d9ce; border-radius:12px; overflow:hidden; background:#fbfcf9; text-decoration:none; color:inherit; transition:transform .14s ease, box-shadow .14s ease; } .ds-tool:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(20,30,20,.12); } .ds-tool-band { background:#2e7d4f; color:#fff; padding:.6rem .9rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem; } .ds-tool-band h3 { margin:0; font-family:'Atkinson Hyperlegible',system-ui,sans-serif; font-weight:700; font-size:1.04rem; color:#fff; } .ds-tag { font-family:'JetBrains Mono',monospace; font-size:.6rem; text-transform:uppercase; letter-spacing:.07em; opacity:.92; } .ds-tool-body { padding:.85rem .95rem 1rem; } .ds-tool-body p { margin:0 0 1rem; color:#55605a; font-size:.92rem; } .ds-go { display:inline-block; color:#2e7d4f; font-weight:700; transition:transform .12s ease; } .ds-tool:hover .ds-go { transform:translateX(3px); }"
+      "description": "Carte neutre (pas de bandeau coloré) : fond quasi blanc, filet, angle droit, jamais d'ombre.",
+      "html": "<div class=\"ds-card\"><h3>Titre</h3><p>Contenu de la carte.</p></div>",
+      "css": ".ds-card { border:1px solid #d8d4c6; border-radius:0; background:#fffefb; padding:1rem 1.1rem; } .ds-card h3 { margin:0 0 .5rem; font-family:'IBM Plex Serif',Georgia,serif; font-weight:600; font-size:1.04rem; color:#191b16; } .ds-card p { margin:0; color:#565a4e; font-size:.92rem; }"
     },
     {
-      "name": "Chip data",
-      "kind": "chip",
-      "refersTo": "chip",
-      "description": "Porte une donnée compacte en mono ; coins pilule, teinte légère de l'accent.",
-      "html": "<span class=\"ds-chip\">128 relevés</span>",
-      "css": ".ds-chip { font-family:'JetBrains Mono',monospace; font-size:.64rem; letter-spacing:.03em; color:#55605a; background:color-mix(in srgb, #2e7d4f 9%, #fff); border:1px solid color-mix(in srgb, #2e7d4f 22%, #d0d9ce); border-radius:999px; padding:.16rem .5rem; font-variant-numeric:tabular-nums; white-space:nowrap; }"
+      "name": "Tuile outil (portail)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Seul endroit du système où l'accent d'une app occupe un fond plein : tuile « en service » de la grille du portail.",
+      "html": "<a class=\"ds-tool\" href=\"#\"><h3>PhytoScope</h3><span class=\"ds-tag\">SAISIE</span><p>Relevés phytosociologiques, multi-utilisateur.</p><span class=\"ds-go\">Ouvrir →</span></a>",
+      "css": ".ds-tool { display:flex; flex-direction:column; gap:.5rem; border-radius:0; padding:16px 18px; background:#1f6b45; color:#fff; text-decoration:none; transition:filter .12s ease; } .ds-tool:hover { filter:brightness(.95); } .ds-tool h3 { margin:0; font-family:'IBM Plex Serif',Georgia,serif; font-weight:600; font-size:1.3rem; color:#fff; } .ds-tag { font-family:'JetBrains Mono',monospace; font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.66); } .ds-tool p { margin:0; color:rgba(255,255,255,.86); font-size:.94rem; } .ds-go { font-family:'IBM Plex Sans',sans-serif; font-weight:700; background:#f4f2ec; color:#1f6b45; align-self:flex-end; padding:.5rem .85rem; }"
     },
     {
       "name": "Statut",
       "kind": "custom",
       "refersTo": "status",
-      "description": "Pastille d'état sémantique (indépendante de l'accent d'app) : en ligne / en chantier.",
-      "html": "<span class=\"ds-status ds-status-live\">En ligne</span>",
-      "css": ".ds-status { display:inline-flex; align-items:center; gap:.4rem; font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.03em; text-transform:uppercase; color:#55605a; } .ds-status::before { content:''; width:.5rem; height:.5rem; border-radius:50%; background:currentColor; } .ds-status-live { color:#2e7d4f; } .ds-status-wip { color:#a9772a; }"
+      "description": "Pastille d'état sémantique (indépendante de l'accent d'app). « En service » n'a pas de badge dédié.",
+      "html": "<span class=\"ds-status ds-status-chantier\">⌛ En chantier</span>",
+      "css": ".ds-status { display:inline-flex; align-items:center; gap:.35rem; font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; padding:.16rem .5rem; border-radius:0; color:#fff; } .ds-status-chantier { background:#8a5f17; } .ds-status-valide { background:#1f7a5c; } .ds-status-invalide { background:#c0562b; }"
     }
   ],
   "narrative": {
-    "northStar": "La clé de détermination",
-    "overview": "Le système se lit comme une clé de détermination : chaque écran conduit l'utilisateur, pas à pas, vers la bonne réponse. On ne cherche pas à impressionner, on cherche à faire trouver. La grammaire est identique partout ; ce qui change d'un outil à l'autre n'est jamais la structure, seulement une couleur franche et une texture thématique. L'ambiance est celle d'un papier de terrain : fond clair, contrastes francs, lisibilité au soleil. Le sérieux vient de la retenue, pas du vernis.",
+    "northStar": "Le papier technique",
+    "overview": "Le système se lit comme un objet de travail rigoureux — fiche de relevé, carnet de laboratoire — pas comme un atlas illustré. Angles droits, encre franche, aucune décoration qui ne porte pas d'information. La grammaire est identique partout ; ce qui change d'un outil à l'autre n'est jamais la structure, seulement une couleur d'accent posée en usage restreint (filet, bouton, lien), jamais en aplat de bandeau.",
     "keyCharacteristics": [
-      "Cohérence de structure, variation de couleur (une couleur franche par app).",
-      "Papier de terrain : clair forcé, contrastes contrôlés, lisible dehors.",
-      "Inclusion posée en contrainte de conception, pas en option.",
-      "Retenue : la confiance passe par la sobriété, jamais par la décoration.",
-      "Guidage : chaque écran mène à l'action ou à l'information suivante."
+      "Angle droit partout, sans exception au niveau système.",
+      "Aucune ombre, aucune élévation au survol — la profondeur se lit au filet et à l'empilement des fonds.",
+      "Aucun dégradé décoratif, aucune texture de bandeau — le bandeau est un aplat encre.",
+      "Une couleur d'app en filet et en accent d'action, jamais en bandeau plein.",
+      "Trois polices, trois emplois stricts : Serif = titres, Sans = interface, Mono = repères/données comptées."
     ],
     "rules": [
-      { "name": "La règle d'une seule voix", "body": "Une app ne porte qu'une couleur franche ; deux accents concurrents sur un même écran sont interdits.", "section": "colors" },
-      { "name": "La règle Hub ≠ App", "body": "Le portail est graphite + couleurs en légende ; une app est monochrome + sa texture + un retour ‹ Portail.", "section": "colors" },
-      { "name": "La règle du fond froid", "body": "Le fond de PAGE est un neutre froid choisi (#e2e7e0), sans exception ; jamais de crème, beige, sable ou parchemin à cet endroit.", "section": "colors" },
-      { "name": "La règle du panneau chaud", "body": "Exception conditionnée, cartes seulement : si l'accent d'une app est absorbé par le froid commun (même famille de teinte), ses cartes peuvent passer au panneau chaud (#faf3e6/#e8dcc4) — jamais le fond de page, jamais un 2e accent. Cas d'usage : Phytoscope (vert absorbé par le vert-gris ambiant).", "section": "colors" },
-      { "name": "La règle « lisible d'abord »", "body": "Atkinson Hyperlegible est une contrainte d'inclusion, pas un choix esthétique : ne jamais la remplacer par une sans-serif qui réambiguïse I/l/1.", "section": "typography" },
-      { "name": "La règle « à plat au repos »", "body": "Les surfaces sont plates par défaut ; l'ombre est une réponse à un état (survol, focus), pas un signal d'importance.", "section": "elevation" }
+      { "name": "La règle d'une seule voix", "body": "Une app ne porte qu'une couleur franche, posée en usage restreint (filet, bouton, lien) — jamais en aplat de bandeau ou de carte, sauf la tuile « en service » du portail.", "section": "colors" },
+      { "name": "La règle du bandeau neutre", "body": "Le bandeau (hub et apps) est un aplat encre partout ; une app se distingue par un filet de tête fin (~5px) à son accent, pas par un aplat coloré.", "section": "colors" },
+      { "name": "La règle du fond froid", "body": "Le fond de page reste un neutre clair choisi (#f4f2ec), jamais de bascule sombre automatique.", "section": "colors" },
+      { "name": "La règle des trois emplois", "body": "Mono ne sert jamais de texte courant ni de titre ; Serif ne sert jamais à un paragraphe.", "section": "typography" },
+      { "name": "La règle « aucune ombre »", "body": "Absolue : ni carte, ni bouton, ni survol. La seule exception est le halo de focus clavier, signal d'accessibilité.", "section": "elevation" }
     ],
     "dos": [
-      "Do poser exactement une couleur franche par app via --acc, structure identique partout.",
-      "Do garder le fond froid papier (#e2e7e0) et le rendu clair forcé ; la chaleur vient de l'accent.",
-      "Do viser des contrastes francs : texte courant ≥ 4.5:1, placeholders compris.",
-      "Do réserver JetBrains Mono aux micro-repères et Atkinson Hyperlegible à tout le reste.",
-      "Do laisser les surfaces plates au repos ; l'ombre répond au survol/focus.",
-      "Do distinguer le hub (graphite + légende) d'une app (monochrome + texture + retour)."
+      "Do garder l'angle droit sans aucune exception au niveau du système commun.",
+      "Do poser l'accent d'une app en usage restreint (filet, bouton, lien), jamais en aplat de bandeau ou de carte.",
+      "Do garder le bandeau en aplat encre, identique au hub et à toutes les apps.",
+      "Do réserver Mono aux repères/chiffres, Serif aux titres, Sans à tout le reste.",
+      "Do lire la profondeur au filet et à l'empilement des fonds, jamais à l'ombre."
     ],
     "donts": [
-      "Don't verser dans le SaaS/dashboard générique : dégradés violet-bleu, cartes clonées, jargon startup.",
-      "Don't produire un site institutionnel daté : menus surchargés, PDF partout.",
-      "Don't basculer vers le jouet enfantin : sur-couleur, coins trop arrondis, ton ludique.",
-      "Don't faire une page marketing tape-à-l'œil : animations partout, boutons qui crient.",
-      "Don't teinter le fond de PAGE en crème/beige/sable/parchemin ; le panneau de carte peut suivre la règle du panneau chaud si l'accent en a besoin.",
-      "Don't mettre deux accents concurrents, ni teinter le hub avec la couleur d'une app.",
-      "Don't remplacer Atkinson Hyperlegible par une sans-serif qui réambiguïse I/l/1 et O/0.",
-      "Don't ajouter de liseré latéral coloré (border-left/right > 1px) ni de texte en dégradé."
+      "Don't arrondir quoi que ce soit au niveau système.",
+      "Don't ajouter une ombre portée, même discrète, même au survol.",
+      "Don't ajouter de dégradé décoratif ni de texture de bandeau.",
+      "Don't remplir le bandeau d'une app avec sa couleur d'accent.",
+      "Don't mettre deux accents concurrents sur un même écran.",
+      "Don't utiliser Mono pour du texte courant ou Serif pour un paragraphe."
     ]
   }
 }
