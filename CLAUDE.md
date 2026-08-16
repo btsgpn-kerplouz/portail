@@ -18,11 +18,21 @@ skill `impeccable` (toute commande `/impeccable …` les lit d'abord) :
 
 - **`PRODUCT.md`** — le *pourquoi / pour qui* : register (`product`), utilisateurs,
   positionnement, personnalité, anti-références, principes directeurs, accessibilité.
-- **`DESIGN.md`** — le *comment ça se voit* : palette, typographie, composants
-  (décrit `shared/theme.css`). Complété par `.impeccable/design.json`.
+- **`DESIGN.md`** — le *comment ça se voit* : palette, typographie, composants.
+  Complété par `.impeccable/design.json` (sidecar miroir, lu par la skill `impeccable`).
 
-La **source de vérité opérationnelle du CSS** reste **`shared/theme.css`** (charte
-« Atlas naturaliste ») ; `DESIGN.md` la documente, il ne la remplace pas.
+Charte en vigueur : **« papier technique froid »** (angle droit partout, aucune
+ombre, IBM Plex Sans/Serif + JetBrains Mono, fond `#f4f2ec`, bandeau encre plein
+`#191b16`) — décrite dans `DESIGN.md`, qui fait référence pour tout nouvel écran.
+Elle **remplace** l'ancienne charte « Atlas naturaliste » (coins arrondis, ombres,
+Atkinson Hyperlegible, textures canvas), qui n'a plus lieu d'être.
+
+⚠️ **`shared/theme.css` n'est pas (encore) à jour** : il porte toujours l'ancienne
+charte et n'est **pas** la source de vérité opérationnelle malgré son rôle prévu —
+chaque app qui a migré (portail, PhytoScope) garde pour l'instant sa **propre copie
+locale** des jetons « papier technique froid ». Ne pas s'y fier pour un nouvel écran :
+partir de `DESIGN.md` et de la charte déjà codée dans une app migrée. Centraliser
+dans `shared/theme.css` reste une option pour plus tard, pas une décision prise.
 
 ## Décisions d'architecture (actées)
 
@@ -38,12 +48,12 @@ La **source de vérité opérationnelle du CSS** reste **`shared/theme.css`** (c
 
 ## Les 4 applications
 
-| App | Nature | Données | État |
-|---|---|---|---|
-| **organisation-cours** | saisie | à migrer vers Supabase | Historique : serveur Node local + fichiers `data/`. **Ne jamais écraser `data/`.** |
-| **phytoscope** | saisie · multi-utilisateur | Supabase ✓ | **Modèle de référence** (déjà éprouvé). |
-| **vegetations-armoricaines** | consultation seule | aucune | « Végétations du massif armoricain ». **Purement statique** (PWA) : pas de Supabase, pas d'auth. |
-| **identification-habitats** | saisie | Supabase | **En cours**, à bâtir sur le modèle Phytoscope. |
+| App | Nature | Données | État | Charte visuelle |
+|---|---|---|---|---|
+| **organisation-cours** | saisie | à migrer vers Supabase | Historique : serveur Node local + fichiers `data/`. **Ne jamais écraser `data/`.** | Papier technique froid — fondation + 3 écrans faits, 18 restants, rien commité. |
+| **phytoscope** | saisie · multi-utilisateur | Supabase ✓ | **Modèle de référence** (déjà éprouvé). | Papier technique froid — très largement migrée, rien commité. |
+| **vegetations-armoricaines** | consultation seule | aucune | « Végétations du massif armoricain ». **Purement statique** (PWA) : pas de Supabase, pas d'auth. | **Atlas naturaliste (ancienne charte)** — pas encore migrée. À ne pas prendre pour référence visuelle. |
+| **identification-habitats** | saisie | Supabase | **En cours**, à bâtir sur le modèle Phytoscope. | À construire d'emblée en papier technique froid. |
 
 ## Structure du dépôt
 

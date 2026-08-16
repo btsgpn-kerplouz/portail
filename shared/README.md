@@ -1,8 +1,17 @@
 # shared/ — design system commun
 
-Ressources **communes à toutes les apps** (source de vérité de l'identité visuelle).
+> ⚠️ **Périmé.** Ce dossier (`theme.css`, `texture.js`, `fonts/`) porte encore
+> l'ancienne charte **« Atlas naturaliste »**, remplacée par **« papier technique
+> froid »** — voir `DESIGN.md` à la racine, qui fait désormais référence. Les apps
+> déjà migrées (portail, PhytoScope) ne s'appuient **pas** sur ce dossier : chacune
+> garde sa propre copie locale des nouveaux jetons (voir `CLAUDE.md`). Centraliser
+> ici est une option pour plus tard, pas encore fait — ne pas prendre ce fichier
+> pour une référence visuelle actuelle.
 
-- **`theme.css`** — la charte **« Atlas naturaliste »** : couleurs, typographie,
+Ressources **communes à toutes les apps** (rôle prévu : source de vérité de
+l'identité visuelle — pas encore le cas, voir avertissement ci-dessus).
+
+- **`theme.css`** — l'ancienne charte **« Atlas naturaliste »** : couleurs, typographie,
   bandeau, cartes, boutons, champs, statuts. Tokens sémantiques.
 - **`texture.js`** — le moteur de **textures de bandeau** (canvas) : `grille`,
   `scatter`, `ondes`, `relief`, `classification`, `ruban`.

@@ -44,11 +44,11 @@ doit réaffirmer : la fiabilité passe avant l'effet.
 
 Avant tout **clair, accueillant, pédagogique** : on comprend vite, rien
 n'intimide, le sérieux passe par la simplicité plutôt que par la démonstration.
-S'y ajoute une **touche vivante et botanique** — couleur végétale assumée, textures
-d'atlas, un peu de caractère éditorial — qui donne du relief sans jamais primer
-sur l'information. La voix est sobre, précise, en français, de naturaliste de
-terrain. L'émotion visée : **confiance et clarté posée**, pas l'enthousiasme
-tapageur.
+S'y ajoute une **rigueur de papier technique** — angles droits, encre franche, une
+seule couleur d'app posée avec parcimonie — plus proche de la fiche de terrain ou du
+carnet de laboratoire que de l'atlas illustré. La voix est sobre, précise, en
+français, de naturaliste de terrain. L'émotion visée : **confiance et clarté
+posée**, pas l'enthousiasme tapageur.
 
 ## Anti-references
 
@@ -66,11 +66,13 @@ Ce que le portail et ses apps ne doivent jamais devenir :
 ## Design Principles
 
 - **Cohérence de structure, variation de couleur.** Même grammaire partout
-  (typographie, bandeau texturé, cartes, champs) ; chaque app porte SA couleur via
-  `--acc`. Apprendre à lire une app, c'est apprendre à lire les autres.
-- **Hub ≠ App.** Le portail se reconnaît au premier coup d'œil : base neutre
-  graphite, toutes les couleurs en légende. Une app = une seule couleur + sa
-  texture + un retour vers le hub.
+  (typographie, bandeau, cartes, champs) ; chaque app porte SA couleur, posée en
+  usage restreint (filet, action) — jamais en aplat de bandeau. Apprendre à lire une
+  app, c'est apprendre à lire les autres.
+- **Un bandeau commun, une identité au filet.** Hub et apps partagent le même
+  bandeau encre plein ; une app se reconnaît à son filet de tête et à l'accent de ses
+  boutons/liens, pas à un aplat de couleur — sauf la tuile d'une app « en service »
+  sur le portail, seul endroit où l'accent occupe tout un fond.
 - **Lisible par tous, d'abord.** L'inclusion est une contrainte de conception, pas
   une option : glyphes non ambigus, contrastes, lecture au soleil sur mobile.
 - **Le sérieux par la sobriété.** La confiance vient de la retenue et de la
@@ -82,11 +84,11 @@ Ce que le portail et ses apps ne doivent jamais devenir :
 
 Cible **WCAG AA**, avec l'inclusion posée en priorité assumée de la charte :
 
-- Police **Atkinson Hyperlegible** (I/l/1 et O/0 désambiguïsés), interligne 1.6,
-  texte aligné à gauche, chiffres tabulaires — pensé pour les lecteurs
-  dyslexiques et confortable pour tous.
+- Police **IBM Plex Sans** pour l'interface et le corps, texte aligné à gauche,
+  chiffres tabulaires en Mono. Interligne confortable, jamais resserré pour gagner
+  de la place.
 - Contrastes contrôlés ; texte courant ≥ 4.5:1. Rendu **clair forcé** (identité
-  « papier de terrain », pas de bascule sombre automatique).
+  « papier technique », pas de bascule sombre automatique).
 - **Terrain** : lisibilité sur mobile en plein soleil, cibles tactiles
   généreuses.
 - `prefers-reduced-motion` respecté (déjà neutralisé dans `shared/theme.css`).

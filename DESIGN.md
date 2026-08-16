@@ -1,338 +1,262 @@
 ---
-name: btsgpn-kerplouz — Atlas naturaliste
+name: btsgpn-kerplouz — Papier technique froid
 description: Design system commun des outils pédagogiques de terrain (BTS GPN — Kerplouz).
 colors:
-  accent: "#2b3a40"
-  house-graphite: "#2b3a40"
-  acc-phytoscope: "#2e7d4f"
-  acc-vegetations: "#c2662f"
-  acc-habitats-gavres: "#0f7aa0"
-  acc-habitats-landes: "#7d4f83"
+  ink: "#191b16"
+  page: "#f4f2ec"
+  page-chantier: "#f7f5ee"
+  card: "#fffefb"
+  neutre-sombre: "#343830"
+  line: "#d8d4c6"
+  line-soft: "#ece8db"
+  line-chantier: "#c2beac"
+  text-2: "#565a4e"
+  text-3: "#6b6a5e"
+  text-4: "#8a958c"
+  acc-phytoscope: "#1f6b45"
+  acc-vegetations: "#b5651d"
+  acc-habitats-gavres: "#0b5f7d"
+  acc-habitats-landes: "#6f4478"
   acc-organisation: "#23458c"
-  page: "#e2e7e0"
-  surface: "#f2f5ef"
-  panel: "#fbfcf9"
-  ink: "#141d17"
-  muted: "#55605a"
-  faint: "#8a958c"
-  line: "#d0d9ce"
-  line-soft: "#e0e6dd"
-  soft: "#e7ebe3"
-  panel-warm: "#faf3e6"
-  line-warm: "#e8dcc4"
-  status-live: "#2e7d4f"
-  status-wip: "#a9772a"
+  status-chantier: "#8a5f17"
+  status-valide: "#1f7a5c"
+  status-invalide: "#c0562b"
+  status-reserve: "#7a5b16"
 typography:
-  display:
-    fontFamily: "Atkinson Hyperlegible, system-ui, sans-serif"
-    fontSize: "clamp(1.8rem, 4.6vw, 2.7rem)"
-    fontWeight: 700
-    lineHeight: 1.12
-    letterSpacing: "-0.015em"
-  title:
-    fontFamily: "Atkinson Hyperlegible, system-ui, sans-serif"
-    fontSize: "1.04rem"
-    fontWeight: 700
-    lineHeight: 1.12
-    letterSpacing: "-0.015em"
-  body:
-    fontFamily: "Atkinson Hyperlegible, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Atkinson Hyperlegible, system-ui, sans-serif"
-    fontSize: "0.9rem"
-    fontWeight: 700
-    lineHeight: 1.4
-    letterSpacing: "normal"
+  serif:
+    fontFamily: "IBM Plex Serif, Georgia, serif"
+    usage: "Titres (bandeau, nom d'app, titre de carte). Absente des apps qui n'en ont pas besoin (organisation-cours)."
+  sans:
+    fontFamily: "IBM Plex Sans, system-ui, sans-serif"
+    usage: "Interface, paragraphes, boutons. La police de tous les jours."
   mono:
     fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: "0.66rem"
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: "0.03em"
-    fontFeature: "tabular-nums slashed-zero"
+    usage: "Repères ou données comptées uniquement : statuts, chiffres, étiquettes, décomptes. Jamais du texte courant."
 rounded:
-  sm: "11px"
-  card: "12px"
-  md: "16px"
-  pill: "999px"
+  default: "0"
+  exceptions: "aucune au niveau système ; une app peut garder des exceptions étroites et documentées (ex. PhytoScope : puces rondes, case de légende 3px, bande d'écart-type 6px) — jamais une carte, un bouton ou un champ."
 spacing:
-  xs: "0.45rem"
-  sm: "0.9rem"
-  md: "1rem"
-  body: "clamp(1.2rem, 3vw, 1.7rem)"
-  banner: "clamp(1.5rem, 3.6vw, 2.3rem)"
+  tuile: "16px 18px (bureau) · 14px 15px (mobile)"
+  corps: "26px 32px 30px (bureau) · 16px 16px 22px (mobile)"
 components:
   button-primary:
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.acc-*}"
     textColor: "#ffffff"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "0.58rem 1rem"
+    typography: "sans, 700"
+    rounded: "0"
+    padding: "0.6rem 1rem"
   button-ghost:
     backgroundColor: "#ffffff"
-    textColor: "{colors.accent}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "0.58rem 1rem"
+    textColor: "{colors.acc-*}"
+    typography: "sans, 700"
+    rounded: "0"
+    padding: "0.6rem 1rem"
   input:
     backgroundColor: "#ffffff"
     textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.sm}"
+    typography: "sans"
+    rounded: "0"
     padding: "0.6rem 0.75rem"
     height: "2.6rem"
   card:
-    backgroundColor: "{colors.panel}"
-    rounded: "{rounded.card}"
-    padding: "0"
-  tool-band:
-    backgroundColor: "{colors.accent}"
-    textColor: "#ffffff"
-    typography: "{typography.title}"
-    padding: "0.6rem 0.9rem"
-  chip:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.muted}"
-    typography: "{typography.mono}"
-    rounded: "{rounded.pill}"
-    padding: "0.16rem 0.5rem"
+    backgroundColor: "{colors.card}"
+    rounded: "0"
+    border: "1px solid {colors.line}"
+  banner:
+    backgroundColor: "{colors.ink}"
+    textColor: "#f4f2ec"
+    accentTreatment: "filet de tête ~5px dans la couleur de l'app — jamais un aplat"
 ---
 
-# Design System: btsgpn-kerplouz — Atlas naturaliste
+# Design System: btsgpn-kerplouz — Papier technique froid
+
+> Remplace entièrement l'ancienne charte « Atlas naturaliste » (coins arrondis, ombres
+> douces, Atkinson Hyperlegible, textures canvas par bandeau, fond sauge). Ce document
+> décrit désormais le **seul système de référence** pour tout ajout ou modification visuelle.
+> État de la migration app par app : voir le tableau des applications dans `CLAUDE.md`
+> (une app peut ne pas encore être passée sur ce système — ce n'est pas une variante
+> acceptée, c'est une dette à résorber).
 
 ## 1. Overview
 
-**Creative North Star: "La clé de détermination"**
+**Registre : le papier technique**, pas l'atlas illustré. On vise l'objet qu'un
+enseignant ou un élève de terrain reconnaît déjà — fiche de relevé, carnet de
+laboratoire, feuille de calcul imprimée : angles droits, encre franche, aucune
+décoration qui ne porte pas d'information. La rigueur du rendu doit rassurer avant
+même d'être lue.
 
-Le système se lit comme une clé de détermination : chaque écran conduit
-l'utilisateur, pas à pas, vers la bonne réponse. On ne cherche pas à
-impressionner, on cherche à faire trouver. La grammaire est identique partout —
-même bandeau, mêmes cartes, mêmes champs — de sorte qu'apprendre à lire une app,
-c'est apprendre à lire les autres. Ce qui change d'un outil à l'autre n'est jamais
-la structure, seulement **une couleur franche** et **une texture thématique**.
-
-L'ambiance est celle d'un **papier de terrain** : fond clair, jamais de bascule
-sombre automatique, contrastes francs, lisibilité au soleil. Le sérieux vient de
-la retenue, pas du vernis. C'est un outil qui doit inspirer confiance au niveau
-d'une ressource professionnelle (référence CBNB), tenu par des enseignants
-naturalistes, pour des élèves qui doivent **se débrouiller seuls**.
-
-Ce système **rejette** explicitement : le SaaS/dashboard générique (dégradés
-violet-bleu, cartes clonées, jargon startup) ; le site institutionnel daté
-(menus surchargés, PDF partout) ; le jouet enfantin (trop coloré, trop arrondi) ;
-et la page marketing tape-à-l'œil (animations partout, boutons qui crient).
+Ce système **retire** ce que la charte précédente mettait en avant : plus de coins
+adoucis, plus d'ombres, plus de texture de bandeau (canvas), plus de dégradé
+décoratif. Ce qui reste pour distinguer une app d'une autre : **une seule couleur
+d'accent**, posée avec parcimonie (filet, bouton, lien) — jamais en aplat de fond.
 
 **Key Characteristics:**
-- Cohérence de structure, variation de couleur (une couleur franche par app).
-- Papier de terrain : clair forcé, contrastes contrôlés, lisible dehors.
-- Inclusion posée en contrainte de conception, pas en option.
-- Retenue : la confiance passe par la sobriété, jamais par la décoration.
-- Guidage : chaque écran mène à l'action ou à l'information suivante.
+- Angle droit **partout**, sans exception au niveau système.
+- Aucune ombre portée, aucune élévation au survol — la profondeur se lit au filet
+  et à l'empilement des fonds (page → carte), pas à un flou.
+- Aucun dégradé décoratif, aucune texture de bandeau. Le bandeau est un **aplat encre**.
+- Une couleur d'app **en filet et en accent d'action**, jamais en bandeau plein.
+- Trois polices, trois emplois stricts : Serif = titres, Sans = interface, Mono =
+  repères/données comptées.
+- Glyphes-caractères pour les micro-interactions (`⌕ ✕ ▾ ▸ ✓`) plutôt que des icônes
+  dessinées, quand un texte suffit.
 
 ## 2. Colors
 
-Une palette de **neutres froids « papier »** sur laquelle chaque app pose **une
-seule couleur franche**, choisie dans une gamme naturelle et botanique.
+Une base de neutres **froids et encrés**, commune à tout le dépôt, sur laquelle
+chaque app pose **une seule couleur franche** en usage restreint (filet, action),
+jamais en fond dominant.
 
-### Primary
-- **Couleur d'app (`--acc`)** (variable, défaut #2b3a40) : la couleur signature de
-  chaque outil. Elle habille le bandeau (à plat, sous la texture), les boutons,
-  les liens, les bandeaux de carte, l'anneau de focus. **Une app = une seule
-  couleur.** Le roster actuel : Phytoscope vert phytosociologue (#2e7d4f),
-  Végétations orange brûlé (#c2662f), Habitats-Gâvres bleu littoral (#0f7aa0),
-  Habitats-Landes prune de lande (#7d4f83), Organisation bleu d'encre (#23458c).
+### Neutrals
+- **Encre** (`#191b16`) : bandeau plein, filet de section, texte principal.
+- **Fond** (`#f4f2ec`) : fond de page, sert aussi d'« encre claire » sur le bandeau.
+- **Fond chantier** (`#f7f5ee`) : élément qui n'existe pas encore (tuile, état vide).
+- **Carte** (`#fffefb`) : fond des cartes et panneaux, quasi blanc.
+- **Neutre sombre** (`#343830`) : fond d'un bloc à part (ex. bloc « réservé aux
+  enseignants » du portail) — pas une couleur d'app.
+- **Filet** (`#d8d4c6`) / **filet interne** (`#ece8db`) : bordures et séparateurs.
+- **Filet chantier** (`#c2beac`, 1px pointillé) : ce qui n'existe pas encore.
+- **Texte 2/3/4** (`#565a4e` / `#6b6a5e` / `#8a958c`) : hiérarchie de texte secondaire,
+  du paragraphe au placeholder — jamais plus clair que `#8a958c`.
 
-### Secondary
-- **Graphite du hub (`--house`)** (#2b3a40) : le neutre du **portail** uniquement.
-  Il n'appartient à aucune app ; c'est ce qui fait qu'on reconnaît le hub au
-  premier coup d'œil. Sur le portail, toutes les couleurs d'app apparaissent en
-  légende, jamais en aplat dominant.
+### Accent d'app (une couleur, un usage restreint)
+Roster actuel : PhytoScope vert `#1f6b45` · Végétations ocre `#b5651d` ·
+Habitats-Gâvres sarcelle `#0b5f7d` · Habitats-Landes mauve `#6f4478` · Organisation
+des cours bleu `#23458c`. Chaque app garde la liberté de nuances internes
+supplémentaires (ex. couleurs de série de relevés en PhytoScope) tant qu'elles ne
+concurrencent pas l'accent identitaire.
 
-### Tertiary
-- **Vert « en ligne »** (#2e7d4f) et **ambre « en chantier »** (#a9772a) : couleurs
-  **sémantiques** de statut (`.status.live` / `.status.wip`), indépendantes de
-  l'accent de l'app. Elles disent un état, pas une identité.
-
-### Neutral
-- **Page** (#e2e7e0) : fond général, neutre franchement froid (pas de crème).
-- **Surface** (#f2f5ef) : cadres et enveloppes.
-- **Panneau** (#fbfcf9) : fond des cartes, quasi blanc.
-- **Encre** (#141d17) : texte principal, très foncé (contraste ~13:1 sur panneau).
-- **Estompé** (#55605a) : texte secondaire.
-- **Ténu** (#8a958c) : texte tertiaire, placeholders, désactivé.
-- **Filet** (#d0d9ce) / **filet doux** (#e0e6dd) : bordures et séparateurs.
-- **Aplat doux** (#e7ebe3) : fonds discrets (ghost survolé, désactivé).
-- **Panneau chaud** (#faf3e6) / **filet chaud** (#e8dcc4) : variante *conditionnelle*
-  du panneau, réservée aux **cartes** d'une app dont l'accent en a besoin (voir
-  Named Rules ci-dessous). Jamais la valeur par défaut, jamais sur le fond de page.
+### Statuts (sémantiques, indépendants de l'accent d'app)
+- **En chantier** : ambre `#8a5f17` — la seule couleur de statut à s'afficher en plein
+  (badge, filet pointillé). « En service » n'a **pas** de couleur dédiée : encre claire
+  + filet suffisent, éventuellement un préfixe `✓`.
+- **Validé / cohérent** `#1f7a5c` · **Non validé / incohérent** `#c0562b` ·
+  **Incertain / avertissement** `#7a5b16` — vocabulaire commun aux apps de saisie qui
+  en ont besoin (PhytoScope : critère flore, zone humide…).
 
 ### Named Rules
-**La règle d'une seule voix.** Une app ne porte qu'**une** couleur franche.
-Deux accents concurrents sur un même écran sont interdits — la couleur sert à
-identifier l'outil et à guider l'œil, pas à décorer.
+**La règle d'une seule voix.** Une app ne porte qu'**une** couleur franche. Elle
+habille des surfaces **étroites** : filet de tête (~5px), bouton d'action, lien,
+liseré — jamais un bandeau ou une carte en aplat plein, **sauf** la tuile d'une app
+« en service » sur la grille du portail (seul endroit où l'accent occupe tout un fond,
+précisément parce que c'est le repère qui dit « ça, ça s'ouvre »).
 
-**La règle Hub ≠ App.** Le portail est graphite + couleurs en légende ; une app
-est monochrome + sa texture + un retour `‹ Portail`. Ne jamais teinter le hub
-avec la couleur d'une app, ni priver une app de sa couleur.
+**La règle du bandeau neutre.** Le bandeau (hub et apps) est un **aplat encre**
+(`#191b16`) partout. Ce n'est plus la couleur d'app qui distingue une app dans son
+bandeau, mais un **filet de tête** fin (~5px) à son accent — parfois deux couleurs de
+filet dans une même app pour distinguer deux espaces internes (ex. PhytoScope : vert
+en espace pédagogique, brun en espace Admin).
 
-**La règle du fond froid.** Le fond de **page** est un neutre froid choisi
-(#e2e7e0), **sans exception** — c'est ce qui identifie tout le système comme
-« papier de terrain ». Jamais de crème, beige, sable ou parchemin à cet endroit.
-
-**La règle du panneau chaud (exception conditionnée, cartes seulement).**
-Le fond de page ne bouge jamais, mais le fond des **cartes** d'une app peut
-passer d'un panneau froid (#fbfcf9) à un panneau chaud (#faf3e6 / filet
-#e8dcc4) **à une seule condition** : l'accent de l'app est assez proche en
-teinte de la famille froide commune pour s'y faire absorber (contraste plat,
-l'accent ne « sort » plus). Ce n'est **pas** un deuxième accent — aucune
-couleur de marque n'est ajoutée, seul le panneau se réchauffe — donc la règle
-d'une seule voix reste intacte. Premier cas d'usage : **Phytoscope**, dont le
-vert se confondait avec le vert-gris du fond froid commun (`apps/phytoscope/`,
-tokens `--warmpanel`/`--warmline`, voir `shared/theme.css`). Une app dont
-l'accent contraste déjà bien avec le froid (ex. l'orange brûlé de
-Végétations) **n'a aucune raison** d'en avoir besoin — ce n'est pas une option
-esthétique par défaut, seulement un correctif de contraste.
+**La règle du fond froid.** Le fond de page reste un neutre clair choisi (`#f4f2ec`),
+jamais un fond sombre par défaut — pas de bascule sombre automatique.
 
 ## 3. Typography
 
-**Display / Body Font:** Atkinson Hyperlegible (avec fallback system-ui, sans-serif)
-**Label / Mono Font:** JetBrains Mono (avec fallback ui-monospace, monospace)
+**Titres :** IBM Plex Serif (avec fallback Georgia, serif) — 400/600.
+**Interface / corps :** IBM Plex Sans (avec fallback system-ui, sans-serif) — 400–700.
+**Repères / données comptées :** JetBrains Mono (avec fallback ui-monospace,
+monospace) — 400/500/700.
 
-**Character:** un appariement sur axe de contraste (humaniste inclusive + mono
-technique), jamais deux sans-serifs voisines. Atkinson désambiguïse les glyphes
-piégeux (I/l/1, O/0) : c'est le choix d'inclusion qui aide les lecteurs
-dyslexiques et le confort de tous. JetBrains Mono, en petit, porte les repères
-« machine » : statuts, compteurs, pastille de signature, chiffres tabulaires.
-
-### Hierarchy
-- **Display** (700, clamp(1.8rem, 4.6vw, 2.7rem), 1.12) : titre de bandeau, en
-  blanc cassé (#f4f8f4) sur l'accent foncé, avec ombre portée légère.
-- **Title** (700, ~1.04rem, 1.12) : titres de carte (`.tool-band h3`), titres de
-  section dans le corps.
-- **Body** (400, 1rem, 1.6) : texte courant. Interligne 1.6, aligné à gauche,
-  longueur de ligne visée 65–75ch.
-- **Label** (700, 0.9rem) : étiquettes de champ des apps de saisie.
-- **Mono** (500, ~0.66rem, letter-spacing 0.03em, chiffres tabulaires) : micro-
-  repères (`.status`, `.chip`, `.pastille`, `.backlink`). Souvent en majuscules
-  pour les statuts.
+**Character :** un appariement classique presse technique — serif pour le titre qui
+identifie, sans humaniste pour tout ce qu'on lit en continu, mono pour tout ce qui se
+compte ou se compare d'un coup d'œil. Une app sans besoin de titre éditorial (ex.
+organisation-cours) peut se passer du Serif : deux polices suffisent, jamais moins.
 
 ### Named Rules
-**La règle « lisible d'abord ».** Atkinson Hyperlegible n'est pas décoratif, c'est
-une contrainte : ne jamais la remplacer par une sans-serif « plus jolie » qui
-réambiguïse I/l/1. L'interligne descend rarement sous 1.6 dans le corps.
+**La règle des trois emplois.** Mono ne sert **jamais** de texte courant ni de titre —
+seulement statuts, chiffres, étiquettes de section, décomptes, en capitales avec un
+`letter-spacing` généreux (0.08–0.2em selon le repère). Serif ne sert **jamais** à un
+paragraphe. Un nom d'espèce ou un terme scientifique reste en **italique** dans la
+police du corps, pas en serif.
 
-**La règle du mono minuscule.** JetBrains Mono ne sert qu'aux **micro-repères**
-(statuts, chiffres, tags) — jamais pour du texte courant ni pour un titre.
+**Chiffres.** Toujours en Mono, alignés à droite dans les tableaux, décimales à la
+**virgule**.
 
-## 4. Elevation
+## 4. Forms & Elevation
 
-Système **majoritairement plat, en calques tonals** : la profondeur se lit surtout
-à l'éclaircissement des surfaces (page #e2e7e0 → surface #f2f5ef → panneau #fbfcf9)
-et aux filets, pas à des ombres marquées. Les ombres existent mais restent
-diffuses et discrètes ; elles s'intensifient **en réponse à une intention**
-(survol d'une carte cliquable), jamais au repos par décoration.
+Système **strictement plat**. `border-radius: 0` partout, sans exception au niveau
+système — angle droit sur boutons, champs, cartes, badges, cadres de pictogramme.
+**Aucune ombre portée**, nulle part, y compris au survol : c'est une règle absolue,
+pas une valeur par défaut modulable. La seule exception tolérée à « aucune ombre » est
+le **halo de focus clavier** (`box-shadow: 0 0 0 3px` de l'accent à faible opacité) —
+un signal d'accessibilité, pas une décoration.
 
-### Shadow Vocabulary
-- **Repos** (`box-shadow: 0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09)`) :
-  ombre d'enveloppe très douce sur le cadre `.frame`.
-- **Intention** (`box-shadow: 0 10px 26px rgba(20,30,20,.12)`) : au survol d'une
-  carte-lien (`a.tool:hover`), combinée à un léger `translateY(-3px)`.
-- **Focus** (`box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent)`) :
-  halo teinté de l'accent autour d'un champ actif.
+**Comment se lit alors la profondeur ?** À l'empilement des fonds (page `#f4f2ec` →
+carte `#fffefb`) et au filet (`1px #d8d4c6`), jamais au flou. Au survol d'un élément
+cliquable (tuile, carte), pas de levée ni d'assombrissement générique imposé : un
+filet qui fonce ou un très léger assombrissement du fond, dans l'esprit du système —
+à trancher à l'implémentation, jamais une ombre ni une translation.
 
-### Named Rules
-**La règle « à plat au repos ».** Les surfaces sont plates par défaut ; l'ombre
-apparaît en réponse à un état (survol, focus), pas pour signaler l'importance.
-Si une carte a besoin d'une ombre lourde pour ressortir, c'est la hiérarchie qu'il
-faut revoir, pas l'ombre.
+**Aucun dégradé décoratif, aucune texture.** Les seuls dégradés tolérés sont
+fonctionnels et documentés par l'app qui en a besoin (ex. jauges d'humidité/ratio en
+PhytoScope, avec des arrêts exacts) ou le liseré hachuré d'une tuile « en chantier »
+sur le portail (`repeating-linear-gradient`). Le moteur de texture canvas de l'ancien
+système (bandeau illustré par app) est **abandonné** : le bandeau est un aplat.
 
 ## 5. Components
 
-### Buttons
-- **Shape :** coins doux (11px, `--radius-sm`).
-- **Primary :** fond `var(--acc)`, texte blanc, bordure 1px de l'accent, padding
-  0.58rem 1rem, graisse 700, ~0.94rem.
-- **Hover / Focus :** `filter: brightness(.93)` + `translateY(-1px)` ; focus visible
-  = contour 2px de l'accent, offset 2px.
-- **Ghost :** fond blanc, texte de l'accent, même bordure ; survol = fond aplat
-  doux (#e7ebe3). **Disabled :** fond doux, texte ténu, sans interaction.
+### Banner
+Aplat **encre plein** (`#191b16`), commun au hub et à toutes les apps — plus de
+couleur de bandeau par app. Texte clair (`#f4f2ec`, ou ses opacités `.66`/`.86` pour
+un repère/un paragraphe). Une app pose son identité par un **filet de tête** fin
+(~5px, sa couleur d'accent), pas par un aplat. Aucune texture, aucun scrim.
 
-### Chips
-- **Style :** fond blanc très légèrement teinté de l'accent
-  (`color-mix(in srgb, var(--acc) 9%, #fff)`), bordure teintée, texte estompé en
-  mono, coins pilule (999px), chiffres tabulaires.
-- **Rôle :** porter une donnée compacte (compteur, repère), pas une action.
+### Portal tool tiles
+Seul endroit du système où l'accent d'une app occupe un fond plein : la tuile d'une
+app « en service » sur la grille du portail. Une app « en chantier » n'a **jamais**
+de fond plein — bordure pointillée (`1px dashed #c2beac`) + liseré latéral hachuré
+(6px, pleine hauteur) dans sa couleur, pas de bouton « Ouvrir ». Toute la tuile est le
+lien ; une tuile en chantier est un `<article>`, pas un `<a>`.
 
 ### Cards / Containers
-- **Corner Style :** 12px (carte outil) ; 16px pour le cadre-enveloppe `.frame`.
-- **Background :** panneau (#fbfcf9) par défaut ; bandeau de tête à l'accent de
-  l'app. Variante **panneau chaud** (#faf3e6, filet #e8dcc4) disponible par app
-  si l'accent est absorbé par le froid commun — voir « La règle du panneau
-  chaud » en §2. Exception, pas un choix esthétique libre.
-- **Shadow Strategy :** plate au repos, ombre « intention » au survol si la carte
-  est un lien (voir Elevation).
-- **Border :** 1px filet (#d0d9ce). **Padding interne :** ~0.85rem 0.95rem.
-- **Cliquable :** la carte entière est le lien (`a.tool`) — pas de bouton isolé
-  dedans ; le survol lève la carte et fait avancer la flèche `.go`.
+Fond `#fffefb`, bordure 1px `#d8d4c6`, angle droit. Pas d'ombre au repos ni au
+survol (voir §4). Padding généreux (~16–18px bureau, cibles tactiles ≥ 44px en
+mobile).
+
+### Buttons
+Angle droit. **Primaire** : fond à l'accent de l'app, texte blanc, 700. **Fantôme** :
+fond blanc, texte à l'accent, même bordure. Survol : assombrissement (`filter:
+brightness`), jamais de levée ni d'ombre.
 
 ### Inputs / Fields
-- **Style :** fond blanc, bordure 1px filet, coins 11px, hauteur min 2.6rem
-  (cible tactile terrain).
-- **Focus :** bordure de l'accent + halo `0 0 0 3px` de l'accent à 22%.
-- **Select :** chevron SVG intégré (pas d'appearance native).
-- **Placeholder :** couleur ténue (#8a958c) — jamais plus clair.
+Fond blanc, bordure 1px filet, angle droit, hauteur min. 2.6rem (cible tactile).
+Focus : bordure à l'accent + halo (seule ombre du système). Placeholder en
+`text-4` (`#8a958c`) — jamais plus clair.
+
+### Status
+Badge plein pour un statut sémantique (« en chantier », « validé »…), texte blanc,
+angle droit. « En service » n'a pas de badge dédié : encre claire + filet suffisent.
 
 ### Navigation
-- **Retour au hub** (`.backlink`) : présent dans **toutes les apps**, absent du
-  portail. En mono minuscule (0.68rem), `‹ Portail`, sur le bandeau foncé.
-- **Pastille de signature** (`.pastille`) : `btsgpn-kerplouz` précédé d'un point
-  coloré (couleur de l'app dans une app ; légende multi-points sur le hub).
-
-### Banner (composant signature)
-Bandeau foncé texturé, commun à tout le système. Fond **à plat**
-(`color-mix(in srgb, var(--acc) 82%, #0a1510)`) + un `<canvas>` de **texture
-thématique** (moteur `shared/texture.js`) + un `.banner-scrim` en dégradé qui
-garantit la lisibilité du titre. Chaque contexte a son motif, même langage de
-traits fins : `grille` (hub), `scatter` (Phytoscope), `ondes` (Habitats-Gâvres),
-`relief` (Habitats-Landes), `classification` (Végétations). La texture est
-`aria-hidden`, purement décorative.
+Retour au hub (`‹ Portail`) présent dans toutes les apps, absent du portail — en mono
+minuscule, sur le bandeau encre. Glyphes-caractères (`⌕ ✕ ▾ ▸ ▴ ⬇ ✓ !`) plutôt que des
+icônes dessinées quand un caractère suffit à porter le sens ; un pictogramme SVG
+inline (grille 24×24, `stroke-width:1.6`) seulement quand un dessin est nécessaire
+(ex. identité d'une app sur le portail) — jamais une image bitmap ni un jeu d'icônes
+importé.
 
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** poser exactement **une** couleur franche par app via `--acc`, et laisser
-  la structure (bandeau, cartes, champs) identique partout.
-- **Do** garder le **fond froid papier** (#e2e7e0) et le rendu **clair forcé** ;
-  la chaleur vient de l'accent, jamais du fond.
-- **Do** viser des contrastes francs : texte courant ≥ 4.5:1, placeholders compris
-  (couleur ténue, pas plus clair).
-- **Do** réserver **JetBrains Mono** aux micro-repères (statuts, chiffres, tags)
-  et **Atkinson Hyperlegible** à tout le reste.
-- **Do** laisser les surfaces **plates au repos** ; l'ombre est une réponse au
-  survol/focus, pas un décor.
-- **Do** distinguer le **hub** (graphite + légende de couleurs) d'une **app**
-  (monochrome + texture + retour `‹ Portail`).
+- **Do** garder l'angle droit **sans aucune exception** au niveau du système commun.
+- **Do** poser l'accent d'une app en usage **restreint** (filet, bouton, lien) —
+  jamais en aplat de bandeau ou de carte (exception : tuile « en service » du portail).
+- **Do** garder le bandeau en aplat **encre**, identique au hub et à toutes les apps.
+- **Do** réserver Mono aux repères/chiffres, Serif aux titres, Sans à tout le reste.
+- **Do** lire la profondeur au filet et à l'empilement des fonds, jamais à l'ombre.
+- **Do** viser des contrastes francs (texte courant ≥ 4.5:1) et des cibles tactiles
+  ≥ 44px.
 
 ### Don't:
-- **Don't** verser dans le **SaaS/dashboard générique** : pas de dégradés
-  violet-bleu, pas de cartes clonées à la chaîne, pas de jargon startup.
-- **Don't** produire un **site institutionnel daté** : menus surchargés, PDF
-  partout, absence de respiration.
-- **Don't** basculer vers le **jouet enfantin** : sur-couleur, coins trop arrondis,
-  ton ludique qui casse le sérieux naturaliste.
-- **Don't** faire une **page marketing tape-à-l'œil** : animations partout,
-  boutons qui crient, promesses au lieu d'informations.
-- **Don't** teinter le fond de **page** en **crème/beige/sable/parchemin** —
-  c'est le réflexe à fuir, ce neutre reste froid et choisi, sans exception.
-  (Le panneau de **carte**, lui, peut suivre la règle du panneau chaud si
-  l'accent de l'app en a besoin — voir §2.)
-- **Don't** mettre **deux accents** concurrents sur un même écran, ni teinter le
-  hub avec la couleur d'une app.
-- **Don't** remplacer Atkinson Hyperlegible par une sans-serif « plus jolie » qui
-  réambiguïse I/l/1 et O/0.
-- **Don't** ajouter de **liseré latéral coloré** (`border-left`/`right` > 1px) sur
-  cartes ou alertes, ni de **texte en dégradé** (`background-clip: text`).
+- **Don't** arrondir quoi que ce soit au niveau système : pas de coin adouci sur un
+  bouton, une carte, un champ, un badge.
+- **Don't** ajouter une ombre portée, même discrète, même au survol — la seule
+  exception est le halo de focus clavier.
+- **Don't** ajouter de dégradé décoratif ni de texture de bandeau (le moteur canvas
+  de l'ancienne charte est abandonné).
+- **Don't** remplir le bandeau d'une app avec sa couleur d'accent : c'est l'aplat
+  encre + un filet de tête qui portent l'identité désormais.
+- **Don't** mettre deux accents concurrents sur un même écran.
+- **Don't** utiliser Mono pour du texte courant ou Serif pour un paragraphe.
+- **Don't** verser dans le SaaS/dashboard générique, le site institutionnel daté, le
+  jouet enfantin ou la page marketing tape-à-l'œil — voir `PRODUCT.md` §Anti-references.
