@@ -4,298 +4,290 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#2b3a40">
+  <meta name="theme-color" content="#191b16">
   <title>Portail BTS GPN — outils pédagogiques</title>
 
-  <!-- Charte « Atlas naturaliste ». Source de vérité : shared/theme.css +
-       shared/texture.js. Recopiée ici pour que le portail reste auto-suffisant
-       au déploiement (Netlify indépendant). Charte modifiée → resynchroniser. -->
+  <!-- Charte « papier technique froid » (refonte août 2026), scopée au portail seul :
+       shared/theme.css garde la charte « Atlas naturaliste » tant que les autres apps
+       n'ont pas leur propre migration (design_handoff_phytoscope/, _organisation_cours/).
+       Jetons repris de refonte claude design/design_handoff_portail/jetons.css — tenir
+       synchronisé si ce dossier de handoff évolue. -->
   <style>
-    @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
-    @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
-    @font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
+    @font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/ibm-plex-sans.woff2') format('woff2')}
+    @font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:600;font-display:swap;src:url('./fonts/ibm-plex-serif-bold.woff2') format('woff2')}
     @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
 
     :root{
-      --page:#e2e7e0; --surface:#f2f5ef; --panel:#fbfcf9;
-      --ink:#141d17; --muted:#55605a; --faint:#8a958c; --line:#d0d9ce; --line-2:#e0e6dd; --soft:#e7ebe3;
-      --radius:16px; --radius-sm:11px;
-      --shadow:0 1px 2px rgba(20,30,20,.05), 0 22px 46px rgba(20,30,20,.09);
-      --shadow-hover:0 10px 26px rgba(20,30,20,.12);
-      --sans:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-      --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-      --house:#2b3a40;
-      --acc:var(--house);
-    }
-    html,body{color-scheme:light}
-    @media (prefers-color-scheme: dark){
-      :root{--page:#e2e7e0;--surface:#f2f5ef;--panel:#fbfcf9;--ink:#141d17;--muted:#55605a;--line:#d0d9ce}
+      /* Cadre et fonds */
+      --pt-fond:              #f4f2ec;
+      --pt-fond-chantier:     #f7f5ee;
+      --pt-encre:             #191b16;
+      --pt-neutre-sombre:     #343830;
+      --pt-filet:             #d8d4c6;
+      --pt-filet-chantier:    #c2beac;
+
+      /* Texte */
+      --pt-texte-titre-clair: #2c2f28;
+      --pt-texte-desc:        #4a4d44;
+      --pt-label:             #565a4e;
+      --pt-sur-encre:         rgba(244,242,236,.66);
+      --pt-sur-couleur:       rgba(244,242,236,.86);
+      --pt-voile:             rgba(244,242,236,.16);
+      --pt-filet-clair:       rgba(244,242,236,.5);
+
+      /* Une couleur par app */
+      --pt-app-phytoscope:    #1f6b45;
+      --pt-app-vegetations:   #B5651D;
+      --pt-app-gavres:        #0b5f7d;
+      --pt-app-landes:        #6f4478;
+      --pt-app-organisation:  #23458c;
+
+      /* Statut */
+      --pt-chantier:          #8a5f17;
+
+      /* Polices */
+      --pt-serif: 'IBM Plex Serif', Georgia, serif;
+      --pt-sans:  'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --pt-mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
     *{box-sizing:border-box}
-    body{margin:0;background:var(--page);color:var(--ink);font-family:var(--sans);line-height:1.6;text-align:left;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-    h1,h3{font-weight:700;letter-spacing:-.015em;line-height:1.12;text-wrap:balance}
-    :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+    html,body{color-scheme:light}
+    body{margin:0;background:var(--pt-fond);color:var(--pt-encre);font-family:var(--pt-sans);line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    h1,h3{margin:0;font-weight:600}
+    a{color:inherit}
 
-    /* Cadre + bandeau */
-    .frame{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
-    .frame-body{padding:clamp(1.2rem,3vw,1.7rem);border-top:1px solid var(--line-2)}
-    .banner{position:relative;overflow:hidden;min-height:164px;display:flex;flex-direction:column;justify-content:center;padding:clamp(1.4rem,3.2vw,2.1rem);--bg1:color-mix(in srgb,var(--acc) 82%,#0a1510);background:var(--bg1)}
-    .banner.hub{--acc:var(--house)}
-    .banner-texture{position:absolute;inset:0;width:100%;height:100%;display:block}
-    .banner-scrim{position:absolute;inset:0;background:linear-gradient(100deg,var(--bg1) 0%,color-mix(in srgb,var(--bg1) 82%,transparent) 36%,transparent 74%)}
-    .banner-inner{position:relative;max-width:56ch}
-    .banner h1{margin:.5rem 0 .4rem;color:#f4f8f4;text-shadow:0 1px 2px rgba(0,0,0,.22);font-size:clamp(1.8rem,4.6vw,2.7rem);max-width:none;white-space:nowrap}
-    @media (max-width:640px){.banner h1{white-space:normal}}
-    .banner .subtitle{margin:0;color:rgba(238,244,238,.84);font-size:1.04rem}
+    /* Cadre général : le portail occupe la largeur disponible, cette maquette (1080px)
+       en largeur maximale de contenu (REGLES.md #22). */
+    .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+    .frame{border:1px solid var(--pt-filet);background:var(--pt-fond)}
 
-    /* Pastille (légende = hub) */
-    .pastille{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;font-weight:500;color:rgba(240,246,240,.86)}
-    .pastille .dot{width:.58rem;height:.58rem;border-radius:50%;background:var(--dot,#cfe3d6);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
-    .pastille.legend .dots{display:inline-flex;gap:3px}
-    .pastille.legend .dot{width:.5rem;height:.5rem;box-shadow:0 0 0 2px rgba(255,255,255,.1)}
+    /* Bandeau */
+    .banner{background:var(--pt-encre);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+    .banner-id{display:flex;align-items:center;gap:20px;min-width:0}
+    .monogram{width:56px;height:56px;flex:0 0 auto;display:grid;place-items:center;border:1.5px solid var(--pt-fond)}
+    .monogram span{font-family:var(--pt-mono);font-size:16px;font-weight:700;letter-spacing:.02em;color:var(--pt-fond)}
+    .banner-text{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .eyebrow{font-family:var(--pt-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--pt-sur-encre)}
+    .banner h1{font-family:var(--pt-serif);font-size:31px;font-weight:600;line-height:1.1;letter-spacing:-.015em;color:var(--pt-fond)}
+    .banner-count{text-align:right;font-family:var(--pt-mono);font-size:10px;letter-spacing:.12em;line-height:1.9;color:var(--pt-sur-encre);text-transform:uppercase;white-space:nowrap}
 
-    /* Grille d'outils + cartes */
-    .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.9rem}
-    .tool{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);transition:transform .14s ease, box-shadow .14s ease}
-    a.tool{text-decoration:none;color:inherit;cursor:pointer}
-    a.tool:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
-    a.tool:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-    /* En chantier : pastel, effacé — se distingue au premier coup d'œil des tuiles actives */
-    .tool--wip{border-style:dashed;background:color-mix(in srgb,var(--acc) 6%,var(--panel));--wip-band:color-mix(in srgb,var(--acc) 20%,var(--surface))}
-    .tool--wip .tool-band{background:var(--wip-band);color:var(--acc)}
-    .tool--wip .tool-band h3{color:color-mix(in srgb,var(--acc) 48%,var(--wip-band))}
-    .tool--wip .tool-body p{color:var(--faint)}
+    .only-mobile{display:none}
 
-    /* Couleurs inversées : bandeau sombre, réservé aux enseignants */
-    .tool--invert .tool-band{background:var(--ink);color:#f4f8f4}
-    .tool--invert .tool-band h3{color:#f4f8f4}
-    .go{display:inline-block;color:var(--acc);font-weight:700;transition:transform .12s ease}
-    a.tool:hover .go{transform:translateX(3px)}
-    .staff{margin-top:1.4rem;padding-top:1.1rem;border-top:1px dashed var(--line)}
-    .staff-label{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
-    .staff .tool{max-width:22rem}
-    .tool-band{background:var(--acc);color:#fff;padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
-    .tool-band.has-icon{padding-block:.7rem}
-    .tool-band-title{display:flex;align-items:center;gap:.7rem;min-width:0}
-    .tool-icon{width:2.3rem;height:2.3rem;flex:0 0 auto;display:block}
-    .tool-band h3{margin:0;font-weight:700;font-size:1.04rem;color:#fff}
-    .tool-band .tag{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;opacity:.92;white-space:nowrap}
-    .tool-body{padding:.85rem .95rem 1rem;display:flex;flex-direction:column;flex-grow:1}
-    .tool-body p{margin:0 0 1rem;color:var(--muted);font-size:.92rem;flex-grow:1}
-    .tool-foot{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:auto}
+    /* Corps + grille */
+    .body{padding:26px 32px 30px;display:flex;flex-direction:column;gap:22px}
+    .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 
-    /* Statut (couleur sémantique) + lien Ouvrir */
-    .status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
-    .status::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:currentColor}
-    .status.live{color:#2e7d4f}
-    .status.wip{color:#a9772a}
-    .open{display:inline-flex;align-items:center;gap:.35rem;font-weight:700;font-size:.86rem;color:var(--acc);text-decoration:none}
-    .open:hover{text-decoration:underline;text-underline-offset:2px}
-    .open:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
-    .open.disabled{color:var(--faint);pointer-events:none}
+    /* Tuile — structure commune */
+    .tool{display:flex;text-decoration:none;color:inherit}
+    .tool-lisere{width:6px;flex:0 0 auto}
+    .tool-inner{flex:1;min-width:0;display:flex;flex-direction:column;gap:11px;padding:16px 18px}
+    .tool-row{display:flex;align-items:center;gap:14px}
+    .tool-title{flex:1;min-width:0;font-family:var(--pt-serif);font-size:21px;font-weight:600;line-height:1.15}
+    .tool-desc{margin:0;font-size:15px;line-height:1.6}
+    .tool-foot{display:flex;justify-content:flex-end}
+    .tool-open{display:inline-block;font-family:var(--pt-sans);font-size:14px;font-weight:700;background:var(--pt-fond);padding:10px 17px}
+    .tool-picto{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center}
+    .tool-picto svg{width:28px;height:28px;display:block}
+    .tool-status{font-family:var(--pt-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;white-space:nowrap}
 
-    /* Mise en page de la page */
-    .wrap{max-width:1280px;margin:0 auto;padding:clamp(1.2rem,3.4vw,2rem) clamp(1rem,4vw,2rem) 0}
-    .page-foot{max-width:1280px;margin:0 auto;padding:1.3rem clamp(1rem,4vw,2rem) 1.6rem;color:var(--muted);font-size:.88rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem .7rem}
-    .page-foot .pastille{color:var(--muted)}
-    .page-foot .pastille .dot{box-shadow:0 0 0 2px rgba(0,0,0,.05)}
-    .foot-contact{color:var(--acc);font-weight:700;text-decoration:none}
-    .foot-contact:hover{text-decoration:underline;text-underline-offset:2px}
-    .foot-contact:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+    /* Tuile « en service » (PhytoScope, Végétations) : fond plein, pas de liseré ni de bordure */
+    .tool--active{background:var(--acc)}
+    .tool--active .tool-title{color:var(--pt-fond)}
+    .tool--active .tool-desc{color:var(--pt-sur-couleur)}
+    .tool--active .tool-picto{background:var(--pt-voile)}
+    .tool--active .tool-picto svg{color:var(--pt-fond)}
+    .tool--active .tool-status{color:var(--pt-fond);border:1px solid var(--pt-filet-clair)}
+    .tool--active .tool-open{color:var(--acc)}
+    .tool--active:hover{filter:brightness(.94)}
+    .tool--active:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px}
 
-    @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
+    /* Tuile « en chantier » (Gâvres, Landes) : claire, pointillée, non cliquable */
+    .tool--wip{background:var(--pt-fond-chantier);border:1px dashed var(--pt-filet-chantier)}
+    .tool--wip .tool-lisere{background:repeating-linear-gradient(180deg,var(--acc) 0 5px,transparent 5px 10px)}
+    .tool--wip .tool-title{color:var(--pt-texte-titre-clair)}
+    .tool--wip .tool-desc{color:var(--pt-texte-desc)}
+    .tool--wip .tool-picto{border:1.5px dashed var(--acc)}
+    .tool--wip .tool-picto svg{width:26px;height:26px;color:var(--acc)}
+    .tool--wip .tool-status{color:var(--pt-chantier);border:1px dashed var(--pt-chantier)}
+
+    /* Bloc « Réservé aux enseignants » */
+    .staff-sep{border-top:2px solid var(--pt-encre);padding-top:16px;display:flex;flex-direction:column;gap:12px}
+    .staff-label{font-family:var(--pt-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pt-label)}
+    .staff-tools{max-width:520px}
+    .tool--staff{background:var(--pt-neutre-sombre)}
+    .tool--staff .tool-inner{flex-direction:row;align-items:center;gap:14px}
+    .tool--staff .tool-title{font-size:19px;color:var(--pt-fond)}
+    .tool--staff .tool-picto{background:var(--pt-app-organisation)}
+    .tool--staff .tool-picto svg{color:var(--pt-fond)}
+    .tool--staff .tool-open{color:var(--pt-encre)}
+    .tool--staff:hover{filter:brightness(1.12)}
+    .tool--staff:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px}
+
+    /* Pied de page */
+    .foot{max-width:1080px;margin:0 auto;padding:18px clamp(1rem,4vw,2rem) 26px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem .9rem;font-family:var(--pt-mono);font-size:11px;letter-spacing:.04em;color:var(--pt-label)}
+    .foot-legend{display:inline-flex;align-items:center;gap:4px}
+    .foot-legend .sw{width:7px;height:7px;flex:0 0 auto}
+    .foot-contact{color:var(--pt-encre);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+    .foot-contact:hover{color:var(--pt-app-organisation)}
+    .foot-contact:focus-visible{outline:2px solid var(--pt-encre);outline-offset:2px}
+
+    :focus-visible{outline:2px solid var(--pt-encre);outline-offset:2px}
+
+    @media (max-width:640px){
+      .only-desktop{display:none}
+      .only-mobile{display:block}
+
+      .wrap{padding:0}
+      .banner{padding:15px 18px;gap:14px}
+      .banner-count{display:none}
+      .monogram{width:42px;height:42px}
+      .monogram span{font-size:13px}
+      .eyebrow{font-size:9px;letter-spacing:.16em}
+      .banner h1{font-size:21px}
+
+      .body{padding:16px 16px 22px;gap:12px}
+      .tools{grid-template-columns:1fr;gap:12px}
+
+      .tool-inner{padding:14px 15px;gap:10px}
+      .tool-title{font-size:19px}
+      .tool-desc{font-size:14px;line-height:1.55}
+      .tool-open{font-size:15px;padding:12px 18px}
+      .tool-picto{width:42px;height:42px}
+      .tool-picto svg{width:27px;height:27px}
+      .tool--active .tool-status{display:none}
+
+      .tool--wip .tool-inner{padding:13px 15px}
+      .tool--wip .tool-desc,.tool--wip .tool-foot{display:none}
+      .tool--wip .tool-row{display:grid;grid-template-columns:auto 1fr;column-gap:12px;row-gap:2px;align-items:center}
+      .tool--wip .tool-picto{grid-row:1 / 3;width:38px;height:38px}
+      .tool--wip .tool-picto svg{width:24px;height:24px}
+      .tool--wip .tool-title{grid-row:1;grid-column:2;font-size:17px}
+      .tool--wip .tool-status{grid-row:2;grid-column:2;font-size:9px;letter-spacing:.06em;border:0;padding:0}
+
+      .staff-sep{padding-top:14px}
+      .staff-label{font-size:9px;letter-spacing:.16em}
+      .staff-tools{max-width:none}
+      .tool--staff .tool-title{font-size:17px}
+      .tool--staff .tool-open{padding:10px 15px}
+    }
+
+    @media (prefers-reduced-motion: reduce){*{transition:none !important}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <div class="frame">
-      <header class="banner hub">
-        <canvas class="banner-texture" data-texture="grille" data-tint="rgba(206,220,222,.16)" aria-hidden="true"></canvas>
-        <div class="banner-scrim"></div>
-        <div class="banner-inner">
-          <span class="pastille legend">
-            <span class="dots">
-              <span class="dot" style="--dot:#2e7d4f"></span>
-              <span class="dot" style="--dot:#c2662f"></span>
-              <span class="dot" style="--dot:#0f7aa0"></span>
-              <span class="dot" style="--dot:#7d4f83"></span>
-            </span>
-            btsgpn-kerplouz
-          </span>
-          <h1>Portail des outils numériques</h1>
-          <p class="subtitle">Applis du BTS GPN de Kerplouz.</p>
+      <header class="banner">
+        <div class="banner-id">
+          <div class="monogram"><span>GPN</span></div>
+          <div class="banner-text">
+            <span class="eyebrow only-desktop">btsgpn — kerplouz — portail</span>
+            <span class="eyebrow only-mobile">btsgpn — kerplouz</span>
+            <h1 class="only-desktop">Outils numériques du BTS GPN</h1>
+            <h1 class="only-mobile">Outils du BTS GPN</h1>
+          </div>
         </div>
+        <div class="banner-count" id="banner-count"></div>
       </header>
 
-      <div class="frame-body">
+      <div class="body">
         <div class="tools">
 
-          <a class="tool" style="--acc:#2e7d4f" href="https://phytoscope.kerplouz.workers.dev" target="_blank" rel="noopener">
-            <div class="tool-band has-icon">
-              <div class="tool-band-title">
-                <!-- Logo validé : logo apps/phyto-cours-valides/phytoscope/phytoscope-glyph.svg -->
-                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><line x1="168" y1="140" x2="168" y2="374" stroke="#faf3e6" stroke-width="16" stroke-linecap="round"/><line x1="168" y1="374" x2="384" y2="374" stroke="#faf3e6" stroke-width="16" stroke-linecap="round"/><circle cx="238" cy="300" r="26" fill="#faf3e6"/><circle cx="280" cy="232" r="40" fill="#faf3e6"/><circle cx="324" cy="296" r="22" fill="#e6d4ab"/><circle cx="300" cy="180" r="30" fill="#e6d4ab"/><circle cx="214" cy="222" r="18" fill="#faf3e6"/><circle cx="352" cy="246" r="15" fill="#faf3e6"/><circle cx="280" cy="232" r="52" fill="none" stroke="#faf3e6" stroke-width="7" stroke-dasharray="6 10"/></svg>
-                <h3>PhytoScope</h3>
+          <a class="tool tool--active" style="--acc:var(--pt-app-phytoscope)" data-status="service" href="https://phytoscope.kerplouz.workers.dev" target="_blank" rel="noopener">
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4v16h16" stroke-linecap="square"></path><circle cx="9" cy="15" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="13" cy="10" r="2.1" fill="currentColor" stroke="none"></circle><circle cx="17" cy="13" r="1.1" fill="currentColor" stroke="none"></circle><circle cx="15.5" cy="6.5" r="1.7" fill="currentColor" stroke="none"></circle></svg></span>
+                <span class="tool-title">PhytoScope</span>
+                <span class="tool-status">✓ en service</span>
               </div>
-              <span class="tag">saisie</span>
-            </div>
-            <div class="tool-body">
-              <p>Saisie de relevés phytosociologiques et visualisation d'indicateurs
-                 écologiques.</p>
-              <div class="tool-foot"><span class="status live">En service</span><span class="go">→</span></div>
+              <p class="tool-desc only-desktop">Relevés phytosociologiques, indices d'Ellenberg, écogrammes, diagnostic zone humide.</p>
+              <p class="tool-desc only-mobile">Relevés, indices d'Ellenberg, écogrammes.</p>
+              <div class="tool-foot"><span class="tool-open">Ouvrir →</span></div>
             </div>
           </a>
 
-          <a class="tool" style="--acc:#c2662f" href="https://vegetations-massif-armoricain.kerplouz.workers.dev" target="_blank" rel="noopener">
-            <div class="tool-band has-icon">
-              <div class="tool-band-title">
-                <!-- Icône reprise de l'onglet Dendrogramme, apps/vegetations-armoricaines/index.html -->
-                <svg class="tool-icon" viewBox="-6 -6 36 36" fill="none" stroke="#faf3e6" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="18.5" cy="6" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/><circle cx="18.5" cy="18" r="1.9"/><path d="M6.9 12h3.3M10.2 12V6.4a.6.6 0 0 1 .6-.6h5.8M10.2 12h6.4M10.2 12v5.6a.6.6 0 0 0 .6.6h5.8"/></svg>
-                <h3>Végétations du massif armoricain</h3>
+          <a class="tool tool--active" style="--acc:var(--pt-app-vegetations)" data-status="service" href="https://vegetations-massif-armoricain.kerplouz.workers.dev" target="_blank" rel="noopener">
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h5M8 4v16M8 4h5M8 12h5M8 20h5"></path><rect x="13" y="2" width="4" height="4" fill="currentColor" stroke="none"></rect><rect x="13" y="10" width="4" height="4" fill="currentColor" stroke="none"></rect><rect x="13" y="18" width="4" height="4" fill="currentColor" stroke="none"></rect></svg></span>
+                <span class="tool-title only-desktop">Végétations du massif armoricain</span>
+                <span class="tool-title only-mobile">Végétations armoricaines</span>
+                <span class="tool-status">✓ en service</span>
               </div>
-              <span class="tag">consultation</span>
-            </div>
-            <div class="tool-body">
-              <p>Consultation de la classification physionomique et phytosociologique des
-                 végétations du massif armoricain du CBNB.</p>
-              <div class="tool-foot"><span class="status live">En service</span><span class="go">→</span></div>
+              <p class="tool-desc only-desktop">Classification physionomique et phytosociologique du CBNB : arbre, fiches, dendrogrammes.</p>
+              <p class="tool-desc only-mobile">Classification du CBNB, hors ligne.</p>
+              <div class="tool-foot"><span class="tool-open">Ouvrir →</span></div>
             </div>
           </a>
 
-          <article class="tool tool--wip" style="--acc:#0f7aa0">
-            <div class="tool-band"><h3>Habitats — Gâvres</h3><span class="tag">clé</span></div>
-            <div class="tool-body">
-              <p>Aide à l'identification des habitats naturels de la Petite Mer de Gâvres.</p>
-              <div class="tool-foot"><span class="status wip">En chantier</span></div>
+          <article class="tool tool--wip" style="--acc:var(--pt-app-gavres)" data-status="chantier">
+            <div class="tool-lisere"></div>
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h18M3 12h13M3 17h8"></path><rect x="3" y="3" width="18" height="18"></rect></svg></span>
+                <span class="tool-title">Habitats — Gâvres</span>
+                <span class="tool-status">⌛ en chantier</span>
+              </div>
+              <p class="tool-desc">Identification des habitats naturels de la Petite Mer de Gâvres.</p>
             </div>
           </article>
 
-          <article class="tool tool--wip" style="--acc:#7d4f83">
-            <div class="tool-band"><h3>Habitats — Landes</h3><span class="tag">clé</span></div>
-            <div class="tool-body">
-              <p>Aide à l'identification des habitats de landes.</p>
-              <div class="tool-foot"><span class="status wip">En chantier</span></div>
+          <article class="tool tool--wip" style="--acc:var(--pt-app-landes)" data-status="chantier">
+            <div class="tool-lisere"></div>
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18"></rect><rect x="6.5" y="6.5" width="11" height="11"></rect><rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none"></rect></svg></span>
+                <span class="tool-title">Habitats — Landes</span>
+                <span class="tool-status">⌛ en chantier</span>
+              </div>
+              <p class="tool-desc">Identification des habitats de landes intérieures et littorales.</p>
             </div>
           </article>
-
-          <!-- Organisation de cours déplacé ci-dessous : réservé aux enseignants -->
         </div>
 
-        <div class="staff">
+        <div class="staff-sep">
           <div class="staff-label">Réservé aux enseignants</div>
-          <a class="tool tool--invert" style="--acc:#23458c" href="https://organisation-cours-gpn.kerplouz.workers.dev" target="_blank" rel="noopener">
-            <div class="tool-band has-icon">
-              <div class="tool-band-title">
-                <!-- Logo validé : logo apps/phyto-cours-valides/cours/cours-mono.svg (couleurs inversées pour fond sombre) -->
-                <svg class="tool-icon" viewBox="0 0 512 512" aria-hidden="true"><rect x="140" y="164" width="232" height="200" rx="14" fill="none" stroke="#f4f8f4" stroke-width="16"/><path d="M140 202 L140 178 A14 14 0 0 1 154 164 L358 164 A14 14 0 0 1 372 178 L372 202 Z" fill="#f4f8f4"/><rect x="156" y="222" width="34" height="40" rx="6" fill="#f4f8f4"/><rect x="156" y="276" width="34" height="54" rx="6" fill="#f4f8f4"/><rect x="196" y="240" width="34" height="60" rx="6" fill="#f4f8f4"/><rect x="236" y="222" width="34" height="44" rx="6" fill="#f4f8f4"/><rect x="236" y="300" width="34" height="40" rx="6" fill="#f4f8f4"/><rect x="276" y="250" width="34" height="70" rx="6" fill="#f4f8f4"/><rect x="316" y="232" width="34" height="50" rx="6" fill="#f4f8f4"/><rect x="316" y="300" width="34" height="44" rx="6" fill="#f4f8f4"/></svg>
-                <h3>Organisation des cours</h3>
+          <div class="staff-tools">
+            <a class="tool tool--staff" data-status="service" href="https://organisation-cours-gpn.kerplouz.workers.dev" target="_blank" rel="noopener">
+              <div class="tool-lisere" style="background:var(--pt-app-organisation)"></div>
+              <div class="tool-inner">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18"></rect><rect x="3" y="3" width="18" height="4" fill="currentColor" stroke="none"></rect><rect x="6" y="10" width="3" height="8" fill="currentColor" stroke="none"></rect><rect x="11" y="13" width="3" height="5" fill="currentColor" stroke="none"></rect><rect x="16" y="11" width="3" height="7" fill="currentColor" stroke="none"></rect></svg></span>
+                <span class="tool-title">Organisation des cours</span>
+                <span class="tool-open">Ouvrir →</span>
               </div>
-              <span class="tag">enseignants</span>
-            </div>
-            <div class="tool-body">
-              <p>Préparation et suivi des séquences de cours.</p>
-              <div class="tool-foot"><span class="status live">En service</span><span class="go">→</span></div>
-            </div>
-          </a>
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="page-foot">
+  <footer class="foot">
     <span>Portail pédagogique · BTS GPN · Kerplouz</span>
-    <span class="pastille legend" aria-hidden="true">
-      <span class="dots">
-        <span class="dot" style="--dot:#2e7d4f"></span>
-        <span class="dot" style="--dot:#c2662f"></span>
-        <span class="dot" style="--dot:#0f7aa0"></span>
-        <span class="dot" style="--dot:#7d4f83"></span>
-      </span>
+    <span class="foot-legend" aria-hidden="true">
+      <span class="sw" style="background:var(--pt-app-phytoscope)"></span>
+      <span class="sw" style="background:var(--pt-app-vegetations)"></span>
+      <span class="sw" style="background:var(--pt-app-gavres)"></span>
+      <span class="sw" style="background:var(--pt-app-landes)"></span>
     </span>
     <a class="foot-contact" href="mailto:martin.diraison@kerplouz.com">Contact</a>
   </footer>
 
-  <!-- Moteur de textures (copie de shared/texture.js — source de vérité) -->
   <script>
   (function () {
-    function build(cv) {
-      var mode = cv.getAttribute('data-texture');
-      var color = cv.getAttribute('data-tint') || 'rgba(255,255,255,.15)';
-      function draw() {
-        var dpr = Math.min(2, window.devicePixelRatio || 1);
-        var w = cv.clientWidth, h = cv.clientHeight;
-        if (!w || !h) return;
-        cv.width = w * dpr; cv.height = h * dpr;
-        var g = cv.getContext('2d');
-        g.setTransform(dpr, 0, 0, dpr, 0, 0);
-        g.clearRect(0, 0, w, h);
-        g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 1;
-        if (mode === 'grille') {
-          var step = 24;
-          for (var gx = step; gx < w; gx += step) { g.beginPath(); g.moveTo(gx, 0); g.lineTo(gx, h); g.stroke(); }
-          for (var gy = step; gy < h; gy += step) { g.beginPath(); g.moveTo(0, gy); g.lineTo(w, gy); g.stroke(); }
-        }
-        else if (mode === 'ondes') {
-          var lines = 22;
-          for (var i = 0; i < lines; i++) {
-            var yb = (i / (lines - 1)) * h;
-            g.globalAlpha = 0.30 + 0.55 * (i / (lines - 1));
-            g.beginPath();
-            for (var x = 0; x <= w; x += 4) {
-              var y = yb + Math.sin(x * 0.021 + i * 0.5) * 4 + Math.sin(x * 0.047 + i * 0.9) * 2.2;
-              x === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
-            }
-            g.stroke();
-          }
-          g.globalAlpha = 1;
-        }
-        else if (mode === 'relief') {
-          var centers = [{ cx: w * 0.30, cy: h * 0.58 }, { cx: w * 0.74, cy: h * 0.30 }];
-          for (var c = 0; c < centers.length; c++) {
-            var C = centers[c];
-            for (var r = 12; r < Math.max(w, h) * 0.95; r += 15) {
-              g.beginPath();
-              for (var a = 0; a <= 6.29; a += 0.11) {
-                var wob = Math.sin(a * 3 + c) * 4 + Math.sin(a * 5 + c * 2) * 2.4;
-                var rr = r + wob;
-                var px = C.cx + Math.cos(a) * rr, py = C.cy + Math.sin(a) * rr * 0.8;
-                a === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
-              }
-              g.closePath(); g.stroke();
-            }
-          }
-        }
-        else if (mode === 'scatter') {
-          g.save(); g.globalAlpha = 0.5;
-          g.beginPath(); g.moveTo(30, h - 22); g.lineTo(w - 14, h - 22); g.moveTo(30, 14); g.lineTo(30, h - 22); g.stroke();
-          g.restore();
-          var s = 42; function rnd() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
-          for (var p = 0; p < 48; p++) {
-            var qx = 34 + rnd() * (w - 56), qy = 16 + rnd() * (h - 46), rad = 1.6 + rnd() * 2.4;
-            g.beginPath(); g.arc(qx, qy, rad, 0, 6.2832);
-            rnd() > 0.5 ? g.fill() : g.stroke();
-          }
-        }
-        else if (mode === 'classification') {
-          var depth = 4, rootX = w * 0.30, rightX = w - 4, seg = (rightX - rootX) / (depth + 1);
-          (function node(x, y, span, d) {
-            if (d <= 0) { g.beginPath(); g.moveTo(x, y); g.lineTo(rightX, y); g.stroke(); return; }
-            var cx = x + seg, up = y - span, dn = y + span;
-            g.beginPath(); g.moveTo(x, y); g.lineTo(cx, y); g.stroke();
-            g.beginPath(); g.moveTo(cx, up); g.lineTo(cx, dn); g.stroke();
-            node(cx, up, span / 2, d - 1);
-            node(cx, dn, span / 2, d - 1);
-          })(rootX, h / 2, h * 0.40, depth);
-        }
-      }
-      draw();
-      var t;
-      window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(draw, 120); });
+    var tuiles = document.querySelectorAll('.tool[data-status]');
+    var service = 0, chantier = 0;
+    tuiles.forEach(function (t) {
+      if (t.getAttribute('data-status') === 'service') service++; else chantier++;
+    });
+    var el = document.getElementById('banner-count');
+    if (el) {
+      var total = service + chantier;
+      el.innerHTML =
+        '<div>' + total + ' outil' + (total > 1 ? 's' : '') + '</div>' +
+        '<div>' + service + ' en service · ' + chantier + ' en chantier</div>';
     }
-    function init() { document.querySelectorAll('canvas[data-texture]').forEach(build); }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
   })();
   </script>
 </body>
