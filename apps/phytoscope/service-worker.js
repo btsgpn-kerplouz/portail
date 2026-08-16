@@ -1,14 +1,15 @@
-const CACHE_NAME = "phytoscope-pwa-v5-1";
+const CACHE_NAME = "phytoscope-pwa-v6-0-1";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./taxa.json",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./fonts/atkinson.woff2",
-  "./fonts/atkinson-bold.woff2",
-  "./fonts/atkinson-italic.woff2",
+  "./fonts/ibm-plex-sans.woff2",
+  "./fonts/ibm-plex-serif.woff2",
+  "./fonts/ibm-plex-serif-bold.woff2",
   "./fonts/jetbrains-mono.woff2"
 ];
 
