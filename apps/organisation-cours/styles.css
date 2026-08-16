@@ -1,56 +1,54 @@
 /* =====================================================================
-   ORGANISATION DES COURS — BTS GPN — V7.0
-   Charte « Atlas naturaliste » (voir shared/theme.css / DESIGN.md) : mêmes
-   tokens structurels que Phytoscope et Végétations, couleur d'app = bleu
-   d'encre « Organisation » (#23458c, réservée dans DESIGN.md/theme.css,
-   remplace l'ocre #8a6d3d jugé peu satisfaisant à l'usage). Les NOMS de
+   ORGANISATION DES COURS — BTS GPN — V8.0
+   Charte « papier technique froid » (voir refonte claude design/
+   design_handoff_organisation_cours/ — REGLES.md, JETONS.md) : angle droit
+   partout, aucune ombre portée, IBM Plex Sans + JetBrains Mono, accent
+   #23458c. Remplace la charte « Atlas naturaliste » (V7.0). Les NOMS de
    variables historiques (--moss, --clay…) sont conservés tels quels (des
    centaines d'usages dans ce fichier) — seules leurs VALEURS changent.
    ===================================================================== */
 
 /* ---------- 0. Polices embarquées (copie de shared/fonts/, app déployée
    séparément sur Cloudflare Workers → shared/ n'est pas servi) ---------- */
-@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
-@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
-@font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/ibm-plex-sans.woff2') format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
 
 /* ---------- 1. Design tokens ---------- */
 :root {
-  /* Couleurs neutres (charte Atlas) */
-  --ink: #141d17;
-  --ink-soft: #2c362f;
-  --muted: #55605a;
-  --paper: #e2e7e0;
-  --surface: #fbfcf9;
-  --surface-alt: #f2f5ef;
-  --line: #d0d9ce;
-  --line-strong: #b9c4b3;
+  /* Couleurs neutres (charte papier technique froid) */
+  --ink: #191b16;
+  --ink-soft: #3b3e36;
+  --muted: #6b6a5e;
+  --paper: #f4f2ec;
+  --surface: #fffefb;
+  --surface-alt: #f0ede2;
+  --line: #d8d4c6;
+  --line-strong: #b3ac93;
 
   /* Couleur de marque — Organisation = bleu d'encre (--acc, alias charte) */
   --acc: #23458c;
   --moss: var(--acc);
   --moss-dark: #17305f;
-  --moss-soft: #dde4f2;
+  --moss-soft: #eef2f9;
   --moss-line: #b7c5e0;
 
   /* Accents fonctionnels (sémantiques, indépendants de la marque) */
-  --clay: #b8602f;
-  --clay-soft: #f4e2d3;
-  --water: #2c7a93;
+  --clay: #c08a12;
+  --clay-soft: #f4ead0;
+  --water: #2f6f73;
   --water-soft: #dcedf1;
-  --amber: #a9772a;
+  --amber: #7a5b16;
   --amber-soft: #f4ead0;
   --plum: #6e4f82;
   --plum-soft: #ece4f0;
-  --danger: #a8392b;
-  --danger-soft: #f5ded9;
-  --success: #2e7d4f;
-  --success-soft: #e1efe6;
+  --danger: #C0562B;
+  --danger-soft: #fdf3ec;
+  --success: #1F7A5C;
+  --success-soft: #eaf4ee;
 
-  /* Typographie (Atkinson Hyperlegible + JetBrains Mono, réglages inclusifs) */
-  --font-display: 'Atkinson Hyperlegible', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Typographie (IBM Plex Sans + JetBrains Mono — pas de serif dans cette app) */
+  --font-display: 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Échelle d'espacement (base 4px) */
@@ -63,13 +61,21 @@
   --sp-7: 32px;
   --sp-8: 40px;
 
-  /* Rayons & ombres */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(20, 30, 20, .07);
-  --shadow-md: 0 6px 20px rgba(20, 30, 20, .10);
-  --shadow-lg: 0 16px 40px rgba(20, 30, 20, .16);
+  /* Rayons & ombres — angle droit partout, aucune ombre portée (REGLES.md #1, #2) */
+  --r-sm: 0;
+  --r-md: 0;
+  --r-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --halo-focus: 0 0 0 3px rgba(35, 69, 140, .15); /* seule exception : champ actif */
+
+  /* Bandeau des onglets principaux (REGLES.md #4) */
+  --onglets-fond: #dedac9;
+  --onglets-filet: #c6c1ae;
+
+  /* Texte très atténué (étiquettes de section, unités, texte fantôme) */
+  --muted-2: #8a958c;
 
   /* Couleurs de groupe (promotions) */
   --gpn1: var(--clay);
@@ -101,14 +107,14 @@ a { color: var(--moss-dark); }
 ::selection { background: var(--moss-soft); }
 
 :focus-visible {
-  outline: 2.5px solid var(--water);
+  outline: 2.5px solid var(--acc);
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }
 
 /* Barre de défilement discrète (Webkit) */
 ::-webkit-scrollbar { height: 10px; width: 10px; }
-::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- 3. Utilitaires fonctionnels (ne pas styler visuellement) ---------- */
@@ -200,16 +206,15 @@ input, select, textarea {
   background: var(--surface);
   color: var(--ink);
 }
-input:focus, select:focus, textarea:focus { border-color: var(--water); }
+input:focus, select:focus, textarea:focus { border-color: var(--acc); box-shadow: var(--halo-focus); }
 textarea { resize: vertical; min-height: 5.5em; line-height: 1.4; }
 input::placeholder, textarea::placeholder { color: #9aa494; }
 
 /* ---------- 6. Coquille / layout ---------- */
 /* Bandeau foncé à fond uni + barre d'onglets, tous deux collés en haut comme
    un seul bloc (.app-sticky-header) : le bandeau étant désormais compact
-   (une seule ligne), le fixer ne mange plus de hauteur utile. Couleur du
-   bandeau pilotée par --acc (ocre « Organisation »). Texture retirée
-   (nuisait à la lecture) : fond uni --bg1.
+   (une seule ligne), le fixer ne mange plus de hauteur utile. Fond uni
+   --ink (#191b16), commun à tous les écrans desktop (REGLES.md #4).
    Bandeau sur une seule ligne : retour portail, titre + sous-titre entre
    parenthèses, bloc connexion à droite — la pastille d'équipe et le badge de
    version sortent du bandeau pour tenir la hauteur sur une seule ligne. */
@@ -222,8 +227,8 @@ html { scroll-padding-top: 6.4rem; }
 .banner {
   position: relative;
   padding: .55rem var(--sp-6);
-  --bg1: color-mix(in srgb, var(--acc) 82%, #0a1510);
-  background: var(--bg1);
+  background: var(--ink);
+  border-top: 5px solid var(--acc);
 }
 .banner-inner {
   position: relative;
@@ -245,30 +250,30 @@ html { scroll-padding-top: 6.4rem; }
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0;
-  text-shadow: 0 1px 2px rgba(0,0,0,.18);
 }
 .app-subtitle {
   font-size: .74rem;
   font-weight: 500;
   color: rgba(238,244,238,.68);
   letter-spacing: .01em;
-  text-shadow: none;
 }
-/* Indicateur de connexion, discret, dans le bandeau : remplace la grande
-   carte "Connecté" qui s'affichait au-dessus de toute l'app (peu ergonomique
-   — retour utilisateur). */
+/* Refonte « papier technique froid » (écran 1, 16/08/2026) — groupe de droite
+   du bandeau, conforme au mockup : export/import JSON (discret, hors mockup
+   mais gardé, voir index.html) puis statut de synchro + « Sauvegarder » +
+   année + avatar, dans cet ordre. Seul `.banner-right` porte `margin-left:auto`. */
+.banner-right { display: flex; align-items: center; gap: .7rem; margin-left: auto; white-space: nowrap; }
+
 .auth-compact {
   display: flex;
   align-items: center;
   gap: .35rem;
-  margin-left: auto;
   font-size: .82rem;
   color: rgba(255,255,255,.85);
   white-space: nowrap;
 }
 .auth-compact #initiales-affichees {
   font-family: var(--font-mono); font-weight: 700; letter-spacing: .02em;
-  padding: .12rem .48rem; border-radius: 999px; background: rgba(255,255,255,.16);
+  padding: .12rem .48rem; border-radius: 0; background: rgba(255,255,255,.16);
 }
 .auth-compact .lien {
   border: none;
@@ -282,15 +287,12 @@ html { scroll-padding-top: 6.4rem; }
 .auth-compact .lien:hover { opacity: 1; color: #fff; }
 .auth-compact .lien:disabled { opacity: .4; cursor: default; }
 
-/* Export / import dans le bandeau (lot A [8]). `margin-left:auto` ici : c'est ce
-   bloc qui pousse tout le groupe de droite, `.auth-compact` se range à sa suite.
-   Réduits à leur icône — le bandeau doit rester sur UNE ligne jusqu'à 390 px. */
+/* Export / import (lot A [8]) : pas dans le mockup, gardés discrets. */
 .banner-data {
   display: flex; align-items: center; gap: .1rem;
-  margin-left: auto; white-space: nowrap;
-  color: rgba(255,255,255,.85);
+  white-space: nowrap;
+  color: rgba(255,255,255,.6);
 }
-.banner-data + .auth-compact { margin-left: .35rem; }
 .banner-data .lien {
   border: none; background: none; color: inherit; cursor: pointer;
   padding: .1rem .3rem; font-size: .95rem; line-height: 1; opacity: .85;
@@ -298,56 +300,62 @@ html { scroll-padding-top: 6.4rem; }
 .banner-data .lien:hover { opacity: 1; color: #fff; }
 .banner-data .lien:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
+/* Statut de synchro : ⟳ + texte persistant (remplace l'ancien toast flottant
+   .save-toast — voir #saveStatus plus bas). */
+.banner-sync { display: flex; align-items: center; gap: .3rem; font-size: .78rem; color: rgba(255,255,255,.7); }
+.banner-sync .lien {
+  border: none; background: none; color: inherit; cursor: pointer;
+  padding: .1rem .2rem; font-size: 1rem; line-height: 1; opacity: .85;
+}
+.banner-sync .lien:hover { opacity: 1; color: #fff; }
+.banner-sync .lien:disabled { opacity: .4; cursor: default; }
+
+.banner-save-btn {
+  padding: .35rem .8rem; font-size: .8rem; font-weight: 600;
+  background: var(--surface); color: var(--ink); border: 1px solid rgba(255,255,255,.3);
+  min-height: 0;
+}
+.banner-save-btn:hover { background: var(--surface-alt); }
+
+.banner-year { font-family: var(--font-mono); font-size: .76rem; color: rgba(255,255,255,.6); }
+
+@media (max-width: 640px) { .banner-year, .banner-sync span:not(.lien) { display: none; } }
+
 .tabs.header-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: .2rem;
-  padding: .4rem var(--sp-6);
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+  padding: .4rem var(--sp-6) 0;
+  background: var(--onglets-fond);
+  border-bottom: 1px solid var(--onglets-filet);
 }
 .tab {
   background: transparent;
   border: 0;
-  color: var(--muted);
+  border-top: 3px solid transparent;
+  color: var(--ink-soft);
   padding: .5rem .7rem;
-  border-radius: var(--r-sm);
   font-size: .85rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
-.tab:hover { background: var(--moss-soft); color: var(--moss-dark); }
-.tab.active { background: var(--moss); color: #fff; }
+.tab:hover { color: var(--moss-dark); }
+.tab.active {
+  background: var(--surface);
+  color: var(--moss-dark);
+  border-top-color: var(--acc);
+  margin-bottom: -1px;
+}
 /* Les actions « données » (export/import) ont quitté le Tableau de bord pour le
    bandeau titre au lot A [8] — voir `.banner-data`. */
 
-/* N5 — message d'enregistrement : toast discret et transitoire (coin bas-droit),
-   au lieu d'un texte permanent dans le bandeau titre. */
-.save-toast {
-  position: fixed;
-  right: var(--sp-4);
-  bottom: var(--sp-4);
-  z-index: 200;
-  max-width: min(70vw, 24rem);
-  padding: .5rem .8rem;
-  border-radius: var(--r-md);
-  background: var(--moss-dark);
-  color: #eef5ee;
-  font-size: .8rem;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
-  opacity: 0;
-  transform: translateY(.4rem);
-  pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
-}
-.save-toast.is-visible { opacity: 1; transform: translateY(0); }
-/* Étape 4 — persiste (pas de fondu automatique) tant qu'un enregistrement
-   n'est pas reparti sans erreur : sinon un échec réseau passerait inaperçu. */
-.save-toast.is-error { background: var(--danger); color: #fff; }
+/* Refonte écran 1 (16/08/2026) — le statut de synchro rejoint le bandeau
+   (mockup), texte persistant plutôt qu'un toast flottant (ancienne décision
+   N5, périmée). #saveStatus vit maintenant dans .banner-sync (voir plus haut). */
+#saveStatus { max-width: 20rem; overflow: hidden; text-overflow: ellipsis; }
+#saveStatus.is-error { color: #ffb4a0; font-weight: 700; }
 
 /* Écran large mieux exploité (tous les onglets) — 1640px laissait des bandes
    vides sur les moniteurs larges ; le contenu (grilles, tableaux) s'étire
@@ -399,7 +407,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .filters-panel { margin-bottom: var(--sp-4); }
 .filter-active-count {
   font-size: .74rem; font-weight: 600; color: #154a5c; background: var(--water-soft);
-  border-radius: 999px; padding: .15rem .6rem; white-space: nowrap;
+  border-radius: 0; padding: .15rem .6rem; white-space: nowrap;
 }
 
 /* ---------- Barre de la Conception pédagogique (lot C [11]) ----------
@@ -412,7 +420,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    (`.ruban-bar`) reprennent le même patron : mêmes règles de collage, contenu
    différent. Quatre vues sur cinq ont ainsi la même grammaire, une barre par
    onglet, toujours au même endroit. */
-.design-bar,
 .week-bar,
 .ruban-bar {
   position: sticky;
@@ -430,64 +437,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
 }
-.design-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
-.design-bar-filtres { flex: 1 1 22rem; min-width: 0; }
-.design-bar-arbre { margin-left: auto; }
-/* `width: 100%` est le défaut des champs de formulaire de cette app : ici on le
-   reprend, sinon chaque menu occuperait une ligne entière et la barre ne
-   tiendrait plus sur une seule. */
-.design-bar select,
-.design-bar input[type="search"] {
-  width: auto; flex: 0 1 auto;
-  height: 1.9rem; padding: 0 .45rem;
-  font-size: .8rem; font-family: inherit;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  background: var(--surface); color: var(--ink);
-  max-width: 11rem;
-}
-.design-bar input[type="search"] { flex: 1 1 8rem; min-width: 6rem; max-width: 18rem; }
-/* Un filtre qui s'écarte de « tout » se voit : sinon, une fois l'étiquette
-   retirée, on cherche longtemps pourquoi une UE a disparu de l'arbre. */
-.design-bar select[data-actif] { border-color: var(--acc); font-weight: 600; color: var(--acc); }
-
-/* Menu « UE » : les UE sont trop nombreuses pour une barre d'une ligne, elles
-   vivent dans un petit volet flottant plutôt que sur une deuxième ligne. */
-.filter-pop { position: relative; }
-.filter-pop > summary {
-  display: flex; align-items: center; gap: .25rem;
-  height: 1.9rem; padding: 0 .5rem;
-  font-size: .8rem; font-weight: 600; color: var(--ink-soft);
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  cursor: pointer; list-style: none; white-space: nowrap;
-}
-.filter-pop > summary::-webkit-details-marker { display: none; }
-.filter-pop > summary::after { content: '▾'; font-size: .7rem; color: var(--muted); }
-.filter-pop.has-selection > summary { border-color: var(--acc); color: var(--acc); }
-.filter-pop-count {
-  font-size: .68rem; font-weight: 700; line-height: 1;
-  color: #fff; background: var(--acc);
-  border-radius: 999px; padding: .12rem .35rem;
-}
-.filter-pop-count[hidden] { display: none; }
-.filter-pop-body {
-  position: absolute; top: calc(100% + .3rem); left: 0; z-index: 5;
-  min-width: 16rem; max-width: min(30rem, 90vw);
-  max-height: 50vh; overflow-y: auto;
-  padding: var(--sp-3);
-  background: var(--surface);
-  border: 1px solid var(--line-strong); border-radius: var(--r-md);
-  box-shadow: var(--shadow-md, 0 6px 20px rgba(0,0,0,.14));
-}
 /* Sur téléphone la barre cesse d'être collante : trois lignes figées en haut
    d'un écran court coûteraient plus qu'elles ne rendent. Les menus se serrent
    à deux par ligne au lieu d'une chacun. */
 @media (max-width: 700px) {
-  .design-bar, .week-bar, .ruban-bar { position: static; gap: .35rem; }
+  .week-bar, .ruban-bar { position: static; gap: .35rem; }
   /* Les cinq boutons de mode occupent déjà deux lignes sur téléphone : les
      filtres repassent dessous, alignés à gauche, plutôt que serrés à droite. */
   .ruban-bar-filtres { margin-left: 0; }
-  .design-bar select { flex: 1 1 8rem; max-width: none; }
-  .design-bar input[type="search"] { flex: 1 1 7rem; max-width: none; }
   /* La barre du planning n'a que deux groupes : ils se rangent l'un sous
      l'autre plutôt que de laisser le second à demi vide à droite. */
   .week-bar-actions { margin-left: 0; }
@@ -600,32 +557,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .alert-banner-ico { font-size: 1rem; }
 .alert-banner-text { flex: 1; }
 
-/* Encart « Salles à réserver » : lignes de séance + case de délestage (lecture
-   seule, pas d'édition au clic — cursor par défaut, hover neutre). */
-.room-row { align-items: center; gap: .5rem .6rem; cursor: default; flex-wrap: wrap; }
-.room-row:hover { background: var(--surface-alt); border-color: var(--line); }
-.room-row .row-main { flex: 1 1 160px; min-width: 0; }
-/* Réservée devient un vrai petit bouton (44px de cible tactile compris dans
-   la hauteur de ligne) plutôt qu'une case nue de 13px — geste le plus répété
-   de cet encart. Décochage possible grâce à la case "Afficher les salles
-   déjà réservées" (garde-fou ajouté en même temps, sans quoi une ligne
-   cochée disparaîtrait sans retour possible). */
-.room-booked-check {
-  flex: 0 0 auto; display: flex; align-items: center; gap: .4rem;
-  height: 2.2rem; padding: 0 .7rem;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  background: var(--surface);
-  font-size: .82rem; color: var(--ink-soft); white-space: nowrap; cursor: pointer;
-  margin-left: auto;
-}
-.room-booked-check:hover { background: var(--surface-alt); }
-.room-booked-check input[type="checkbox"] { accent-color: var(--water); width: 1.1rem; height: 1.1rem; }
-.room-row-booked { opacity: .65; }
-.room-row-booked .room-booked-check { background: var(--surface-alt); }
-@media (max-width: 900px) {
-  .room-booked-check { flex: 1 1 100%; justify-content: center; margin-left: 0; }
-}
-.room-urgent { background: var(--amber-soft); color: #7a5b16; }
+/* Bouton « Marquer réservée / Réserver » d'une ligne d'Urgences (checkbox
+   déguisée en bouton, voir #dashboard .urgence-verbe pour l'habillage). */
+.room-booked-check { cursor: pointer; }
+.room-booked-check input[type="checkbox"] { accent-color: var(--acc); }
 
 
 /* ---------- 8. Code badges (signature graphique) ---------- */
@@ -658,7 +593,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   body { background: #fff; }
   .banner, .tabs, .header-tabs, .header-actions, .toolbar,
   .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title,
-  .design-bar, .week-bar, .ruban-bar { display: none !important; }
+  .design-layout aside, .design-subtabs, .week-bar, .ruban-bar { display: none !important; }
   main { max-width: none; padding: .4rem; }
   .view { display: block; }
   .panel, .kpi-strip { box-shadow: none; }
@@ -764,23 +699,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .checkbox-row { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
 .checkbox-chip {
   display: inline-flex; align-items: center; gap: .35rem;
-  border: 1px solid var(--line-strong); border-radius: 999px;
+  border: 1px solid var(--line-strong); border-radius: 0;
   padding: .3rem .6rem; background: var(--surface); font-size: .8rem; font-weight: 600;
 }
 .checkbox-chip input { width: 13px; height: 13px; }
-.scrollable-choice-row { max-height: none; overflow: visible; }
-.compact-ue-picker .ue-choice { padding: .2rem .5rem; }
-
-/* Lot D [17] — Progressions semestres : les 4 semestres rangés en 2 binômes de
-   promotion. C'est le groupe qui porte l'information « GPN1 / GPN2 », ce qui a
-   permis de retirer le filtre « Promotion » qui la donnait une seconde fois. */
-.semester-pairs { display: flex; flex-wrap: wrap; gap: .45rem var(--sp-4); align-items: center; }
-.semester-pair { display: inline-flex; align-items: center; gap: .45rem; }
-.semester-pair-label {
-  font-family: var(--font-mono); font-size: .74rem; font-weight: 700;
-  letter-spacing: .04em; color: var(--ink-soft);
-}
-.ue-choice { border-color: color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong)); }
 /* Lot D [16] — pourquoi ces UE-là sont cochées : sans cette phrase, un cochage
    par défaut passe pour une erreur de l'app. Occupe toute la ligne sous les cases. */
 .choice-row-note { flex: 1 0 100%; margin: .15rem 0 0; font-size: .78rem; line-height: 1.35; }
@@ -838,7 +760,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   content: '';
   flex: 0 0 auto;
   width: 10px; height: 10px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--ue-color, var(--moss));
 }
 .entity-card > summary:hover { background: var(--ue-soft, var(--surface-alt)); }
@@ -910,7 +832,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .keyword-chip {
   display: inline-flex; align-items: center;
   font-size: .72rem; font-weight: 600;
-  padding: .12rem .5rem; border-radius: 999px;
+  padding: .12rem .5rem; border-radius: 0;
   background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
   max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -919,7 +841,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .status-pill {
   flex: 0 0 auto;
   font-size: .72rem; font-weight: 700;
-  padding: .12rem .55rem; border-radius: 999px;
+  padding: .12rem .55rem; border-radius: 0;
   border: 1px solid transparent;
   white-space: nowrap;
 }
@@ -977,67 +899,97 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
 
-/* =====================================================================
-   Lot C-bis — TROIS NIVEAUX, TROIS DENSITÉS DE COULEUR
-   Jusqu'ici UE et séquence portaient le même bandeau clair à pastille : seule
-   l'étiquette « UE »/« Séquence » les séparait, et le lot C a supprimé leur
-   dernière différence de contenu (les deux portent « Modifier »). On rend donc
-   la hiérarchie à la couleur, du plus dense au plus dilué :
-     1. UE       — aplat FONCÉ, écriture blanche (--ue-deep, garanti 4,5:1).
-     2. Séquence — bandeau clair à pastille de couleur (inchangé, l'échelon
-                   intermédiaire ne bouge pas : c'est lui qui donne l'écart).
-     3. Séance   — bandeau clair, titre encré, corps PASTEL (plus bas).
-   Les trois vont ensemble : colorer l'UE sans diluer la tuile de séance les
-   aurait rapprochées au lieu de les séparer.
-   ===================================================================== */
-.entity-ue > summary {
-  background: var(--ue-deep, var(--moss-dark));
-  padding: .6rem .75rem;
-}
-/* La pastille ronde disait « voici la couleur de cette UE » : sur un aplat de
-   cette même couleur, elle ne dit plus rien. */
-.entity-ue > summary::before { display: none; }
-.entity-ue > summary:hover { background: color-mix(in srgb, var(--ue-deep, var(--moss-dark)) 88%, #fff); }
-.entity-ue > summary .entity-chevron,
-.entity-ue > summary .entity-title { color: #fff; }
-/* Mentions secondaires : atténuées, mais pas au point de descendre sous 4,5:1 —
-   à .72rem elles restent du « petit texte » aux yeux du WCAG. C'est la marge
-   prise par deepColor (5,5) qui rend ce 88 % possible. */
-.entity-ue > summary .entity-level-label,
-.entity-ue > summary .entity-tag,
-.entity-ue > summary .entity-count { color: rgba(255, 255, 255, .88); }
-.entity-ue > summary .entity-code {
-  /* Blanc PUR : à 94 % la pastille se teintait du fond foncé et le code passait
-     sous le seuil sur les 4 teintes les plus claires de la palette. */
-  background: #fff;
-  color: var(--ue-deep, var(--moss-dark));
-  border-color: transparent;
-}
-
-/* Séquence : un ton plus discret que l'UE, toujours rattachée visuellement */
-.entity-sequence { margin-left: var(--sp-3); border-style: solid; }
+/* Séquence : le seul niveau de carte dépliable qui reste dans l'onglet
+   « Séquences » depuis la refonte écran 2 (16/08/2026) — l'UE est devenue
+   l'en-tête fixe du panneau de détail (.design-detail-head), plus une carte
+   parmi d'autres. Voir .design-* plus bas pour le sidebar et l'en-tête. */
+.entity-sequence { border-style: solid; }
 .entity-sequence > summary { padding: .5rem .7rem; }
 .entity-sequence > summary::before { width: 8px; height: 8px; }
 
 /* Séance : volontairement une ligne plate (.row-item.session-row, voir plus
    bas), pas une carte — pour qu'on ne confonde pas ce niveau avec UE/séquence. */
 
-.promo-group {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface-alt);
-  margin-bottom: var(--sp-3);
-  overflow: hidden;
-}
-.promo-group > summary {
-  padding: .65rem var(--sp-4);
-  border-left: 0;
-  font-weight: 700;
-}
-.promo-group > summary span:first-child { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: .5rem; }
-.promo-group > summary strong { font-size: 1rem; color: var(--ink); }
-.promo-group > summary em { margin-left: auto; font-style: normal; color: var(--muted); font-size: .8rem; }
 .ue-tree { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* =====================================================================
+   CONCEPTION PÉDAGOGIQUE — sidebar UE + panneau de détail (écran 2, refonte
+   « papier technique froid » du 16/08/2026). Le sidebar est le SEUL filtrage
+   de cette vue (REGLES.md #21) : une promotion active, une UE sélectionnée à
+   la fois — vrai sélecteur, pas de l'estompage. 274px de large (README).
+   ===================================================================== */
+.design-layout { display: grid; grid-template-columns: 274px minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.design-sidebar {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  border-right: 1px solid var(--line); padding-right: var(--sp-3);
+  position: sticky; top: calc(var(--hauteur-collante, 6.4rem) - 1px);
+  max-height: calc(100vh - var(--hauteur-collante, 6.4rem) - var(--sp-4));
+  overflow-y: auto;
+}
+.design-sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.promo-switch { display: inline-flex; border: 1px solid var(--line-strong); }
+.promo-switch-btn {
+  padding: .35rem .8rem; font-size: .82rem; font-weight: 600;
+  background: var(--surface); color: var(--ink-soft); border: 0;
+  border-right: 1px solid var(--line-strong);
+}
+.promo-switch-btn:last-child { border-right: 0; }
+.promo-switch-btn.active { background: var(--ink); color: #fff; }
+.design-sidebar-count { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.design-sidebar-legend {
+  display: flex; gap: var(--sp-4); flex-wrap: wrap;
+  font-size: .8rem; color: var(--ink-soft);
+}
+.design-sidebar-legend label { display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; }
+.legend-dot { width: 9px; height: 9px; flex: 0 0 auto; border: 1.5px solid var(--acc); }
+.legend-dot-filled { background: var(--acc); }
+.legend-dot-hollow { background: var(--surface); }
+.design-sidebar-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.design-sidebar-group-label {
+  font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  margin: 0 0 .3rem;
+}
+.design-ue-row {
+  display: flex; flex-direction: column; gap: .2rem; width: 100%;
+  text-align: left; padding: .5rem .55rem; margin-bottom: 1px;
+  background: transparent; border: 0; border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.design-ue-row:hover { background: var(--surface-alt); }
+.design-ue-row.is-selected { background: color-mix(in srgb, var(--acc) 9%, var(--surface)); border-left: 3px solid var(--acc); padding-left: calc(.55rem - 3px); }
+.design-ue-row.is-dimmed { opacity: .5; }
+.design-ue-row.is-empty .design-ue-count { color: var(--muted); font-style: italic; }
+.design-ue-title { font-weight: 700; font-size: .88rem; color: var(--ink); display: flex; align-items: baseline; gap: .4rem; }
+.design-ue-row .code-badge { font-size: .68rem; }
+.design-ue-sub { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.design-ue-count { font-size: .76rem; color: var(--ink-soft); }
+.design-ue-pills { display: flex; gap: .25rem; }
+.design-ue-pill {
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 700;
+  padding: .05rem .3rem; border: 1.5px solid var(--acc); color: var(--acc);
+  background: var(--surface);
+}
+.design-ue-pill.is-mine { background: var(--acc); color: #fff; }
+
+.design-detail { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.design-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+.design-detail-headline h2 { margin: 0 0 .3rem; font-size: 1.15rem; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.design-detail-headline .meta-line { margin: 0; }
+.design-subtabs { display: flex; gap: var(--sp-4); border-bottom: 1px solid var(--line-strong); }
+.design-subtab {
+  padding: .5rem 0; background: none; border: 0; border-bottom: 2px solid transparent;
+  font-size: .88rem; color: var(--muted); font-weight: 500;
+}
+.design-subtab .design-subtab-count { font-size: .78rem; color: inherit; }
+.design-subtab:hover { color: var(--ink-soft); }
+.design-subtab.active { color: var(--ink); font-weight: 700; border-bottom-color: var(--acc); }
+.design-subtab-panel[hidden] { display: none; }
+
+@media (max-width: 900px) {
+  .design-layout { grid-template-columns: 1fr; }
+  .design-sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: var(--sp-3); position: static; max-height: none; }
+}
 
 @media (max-width: 760px) {
   .entity-card > summary { flex-wrap: wrap; }
@@ -1118,7 +1070,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .session-card-number {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 0 0 auto;
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 20px; height: 20px; border-radius: 0;
   /* Lot 5 — encre : le numéro dans le rond blanc tombait à 1,89 (illisible).
      Lot C-bis — le rond redevient blanc PUR sur l'aplat foncé : --ue-deep étant
      garanti à 5,5:1 sous du blanc, le chiffre l'est aussi par symétrie. */
@@ -1266,48 +1218,67 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .constraint-evenement-etablissement { border-left-color: var(--water); background: var(--water-soft); color: #154a5c; }
 
 /* =====================================================================
-   DIAGRAMME SEMESTRE — frise hebdomadaire par UE
-   TOUTE la frise est une seule grille CSS (.timeline-grid). Les bandeaux
-   mois / semaines / séquences / jours sont des cellules de cette même grille,
-   donc les colonnes de semaines restent parfaitement alignées sur toutes les
-   lignes, à n'importe quelle largeur de fenêtre. La colonne d'étiquettes (à
-   gauche) est "sticky" pour rester visible au défilement horizontal.
+   PROGRESSION — refonte « papier technique froid » (écran 3, 16/08/2026).
+   Bascule GPN1/GPN2 + Semestre1/Semestre2 (mêmes classes .promo-switch que
+   Conception), rangée de cartes UE (vrai sélecteur — REGLES.md #21, exception
+   « Empiler » assumée : voir README), deux bandes encadrées et titrées
+   séparément (Séquences ↔, Séances ↕). Les deux bandes NE sont PAS imbriquées
+   dans une grille commune : elles se relient par la couleur de séquence
+   reportée sur les séances, pas par un alignement mécanique des colonnes.
    ===================================================================== */
-.timeline-panel { margin-top: var(--sp-3); }
-.semester-timeline { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
-.timeline-card {
-  --timeline-label-col: 54px;
-  --timeline-week-min: 60px;
-  --timeline-row-min: 30px;
-  border: 1px solid color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong));
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.timeline-title {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  padding: .55rem .8rem;
-  border-bottom: 1px solid var(--line);
-  border-left: 6px solid var(--ue-color, var(--moss));
-  background: var(--ue-soft, var(--surface-alt));
-}
-.timeline-title h4 { font-family: var(--font-display); font-size: 1rem; margin-bottom: .1rem; }
-.timeline-title p { margin: 0; color: var(--ink-soft); font-size: .76rem; }
+.progression-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+.progression-week-range { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); margin-left: auto; }
+.semester-switch .promo-switch-btn { padding: .5rem 1rem; }
+.semester-switch .promo-switch-btn.active { background: var(--surface); color: var(--ink); border-color: var(--ink); font-weight: 700; }
 
-/* Conteneur scrollable horizontal : la grille interne peut dépasser. */
+.progression-ue-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.progression-ue-cards { display: flex; gap: var(--sp-2); flex-wrap: wrap; flex: 1 1 auto; }
+.progression-ue-card {
+  display: flex; flex-direction: column; gap: .3rem; text-align: left;
+  min-width: 190px; padding: .5rem .65rem;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  cursor: pointer;
+}
+.progression-ue-card:hover { background: var(--surface-alt); }
+.progression-ue-card.is-selected {
+  border-color: var(--acc); border-width: 2px; padding: calc(.5rem - 1px) calc(.65rem - 1px);
+  background: color-mix(in srgb, var(--acc) 6%, var(--surface));
+}
+.progression-ue-card.is-empty { opacity: .65; }
+.progression-ue-card-title { font-weight: 700; font-size: .84rem; color: var(--ink); display: flex; align-items: baseline; gap: .35rem; }
+.progression-ue-card-sub { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--ink-soft); }
+.progression-stack-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
+
+.progression-panel { margin-top: var(--sp-3); }
+.progression-panel-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.progression-panel-head h3 { margin: 0; }
+.progression-direction {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: 1px solid var(--line-strong);
+  font-family: var(--font-mono); color: var(--ink-soft);
+}
+.progression-hors-fenetre { padding: .35rem .5rem; font-size: .78rem; font-style: italic; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
+.progression-panel-foot { display: flex; align-items: center; gap: .4rem; margin-top: var(--sp-2); font-size: .8rem; color: var(--ink-soft); }
+.progression-day-count { font-weight: 400; }
+
+/* Conteneur scrollable horizontal : la grille interne peut dépasser. Colonne
+   d'étiquettes et coin "sticky" pour rester visibles au défilement. */
 .timeline-scroll { overflow-x: auto; }
 .timeline-grid {
+  --timeline-label-col: 130px;
+  --timeline-week-min: 92px;
+  --timeline-row-min: 34px;
   display: grid;
   /* grid-template-columns est posé inline (dépend du nombre de semaines). */
   align-items: stretch;
+  border: 1px solid var(--line-strong);
   /* Lot 8 (Q6) — PAS de min-width: max-content ici : cette règle forçait la
      grille (et donc CHAQUE colonne, via le partage des fr) à la largeur
      réclamée par le titre de séquence le plus long, même avec des colonnes en
      minmax(60px, 1fr). Sans elle, une grille CSS overflow naturellement à la
-     somme des minimums de pistes (54px + N × --timeline-week-min) quand ça ne
-     tient pas, et .timeline-scroll prend le relais avec un défilement — c'est
-     précisément le comportement voulu. */
+     somme des minimums de pistes (label + N × --timeline-week-min) quand ça
+     ne tient pas, et .timeline-scroll prend le relais avec un défilement —
+     c'est précisément le comportement voulu. */
 }
 /* Étiquettes de ligne + coins : collés à gauche. */
 .timeline-row-label, .timeline-corner {
@@ -1321,16 +1292,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-weight: 650; font-size: .72rem; color: var(--ink-soft);
   display: flex; align-items: center;
 }
-.header-label, .sequence-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-
-/* Ligne MOIS */
-.timeline-corner-month { background: var(--moss-dark); border-bottom-color: rgba(255,255,255,.12); }
-.timeline-month {
-  padding: .3rem .4rem; text-align: center;
-  font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: capitalize;
-  color: #e3ede4; background: var(--moss-dark);
-  border-right: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid var(--line);
-}
+.header-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 
 /* Ligne SEMAINES */
 .timeline-week-head {
@@ -1386,24 +1348,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--acc); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Ligne SÉQUENCES : une piste unique sur toute la largeur des semaines, qui
-   contient sa propre sous-grille calée sur le même nombre de colonnes. La
-   sous-grille hérite des colonnes de semaines via subgrid quand c'est
-   supporté, sinon repeat() identique. */
-.timeline-sequence-row .sequence-label { border-bottom: 1px solid var(--line); }
-.timeline-sequence-track {
-  display: grid;
-  grid-template-columns: subgrid;
-  /* Un couloir (lane) par ligne : hauteur régulière, extensible si le contenu
-     déborde. Les bandes reçoivent leur grid-row explicite en JS. */
-  grid-auto-rows: minmax(34px, auto);
-  /* Teinte chaude mais discrète : distingue la lecture HORIZONTALE de cette
-     ligne séquences de la lecture VERTICALE des journées, sans crier. */
-  background: color-mix(in srgb, var(--amber-soft) 42%, var(--surface));
-  border-bottom: 1px solid var(--line);
-  min-height: 38px; align-items: center;
-  position: relative;
-}
+/* Bandes SÉQUENCES/contraintes : bandes explicitement placées (grid-column /
+   grid-row posés en JS) à même niveau que les cases-jours, plus de sous-grille
+   dédiée depuis la refonte écran 3 (16/08/2026, deux bandes séparées). */
 /* Fond de colonne (une par semaine), derrière les bandes : maillage vertical
    léger + hachures « sans cours » pour les semaines bloquées (vacances, fériés). */
 .timeline-seq-bg {
@@ -1419,19 +1366,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .timeline-seq-bg.is-thematic {
   background: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, #d9b75a 55%, transparent) 7px 14px);
 }
-/* Filet sous la zone réservée aux périodes/contraintes (couloir(s) du haut). */
-.timeline-seq-zone {
-  align-self: stretch; justify-self: stretch;
-  border-bottom: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
-  pointer-events: none;
-}
 .timeline-sequence-band, .timeline-constraint-band { position: relative; z-index: 1; }
-@supports not (grid-template-columns: subgrid) {
-  /* Repli pour les navigateurs sans subgrid : la piste reprend exactement le
-     même patron de colonnes que la grille principale (posé inline en JS via
-     une variable identique), garantissant le même alignement. */
-  .timeline-sequence-track { grid-template-columns: repeat(var(--timeline-week-count, 1), minmax(var(--timeline-week-min), 1fr)); }
-}
 .timeline-sequence-band, .timeline-constraint-band {
   min-height: 30px; min-width: 0; margin: 3px; border-radius: var(--r-sm);
   padding: .2rem .45rem; text-align: left; overflow: hidden;
@@ -1479,7 +1414,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .timeline-sequence-band.seq-colored .teacher-pip {
   font-size: .55rem; font-weight: 700; line-height: 1;
   text-transform: none; letter-spacing: 0; opacity: 1;
-  padding: 2px 5px; border-radius: 999px; white-space: nowrap;
+  padding: 2px 5px; border-radius: 0; white-space: nowrap;
   color: var(--ink);
   background: color-mix(in srgb, var(--ue-color, var(--moss)) 20%, #fff);
   border: 1px solid color-mix(in srgb, var(--ue-color, var(--moss)) 45%, transparent);
@@ -1522,15 +1457,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .timeline-session-meta { font-style: normal; font-size: .64rem; opacity: .9; }
 .timeline-session-keywords { font-size: .6rem; opacity: .72; line-height: 1.1; }
 
-/* Lot 8 (Q6) — la densité pilote aussi la largeur de colonne (pas seulement la
-   hauteur de ligne) : compacte fait tenir un semestre entier à l'écran,
-   confort laisse plus de place aux titres de séquence. */
-.timeline-compact { --timeline-row-min: 28px; --timeline-week-min: 60px; }
-.timeline-compact .timeline-session { padding: .2rem .35rem; }
-.timeline-comfort { --timeline-row-min: 44px; --timeline-week-min: 110px; }
-
 @media print {
-  .timeline-card { break-inside: avoid; }
+  .progression-panel { break-inside: avoid; }
   .timeline-scroll { overflow: visible; }
 }
 
@@ -1538,9 +1466,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    PLANNING SEMAINE — grille horaire opérationnelle
    ===================================================================== */
 /* ---------- Barre du Planning hebdo (lot E [19]) ----------
-   Elle hérite du collage et de l'habillage de `.design-bar` (voir plus haut) et
-   n'ajoute ici que son contenu propre : le rappel de la semaine à gauche, les
-   actions à droite. */
+   Elle hérite du collage et de l'habillage partagés avec `.ruban-bar` (voir
+   plus bas) et n'ajoute ici que son contenu propre : le rappel de la semaine
+   à gauche, les actions à droite. */
 .week-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
 .week-bar-semaine { gap: .15rem; }
 .week-bar-actions { margin-left: auto; gap: .5rem; }
@@ -1554,26 +1482,37 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .week-bar .mask-toggle { white-space: nowrap; }
 
 .week-toolbar { gap: .5rem; }
-.week-calendar-panel {
-  margin: 0 0 var(--sp-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  padding: var(--sp-3);
-  box-shadow: var(--shadow-lg);
-  display: none;
-  width: 340px;
-  max-width: 100%;
-  box-sizing: border-box;
+
+/* Bande de semaines (REGLES.md #22 — seul sélecteur de date de l'app). */
+.week-strip-bar { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
+.week-strip-label { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+.week-strip-label strong { color: var(--ink); font-weight: 700; }
+.week-strip-switch .promo-switch-btn { padding: .35rem .7rem; font-size: .72rem; }
+.week-strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+  gap: 2px; margin: 0 0 var(--sp-3);
 }
-.week-calendar-panel.is-open { display: block; }
-/* Calendrier « ancré » + « Séances à placer » : colonne de gauche, empilés ;
-   le planning occupe la colonne de droite, remonté au niveau du calendrier
-   au lieu d'être repoussé sous une bande pleine largeur. Sous ~1100px, la
-   colonne repasse au-dessus du planning (flex-wrap). */
+.week-strip-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  padding: .3rem 0 .35rem; cursor: pointer; font: inherit;
+}
+.week-strip-tile:hover { background: var(--surface-alt); }
+.week-strip-num { font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--ink-soft); }
+.week-strip-date { font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
+.week-strip-tile-bar { display: block; height: 3px; width: calc(100% - 14px); margin-top: 2px; background: var(--line-strong); }
+/* Férié/vacances : hachure grise neutre, jamais ambrée (REGLES.md #15). */
+.week-strip-tile.is-blocked { background: repeating-linear-gradient(135deg, var(--surface) 0 5px, var(--surface-alt) 5px 10px); }
+.week-strip-tile.is-blocked .week-strip-tile-bar { background: var(--ink-soft); opacity: .35; }
+/* Semaine thématique / EIL : seul cas où l'ambre est permis (REGLES.md #15). */
+.week-strip-tile.is-thematic .week-strip-num { color: #6b5510; }
+.week-strip-tile.is-thematic .week-strip-tile-bar { background: var(--clay); }
+.week-strip-tile.is-selected, .week-strip-tile.is-selected:hover { background: var(--acc); border-color: var(--acc); }
+.week-strip-tile.is-selected .week-strip-num, .week-strip-tile.is-selected .week-strip-date { color: #fffefb; }
+.week-strip-tile.is-selected .week-strip-tile-bar { background: #fffefb; }
+
 .week-plan-top { display: flex; gap: var(--sp-3); align-items: flex-start; flex-wrap: wrap; margin: 0 0 var(--sp-3); }
 .week-sidebar { display: flex; flex-direction: column; gap: var(--sp-3); flex: 0 0 340px; max-width: 100%; min-width: 0; }
-.week-plan-top .week-calendar-panel.week-calendar-docked { display: block; margin: 0; max-width: 100%; }
 .week-plan-top .backlog-panel { flex: 1 1 auto; min-width: 0; margin: 0; }
 .week-plan-top .notes-panel { margin: 0; }
 .week-plan-top .week-planning-main { flex: 1 1 640px; min-width: 0; }
@@ -1670,7 +1609,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .tight-section legend { font-size: .82rem; }
 .constraint-pill .exam-flag, .timeline-constraint-band .exam-flag {
   display: inline-block; font-size: .58rem; font-weight: 700; margin-left: .3rem;
-  padding: 0 .3rem; border-radius: 999px; background: var(--clay, #b56952); color: #fff;
+  padding: 0 .3rem; border-radius: 0; background: var(--clay, #b56952); color: #fff;
 }
 
 .schedule-section {
@@ -1687,13 +1626,11 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-size: 1.05rem;
   font-weight: 650;
 }
+/* REGLES.md #14 — couleur de promotion fixe (GPN1 ambre, GPN2 sarcelle), ne
+   varie jamais avec la période affichée (l'ancienne variante par saison,
+   Lot R, datait de la charte Atlas naturaliste). */
 .schedule-title.gpn1 { background: var(--gpn1-soft); color: #6b3013; }
 .schedule-title.gpn2 { background: var(--gpn2-soft); color: #154a5c; }
-/* Lot R — teinte du bandeau de promo selon la période (spécificité 2 classes > base). */
-.schedule-title.period-autumn.gpn1 { background: #dbe8f5; color: #1d466b; box-shadow: inset 4px 0 0 #3a76ad; }
-.schedule-title.period-autumn.gpn2 { background: #f4dede; color: #7a2b2b; box-shadow: inset 4px 0 0 #b04a4a; }
-.schedule-title.period-spring.gpn1 { background: #f5edcb; color: #6b5510; box-shadow: inset 4px 0 0 #e0a526; }
-.schedule-title.period-spring.gpn2 { background: #dcecd7; color: #2f5d33; box-shadow: inset 4px 0 0 #5a9c5f; }
 .table-scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; }
 /* Lot S(d) — largeurs de colonnes FIXES : la colonne horaire (1re) est calée à
@@ -1717,7 +1654,7 @@ table { border-collapse: collapse; width: 100%; }
 .empty-slot:hover { background: var(--moss-soft); }
 .drop-hint {
   display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+  border-radius: 0; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
 }
 .empty-slot:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
 
@@ -1767,11 +1704,11 @@ table { border-collapse: collapse; width: 100%; }
   background: repeating-linear-gradient(45deg, var(--surface) 0 6px, var(--surface-alt) 6px 12px);
   color: var(--muted);
 }
-.demi-col.demi-empty .drop-hint { width: auto; height: auto; padding: .1rem .45rem; border-radius: 999px; font-size: .66rem; }
+.demi-col.demi-empty .drop-hint { width: auto; height: auto; padding: .1rem .45rem; border-radius: 0; font-size: .66rem; }
 /* Badge ½A / ½B, réutilisé dans le planning et la frise. */
 .demi-badge {
   display: inline-block; margin-right: .25rem; padding: 0 .28rem;
-  border-radius: 999px; font-size: .6rem; font-weight: 800; line-height: 1.5;
+  border-radius: 0; font-size: .6rem; font-weight: 800; line-height: 1.5;
   background: rgba(0,0,0,.14); color: inherit; vertical-align: baseline;
 }
 .demi-badge.demi-a { background: color-mix(in srgb, var(--water) 32%, transparent); }
@@ -1793,7 +1730,7 @@ table { border-collapse: collapse; width: 100%; }
   position: absolute; top: 2px; right: 2px; z-index: 2;
   width: 18px; height: 18px; padding: 0; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid rgba(0,0,0,.16);
+  border-radius: 0; border: 1px solid rgba(0,0,0,.16);
   background: rgba(255,255,255,.82); color: #444;
   font-size: .72rem; cursor: pointer;
   opacity: 0; transition: opacity .12s ease, background .12s ease, transform .12s ease;
@@ -1826,7 +1763,7 @@ table { border-collapse: collapse; width: 100%; }
 .day-constraint-chip .dcc-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-constraint-chip.is-exam { border-left-color: var(--clay); background: var(--clay-soft); color: #6b3013; }
 .day-constraint-chip.is-blocked { border-left-color: var(--amber); background: var(--amber-soft); color: #6b4f12; }
-.day-constraint-chip:hover { filter: brightness(.97); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.day-constraint-chip:hover { filter: brightness(.97); }
 
 /* C2 — créneaux grisés des jours « sans cours » (vacances/stage/férié) */
 .empty-slot.day-off-slot {
@@ -1859,10 +1796,10 @@ table { border-collapse: collapse; width: 100%; }
    RÉFÉRENTIEL — capacités structurées + texte intégral des PDF
    ===================================================================== */
 /* ---------- Barre du Référentiel & Ruban (lot F [5]) ----------
-   Quatrième vue à reprendre le patron de `.design-bar` (voir le bloc de collage
-   plus haut) : modes d'affichage à gauche, filtres à droite, une seule ligne
-   collée sous les onglets. Ces règles sont posées AVANT `.reference-mode-switch`
-   pour que la pilule des modes garde son fond et son `gap` propres. */
+   Reprend le patron collé sous les onglets partagé avec `.week-bar` : modes
+   d'affichage à gauche, filtres à droite, une seule ligne. Ces règles sont
+   posées AVANT `.reference-mode-switch` pour que la pilule des modes garde
+   son fond et son `gap` propres. */
 .ruban-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
 .ruban-bar-filtres { flex: 1 1 20rem; min-width: 0; margin-left: auto; gap: .4rem; }
 /* ⚠️ setRubanMode() masque ce groupe par l'attribut `hidden` : sans cette règle,
@@ -1880,22 +1817,44 @@ table { border-collapse: collapse; width: 100%; }
    mode qui les propose. */
 .ruban-gestes { margin: 0 0 var(--sp-2); }
 
-.reference-mode-switch { display: inline-flex; flex-wrap: wrap; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+.reference-mode-switch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 0; padding: .2rem; }
 .reference-mode-switch button {
   background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .8rem;
-  border-radius: 999px; font-size: .82rem;
+  border-radius: 0; font-size: .82rem;
 }
 .reference-mode-switch button.active { background: var(--moss); color: #fff; }
+/* README : Ruban/Répartition sont un bouton à deux positions — regroupées et
+   séparées des 3 autres modes par un filet, plutôt que 5 boutons équivalents. */
+.ruban-toggle-pair { display: inline-flex; gap: .25rem; padding-right: .45rem; margin-right: .2rem; border-right: 1px solid var(--line-strong); }
 .reference-mode-panel { display: none; }
 .reference-mode-panel.active-mode { display: block; }
 
+/* ---- Répartition (06-referentiel-repartition.png) ---- */
+.repartition-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 var(--sp-2); }
+.repartition-summary { font-size: .84rem; color: var(--ink-soft); }
+.repartition-table th:first-child, .repartition-table td.repartition-td-ue { width: 15rem; }
+.repartition-td-ue { vertical-align: top; display: table-cell; }
+.repartition-td-ue.is-dim { opacity: .45; }
+.repartition-seq-count { display: block; font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+tr.repartition-sem-row td {
+  background: var(--surface-alt); border-bottom: 1px solid var(--line-strong);
+  padding: .4rem .55rem; font-family: var(--font-mono); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--moss-dark);
+}
+.repartition-sem-period { margin-left: .6rem; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.repartition-table tr.is-dim td { opacity: .45; }
+.ruban-td-cap { font-family: var(--font-mono); font-weight: 700; font-size: .78rem; color: var(--moss-dark); white-space: nowrap; }
+.repartition-pills { display: flex; flex-wrap: wrap; gap: .2rem; }
+
 /* ---- Créneaux de cours type (planning hebdo type) ---- */
 .creneaux-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
-.creneaux-toolbar .meta { margin: 0; flex: 1 1 320px; }
-.creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+.creneaux-toolbar-label { font-weight: 700; font-size: .88rem; color: var(--ink); }
+.creneaux-summary { font-size: .82rem; color: var(--ink-soft); }
+.creneaux-teacher-filter { margin-left: auto; font-size: .8rem; color: var(--ink-soft); display: flex; align-items: center; gap: .35rem; }
+.creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 0; padding: .2rem; }
 .creneaux-period-switch button {
   background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .9rem;
-  border-radius: 999px; font-size: .82rem; cursor: pointer;
+  border-radius: 0; font-size: .82rem; cursor: pointer;
 }
 .creneaux-period-switch button.active { background: var(--moss); color: #fff; }
 .creneaux-grids { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: var(--sp-4); align-items: start; }
@@ -1915,7 +1874,7 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-empty:hover { background: var(--moss-soft); }
 .tpl-empty .drop-hint {
   display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+  border-radius: 0; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
 }
 .tpl-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
 .tpl-cell {
@@ -1925,7 +1884,7 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-cell:hover { outline: 2px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent); outline-offset: -2px; }
 .tpl-cell .tpl-ue { font-family: var(--font-mono); font-size: .72rem; font-weight: 700; }
 .tpl-cell .tpl-title { font-size: .74rem; line-height: 1.15; margin-top: .1rem; }
-.tpl-cell .tpl-teacher { font-size: .68rem; color: var(--ink-soft); margin-top: .1rem; }
+.tpl-cell .tpl-teachers { display: flex; flex-wrap: wrap; justify-content: center; gap: .15rem; margin-top: .25rem; }
 /* Cellule scindée gauche/droite (2 créneaux sur la même plage). Le conteneur est
    en absolu inset:0 pour remplir toute la hauteur de la case (rowspan) — sinon le
    contenu se rétrécissait au centre. */
@@ -1941,7 +1900,7 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-col.tpl-half-empty { background: var(--surface); display: flex; align-items: center; justify-content: center; }
 .tpl-col.tpl-half-empty:hover { background: var(--moss-soft); }
 .tpl-col.tpl-half-empty .drop-hint {
-  width: auto; height: auto; padding: .1rem .4rem; border-radius: 999px; font-size: .66rem;
+  width: auto; height: auto; padding: .1rem .4rem; border-radius: 0; font-size: .66rem;
   border: 1px dashed var(--line-strong); color: var(--line-strong);
 }
 .tpl-col.tpl-half-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); }
@@ -2023,7 +1982,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-chip-block div { display: flex; flex-wrap: wrap; gap: .25rem; }
 .reference-chip-block span {
   display: inline-flex; border: 1px solid var(--water-soft); background: var(--water-soft);
-  color: #154a5c; border-radius: 999px; padding: .1rem .5rem; font-size: .74rem; font-weight: 650;
+  color: #154a5c; border-radius: 0; padding: .1rem .5rem; font-size: .74rem; font-weight: 650;
 }
 .reference-raw-source, .inline-reference-section, .reference-source-drawer {
   border: 1px dashed var(--line-strong); border-radius: var(--r-sm); padding: .4rem .6rem; margin-top: .4rem;
@@ -2123,7 +2082,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .4rem; }
 .reference-tag {
   font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
-  padding: .12rem .45rem; border-radius: 999px; background: var(--moss-soft, #e3ece0); color: var(--moss-dark);
+  padding: .12rem .45rem; border-radius: 0; background: var(--moss-soft, #e3ece0); color: var(--moss-dark);
 }
 .reference-finality { font-size: .82rem; color: var(--ink-soft); margin-bottom: .5rem; }
 
@@ -2156,15 +2115,15 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
    Référentiel — consultation interactive par module (accordéon)
    ============================================================ */
 .refmod-toolbar { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.refmod-modtabs { display: inline-flex; gap: 4px; flex-wrap: nowrap; background: var(--surface-alt); border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px; }
+.refmod-modtabs { display: inline-flex; gap: 4px; flex-wrap: nowrap; background: var(--surface-alt); border: 1px solid var(--line-strong); border-radius: 0; padding: 3px; }
 .refmod-modtab {
   border: 0; background: transparent; color: var(--ink-soft);
-  padding: .3rem .6rem; border-radius: 999px; font-weight: 700; font-size: .8rem; cursor: pointer;
+  padding: .3rem .6rem; border-radius: 0; font-weight: 700; font-size: .8rem; cursor: pointer;
   min-width: 2.4rem; text-align: center; letter-spacing: .01em;
   transition: background .12s, color .12s;
 }
 .refmod-modtab:hover { background: var(--moss-soft); color: var(--moss-dark); }
-.refmod-modtab.active { background: var(--moss); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.refmod-modtab.active { background: var(--moss); color: #fff; }
 /* Lot F [5] — ⚠️ `flex-direction: row` n'est PAS décoratif : cette classe est
    posée sur un <label>, et la règle `label` (voir « Champs de formulaire ») met
    `flex-direction: column`. Sans ce mot-clé, la loupe se plaçait AU-DESSUS du
@@ -2174,7 +2133,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-search {
   flex: 1 1 12rem; max-width: 20rem; margin-left: auto;
   display: flex; flex-direction: row; align-items: center; gap: .35rem;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: .22rem .55rem;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 0; padding: .22rem .55rem;
 }
 .refmod-search span { opacity: .7; font-size: .8rem; }
 /* Le `padding: .55rem .65rem` de la règle générale des champs ajoutait 13 px de
@@ -2188,6 +2147,48 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-count { font-size: .8rem; color: var(--muted); padding: 0 .35rem; min-width: 5ch; }
 .refmod-panel { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
 .refmod-content { margin-top: 0; }
+
+/* =====================================================================
+   RÉFÉRENTIEL — version hybride (16/08/2026) : barre latérale plate (Général +
+   capacités du module actif) + contenu central identique à l'ancien accordéon
+   (refDeclinaison/refBlocs/refGeneralSection réutilisées telles quelles).
+   ===================================================================== */
+.refread-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr) 280px; gap: var(--sp-3); align-items: start; }
+@media (max-width: 1100px) { .refread-layout { grid-template-columns: 1fr; } }
+
+.refread-toc { border: 1px solid var(--line-strong); background: var(--surface); max-height: 80vh; overflow-y: auto; }
+.refread-toc-head { font-family: var(--font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: .55rem .6rem; border-bottom: 1px solid var(--line-strong); background: var(--surface-alt); }
+.refread-toc-list { list-style: none; margin: 0; padding: 0; }
+.refread-toc-item {
+  display: flex; align-items: baseline; gap: .4rem; width: 100%; text-align: left;
+  background: transparent; border: 0; border-left: 3px solid transparent; border-bottom: 1px solid var(--line);
+  padding: .45rem .6rem .45rem .55rem; font: inherit; font-size: .8rem; color: var(--ink-soft); cursor: pointer;
+}
+.refread-toc-item:hover { background: var(--surface-alt); color: var(--ink); }
+.refread-toc-item.active { background: color-mix(in srgb, var(--acc) 8%, var(--surface)); border-left-color: var(--acc); color: var(--ink); font-weight: 700; }
+.refread-toc-item.refread-toc-general { font-weight: 700; border-bottom-color: var(--line-strong); }
+.refread-toc-code { font-family: var(--font-mono); font-size: .7rem; font-weight: 700; color: var(--moss-dark); white-space: nowrap; }
+.refread-toc-item.active .refread-toc-code { color: var(--acc); }
+
+.refread-body { border: 1px solid var(--line-strong); background: var(--card, var(--surface)); padding: var(--sp-4); max-height: 80vh; overflow-y: auto; }
+.refread-cap-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: var(--sp-3); border-bottom: 1px solid var(--line-strong); padding-bottom: var(--sp-2); }
+.refread-cap-code { font-family: var(--font-mono); font-weight: 700; font-size: .8rem; color: var(--acc); }
+.refread-cap-head h3 { font-size: 1.1rem; }
+
+.refread-chezvous { border: 1px solid var(--line-strong); background: var(--surface); padding: var(--sp-3); max-height: 80vh; overflow-y: auto; }
+.refread-chezvous h4 { font-size: .92rem; display: flex; align-items: baseline; gap: .4rem; margin: 0 0 var(--sp-2); }
+.refread-cv-block { margin: 0 0 var(--sp-3); }
+.refread-cv-label { display: flex; align-items: baseline; justify-content: space-between; font-family: var(--font-mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .3rem; }
+.refread-cv-count { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.refread-cv-disc { margin: 0; font-size: .82rem; color: var(--ink-soft); }
+.refread-seq-item {
+  display: block; width: 100%; text-align: left; background: var(--surface-alt);
+  border: 1px solid var(--line-strong); border-left: 3px solid var(--seq-color, var(--moss));
+  padding: .4rem .55rem; margin-bottom: .3rem; font: inherit; cursor: pointer;
+}
+.refread-seq-item:hover { background: var(--card, var(--surface)); }
+.refread-seq-item strong { display: block; font-size: .82rem; }
+.refread-seq-item .meta { display: block; margin-top: .1rem; font-size: .7rem; }
 
 /* En-tête de module */
 .rm-head { margin-bottom: var(--sp-3); }
@@ -2204,7 +2205,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-content summary::-webkit-details-marker { display: none; }
 .refmod-content summary::before {
   content: "+"; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
-  width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 1rem; line-height: 1;
+  width: 24px; height: 24px; border-radius: 0; font-weight: 800; font-size: 1rem; line-height: 1;
 }
 .refmod-content details[open] > summary::before { content: "\2212"; }
 
@@ -2301,7 +2302,7 @@ table.rm-eval ul { margin: .1rem 0 .1rem .9rem; }
 .rm-linkentry a { word-break: break-word; }
 
 /* Surlignage de recherche */
-mark.rm-mark { background: var(--amber-soft); color: var(--ink); border-radius: 3px; padding: 0 .08em; box-shadow: inset 0 -2px 0 var(--amber); }
+mark.rm-mark { background: var(--amber-soft); color: var(--ink); border-radius: 0; padding: 0 .08em; box-shadow: inset 0 -2px 0 var(--amber); }
 
 /* Annexes du référentiel (même niveau que les capacités, accent « eau ») */
 .rm-annexe > summary {
@@ -2334,27 +2335,31 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: start; }
 .ruban-col { display: flex; flex-direction: column; gap: var(--sp-2); }
 .ruban-col-head {
+  display: flex; align-items: baseline; justify-content: center; gap: .4rem;
   background: var(--moss); color: #fff; font-weight: 700; font-size: .9rem;
-  text-align: center; padding: .45rem .5rem; border-radius: 999px; letter-spacing: .01em;
+  text-align: center; padding: .45rem .5rem; border-radius: 0; letter-spacing: .01em;
 }
-/* Lot R (harmonisation ruban) — bandeau de semestre aux mêmes tons que le planning. */
-.ruban-col.sem-s1 .ruban-col-head { background: #3a76ad; } /* GPN1 automne — bleu */
-.ruban-col.sem-s2 .ruban-col-head { background: #e0a526; color: #4a3806; } /* GPN1 printemps — jaune vif (texte foncé pour le contraste) */
-.ruban-col.sem-s3 .ruban-col-head { background: #b04a4a; } /* GPN2 automne — rouge */
-.ruban-col.sem-s4 .ruban-col-head { background: #5a9c5f; color: #0d2410; } /* GPN2 printemps — vert (texte foncé pour le contraste, cf. Lot 5) */
+.ruban-col-promo { font-family: var(--font-mono); font-size: .68rem; font-weight: 600; opacity: .85; }
+/* REGLES.md #14 — couleurs de semestre (JETONS.md, Ruban uniquement) : S1 bleu,
+   S2 ambre, S3 rouge/rust, S4 vert. Corrigé le 16/08/2026 (l'ancien jaune vif
+   #e0a526 était un reliquat non touché de la charte Atlas naturaliste). */
+.ruban-col.sem-s1 .ruban-col-head { background: #3a6ea5; }
+.ruban-col.sem-s2 .ruban-col-head { background: #c08a12; }
+.ruban-col.sem-s3 .ruban-col-head { background: #b0423f; }
+.ruban-col.sem-s4 .ruban-col-head { background: #41874f; }
 .ruban-ue {
   background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--moss);
   border-radius: var(--r-md); padding: .6rem .7rem; box-shadow: var(--shadow-sm);
   transition: opacity .15s;
 }
 .ruban-ue.is-dim { opacity: .42; }
-/* Lot R (harmonisation ruban) — liseré gauche par semestre, mêmes tons que les
-   bandeaux de promo du planning. Placé AVANT .is-modified (amber) pour qu'une UE
-   éditée conserve son liseré ambré prioritaire. */
-.ruban-ue.sem-s1 { border-left-color: #3a76ad; } /* GPN1 automne — bleu */
-.ruban-ue.sem-s2 { border-left-color: #e0a526; } /* GPN1 printemps — jaune */
-.ruban-ue.sem-s3 { border-left-color: #b04a4a; } /* GPN2 automne — rouge */
-.ruban-ue.sem-s4 { border-left-color: #5a9c5f; } /* GPN2 printemps — vert */
+/* REGLES.md #5 — une tuile colorée ne porte jamais une couleur à part : fond =
+   teinte+14 (8 % alpha), filet gauche = teinte pleine. Couleur de semestre
+   reportée sur la carte ET sur ses capacités liées (07-ruban.png). */
+.ruban-ue.sem-s1 { background: #3a6ea514; border-left-color: #3a6ea5; }
+.ruban-ue.sem-s2 { background: #c08a1214; border-left-color: #c08a12; }
+.ruban-ue.sem-s3 { background: #b0423f14; border-left-color: #b0423f; }
+.ruban-ue.sem-s4 { background: #41874f14; border-left-color: #41874f; }
 .ruban-ue-head { display: flex; flex-direction: column; gap: .1rem; margin-bottom: .25rem; }
 .ruban-ue-code { font-size: .72rem; font-weight: 700; color: var(--moss-dark); letter-spacing: .03em; }
 .ruban-ue-head strong { font-size: .92rem; color: var(--ink); }
@@ -2374,6 +2379,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-cap-code { font-family: var(--font-mono); font-size: .74rem; font-weight: 700; color: var(--water); white-space: nowrap; }
 .ruban-cap.has-ref .ruban-cap-code::after { content: " ↗"; font-size: .7rem; opacity: .7; }
 .ruban-cap-title { font-size: .78rem; line-height: 1.3; }
+/* Capacité « liée » : le filet/code reprend la couleur du semestre de sa carte,
+   pas une teinte fixe (07-ruban.png — bleu en S1, ambre en S2, rouge en S3, vert
+   en S4). Le fond au survol (--water-soft) reste inchangé, hors-sujet ici. */
+.ruban-ue.sem-s1 .ruban-cap.has-ref { border-left-color: #3a6ea5; }
+.ruban-ue.sem-s1 .ruban-cap-code { color: #3a6ea5; }
+.ruban-ue.sem-s2 .ruban-cap.has-ref { border-left-color: #c08a12; }
+.ruban-ue.sem-s2 .ruban-cap-code { color: #8c6a10; }
+.ruban-ue.sem-s3 .ruban-cap.has-ref { border-left-color: #b0423f; }
+.ruban-ue.sem-s3 .ruban-cap-code { color: #b0423f; }
+.ruban-ue.sem-s4 .ruban-cap.has-ref { border-left-color: #41874f; }
+.ruban-ue.sem-s4 .ruban-cap-code { color: #326a3d; }
 
 /* Tableau détaillé */
 .ruban-table-wrap { overflow-x: auto; }
@@ -2385,7 +2401,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-cap-link { border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: .82rem; padding: 0; }
 .ruban-cap-link:hover { color: var(--water); text-decoration: underline; }
 .ruban-cap-link.has-ref strong { color: var(--water); }
-.ruban-mark { background: var(--amber-soft); color: #6b4f12; padding: 0 .2rem; border-radius: 3px; font-weight: 700; }
+.ruban-mark { background: var(--amber-soft); color: #6b4f12; padding: 0 .2rem; border-radius: 0; font-weight: 700; }
 
 /* Modale de détail capacité */
 .ruban-cap-modal { max-width: 520px; }
@@ -2441,10 +2457,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .empty-hint { color: var(--muted); font-style: italic; padding: var(--sp-4); text-align: center; }
 
 .frais-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.frais-filters { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+/* align-items:flex-end — sans lui, le bouton « + Déplacement » (pas de label
+   au-dessus, contrairement à Statut/Classe) s'étire par défaut (stretch) à la
+   hauteur label+select et paraît disproportionné. */
+.frais-filters { display: flex; align-items: flex-end; gap: var(--sp-3); flex-wrap: wrap; }
 .frais-filters label { display: flex; flex-direction: column; font-size: .78rem; color: var(--muted); gap: .2rem; }
-.frais-export, .rooms-export { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; margin-top: var(--sp-2); }
-.frais-export .meta, .rooms-export .meta { margin-right: .3rem; }
+.frais-export { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; margin-top: var(--sp-2); }
+.frais-export .meta { margin-right: .3rem; }
 
 .frais-totals { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-bottom: var(--sp-2); font-size: .92rem; }
 .frais-table-wrap { }
@@ -2461,7 +2480,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-row-actions { text-align: right; width: 2.4rem; }
 .frais-link { opacity: .7; font-size: .8rem; }
 
-.frais-status { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .74rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.frais-status { display: inline-block; padding: .1rem .5rem; border-radius: 0; font-size: .74rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
 .frais-status.is-todo { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
 .frais-status.is-progress { background: var(--water-soft); color: var(--water); border-color: var(--water); }
 .frais-status.is-done { background: var(--success-soft); color: var(--success); border-color: var(--moss-line); }
@@ -2473,7 +2492,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); }
 /* Lot 5 (Q3) — même recette que .room-urgent : le blanc sur ambre plein
    tombait à 3,92 ; ambre pâle + texte foncé reste une alerte, en restant lisible. */
-.frais-badge.has-pending { color: #7a5b16; background: var(--amber-soft); border-radius: 999px; padding: .1rem .55rem; }
+.frais-badge.has-pending { color: #7a5b16; background: var(--amber-soft); border-radius: 0; padding: .1rem .55rem; }
 .frais-panel .frais-toolbar { margin-top: var(--sp-2); }
 
 /* ---------- Lot F — édition composition d'UE (Ruban) ---------- */
@@ -2505,7 +2524,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .row-keywords { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }
 .kw-chip {
   display: inline-flex; align-items: center; font-size: .66rem; font-weight: 600;
-  padding: .04rem .4rem; border-radius: 999px; background: var(--amber-soft); color: #7a5b16;
+  padding: .04rem .4rem; border-radius: 0; background: var(--amber-soft); color: #7a5b16;
   border: 1px solid #e7d39e; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -2522,7 +2541,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .eil-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .eil-detail-head .entity-level-label {
   background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
-  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  padding: .05rem .45rem; border-radius: 0; font-size: .6rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .04em;
 }
 .eil-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
@@ -2533,7 +2552,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .loose-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .loose-detail-head .entity-level-label {
   background: var(--line); color: var(--ink-soft); border: 1px solid var(--line-strong);
-  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  padding: .05rem .45rem; border-radius: 0; font-size: .6rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .04em; font-style: normal;
 }
 .loose-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
@@ -2567,7 +2586,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .saturday-cell > * { margin-right: .4rem; vertical-align: middle; }
 .saturday-session {
   display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .55rem;
-  border-radius: 999px; font-size: .74rem; font-weight: 600; color: var(--ink);
+  border-radius: 0; font-size: .74rem; font-weight: 600; color: var(--ink);
   background: color-mix(in srgb, var(--seq-color, var(--moss)) 34%, transparent);
   border: 1px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent);
 }
@@ -2621,7 +2640,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   font-family: var(--font-mono); font-size: .72rem; letter-spacing: .03em;
   font-weight: 500; color: var(--muted); margin-bottom: var(--sp-3);
 }
-.atlas-pastille-light .pdot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--acc); }
+.atlas-pastille-light .pdot { width: .55rem; height: .55rem; border-radius: 0; background: var(--acc); }
 .auth-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -2644,82 +2663,88 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .auth-card .lien:hover { color: var(--ink); }
 
 /* =====================================================================
-   TABLEAU DE BORD — mise en page validée (audit en 8 tours, 2026)
-   Structure : conception I. Habillage : « le carnet » (K) + le code
-   couleur de la variante N — LA COULEUR DIT QUAND.
-     rouge  = en retard, ou urgent (réservation sous 15 j, séance sans
-              créneau cette semaine)
-     ambre  = dans la quinzaine
-     gris   = plus tard
+   TABLEAU DE BORD — charte « papier technique froid » (refonte août 2026,
+   design_handoff_organisation_cours/, écran 1 « Tableau de bord vue globale »)
+   Vraies cartes bordées (fond blanc, filet, en-tête sable), pas des lignes
+   plates : REGLES.md #1/#2/#18. La couleur dit l'échéance :
+     rouge  = urgent (réservation/ordre sous ROOM_ALERT_DAYS jours, séance
+              sans créneau cette semaine) — --alerte
+     ambre  = à anticiper mais pas urgent — --reserve
+     gris   = plus tard / neutre
    Tout est préfixé par #dashboard : les autres onglets ne bougent pas.
    ===================================================================== */
 
 #dashboard {
-  --niv-retard: #b4342a;   /* blanc dessus : 6,1 */
-  --niv-proche: #835913;   /* deux contraintes à la fois : lisible en TEXTE sur
-                              le fond de page (4,9 sur --paper) et porteur de
-                              texte BLANC en pastille (6,2). L'ambre de la
-                              charte (#a9772a) échoue aux deux (3,9 / 3,9). */
-  --niv-loin: #5b5f66;     /* blanc dessus : 6,4 */
-  --bleu-titre: var(--acc);/* « Aujourd'hui », blanc dessus : 9,1 */
+  --niv-retard: var(--danger);  /* #C0562B — REGLES.md #12 : alerte/échéance */
+  --niv-proche: var(--amber);   /* #7a5b16 — réserve/incertitude, à anticiper */
+  --niv-loin: var(--muted);     /* #6b6a5e — plus tard, neutre */
+  --bleu-titre: var(--acc);
 }
 
-/* ---- Charpente : zone hebdomadaire puis zone mensuelle ----
-   Ni titre de page (l'onglet suffit) ni barre d'actions (export/import sont
-   passés dans le bandeau) : la vue commence par « Ma semaine ». ---- */
-#dashboard .zone-haute { display: flex; flex-direction: column; gap: var(--sp-5); margin-bottom: var(--sp-6); }
-#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-3); }
+/* ---- Charpente : zone hebdomadaire puis zone mensuelle ---- */
+#dashboard .zone-haute { margin-bottom: var(--sp-6); }
+#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-4); }
 #dashboard .zone-titre {
-  margin: 0 0 var(--sp-3); font-size: .6875rem; font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
-}
-/* Zone mensuelle sur DEUX colonnes (lot A [20]) : repliées, ces quatre barres
-   ne portent qu'un titre et un badge — les mettre en pile gaspillait la moitié
-   de la largeur. Les encarts gardent leur position MÊME DÉPLIÉS : plutôt que de
-   rendre la pleine largeur à « Frais », on a raccourci son tableau (Classe, UE
-   et Taux retirés de l'affichage, voir renderFrais()). */
-#dashboard .zone-basse-lignes {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 var(--sp-5); align-items: start;
-}
-#dashboard .zone-basse-lignes > * { min-width: 0; }
-/* Même filet de séparation qu'en zone haute : deux colonnes de barres côte à
-   côte sans limite se lisaient comme une seule liste en désordre. */
-#dashboard .zone-basse-lignes > :nth-child(even) {
-  border-left: 1px solid var(--line-strong);
-  padding-left: var(--sp-5);
-}
-@media (max-width: 700px) {
-  #dashboard .zone-basse-lignes { grid-template-columns: 1fr; }
-  #dashboard .zone-basse-lignes > * { border-left: 0; padding-left: 0; }
+  margin: 0 0 var(--sp-3); font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2);
 }
 
-/* ---- Un bloc n'est plus une boîte : un titre sur un trait, et du contenu.
-   Lot A [2] — le bloc est aussi FERMÉ en bas par un filet fin. Ouvert des deux
-   côtés, on ne voyait plus où un espace de travail finissait et où le suivant
-   commençait ; c'est ce que « pas clairement identifiables » désignait. ---- */
-#dashboard .bande-bloc {
-  background: transparent; border: 0; border-top: 2px solid var(--ink);
-  border-bottom: 1px solid var(--line);
-  border-radius: 0; box-shadow: none; padding: 0; margin-bottom: 0; overflow: hidden;
-}
+/* ---- Grille principale : colonne large (Ma semaine/Prochainement/Urgences)
+   + colonne fixe 330px (Séances pas encore placées / À faire) — REGLES.md,
+   écran 1 : `grid-template-columns:1fr 330px`. ---- */
+#dashboard .dash-grille { display: grid; grid-template-columns: 1fr 330px; gap: var(--sp-4); align-items: start; }
+#dashboard .dash-col-gauche, #dashboard .dash-col-droite { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+@media (max-width: 1000px) { #dashboard .dash-grille { grid-template-columns: 1fr; } }
 
-/* [9] Les titres d'encart prennent le bleu du bandeau : un repère de début de
-   bloc qui se lit de loin, sans surface colorée (on reste à ~1,5 % de couleur). */
-#dashboard .bloc-tete h3,
-#dashboard .ligne-trois h3,
-#dashboard .zone-basse-lignes h3,
-#dashboard .zone-haute > .panel-collapsible h3 { color: var(--bleu-titre); }
-#dashboard .bande-bloc[hidden] { display: none; }
-#dashboard .bloc-tete { padding: var(--sp-3) 0 var(--sp-2); }
-#dashboard .bloc-tete h3 { font-size: 1.05rem; margin: 0; }
-#dashboard .bloc-id { font-family: var(--font-mono); font-size: .6875rem; font-weight: 600; color: var(--muted); margin-left: .4rem; }
-#dashboard .bloc-compte { font-size: .75rem; color: var(--muted); white-space: nowrap; }
-#dashboard .bloc-compte strong { color: var(--niv-proche); }
-#dashboard .bloc-vide { padding: 0 0 var(--sp-4); margin: 0; color: var(--muted); font-size: .75rem; }
+/* ---- Bloc = une vraie carte (fond blanc, filet, en-tête sable) ---- */
+#dashboard .bande-bloc, #dashboard .backlog-panel, #dashboard .urgences-panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 0; box-shadow: none; padding: 0; overflow: hidden;
+}
+#dashboard .bande-bloc[hidden], #dashboard .urgences-panel[hidden] { display: none; }
+#dashboard .bloc-tete, #dashboard .backlog-panel > .panel-heading-inline {
+  display: flex; align-items: center; gap: var(--sp-2) var(--sp-3); flex-wrap: wrap;
+  padding: .5rem .8rem; background: var(--surface-alt); border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+#dashboard .bloc-tete h3, #dashboard .backlog-panel h3 { font-size: .85rem; font-weight: 700; color: var(--ink); margin: 0; }
+#dashboard .bloc-id { font-family: var(--font-mono); font-size: .6875rem; font-weight: 400; color: var(--muted); margin-left: .35rem; }
+#dashboard .bloc-compte { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); white-space: nowrap; }
+#dashboard .bloc-compte strong { color: var(--niv-retard); }
+#dashboard .bloc-lien {
+  margin-left: auto; font-size: .75rem; color: var(--acc); font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+#dashboard .bloc-lien:hover, #dashboard .bloc-lien:focus-visible { color: var(--moss-dark); }
+#dashboard .bloc-legende {
+  display: inline-flex; align-items: center; gap: .3rem; font-family: var(--font-mono);
+  font-size: .6875rem; color: var(--niv-retard); white-space: nowrap;
+}
+#dashboard .bloc-legende-puce { width: 9px; height: 9px; flex: 0 0 auto; background: var(--danger-soft); border: 1px solid #e0bfa4; border-left: 3px solid var(--danger); }
+#dashboard .bloc-vide { padding: var(--sp-3) .8rem; margin: 0; color: var(--muted); font-size: .75rem; }
+#dashboard .backlog-panel .badge-groupe { margin-left: auto; }
+
+/* « Séances pas encore placées » — en-tête ambre (attention douce, distincte
+   du rouge des Urgences) + pastille de compte pleine, conformes au mockup. */
+#dashboard .backlog-panel { border-left: 3px solid var(--amber); }
+#dashboard .backlog-panel > .panel-heading-inline { background: var(--amber-soft); }
+#dashboard .backlog-panel h3 { color: #6b4f12; }
+#dashboard .backlog-panel .frais-badge:first-child {
+  display: inline-flex; align-items: center; justify-content: center; height: 16px; padding: 0 6px;
+  background: var(--amber); font-family: var(--font-mono); font-size: .6rem; font-weight: 700; color: #fff;
+}
+#dashboard .backlog-panel-link {
+  display: block; width: 100%; text-align: center; padding: .5rem .8rem;
+  border: 0; border-top: 1px solid var(--line); background: var(--surface-alt);
+  font-size: .78rem; color: var(--acc); font-weight: 600; cursor: pointer;
+}
+#dashboard .backlog-panel-link:hover { background: var(--amber-soft); }
+.drag-handle { color: var(--muted); opacity: .7; margin-right: .1rem; cursor: grab; }
+/* Dans .session-card-head (fond foncé --ue-deep, texte blanc) : la poignée
+   suit la même teinte claire, sinon invisible sur ce fond. */
+.session-card-head .drag-handle { color: rgba(255,255,255,.75); }
 
 /* ---- Le retard, pleine largeur, au-dessus des jours ---- */
-#dashboard .retard-bandeau { padding: .5rem 0 .6rem; }
+#dashboard .retard-bandeau { padding: .5rem .8rem .6rem; border-bottom: 1px solid var(--line); }
 #dashboard .retard-titre {
   display: inline-block; font-family: var(--font-mono); font-size: .6875rem;
   font-weight: 700; letter-spacing: .06em; margin-bottom: .35rem;
@@ -2735,188 +2760,222 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .retard-quand { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--niv-retard); min-width: 5.2rem; }
 #dashboard .retard-detail { font-size: .75rem; color: var(--ink-soft); }
 
-/* ---- La bande : des colonnes côte à côte, séparées par un filet ---- */
-#dashboard .bande { display: grid; border-top: 1px solid var(--line); }
+/* ---- La bande : colonnes de jours séparées par un filet de grille clair,
+   fond du bandeau de jour légèrement distinct du fond de carte (REGLES.md
+   #16 : la structure reste plus foncée que le fond général). ---- */
+#dashboard .bande { display: grid; gap: 1px; background: var(--filet-interne, #ece8db); }
 #dashboard .bande-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-#dashboard .col-jour { border-right: 1px solid var(--line); padding: var(--sp-3); min-width: 0; }
-#dashboard .col-jour:first-child { padding-left: 0; }
-#dashboard .col-jour:last-child { border-right: 0; padding-right: 0; }
-#dashboard .col-tete { display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; margin-bottom: var(--sp-2); }
-#dashboard .col-nom { font-weight: 700; font-size: .8125rem; color: var(--ink); }
-#dashboard .col-date { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
+#dashboard .col-jour { background: var(--surface); padding: 0; min-width: 0; display: flex; flex-direction: column; }
+#dashboard .col-tete {
+  display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap;
+  padding: .3rem .5rem; background: var(--paper); border-bottom: 1px solid var(--filet-interne, #ece8db);
+}
+#dashboard .col-nom { font-family: var(--font-mono); font-weight: 600; font-size: .68rem; color: var(--ink-soft); }
+#dashboard .col-date { font-family: var(--font-mono); font-size: .625rem; color: var(--muted-2); }
 #dashboard .col-compte {
   margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
-  color: var(--muted); background: var(--surface-alt); border-radius: 999px; padding: 0 .4rem;
+  color: var(--muted); background: var(--surface-alt); padding: 0 .4rem;
 }
-#dashboard .col-vide { margin: 0; font-size: .75rem; color: var(--line-strong); }
+#dashboard .col-vide { margin: 0; padding: .5rem; font-size: .72rem; color: var(--muted-2); }
+#dashboard .col-vide-libre { display: flex; flex-direction: column; gap: .25rem; border: 1px dashed var(--moss-line); padding: .4rem .5rem; margin: .4rem; }
+#dashboard .col-vide-lien { font-size: .72rem; color: var(--acc); font-weight: 600; cursor: pointer; }
 #dashboard .col-periode {
-  margin: 0 0 .35rem; padding: .05rem .45rem; border-radius: 0;
+  margin: .3rem .5rem 0; padding: .05rem .45rem;
   border-left: 2px solid var(--ink-soft); color: var(--ink-soft);
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 600;
 }
 
-/* « Aujourd'hui » : une étiquette pleine dans le bleu du bandeau titre. */
-#dashboard .col-jour.est-aujourdhui .col-tete {
-  background: var(--bleu-titre); border-radius: 3px;
-  padding: .3rem .5rem; margin-bottom: var(--sp-2);
-}
-#dashboard .col-jour.est-aujourdhui .col-nom { color: #fff; }
-#dashboard .col-jour.est-aujourdhui .col-date { color: #ccd5e8; }
-#dashboard .col-jour.est-passe .col-nom,
-#dashboard .col-jour.est-passe .col-date { color: var(--muted); }
+/* « Aujourd'hui » : bandeau teinté dans l'accent, comme la maquette (#dde4f2). */
+#dashboard .col-jour.est-aujourdhui .col-tete { background: #dde4f2; border-bottom-color: #c7d5ec; }
+#dashboard .col-jour.est-aujourdhui .col-nom { color: var(--moss-dark); }
+#dashboard .col-jour.est-aujourdhui .col-date { color: #4a68a0; }
+#dashboard .col-jour.est-passe .col-nom, #dashboard .col-jour.est-passe .col-date { color: var(--muted-2); }
 #dashboard .col-jour.est-passe .carte-titre { color: var(--muted); }
 
-/* ---- La carte : une ligne réglée, pas une tuile ---- */
-#dashboard .col-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+/* ---- La carte : une vraie tuile bordée, liseré gauche = échéance (REGLES.md
+   #5, adapté : le liseré porte l'urgence plutôt qu'une couleur de séquence,
+   le rendu actuel ne trace pas encore la couleur de séquence jusqu'ici). ---- */
+#dashboard .col-liste { list-style: none; margin: 0; padding: .35rem; display: flex; flex-direction: column; gap: .3rem; }
 #dashboard .carte {
   display: flex; flex-direction: column; gap: .1rem;
-  background: transparent; border: 0; border-left: 3px solid var(--line);
-  border-radius: 0; padding: .3rem 0 .35rem .6rem; min-height: 44px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-strong);
+  padding: .3rem .45rem; min-height: 40px; cursor: pointer;
 }
-#dashboard .carte:hover { background: var(--surface-alt); border-left-color: var(--ink-soft); }
+#dashboard .carte:hover { background: var(--surface-alt); }
 #dashboard .carte:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 #dashboard .carte-heure { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
-#dashboard .carte-titre { font-size: .875rem; font-weight: 700; line-height: 1.25; color: var(--ink); }
+#dashboard .carte-titre { font-size: .8125rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
 #dashboard .carte-meta { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
 #dashboard .carte-actions { display: flex; flex-wrap: wrap; gap: .22rem .3rem; margin-top: .3rem; }
 #dashboard .carte-tete { display: flex; align-items: center; justify-content: space-between; gap: .4rem; flex-wrap: wrap; }
 #dashboard .carte-tete .carte-actions { margin-top: 0; }
 
-/* Le trait porte le délai — c'est lui qui se lit de loin. */
-#dashboard .carte.a-traiter { border-left-color: var(--niv-proche); }
+/* Le liseré porte le délai — c'est lui qui se lit de loin. */
+#dashboard .carte.a-traiter { border-left-color: var(--niv-proche); background: var(--reserve-fond, var(--amber-soft)); }
 #dashboard .carte.a-traiter .carte-heure { color: var(--niv-proche); }
-#dashboard .carte.est-urgent { border-left-color: var(--niv-retard); }
+#dashboard .carte.est-urgent { border-left-color: var(--niv-retard); background: var(--danger-soft); }
 #dashboard .carte.est-urgent .carte-heure { color: var(--niv-retard); }
-/* Une réunion n'est pas une action : trait pointillé, choix validé en revue. */
-#dashboard .carte.est-reunion { border-left: 2px dotted var(--muted); }
-
-/* Au-delà de la quinzaine, la couleur s'éteint : l'étiquette seule parle. */
-#dashboard .col-lointaine .col-nom, #dashboard .col-lointaine .col-date { color: var(--muted); }
-#dashboard .col-lointaine .carte.a-traiter,
-#dashboard .col-lointaine .carte.est-reunion { border-left-color: var(--line-strong); }
-#dashboard .col-lointaine .carte.a-traiter .carte-heure { color: var(--muted); }
-#dashboard .col-lointaine .act { background: var(--niv-loin); }
+/* Une réunion n'est pas une action : liseré pointillé, choix validé en revue. */
+#dashboard .carte.est-reunion { border-left: 2px dotted var(--muted); background: var(--surface); }
 
 /* ---- Les pastilles : pleines, texte clair ---- */
 #dashboard .act {
   display: inline-flex; align-items: center;
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
-  padding: .14rem .5rem; border-radius: 999px; white-space: nowrap;
+  padding: .14rem .5rem; white-space: nowrap;
   background: var(--niv-proche); color: #fff; border: 0;
 }
 #dashboard .act-urgent { background: var(--niv-retard); }
 /* Ni une échéance, ni une action : gris dans tous les cas. */
-#dashboard .act-reunion, #dashboard .act-periode,
-#dashboard .col-lointaine .act-reunion,
-#dashboard .col-lointaine .act-periode { background: var(--niv-loin); }
+#dashboard .act-reunion, #dashboard .act-periode { background: var(--niv-loin); }
 
-/* ---- Ce qui n'a pas de créneau : urgent, donc rouge ---- */
-#dashboard .bande-sans-creneau { border-top: 1px solid var(--line); padding: var(--sp-3) 0; }
-#dashboard .sc-titre { display: block; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--ink-soft); margin-bottom: .35rem; }
+/* ---- Ce qui n'a pas de créneau cette semaine : urgent, donc rouge ---- */
+#dashboard .bande-sans-creneau { padding: .6rem .8rem; border-top: 1px solid var(--line); }
+#dashboard .sc-titre { display: block; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--niv-retard); margin-bottom: .35rem; }
 #dashboard .sc-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
 #dashboard .sc-liste > .carte { flex: 1 1 280px; max-width: 460px; }
-#dashboard .bande-audela { margin: 0; padding: .5rem 0 .7rem; border-top: 1px solid var(--line); font-size: .75rem; color: var(--muted); }
-#dashboard .bande-audela strong { color: var(--ink-soft); }
 
-/* ---- Ligne des encarts de travail : « À faire », « À réserver »,
-   « Déplacements ». Paliers explicites depuis le lot A — avec trois encarts,
-   `auto-fit` produisait à largeur moyenne un 3e élément seul sur une deuxième
-   ligne, que les filets de séparation ci-dessous auraient mal habillé.
-   align-items:start — un encart déplié n'étire pas ses voisins. ---- */
-#dashboard .ligne-trois {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-4); align-items: start;
+/* ---- « Les deux semaines suivantes » : mêmes cartes, en compact, une ligne
+   par semaine avec sa colonne de numéro (44px, REGLES.md gabarit). ---- */
+#dashboard .bande-compacte { display: flex; flex-direction: column; gap: 1px; background: var(--filet-interne, #ece8db); }
+#dashboard .ligne-semaine { display: grid; grid-template-columns: 44px 1fr; gap: 1px; background: var(--filet-interne, #ece8db); }
+#dashboard .col-semaine-num {
+  background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: .2rem;
 }
-#dashboard .ligne-trois > * { min-width: 0; margin-bottom: 0; }
+#dashboard .sem-nom { font-family: var(--font-mono); font-size: .68rem; font-weight: 600; color: var(--ink-soft); }
+#dashboard .sem-date { font-family: var(--font-mono); font-size: .58rem; color: var(--muted-2); }
+#dashboard .bande-compacte .col-tete { padding: .2rem .4rem; }
+#dashboard .bande-compacte .col-nom { font-size: .6rem; }
+#dashboard .bande-compacte .col-date { font-size: .58rem; }
+#dashboard .bande-compacte .col-liste { padding: .25rem; gap: .2rem; }
+#dashboard .bande-compacte .carte { padding: .2rem .35rem; min-height: 0; }
+#dashboard .bande-compacte .carte-titre { font-size: .72rem; }
+#dashboard .bande-compacte .carte-meta { font-size: .6rem; }
+#dashboard .bande-compacte .col-vide { font-size: .62rem; padding: .3rem; }
+#dashboard .bande-compacte .col-vide-libre { margin: .25rem; padding: .25rem .35rem; }
+#dashboard .bande-compacte .col-vide-lien { font-size: .62rem; }
 
-/* [2] Chaque encart est un ESPACE DE TRAVAIL, pas un bloc de texte qui flotte :
-   un filet vertical fin le sépare de son voisin et le rend dénombrable d'un
-   coup d'œil. C'est la réponse à « trop sobre » — une limite, pas une couleur. */
-#dashboard .ligne-trois > * + * {
-  border-left: 1px solid var(--line-strong);
-  padding-left: var(--sp-4);
+/* ---- Urgences : pile fusionnée salle/véhicule/matériel/ordre de mission,
+   REGLES.md #25 — liseré gauche 3px alerte, en-tête teinté, chaque ligne
+   finit par un verbe. ---- */
+#dashboard .urgences-panel { border-left: 3px solid var(--danger); }
+#dashboard .urgences-tete { background: var(--alerte-fond-2, #f7e9e2); }
+#dashboard .urgences-tete h3 { color: var(--alerte-fort, #8c3a15); }
+#dashboard .urgence-compte {
+  display: inline-flex; align-items: center; justify-content: center; height: 16px; padding: 0 6px;
+  background: var(--danger); font-family: var(--font-mono); font-size: .6rem; font-weight: 700; color: #fff;
 }
-@media (max-width: 1000px) {
-  #dashboard .ligne-trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* À deux colonnes, seul l'encart de droite porte le filet : celui qui passe à
-     la ligne redevient un début de rangée. */
-  #dashboard .ligne-trois > :nth-child(odd) { border-left: 0; padding-left: 0; }
+#dashboard .urgences-sous { font-size: .7rem; color: var(--alerte-fort, #8c3a15); flex-basis: 100%; }
+@media (min-width: 640px) { #dashboard .urgences-sous { flex-basis: auto; } }
+#dashboard .urgence-liste { display: flex; flex-direction: column; }
+#dashboard .urgence-row {
+  display: flex; align-items: center; gap: .6rem; padding: .5rem .8rem; border-bottom: 1px solid var(--filet-interne, #ece8db);
+  flex-wrap: wrap;
 }
-@media (max-width: 700px) {
-  #dashboard .ligne-trois { grid-template-columns: 1fr; gap: 0; }
-  #dashboard .ligne-trois > * { border-left: 0; padding-left: 0; }
+#dashboard .urgence-type {
+  flex: 0 0 96px; font-family: var(--font-mono); font-size: .58rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
-#dashboard .ligne-trois h3 { font-size: 1.05rem; }
-#dashboard .ligne-trois > .panel-collapsible,
-#dashboard .ligne-trois > .priority-panel {
-  background: transparent; border: 0; border-top: 2px solid var(--ink);
-  border-radius: 0; box-shadow: none;
+#dashboard .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
+#dashboard .urgence-delai.est-urgent { color: var(--danger); }
+#dashboard .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
+#dashboard .urgence-detail {
+  flex: 1 1 200px; min-width: 0; font-size: .78rem; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#dashboard .ligne-trois > .panel-collapsible > summary { padding: var(--sp-3) 0 var(--sp-2); }
-#dashboard .ligne-trois > .panel-collapsible > *:not(summary) { padding-left: 0; padding-right: 0; }
-#dashboard .priority-panel { padding: var(--sp-3) 0 var(--sp-4); }
-#dashboard .priority-panel .todo-notes {
-  border: 0; border-radius: 0; background: transparent; padding: 0; margin-top: .35rem;
+#dashboard .urgence-verbe {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .3rem; height: 30px; padding: 0 .6rem;
+  font-size: .75rem; font-weight: 500; color: var(--acc); border: 1px solid var(--moss-line);
+  background: var(--surface); cursor: pointer; margin-left: auto;
 }
-#dashboard .priority-panel .todo-notes:focus { outline: none; background: transparent; }
-#dashboard .priority-panel:focus-within { border-top-color: var(--acc); box-shadow: none; }
-/* En colonne, « À faire » a besoin de hauteur d'écriture — mais seulement sur
-   grand écran : empilé sur téléphone, ce serait du défilement pour rien. */
-@media (min-width: 701px) {
-  #dashboard .ligne-trois .priority-panel .todo-notes { min-height: 190px; }
-}
+#dashboard .urgence-verbe:hover, #dashboard .urgence-verbe:focus-visible { background: var(--moss-soft); }
+#dashboard .urgence-verbe input[type="checkbox"] { width: 0; height: 0; opacity: 0; position: absolute; }
+#dashboard .urgence-pied { padding: .5rem .8rem; background: var(--fond-total, #faf8f0); font-size: .68rem; line-height: 1.5; color: var(--muted); }
+#dashboard .empty-hint { padding: var(--sp-3) .8rem; text-align: left; }
 
-/* ---- Les encarts repliés : des barres pleine largeur ---- */
-#dashboard .zone-basse-lignes > .panel-collapsible,
-#dashboard .zone-haute > .panel-collapsible {
-  background: transparent; border: 0; border-bottom: 1px solid var(--line);
-  border-radius: 0; box-shadow: none;
+/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande. Fermées
+   ce sont des barres compactes en grille 4 colonnes ; ouvertes, la carte
+   s'étend sur toute la largeur pour ne pas écraser tableaux/filtres. ---- */
+#dashboard .zone-basse-grille {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
 }
-#dashboard .zone-basse-lignes > .panel-collapsible > summary,
-#dashboard .zone-haute > .panel-collapsible > summary { padding: .6rem 0; }
-#dashboard .zone-basse-lignes > .panel-collapsible > *:not(summary),
-#dashboard .zone-haute > .panel-collapsible > *:not(summary) { padding-left: 0; padding-right: 0; }
-#dashboard .zone-basse-lignes h3,
-#dashboard .zone-haute > .panel-collapsible h3 { font-size: 1.05rem; }
+#dashboard .zone-basse-grille > .panel-collapsible {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0;
+}
+#dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
+#dashboard .zone-basse-grille > .panel-collapsible > summary { padding: .55rem .7rem; }
+#dashboard .zone-basse-grille > .panel-collapsible > *:not(summary) { padding: 0 .8rem .8rem; }
+#dashboard .zone-basse-grille h3 { font-size: .82rem; }
 #dashboard .panel-collapsible > summary { align-items: flex-start; }
 #dashboard .panel-collapsible > summary::before { margin-top: .3rem; }
 #dashboard .panel-collapsible > summary .panel-heading-inline { align-items: center; }
 #dashboard .badge-groupe { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
+@media (max-width: 1100px) {
+  #dashboard .zone-basse-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  #dashboard .zone-basse-grille { grid-template-columns: 1fr; }
+}
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }
-#dashboard .frais-badge.has-pending { background: var(--niv-proche); color: #fff; border-radius: 999px; padding: .1rem .55rem; }
-#dashboard .row-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+#dashboard .frais-badge.has-pending { background: var(--niv-proche); color: #fff; padding: .1rem .55rem; }
+#dashboard .row-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); }
 #dashboard .row-item:hover { background: var(--surface-alt); border-color: var(--line); }
-/* Une réservation à moins de 15 jours est rouge — demande de l'enseignant. */
-#dashboard .status-pill.room-urgent { background: var(--niv-retard); color: #fff; border-radius: 999px; padding: .1rem .5rem; }
-/* Lot B — lignes de l'encart « Déplacements » : un ordre de mission à demander
-   s'ouvre d'un clic sur la séance ou la réunion d'origine, comme les cartes.
-   Les pastilles « Véhicule à réserver » / « Ordre de mission » n'ont pas de
-   couleur propre : c'est le DÉLAI qui les teinte, règle commune à toutes. */
-/* Dans une colonne étroite, « 22/09/2026 · Véhicule de l'établissement · GPN1 »
-   ne tient pas sur une ligne et l'ellipse mangeait justement ce qu'on cherche à
-   lire : QUOI réserver. Ici la ligne se replie plutôt que de se couper. */
-#dashboard .room-row .row-meta,
-#dashboard .om-row .row-meta { white-space: normal; overflow: visible; line-height: 1.35; }
+#dashboard .meta-etiquette {
+  margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted-2);
+}
 
-#dashboard .om-row { cursor: pointer; min-height: 44px; }
-#dashboard .om-row:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+/* « À faire » : carte blanche ordinaire, liseré encre (pas de teinte bleue —
+   REGLES.md #11 : l'accent est réservé à l'action, pas à la mise en avant
+   décorative d'un panneau). Remplace le fond teinté générique .priority-panel. */
+#dashboard .priority-panel, #dashboard .priority-panel.has-pending {
+  border: 1px solid var(--line); border-left: 3px solid var(--ink); background: var(--surface);
+}
+#dashboard .priority-panel > .panel-heading-inline {
+  padding: .5rem .8rem; background: var(--surface-alt); border-bottom: 1px solid var(--line);
+}
+#dashboard .priority-panel h3 { font-size: .85rem; }
 
-#dashboard .empty-hint { padding: var(--sp-3) 0; text-align: left; }
-#dashboard .rooms-panel > .meta.tight { margin-top: var(--sp-3); }
+/* Liste à cocher « À faire » (refonte écran 1, 16/08/2026 — mockup) : une
+   tâche cochée reste barrée le temps de la décocher par erreur (voir
+   renderTodoList), un « ✕ » discret pour la supprimer sans confirmation. */
+.todo-list { display: flex; flex-direction: column; }
+.todo-row {
+  display: flex; align-items: flex-start; gap: .5rem; padding: .5rem .8rem;
+  border-bottom: 1px solid var(--line); cursor: pointer;
+}
+.todo-row:hover { background: var(--surface-alt); }
+.todo-row:hover .todo-row-remove { opacity: 1; }
+.todo-row input[type="checkbox"] { margin-top: .15rem; flex: 0 0 auto; }
+.todo-row-text { flex: 1 1 auto; font-size: .84rem; color: var(--ink); line-height: 1.35; }
+.todo-row.is-done .todo-row-text { text-decoration: line-through; color: var(--muted); }
+.todo-row-remove {
+  flex: 0 0 auto; border: 0; background: none; color: var(--muted); cursor: pointer;
+  padding: 0 .2rem; font-size: .8rem; opacity: 0; transition: opacity .12s ease;
+}
+.todo-row-remove:hover { color: var(--danger); }
+.todo-add-input {
+  margin: .5rem .8rem; width: calc(100% - 1.6rem); border: 1px dashed var(--line-strong);
+  background: transparent; padding: .5rem .6rem; font-size: .82rem;
+}
+.todo-add-input:focus { border-style: solid; border-color: var(--acc); box-shadow: var(--halo-focus); }
+.todo-footnote { padding: 0 .8rem .7rem; margin: 0; line-height: 1.4; }
 
 @media (max-width: 1100px) {
   #dashboard .bande-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #dashboard .col-jour { border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 700px) {
   #dashboard .bande-5 { grid-template-columns: 1fr; }
-  #dashboard .col-jour { border-right: 0; padding-left: 0; padding-right: 0; }
-  /* Empilée, une bande n'a plus besoin de montrer les jours déjà passés ni les
-     semaines sans rien à traiter. */
+  #dashboard .ligne-semaine { grid-template-columns: 1fr; }
+  #dashboard .col-semaine-num { flex-direction: row; gap: .4rem; justify-content: flex-start; padding: .2rem .5rem; }
+  /* Empilée, une bande n'a plus besoin de montrer les jours déjà passés. */
   #dashboard .col-jour.est-passe:not(.est-aujourdhui) { display: none; }
-  #dashboard .col-jour.col-semaine:has(> .col-vide) { display: none; }
   #dashboard .zone-haute { gap: var(--sp-4); }
   #dashboard .sc-liste > .carte { max-width: none; }
+  #dashboard .urgence-row { padding: .5rem; }
+  #dashboard .urgence-type { flex-basis: 100%; }
 }
+
