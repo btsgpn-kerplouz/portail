@@ -86,7 +86,8 @@
     .tool-title{flex:1;min-width:0;font-family:var(--pt-serif);font-size:21px;font-weight:600;line-height:1.15}
     .tool-desc{margin:0;font-size:15px;line-height:1.6}
     .tool-foot{display:flex;justify-content:flex-end}
-    .tool-open{display:inline-block;font-family:var(--pt-sans);font-size:14px;font-weight:700;background:var(--pt-fond);padding:10px 17px}
+    .tool-arrow{display:inline-block;font-family:var(--pt-sans);font-size:16px;font-weight:700;opacity:.6;transition:opacity .15s ease,font-size .15s ease}
+    .tool:hover .tool-arrow,.tool:focus-visible .tool-arrow{opacity:1;font-size:20px}
     .tool-picto{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center}
     .tool-picto svg{width:28px;height:28px;display:block}
     .tool-status{font-family:var(--pt-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;white-space:nowrap}
@@ -98,9 +99,11 @@
     .tool--active .tool-picto{background:var(--pt-voile)}
     .tool--active .tool-picto svg{color:var(--pt-fond)}
     .tool--active .tool-status{color:var(--pt-fond);border:1px solid var(--pt-filet-clair)}
-    .tool--active .tool-open{color:var(--acc)}
-    .tool--active:hover{filter:brightness(.94)}
-    .tool--active:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px}
+    .tool--active .tool-arrow{color:var(--pt-fond)}
+    /* Écart assumé à DESIGN.md (aucune ombre/translation) : demandé explicitement pour le portail. */
+    .tool--active{transition:transform .18s ease,box-shadow .18s ease,filter .15s ease}
+    .tool--active:hover{filter:brightness(.97);transform:translateY(-5px);box-shadow:0 12px 22px rgba(25,27,22,.28)}
+    .tool--active:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px;transform:translateY(-5px);box-shadow:0 12px 22px rgba(25,27,22,.28)}
 
     /* Tuile « en chantier » (Gâvres, Landes) : claire, pointillée, non cliquable */
     .tool--wip{background:var(--pt-fond-chantier);border:1px dashed var(--pt-filet-chantier)}
@@ -120,9 +123,10 @@
     .tool--staff .tool-title{font-size:19px;color:var(--pt-fond)}
     .tool--staff .tool-picto{background:var(--pt-app-organisation)}
     .tool--staff .tool-picto svg{color:var(--pt-fond)}
-    .tool--staff .tool-open{color:var(--pt-encre)}
-    .tool--staff:hover{filter:brightness(1.12)}
-    .tool--staff:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px}
+    .tool--staff .tool-arrow{color:var(--pt-fond)}
+    .tool--staff{transition:transform .18s ease,box-shadow .18s ease,filter .15s ease}
+    .tool--staff:hover{filter:brightness(1.15);transform:translateY(-4px);box-shadow:0 10px 18px rgba(25,27,22,.32)}
+    .tool--staff:focus-visible{outline:2px solid var(--pt-fond);outline-offset:-4px;transform:translateY(-4px);box-shadow:0 10px 18px rgba(25,27,22,.32)}
 
     /* Pied de page */
     .foot{max-width:1080px;margin:0 auto;padding:18px clamp(1rem,4vw,2rem) 26px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem .9rem;font-family:var(--pt-mono);font-size:11px;letter-spacing:.04em;color:var(--pt-label)}
@@ -152,7 +156,7 @@
       .tool-inner{padding:14px 15px;gap:10px}
       .tool-title{font-size:19px}
       .tool-desc{font-size:14px;line-height:1.55}
-      .tool-open{font-size:15px;padding:12px 18px}
+      .tool-arrow{font-size:17px}
       .tool-picto{width:42px;height:42px}
       .tool-picto svg{width:27px;height:27px}
       .tool--active .tool-status{display:none}
@@ -169,7 +173,6 @@
       .staff-label{font-size:9px;letter-spacing:.16em}
       .staff-tools{max-width:none}
       .tool--staff .tool-title{font-size:17px}
-      .tool--staff .tool-open{padding:10px 15px}
     }
 
     @media (prefers-reduced-motion: reduce){*{transition:none !important}}
@@ -203,7 +206,7 @@
               </div>
               <p class="tool-desc only-desktop">Relevés phytosociologiques, indices d'Ellenberg, écogrammes, diagnostic zone humide.</p>
               <p class="tool-desc only-mobile">Relevés, indices d'Ellenberg, écogrammes.</p>
-              <div class="tool-foot"><span class="tool-open">Ouvrir →</span></div>
+              <div class="tool-foot"><span class="tool-arrow" aria-hidden="true">→</span></div>
             </div>
           </a>
 
@@ -217,7 +220,7 @@
               </div>
               <p class="tool-desc only-desktop">Classification physionomique et phytosociologique du CBNB : arbre, fiches, dendrogrammes.</p>
               <p class="tool-desc only-mobile">Classification du CBNB, hors ligne.</p>
-              <div class="tool-foot"><span class="tool-open">Ouvrir →</span></div>
+              <div class="tool-foot"><span class="tool-arrow" aria-hidden="true">→</span></div>
             </div>
           </a>
 
@@ -254,7 +257,7 @@
               <div class="tool-inner">
                 <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18"></rect><rect x="3" y="3" width="18" height="4" fill="currentColor" stroke="none"></rect><rect x="6" y="10" width="3" height="8" fill="currentColor" stroke="none"></rect><rect x="11" y="13" width="3" height="5" fill="currentColor" stroke="none"></rect><rect x="16" y="11" width="3" height="7" fill="currentColor" stroke="none"></rect></svg></span>
                 <span class="tool-title">Organisation des cours</span>
-                <span class="tool-open">Ouvrir →</span>
+                <span class="tool-arrow" aria-hidden="true">→</span>
               </div>
             </a>
           </div>
