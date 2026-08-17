@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Transect — Petite Mer de Gâvres</title>
+<style>
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/ibm-plex-sans.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/ibm-plex-serif.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/ibm-plex-serif-bold.woff2') format('woff2');}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/jetbrains-mono.woff2') format('woff2');}
+:root{
+  /* Charte « papier technique froid » (btsgpn-kerplouz) — accent app : Habitats-Gâvres */
+  --ink:#191b16;
+  --page:#f4f2ec;
+  --page-chantier:#f7f5ee;
+  --card:#fffefb;
+  --neutre-sombre:#343830;
+  --line:#d8d4c6;
+  --line-soft:#ece8db;
+  --line-chantier:#c2beac;
+  --text-2:#565a4e;
+  --text-3:#6b6a5e;
+  --text-4:#8a958c;
+  --acc:#0b5f7d;
+  --acc-dark:#083f54;
+  --acc-soft:#e6eef0;
+  --status-chantier:#8a5f17;
+  --status-valide:#1f7a5c;
+  --status-invalide:#c0562b;
+  --status-reserve:#7a5b16;
+  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--sans);
+  background:var(--page);
+  color:var(--ink);
+  line-height:1.5;
+  padding-bottom:70px;
+}
+h1,h2,h3{font-family:var(--serif);font-weight:700;margin:.2em 0 .4em;color:var(--ink);}
+h1{font-size:1.3rem;}
+h2{font-size:1.1rem;}
+h3{font-size:1rem;font-family:var(--sans);font-weight:700;}
+p{margin:.4em 0;}
+button{
+  font:inherit;
+  cursor:pointer;
+  border:1px solid var(--acc);
+  border-radius:0;
+  padding:.7em 1.1em;
+  background:var(--acc);
+  color:#fff;
+  font-weight:700;
+}
+button:hover{filter:brightness(.93);}
+button:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent);}
+button.secondaire{
+  background:var(--card);
+  color:var(--acc);
+  border:1px solid var(--acc);
+}
+button.discret{
+  background:transparent;
+  color:var(--acc);
+  border:none;
+  text-decoration:underline;
+  padding:.3em .2em;
+}
+button:disabled{opacity:.45;cursor:not-allowed;}
+input[type=text],input[type=number]{
+  font:inherit;
+  padding:.6em .7em;
+  border-radius:0;
+  border:1px solid var(--line);
+  width:100%;
+  background:#fff;
+  min-height:2.6rem;
+  color:var(--ink);
+}
+input[type=text]:focus,input[type=number]:focus{
+  outline:none;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+}
+.app-header{
+  position:sticky;top:0;z-index:20;
+  background:var(--ink);
+  color:var(--page);
+  padding:.7em 1em;
+  display:flex;align-items:center;gap:.6em;
+  border-top:5px solid var(--acc);
+}
+.app-header .titre{
+  font-family:var(--serif);font-weight:700;font-size:1.02rem;flex:1;
+}
+.app-header .titre small{display:block;font-family:var(--sans);font-weight:400;font-size:.72rem;opacity:.7;}
+.icon-btn{
+  background:transparent;
+  color:var(--page);
+  border:1px solid rgba(244,242,236,.35);
+  border-radius:0;
+  width:2.4em;height:2.4em;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;
+  padding:0;
+}
+main{max-width:640px;margin:0 auto;padding:1em;}
+.ecran{display:none;}
+.ecran.actif{display:block;}
+.carte{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:0;
+  padding:1em 1.1em;
+  margin-bottom:1em;
+}
+.accueil-bouton{
+  display:flex;align-items:center;gap:.8em;
+  width:100%;text-align:left;
+  margin-bottom:.8em;
+  padding:1em 1.1em;
+  border-radius:0;
+}
+.accueil-bouton .emoji{font-family:var(--mono);font-weight:700;font-size:1.1rem;color:inherit;border:1px solid currentColor;width:1.8em;height:1.8em;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.accueil-bouton .txt b{display:block;font-size:1rem;font-family:var(--serif);}
+.accueil-bouton .txt span{font-size:.8rem;opacity:.85;font-weight:400;}
+.accueil-bouton.principal{background:var(--acc);color:#fff;border:1px solid var(--acc);}
+.accueil-bouton.secondaire2{background:var(--card);color:var(--ink);border:1px solid var(--line);}
+.champ{margin-bottom:.9em;}
+.champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
+.ligne2{display:flex;gap:.6em;}
+.ligne2 .champ{flex:1;}
+/* ---- Module de saisie (recherche + ajout + cortège), inspiré de Phytoscope ---- */
+.addbar{
+  background:var(--page-chantier);border:1px solid var(--line);border-radius:0;padding:.9em;margin:.6em 0 1em;
+}
+.search-wrap{position:relative;}
+#recherche-espece{margin-bottom:0;}
+.suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);
+  background:#fff;border:1px solid var(--line);border-radius:0;
+  z-index:30;max-height:280px;overflow:auto;display:none;
+}
+.suggestions.ouvert{display:block;}
+.suggestion{padding:.6em .8em;border-bottom:1px solid var(--line-soft);cursor:pointer;}
+.suggestion:last-child{border-bottom:none;}
+.suggestion:hover,.suggestion.active{background:var(--acc-soft);}
+.suggestion b{display:block;font-size:.92rem;}
+.suggestion span{font-size:.78rem;color:var(--text-2);font-style:italic;}
+.selected-hint{font-size:.82rem;color:var(--text-2);margin:.7em 0;min-height:1.2em;}
+.selected-hint b{color:var(--acc-dark);}
+.btn-add{width:100%;}
+.btn-add:disabled{background:var(--line);border-color:var(--line);color:var(--text-2);cursor:not-allowed;}
+.chip-libre{
+  display:inline-flex;align-items:center;gap:.4em;
+  background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);
+  border-radius:0;padding:.3em .5em .3em .8em;margin:.2em .3em .2em 0;font-size:.85rem;
+}
+.chip-libre button{background:transparent;border:none;color:var(--acc-dark);padding:0 .3em;font-size:1rem;font-weight:700;}
+.chip-libre.absent{background:#f6ece4;color:var(--status-invalide);}
+table.cortege{width:100%;border-collapse:collapse;font-size:.88rem;}
+table.cortege th,table.cortege td{border-bottom:1px solid var(--line);padding:.5em .3em;text-align:left;vertical-align:top;}
+table.cortege th{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);font-weight:700;}
+table.cortege .fr{font-weight:700;}
+table.cortege .latin{font-style:italic;color:var(--text-2);font-size:.85em;}
+table.cortege .latin.non-reconnue{color:var(--status-invalide);font-style:normal;}
+table.cortege td.num{text-align:center;white-space:nowrap;}
+.puce-abond{display:inline-flex;align-items:center;justify-content:center;min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:0;background:var(--acc);color:#fff;font-weight:700;font-family:var(--mono);font-size:.85rem;}
+.puce-abond.non-reconnue{background:var(--line-chantier);color:var(--ink);}
+table.cortege button.retirer{background:transparent;border:none;color:var(--status-invalide);text-decoration:underline;padding:.2em;font-size:.82rem;}
+.barre-actions{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  padding:.7em 1em;
+  display:flex;gap:.6em;z-index:20;
+}
+.barre-actions button{flex:1;}
+.compteur-badge{
+  background:var(--status-invalide);color:#fff;border-radius:0;
+  font-family:var(--mono);font-size:.7rem;padding:.1em .5em;margin-left:.4em;
+}
+.resultat-carte{
+  background:var(--card);border:1px solid var(--line);border-radius:0;padding:1em 1.1em;margin-bottom:.9em;
+  border-left:5px solid var(--line-chantier);
+}
+.resultat-carte.top1{border-left-color:var(--acc);}
+.autres-possibilites{margin-top:.2em;}
+.autres-possibilites summary{cursor:pointer;font-family:var(--mono);font-size:.8rem;color:var(--acc-dark);font-weight:700;padding:.7em .2em;list-style:none;}
+.autres-possibilites summary::-webkit-details-marker{display:none;}
+.autres-possibilites summary::before{content:'▸ ';}
+.autres-possibilites[open] summary::before{content:'▾ ';}
+.resultat-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:.6em;}
+.resultat-entete .score{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--acc-dark);white-space:nowrap;}
+.resultat-entete .score small{display:block;font-weight:400;font-size:.65rem;color:var(--text-2);}
+.barre-score{height:6px;background:var(--line-soft);border-radius:0;overflow:hidden;margin:.5em 0;}
+.barre-score>div{height:100%;background:var(--acc);}
+.syntaxon{font-style:italic;color:var(--text-2);font-size:.85rem;margin-bottom:.4em;}
+.tag{display:inline-block;background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);border-radius:0;padding:.1em .5em;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.03em;margin-right:.3em;}
+.detail-bloc{margin-top:.6em;font-size:.9rem;}
+.liste-especes-resultat{display:flex;flex-wrap:wrap;gap:.3em;margin:.3em 0;}
+.puce-espece{border-radius:0;border:1px solid var(--line);padding:.15em .5em;font-size:.78rem;}
+.puce-espece.ok{background:#e7f1ec;color:var(--status-valide);border-color:var(--status-valide);}
+.puce-espece.freq{background:var(--acc-soft);color:var(--acc-dark);}
+.puce-espece.manque{background:#f6ece4;color:var(--status-invalide);border-color:var(--status-invalide);}
+.avertissement{background:#f7efdc;color:var(--status-reserve);border:1px solid var(--status-reserve);border-radius:0;padding:.6em .8em;font-size:.85rem;margin-bottom:1em;}
+.fiche-liste-item{
+  background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:0;padding:.8em 1em;margin-bottom:.6em;cursor:pointer;
+}
+.fiche-liste-item:hover{border-color:var(--acc);}
+.fiche-liste-item .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:0;background:var(--acc);color:#fff;font-family:var(--mono);font-weight:700;font-size:.75rem;margin-right:.5em;
+}
+.fiche-liste-item .zonation-tag{float:right;font-size:.72rem;color:var(--text-2);}
+.retour-lien{margin-bottom:.7em;display:inline-block;color:var(--acc);font-family:var(--mono);font-size:.78rem;text-decoration:none;}
+.retour-lien:hover{text-decoration:underline;}
+.zonation-diagram{width:100%;height:auto;margin-bottom:.6em;}
+table.historique{width:100%;border-collapse:collapse;font-size:.85rem;}
+table.historique th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);}
+table.historique th,table.historique td{border-bottom:1px solid var(--line);padding:.4em .3em;text-align:left;}
+.vide-msg{color:var(--text-2);text-align:center;padding:2em 1em;}
+.filtre-groupe{display:flex;gap:.4em;flex-wrap:wrap;margin-bottom:.6em;}
+.filtre-chip{
+  background:var(--card);border:1px solid var(--line);border-radius:0;
+  padding:.3em .8em;font-size:.78rem;color:var(--ink);
+}
+.filtre-chip.actif{background:var(--acc);color:#fff;border-color:var(--acc);}
+.abondance-select{
+  display:flex;flex-wrap:wrap;align-items:center;gap:.4em;
+  width:100%;margin:.7em 0 0;padding:.5em;
+  background:#fff;border:1px solid var(--line);border-radius:0;
+}
+.abondance-label{font-size:.78rem;color:var(--text-2);font-weight:700;margin-right:.1em;width:100%;}
+.abondance-select button{
+  min-width:2.5em;min-height:2.5em;padding:.2em;font-family:var(--mono);font-size:1.05rem;border-radius:0;
+  background:var(--page);color:var(--text-2);font-weight:700;border:1px solid var(--line);
+}
+.abondance-select button.actif{background:var(--acc);color:#fff;border-color:var(--acc);}
+.fourchette-affichage{
+  display:flex;flex-direction:column;gap:.15em;min-height:2.2em;
+  margin:.5em 0 0;padding:.5em .7em;background:var(--acc-soft);border:1px solid var(--line);border-radius:0;
+}
+.fourchette-ligne1{display:flex;align-items:baseline;gap:.6em;}
+.fourchette-code{
+  display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;
+  font-family:var(--mono);font-weight:700;font-size:.85rem;background:var(--acc);color:#fff;padding:.1em .4em;
+}
+.fourchette-intervalle{font-family:var(--mono);font-weight:700;color:var(--acc-dark);font-size:1rem;}
+.fourchette-desc{font-weight:400;color:var(--text-2);font-size:.8rem;}
+/* ---- Schéma comparateur de recouvrement (quadrats 1 m²), toujours visible ---- */
+.comparateur-detail{margin:.9em 0 0;}
+.comparateur-detail p{font-size:.78rem;color:var(--text-2);margin:.2em 0 .6em;}
+.comparateur-scroll{display:flex;gap:.7em;overflow-x:auto;padding:.3em .1em .6em;}
+.quadrat{flex:0 0 auto;text-align:center;}
+.quadrat-grille{
+  width:60px;height:60px;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);
+  border:2px solid var(--ink);border-radius:0;overflow:hidden;background:#fff;
+}
+.quadrat-grille.grand{width:84px;height:84px;}
+.quadrat.selectionne .quadrat-grille{border-color:var(--status-invalide);border-width:3px;}
+.quadrat.selectionne .quadrat-legende b{color:var(--status-invalide);}
+.quadrat-cellule{background:transparent;display:flex;align-items:center;justify-content:center;}
+.quadrat-cellule.pleine{background:var(--status-valide);}
+.quadrat-cellule.croix{color:var(--status-valide);font-weight:700;font-size:7px;line-height:1;}
+.quadrat-legende{font-family:var(--mono);font-size:.66rem;color:var(--text-2);margin-top:.3em;font-weight:700;line-height:1.3;}
+.quadrat-legende b{color:var(--acc-dark);display:block;font-size:.85rem;}
+.score-box{display:flex;flex-direction:column;align-items:flex-end;gap:.25em;flex-shrink:0;}
+.score-principal{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--acc-dark);white-space:nowrap;line-height:1;}
+.score-principal small{display:block;font-family:var(--sans);font-weight:400;font-size:.62rem;color:var(--text-2);margin-top:.15em;}
+.score-secondaire{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--text-2);white-space:nowrap;line-height:1;}
+.score-secondaire small{display:block;font-family:var(--sans);font-weight:400;font-size:.6rem;color:var(--text-3);margin-top:.1em;}
+.profil-fiche-pastille{cursor:pointer;}
+.carte-explication{background:var(--page-chantier);}
+.carte-explication h2{margin-top:0;}
+.carte-explication p{font-size:.88rem;line-height:1.5;}
+.legende-especes{font-size:.8rem;color:var(--text-2);}
+.etiquette-top{
+  display:inline-block;background:var(--acc);color:#fff;font-family:var(--mono);font-weight:700;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:0;padding:.3em .7em;margin:-1em -1.1em .7em;
+}
+.etiquette-autre{
+  display:inline-block;background:var(--line-soft);color:var(--text-2);font-family:var(--mono);font-weight:700;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:0;padding:.3em .7em;margin:-1em -1.1em .7em;
+}
+.tag-zone{background:var(--acc-soft);color:var(--acc-dark);border-color:var(--line);}
+.qualificatif{font-weight:700;font-size:.88rem;margin:.3em 0;}
+.qualificatif-exc,.qualificatif-bon{color:var(--status-valide);}
+.qualificatif-partiel{color:var(--status-reserve);}
+.qualificatif-faible,.qualificatif-nul{color:var(--status-invalide);}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <button class="icon-btn" id="btn-accueil" title="Accueil">⌂</button>
+  <div class="titre" id="titre-ecran">Transect<small>Petite Mer de Gâvres — BTS GPN</small></div>
+</div>
+
+<main>
+
+  <!-- ECRAN ACCUEIL -->
+  <section class="ecran actif" id="ecran-accueil">
+    <div class="carte">
+      <h1>Visualiser et comprendre la zonation végétale</h1>
+      <p>Le long d'un transect, réalisez un relevé floristique tous les m². L'application compare votre relevé à la typologie des habitats des marais salés de la Petite Mer de Gâvres (COLASSE, 2019, CBN de Brest) et vous propose l'habitat phytosociologique le plus probable.</p>
+    </div>
+    <button class="accueil-bouton principal" onclick="allerA('releve')">
+      <span class="emoji">🌿</span>
+      <span class="txt"><b>Nouveau relevé</b><span>Saisir les espèces observées à un point</span></span>
+    </button>
+    <button class="accueil-bouton secondaire2" onclick="allerA('fiches')">
+      <span class="emoji">📖</span>
+      <span class="txt"><b>Fiches habitats</b><span>Les 16 groupements trouvables sur le site</span></span>
+    </button>
+    <button class="accueil-bouton secondaire2" onclick="allerA('historique')">
+      <span class="emoji">📍</span>
+      <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
+    </button>
+  </section>
+
+  <!-- ECRAN RELEVE -->
+  <section class="ecran" id="ecran-releve">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div class="carte">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5em;flex-wrap:wrap;">
+        <span class="tag" id="badge-transect-actif"></span>
+        <button class="discret" onclick="changerTransect()" style="margin:0;">↻ Changer de transect</button>
+      </div>
+      <h2 style="margin-top:.5em;">Relevé n°<span id="numero-releve-affiche">1</span></h2>
+      <p style="font-size:.78rem;color:var(--text-2);margin-top:-.2em;">Numéroté automatiquement selon sa position sur le transect en cours (1<sup>er</sup>, 2<sup>e</sup>, 3<sup>e</sup> mètre carré…).</p>
+      <div class="champ">
+        <label for="in-distance">Distance transect (m)</label>
+        <input type="number" id="in-distance" placeholder="Ex : 3">
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Espèces observées</h2>
+      <p style="font-size:.8rem;color:var(--text-2);margin-top:-.3em;">Si une espèce n'est pas reconnue, elle peut quand même être ajoutée (pour mémoire, sans effet sur le score).</p>
+
+      <div class="addbar">
+        <div class="search-wrap">
+          <input type="text" id="recherche-espece" autocomplete="off" placeholder="⌕ Rechercher une espèce (nom FR ou latin)…" oninput="onSaisieRecherche()" onkeydown="onToucheRecherche(event)">
+          <div id="suggestions-especes" class="suggestions"></div>
+        </div>
+        <div class="abondance-select" id="abondance-ajout">
+          <!-- contenu généré par JS -->
+        </div>
+        <div class="fourchette-affichage" id="fourchette-affichage"></div>
+        <div id="espece-selectionnee" class="selected-hint">Tapez un nom, choisissez-le dans la liste, précisez l'abondance puis validez.</div>
+        <button id="btn-ajouter-espece" class="btn-add" onclick="ajouterAuCortege()" disabled>+ Ajouter au relevé</button>
+
+        <div class="comparateur-detail">
+          <p class="abondance-label" style="margin:.8em 0 .1em;">Repère visuel : à quoi ressemble chaque niveau dans 1 m² ?</p>
+          <p>Chaque carré représente un placeau d'1 m² ; la partie verte montre la proportion couverte par l'espèce que vous êtes en train de saisir, pour ce niveau (pas la végétation dans son ensemble).</p>
+          <div class="comparateur-scroll" id="comparateur-recouvrement"></div>
+        </div>
+      </div>
+
+      <h3 style="font-size:.85rem;color:var(--acc-dark);margin-top:1.2em;">Cortège saisi (<span id="nb-cortege">0</span>)</h3>
+      <div id="tableau-cortege"></div>
+    </div>
+  </section>
+
+  <!-- ECRAN RESULTATS -->
+  <section class="ecran" id="ecran-resultats">
+    <a class="retour-lien" onclick="allerA('releve')">← Modifier le relevé</a>
+    <div class="carte carte-explication">
+      <h2>Comment lire ces résultats ?</h2>
+      <p>Chaque habitat possède des <b>espèces caractéristiques</b> : des espèces qui, à elles seules, permettent de le reconnaître (comme un indice qui ne trompe pas). Les habitats ci-dessous sont classés selon <b>le nombre d'espèces caractéristiques de votre relevé qu'on retrouve effectivement</b> dans chacun — c'est le chiffre en gros (ex. <b>3/3</b>). L'<b>indice global</b> (en %) affine ce classement en tenant compte aussi des espèces compagnes et de leur abondance.</p>
+      <p class="legende-especes"><span class="puce-espece ok">✓ espèce</span> caractéristique trouvée · <span class="puce-espece freq">✓ espèce</span> compagne trouvée · <span class="puce-espece manque">✗ espèce</span> caractéristique attendue mais non observée.</p>
+    </div>
+    <div id="zone-avertissement"></div>
+    <div id="zone-resultats"></div>
+  </section>
+
+  <!-- ECRAN FICHES -->
+  <section class="ecran" id="ecran-fiches">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div class="carte">
+      <h2>La zonation, du bas vers le haut</h2>
+      <svg class="zonation-diagram" id="svg-zonation" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"></svg>
+      <p style="font-size:.8rem;color:var(--text-2);">D'après les profils de végétation relevés sur le site (Fig. 6, COLASSE 2019). L'ordre réel varie localement selon la topographie.</p>
+    </div>
+    <div class="filtre-groupe" id="filtre-zonation"></div>
+    <div id="liste-fiches"></div>
+  </section>
+
+  <!-- ECRAN DETAIL FICHE -->
+  <section class="ecran" id="ecran-detail-fiche">
+    <a class="retour-lien" id="lien-retour-fiche">← Fiches habitats</a>
+    <div id="contenu-detail-fiche"></div>
+  </section>
+
+  <!-- ECRAN HISTORIQUE -->
+  <section class="ecran" id="ecran-historique">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div class="carte">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5em;flex-wrap:wrap;">
+        <h2 style="margin:0;">Mes transects</h2>
+        <button class="secondaire" onclick="demarrerNouveauTransect()">+ Nouveau transect</button>
+      </div>
+      <p style="font-size:.78rem;color:var(--text-2);">Tout est enregistré uniquement sur cet appareil (hors-ligne). Exportez régulièrement pour ne rien perdre.</p>
+      <div id="zone-historique"></div>
+      <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
+        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Exporter tout en CSV</button>
+        <button class="secondaire" onclick="exporterPourPhytoscope()">⬇ Exporter tout pour Phytoscope (JSON)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Le fichier JSON s'importe directement dans Phytoscope (écran Administration → Import de relevés) pour poursuivre l'analyse (gradients, écogrammes…).</p>
+        <button class="discret" onclick="viderHistorique()">Tout effacer</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="data.js"></script>
+<script>
+/* Etat de l'application */
+let etat = {
+  cortege: [], // liste ordonnée d'entrées : {key, fr, latin, mode:'bb', cover, reconnue}
+  especeSelectionnee: null, // taxon choisi dans les suggestions, en attente d'ajout
+  coefCourant: null, // coefficient Braun-Blanquet actuellement sélectionné pour l'ajout
+  dernierResultat: null
+};
+
+/* Habitats proposés par le relevé et le calcul de score : le référentiel complet
+   (data.js), déjà restreint aux groupements effectivement trouvables sur le site. */
+const HABITATS_ACTIFS = HABITATS;
+
+/* Échelle d'abondance-dominance de Braun-Blanquet — barème réel utilisé pour la cotation
+   des relevés phytosociologiques (mêmes valeurs de référence que l'app Phytoscope du
+   portail btsgpn-kerplouz : conversion en % de recouvrement pour information ; "mult"
+   est un coefficient plus mesuré utilisé uniquement pour l'indice global secondaire,
+   afin qu'une espèce simplement "présente" garde un poids raisonnable dans le score). */
+const COEF_ABONDANCE = {
+  'i': {label:'i', desc:'1 individu isolé, unique au sein du quadrat', intervalle:'< 1 %', pct:0.01, mult:0.5},
+  'r': {label:'r', desc:'rare : quelques individus (2-3), recouvrement très faible', intervalle:'< 1 %', pct:0.1, mult:0.6},
+  '+': {label:'+', desc:'peu abondant mais plusieurs individus, recouvrement faible', intervalle:'< 5 %', pct:0.5, mult:0.7},
+  '1': {label:'1', desc:'nombreux individus, recouvrement toujours faible', intervalle:'0 – 5 %', pct:2.5, mult:0.9},
+  '2': {label:'2', desc:'quel que soit le nombre d\'individus', intervalle:'5 – 25 %', pct:15, mult:1.1},
+  '3': {label:'3', desc:'quel que soit le nombre d\'individus', intervalle:'25 – 50 %', pct:37.5, mult:1.3},
+  '4': {label:'4', desc:'quel que soit le nombre d\'individus', intervalle:'50 – 75 %', pct:62.5, mult:1.6},
+  '5': {label:'5', desc:'quel que soit le nombre d\'individus', intervalle:'75 – 100 %', pct:87.5, mult:2.0}
+};
+const CODES_ABONDANCE = ['i','r','+','1','2','3','4','5'];
+/* i, r, + se distinguent d'abord par le NOMBRE d'individus (abondance), pas par la
+   surface couverte (dominance) : le comparateur les représente donc par des croix
+   (une croix = un individu) plutôt que par un remplissage de cellules, pour que les
+   élèves voient clairement la nuance entre "un seul pied" (i), "quelques pieds" (r)
+   et "plusieurs pieds mais peu de recouvrement" (+). À partir de 1, la dominance
+   (proportion de la surface couverte) prend le relais et redevient un remplissage. */
+const CROIX_ABONDANCE = {'i':1, 'r':3, '+':7};
+const ABONDANCE_DEFAUT = '+';
+
+/* Équivalent en % de recouvrement, quel que soit le mode de saisie (comme la fonction
+   pct(row) de Phytoscope) — sert à l'affichage et au calcul du score. */
+function pctDeCouverture(mode, cover){
+  if(mode === 'pct') return Math.max(0, Math.min(100, parseFloat(cover)||0));
+  return (COEF_ABONDANCE[cover]||{}).pct ?? 0;
+}
+/* Coefficient pondérateur utilisé par l'indice global secondaire (cf. calculerScores) :
+   repris directement de COEF_ABONDANCE en mode Braun-Blanquet ; en mode %, interpolation
+   continue cohérente avec la même échelle (0 % → 0,5 ; 100 % → 2,0). */
+function multDeCouverture(mode, cover){
+  if(mode === 'bb') return (COEF_ABONDANCE[cover]||COEF_ABONDANCE[ABONDANCE_DEFAUT]).mult;
+  const p = pctDeCouverture('pct', cover);
+  return Math.max(0.5, Math.min(2.0, 0.5 + (p/100)*1.5));
+}
+/* Libellé court affiché dans le cortège et les résultats. */
+function libelleCouverture(mode, cover){
+  return mode === 'pct' ? `${cover}%` : cover;
+}
+
+const ZONES_LINES_COULEURS = ["#7fa8bd","#8fb3c9","#a9c9a0","#8fb98a","#6fa46a","#d8c9a0","#c9b8d8"];
+
+/* Certaines fiches (19, 20) appartiennent officiellement à deux zones à la fois (cf. Figure 5
+   du rapport) : on stocke donc un tableau de zones par fiche, pas une seule valeur. */
+const ZONE_PAR_FICHE = {};
+PROFIL_ZONATION.forEach(z => z.fiches.forEach(id => {
+  (ZONE_PAR_FICHE[id] = ZONE_PAR_FICHE[id] || []).push(z.zone);
+}));
+function zonesDuFiche(id){ return ZONE_PAR_FICHE[id] || []; }
+
+function normaliser(s){
+  return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+}
+
+/* Construit la liste maîtresse des espèces (dédupliquée) à partir des habitats actifs */
+function especesMaitresses(){
+  const map = new Map();
+  HABITATS_ACTIFS.forEach(h=>{
+    h.especes.forEach(e=>{
+      const key = normaliser(e.latin);
+      if(!map.has(key)) map.set(key, {latin:e.latin, fr:e.fr});
+    });
+  });
+  return Array.from(map.values()).sort((a,b)=> a.fr.localeCompare(b.fr,'fr'));
+}
+
+/* ---------- Navigation ---------- */
+function allerA(nom){
+  document.querySelectorAll('.ecran').forEach(e=>e.classList.remove('actif'));
+  document.getElementById('ecran-'+nom).classList.add('actif');
+  const titres = {
+    accueil:"Transect", releve:"Nouveau relevé", resultats:"Résultat",
+    fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat"
+  };
+  document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Transect";
+  if(nom==='releve'){
+    initSaisieEspeces();
+    majEnteteReleve();
+  }
+  if(nom==='fiches') construireEcranFiches();
+  if(nom==='historique') afficherHistorique();
+  window.scrollTo(0,0);
+}
+document.getElementById('btn-accueil').onclick = ()=>allerA('accueil');
+
+/* ---------- Ecran relevé : recherche + ajout au cortège (inspiré du module de saisie de Phytoscope) ---------- */
+
+function initSaisieEspeces(){
+  // Aucun coefficient présélectionné : l'élève doit en choisir un consciemment
+  // avant de pouvoir ajouter l'espèce (cf. majEtatBoutonAjouter).
+  construireSelecteurAbondance();
+  construireComparateurRecouvrement();
+  afficherFourchette();
+  majEtatBoutonAjouter();
+  document.getElementById('suggestions-especes').classList.remove('ouvert');
+  construireTableauCortege();
+}
+
+/* ---- Schéma comparateur : quadrats 1 m² à remplissage proportionnel ----
+   Un même ordre de remplissage (mélange déterministe, seed fixe) est réutilisé pour
+   tous les quadrats : les cellules d'un petit pourcentage sont un sous-ensemble de
+   celles d'un pourcentage plus grand, ce qui donne un aspect de recouvrement naturel
+   et cohérent d'un quadrat à l'autre plutôt qu'un simple bloc plein en haut à gauche. */
+const ORDRE_QUADRAT = (function(){
+  const arr = Array.from({length:100}, (_,i)=>i);
+  let graine = 42;
+  function alea(){ graine = (graine*9301+49297) % 233280; return graine/233280; }
+  for(let i=arr.length-1;i>0;i--){ const j = Math.floor(alea()*(i+1)); [arr[i],arr[j]] = [arr[j],arr[i]]; }
+  return arr;
+})();
+
+function construireGrilleQuadrat(code){
+  const nCroix = CROIX_ABONDANCE[code];
+  if(nCroix){
+    // i / r / + : le nombre d'INDIVIDUS prime, pas la surface — une croix = un individu.
+    const croix = new Set(ORDRE_QUADRAT.slice(0, nCroix));
+    let html = '';
+    for(let i=0;i<100;i++) html += `<div class="quadrat-cellule ${croix.has(i)?'croix':''}">${croix.has(i)?'✕':''}</div>`;
+    return html;
+  }
+  // 1 à 5 : la surface couverte (dominance) prime — remplissage proportionnel des cellules.
+  const pct = COEF_ABONDANCE[code].pct;
+  const nPleines = pct>0 ? Math.max(1, Math.round(pct)) : 0;
+  const pleines = new Set(ORDRE_QUADRAT.slice(0, nPleines));
+  let html = '';
+  for(let i=0;i<100;i++) html += `<div class="quadrat-cellule ${pleines.has(i)?'pleine':''}"></div>`;
+  return html;
+}
+
+/* La ligne de quadrats de référence reste affichée en permanence sous les boutons de
+   coefficients ("il faut du visuel") ; le quadrat du coefficient actuellement sélectionné
+   est mis en évidence (classe "selectionne"), pour relier directement le clic à son repère
+   visuel sans avoir besoin d'un quadrat interactif séparé. */
+function construireComparateurRecouvrement(){
+  const cont = document.getElementById('comparateur-recouvrement');
+  if(!cont) return;
+  cont.innerHTML = CODES_ABONDANCE.map(c=>{
+    return `<div class="quadrat ${etat.coefCourant===c?'selectionne':''}" data-c="${c}">
+      <div class="quadrat-grille">${construireGrilleQuadrat(c)}</div>
+      <div class="quadrat-legende"><b>${c}</b>${COEF_ABONDANCE[c].intervalle}</div>
+    </div>`;
+  }).join('');
+}
+
+function construireSelecteurAbondance(){
+  const cont = document.getElementById('abondance-ajout');
+  cont.innerHTML = `<span class="abondance-label">Coefficient d'abondance-dominance :</span>` +
+    CODES_ABONDANCE.map(c=>`<button type="button" data-c="${c}" class="${etat.coefCourant===c?'actif':''}" onclick="choisirCoefficient('${c}')" title="${COEF_ABONDANCE[c].desc}">${c}</button>`).join('');
+}
+
+function afficherFourchette(){
+  const c = etat.coefCourant;
+  const cont = document.getElementById('fourchette-affichage');
+  if(!c){
+    cont.innerHTML = `<div class="fourchette-desc">Choisissez un coefficient d'abondance-dominance ci-dessus pour pouvoir ajouter l'espèce.</div>`;
+    return;
+  }
+  const info = COEF_ABONDANCE[c];
+  cont.innerHTML = `
+    <div class="fourchette-ligne1"><span class="fourchette-code">${c}</span><span class="fourchette-intervalle">${info.intervalle}</span></div>
+    <div class="fourchette-desc">${info.desc}</div>
+  `;
+}
+
+function majEtatBoutonAjouter(){
+  const btn = document.getElementById('btn-ajouter-espece');
+  if(btn) btn.disabled = !etat.coefCourant;
+}
+
+function choisirCoefficient(code){
+  etat.coefCourant = code;
+  document.querySelectorAll('#abondance-ajout button').forEach(b=> b.classList.toggle('actif', b.dataset.c===code));
+  document.querySelectorAll('#comparateur-recouvrement .quadrat').forEach(q=> q.classList.toggle('selectionne', q.dataset.c===code));
+  afficherFourchette();
+  majEtatBoutonAjouter();
+}
+
+/* Recherche par score : préfixe du nom FR > préfixe du latin > sous-chaîne FR > sous-chaîne latin.
+   Exclut les espèces déjà ajoutées au cortège pour éviter les doublons accidentels. */
+function rechercherEspeces(q){
+  q = normaliser(q);
+  if(!q) return [];
+  const dejaAjoutees = new Set(etat.cortege.filter(e=>e.reconnue).map(e=>e.key));
+  const res = [];
+  especesMaitresses().forEach(e=>{
+    const key = normaliser(e.latin);
+    if(dejaAjoutees.has(key)) return;
+    const fr = normaliser(e.fr), latin = key;
+    let score = 999;
+    if(fr.startsWith(q)) score = 0;
+    else if(latin.startsWith(q)) score = 1;
+    else if(fr.includes(q)) score = 2;
+    else if(latin.includes(q)) score = 3;
+    if(score<999) res.push([score, e]);
+  });
+  return res.sort((a,b)=> a[0]-b[0] || a[1].fr.localeCompare(b[1].fr,'fr')).slice(0,8).map(x=>x[1]);
+}
+
+function onSaisieRecherche(){
+  etat.especeSelectionnee = null;
+  document.getElementById('espece-selectionnee').textContent = "Tapez un nom, choisissez-le dans la liste, précisez l'abondance puis validez.";
+  afficherSuggestions(rechercherEspeces(document.getElementById('recherche-espece').value));
+}
+
+function afficherSuggestions(liste){
+  const box = document.getElementById('suggestions-especes');
+  if(!liste.length){ box.classList.remove('ouvert'); box.innerHTML=''; return; }
+  box.innerHTML = liste.map(e=>`<div class="suggestion" data-key="${normaliser(e.latin)}"><b>${e.fr}</b><span>${e.latin}</span></div>`).join('');
+  box.classList.add('ouvert');
+}
+
+function choisirSuggestion(key){
+  const e = especesMaitresses().find(x=> normaliser(x.latin)===key);
+  if(!e) return;
+  etat.especeSelectionnee = e;
+  document.getElementById('recherche-espece').value = e.fr;
+  document.getElementById('espece-selectionnee').innerHTML = `Espèce sélectionnée : <b>${e.fr}</b> <i>(${e.latin})</i>`;
+  document.getElementById('suggestions-especes').classList.remove('ouvert');
+}
+
+function onToucheRecherche(event){
+  if(event.key === 'Enter'){
+    event.preventDefault();
+    const premiere = document.querySelector('#suggestions-especes .suggestion');
+    if(premiere) choisirSuggestion(premiere.dataset.key);
+  } else if(event.key === 'Escape'){
+    document.getElementById('suggestions-especes').classList.remove('ouvert');
+  }
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.search-wrap')) document.getElementById('suggestions-especes')?.classList.remove('ouvert');
+});
+document.addEventListener('click', e=>{
+  const item = e.target.closest('#suggestions-especes .suggestion');
+  if(item) choisirSuggestion(item.dataset.key);
+});
+
+function ajouterAuCortege(){
+  const recherche = document.getElementById('recherche-espece');
+  const hint = document.getElementById('espece-selectionnee');
+  const mode = 'bb';
+  if(!etat.coefCourant){
+    hint.innerHTML = `<span style="color:var(--status-invalide);">Choisissez d'abord un coefficient d'abondance-dominance.</span>`;
+    return;
+  }
+  const cover = etat.coefCourant;
+  let entree;
+
+  if(etat.especeSelectionnee){
+    const e = etat.especeSelectionnee;
+    entree = {key: normaliser(e.latin), fr: e.fr, latin: e.latin, mode, cover, reconnue: true};
+  } else {
+    const texte = recherche.value.trim();
+    if(!texte){
+      hint.innerHTML = `<span style="color:var(--status-invalide);">Tapez un nom d'espèce (ou sélectionnez-en un dans la liste) avant d'ajouter.</span>`;
+      return;
+    }
+    // espèce non reconnue : ajoutée telle quelle, pour mémoire, sans effet sur le score
+    const dejaLibre = etat.cortege.find(x=> !x.reconnue && normaliser(x.fr)===normaliser(texte));
+    entree = {key:null, fr: texte, latin:null, mode, cover, reconnue:false};
+    if(dejaLibre){ dejaLibre.mode = mode; dejaLibre.cover = cover; finirAjout(); return; }
+  }
+
+  etat.cortege.push(entree);
+  finirAjout();
+
+  function finirAjout(){
+    etat.especeSelectionnee = null;
+    etat.coefCourant = null;
+    construireSelecteurAbondance();
+    construireComparateurRecouvrement();
+    afficherFourchette();
+    majEtatBoutonAjouter();
+    recherche.value = '';
+    hint.textContent = "Tapez un nom, choisissez-le dans la liste, précisez l'abondance puis validez.";
+    document.getElementById('suggestions-especes').classList.remove('ouvert');
+    construireTableauCortege();
+    recherche.focus();
+  }
+}
+
+function retirerDuCortege(index){
+  etat.cortege.splice(index,1);
+  construireTableauCortege();
+}
+
+function construireTableauCortege(){
+  document.getElementById('nb-cortege').textContent = etat.cortege.length;
+  const cont = document.getElementById('tableau-cortege');
+  if(!etat.cortege.length){
+    cont.innerHTML = `<p class="vide-msg">Aucune espèce saisie pour ce point.</p>`;
+    return;
+  }
+  cont.innerHTML = `<table class="cortege"><thead><tr><th>Espèce</th><th>Coefficient</th><th></th></tr></thead><tbody>
+    ${etat.cortege.map((e,i)=>{
+      const titre = e.mode==='pct' ? `${e.cover}% de recouvrement estimé` : (COEF_ABONDANCE[e.cover]?.desc||'');
+      return `<tr>
+      <td><span class="fr">${e.fr}</span>${e.latin?`<br><span class="latin">${e.latin}</span>`:`<br><span class="latin non-reconnue">non référencée</span>`}</td>
+      <td class="num"><span class="puce-abond ${e.reconnue?'':'non-reconnue'}" title="${titre}">${libelleCouverture(e.mode, e.cover)}</span></td>
+      <td class="num"><button type="button" class="retirer" onclick="retirerDuCortege(${i})">Retirer</button></td>
+    </tr>`;
+    }).join('')}
+  </tbody></table>`;
+}
+
+/* ---------- Algorithme de score ----------
+   Deux indicateurs complémentaires sont calculés pour chaque habitat (limité aux
+   11 habitats du profil de Linés, cf. HABITATS_ACTIFS) :
+   - tauxCar : proportion des espèces CARACTÉRISTIQUES du syntaxon retrouvées dans le relevé
+     (le critère le plus diagnostique en phytosociologie : c'est lui qui classe les résultats) ;
+   - score : indice global pondéré (car = 2 points, fréquente = 1 point), chaque espèce
+     trouvée étant en plus pesée par son abondance-dominance (une espèce dominante compte
+     plus qu'une espèce simplement présente), plafonné à 100 % pour rester lisible.
+*/
+function calculerScores(){
+  const cortegeReconnu = new Map(etat.cortege.filter(e=>e.reconnue).map(e=>[e.key, {mode:e.mode, cover:e.cover}]));
+  const wCar = 2, wFreq = 1;
+  const resultats = HABITATS_ACTIFS.map(h=>{
+    let num=0, den=0, matchCar=[], matchFreq=[], manqueCar=[], totalCar=0;
+    h.especes.forEach(e=>{
+      if(e.statut === 'absent') return;
+      const poids = e.statut==='car' ? wCar : wFreq;
+      den += poids;
+      if(e.statut==='car') totalCar++;
+      const key = normaliser(e.latin);
+      if(cortegeReconnu.has(key)){
+        const {mode, cover} = cortegeReconnu.get(key);
+        const mult = multDeCouverture(mode, cover);
+        num += poids * mult;
+        (e.statut==='car'?matchCar:matchFreq).push({...e, mode, cover});
+      } else if(e.statut==='car'){
+        manqueCar.push(e);
+      }
+    });
+    const score = den>0 ? Math.round(Math.min(num,den)/den*100) : 0;
+    const tauxCar = totalCar>0 ? Math.round(matchCar.length/totalCar*100) : 0;
+    return {habitat:h, score, tauxCar, totalCar, matchCar, matchFreq, manqueCar};
+  });
+  resultats.sort((a,b)=> b.tauxCar - a.tauxCar || b.score - a.score);
+  return resultats;
+}
+
+/* Traduit le taux d'espèces caractéristiques en appréciation en langage clair,
+   pour des élèves débutants qui n'ont pas encore l'habitude de lire un pourcentage
+   comme un niveau de confiance. */
+function qualificatifTauxCar(taux){
+  if(taux>=100) return {texte:"✓ Correspondance excellente : toutes les espèces caractéristiques attendues ont été trouvées", cls:"exc"};
+  if(taux>=60)  return {texte:"Bonne correspondance : la plupart des espèces caractéristiques ont été trouvées", cls:"bon"};
+  if(taux>=30)  return {texte:"Correspondance partielle : seulement une partie des espèces caractéristiques a été trouvée", cls:"partiel"};
+  if(taux>0)    return {texte:"Correspondance faible : peu d'espèces caractéristiques trouvées, résultat incertain", cls:"faible"};
+  return {texte:"Aucune espèce caractéristique de cet habitat trouvée dans le relevé", cls:"nul"};
+}
+
+/* déclenché par la barre d'actions fixe */
+function carteResultatHTML(r, i){
+  const h = r.habitat;
+  const q = qualificatifTauxCar(r.tauxCar);
+  const puceEspece = (e, cls) => `<span class="puce-espece ${cls}">✓ ${e.fr}${e.cover!=null?` <b>(${libelleCouverture(e.mode, e.cover)})</b>`:''}</span>`;
+  const chips = [
+    ...r.matchCar.map(e=>puceEspece(e,'ok')),
+    ...r.matchFreq.map(e=>puceEspece(e,'freq')),
+    ...r.manqueCar.map(e=>`<span class="puce-espece manque">✗ ${e.fr}</span>`)
+  ].join('');
+  const idxZoneR = PROFIL_ZONATION.findIndex(z => z.fiches.includes(h.id));
+  return `<div class="resultat-carte ${i===0?'top1':''}">
+    ${i===0 ? `<div class="etiquette-top">🎯 Habitat le plus probable</div>` : `<div class="etiquette-autre">Autre possibilité</div>`}
+    <div class="resultat-entete">
+      <div>
+        <span class="tag">Fiche ${h.id}</span>
+        <span class="tag tag-zone">📍 Position habituelle : ${h.zonation}</span>
+        <h3>${h.nomFr}</h3>
+        <div class="syntaxon">${h.syntaxon}</div>
+      </div>
+      <div class="score-box">
+        <div class="score-principal">${r.matchCar.length}/${r.totalCar}<small>espèces caract.</small></div>
+        <div class="score-secondaire">${r.score}%<small>indice global</small></div>
+      </div>
+    </div>
+    ${idxZoneR>=0 ? construireMiniProfilSVG(idxZoneR) : ''}
+    <div class="qualificatif qualificatif-${q.cls}">${q.texte}</div>
+    <div class="barre-score"><div style="width:${r.tauxCar}%"></div></div>
+    <div class="liste-especes-resultat">${chips}</div>
+    <button class="discret" onclick="allerVoirFiche(${idAttr(h.id)}, 'resultats')">Voir la fiche complète →</button>
+  </div>`;
+}
+
+const CARTE_ENREGISTREMENT = `<div class="carte">
+  <div class="champ">
+    <label for="in-observation">Observations / remarques (optionnel)</label>
+    <textarea id="in-observation" rows="3" placeholder="Ex : sol très piétiné, mosaïque avec la zone voisine, doute sur une espèce…" style="width:100%;font-family:var(--sans);font-size:.9rem;padding:.5em;border:1px solid var(--line);border-radius:0;background:#fff;color:var(--ink);resize:vertical;"></textarea>
+  </div>
+  <div style="text-align:center;margin-top:.8em;">
+    <button onclick="enregistrerReleve()">💾 Enregistrer ce relevé</button>
+    <div style="margin-top:.5em;">
+      <button class="discret" onclick="nouveauPoint()">Nouveau point (sans enregistrer)</button>
+    </div>
+  </div>
+</div>`;
+
+function afficherResultats(){
+  const total = etat.cortege.length;
+  const nbReconnues = etat.cortege.filter(e=>e.reconnue).length;
+  const zoneAvert = document.getElementById('zone-avertissement');
+  zoneAvert.innerHTML = '';
+  if(total === 0){
+    zoneAvert.innerHTML = `<div class="avertissement">Aucune espèce saisie. Retournez au relevé pour en ajouter au moins une.</div>`;
+  } else if(nbReconnues < 3){
+    zoneAvert.innerHTML = `<div class="avertissement">Peu d'espèces reconnues (${nbReconnues}).</div>`;
+  }
+
+  // On ne retient que les habitats qui partagent au moins une espèce (caractéristique
+  // ou compagne) avec le relevé : un habitat à 0 espèce en commun n'a rien à faire dans
+  // les propositions, même s'il reste "le moins pire" du classement par défaut.
+  const pertinents = calculerScores().filter(r => r.matchCar.length>0 || r.matchFreq.length>0).slice(0,6);
+  const zone = document.getElementById('zone-resultats');
+
+  if(!pertinents.length){
+    zone.innerHTML = `<p class="vide-msg">Aucun habitat ne partage d'espèce avec ce relevé. Vérifiez la saisie ou complétez le relevé avec d'autres espèces.</p>
+      <div style="text-align:center;"><button class="discret" onclick="nouveauPoint()">Nouveau point (sans enregistrer)</button></div>`;
+    etat.dernierResultat = null;
+    allerA('resultats');
+    return;
+  }
+
+  const autres = pertinents.slice(1);
+  zone.innerHTML = carteResultatHTML(pertinents[0], 0)
+    + CARTE_ENREGISTREMENT
+    + (autres.length ? `<details class="autres-possibilites">
+        <summary>Voir ${autres.length} autre${autres.length>1?'s':''} possibilité${autres.length>1?'s':''} (moins probable${autres.length>1?'s':''})</summary>
+        ${autres.map((r,i)=>carteResultatHTML(r,i+1)).join('')}
+      </details>` : '');
+
+  etat.dernierResultat = pertinents[0];
+  allerA('resultats');
+}
+
+/* ---------- Profil de zonation (reconstitué d'après la Fig. 6c, transect de Linés) ----------
+   Le schéma complet (construireProfilSVG) sert sur l'écran "Fiches habitats" (pastilles
+   cliquables vers chaque fiche, groupées par grand ensemble Slikke / Schorre / Contact dune).
+   Une version compacte (construireMiniProfilSVG) reprend les mêmes colonnes avec un point
+   rouge unique : elle sert à situer un habitat précis, sur l'écran résultats (chaque habitat
+   potentiel proposé) et sur chaque fiche détail.
+*/
+function decouperEnLignes(texte, maxLen){
+  const mots = texte.split(' ');
+  const lignes = [];
+  let ligne = '';
+  mots.forEach(m=>{
+    const essai = ligne ? ligne+' '+m : m;
+    if(essai.length > maxLen && ligne){ lignes.push(ligne); ligne = m; }
+    else ligne = essai;
+  });
+  if(ligne) lignes.push(ligne);
+  return lignes;
+}
+
+function idAttr(id){ return typeof id === 'string' ? `'${id}'` : id; }
+
+const GRANDS_ENSEMBLES = [
+  { nom:'Slikke', debut:0, fin:2, couleur:'#3c6e8a' },
+  { nom:'Schorre', debut:2, fin:6, couleur:'#3f7a3a' },
+  { nom:'Contact dune', debut:6, fin:7, couleur:'#6b4f82' }
+];
+
+function construireProfilSVG(svgId, opts){
+  opts = opts || {};
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const n = PROFIL_ZONATION.length;
+  const w = 600/n;
+  let html = '';
+  // Bande des grands ensembles (Slikke / Schorre / Contact dune)
+  GRANDS_ENSEMBLES.forEach(g=>{
+    const x0 = g.debut*w, x1 = g.fin*w;
+    html += `<g>
+      <rect x="${x0}" y="1" width="${x1-x0-2}" height="17" fill="${g.couleur}" opacity="0.13"/>
+      <rect x="${x0}" y="15" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
+      <text x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" font-weight="700" letter-spacing="0.05em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+    </g>`;
+  });
+  // Séparateurs verticaux entre grands ensembles
+  GRANDS_ENSEMBLES.slice(1).forEach(g=>{
+    html += `<line x1="${g.debut*w}" y1="20" x2="${g.debut*w}" y2="178" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
+  });
+  PROFIL_ZONATION.forEach((z,i)=>{
+    const fichesAffiches = z.fiches;
+    const lignes = decouperEnLignes(z.zone, 9);
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:9.5}">${l}</tspan>`).join('');
+    const selectionnee = opts.zoneSelectionnee === i;
+    html += `<g class="zone-colonne" tabindex="0" role="button" aria-label="${z.zone} — voir uniquement les habitats de cette zone" onclick="selectionnerZoneFiches(${i})" style="cursor:pointer;">
+      <rect x="${i*w}" y="20" width="${w-2}" height="158" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.05:0.01}"/>
+      <rect x="${i*w}" y="42" width="${w-2}" height="100" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.9:0.55}"/>
+      ${selectionnee ? `<rect x="${i*w+1}" y="43" width="${w-4}" height="98" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
+      <text x="${i*w+w/2}" y="162" text-anchor="middle" font-size="8.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
+    fichesAffiches.forEach((fid, k)=>{
+      const cx = i*w + 13 + (k%4)*16;
+      const cy = 56 + Math.floor(k/4)*16;
+      html += `<circle cx="${cx}" cy="${cy}" r="7" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
+        <text x="${cx}" y="${cy+2.6}" text-anchor="middle" font-size="7" fill="#191b16" style="pointer-events:none">${fid}</text>`;
+    });
+    html += `</g>`;
+  });
+  svg.innerHTML = html + `<text x="10" y="192" font-size="9" fill="#565a4e">slikke (mer) →</text><text x="590" y="192" font-size="9" fill="#565a4e" text-anchor="end">← dune</text>`;
+}
+
+/* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
+   que le profil complet, mais avec un point rouge sur la zone de l'habitat affiché. */
+function construireMiniProfilSVG(idxZone){
+  const n = PROFIL_ZONATION.length;
+  const w = 600/n;
+  let html = '';
+  GRANDS_ENSEMBLES.forEach(g=>{
+    const x0 = g.debut*w, x1 = g.fin*w;
+    html += `<g>
+      <rect x="${x0}" y="1" width="${x1-x0-2}" height="14" fill="${g.couleur}" opacity="0.13"/>
+      <rect x="${x0}" y="12" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
+      <text x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" font-weight="700" letter-spacing="0.05em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+    </g>`;
+  });
+  GRANDS_ENSEMBLES.slice(1).forEach(g=>{
+    html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="74" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
+  });
+  PROFIL_ZONATION.forEach((z,i)=>{
+    const lignes = decouperEnLignes(z.zone, 9);
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:9}">${l}</tspan>`).join('');
+    html += `<g>
+      <rect x="${i*w}" y="24" width="${w-2}" height="30" fill="${ZONES_LINES_COULEURS[i]}" opacity="${i===idxZone?0.9:0.4}"/>
+      <text x="${i*w+w/2}" y="66" text-anchor="middle" font-size="7.6" fill="#191b16">${tspans}</text>
+    </g>`;
+    if(i===idxZone){
+      html += `<circle cx="${i*w+w/2}" cy="39" r="6.5" fill="#c0562b" stroke="#fff" stroke-width="1.6"/>`;
+    }
+  });
+  return `<svg class="zonation-diagram" viewBox="0 0 600 78" xmlns="http://www.w3.org/2000/svg">${html}</svg>`;
+}
+
+/* Ordre et couleur de référence pour toute liste de fiches : dérivés de PROFIL_ZONATION
+   (la même source qui construit le diagramme), pour que l'ordre affiché suive
+   effectivement la progression du transect slikke → dune, et que chaque fiche porte
+   la couleur de sa zone dans le diagramme (correspondance visuelle directe). */
+const ORDRE_TRANSECT = PROFIL_ZONATION.flatMap(z => z.fiches);
+function indexZoneHabitat(id){ return PROFIL_ZONATION.findIndex(z => z.fiches.includes(id)); }
+function couleurZoneHabitat(id){
+  const i = indexZoneHabitat(id);
+  return i>=0 ? ZONES_LINES_COULEURS[i] : 'var(--line)';
+}
+
+/* ---------- Ecran fiches (référence) ----------
+   Touchez une case du profil (grande zone, pas les petits numéros) pour ne garder
+   dans la liste que les habitats décrits dans cette zone. */
+let zoneFichesActive = null;
+
+function selectionnerZoneFiches(i){
+  zoneFichesActive = (zoneFichesActive === i) ? null : i;
+  construireEcranFiches();
+}
+
+function construireEcranFiches(){
+  construireProfilSVG('svg-zonation', {zoneSelectionnee: zoneFichesActive});
+
+  const filtreInfo = document.getElementById('filtre-zonation');
+  if(zoneFichesActive !== null){
+    const z = PROFIL_ZONATION[zoneFichesActive];
+    filtreInfo.innerHTML = `<span class="filtre-chip actif">📍 ${z.zone}</span><span class="filtre-chip" onclick="selectionnerZoneFiches(null)">✕ Tout afficher</span>`;
+  } else {
+    filtreInfo.innerHTML = `<p style="font-size:.78rem;color:var(--text-2);margin:.6em 0;">Touchez une case du profil pour n'afficher que les habitats de cette zone.</p>`;
+  }
+
+  const cont = document.getElementById('liste-fiches');
+  const idsZone = zoneFichesActive !== null ? PROFIL_ZONATION[zoneFichesActive].fiches : null;
+  const liste = HABITATS
+    .filter(h => !idsZone || idsZone.includes(h.id))
+    .slice()
+    .sort((a,b)=> ORDRE_TRANSECT.indexOf(a.id) - ORDRE_TRANSECT.indexOf(b.id));
+  cont.innerHTML = liste.map(h=>`
+    <div class="fiche-liste-item" style="border-left-color:${couleurZoneHabitat(h.id)};" onclick="allerVoirFiche(${idAttr(h.id)})">
+      <span class="num">${h.id}</span>${h.nomFr}
+      <div class="zonation-tag">${h.zonation}</div>
+    </div>
+  `).join('') || `<p class="vide-msg">Aucune fiche dans cette zone.</p>`;
+}
+
+function allerVoirFiche(id, origine){
+  const h = HABITATS.find(x=>x.id===id);
+  if(!h) return;
+  const lien = document.getElementById('lien-retour-fiche');
+  if(origine === 'resultats'){
+    lien.textContent = '← Retour aux résultats';
+    lien.onclick = ()=> allerA('resultats');
+  } else {
+    lien.textContent = '← Fiches habitats';
+    lien.onclick = ()=> allerA('fiches');
+  }
+  const cont = document.getElementById('contenu-detail-fiche');
+  const especesParStatut = s => h.especes.filter(e=>e.statut===s).map(e=>`${e.fr} <i>(${e.latin})</i>`).join(', ') || '—';
+  const idxZone = PROFIL_ZONATION.findIndex(z => z.fiches.includes(h.id));
+  const couleurZone = idxZone>=0 ? ZONES_LINES_COULEURS[idxZone] : 'var(--line)';
+  cont.innerHTML = `
+    <div class="carte" style="border-left:5px solid ${couleurZone};">
+      <span class="tag">Fiche ${h.id}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${PROFIL_ZONATION[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
+      <h2>${h.nomFr}</h2>
+      <div class="syntaxon">${h.syntaxon}</div>
+      ${idxZone>=0 ? `<p class="abondance-label" style="margin:.9em 0 .2em;">Position sur le profil de zonation</p>${construireMiniProfilSVG(idxZone)}` : ''}
+      <p style="font-size:.8rem;color:var(--text-2);">EUNIS ${h.codes.eunis} · CORINE ${h.codes.corine} · EUR28 ${h.codes.eur28} · Cahiers d'habitats ${h.codes.cahiers}</p>
+      <div class="detail-bloc"><h3>Physionomie</h3><p>${h.physionomie||'—'}</p></div>
+      <div class="detail-bloc"><h3>Écologie</h3><p>${h.ecologie||'—'}</p></div>
+      <div class="detail-bloc"><h3>Espèces caractéristiques</h3><p>${especesParStatut('car')}</p></div>
+      <div class="detail-bloc"><h3>Espèces fréquentes</h3><p>${especesParStatut('freq')}</p></div>
+      <div class="detail-bloc"><h3>Confusions possibles</h3><p>${h.confusions||'—'}</p></div>
+      <div class="detail-bloc"><h3>Dynamique et contacts</h3><p>${h.dynamique||'—'}</p></div>
+    </div>
+  `;
+  allerA('detail-fiche');
+}
+
+/* ---------- Historique / localStorage ---------- */
+const CLE_HISTORIQUE = 'pmg_releves_v1';
+
+function chargerHistorique(){
+  try{ return JSON.parse(localStorage.getItem(CLE_HISTORIQUE)) || []; }catch(e){ return []; }
+}
+function sauverHistorique(liste){
+  localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(liste));
+}
+function majCompteurHistorique(){
+  const n = chargerHistorique().length;
+  document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
+}
+
+/* ---------- Transect en cours ----------
+   Chaque relevé appartient à un transect (une sortie terrain). La numérotation
+   "Relevé n°X" repart de 1 à chaque nouveau transect : elle compte la position
+   du point le long de CE transect (1er, 2e, 3e mètre carré...), jamais le total
+   de relevés enregistrés sur l'appareil toutes sorties confondues. */
+const CLE_TRANSECT_ACTIF = 'pmg_transect_actif_v1';
+
+function nomTransectActif(){
+  return localStorage.getItem(CLE_TRANSECT_ACTIF) || null;
+}
+function definirTransectActif(nom){
+  localStorage.setItem(CLE_TRANSECT_ACTIF, nom);
+}
+function assurerTransectActif(){
+  let nom = nomTransectActif();
+  if(!nom){
+    nom = `Transect du ${new Date().toLocaleDateString('fr-FR')}`;
+    definirTransectActif(nom);
+  }
+  return nom;
+}
+function releveDuTransect(nom){
+  return chargerHistorique().filter(r => (r.transect || 'Transect (sans nom)') === nom);
+}
+function prochainNumeroTransect(nom){
+  return releveDuTransect(nom).length + 1;
+}
+function demarrerNouveauTransect(){
+  const saisie = prompt('Nom du nouveau transect :', `Transect du ${new Date().toLocaleDateString('fr-FR')}`);
+  if(saisie === null) return;
+  definirTransectActif(saisie.trim() || `Transect du ${new Date().toLocaleDateString('fr-FR')}`);
+  nouveauPoint();
+}
+function changerTransect(){
+  const actuel = assurerTransectActif();
+  const saisie = prompt('Nom du transect en cours (laissez tel quel pour continuer, ou changez pour reprendre/démarrer un autre transect) :', actuel);
+  if(saisie === null) return;
+  const nouveauNom = saisie.trim() || actuel;
+  definirTransectActif(nouveauNom);
+  if(nouveauNom !== actuel){
+    // On change bien de transect : la distance suggérée pour l'ancien ne vaut plus rien.
+    document.getElementById('in-distance').value = '';
+  }
+  majEnteteReleve();
+}
+function reprendreTransect(nom){
+  definirTransectActif(nom);
+  nouveauPoint();
+}
+function majEnteteReleve(){
+  const nom = assurerTransectActif();
+  const numero = prochainNumeroTransect(nom);
+  document.getElementById('badge-transect-actif').textContent = `📍 ${nom}`;
+  document.getElementById('numero-releve-affiche').textContent = numero;
+  const inDistance = document.getElementById('in-distance');
+  if(inDistance && !inDistance.value){
+    // Par défaut, un relevé par mètre à partir du début du transect : le relevé n°1
+    // est à 1 m, le n°2 à 2 m, etc. (reste éditable si l'espacement réel diffère).
+    const rs = releveDuTransect(nom);
+    const derniere = rs.length ? parseFloat(rs[rs.length-1].distance) : NaN;
+    inDistance.value = !isNaN(derniere) ? (derniere + 1) : numero;
+  }
+}
+
+function resetReleve(){
+  etat.cortege = [];
+  etat.especeSelectionnee = null;
+  etat.coefCourant = null;
+  etat.dernierResultat = null;
+  document.getElementById('in-distance').value = '';
+  document.getElementById('recherche-espece').value = '';
+}
+
+function nouveauPoint(){
+  resetReleve();
+  allerA('releve');
+}
+
+function enregistrerReleve(){
+  if(!etat.dernierResultat) return;
+  const liste = chargerHistorique();
+  const transect = assurerTransectActif();
+  const numero = prochainNumeroTransect(transect);
+  liste.push({
+    date: new Date().toISOString(),
+    transect,
+    numero,
+    observation: document.getElementById('in-observation')?.value || '',
+    distance: document.getElementById('in-distance').value || '',
+    cortege: etat.cortege.map(e=>({fr:e.fr, latin:e.latin, mode:e.mode, cover:e.cover, reconnue:e.reconnue})),
+    top: etat.dernierResultat.habitat.nomFr,
+    topFiche: etat.dernierResultat.habitat.id,
+    tauxCar: etat.dernierResultat.tauxCar,
+    carMatch: `${etat.dernierResultat.matchCar.length}/${etat.dernierResultat.totalCar}`,
+    score: etat.dernierResultat.score
+  });
+  sauverHistorique(liste);
+  majCompteurHistorique();
+  alert(`Relevé n°${numero} enregistré (${transect}). Vous pouvez passer au point suivant.`);
+  nouveauPoint();
+}
+
+function afficherHistorique(){
+  const liste = chargerHistorique();
+  const zone = document.getElementById('zone-historique');
+  if(!liste.length){ zone.innerHTML = '<p class="vide-msg">Aucun relevé pour le moment.</p>'; return; }
+  const nomActif = nomTransectActif();
+  const groupes = {};
+  const ordre = [];
+  liste.forEach(r=>{
+    const t = r.transect || 'Transect (sans nom)';
+    if(!groupes[t]){ groupes[t] = []; ordre.push(t); }
+    groupes[t].push(r);
+  });
+  zone.innerHTML = ordre.map(nom=>{
+    const rs = groupes[nom].slice().sort((a,b)=>(a.numero||0)-(b.numero||0));
+    const actif = nom === nomActif;
+    return `
+    <div style="margin-top:1.1em;display:flex;justify-content:space-between;align-items:center;gap:.5em;flex-wrap:wrap;">
+      <h3 style="margin:0;">${nom} ${actif ? '<span class="tag" style="margin-left:.4em;">en cours</span>' : ''}</h3>
+      <span style="font-family:var(--mono);font-size:.75rem;color:var(--text-2);">${rs.length} relevé${rs.length>1?'s':''}</span>
+    </div>
+    <table class="historique"><thead><tr><th>N°</th><th>Dist. (m)</th><th>Habitat probable</th><th>Espèces caract.</th><th>Remarque</th></tr></thead><tbody>
+      ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td></tr>`).join('')}
+    </tbody></table>
+    ${!actif ? `<button class="discret" onclick="reprendreTransect('${nom.replace(/'/g,"\\'")}')">↻ Reprendre ce transect</button>` : ''}
+  `;
+  }).join('');
+}
+
+function viderHistorique(){
+  if(confirm('Effacer tous les relevés enregistrés sur cet appareil ?')){
+    localStorage.removeItem(CLE_HISTORIQUE);
+    localStorage.removeItem(CLE_TRANSECT_ACTIF);
+    afficherHistorique();
+    majCompteurHistorique();
+  }
+}
+
+function exporterHistoriqueCSV(){
+  const liste = chargerHistorique();
+  if(!liste.length) return;
+  const lignes = [['Transect','N°','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Date'].join(';')];
+  liste.forEach(r=>{
+    const especesAvecAbond = (r.cortege||[]).map(e => `${e.fr}${e.latin?' ('+e.latin+')':' [non référencée]'}:${libelleCouverture(e.mode, e.cover)}`).join(', ');
+    const remarque = (r.observation||'').replace(/[\r\n;]+/g,' ').trim();
+    lignes.push([r.transect||'', r.numero||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond, remarque, r.date].join(';'));
+  });
+  const blob = new Blob([lignes.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'releves_petite_mer_de_gavres.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Export compatible Phytoscope ----------
+   Reproduit le schéma JSON attendu par l'import de Phytoscope (apps/phytoscope du
+   portail btsgpn-kerplouz) : { releves:[ {id, name, date, ..., rows:[{name, mode:"bb",
+   cover, ...}]} ] }. Phytoscope résout les taxons d'abord par le nom latin exact
+   (row.name) : les espèces reconnues seront donc directement exploitables (gradients,
+   écogrammes...) une fois le fichier importé ; les espèces non référencées apparaîtront
+   comme "taxon inconnu" mais restent visibles, sans rien casser. */
+function idPhytoscope(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
+
+function exporterPourPhytoscope(){
+  const liste = chargerHistorique();
+  if(!liste.length) return;
+  const releves = liste.map(r=>{
+    const horodatage = r.date || new Date().toISOString();
+    const rows = (r.cortege||[]).map(e=>({
+      line_id: idPhytoscope(),
+      tid: null,
+      name: e.latin || e.fr,
+      stratum: "Herbacée",
+      mode: e.mode || "bb",
+      cover: e.cover
+    }));
+    const nomReleve = `${r.transect || 'Transect'} — relevé n°${r.numero || '?'}`;
+    const notesIdentif = r.top ? `Identification proposée par l'appli terrain : ${r.top} (fiche ${r.topFiche}) — ${r.carMatch||''} espèces caractéristiques, indice global ${r.score}%.` : "";
+    return {
+      id: idPhytoscope(),
+      name: nomReleve,
+      date: horodatage.slice(0,10),
+      observer: "",
+      site: "Petite Mer de Gâvres — profil de Linés (Plouhinec)",
+      location: r.distance ? `Distance sur le transect : ${r.distance} m` : "",
+      area: "",
+      notes: [notesIdentif, r.observation].filter(Boolean).join(' — '),
+      codeProjet: r.transect || "TP zonation Gâvres",
+      rows,
+      created_at: horodatage,
+      updated_at: horodatage,
+      device_id: "app-zonation-gavres"
+    };
+  });
+  const payload = { releves, selectedId: releves[0].id, selectedIds: releves.map(r=>r.id) };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* barre d'action fixe pour l'écran relevé */
+document.addEventListener('DOMContentLoaded', ()=>{
+  majCompteurHistorique();
+  const barre = document.createElement('div');
+  barre.className='barre-actions';
+  barre.id='barre-releve';
+  barre.innerHTML = `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="afficherResultats()">Analyser le relevé</button>`;
+  document.body.appendChild(barre);
+  majBarreActions();
+});
+
+function majBarreActions(){
+  const barre = document.getElementById('barre-releve');
+  const surReleve = document.getElementById('ecran-releve').classList.contains('actif');
+  barre.style.display = surReleve ? 'flex' : 'none';
+}
+const _allerA = allerA;
+allerA = function(nom){ _allerA(nom); majBarreActions(); };
+</script>
+</body>
+</html>
