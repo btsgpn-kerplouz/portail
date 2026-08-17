@@ -97,6 +97,8 @@ input[type=text]:focus,input[type=number]:focus{
   font-family:var(--serif);font-weight:700;font-size:1.02rem;flex:1;
 }
 .app-header .titre small{display:block;font-family:var(--sans);font-weight:400;font-size:.72rem;opacity:.7;}
+.portail-lien{font-family:var(--mono);font-size:.72rem;color:rgba(244,242,236,.55);text-decoration:none;white-space:nowrap;flex:0 0 auto;}
+.portail-lien:hover{color:var(--page);}
 .icon-btn{
   background:transparent;
   color:var(--page);
@@ -298,6 +300,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 <div class="app-header">
   <button class="icon-btn" id="btn-accueil" title="Accueil">⌂</button>
   <div class="titre" id="titre-ecran">Transect<small>Petite Mer de Gâvres — BTS GPN</small></div>
+  <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
 </div>
 
 <main>
