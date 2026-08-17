@@ -53,7 +53,7 @@ dans `shared/theme.css` reste une option pour plus tard, pas une décision prise
 | **organisation-cours** | saisie | à migrer vers Supabase | Historique : serveur Node local + fichiers `data/`. **Ne jamais écraser `data/`.** | Papier technique froid — fondation + 3 écrans faits, 18 restants, rien commité. |
 | **phytoscope** | saisie · multi-utilisateur | Supabase ✓ | **Modèle de référence** (déjà éprouvé). | Papier technique froid — très largement migrée, rien commité. |
 | **vegetations-armoricaines** | consultation seule | aucune | « Végétations du massif armoricain ». **Purement statique** (PWA) : pas de Supabase, pas d'auth. | **Atlas naturaliste (ancienne charte)** — pas encore migrée. À ne pas prendre pour référence visuelle. |
-| **transect** | saisie | `localStorage` (Supabase prévu) | « Transect » — identification des habitats de la Petite Mer de Gâvres. Front fonctionnel, données encore en local ; bascule Supabase à venir sur le modèle Phytoscope. | Papier technique froid — dès la première version, rien commité. |
+| **zonation** | saisie | `localStorage` (Supabase prévu) | « Zonation » — identification des habitats de la Petite Mer de Gâvres. Front fonctionnel, données encore en local ; bascule Supabase à venir sur le modèle Phytoscope. | Papier technique froid — dès la première version, rien commité. |
 
 ## Structure du dépôt
 
@@ -65,7 +65,7 @@ portail/             <- la page-hub
 apps/organisation-cours/
 apps/phytoscope/
 apps/vegetations-armoricaines/
-apps/transect/
+apps/zonation/
 ```
 
 ## Conventions communes
