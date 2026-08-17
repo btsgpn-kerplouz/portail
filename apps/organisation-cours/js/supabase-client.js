@@ -43,3 +43,8 @@ export function getClient() {
   }
   return clientPromise;
 }
+
+// Pont vers app.js, chargé en script classique (pas un module — ne peut pas
+// faire `import`). Même principe que window.OC_SYNC/OC_APP : utilisé pour
+// l'upload/lecture de la signature privée (écran 13, Ordre de mission).
+window.OC_SUPABASE_CLIENT = getClient;

@@ -109,7 +109,14 @@ let state = null;
 // hors année scolaire, cf. loadData() qui retombe sur state.weeks[0] quand
 // cette semaine n'existe pas dans le planning).
 let selectedWeek = currentWeekId();
-let seqCalMonthKey = null; // AAAA-MM du mois affiché dans le calendrier de la modale séquence
+// Écran 12 — modale séance : semaine affichée par le sélecteur de créneaux et
+// choix courant de l'utilisateur (un créneau standard, « autre créneau » ou
+// « sans date »). État UI pur, jamais persisté tel quel (voir submitSessionForm).
+let sessionSlotPickerWeekId = '';
+let sessionSlotChoice = null;
+// Écran 12 — « Créer et enchaîner » : le prochain submit du formulaire séance
+// doit rouvrir le formulaire au lieu de fermer la modale.
+let sessionChainRequested = false;
 // Refonte écran 4 (16/08/2026) — période affichée par la bande de semaines du
 // Planning hebdo (REGLES.md #22, seul sélecteur de date de l'app). Resynchronisée
 // sur la semaine sélectionnée à chaque renderPlanning() ; la bascule Sept–déc/
@@ -148,11 +155,17 @@ let rubanTeacher = 'Tous';
 let rubanMode = 'ruban';
 let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneaux type
 let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
+let studentPlanningPromo = ''; // Écran 8 — promotion affichée, résolue au premier rendu (state.promotions[0])
+let studentPlanningMineOnly = true; // case « Mettre mes cours en avant »
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
 
 // initiales transmises par js/auth.js via OC_APP.demarrer(initiales) — sert
 // au périmètre strictement personnel du Tableau de bord (voir estVisiblePourMoi).
 let moiInitiales = '';
+// Nom/prénom transmis en même temps (écran 13, Ordre de mission — préremplissage
+// de « Commandé par »). Absents si non fournis (ex. anciens appels non mis à jour).
+let moiNom = '';
+let moiPrenom = '';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -237,6 +250,11 @@ function normalizeData(data) {
     rubanOverrides: (data.rubanOverrides && typeof data.rubanOverrides === 'object') ? data.rubanOverrides : {},
     rubanUeCaps: (data.rubanUeCaps && typeof data.rubanUeCaps === 'object' && !Array.isArray(data.rubanUeCaps)) ? data.rubanUeCaps : {},
     weekTemplates: Array.isArray(data.weekTemplates) ? data.weekTemplates.map(normalizeTemplateSlot).filter(Boolean) : [],
+    // Écran 8 — Planning étudiant : semaine type PAR PROMOTION, saisie à la main.
+    // Même forme que weekTemplates mais sans semestre ni colonne L/R (aucune
+    // cellule scindée dans la maquette de cet écran) et une promotion propre
+    // (weekTemplates la déduit du semestre ; ici il n'y a pas de semestre).
+    studentWeekTemplate: Array.isArray(data.studentWeekTemplate) ? data.studentWeekTemplate.map(normalizeStudentSlot).filter(Boolean) : [],
     lastSavedAt: data.lastSavedAt || null
   };
 
@@ -456,6 +474,24 @@ function normalizeTemplateSlot(t = {}) {
   };
 }
 
+function normalizeStudentSlot(t = {}) {
+  if (!t || typeof t !== 'object') return null;
+  const start = clampTemplateSlots(Number(t.startSlot) || 0, Number(t.endSlot));
+  return {
+    id: t.id || uid('etu'),
+    promotion: DEFAULT_PROMOTIONS.includes(t.promotion) ? t.promotion : DEFAULT_PROMOTIONS[0],
+    day: Math.max(0, Math.min(4, Number(t.day) || 0)),
+    startSlot: start.start,
+    endSlot: start.end,
+    ueId: t.ueId || '',
+    ueCode: typeof t.ueCode === 'string' ? t.ueCode : '',
+    title: typeof t.title === 'string' ? t.title : '',
+    room: typeof t.room === 'string' ? t.room : '',
+    teacher: typeof t.teacher === 'string' ? t.teacher : '',
+    color: isValidHexColor(t.color) ? t.color : ''
+  };
+}
+
 function normalizeTodoItem(t = {}) {
   if (!t || typeof t !== 'object' || !String(t.text || '').trim()) return null;
   return {
@@ -519,6 +555,37 @@ function templateCellInner(t) {
   return `<button type="button" class="tpl-del" data-del-template="${escapeAttr(t.id)}" title="Supprimer ce créneau" aria-label="Supprimer ce créneau">×</button>
     ${code ? `<div class="tpl-ue">${escapeHtml(code)}</div>` : ''}
     ${t.title ? `<div class="tpl-title">${escapeHtml(t.title)}</div>` : ''}
+    ${teachers.length ? `<div class="tpl-teachers">${teachers.map(x => `<span class="design-ue-pill${x.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(x)}</span>`).join('')}</div>` : ''}`;
+}
+
+/* Écran 8 — Planning étudiant. Dupliqué depuis les fonctions ci-dessus
+   (templateSlotCode/templateSlotTint/templateCellInner) plutôt que paramétré :
+   voir la mémoire du chantier, on évite de toucher au code déjà approuvé de
+   « Mes créneaux types ». */
+function findStudentSlot(id) { return state?.studentWeekTemplate?.find(t => t.id === id); }
+function studentSlotCode(t) {
+  if (!t) return '';
+  if (t.ueId) return findUe(t.ueId)?.code || t.ueCode || '';
+  return t.ueCode || '';
+}
+function studentSlotTint(t) {
+  if (!t) return '#9aa0ad';
+  if (isValidHexColor(t.color)) return t.color;
+  if (t.ueId) return ueColor(t.ueId);
+  return '#9aa0ad';
+}
+/* REGLES.md #21 : « mes cours » = un intervenant du créneau porte mes initiales
+   (même comparaison que rubanUeIsMine ailleurs dans le fichier). */
+function isMyStudentSlot(t) {
+  return teacherTokens(t?.teacher).some(x => x.toLowerCase() === moiInitiales.toLowerCase());
+}
+function studentSlotCellInner(t) {
+  const code = studentSlotCode(t);
+  const teachers = teacherTokens(t.teacher);
+  return `<button type="button" class="tpl-del" data-del-student-slot="${escapeAttr(t.id)}" title="Supprimer ce cours" aria-label="Supprimer ce cours">×</button>
+    ${code ? `<div class="tpl-ue">${escapeHtml(code)}</div>` : ''}
+    ${t.title ? `<div class="tpl-title">${escapeHtml(t.title)}</div>` : ''}
+    ${t.room ? `<div class="tpl-room meta">${escapeHtml(t.room)}</div>` : ''}
     ${teachers.length ? `<div class="tpl-teachers">${teachers.map(x => `<span class="design-ue-pill${x.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(x)}</span>`).join('')}</div>` : ''}`;
 }
 
@@ -741,9 +808,9 @@ function roomBookingDaysUntil(date) {
    véhicule) : ce sont deux démarches distinctes auprès de deux personnes. */
 function reservationRows() {
   const rows = [];
-  const pousser = (kind, source, entity, label, booked, date, titre, detail) => {
+  const pousser = (kind, source, entity, label, booked, dismissed, date, titre, detail) => {
     rows.push({
-      kind, source, entity, label, booked,
+      kind, source, entity, label, booked, dismissed,
       id: entity.id, titre, detail,
       date, daysUntil: roomBookingDaysUntil(date)
     });
@@ -753,18 +820,18 @@ function reservationRows() {
     const salle = sessionRoomToBook(s);
     const date = roomBookingDate(s);
     if (salle) {
-      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked,
+      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked, !!s.roomBookedDismissed,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
     if (s.deplacement === 'etablissement') {
-      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked,
+      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked, !!s.vehicleBookedDismissed,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
   });
 
   (state.reunions || []).forEach(r => {
     if (r.deplacement !== 'etablissement') return;
-    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked,
+    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked, !!r.vehicleBookedDismissed,
       parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
   });
 
@@ -776,10 +843,17 @@ function reservationRows() {
   });
 }
 
-/* Lignes « actives » de l'encart : ni réservées, ni passées (délestage
-   demandé en revue — au fil de l'eau, et automatique une fois la date passée). */
+/* Lignes de l'encart : celles pas encore réservées (délestées d'elles-mêmes
+   une fois la date passée, sans action possible) + celles réservées mais pas
+   encore retirées à la main (persistent, affichées « fait », jusqu'au clic
+   sur ×) — une case cochée par erreur ne fait donc plus disparaître la ligne
+   sans recours. */
 function activeRoomBookingRows() {
-  return reservationRows().filter(r => !r.booked && (r.daysUntil === null || r.daysUntil >= 0));
+  return reservationRows().filter(r => {
+    if (r.dismissed) return false;
+    if (r.booked) return true;
+    return r.daysUntil === null || r.daysUntil >= 0;
+  });
 }
 
 const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', mission: 'Ordre de mission' };
@@ -798,7 +872,7 @@ function urgenceRows() {
       kind: r.kind, titre: r.label,
       detail: [r.titre, r.detail, horaire].filter(Boolean).join(' · '),
       date: r.date, daysUntil: r.daysUntil,
-      source: r.source, id: r.id
+      source: r.source, id: r.id, fait: r.booked
     });
   });
   ordresDeMissionAFaire().forEach(o => {
@@ -806,7 +880,7 @@ function urgenceRows() {
       kind: 'mission', titre: o.titre,
       detail: o.detail || '',
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
-      source: o.source, id: o.id
+      source: o.source, id: o.id, fait: o.fait
     });
   });
   return out.sort((a, b) => {
@@ -829,19 +903,370 @@ function renderUrgences() {
     ? rows.map(r => {
       const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
       const delaiLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'J' : `J–${r.daysUntil}`);
-      const urgent = r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
-      const verbe = r.kind === 'mission'
-        ? `<span class="urgence-verbe" ${r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`} tabindex="0" role="button">Éditer</span>`
-        : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>`;
-      return `<div class="urgence-row${urgent ? ' est-urgent' : ''}">
+      const urgent = !r.fait && r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
+      const dismissBtn = `<button type="button" class="urgence-dismiss" data-dismiss-urgence="${escapeAttr(r.kind)}:${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Retirer de la liste" aria-label="Retirer de la liste">×</button>`;
+      // « Fait » reste une case à cocher (décochée = retour arrière immédiat)
+      // plutôt qu'une simple étiquette — même geste que la réservation
+      // salle/véhicule, y compris pour un ordre de mission (data-mission-toggle).
+      const faitCheckbox = r.kind === 'mission'
+        ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
+        : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
+      const verbe = r.fait
+        ? `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>${dismissBtn}`
+        : r.kind === 'mission'
+          ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>`
+          : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>`;
+      // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
+      // « Ma semaine »/« Prochainement ») — la case, le lien Éditer et le ×
+      // gardent leur propre action (guard dans le gestionnaire de clic).
+      const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
+      return `<div class="urgence-row${urgent ? ' est-urgent' : ''}${r.fait ? ' est-fait' : ''}" ${editAttr} tabindex="0" role="button">
         <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
         <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
         <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
         <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
         ${verbe}
       </div>`;
-    }).join('') + `<div class="urgence-pied">Une ligne n&rsquo;existe que si un champ est réellement vide ou une case réellement décochée. Un ordre de mission disparaît de lui-même passé la date du déplacement.</div>`
+    }).join('') + `<div class="urgence-pied">Cliquer une ligne ouvre la séance ou la réunion. Une fois faite, elle reste affichée en vert : décocher « Fait » revient en arrière, cliquer × la retire simplement de la liste. Une ligne pas encore faite disparaît d&rsquo;elle-même passé la date.</div>`
     : '<p class="empty-hint">Rien d’urgent pour le moment.</p>';
+}
+
+/* ============================================================
+   Écran 13 — Ordre de mission. Document A4 édité en place, atteint
+   uniquement depuis une ligne Urgences (data-open-mission="session:id" ou
+   "reunion:id") — PAS un onglet permanent de .header-tabs. Contenu calé sur
+   le vrai PDF de l'établissement (retours/, jamais commité — voir mémoire
+   Claude Code organisation-cours-refonte-papier-technique-froid).
+   ============================================================ */
+let missionViewTarget = null; // { kind: 'session' | 'reunion', id }
+
+function missionEntity() {
+  if (!missionViewTarget) return null;
+  return missionViewTarget.kind === 'reunion'
+    ? (state.reunions || []).find(r => r.id === missionViewTarget.id)
+    : findSession(missionViewTarget.id);
+}
+
+function missionDeplacementLie(entity) {
+  if (!entity) return null;
+  return missionViewTarget.kind === 'reunion'
+    ? reunionDeplacement(entity)
+    : (state.deplacements || []).find(d => d.sessionId === entity.id) || null;
+}
+
+function missionTitreEntite(entity) {
+  return missionViewTarget.kind === 'reunion'
+    ? (entity.sujets ? truncate(entity.sujets, 48) : 'Réunion')
+    : (entity.title || 'Séance sans titre');
+}
+
+// Préférences purement locales au poste (pas de colonne Supabase pour ça :
+// la fonction change rarement, les destinataires sont propres à chaque
+// enseignant) — jamais de vraie adresse codée en dur dans le dépôt.
+function missionFonctionMemorisee() {
+  try { return localStorage.getItem('oc-ma-fonction') || ''; } catch (e) { return ''; }
+}
+function memoriserMissionFonction(valeur) {
+  try { localStorage.setItem('oc-ma-fonction', valeur || ''); } catch (e) { /* stockage indisponible : tant pis */ }
+}
+function missionDestinatairesMemorises() {
+  try { return JSON.parse(localStorage.getItem('oc-mission-destinataires') || '[]'); } catch (e) { return []; }
+}
+function memoriserMissionDestinataires(liste) {
+  try { localStorage.setItem('oc-mission-destinataires', JSON.stringify(liste || [])); } catch (e) { /* tant pis */ }
+}
+
+function defaultMissionDetail(entity) {
+  const dep = missionDeplacementLie(entity);
+  const iso = missionViewTarget.kind === 'reunion' ? (entity.date || '') : sessionIsoDate(entity);
+  const horaire = missionViewTarget.kind === 'session' ? dashHoraire(entity) : '';
+  const [heureDebut, heureFin] = horaire ? horaire.split('–').map(x => x.trim()) : ['', ''];
+  return {
+    commandePar: { nom: `${moiNom} ${moiPrenom}`.trim(), fonction: missionFonctionMemorisee() },
+    destination: dep?.lieu || entity.room || '',
+    dateMission: iso || '',
+    heureDebut: heureDebut || '', heureFin: heureFin || '',
+    description: missionTitreEntite(entity),
+    accompagnants: [],
+    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
+    faitLe: new Date().toISOString().slice(0, 10),
+    faitA: 'Auray',
+    destinataires: missionDestinatairesMemorises(),
+    envoyeAt: null
+  };
+}
+
+function ensureMissionDetail(entity) {
+  if (!entity.missionDetail) entity.missionDetail = defaultMissionDetail(entity);
+  // Toujours au moins une ligne réelle en état : le champ affiché doit pouvoir
+  // s'écrire (accompagnants.0.nom) même avant tout clic sur « + Ajouter ».
+  if (!entity.missionDetail.accompagnants.length) entity.missionDetail.accompagnants.push({ nom: '', fonction: '' });
+  return entity.missionDetail;
+}
+
+function openMissionView(kind, id) {
+  if (!kind || !id) return;
+  missionViewTarget = { kind, id };
+  const entity = missionEntity();
+  if (!entity) { missionViewTarget = null; return; }
+  ensureMissionDetail(entity);
+  $$('.tab').forEach(t => t.classList.remove('active'));
+  $$('.view').forEach(v => v.classList.remove('active-view'));
+  $('#missionView')?.classList.add('active-view');
+  renderMissionView();
+  window.scrollTo(0, 0);
+}
+
+function closeMissionView() {
+  missionViewTarget = null;
+  $('.tab[data-view="dashboard"]')?.click();
+}
+
+function missionStatutLabel(entity, detail) {
+  if (detail.envoyeAt) return `envoyé le ${new Date(detail.envoyeAt).toLocaleDateString('fr-FR')}`;
+  const iso = detail.dateMission;
+  if (!iso) return 'date à préciser · non envoyé';
+  const j = dashJoursEntre(iso);
+  const delai = j === null ? '' : (j <= 0 ? 'J' : `J–${j}`);
+  return `${delai} · non envoyé`;
+}
+
+function missionAccompagnantRow(a, index) {
+  return `<div class="mission-accompagnant-row">
+    <label class="mission-field-label">Nom Prénom :
+      <input type="text" class="mission-field" data-mission-field="accompagnants.${index}.nom" value="${escapeAttr(a.nom || '')}" />
+    </label>
+    <label class="mission-field-label">Fonction :
+      <input type="text" class="mission-field" data-mission-field="accompagnants.${index}.fonction" value="${escapeAttr(a.fonction || '')}" />
+    </label>
+    <button type="button" class="icon-button mission-remove-accompagnant" data-mission-remove-accompagnant="${index}" title="Retirer">×</button>
+  </div>`;
+}
+
+function missionCheck(checked, field, label) {
+  return `<label class="checkbox-inline mission-check">
+    <input type="checkbox" data-mission-field="${escapeAttr(field)}" ${checked ? 'checked' : ''} />
+    <span>${escapeHtml(label)}</span>
+  </label>`;
+}
+
+function missionSignatureBoxHtml() {
+  const url = missionSignatureUrlCache;
+  if (url) return `<img src="${escapeAttr(url)}" alt="Signature" class="mission-signature-img" />`;
+  return `<button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Ajouter ma signature (privé)</button>
+    <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
+}
+
+function renderMissionView() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const titre = missionTitreEntite(entity);
+
+  const titleEl = $('#missionTitle');
+  if (titleEl) titleEl.textContent = `Ordre de mission — ${titre}`;
+  const statusEl = $('#missionStatus');
+  if (statusEl) statusEl.textContent = missionStatutLabel(entity, detail);
+
+  const accompagnants = detail.accompagnants; // toujours ≥ 1 (ensureMissionDetail)
+  const doc = $('#missionDocument');
+  if (doc) doc.innerHTML = `
+    <header class="mission-doc-header">
+      <img src="img/logo-kerplouz.png" alt="Kerplouz LaSalle — Auray" class="mission-logo" />
+      <h1>Ordre de mission</h1>
+    </header>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Commandé par (Nom/Prénom) :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="commandePar.nom" value="${escapeAttr(detail.commandePar.nom)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Fonction :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="commandePar.fonction" value="${escapeAttr(detail.commandePar.fonction)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Est autorisé(e) à se rendre le :</span>
+      <input type="date" class="mission-field" data-mission-field="dateMission" value="${escapeAttr(detail.dateMission)}" />
+      <span class="mission-field-label">à :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="destination" value="${escapeAttr(detail.destination)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Heure début :</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="heureDebut" value="${escapeAttr(detail.heureDebut)}" />
+      <span class="mission-field-label">Heure fin :</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="heureFin" value="${escapeAttr(detail.heureFin)}" />
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title">Description de la mission :</span>
+      <textarea class="mission-field mission-field-block" rows="3" data-mission-field="description">${escapeHtml(detail.description)}</textarea>
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title">Accompagnants :</span>
+      <div id="missionAccompagnants">${accompagnants.map(missionAccompagnantRow).join('')}</div>
+      ${accompagnants.length < 4 ? '<button type="button" id="missionAddAccompagnant" class="lien">+ Ajouter un accompagnant</button>' : ''}
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title mission-transport-title">Moyens de transports</span>
+      <div class="mission-transport-grid">
+        <div>
+          ${missionCheck(detail.transport.vehiculePersonnel, 'transport.vehiculePersonnel', 'Véhicule personnel')}
+          <label class="mission-field-label mission-vehicule-de">Véhicule de :
+            <input type="text" class="mission-field" data-mission-field="transport.vehiculeDe" value="${escapeAttr(detail.transport.vehiculeDe)}" />
+          </label>
+        </div>
+        <div>
+          ${missionCheck(detail.transport.verifAssurance, 'transport.verifAssurance', 'Vérification assurance avant départ')}
+          ${missionCheck(detail.transport.verifPermis, 'transport.verifPermis', 'Vérification permis avant départ')}
+          ${missionCheck(detail.transport.controleFormateur, 'transport.controleFormateur', 'Contrôle formateur avant départ')}
+        </div>
+      </div>
+    </div>
+    <div class="mission-field-line mission-fait">
+      <span class="mission-field-label">Fait à</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="faitA" value="${escapeAttr(detail.faitA)}" />
+      <span class="mission-field-label">le :</span>
+      <input type="date" class="mission-field" data-mission-field="faitLe" value="${escapeAttr(detail.faitLe)}" />
+    </div>
+    <div class="mission-signatures">
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Le Demandeur :</span>
+        ${missionSignatureBoxHtml()}
+      </div>
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Formateur / Enseignant :</span>
+      </div>
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Direction (1 des 3 pers.) :</span>
+        <p class="meta mission-sig-hint">Chef d’établissement · Gestionnaire · Responsable UFA/CFA</p>
+      </div>
+    </div>`;
+
+  const chipsEl = $('#missionDestinatairesList');
+  if (chipsEl) chipsEl.innerHTML = detail.destinataires.map((email, i) => `
+    <span class="mission-chip">${escapeHtml(email)}<button type="button" data-mission-remove-destinataire="${i}" title="Retirer">×</button></span>`).join('')
+    || '<span class="meta">Aucun destinataire pour l’instant.</span>';
+
+  const pdfBtn = $('#missionPdfButton');
+  if (pdfBtn) pdfBtn.textContent = 'Enregistrer le PDF';
+}
+
+function missionSetField(path, value) {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const parts = path.split('.');
+  let target = detail;
+  for (let i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+  target[parts[parts.length - 1]] = value;
+  if (path === 'commandePar.fonction') memoriserMissionFonction(value);
+}
+
+const MISSION_PRINT_CSS = `
+@page { size: A4 portrait; margin: 12mm; }
+body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
+.mission-print-page{background:#fffefb;max-width:190mm;margin:0 auto;padding:14mm;}
+.mission-doc-header{display:flex;align-items:center;gap:16px;border-bottom:1px solid #191b16;padding-bottom:10px;margin-bottom:18px;}
+.mission-doc-header img{height:48px;}
+.mission-doc-header h1{font-size:22px;margin:0;}
+.mission-print-line{margin:0 0 10px;font-size:13px;}
+.mission-print-line strong{border-bottom:1px solid #191b16;padding:0 4px;}
+.mission-print-block{margin:14px 0;}
+.mission-print-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px;}
+.mission-print-desc{border:1px solid #191b16;padding:10px;min-height:50px;white-space:pre-wrap;font-size:13px;}
+.mission-print-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.mission-print-table td{padding:3px 6px;border-bottom:1px solid #d8d4c6;}
+.mission-print-check{margin:2px 0;font-size:12px;}
+.mission-print-sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}
+.mission-print-sigs div{border:1px solid #191b16;min-height:70px;padding:8px;font-size:11px;}
+.mission-print-sigs img{max-height:50px;}
+@media print{body{background:#fff;}.mission-print-page{box-shadow:none;padding:0;max-width:none;}}
+`;
+
+function missionPagePrintHtml(entity, detail) {
+  const acc = detail.accompagnants.filter(a => a.nom || a.fonction);
+  return `<div class="mission-print-page">
+    <div class="mission-doc-header"><img src="img/logo-kerplouz.png" alt="" /><h1>Ordre de mission</h1></div>
+    <p class="mission-print-line">Commandé par (Nom/Prénom) : <strong>${escapeHtml(detail.commandePar.nom || '—')}</strong></p>
+    <p class="mission-print-line">Fonction : <strong>${escapeHtml(detail.commandePar.fonction || '—')}</strong></p>
+    <p class="mission-print-line">Est autorisé(e) à se rendre le <strong>${escapeHtml(detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : '—')}</strong> à : <strong>${escapeHtml(detail.destination || '—')}</strong></p>
+    <p class="mission-print-line">Heure début : <strong>${escapeHtml(detail.heureDebut || '—')}</strong> Heure fin : <strong>${escapeHtml(detail.heureFin || '—')}</strong></p>
+    <div class="mission-print-block"><h3>Description de la mission</h3><div class="mission-print-desc">${escapeHtml(detail.description || '')}</div></div>
+    <div class="mission-print-block"><h3>Accompagnants</h3><table class="mission-print-table">${acc.length ? acc.map(a => `<tr><td>${escapeHtml(a.nom || '—')}</td><td>${escapeHtml(a.fonction || '—')}</td></tr>`).join('') : '<tr><td class="meta">Aucun</td></tr>'}</table></div>
+    <div class="mission-print-block"><h3>Moyens de transports</h3>
+      <p class="mission-print-check">${detail.transport.vehiculePersonnel ? '☒' : '☐'} Véhicule personnel</p>
+      <p class="mission-print-check">${detail.transport.vehiculeDe ? '☒' : '☐'} Véhicule de : ${escapeHtml(detail.transport.vehiculeDe || '')}</p>
+      <p class="mission-print-check">${detail.transport.verifAssurance ? '☒' : '☐'} Vérification assurance avant départ</p>
+      <p class="mission-print-check">${detail.transport.verifPermis ? '☒' : '☐'} Vérification permis avant départ</p>
+      <p class="mission-print-check">${detail.transport.controleFormateur ? '☒' : '☐'} Contrôle formateur avant départ</p>
+    </div>
+    <p class="mission-print-line">Fait à ${escapeHtml(detail.faitA || '—')} le ${escapeHtml(detail.faitLe ? new Date(detail.faitLe).toLocaleDateString('fr-FR') : '—')}</p>
+    <div class="mission-print-sigs">
+      <div>Le Demandeur${missionSignatureUrlCache ? `<br><img src="${escapeAttr(missionSignatureUrlCache)}" alt="" />` : ''}</div>
+      <div>Formateur / Enseignant</div>
+      <div>Direction (1 des 3 pers.)</div>
+    </div>
+  </div>`;
+}
+
+function missionOpenPrintWindow() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const win = window.open('', '_blank');
+  if (!win) { alert('Le navigateur a bloqué l’ouverture de la fenêtre d’impression. Autorisez les pop-ups pour ce site.'); return; }
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Ordre de mission — ${escapeHtml(missionTitreEntite(entity))}</title><style>${MISSION_PRINT_CSS}</style></head><body>${missionPagePrintHtml(entity, detail)}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+  win.document.close();
+}
+
+// mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app) —
+// on ouvre donc d'abord l'impression (l'utilisateur choisit « Enregistrer en
+// PDF »), puis le mail pré-rempli qui le rappelle dans le corps du message.
+function missionSendMail() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  missionOpenPrintWindow();
+  const sujet = `Ordre de mission — ${missionTitreEntite(entity)}`;
+  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : ''} (${detail.destination || ''}).\nMerci de joindre le PDF que vous venez d’enregistrer avant l’envoi.\n\nCordialement,\n${detail.commandePar.nom}`;
+  const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+  window.location.href = href;
+  detail.envoyeAt = new Date().toISOString();
+  entity.ordreMission = true;
+  saveData('Ordre de mission marqué envoyé');
+}
+
+// Signature — stockage privé Supabase (bucket "oc-signatures", voir
+// supabase/013-signatures-storage.sql), jamais dans le dépôt. Non testable
+// depuis retours/preview.js (stub sans Supabase réel) : à vérifier par Martin
+// sur http://localhost:8765/index.html une fois le bucket créé.
+let missionSignatureUrlCache = '';
+
+async function missionChargerSignature() {
+  try {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient) return;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${user.id}/signature.png`, 3600);
+    if (error || !data) return;
+    missionSignatureUrlCache = data.signedUrl;
+    if (missionViewTarget) renderMissionView();
+  } catch (e) { /* pas de signature déposée, ou bucket pas encore créé : silencieux */ }
+}
+
+async function missionUploaderSignature(file) {
+  try {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient || !file) return;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    setSaveStatus('Envoi de la signature…');
+    const { error } = await sb.storage.from('oc-signatures').upload(`${user.id}/signature.png`, file, { upsert: true, contentType: file.type });
+    if (error) { alert('Échec de l’envoi de la signature : ' + error.message); return; }
+    await missionChargerSignature();
+    setSaveStatus('Signature enregistrée (privée)');
+  } catch (e) { alert('Échec de l’envoi de la signature.'); }
 }
 
 /* Badge du panneau Tableau de bord : nb + total des demandes NON terminées.
@@ -1434,7 +1859,10 @@ function renderAll(resetSelectors = true) {
   renderPlanning();
   if ($('#refreadToc')) renderReference();
   if ($('#rubanGrid')) renderRuban();
-  if ($('#creneauxGrids') && rubanMode === 'creneaux') renderCreneaux();
+  if ($('#creneauxGrids') && rubanTab === 'creneaux') renderCreneaux();
+  if ($('#studentPlanningGrid') && rubanTab === 'etudiant') renderStudentPlanning();
+  if ($('#dossierUeSelect')) renderDossier();
+  if (missionViewTarget) renderMissionView();
   if ($('#fraisTableWrap')) renderFrais();
   if ($('#reunionsList')) renderReunions();
   // Restaurer après le re-rendu (le DOM a la même hauteur, la position est conservée).
@@ -1790,30 +2218,33 @@ function renderDashBacklogBadges() {
     + (nonRatt ? `<span class="frais-badge has-pending">${nonRatt} à rattacher</span>` : '');
 }
 
-/* Les ordres de mission à établir : séances et réunions en véhicule PERSONNEL
-   dont l'ordre de mission n'est pas encore demandé, et qui n'ont pas eu lieu.
-   Triés par date, les plus proches en tête — c'est une échéance. */
+/* Les ordres de mission : séances et réunions en véhicule PERSONNEL. Une
+   mission pas encore demandée se déleste d'elle-même passé la date (rien à
+   demander pour un déplacement déjà eu lieu) ; une mission déjà envoyée reste
+   affichée (marquée « fait ») jusqu'à ce qu'elle soit retirée à la main —
+   voir missionDismissed, posé par le clic sur × dans renderUrgences. Triées
+   par date, les plus proches en tête. */
 function ordresDeMissionAFaire() {
   const out = [];
+  const pousser = (source, id, titre, date, detail, fait) => {
+    if (!fait && date && dashJoursEntre(date) < 0) return;
+    out.push({ source, id, titre, date, detail, fait });
+  };
   (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
-    if (s.deplacement !== 'personnel' || s.ordreMission) return;
+    if (s.deplacement !== 'personnel' || s.missionDismissed) return;
     const iso = sessionIsoDate(s);
-    out.push({ source: 'session', id: s.id, titre: s.title || 'Séance sans titre',
-      date: iso ? parseIsoDate(iso) : null, detail: s.promotion || '' });
+    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
   });
   (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    if (r.deplacement !== 'personnel' || r.ordreMission) return;
-    out.push({ source: 'reunion', id: r.id, titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
-      date: parseIsoDate(r.date), detail: r.lieu || '' });
+    if (r.deplacement !== 'personnel' || r.missionDismissed) return;
+    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
   });
-  return out
-    .filter(o => !o.date || dashJoursEntre(o.date) >= 0)
-    .sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return a.date - b.date;
-    });
+  return out.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date - b.date;
+  });
 }
 
 function renderDashboard() {
@@ -2941,75 +3372,6 @@ function mondayOf(date) {
   return d;
 }
 
-/* `selection` : soit une clé lundi (chaîne) → sélection d'UNE semaine (Planning
-   semaine, attribut `data-set-week` porteur de l'id de semaine), soit un objet
-   { start, end } de clés lundi → sélection de PLAGE (modale séquence, attribut
-   `data-<opts.pickAttr>` porteur de la clé lundi). Rétrocompatible : appelé sans
-   objet ni opts, le comportement d'origine (mono-sélection) est conservé. */
-function renderCalendarMonth(monthDate, mondayToWeek, selection, showLabel = true, opts = {}) {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const monthLabel = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstOffset = (new Date(year, month, 1).getDay() + 6) % 7; // colonne du 1er (lun=0)
-  const dows = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  const pickAttr = opts.pickAttr || 'set-week';
-  const rangeMode = selection && typeof selection === 'object';
-  const singleKey = rangeMode ? '' : (selection || '');
-  const rStart = rangeMode ? (selection.start || '') : '';
-  const rEnd = rangeMode ? (selection.end || '') : '';
-  const lo = rStart && rEnd ? (rStart <= rEnd ? rStart : rEnd) : (rStart || rEnd);
-  const hi = rStart && rEnd ? (rStart <= rEnd ? rEnd : rStart) : (rStart || rEnd);
-  // Cellules-jours à plat (vides de début + jours + complément) puis lignes de 7.
-  const days = [];
-  for (let i = 0; i < firstOffset; i += 1) days.push(null);
-  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
-  while (days.length % 7 !== 0) days.push(null);
-  const wkNumberOf = (weekId) => {
-    const w = state.weeks.find(x => x.id === weekId);
-    return w ? `S${String(weekNumberOf(w)).padStart(2, '0')}` : '';
-  };
-  // UNE seule grille (n° de semaine + 7 jours) : alignement garanti, pas de
-  // sous-grille imbriquée qui débordait. En-tête : cellule « Sem. » + L M M J V S D.
-  let body = `<span class="cal-wk cal-wk-head">Sem.</span>${dows.map(d => `<span class="cal-dow">${d}</span>`).join('')}`;
-  for (let i = 0; i < days.length; i += 7) {
-    const row = days.slice(i, i + 7);
-    let wk = '';
-    for (const day of row) {
-      if (!day) continue;
-      const id = mondayToWeek.get(isoKey(mondayOf(new Date(year, month, day))));
-      if (id) { wk = wkNumberOf(id); break; }
-    }
-    body += `<span class="cal-wk">${escapeHtml(wk)}</span>`;
-    for (const day of row) {
-      if (!day) { body += '<span class="cal-day cal-empty"></span>'; continue; }
-      const date = new Date(year, month, day);
-      const mKey = isoKey(mondayOf(date));
-      const weekId = mondayToWeek.get(mKey);
-      if (!weekId) { body += `<span class="cal-day cal-off">${day}</span>`; continue; }
-      const wObj = state.weeks.find(x => x.id === weekId);
-      const tip = wObj ? `${wObj.label.replace('S0', 'S')} · ${wObj.dateRange || ''}` : '';
-      let cls = 'cal-day cal-active';
-      let dataAttr;
-      if (rangeMode) {
-        const isStart = rStart && mKey === rStart;
-        const isEnd = rEnd && mKey === rEnd;
-        if (isStart || isEnd) cls += ' cal-selected';
-        if (isStart) cls += ' cal-range-start';
-        if (isEnd) cls += ' cal-range-end';
-        if (lo && hi && mKey >= lo && mKey <= hi && !isStart && !isEnd) cls += ' cal-in-range';
-        dataAttr = `data-${pickAttr}="${escapeAttr(mKey)}"`;
-      } else {
-        if (mKey === singleKey) cls += ' cal-selected';
-        dataAttr = `data-${pickAttr}="${escapeAttr(weekId)}"`;
-      }
-      body += `<button type="button" class="${cls}" ${dataAttr} title="${escapeAttr(tip)}">${day}</button>`;
-    }
-  }
-  const labelHtml = showLabel ? `<div class="cal-month-label">${escapeHtml(monthLabel)}</div>` : '';
-  return `<div class="cal-month${showLabel ? '' : ' single'}">${labelHtml}<div class="cal-grid cal-grid-wk">${body}</div></div>`;
-}
-
 function moveWeek(offset) {
   const idx = state.weeks.findIndex(w => w.id === selectedWeek);
   if (idx < 0) return;
@@ -3330,6 +3692,27 @@ function autoSlotStart(promotion, weekId, day, durationSlots, excludeId) {
   return 0;
 }
 
+/* Écran 12 — généralisation d'autoSlotStart : au lieu du premier créneau libre,
+   la liste de TOUS les créneaux standards libres de la semaine (5 jours ×
+   8 créneaux, hors Repas), pour le sélecteur de créneaux de la modale séance. */
+function freeSlotsForWeek(promotion, weekId, excludeId) {
+  if (!weekId) return [];
+  const results = [];
+  DAYS.forEach((_, day) => {
+    const occupied = new Set();
+    state.sessions.forEach(s => {
+      if (s.id === excludeId || !isDefinitiveSession(s)) return;
+      if (s.weekId !== weekId || s.promotion !== promotion || Number(s.day) !== day) return;
+      for (let i = Number(s.startSlot); i <= Number(s.endSlot); i += 1) occupied.add(i);
+    });
+    SLOTS.forEach((label, slotIndex) => {
+      if (slotIndex === 4 || occupied.has(slotIndex)) return; // Repas — jamais un créneau
+      results.push({ day, slotIndex, label: `${DAY_NAMES[day].slice(0, 3).toUpperCase()} ${label.split(' – ')[0]}` });
+    });
+  });
+  return results;
+}
+
 /* #6 — les récréations sont des lignes <tr> pleine largeur intercalées dans la
    table planning (pause du matin avant le créneau 2, pause de l'après-midi avant
    le créneau 7). Pour qu'une séance longue N'ENJAMBE PAS ces lignes (ce qui les
@@ -3412,18 +3795,17 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceSemester').value = sequence?.semester || ue?.semester || 'Semestre 1';
   $('#sequenceWeeks').value = sequence?.targetWeeks || '';
   $('#sequencePeriodNote').value = sequence?.periodNote || '';
-  refreshSequencePeriodDates(sequence?.targetWeeks || '', ue);
-  // Nouvelle séquence : centrer le calendrier de période sur la semaine de début
-  // de l'UE (sans pré-sélectionner de plage), pour que le choix se fasse d'emblée
-  // dans les semaines de l'UE plutôt qu'au tout début du semestre.
-  if (isNew && ue?.startWeekId) {
-    const [monday] = weekDateRange(state.weeks.find(w => w.id === ue.startWeekId) || {});
-    if (monday) {
-      seqCalMonthKey = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}`;
-      renderSequenceCalendar();
-    }
-  }
-  $('#sequenceHours').value = sequence?.hoursEstimate || '';
+  // Écran 12 — semaines saisies directement (S45 → S46), plus de calendrier
+  // (REGLES.md #22). `parseWeekRanges` est la même fonction que la Progression.
+  const [firstRange] = parseWeekRanges(sequence?.targetWeeks || '');
+  $('#sequenceWeekStart').value = firstRange ? `S${String(firstRange.start).padStart(2, '0')}` : '';
+  $('#sequenceWeekEnd').value = firstRange ? `S${String(firstRange.end).padStart(2, '0')}` : '';
+  syncSequenceWeeksField();
+  // Toujours une chaîne (« 5 h », « 12 h »…) : on n'affiche que le nombre dans
+  // le stepper, le reste du texte éventuel (arbitrage ancien) est ignoré ici
+  // mais reste conservé tel quel s'il n'est jamais réenregistré.
+  const hoursMatch = /\d+/.exec(sequence?.hoursEstimate || '');
+  $('#sequenceHours').value = hoursMatch ? hoursMatch[0] : '';
   // Lot C-bis — champs retirés du formulaire (voir la note à l'enregistrement) ;
   // le `?.` garde ces lignes inoffensives s'ils venaient à revenir.
   if ($('#sequenceType')) $('#sequenceType').value = sequence?.sequenceType || '';
@@ -3434,7 +3816,11 @@ function openSequenceModal(sequence = null, context = {}) {
     const auto = sequence ? computedSequenceColor(sequence) : computedSequenceColor({ ueId: ue?.id, id: '__new' });
     seqColorInput.value = custom ? sequence.color : auto;
     seqColorInput.dataset.custom = custom ? '1' : '0';
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
   }
+  const assessmentType = sequence?.assessmentType || '';
+  $('#sequenceAssessmentType').value = assessmentType;
+  $$('#sequenceAssessmentTypeButtons button').forEach(b => b.classList.toggle('active', (b.dataset.assessmentType || '') === assessmentType));
   $('#sequenceTeacher').value = sequence?.teacher || '';
   $('#sequenceObjectives').value = sequence?.objectives || '';
   renderSequenceCapacityChoices(sequence?.capacityCodes || [], ue);
@@ -3451,6 +3837,7 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceNotes').value = sequence?.notes || '';
   $('#deleteSequenceButton').hidden = isNew;
   $('#exportSequenceButton').hidden = isNew;
+  $('#submitSequenceButton').textContent = isNew ? 'Créer la séquence' : 'Enregistrer';
   $('#sequenceDialog').showModal();
   $('#sequenceDialog')._dirty = false;
 }
@@ -3485,9 +3872,8 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionSequence').value = rattValue;
   $('#sessionTitle').value = session?.title || '';
   $('#sessionPromotion').value = session?.promotion || context.promotion || ue?.promotion || state.promotions[0] || 'GPN1';
-  const placement = context.forceDefinitive ? 'definitif' : (session?.placementStatus || context.placementStatus || 'fictif');
-  $('#sessionPlacementStatus').value = placement;
-  applySessionPlacementVisibility();
+  const noSeqBox = $('#sessionNoSequence');
+  if (noSeqBox) { noSeqBox.checked = !rattValue; $('#sessionSequence').disabled = !rattValue; }
   // Semaine par défaut d'une NOUVELLE séance calée sur les semaines de l'UE en
   // conception : 1re semaine de la séquence de rattachement, sinon semaine de la
   // semaine thématique (EIL), sinon semaine de début de l'UE. À l'édition, la
@@ -3499,15 +3885,23 @@ function openSessionModal(session = null, context = {}) {
         || ue?.startWeekId
         || '')
     : '';
-  $('#sessionWeek').value = session?.targetWeekId || session?.weekId || context.weekId || designDefaultWeek || selectedWeek;
+  // Écran 12 — créneau choisi via le sélecteur de créneaux libres (plus de
+  // jour/début/fin/statut de placement saisis à la main, REGLES.md #22).
+  sessionSlotPickerWeekId = session?.targetWeekId || session?.weekId || context.weekId || designDefaultWeek || selectedWeek;
+  if (session && isDefinitiveSession(session) && !session.customStart && !session.customEnd) {
+    sessionSlotChoice = { type: 'slot', day: Number(session.day), slotIndex: Number(session.startSlot) };
+  } else if (session && isDefinitiveSession(session)) {
+    sessionSlotChoice = { type: 'other' };
+  } else if (session) {
+    sessionSlotChoice = { type: 'none' };
+  } else if (context.day != null && context.slot != null) {
+    sessionSlotChoice = { type: 'slot', day: Number(context.day), slotIndex: Number(context.slot) };
+  } else {
+    sessionSlotChoice = null;
+  }
   $('#sessionDay').value = String(session?.day ?? context.day ?? 0);
   $('#sessionStart').value = String(session?.startSlot ?? context.slot ?? 0);
   $('#sessionEnd').value = String(session?.endSlot ?? context.slot ?? 0);
-  $('#sessionExpectedDuration').value = session?.expectedDuration || '';
-  $('#sessionOrder').value = session?.order || '';
-  $('#sessionFictiveSlot').value = session?.fictiveSlot || '';
-  $('#sessionFictiveDay').value = session?.fictiveDay ?? '';
-  $('#sessionExactDate').value = session?.exactDate || '';
   $('#sessionCustomStart').value = session?.customStart || '';
   $('#sessionCustomEnd').value = session?.customEnd || '';
   $('#sessionType').value = session?.type || 'Cours en salle';
@@ -3524,7 +3918,9 @@ function openSessionModal(session = null, context = {}) {
     const inherited = session ? sessionInheritedColor(session) : (seq ? sequenceColor(seq.id) : ueColor(ue?.id));
     sessColorInput.value = custom ? session.color : inherited;
     sessColorInput.dataset.custom = custom ? '1' : '0';
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
   }
+  renderSessionSlotPicker();
   if ($('#sessionDeplacement')) {
     $('#sessionDeplacement').value = session?.deplacement || '';
     if ($('#sessionVehicleBooked')) $('#sessionVehicleBooked').checked = !!session?.vehicleBooked;
@@ -3540,13 +3936,15 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionActivities').value = session?.activities || '';
   $('#sessionNotions').value = session?.notions || '';
   $('#sessionMaterials').value = session?.materials || '';
-  $('#sessionAssessment').value = session?.assessment || '';
-  $('#sessionHomework').value = session?.homework || '';
   $('#sessionDifferentiation').value = session?.differentiation || '';
   $('#sessionNotes').value = session?.notes || '';
   $('#deleteSessionButton').hidden = isNew;
   const dupBtn = $('#duplicateSessionButton');
   if (dupBtn) dupBtn.hidden = isNew;
+  $('#submitSessionButton').textContent = isNew ? 'Créer la séance' : 'Enregistrer';
+  const chainBtn = $('#chainSessionButton');
+  if (chainBtn) chainBtn.hidden = !isNew;
+  sessionChainRequested = false;
   $('#sessionDialog').showModal();
   $('#sessionDialog')._dirty = false;
 }
@@ -3692,6 +4090,75 @@ function getSessionColorFieldValue() {
   const el = $('#sessionColorInput');
   if (!el) return '';
   return el.dataset.custom === '1' && isValidHexColor(el.value) ? el.value : '';
+}
+
+/* Écran 12 — grille figée de 12 teintes (JETONS.md « Palette libre de séquence
+   / séance »), partagée par les deux modales. Le champ `hiddenInputId` (le même
+   `<input type="color">` qu'avant, resté la source de vérité pour
+   get*ColorFieldValue ci-dessus) reste aussi le picker « autre… » : la grille
+   ne fait qu'écrire dedans par-dessus. */
+const SEQUENCE_COLOR_PALETTE = ['#1a5fb4', '#1c71d8', '#3584e4', '#99c1f1', '#23ccd7', '#33d17a', '#26a269', '#f5c211', '#ff7800', '#e01b24', '#e66100', '#6e4f82'];
+
+function renderColorSwatchGrid(gridSelector, hiddenInputId) {
+  const grid = $(gridSelector);
+  if (!grid) return;
+  grid.innerHTML = SEQUENCE_COLOR_PALETTE.map(hex =>
+    `<button type="button" class="color-swatch" data-color="${hex}" style="background:${hex}" aria-label="${hex}"></button>`
+  ).join('');
+  grid.addEventListener('click', (event) => {
+    const btn = event.target.closest('.color-swatch');
+    if (!btn) return;
+    const input = $(hiddenInputId);
+    if (!input) return;
+    input.value = btn.dataset.color;
+    input.dataset.custom = '1';
+    syncColorSwatchActive(gridSelector, hiddenInputId);
+  });
+}
+
+function syncColorSwatchActive(gridSelector, hiddenInputId) {
+  const grid = $(gridSelector);
+  const input = $(hiddenInputId);
+  if (!grid || !input) return;
+  const value = (input.value || '').toLowerCase();
+  $$(`${gridSelector} .color-swatch`).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color.toLowerCase() === value);
+  });
+}
+
+/* Écran 12 — sélecteur de créneaux libres de la modale séance (REGLES.md #22,
+   remplace jour/début-fin/semaine/statut de placement). `sessionSlotPickerWeekId`/
+   `sessionSlotChoice` sont l'état UI (déclarés en haut du fichier) ; le submit
+   du formulaire séance les traduit en day/startSlot/endSlot/weekId/placementStatus. */
+function renderSessionSlotPicker() {
+  const weekId = sessionSlotPickerWeekId || selectedWeek;
+  sessionSlotPickerWeekId = weekId;
+  const week = state.weeks.find(w => w.id === weekId);
+  const label = $('#sessionSlotWeekLabel');
+  if (label) label.textContent = week ? `${week.label.replace('S0', 'S')} · ${compactDateRange(week.dateRange)}` : 'Semaine à choisir';
+  const promotion = $('#sessionPromotion')?.value || state.promotions[0] || 'GPN1';
+  const excludeId = $('#sessionId')?.value || '';
+  const options = $('#sessionSlotOptions');
+  if (options) {
+    const slots = freeSlotsForWeek(promotion, weekId, excludeId);
+    options.innerHTML = slots.length
+      ? slots.map(s => `<button type="button" class="slot-option" data-slot-day="${s.day}" data-slot-index="${s.slotIndex}"><strong>${escapeHtml(s.label)}</strong></button>`).join('')
+      : '<p class="meta tight">Aucun créneau libre cette semaine pour cette promotion.</p>';
+  }
+  syncSessionSlotPickerActive();
+}
+
+function syncSessionSlotPickerActive() {
+  $$('#sessionSlotOptions .slot-option').forEach(btn => {
+    const isActive = sessionSlotChoice?.type === 'slot'
+      && Number(btn.dataset.slotDay) === sessionSlotChoice.day
+      && Number(btn.dataset.slotIndex) === sessionSlotChoice.slotIndex;
+    btn.classList.toggle('active', isActive);
+  });
+  $('.slot-option-other')?.classList.toggle('active', sessionSlotChoice?.type === 'other');
+  $('.slot-option-none')?.classList.toggle('active', sessionSlotChoice?.type === 'none');
+  const customFields = $('#sessionCustomSlotFields');
+  if (customFields) customFields.hidden = sessionSlotChoice?.type !== 'other';
 }
 
 /* Id de la semaine suivante dans l'ordre chronologique de state.weeks ('' si aucune). */
@@ -4107,7 +4574,7 @@ function renderRefBody() {
     body.innerHTML = `<div class="rm-panel rm-card">${current.annexe.html}</div>`;
   }
   renderRefChezVous(current.kind === 'cap' ? current.cap : null);
-  const q = ($('#referenceModuleSearch')?.value || '').trim();
+  const q = ($('#rubanUnifiedSearch')?.value || '').trim();
   if (q) refmodSearch(q);
 }
 
@@ -4241,8 +4708,7 @@ function openReferenceModuleForCapacity(code) {
   $$('.view').forEach(v => v.classList.toggle('active-view', v.id === 'ruban'));
   selectedReferenceModule = module.id;
   refReadSection = cap.id;
-  setRubanMode('reference');
-  renderReferenceModule();
+  setRubanTab('reference');
   requestAnimationFrame(() => $('#refreadBody')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
@@ -4321,7 +4787,7 @@ function renderRuban() {
     rubanTeacher = sel.value;
   }
 
-  const q = ($('#rubanSearch')?.value || '').trim().toLowerCase();
+  const q = ($('#rubanUnifiedSearch')?.value || '').trim().toLowerCase();
   const teacher = rubanTeacher;
   const matchCap = (c, u, s) => {
     const inTeacher = teacher === 'Tous' || c.enseignants.includes(teacher) || c.evaluateurs.includes(teacher);
@@ -4479,16 +4945,6 @@ function openUeCapsModal(ueCode) {
   $('#ueCapsModalTitle').textContent = `Capacités — ${u.code} · ${u.title}`;
   renderUeCapsRows(rubanUeCapacities(u));
   $('#ueCapsDialog').showModal();
-}
-
-function renderRubanPdf() {
-  const sel = $('#rubanPdfSelect');
-  const frame = $('#rubanPdfFrame');
-  const open = $('#rubanPdfOpen');
-  if (!sel) return;
-  const src = 'docs/' + (sel.value || 'ruban-semestres.pdf');
-  if (frame && frame.getAttribute('src') !== src) frame.setAttribute('src', src);
-  if (open) open.setAttribute('href', src);
 }
 
 /* ---------------------------------------------------------------------------
@@ -4659,6 +5115,139 @@ async function deleteTemplateSlot() {
   await saveData('Créneau type supprimé');
 }
 
+/* ---------------------------------------------------------------------------
+   Écran 8 — Planning étudiant (sous-onglet « Planning étudiant » de Référentiel
+   & Ruban). Semaine type PAR PROMOTION, saisie à la main — sans date, sans
+   glisser-déposer ni étirement (voir la mémoire du chantier : cette interaction
+   n'existe nulle part ailleurs dans l'appli). Même mécanique clic-vide=créer /
+   clic-tuile=modifier que « Mes créneaux types » juste au-dessus, dupliquée
+   plutôt que partagée pour ne rien risquer sur cet écran déjà approuvé.
+--------------------------------------------------------------------------- */
+function renderStudentPlanning() {
+  if (!studentPlanningPromo) studentPlanningPromo = state.promotions[0] || 'GPN1';
+  $$('#rubanTabEtudiant [data-student-promo]').forEach(b => {
+    const isActive = b.dataset.studentPromo === studentPlanningPromo;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-pressed', String(isActive));
+  });
+  const mineToggle = $('#studentMineToggle');
+  if (mineToggle) studentPlanningMineOnly = mineToggle.checked;
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === studentPlanningPromo);
+  const countEl = $('#studentSummaryCount');
+  if (countEl) countEl.textContent = `· ${slots.length} créneaux sur 40`;
+  renderStudentGrid(studentPlanningPromo);
+}
+
+function renderStudentGrid(promotion) {
+  const container = $('#studentPlanningGrid');
+  if (!container) return;
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === promotion);
+  const skip = new Set();
+  const rows = SLOTS.map((slotLbl, slotIndex) => {
+    if (slotIndex === 4) {
+      return `<tr class="tpl-lunch"><td class="time-cell">Repas</td><td class="lunch-cell" colspan="5">Repas</td></tr>`;
+    }
+    const afterBreak = (slotIndex === 2 || slotIndex === 7) ? ' tpl-after-break' : '';
+    const cells = DAYS.map((day, dayIndex) => {
+      const key = `${dayIndex}-${slotIndex}`;
+      if (skip.has(key)) return '';
+      const t = slots.find(s => Number(s.day) === dayIndex && Number(s.startSlot) === slotIndex);
+      if (t) {
+        const cap = slotIndex < 4 ? 3 : 8;
+        const segEnd = Math.min(Number(t.endSlot), cap);
+        const rowspan = Math.max(1, segEnd - slotIndex + 1);
+        for (let i = slotIndex + 1; i <= segEnd; i += 1) skip.add(`${dayIndex}-${i}`);
+        const dimmed = studentPlanningMineOnly && !isMyStudentSlot(t);
+        return `<td class="tpl-cell${dimmed ? ' student-dimmed' : ''}" rowspan="${rowspan}" style="--seq-color:${studentSlotTint(t)}" data-edit-student-slot="${escapeAttr(t.id)}" title="Modifier ce cours">${studentSlotCellInner(t)}</td>`;
+      }
+      const ctx = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
+      return `<td class="tpl-empty" data-create-student-slot='${escapeAttr(ctx)}' title="Ajouter un cours"><span class="drop-hint">+</span></td>`;
+    }).join('');
+    return `<tr class="${afterBreak}"><td class="time-cell">${slotLbl}</td>${cells}</tr>`;
+  }).join('');
+  const header = `<tr><th class="tpl-corner">Créneau</th>${DAYS.map(d => `<th>${escapeHtml(d)}</th>`).join('')}</tr>`;
+  container.innerHTML = `<table class="tpl-grid"><thead>${header}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function studentUeOptionsHtml(promotion, selectedId) {
+  const ues = (state.ues || []).filter(ue => ue.promotion === promotion);
+  const opts = ues.map(ue => `<option value="${escapeAttr(ue.id)}" ${ue.id === selectedId ? 'selected' : ''}>${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</option>`).join('');
+  return `<option value="">— UE liée —</option>${opts}<option value="__free__" ${selectedId === '__free__' ? 'selected' : ''}>Autre (texte libre)…</option>`;
+}
+
+function openStudentSlotModal(slot, context = {}) {
+  const dialog = $('#studentSlotDialog');
+  if (!dialog) return;
+  const promotion = slot?.promotion || context.promotion || studentPlanningPromo || state.promotions[0] || 'GPN1';
+  $('#studentSlotId').value = slot?.id || '';
+  $('#studentSlotPromotion').value = promotion;
+  $('#studentSlotModalTitle').textContent = slot ? 'Modifier un cours' : 'Ajouter un cours';
+  setOptions('#studentSlotDay', DAYS.map((d, i) => `<option value="${i}">${d}</option>`).join(''), String(slot?.day ?? context.day ?? 0));
+  const slotOpts = SLOTS.map((s, i) => i === 4 ? '' : `<option value="${i}">${s}</option>`).join('');
+  setOptions('#studentSlotStart', slotOpts, String(slot?.startSlot ?? context.slot ?? 0));
+  setOptions('#studentSlotEnd', slotOpts, String(slot?.endSlot ?? context.slot ?? 0));
+  const ueSelectValue = slot ? (slot.ueId || (slot.ueCode ? '__free__' : '')) : '';
+  $('#studentSlotUe').innerHTML = studentUeOptionsHtml(promotion, ueSelectValue);
+  $('#studentSlotUe').value = ueSelectValue;
+  $('#studentSlotUeCode').value = slot?.ueCode || '';
+  $('#studentSlotTitle').value = slot?.title || '';
+  $('#studentSlotRoom').value = slot?.room || '';
+  $('#studentSlotTeacher').value = slot?.teacher || '';
+  const colorEl = $('#studentSlotColorInput');
+  if (colorEl) {
+    const hasColor = isValidHexColor(slot?.color);
+    colorEl.value = hasColor ? slot.color : (slot?.ueId ? ueColor(slot.ueId) : '#9aa0ad');
+    colorEl.dataset.custom = hasColor ? '1' : '0';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  }
+  toggleStudentSlotFreeCode();
+  $('#deleteStudentSlotButton').style.display = slot ? '' : 'none';
+  if (!dialog.open) dialog.showModal();
+}
+
+function toggleStudentSlotFreeCode() {
+  const isFree = $('#studentSlotUe')?.value === '__free__';
+  const wrap = $('#studentSlotUeCodeField');
+  if (wrap) wrap.hidden = !isFree;
+}
+
+async function saveStudentSlot(event) {
+  event?.preventDefault();
+  const id = $('#studentSlotId').value;
+  const ueSel = $('#studentSlotUe').value;
+  const ueId = ueSel && ueSel !== '__free__' ? ueSel : '';
+  const clamp = clampTemplateSlots(Number($('#studentSlotStart').value), Number($('#studentSlotEnd').value));
+  const colorEl = $('#studentSlotColorInput');
+  const color = (colorEl?.dataset.custom === '1' && isValidHexColor(colorEl.value)) ? colorEl.value : '';
+  const slot = normalizeStudentSlot({
+    id: id || undefined,
+    promotion: $('#studentSlotPromotion').value,
+    day: Number($('#studentSlotDay').value),
+    startSlot: clamp.start,
+    endSlot: clamp.end,
+    ueId,
+    ueCode: ueSel === '__free__' ? $('#studentSlotUeCode').value.trim() : '',
+    title: $('#studentSlotTitle').value.trim(),
+    room: $('#studentSlotRoom').value.trim(),
+    teacher: $('#studentSlotTeacher').value.trim(),
+    color
+  });
+  const idx = state.studentWeekTemplate.findIndex(t => t.id === slot.id);
+  if (idx >= 0) state.studentWeekTemplate[idx] = slot; else state.studentWeekTemplate.push(slot);
+  $('#studentSlotDialog')?.close();
+  await saveData('Cours (planning étudiant) enregistré');
+}
+
+async function deleteStudentSlot() {
+  const id = $('#studentSlotId').value;
+  $('#studentSlotDialog')?.close();
+  if (!id) return;
+  state.studentWeekTemplate = state.studentWeekTemplate.filter(t => t.id !== id);
+  await saveData('Cours (planning étudiant) supprimé');
+}
+
+/* Bascule Ruban/Répartition — inchangée, seulement imbriquée dans le sous-onglet
+   « Référentiel & répartition » depuis la réorg écran 8 (setRubanTab ci-dessous). */
 function setRubanMode(mode) {
   rubanMode = mode;
   $$('[data-ruban-mode]').forEach(b => {
@@ -4668,15 +5257,643 @@ function setRubanMode(mode) {
   });
   $('#rubanModeRuban')?.classList.toggle('active-mode', mode === 'ruban');
   $('#rubanModeTable')?.classList.toggle('active-mode', mode === 'table');
-  $('#rubanModeReference')?.classList.toggle('active-mode', mode === 'reference');
-  $('#rubanModePdf')?.classList.toggle('active-mode', mode === 'pdf');
-  $('#rubanModeCreneaux')?.classList.toggle('active-mode', mode === 'creneaux');
-  // Les filtres enseignant/recherche ne concernent que le Ruban et le Tableau.
-  const filters = $('#rubanFilters');
-  if (filters) filters.hidden = (mode === 'reference' || mode === 'pdf' || mode === 'creneaux');
-  if (mode === 'pdf') renderRubanPdf();
-  if (mode === 'reference') renderReferenceModule();
-  if (mode === 'creneaux') renderCreneaux();
+}
+
+/* Écran 8 — 4 sous-onglets (reference/repartition/etudiant/creneaux) qui
+   remplacent les anciens boutons plats data-ruban-mode="reference"/"pdf"/
+   "creneaux". Chaque panneau garde son id et son contenu d'origine ; seule la
+   visibilité change (attribut `hidden`, plus `.active-mode`). La recherche
+   unifiée n'a de sens que sur reference/repartition : vidée et neutralisée
+   ailleurs, comme « Réglages d'année » (Créneaux types) n'a pas de comportement
+   défini par la maquette non plus. */
+let rubanTab = 'repartition';
+function setRubanTab(tab) {
+  rubanTab = tab;
+  $$('[data-ruban-tab]').forEach(b => {
+    const isActive = b.dataset.rubanTab === tab;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+  $('#rubanModeReference').hidden = tab !== 'reference';
+  $('#rubanTabRepartition').hidden = tab !== 'repartition';
+  $('#rubanTabEtudiant').hidden = tab !== 'etudiant';
+  $('#rubanModeCreneaux').hidden = tab !== 'creneaux';
+  const search = $('#rubanUnifiedSearch');
+  if (search) {
+    search.value = '';
+    search.disabled = (tab === 'etudiant' || tab === 'creneaux');
+  }
+  if (tab === 'reference') renderReferenceModule();
+  else if (tab === 'repartition') renderRuban();
+  else if (tab === 'etudiant') renderStudentPlanning();
+  else if (tab === 'creneaux') renderCreneaux();
+}
+
+/* ============================================================
+   Écran 11 — Dossier (compositeur 3 colonnes + document imprimé)
+   ============================================================
+   Toutes les pages viennent des données réelles déjà saisies
+   ailleurs (UE/séquences/séances, référentiel, ruban) — rien de
+   nouveau à ressaisir. Seul ajout de donnée : ue.bilan (texte
+   libre « Bilan de l'unité »), édité ici, persisté comme tout
+   autre champ d'UE (mergeReferenceUes le porte via ...existing).
+   Pagination : 1 page A4 par section cochée, 1 page par séquence
+   cochée (pas de tassement à plusieurs séquences par page comme
+   le document de référence — trop fragile à garantir en CSS
+   d'impression réelle sans risquer un contenu tronqué ; le nombre
+   de pages n'est donc jamais figé à 7, il dépend de l'UE choisie
+   et des sections cochées, conformément au Known Gap #3). */
+
+const DOSSIER_PRINT_CSS = `
+.dossier-page{box-sizing:border-box;width:210mm;min-height:297mm;margin:0 auto 8mm;padding:16mm 15mm 20mm;background:#fffefb;border:1px solid #d8d4c6;font-family:'IBM Plex Sans',sans-serif;color:#191b16;break-before:page;position:relative}
+.dossier-page:first-child{break-before:auto}
+.dossier-page .mono{font-family:'JetBrains Mono',monospace}
+.dossier-page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #d8d4c6;padding-bottom:8px;margin-bottom:20px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8a958c}
+.dossier-h2{margin:0 0 4px;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.dossier-h3{margin:20px 0 8px;font-size:13px;font-weight:700}
+.dossier-h2-rule{width:40px;height:3px;background:#1a5fb4;margin-bottom:18px}
+.dossier-body-text{font-size:13px;line-height:1.6;color:#3b3e36;max-width:70ch;margin:0 0 12px}
+.dossier-body-text.meta{color:#6b6a5e}
+.dossier-note-warn{font-size:12px;color:#7a5b16;background:#f4ead0;border:1px solid #e7dcb6;padding:8px 10px;margin:10px 0}
+.dossier-label{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8a958c;margin-bottom:4px}
+.dossier-page-footer{position:absolute;left:15mm;right:15mm;bottom:9mm;display:flex;justify-content:space-between;border-top:1px solid #ece8db;padding-top:7px;font-size:10px;color:#8a958c;font-family:'JetBrains Mono',monospace}
+.dossier-chip-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dossier-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid #d8d4c6;background:#f4f2ec;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#3b3e36}
+.dossier-chip.mine{background:#23458c;border-color:#23458c;color:#fffefb;font-weight:600}
+.dossier-chip.dossier-chip-accent{background:#dde4f2;border-color:#b7c5e0;color:#17305f;font-weight:600}
+.dossier-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 4px}
+.dossier-table thead{display:table-header-group}
+.dossier-table th{text-align:left;padding:6px 8px;background:#f0ede2;border:1px solid #d8d4c6;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#6b6a5e}
+.dossier-table td{padding:7px 8px;border:1px solid #ece8db;vertical-align:top}
+.dossier-table-sub{display:block;font-size:11px;color:#6b6a5e;margin-top:2px;font-weight:400}
+.dossier-flag-warn{color:#C0562B}
+.dossier-flag-ok{color:#1F7A5C}
+.dossier-recap-total{margin-top:10px;font-size:12px}
+/* Garde */
+.dossier-page-garde{padding:0;display:flex;flex-direction:column}
+.dossier-garde-band{height:8px;background:#1a5fb4;flex:0 0 auto}
+.dossier-garde-inner{flex:1;padding:16mm 15mm 12mm;display:flex;flex-direction:column}
+.dossier-garde-topbar{display:flex;justify-content:space-between;border-bottom:1px solid #d8d4c6;padding-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6a5e}
+.dossier-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b6a5e;margin-bottom:16px}
+.dossier-garde-title{margin-top:14mm}
+.dossier-ue-code-big{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:#17305f}
+.dossier-garde-title h1{margin:6px 0 0;font-size:38px;line-height:1.08;font-weight:600;letter-spacing:-.02em;max-width:16ch}
+.dossier-garde-desc{margin:20px 0 0;font-size:14px;line-height:1.55;color:#3b3e36;max-width:56ch}
+.dossier-garde-meta{margin-top:auto;border-top:1px solid #d8d4c6;padding-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px 18px;font-size:14px}
+.dossier-garde-meta .span-2{grid-column:span 2}
+.dossier-garde-meta strong{display:block;font-size:14px;font-weight:600}
+.dossier-garde-meta small{display:block;font-size:11px;color:#565a4e;margin-top:2px}
+.dossier-teacher-pills{display:flex;flex-wrap:wrap;gap:12px}
+.dossier-teacher-pill{display:flex;align-items:center;gap:7px}
+.dossier-teacher-pill .pip{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#f0ede2;border:1px solid #d8d4c6;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;color:#3b3e36}
+.dossier-teacher-pill.mine .pip{background:#1a5fb4;border-color:#1a5fb4;color:#fffefb}
+.dossier-teacher-pill span.mono{font-size:11px;color:#565a4e}
+.dossier-garde-footer{margin-top:20px;border-top:1px solid #d8d4c6;padding-top:16px;display:flex;align-items:center;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6a5e}
+.dossier-garde-footer .dossier-garde-footer-right{margin-left:auto;font-family:'IBM Plex Sans',sans-serif;font-size:11px;color:#565a4e}
+/* Capacités */
+.dossier-capacity-block{border:1px solid #d8d4c6;border-left:3px solid #1a5fb4;margin-bottom:16px}
+.dossier-capacity-head{display:flex;align-items:baseline;gap:12px;padding:12px 14px 10px;border-bottom:1px solid #ece8db}
+.dossier-capacity-code{font-size:15px;font-weight:600;color:#17305f}
+.dossier-capacity-title{font-size:14px;font-weight:600}
+.dossier-capacity-grid{padding:10px 14px 12px;display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:12px}
+.dossier-criteria-list{margin:0;padding-left:16px;color:#3b3e36}
+.dossier-volumes-row{display:flex;border:1px solid #d8d4c6;margin:6px 0 4px}
+.dossier-volume-cell{flex:1;padding:10px 10px;text-align:center;border-right:1px solid #ece8db}
+.dossier-volume-cell:last-child{border-right:none}
+.dossier-volume-cell strong{display:block;font-size:17px}
+.dossier-volume-cell span{font-size:10.5px;color:#565a4e}
+/* Progression */
+.dossier-frise-grid{display:grid;row-gap:2px;column-gap:2px;margin-bottom:14px}
+.dossier-frise-week{font-size:9px;text-align:center;color:#8a958c;padding-bottom:4px}
+.dossier-frise-label{font-size:11px;padding:4px 6px 4px 0;align-self:center}
+.dossier-frise-cell{background:#f4f2ec;height:20px}
+.dossier-frise-bar{background:var(--seq-color,#1a5fb4);height:20px}
+.dossier-table-compact th,.dossier-table-compact td{padding:5px 8px;font-size:11px}
+/* Fiche de séquence */
+.dossier-sequence-head{border-left:4px solid var(--seq-color,#1a5fb4);padding-left:14px;margin-bottom:14px}
+.dossier-sequence-head h2{margin:0 0 8px;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.dossier-sequence-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-top:14px;font-size:12px}
+.dossier-sequence-meta p{margin:0;color:#3b3e36;line-height:1.5}
+`;
+
+let dossierUeId = '';
+let dossierViewMode = 'grille';
+let dossierSections = null;
+
+function resetDossierSections(ue) {
+  dossierSections = {
+    ueId: ue?.id || '',
+    garde: true,
+    intention: true,
+    referentiel: true,
+    referentielIntitules: true,
+    referentielCriteres: false,
+    progression: true,
+    sequences: true,
+    sequenceIds: new Set((state.sequences || []).filter(s => s.ueId === ue?.id).map(s => s.id)),
+    recapitulatif: true,
+    bilan: false,
+    vigilance: false
+  };
+}
+
+function dossierEditedDateLabel() {
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+}
+
+function ensureDossierPrintStyle() {
+  if (document.getElementById('dossierPrintStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'dossierPrintStyle';
+  style.textContent = DOSSIER_PRINT_CSS;
+  document.head.appendChild(style);
+}
+
+function renderDossier() {
+  const select = $('#dossierUeSelect');
+  if (!select) return;
+  ensureDossierPrintStyle();
+  const sortedUes = state.ues.slice().sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+  select.innerHTML = sortedUes.length
+    ? sortedUes.map(ue => `<option value="${escapeAttr(ue.id)}">${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</option>`).join('')
+    : '<option value="">Aucune UE</option>';
+  if (!dossierUeId || !state.ues.some(u => u.id === dossierUeId)) dossierUeId = sortedUes[0]?.id || '';
+  select.value = dossierUeId;
+
+  const ue = findUe(dossierUeId);
+  if (!dossierSections || dossierSections.ueId !== dossierUeId) resetDossierSections(ue);
+
+  renderDossierUeSummary(ue);
+  renderDossierSectionsList(ue);
+
+  const units = ue ? dossierBuildUnits(ue, dossierSections) : [];
+  renderDossierPreviewGrille(ue, units);
+  renderDossierPreviewLecture(ue, units);
+  renderDossierAvantImprimer(ue, units);
+}
+
+function dossierUeSessions(ue) {
+  if (!ue) return [];
+  return state.sessions.filter(s => s.ueId === ue.id);
+}
+
+function dossierSessionMinutes(session) {
+  const fromText = String(session.expectedDuration || '').match(/(\d+)\s*h(?:\s*(\d+))?/i);
+  if (fromText) return Number(fromText[1]) * 60 + Number(fromText[2] || 0);
+  if (isDefinitiveSession(session)) return sessionDurationSlots(session) * 55;
+  return 0;
+}
+function dossierHoursLabel(minutes) {
+  if (!minutes) return '';
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
+
+function dossierPeriodLabel(ue) {
+  if (!ue.startWeekId || !ue.endWeekId) return 'à préciser';
+  return `${weekLabel(ue.startWeekId)} → ${weekLabel(ue.endWeekId)}`;
+}
+
+function dossierTeacherStats(ue) {
+  const counts = new Map();
+  dossierUeSessions(ue).forEach(s => teacherTokens(s.teacher).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)));
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([initials, count]) => ({ initials, count }));
+}
+
+function dossierTeacherPillsHtml(teachers) {
+  if (!teachers.length) return '<p class="meta tight">Aucun enseignant déclaré sur les séances.</p>';
+  return `<div class="dossier-teacher-pills">${teachers.map(t => `<span class="dossier-teacher-pill ${t.initials === moiInitiales ? 'mine' : ''}"><span class="pip">${escapeHtml(t.initials)}</span><span class="mono">${escapeHtml(t.initials)} · ${t.count} séance(s)</span></span>`).join('')}</div>`;
+}
+
+function dossierUnitShortLabel(u) {
+  if (u.kind === 'sequence') return truncate(u.title, 18);
+  return { garde: 'Garde', intention: 'Intention', referentiel: 'Capacités', progression: 'Progression', recapitulatif: 'Séances', bilan: 'Bilan' }[u.kind] || u.title;
+}
+
+/* Liste ordonnée des unités (= pages) à sortir, selon les cases cochées. Une
+   unité = une page A4 exactement (voir note d'en-tête du bloc). */
+function dossierBuildUnits(ue, sections) {
+  const seqs = state.sequences.filter(s => s.ueId === ue.id).slice()
+    .sort((a, b) => dossierSequenceOrder(a) - dossierSequenceOrder(b));
+  const units = [{ key: 'garde', kind: 'garde', title: 'Page de garde' }];
+  if (sections.intention) units.push({ key: 'intention', kind: 'intention', title: 'Intention pédagogique' });
+  if (sections.referentiel) units.push({ key: 'referentiel', kind: 'referentiel', title: 'Le référentiel interactif' });
+  if (sections.progression) units.push({ key: 'progression', kind: 'progression', title: 'Progression de l’unité' });
+  if (sections.sequences) {
+    seqs.forEach((seq, i) => {
+      if (sections.sequenceIds.has(seq.id)) units.push({ key: `seq:${seq.id}`, kind: 'sequence', title: seq.title || `Séquence ${i + 1}`, seq });
+    });
+  }
+  if (sections.recapitulatif) units.push({ key: 'recapitulatif', kind: 'recapitulatif', title: 'Récapitulatif des séances' });
+  if (sections.bilan) units.push({ key: 'bilan', kind: 'bilan', title: 'Bilan de l’unité' });
+  return units;
+}
+function dossierSequenceOrder(seq) {
+  const m = String(seq.targetWeeks || '').match(/\d{1,2}/);
+  return m ? Number(m[0]) : 999;
+}
+
+function dossierSessionSort(a, b) {
+  const wa = a.weekId || a.targetWeekId || '', wb = b.weekId || b.targetWeekId || '';
+  if (wa !== wb) return wa.localeCompare(wb);
+  return (a.day ?? 9) - (b.day ?? 9);
+}
+
+/* ---- Contenu des pages (réutilisé tel quel par l'aperçu « Lecture » et par
+   la fenêtre d'impression : une seule fonction produit le HTML des deux). ---- */
+
+function dossierPageHeaderInner(ue) {
+  return `<span>${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</span><span>${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)}</span>`;
+}
+function dossierPageFooter(ue, footerOpts) {
+  if (!footerOpts?.show) return '';
+  const num = footerOpts.pageOf ? `page ${footerOpts.index} sur ${footerOpts.total}` : String(footerOpts.index);
+  return `<div class="dossier-page-footer"><span>${escapeHtml(ue.code)} · dossier édité le ${dossierEditedDateLabel()}</span><span class="mono">${num}</span></div>`;
+}
+
+function dossierPageGarde(ue, footerOpts, total) {
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const sessions = dossierUeSessions(ue);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  const teachers = dossierTeacherStats(ue);
+  const footer = footerOpts?.show ? `<div class="dossier-garde-footer">
+      <span>Édité le ${dossierEditedDateLabel()}</span>
+      <span>${total} page${total > 1 ? 's' : ''} · année ${escapeHtml(state.schoolYear || '')}</span>
+      <span class="dossier-garde-footer-right">Organisation des cours — BTS GPN Kerplouz</span>
+    </div>` : '';
+  return `<article class="dossier-page dossier-page-garde">
+    <div class="dossier-garde-band"></div>
+    <div class="dossier-garde-inner">
+      <div class="dossier-garde-topbar mono"><span>Kerplouz LaSalle — Auray</span><span>BTSA Gestion et Protection de la Nature</span></div>
+      <div class="dossier-garde-title">
+        <div class="dossier-eyebrow">Dossier d'unité d'enseignement</div>
+        <div class="dossier-ue-code-big mono">${escapeHtml(ue.code)}</div>
+        <h1>${escapeHtml(ue.title)}</h1>
+        ${ue.description ? `<p class="dossier-garde-desc">${escapeHtml(ue.description)}</p>` : ''}
+      </div>
+      <div class="dossier-garde-meta">
+        <div><span class="dossier-label">Promotion</span><strong>${escapeHtml(ue.promotion)}</strong></div>
+        <div><span class="dossier-label">Semestre</span><strong>${escapeHtml(ue.semester)}</strong></div>
+        <div><span class="dossier-label">Période</span><strong class="mono">${escapeHtml(dossierPeriodLabel(ue))}</strong></div>
+        <div><span class="dossier-label">Volume</span><strong class="mono">${escapeHtml(dossierHoursLabel(minutes) || 'à préciser')}</strong><small>${seqs.length} séquence(s) · ${sessions.length} séance(s)</small></div>
+        <div class="span-2"><span class="dossier-label">Enseignants intervenant sur les séances</span>${dossierTeacherPillsHtml(teachers)}</div>
+      </div>
+      ${footer}
+    </div>
+  </article>`;
+}
+
+function dossierPageIntention(ue, footerOpts) {
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Intention pédagogique</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text">${ue.description ? escapeHtml(ue.description) : '<span class="meta">Aucune intention pédagogique renseignée pour cette UE.</span>'}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierUeCapacitiesFull(ue) {
+  const rubanUe = findRubanUe(ueCodeCompact(ue.code));
+  const caps = rubanUe ? rubanUeCapacities(rubanUe) : ueCapacities(ue).map(c => ({ code: c.code, title: c.title, disciplines: [], enseignants: [], evaluateurs: [] }));
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  return caps.map(cap => ({
+    ...cap,
+    ref: (window.REFERENCE_CAPACITIES || {})[cap.code] || null,
+    sequences: seqs.filter(s => (s.capacityCodes || []).includes(cap.code))
+  }));
+}
+
+function dossierCapacityBlockHtml(cap, sections) {
+  const seqNames = cap.sequences.map(s => s.title || 'sans titre');
+  const title = (sections.referentielIntitules && cap.ref?.title) ? cap.ref.title : cap.title;
+  return `<div class="dossier-capacity-block">
+    <div class="dossier-capacity-head"><span class="mono dossier-capacity-code">${escapeHtml(cap.code)}</span><span class="dossier-capacity-title">${escapeHtml(title)}</span></div>
+    <div class="dossier-capacity-grid">
+      <span class="dossier-label">Disciplines</span><span class="dossier-chip-row">${cap.disciplines.length ? cap.disciplines.map(d => `<span class="dossier-chip">${escapeHtml(d)}</span>`).join('') : '<span class="meta">Non renseignées</span>'}</span>
+      <span class="dossier-label">Enseignants</span><span class="dossier-chip-row">${cap.enseignants.length ? cap.enseignants.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '<span class="meta">Non renseignés</span>'}</span>
+      <span class="dossier-label">Évaluateurs</span><span class="dossier-chip-row">${cap.evaluateurs.length ? cap.evaluateurs.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '<span class="meta">Non renseignés</span>'}</span>
+      <span class="dossier-label">Travaillée en</span><span>${seqNames.length ? escapeHtml(seqNames.join(' · ')) : '<span class="meta">Aucune séquence ne déclare cette capacité.</span>'}</span>
+      ${sections.referentielCriteres && cap.ref?.criteria?.length ? `<span class="dossier-label">Critères d'évaluation</span><span><ul class="dossier-criteria-list">${cap.ref.criteria.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></span>` : ''}
+    </div>
+  </div>`;
+}
+
+function dossierVolumesByType(ue) {
+  const map = new Map();
+  dossierUeSessions(ue).forEach(s => {
+    const type = s.type || 'Non précisé';
+    map.set(type, (map.get(type) || 0) + dossierSessionMinutes(s));
+  });
+  return [...map.entries()].filter(([, minutes]) => minutes > 0).sort((a, b) => b[1] - a[1]);
+}
+function dossierVolumesTableHtml(rows) {
+  if (!rows.length) return '<p class="dossier-body-text meta">Aucune séance saisie pour cette UE.</p>';
+  return `<div class="dossier-volumes-row">${rows.map(([type, minutes]) => `<div class="dossier-volume-cell"><strong class="mono">${escapeHtml(dossierHoursLabel(minutes))}</strong><span>${escapeHtml(type)}</span></div>`).join('')}</div>`;
+}
+
+function dossierEvaluationTableHtml(ue) {
+  const rows = dossierUeSessions(ue).filter(s => s.type === 'Évaluation');
+  if (!rows.length) return '<p class="dossier-body-text meta">Aucune évaluation d’unité saisie sur les séances (type « Évaluation »).</p>';
+  return `<table class="dossier-table"><thead><tr><th>Épreuve</th><th>Objet</th><th>Semaine</th></tr></thead><tbody>
+    ${rows.map(s => `<tr><td><strong>${escapeHtml(s.title || 'Sans titre')}</strong></td><td>${escapeHtml(s.objectives || s.notes || '')}</td><td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}${isFictiveSession(s) ? ' <span class="dossier-flag-warn">à placer</span>' : ''}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+function dossierPageReferentiel(ue, sections, footerOpts) {
+  const caps = dossierUeCapacitiesFull(ue);
+  const capsHtml = caps.length ? caps.map(cap => dossierCapacityBlockHtml(cap, sections)).join('')
+    : '<p class="dossier-body-text meta">Aucune capacité déclarée pour cette UE dans Référentiel &amp; Ruban.</p>';
+  const seqsWithoutCap = state.sequences.filter(s => s.ueId === ue.id && !(s.capacityCodes || []).length);
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Le référentiel interactif</h2><div class="dossier-h2-rule"></div>
+    ${capsHtml}
+    ${seqsWithoutCap.length ? `<p class="dossier-note-warn">${seqsWithoutCap.length} séquence(s) sans capacité déclarée : ${escapeHtml(seqsWithoutCap.map(s => s.title || 'sans titre').join(', '))}.</p>` : ''}
+    <h3 class="dossier-h3">Volumes par type de séance</h3>
+    ${dossierVolumesTableHtml(dossierVolumesByType(ue))}
+    <h3 class="dossier-h3">Évaluation de l'unité</h3>
+    ${dossierEvaluationTableHtml(ue)}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierProgressionTableHtml(seqs) {
+  if (!seqs.length) return '';
+  return `<table class="dossier-table dossier-table-compact"><thead><tr><th>Séquence</th><th>Semaines</th><th>Durée</th><th>Séances</th></tr></thead><tbody>
+    ${seqs.map(seq => `<tr><td><strong>${escapeHtml(seq.title || 'Sans titre')}</strong></td><td class="mono">${escapeHtml(seq.targetWeeks || '—')}</td><td class="mono">${escapeHtml(seq.hoursEstimate || '—')}</td><td class="mono">${state.sessions.filter(s => s.sequenceId === seq.id).length}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+function dossierPageProgression(ue, footerOpts) {
+  const weeks = weeksForSemester(ue.semester);
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  let grid = '';
+  if (seqs.length && weeks.length) {
+    weeks.forEach((w, i) => { grid += `<div class="dossier-frise-week mono" style="grid-column:${i + 2};grid-row:1">${escapeHtml(w.label)}</div>`; });
+    seqs.forEach((seq, idx) => {
+      const row = idx + 2;
+      grid += `<div class="dossier-frise-label" style="grid-row:${row}">${escapeHtml(seq.title || 'Séquence sans titre')}</div>`;
+      weeks.forEach((w, i) => { grid += `<div class="dossier-frise-cell" style="grid-column:${i + 2};grid-row:${row}"></div>`; });
+      sequenceWeekSegments(seq, weeks).forEach(seg => {
+        grid += `<div class="dossier-frise-bar" style="grid-column:${seg.startIndex + 2} / ${seg.endIndex + 3};grid-row:${row};--seq-color:${sequenceColor(seq.id)}"></div>`;
+      });
+    });
+  }
+  const cols = `130px repeat(${weeks.length || 1}, 1fr)`;
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Progression de l'unité</h2><div class="dossier-h2-rule"></div>
+    ${seqs.length ? `<div class="dossier-frise-grid" style="grid-template-columns:${cols}">${grid}</div>` : '<p class="dossier-body-text meta">Aucune séquence pour cette UE.</p>'}
+    ${dossierProgressionTableHtml(seqs)}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierSequenceBlock(seq, ue, footerOpts) {
+  const sessions = state.sessions.filter(s => s.sequenceId === seq.id).slice().sort(dossierSessionSort);
+  const rows = sessions.map((s, i) => `<tr>
+    <td class="mono">${i + 1}</td>
+    <td><strong>${escapeHtml(s.title || 'Sans titre')}</strong>${s.objectives ? `<span class="dossier-table-sub">${escapeHtml(truncate(s.objectives, 160))}</span>` : ''}</td>
+    <td class="mono">${escapeHtml(s.type || '—')}</td>
+    <td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}</td>
+    <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
+    <td>${escapeHtml(s.room || '—')}</td>
+  </tr>`).join('') || `<tr><td colspan="6" class="meta">Aucune séance rattachée à cette séquence.</td></tr>`;
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono"><span>${escapeHtml(ue.code)} · Séquences</span><span>${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)}</span></header>
+    <div class="dossier-sequence-head" style="--seq-color:${sequenceColor(seq.id)}">
+      <div class="dossier-eyebrow">Séquence</div>
+      <h2>${escapeHtml(seq.title || 'Sans titre')}</h2>
+      <div class="dossier-chip-row">
+        <span class="dossier-chip">${escapeHtml(seq.targetWeeks || '—')}</span>
+        <span class="dossier-chip">${escapeHtml(seq.hoursEstimate || '—')}</span>
+        <span class="dossier-chip">${sessions.length} séance(s)</span>
+        ${(seq.capacityCodes || []).map(c => `<span class="dossier-chip dossier-chip-accent">${escapeHtml(c)}</span>`).join('')}
+        ${teacherTokens(seq.teacher || ue.teacher).map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('')}
+      </div>
+    </div>
+    <table class="dossier-table"><thead><tr><th>Nº</th><th>Séance</th><th>Type</th><th>Sem.</th><th>Durée</th><th>Lieu</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="dossier-sequence-meta">
+      ${seq.objectives ? `<div><span class="dossier-label">Objectifs</span><p>${escapeHtml(seq.objectives)}</p></div>` : ''}
+      ${seq.learningOutcomes ? `<div><span class="dossier-label">Acquis visés</span><p>${escapeHtml(seq.learningOutcomes)}</p></div>` : ''}
+      ${seq.keywords ? `<div><span class="dossier-label">Mots-clés</span><p>${escapeHtml(seq.keywords)}</p></div>` : ''}
+      ${seq.deliverables ? `<div><span class="dossier-label">Production attendue</span><p>${escapeHtml(seq.deliverables)}</p></div>` : ''}
+    </div>
+    ${!seq.deliverables ? '<p class="dossier-note-warn">Aucune production attendue renseignée pour cette séquence.</p>' : ''}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageRecapitulatif(ue, footerOpts) {
+  const sessions = dossierUeSessions(ue).slice().sort(dossierSessionSort);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  const placed = sessions.filter(s => !isFictiveSession(s)).length;
+  const toPlace = sessions.length - placed;
+  const rows = sessions.map(s => `<tr>
+    <td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}</td>
+    <td class="mono">${!isFictiveSession(s) && Number.isInteger(s.day) ? escapeHtml((DAY_NAMES[s.day] || '').slice(0, 3).toLowerCase()) : '—'}</td>
+    <td><strong>${escapeHtml(s.title || 'Sans titre')}</strong></td>
+    <td class="mono">${escapeHtml(s.type || '—')}</td>
+    <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
+    <td>${escapeHtml(s.room || '—')}</td>
+    <td class="mono">${escapeHtml(teacherTokens(s.teacher).join('·')) || '—'}</td>
+    <td class="mono ${isFictiveSession(s) ? 'dossier-flag-warn' : 'dossier-flag-ok'}">${escapeHtml(displayPlacementStatus(s.placementStatus) || 'placée')}</td>
+  </tr>`).join('') || `<tr><td colspan="8" class="meta">Aucune séance pour cette UE.</td></tr>`;
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Récapitulatif des séances</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text meta">Les ${sessions.length} séance(s) de l'unité, une ligne chacune.</p>
+    <table class="dossier-table"><thead><tr><th>Sem.</th><th>Jour</th><th>Séance</th><th>Type</th><th>Durée</th><th>Lieu</th><th>Ens.</th><th>État</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="dossier-recap-total mono">Total : ${escapeHtml(dossierHoursLabel(minutes) || '—')} · ${placed} placée(s)${toPlace ? ` · <span class="dossier-flag-warn">${toPlace} à placer</span>` : ''}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageBilan(ue, footerOpts) {
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Bilan de l'unité</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text">${ue.bilan ? escapeHtml(ue.bilan).replace(/\n/g, '<br>') : '<span class="meta">Aucun bilan renseigné.</span>'}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageContentHtml(unit, ue, sections, footerOpts, total) {
+  switch (unit.kind) {
+    case 'garde': return dossierPageGarde(ue, footerOpts, total);
+    case 'intention': return dossierPageIntention(ue, footerOpts);
+    case 'referentiel': return dossierPageReferentiel(ue, sections, footerOpts);
+    case 'progression': return dossierPageProgression(ue, footerOpts);
+    case 'sequence': return dossierSequenceBlock(unit.seq, ue, footerOpts);
+    case 'recapitulatif': return dossierPageRecapitulatif(ue, footerOpts);
+    case 'bilan': return dossierPageBilan(ue, footerOpts);
+    default: return '';
+  }
+}
+
+function dossierPagesHtml(ue, units, opts = {}) {
+  const footerDate = opts.footerDate !== undefined ? opts.footerDate : !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = opts.pageOf !== undefined ? opts.pageOf : !!$('#dossierOptPageOf')?.checked;
+  const total = units.length;
+  return units.map((u, i) => dossierPageContentHtml(u, ue, dossierSections, { show: footerDate, pageOf, index: i + 1, total }, total)).join('');
+}
+
+/* ---- Colonne 2 : la checklist des sections ---- */
+
+function dossierSectionRow(key, label, opts = {}) {
+  const checked = opts.locked ? (key === 'garde') : !!dossierSections[key];
+  const disabled = opts.disabled ? 'disabled' : '';
+  const hint = opts.hint ? `<p class="dossier-section-hint">${escapeHtml(opts.hint)}</p>` : '';
+  const subRows = opts.sub ? `<div class="dossier-subsections">${opts.sub.join('')}</div>` : '';
+  const editor = (key === 'bilan' && dossierSections.bilan) ? dossierBilanEditorHtml() : '';
+  return `<div class="dossier-section-row ${opts.locked ? 'locked' : ''}">
+    <label class="checkbox-inline">
+      <input type="checkbox" data-dossier-section="${key}" ${checked ? 'checked' : ''} ${disabled} />
+      <span>${escapeHtml(label)}</span>
+    </label>
+    ${hint}
+    ${subRows}
+    ${editor}
+  </div>`;
+}
+function dossierSubRow(key, label) {
+  const checked = key.startsWith('seq:') ? dossierSections.sequenceIds.has(key.slice(4)) : !!dossierSections[key];
+  return `<label class="checkbox-inline dossier-subrow"><input type="checkbox" data-dossier-subsection="${escapeAttr(key)}" ${checked ? 'checked' : ''} /><span>${escapeHtml(label)}</span></label>`;
+}
+function dossierBilanEditorHtml() {
+  const ue = findUe(dossierUeId);
+  return `<textarea class="dossier-bilan-editor" id="dossierBilanText" rows="3" placeholder="Ce qui a marché, ce qui a coincé, à ajuster l'an prochain…">${escapeHtml(ue?.bilan || '')}</textarea>`;
+}
+
+function renderDossierUeSummary(ue) {
+  const el = $('#dossierUeSummary');
+  if (!el) return;
+  if (!ue) { el.innerHTML = '<p class="meta">Aucune UE.</p>'; return; }
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const sessions = dossierUeSessions(ue);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  el.innerHTML = `<div class="dossier-ue-card">
+    <div class="dossier-ue-code mono">${escapeHtml(ue.code)}</div>
+    <div class="dossier-ue-title">${escapeHtml(ue.title)}</div>
+    <div class="dossier-ue-meta">${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)} · ${seqs.length} séq. · ${sessions.length} séances</div>
+    <div class="dossier-ue-meta">${escapeHtml(dossierHoursLabel(minutes) || 'Volume à préciser')}</div>
+  </div>`;
+}
+
+function renderDossierSectionsList(ue) {
+  const el = $('#dossierSectionsList');
+  const countEl = $('#dossierSectionsCount');
+  if (!el) return;
+  if (!ue) { el.innerHTML = ''; if (countEl) countEl.textContent = ''; return; }
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const rows = [
+    dossierSectionRow('garde', 'Page de garde', { locked: true, hint: 'obligatoire' }),
+    dossierSectionRow('intention', 'Intention pédagogique'),
+    dossierSectionRow('referentiel', 'Le référentiel interactif', { sub: [
+      dossierSubRow('referentielIntitules', 'Intitulés complets'),
+      dossierSubRow('referentielCriteres', 'Critères d’évaluation détaillés')
+    ] }),
+    dossierSectionRow('progression', 'Progression de l’unité'),
+    dossierSectionRow('sequences', 'Fiches de séquence', { sub: seqs.length
+      ? seqs.map(seq => dossierSubRow(`seq:${seq.id}`, seq.title || 'Séquence sans titre'))
+      : ['<p class="meta tight dossier-subrow">Aucune séquence pour cette UE.</p>'] }),
+    dossierSectionRow('recapitulatif', 'Récapitulatif des séances'),
+    dossierSectionRow('bilan', 'Bilan de l’unité', { hint: 'Jamais inclus par défaut. Vous le sortez pour ce dossier-ci.' }),
+    dossierSectionRow('vigilance', 'Points de vigilance', { locked: true, disabled: true, hint: 'Ne sort jamais du logiciel — non désactivable.' })
+  ];
+  el.innerHTML = rows.join('');
+  if (countEl) {
+    const checked = ['garde', 'intention', 'referentiel', 'progression', 'sequences', 'recapitulatif', 'bilan'].filter(k => dossierSections[k]).length;
+    countEl.textContent = `${checked} / 7`;
+  }
+}
+
+/* ---- Colonne centrale : Aperçu (Grille / Lecture) ---- */
+
+function dossierThumbAbstract(u) {
+  if (u.kind === 'garde') return '<span class="db-line short accent"></span><span class="db-line title"></span><span class="db-box tall"></span>';
+  if (u.kind === 'sequence') return '<span class="db-line accent"></span><span class="db-box"></span><span class="db-line"></span><span class="db-line short"></span>';
+  if (u.kind === 'recapitulatif') return '<span class="db-line accent"></span><span class="db-box tall"></span>';
+  return '<span class="db-line accent"></span><span class="db-box"></span><span class="db-line"></span>';
+}
+function renderDossierPreviewGrille(ue, units) {
+  const el = $('#dossierPreviewGrille');
+  if (!el) return;
+  el.innerHTML = ue && units.length
+    ? units.map((u, i) => `<div class="dossier-thumb">
+        <div class="dossier-thumb-page">${dossierThumbAbstract(u)}</div>
+        <div class="dossier-thumb-label">${i + 1} · ${escapeHtml(dossierUnitShortLabel(u))}</div>
+      </div>`).join('')
+    : '<p class="meta">Choisir une UE et au moins une section.</p>';
+}
+function renderDossierPreviewLecture(ue, units) {
+  const el = $('#dossierPreviewLecture');
+  if (!el) return;
+  el.innerHTML = ue && units.length ? dossierPagesHtml(ue, units) : '<p class="meta">Choisir une UE et au moins une section.</p>';
+}
+
+/* ---- Colonne 3 : complétude + manques + impression ---- */
+
+function dossierCompleteness(ue) {
+  if (!ue) return { percent: 0, gaps: [] };
+  const sessions = dossierUeSessions(ue);
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const gaps = [];
+  const noObjectives = sessions.filter(s => !String(s.objectives || '').trim());
+  if (noObjectives.length) gaps.push({ label: `${noObjectives.length} séance(s) sans objectifs`, detail: noObjectives.slice(0, 4).map(s => s.title || 'sans titre').join(', '), action: 'Les remplir →', goto: ue.id });
+  const toPlace = sessions.filter(isFictiveSession);
+  if (toPlace.length) gaps.push({ label: `${toPlace.length} séance(s) à placer`, detail: 'Apparaîtront « à placer » dans le récapitulatif.', action: 'Voir le planning →', goto: ue.id });
+  const noCapacity = seqs.filter(s => !(s.capacityCodes || []).length);
+  if (noCapacity.length) gaps.push({ label: `${noCapacity.length} séquence(s) sans capacité déclarée`, detail: noCapacity.map(s => s.title || 'sans titre').join(', '), action: 'Les compléter →', goto: ue.id });
+  const noDeliverable = seqs.filter(s => !String(s.deliverables || '').trim());
+  if (noDeliverable.length) gaps.push({ label: `${noDeliverable.length} séquence(s) sans production attendue`, detail: noDeliverable.map(s => s.title || 'sans titre').join(', '), action: 'Les compléter →', goto: ue.id });
+  const bilanMissing = dossierSections.bilan && !String(ue.bilan || '').trim();
+  if (bilanMissing) gaps.push({ label: `Bilan de l'unité vide`, detail: 'La page sortira sans texte.', action: 'Le rédiger →', goto: ue.id });
+  const checks = [noObjectives, toPlace, noCapacity, noDeliverable, bilanMissing ? [1] : []];
+  const failed = checks.filter(a => a.length).length;
+  const percent = Math.round(((checks.length - failed) / checks.length) * 100);
+  return { percent, gaps };
+}
+
+function renderDossierAvantImprimer(ue, units) {
+  const total = units.length;
+  const countEl = $('#dossierPageCount');
+  if (countEl) countEl.textContent = ue ? `${total} page${total > 1 ? 's' : ''} · A4 portrait` : '';
+  const { percent, gaps } = dossierCompleteness(ue);
+  const barEl = $('#dossierCompleteness');
+  if (barEl) {
+    barEl.innerHTML = ue ? `
+      <p class="dossier-completeness-label">Le dossier est complet à ${percent} %</p>
+      <p class="meta tight">${gaps.length ? `${gaps.length} manque(s) repéré(s). Le dossier s'imprime quand même : les champs vides ne sortent pas.` : 'Aucun manque repéré.'}</p>
+      <div class="dossier-completeness-bar"><span style="width:${percent}%"></span></div>` : '';
+  }
+  const gapsEl = $('#dossierGaps');
+  if (gapsEl) {
+    gapsEl.innerHTML = gaps.map(g => `<div class="dossier-gap">
+      <p>${escapeHtml(g.label)}</p>
+      ${g.detail ? `<p class="meta tight">${escapeHtml(g.detail)}</p>` : ''}
+      <button type="button" class="link-button" data-dossier-gap-goto="${escapeAttr(g.goto || '')}">${escapeHtml(g.action || 'Voir →')}</button>
+    </div>`).join('');
+  }
+  const printBtn = $('#dossierPrintButton');
+  if (printBtn) printBtn.textContent = ue && total ? `Imprimer le dossier — ${total} page${total > 1 ? 's' : ''}` : 'Imprimer le dossier';
+  if (printBtn) printBtn.disabled = !ue || !total;
+  const pdfBtn = $('#dossierPdfButton');
+  if (pdfBtn) pdfBtn.disabled = !ue || !total;
+}
+
+function dossierOpenPrintWindow() {
+  const ue = findUe(dossierUeId);
+  if (!ue) return;
+  const units = dossierBuildUnits(ue, dossierSections);
+  if (!units.length) return;
+  const footerDate = !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = !!$('#dossierOptPageOf')?.checked;
+  const pagesHtml = dossierPagesHtml(ue, units, { footerDate, pageOf });
+  const win = window.open('', '_blank');
+  if (!win) { alert('Le navigateur a bloqué l’ouverture de la fenêtre d’impression. Autorisez les pop-ups pour ce site.'); return; }
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier — ${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</title><style>body{margin:0;background:#e9e6dc}${DOSSIER_PRINT_CSS}@media print{body{background:#fff}.dossier-page{border:none;margin:0}}</style></head><body>${pagesHtml}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+  win.document.close();
 }
 
 function bindEvents() {
@@ -4708,7 +5925,7 @@ function bindEvents() {
     selectedReferenceModule = btn.dataset.refModule;
     refReadSection = ''; // redémarre sur la 1re capacité du nouveau module
     const countEl = $('#refmodCount'); if (countEl) countEl.textContent = '';
-    const input = $('#referenceModuleSearch'); if (input) input.value = '';
+    const input = $('#rubanUnifiedSearch'); if (input) input.value = '';
     renderReferenceModule();
   }));
   // Barre latérale du référentiel : Général / une capacité / une annexe.
@@ -4723,24 +5940,166 @@ function bindEvents() {
     const seqBtn = event.target.closest('[data-edit-sequence]');
     if (seqBtn) openSequenceModal(findSequence(seqBtn.dataset.editSequence));
   });
-  // Recherche dans le module (débounce).
-  let refmodTimer;
-  $('#referenceModuleSearch')?.addEventListener('input', (event) => {
-    clearTimeout(refmodTimer);
+  // Recherche unifiée (écran 8) : débounce, routée selon le sous-onglet actif —
+  // « reference » cherche dans le module (refmodSearch), « repartition » filtre
+  // le Ruban/la Répartition (renderRuban) ; inerte ailleurs (champ désactivé par
+  // setRubanTab).
+  let rubanSearchTimer;
+  $('#rubanUnifiedSearch')?.addEventListener('input', (event) => {
+    clearTimeout(rubanSearchTimer);
     const value = event.target.value;
-    refmodTimer = setTimeout(() => refmodSearch(value), 180);
+    rubanSearchTimer = setTimeout(() => {
+      if (rubanTab === 'reference') refmodSearch(value);
+      else if (rubanTab === 'repartition') renderRuban();
+    }, 180);
   });
   $('#refmodExpand')?.addEventListener('click', refmodExpandAll);
   $('#refmodCollapse')?.addEventListener('click', refmodCollapseAll);
   mesurerBandeauCollant();
   $('#refmodClear')?.addEventListener('click', () => {
-    const input = $('#referenceModuleSearch'); if (input) input.value = '';
+    const input = $('#rubanUnifiedSearch'); if (input) input.value = '';
     refmodClearMarks();
     const countEl = $('#refmodCount'); if (countEl) countEl.textContent = '';
   });
 
+  // Écran 11 — Dossier
+  $('#dossierUeSelect')?.addEventListener('change', (event) => {
+    dossierUeId = event.target.value;
+    resetDossierSections(findUe(dossierUeId));
+    renderDossier();
+  });
+  $('#dossierSectionsList')?.addEventListener('change', (event) => {
+    const mainKey = event.target.dataset.dossierSection;
+    if (mainKey) {
+      if (mainKey === 'garde' || mainKey === 'vigilance') { event.target.checked = mainKey === 'garde'; return; }
+      dossierSections[mainKey] = event.target.checked;
+      renderDossier();
+      return;
+    }
+    const subKey = event.target.dataset.dossierSubsection;
+    if (!subKey) return;
+    if (subKey.startsWith('seq:')) {
+      const id = subKey.slice(4);
+      if (event.target.checked) dossierSections.sequenceIds.add(id); else dossierSections.sequenceIds.delete(id);
+    } else {
+      dossierSections[subKey] = event.target.checked;
+    }
+    renderDossier();
+  });
+  // Capture:true — un <textarea> ne fait pas remonter « blur » en bulle.
+  $('#dossierSectionsList')?.addEventListener('blur', (event) => {
+    if (event.target?.id !== 'dossierBilanText') return;
+    const ue = findUe(dossierUeId);
+    if (!ue) return;
+    const value = event.target.value;
+    if ((ue.bilan || '') === value) return;
+    ue.bilan = value;
+    saveData('Bilan de l’unité enregistré');
+  }, true);
+  $$('[data-dossier-view]').forEach(btn => btn.addEventListener('click', () => {
+    dossierViewMode = btn.dataset.dossierView;
+    $$('[data-dossier-view]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
+    const grille = $('#dossierPreviewGrille'), lecture = $('#dossierPreviewLecture');
+    if (grille) grille.hidden = dossierViewMode !== 'grille';
+    if (lecture) lecture.hidden = dossierViewMode !== 'lecture';
+  }));
+  $('#dossierOptFooterDate')?.addEventListener('change', renderDossier);
+  $('#dossierOptPageOf')?.addEventListener('change', renderDossier);
+  $('#dossierGaps')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-dossier-gap-goto]');
+    if (!btn?.dataset.dossierGapGoto) return;
+    designSelectedUeId = btn.dataset.dossierGapGoto;
+    $('.tab[data-view="design"]')?.click();
+    renderDesign();
+  });
+  $('#dossierPrintButton')?.addEventListener('click', dossierOpenPrintWindow);
+  $('#dossierPdfButton')?.addEventListener('click', dossierOpenPrintWindow);
+
+  // Écran 13 — Ordre de mission (atteint depuis une ligne Urgences, pas un onglet).
+  document.body.addEventListener('click', (event) => {
+    const open = event.target.closest('[data-open-mission]');
+    if (!open) return;
+    const [kind, id] = open.dataset.openMission.split(':');
+    openMissionView(kind, id);
+  });
+  // Bouton × d'une ligne Urgences « fait » : retire la ligne de l'affichage
+  // sans toucher à la donnée sous-jacente (roomBooked/vehicleBooked/ordreMission
+  // restent tels quels) — un clic accidentel sur « Réserver »/« Envoyer » reste
+  // récupérable en éditant la séance/réunion, et le retrait de la liste est un
+  // choix distinct, explicite, de l'utilisateur.
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-dismiss-urgence]');
+    if (!btn) return;
+    const [kind, source, id] = btn.dataset.dismissUrgence.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    if (kind === 'vehicule') entity.vehicleBookedDismissed = true;
+    else if (kind === 'salle') entity.roomBookedDismissed = true;
+    else if (kind === 'mission') entity.missionDismissed = true;
+    saveData('Ligne retirée des urgences');
+  });
+  $('#missionBackButton')?.addEventListener('click', closeMissionView);
+  // Un seul écouteur « change » (pas blur) pour tous les champs du document :
+  // évite le double déclenchement blur+change sur les <input type="date">.
+  $('#missionDocument')?.addEventListener('change', (event) => {
+    const el = event.target.closest('[data-mission-field]');
+    if (!el) return;
+    const estCase = el.tagName === 'INPUT' && el.type === 'checkbox';
+    missionSetField(el.dataset.missionField, estCase ? el.checked : el.value);
+    saveData('Ordre de mission enregistré');
+  });
+  $('#missionDocument')?.addEventListener('click', (event) => {
+    if (event.target.closest('#missionAddAccompagnant')) {
+      const entity = missionEntity(); if (!entity) return;
+      ensureMissionDetail(entity).accompagnants.push({ nom: '', fonction: '' });
+      renderMissionView();
+      return;
+    }
+    const remove = event.target.closest('[data-mission-remove-accompagnant]');
+    if (remove) {
+      const entity = missionEntity(); if (!entity) return;
+      const detail = ensureMissionDetail(entity);
+      detail.accompagnants.splice(Number(remove.dataset.missionRemoveAccompagnant), 1);
+      renderMissionView();
+      saveData('Ordre de mission enregistré');
+      return;
+    }
+    if (event.target.closest('#missionSignatureUpload')) {
+      $('#missionSignatureFile')?.click();
+      return;
+    }
+  });
+  $('#missionDocument')?.addEventListener('change', (event) => {
+    if (event.target.id !== 'missionSignatureFile') return;
+    const file = event.target.files?.[0];
+    if (file) missionUploaderSignature(file);
+  });
+  $('#missionAddDestinataire')?.addEventListener('click', () => {
+    const entity = missionEntity(); if (!entity) return;
+    const email = window.prompt('Adresse e-mail à ajouter :', '');
+    if (!email || !email.trim()) return;
+    const detail = ensureMissionDetail(entity);
+    detail.destinataires.push(email.trim());
+    memoriserMissionDestinataires(detail.destinataires);
+    renderMissionView();
+  });
+  $('#missionDestinatairesList')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-mission-remove-destinataire]');
+    if (!btn) return;
+    const entity = missionEntity(); if (!entity) return;
+    const detail = ensureMissionDetail(entity);
+    detail.destinataires.splice(Number(btn.dataset.missionRemoveDestinataire), 1);
+    memoriserMissionDestinataires(detail.destinataires);
+    renderMissionView();
+  });
+  $('#missionPdfButton')?.addEventListener('click', missionOpenPrintWindow);
+  $('#missionSendButton')?.addEventListener('click', missionSendMail);
+  missionChargerSignature();
+
   // Ruban pédagogique
   $$('[data-ruban-mode]').forEach(btn => btn.addEventListener('click', () => setRubanMode(btn.dataset.rubanMode)));
+  // Écran 8 — sous-onglets Référentiel & Ruban.
+  $$('[data-ruban-tab]').forEach(btn => btn.addEventListener('click', () => setRubanTab(btn.dataset.rubanTab)));
 
   // Créneaux de cours type
   $$('[data-creneaux-period]').forEach(btn => btn.addEventListener('click', () => {
@@ -4794,9 +6153,55 @@ function bindEvents() {
   $('#templateColor')?.addEventListener('input', (e) => { e.target.dataset.custom = '1'; });
   $('#rubanTeacherFilter')?.addEventListener('change', e => { rubanTeacher = e.target.value; renderRuban(); });
   $('#repartitionMineToggle')?.addEventListener('change', () => renderRuban());
-  let rubanTimer;
-  $('#rubanSearch')?.addEventListener('input', () => { clearTimeout(rubanTimer); rubanTimer = setTimeout(renderRuban, 160); });
-  $('#rubanPdfSelect')?.addEventListener('change', () => renderRubanPdf());
+
+  // Écran 8 — Planning étudiant.
+  $$('#rubanTabEtudiant [data-student-promo]').forEach(btn => btn.addEventListener('click', () => {
+    studentPlanningPromo = btn.dataset.studentPromo;
+    renderStudentPlanning();
+  }));
+  $('#studentMineToggle')?.addEventListener('change', () => renderStudentPlanning());
+  $('#studentPlanningGrid')?.addEventListener('click', (event) => {
+    const del = event.target.closest('[data-del-student-slot]');
+    if (del) {
+      event.stopPropagation();
+      if (!confirm('Supprimer ce cours ?')) return;
+      state.studentWeekTemplate = state.studentWeekTemplate.filter(t => t.id !== del.dataset.delStudentSlot);
+      saveData('Cours (planning étudiant) supprimé');
+      return;
+    }
+    const edit = event.target.closest('[data-edit-student-slot]');
+    if (edit) return openStudentSlotModal(findStudentSlot(edit.dataset.editStudentSlot));
+    const create = event.target.closest('[data-create-student-slot]');
+    if (create) return openStudentSlotModal(null, JSON.parse(create.dataset.createStudentSlot));
+  });
+  $('#studentSlotForm')?.addEventListener('submit', saveStudentSlot);
+  $('#studentSlotUe')?.addEventListener('change', () => {
+    toggleStudentSlotFreeCode();
+    const ueId = $('#studentSlotUe').value;
+    if (ueId && ueId !== '__free__') {
+      const colorEl = $('#studentSlotColorInput');
+      if (colorEl && colorEl.dataset.custom !== '1') {
+        colorEl.value = ueColor(ueId);
+        syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+      }
+    }
+  });
+  $('#cancelStudentSlotButton')?.addEventListener('click', () => $('#studentSlotDialog')?.close());
+  $('#closeStudentSlotModal')?.addEventListener('click', () => $('#studentSlotDialog')?.close());
+  $('#deleteStudentSlotButton')?.addEventListener('click', deleteStudentSlot);
+  $('#studentSlotColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  });
+  $('#studentSlotColorAuto')?.addEventListener('click', () => {
+    const el = $('#studentSlotColorInput');
+    if (!el) return;
+    el.dataset.custom = '0';
+    const ueId = $('#studentSlotUe').value;
+    el.value = (ueId && ueId !== '__free__') ? ueColor(ueId) : '#9aa0ad';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  });
+
   /* Clics Ruban : ✎ (composition d'UE), ↺ (rétablir une UE), capacité (→ référentiel).
      Écouteur limité à la vue Ruban, et non posé sur <body> : `data-edit-ue` sert
      AUSSI dans la Conception pédagogique depuis le lot C, où le corps de carte le
@@ -5024,6 +6429,11 @@ function bindEvents() {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
+      // Une ligne Urgences porte maintenant data-edit-session/-reunion sur
+      // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
+      // réservation, le lien « Éditer » (ordre de mission) et le × gardent
+      // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss')) return;
       const ouvrir = event.target.closest('[data-ouvrir]');
       if (ouvrir) {
         // « Séances pas encore placées » n'est plus un <details> repliable
@@ -5049,7 +6459,8 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss')) return;
+      const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
       carte.click();
@@ -5255,44 +6666,58 @@ function bindEvents() {
     $('#sequencePromotion').value = ue.promotion;
     $('#sequenceSemester').value = ue.semester;
     renderSequenceCapacityChoices([], ue);
-    refreshSequencePeriodDates('', ue);
   });
   $('#ueCode').addEventListener('input', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || { code: $('#ueCode').value, capacities: [] }));
   $('#uePromotion').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
   $('#ueSemester').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
-  $('#sequencePromotion')?.addEventListener('change', () => refreshSequencePeriodDates($('#sequenceWeeks')?.value || '', findUe($('#sequenceUe')?.value)));
-  $('#sequenceCalendar')?.addEventListener('click', (event) => {
-    const nav = event.target.closest('[data-seqcal-nav]');
-    if (nav) { if (!nav.disabled) moveSequenceCalendarMonth(nav.dataset.seqcalNav === 'next' ? 1 : -1); return; }
-    const btn = event.target.closest('[data-seqpick-week]');
+  ['#sequenceWeekStart', '#sequenceWeekEnd'].forEach(sel => $(sel)?.addEventListener('input', syncSequenceWeeksField));
+  $('#sequenceHoursMinus')?.addEventListener('click', () => {
+    const input = $('#sequenceHours');
+    input.value = String(Math.max(0, (parseInt(input.value, 10) || 0) - 1));
+  });
+  $('#sequenceHoursPlus')?.addEventListener('click', () => {
+    const input = $('#sequenceHours');
+    input.value = String((parseInt(input.value, 10) || 0) + 1);
+  });
+  $('#sequenceAssessmentTypeButtons')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-assessment-type]');
     if (!btn) return;
-    const key = btn.dataset.seqpickWeek; // clé lundi (AAAA-MM-JJ)
-    const startEl = $('#sequenceStartDate');
-    const endEl = $('#sequenceEndDate');
-    if (!startEl || !endEl) return;
-    const toKey = iso => { const d = parseIsoDate(iso); return d ? isoKey(mondayOf(d)) : ''; };
-    const s = toKey(startEl.value);
-    const e = toKey(endEl.value);
-    if (!s || (s && e)) { startEl.value = key; endEl.value = ''; }          // (re)commence une plage
-    else if (key < s) { endEl.value = startEl.value; startEl.value = key; } // clic avant le début → on inverse
-    else { endEl.value = key; }
-    syncSequenceWeeksField();
-    renderSequenceCalendar();
+    $$('#sequenceAssessmentTypeButtons button').forEach(b => b.classList.toggle('active', b === btn));
+    $('#sequenceAssessmentType').value = btn.dataset.assessmentType;
   });
   $('#sequenceCapacityChoices')?.addEventListener('change', () => updateSequenceCapacityDetails());
-  $('#sessionPlacementStatus').addEventListener('change', applySessionPlacementVisibility);
-  // Lot S(a) — la « Durée prévue » pilote la fin standard (donc la hauteur du bloc
-  // dans le Planning hebdo) : changer le nombre d'heures d'une séance déjà placée
-  // recalcule la fin → le rowspan s'actualise à l'enregistrement. La fin reste
-  // ajustable ensuite à la main. Ne s'active que sur interaction (pas à l'ouverture
-  // de la modale, qui pose les valeurs sans déclencher d'événement).
-  const syncSessionEndFromDuration = () => {
-    const duration = $('#sessionExpectedDuration').value.trim();
-    if (!duration) return; // aucune durée saisie : ne pas toucher à la fin choisie
-    $('#sessionEnd').value = String(inferEndSlot(Number($('#sessionStart').value), duration));
-  };
-  $('#sessionExpectedDuration').addEventListener('input', syncSessionEndFromDuration);
-  $('#sessionStart').addEventListener('change', syncSessionEndFromDuration);
+  // Écran 12 — sélecteur de créneaux libres de la modale séance.
+  $('#sessionSlotWeekPrev')?.addEventListener('click', () => {
+    const idx = state.weeks.findIndex(w => w.id === sessionSlotPickerWeekId);
+    if (idx > 0) { sessionSlotPickerWeekId = state.weeks[idx - 1].id; renderSessionSlotPicker(); }
+  });
+  $('#sessionSlotWeekNext')?.addEventListener('click', () => {
+    const idx = state.weeks.findIndex(w => w.id === sessionSlotPickerWeekId);
+    if (idx >= 0 && idx < state.weeks.length - 1) { sessionSlotPickerWeekId = state.weeks[idx + 1].id; renderSessionSlotPicker(); }
+  });
+  $('#sessionSlotOptions')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('.slot-option');
+    if (!btn) return;
+    sessionSlotChoice = { type: 'slot', day: Number(btn.dataset.slotDay), slotIndex: Number(btn.dataset.slotIndex) };
+    syncSessionSlotPickerActive();
+  });
+  $$('.slot-picker-options-fixed .slot-option').forEach(btn => btn.addEventListener('click', () => {
+    sessionSlotChoice = { type: btn.dataset.slotChoice };
+    syncSessionSlotPickerActive();
+  }));
+  $('#sessionPromotion')?.addEventListener('change', renderSessionSlotPicker);
+  $('#sessionNoSequence')?.addEventListener('change', (event) => {
+    const seqSelect = $('#sessionSequence');
+    if (!seqSelect) return;
+    if (event.target.checked) {
+      seqSelect.dataset.prev = seqSelect.value;
+      seqSelect.value = '';
+      seqSelect.disabled = true;
+    } else {
+      seqSelect.disabled = false;
+      if (seqSelect.dataset.prev) seqSelect.value = seqSelect.dataset.prev;
+    }
+  });
   /* Lot G — changer d'UE vidait les capacités cochées EN SILENCE. Remettre à
      zéro est juste (les codes de l'ancienne UE n'existent pas dans la nouvelle),
      mais le faire sans un mot se lit comme une perte de saisie — même leçon
@@ -5372,6 +6797,10 @@ function confirmCloseModal(dialog) {
 }
 
 function bindModalActions() {
+  // Écran 12 — grille de 12 teintes, une fois pour chaque modale (statique).
+  renderColorSwatchGrid('#sequenceColorSwatches', '#sequenceColorInput');
+  renderColorSwatchGrid('#sessionColorSwatches', '#sessionColorInput');
+  renderColorSwatchGrid('#studentSlotColorSwatches', '#studentSlotColorInput');
   $('#ueForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = $('#ueId').value || uid('ue');
@@ -5430,7 +6859,7 @@ function bindModalActions() {
       semester: $('#sequenceSemester').value || findUe($('#sequenceUe').value)?.semester || '',
       targetWeeks: getSequencePeriodValue(),
       periodNote: $('#sequencePeriodNote').value.trim(),
-      hoursEstimate: $('#sequenceHours').value.trim(),
+      hoursEstimate: $('#sequenceHours').value.trim() ? `${$('#sequenceHours').value.trim()} h` : '',
       sequenceType: existingSeqType,
       status: existingSeqStatus,
       color: getSequenceColorFieldValue(),
@@ -5443,6 +6872,7 @@ function bindModalActions() {
       keywords: $('#sequenceKeywords').value.trim(),
       teachingMethods: $('#sequenceTeachingMethods').value.trim(),
       differentiation: $('#sequenceDifferentiation').value.trim(),
+      assessmentType: $('#sequenceAssessmentType').value,
       assessment: $('#sequenceAssessment').value.trim(),
       resources: $('#sequenceResources').value.trim(),
       deliverables: $('#sequenceDeliverables').value.trim(),
@@ -5472,22 +6902,42 @@ function bindModalActions() {
   $('#closeSequenceModal').addEventListener('click', () => confirmCloseModal($('#sequenceDialog')));
   // Lot L — sélecteur de couleur de séquence : toute modification manuelle = couleur
   // « choisie » ; le bouton Auto revient à la couleur automatique (dérivée de l'UE).
-  $('#sequenceColorInput')?.addEventListener('input', (event) => { event.target.dataset.custom = '1'; });
+  $('#sequenceColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
+  });
   $('#sequenceColorAuto')?.addEventListener('click', () => {
     const el = $('#sequenceColorInput');
     if (!el) return;
     el.dataset.custom = '0';
     const seq = state.sequences.find(s => s.id === $('#sequenceId').value);
     el.value = computedSequenceColor(seq ? { ...seq, color: '' } : { ueId: $('#sequenceUe').value, id: '__new' });
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
   });
 
   $('#sessionForm').addEventListener('submit', async (event) => {
     event.preventDefault();
+    const isNewSession = !$('#sessionId').value;
     const id = $('#sessionId').value || uid('session');
-    const startSlot = Number($('#sessionStart').value);
-    const endSlot = Number($('#sessionEnd').value);
-    const placementStatus = $('#sessionPlacementStatus').value;
-    const selectedSessionWeek = $('#sessionWeek').value;
+    const existingSession = findSession(id);
+    // Écran 12 — le créneau vient du sélecteur (sessionSlotChoice), plus des
+    // anciens champs jour/début/fin/semaine/statut saisis à la main.
+    let day = 0, startSlot = 0, endSlot = 0, placementStatus = 'fictif', selectedSessionWeek = '', customStart = '', customEnd = '';
+    if (sessionSlotChoice?.type === 'slot') {
+      day = sessionSlotChoice.day;
+      startSlot = sessionSlotChoice.slotIndex;
+      endSlot = sessionSlotChoice.slotIndex;
+      placementStatus = 'definitif';
+      selectedSessionWeek = sessionSlotPickerWeekId;
+    } else if (sessionSlotChoice?.type === 'other') {
+      day = Number($('#sessionDay').value || 0);
+      startSlot = Number($('#sessionStart').value || 0);
+      endSlot = Number($('#sessionEnd').value || 0);
+      placementStatus = 'definitif';
+      selectedSessionWeek = sessionSlotPickerWeekId;
+      customStart = $('#sessionCustomStart').value.trim();
+      customEnd = $('#sessionCustomEnd').value.trim();
+    } // sessionSlotChoice null ou {type:'none'} → séance non placée (backlog)
     // Lot K — le rattachement est SOIT une séquence, SOIT une semaine thématique
     // (valeur « eil:<id> » → constraintId). Jamais les deux.
     const rattVal = $('#sessionSequence').value;
@@ -5495,13 +6945,19 @@ function bindModalActions() {
     const sessionDemiGroupe = $('#sessionDemiGroupe')?.value || ''; // Lot V — champ « Groupe » unifié
     // roomBooked se coche depuis l'encart « Salles à réserver » du tableau de
     // bord, jamais dans ce formulaire : on le préserve tel quel à l'édition.
-    const existingRoomBooked = findSession(id)?.roomBooked || false;
+    const existingRoomBooked = existingSession?.roomBooked || false;
     // Lot C-bis — le champ « Statut pédagogique » a quitté la modale : il était
     // saisi mais affiché NULLE PART (seul un export le sortait), pendant que la
     // pastille de la tuile montre le PLACEMENT, qui est autre chose. La donnée
     // déjà saisie est conservée telle quelle — on ne l'écrase pas au premier
     // enregistrement qui suit. Même motif que roomBooked ci-dessus.
-    const existingStatus = findSession(id)?.status || 'Prévue';
+    const existingStatus = existingSession?.status || 'Prévue';
+    // Écran 12 — expectedDuration/order/fictiveSlot/fictiveDay pilotent le
+    // classement et l'auto-placement du backlog (voir dashboard, drag&drop)
+    // mais n'ont plus de champ dans ce formulaire : préservés tels quels à
+    // l'édition (même motif que roomBooked/status ci-dessus) ; une NOUVELLE
+    // séance sans date reçoit juste un `order` (tri par date de création),
+    // le reste retombe sur les replis déjà gérés en aval (« à préciser »).
     const session = {
       id,
       title: $('#sessionTitle').value.trim(),
@@ -5512,17 +6968,17 @@ function bindModalActions() {
       placementStatus,
       targetWeekId: selectedSessionWeek,
       weekId: placementStatus === 'definitif' ? selectedSessionWeek : '',
-      day: Number($('#sessionDay').value),
+      day,
       startSlot: Math.min(startSlot, endSlot),
       endSlot: Math.max(startSlot, endSlot),
-      expectedDuration: $('#sessionExpectedDuration').value.trim(),
-      order: $('#sessionOrder').value.trim(),
-      fictiveSlot: $('#sessionFictiveSlot').value.trim(),
-      fictiveDay: $('#sessionFictiveDay').value,
-      exactDate: $('#sessionExactDate').value.trim(),
-      customStart: $('#sessionCustomStart').value.trim(),
-      customEnd: $('#sessionCustomEnd').value.trim(),
-      capacityCodes: selectedCheckboxValues('#sessionCapacityChoices'),
+      expectedDuration: existingSession?.expectedDuration || '',
+      order: existingSession?.order || (isNewSession ? Date.now() : ''),
+      fictiveSlot: existingSession?.fictiveSlot || '',
+      fictiveDay: existingSession?.fictiveDay ?? '',
+      exactDate: existingSession?.exactDate || '',
+      customStart,
+      customEnd,
+      capacityCodes: existingSession?.capacityCodes || [],
       type: $('#sessionType').value,
       color: getSessionColorFieldValue(),
       demiGroupe: sessionDemiGroupe, // Lot V — '' | 'A' | 'B'
@@ -5537,8 +6993,8 @@ function bindModalActions() {
       activities: $('#sessionActivities').value.trim(),
       notions: $('#sessionNotions').value.trim(),
       materials: $('#sessionMaterials').value.trim(),
-      assessment: $('#sessionAssessment').value.trim(),
-      homework: $('#sessionHomework').value.trim(),
+      assessment: existingSession?.assessment || '',
+      homework: existingSession?.homework || '',
       differentiation: $('#sessionDifferentiation').value.trim(),
       notes: $('#sessionNotes').value.trim(),
       // Lot B — normalizeDeplacementFields borne les deux cases à leur branche et
@@ -5568,7 +7024,22 @@ function bindModalActions() {
     // Seul le véhicule PERSONNEL ouvre des frais. Le véhicule de l'établissement
     // se réserve et s'arrête là : ni ordre de mission, ni remboursement.
     if (session.deplacement === 'personnel') ensureDeplacementForSession(session);
-    $('#sessionDialog').close();
+    // Écran 12 — « Créer et enchaîner » : rouvre un formulaire de création
+    // vierge (nom + créneau) en gardant séquence/type/enseignants/promotion.
+    if (sessionChainRequested) {
+      sessionChainRequested = false;
+      $('#sessionId').value = '';
+      $('#sessionTitle').value = '';
+      $('#sessionModalTitle').textContent = 'Créer une séance';
+      $('#deleteSessionButton').hidden = true;
+      const dupBtn = $('#duplicateSessionButton'); if (dupBtn) dupBtn.hidden = true;
+      sessionSlotChoice = null;
+      renderSessionSlotPicker();
+      $('#sessionDialog')._dirty = false;
+      $('#sessionTitle').focus();
+    } else {
+      $('#sessionDialog').close();
+    }
     await saveData('Séance enregistrée');
   });
   $('#deleteSessionButton').addEventListener('click', async () => {
@@ -5588,19 +7059,27 @@ function bindModalActions() {
     $('#sessionDialog').close();
     await duplicateSession(source);
   });
+  $('#chainSessionButton')?.addEventListener('click', () => {
+    sessionChainRequested = true;
+    $('#sessionForm').requestSubmit();
+  });
   // Lot B — changer de mode de déplacement change la suite à afficher.
   $('#sessionDeplacement')?.addEventListener('change', () => syncDeplacementFields('session'));
   $('#reunionDeplacement')?.addEventListener('change', () => syncDeplacementFields('reunion'));
 
   // Lot L — couleur propre d'une séance : modification manuelle = couleur choisie ;
   // Auto = couleur héritée (séquence si rattachée, sinon UE).
-  $('#sessionColorInput')?.addEventListener('input', (event) => { event.target.dataset.custom = '1'; });
+  $('#sessionColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
+  });
   $('#sessionColorAuto')?.addEventListener('click', () => {
     const el = $('#sessionColorInput');
     if (!el) return;
     el.dataset.custom = '0';
     const seqId = $('#sessionSequence').value;
     el.value = seqId ? sequenceColor(seqId) : ueColor($('#sessionUe').value);
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
   });
   // Pré-remplissage discret : passer le type en « Cours en salle informatique »
   // suggère la salle à réserver, sans jamais écraser un choix déjà fait.
@@ -5627,16 +7106,29 @@ function bindModalActions() {
      ligne qui dit dans quel champ écrire, plus le seul identifiant de séance. */
   $('#urgencesList')?.addEventListener('change', (event) => {
     const cb = event.target.closest('[data-reservation-id]');
-    if (!cb) return;
-    const { reservationKind, reservationSource, reservationId } = cb.dataset;
-    const entity = reservationSource === 'reunion'
-      ? (state.reunions || []).find(r => r.id === reservationId)
-      : findSession(reservationId);
+    if (cb) {
+      const { reservationKind, reservationSource, reservationId } = cb.dataset;
+      const entity = reservationSource === 'reunion'
+        ? (state.reunions || []).find(r => r.id === reservationId)
+        : findSession(reservationId);
+      if (!entity) return;
+      if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
+      else entity.roomBooked = cb.checked;
+      const quoi = reservationKind === 'vehicule' ? 'Véhicule' : 'Salle';
+      saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
+      return;
+    }
+    // Case « Fait » d'un ordre de mission : décocher revient directement à
+    // « à faire » (retour arrière facile, symétrique du toggle salle/véhicule
+    // ci-dessus), sans passer par la case du formulaire de la séance/réunion.
+    const mb = event.target.closest('[data-mission-toggle]');
+    if (!mb) return;
+    const [source, id] = mb.dataset.missionToggle.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
     if (!entity) return;
-    if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
-    else entity.roomBooked = cb.checked;
-    const quoi = reservationKind === 'vehicule' ? 'Véhicule' : 'Salle';
-    saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
+    entity.ordreMission = mb.checked;
+    if (!mb.checked && entity.missionDetail) entity.missionDetail.envoyeAt = null;
+    saveData(mb.checked ? 'Ordre de mission marqué fait' : 'Ordre de mission remis à faire');
   });
   const openDeplacementFromEvent = (event) => {
     const el = event.target.closest('[data-edit-deplacement]');
@@ -5880,111 +7372,18 @@ function weekForIsoDate(iso) {
   return prior || weeks[0] || null;
 }
 
-/* D3 / D3-bis — la période de séquence se saisit dans le calendrier maison (à n°
-   de semaine). On pré-remplit les bornes (lundi ISO début/fin, champs cachés)
-   depuis targetWeeks — sur toute l'année de la promo, pour couvrir les UE à cheval
-   S3/S4 — puis on (re)dessine le calendrier en sélection de plage. */
-function refreshSequencePeriodDates(targetWeeks = '', ue = null) {
-  const startInput = $('#sequenceStartDate');
-  const endInput = $('#sequenceEndDate');
-  if (!startInput || !endInput) return;
-  const resolvedUe = ue || findUe($('#sequenceUe')?.value);
-  const semester = resolvedUe?.semester || $('#sequenceSemester')?.value || 'Semestre 1';
-  if ($('#sequenceSemester')) $('#sequenceSemester').value = semester;
-  const weeks = weeksForSemesterSpan(semester);
-  const ranges = parseWeekRanges(targetWeeks);
-  const firstRange = ranges[0] || {};
-  const startWeek = firstRange.start ? weeks.find(w => weekNumberOf(w) === Number(firstRange.start)) : null;
-  const endWeek = firstRange.end ? weeks.find(w => weekNumberOf(w) === Number(firstRange.end)) : startWeek;
-  startInput.value = startWeek ? isoOf(weekDateRange(startWeek)[0]) : '';
-  endInput.value = endWeek ? isoOf(weekDateRange(endWeek)[0]) : (startInput.value || '');
-  seqCalMonthKey = null; // recentre le calendrier sur la période sélectionnée
-  syncSequenceWeeksField();
-  renderSequenceCalendar();
-}
-
-/* D3-bis Étape 2 — calendrier maison (à n° de semaine) intégré à la modale
-   séquence, en sélection de PLAGE : 1er clic = semaine de début, 2e = semaine de
-   fin (surlignage). Semaines cliquables = toute l'année de la promo (paire de
-   semestres), pour couvrir les UE à cheval et les EIL hors semestre nominal. */
-function renderSequenceCalendar() {
-  const container = $('#sequenceCalendar');
-  if (!container) return;
-  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
-  const weeks = weeksForSemesterSpan(semester);
-  const mondayToWeek = new Map();
-  let minDate = null, maxDate = null;
-  weeks.forEach(w => {
-    const [s, e] = weekDateRange(w);
-    if (!s) return;
-    mondayToWeek.set(isoKey(s), w.id);
-    if (!minDate || s < minDate) minDate = s;
-    if (!maxDate || (e || s) > maxDate) maxDate = e || s;
-  });
-  if (!minDate) { container.innerHTML = '<p class="meta">Aucune semaine disponible.</p>'; return; }
-
-  const startIso = $('#sequenceStartDate')?.value || '';
-  const endIso = $('#sequenceEndDate')?.value || '';
-  const toKey = iso => { const d = parseIsoDate(iso); return d ? isoKey(mondayOf(d)) : ''; };
-  const startKey = toKey(startIso);
-  const endKey = toKey(endIso);
-
-  const firstMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-  const lastMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-  const clampMonth = (d) => new Date(Math.min(Math.max(d.getTime(), firstMonth.getTime()), lastMonth.getTime()));
-  let shown;
-  if (seqCalMonthKey) {
-    const [y, m] = seqCalMonthKey.split('-').map(Number);
-    shown = new Date(y, m - 1, 1);
-  } else {
-    const base = parseIsoDate(startIso) || minDate;
-    shown = new Date(base.getFullYear(), base.getMonth(), 1);
-  }
-  shown = clampMonth(shown);
-  const atFirst = shown.getTime() <= firstMonth.getTime();
-  const atLast = shown.getTime() >= lastMonth.getTime();
-  const monthLabel = shown.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-  const header = `<div class="week-cal-header">
-    <button type="button" class="week-cal-nav" data-seqcal-nav="prev"${atFirst ? ' disabled' : ''} aria-label="Mois précédent">‹</button>
-    <div class="week-cal-monthlabel">${escapeHtml(monthLabel)}</div>
-    <button type="button" class="week-cal-nav" data-seqcal-nav="next"${atLast ? ' disabled' : ''} aria-label="Mois suivant">›</button>
-  </div>`;
-  const grid = renderCalendarMonth(shown, mondayToWeek, { start: startKey, end: endKey }, false, { pickAttr: 'seqpick-week' });
-  let hint;
-  if (startKey && endKey) hint = 'Plage définie — recliquez une semaine pour repartir d’un nouveau début.';
-  else if (startKey) hint = 'Cliquez la semaine de fin (ou la même pour une seule semaine).';
-  else hint = 'Cliquez la semaine de début.';
-  container.innerHTML = `<div class="week-cal-compact seq-cal">${header}${grid}<p class="week-cal-hint">${hint}</p></div>`;
-}
-
-/* Décale le mois affiché dans le calendrier de la modale séquence. */
-function moveSequenceCalendarMonth(offset) {
-  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
-  const weeks = weeksForSemesterSpan(semester);
-  let base;
-  if (seqCalMonthKey) {
-    const [y, m] = seqCalMonthKey.split('-').map(Number);
-    base = new Date(y, m - 1, 1);
-  } else {
-    const d = parseIsoDate($('#sequenceStartDate')?.value || '') || (weeks[0] ? weekDateRange(weeks[0])[0] : new Date());
-    base = new Date(d.getFullYear(), d.getMonth(), 1);
-  }
-  base.setMonth(base.getMonth() + offset);
-  seqCalMonthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
-  renderSequenceCalendar();
-}
-
+/* Écran 12 — semaines de séquence saisies directement dans #sequenceWeekStart/
+   #sequenceWeekEnd (« S45 » → « S46 »), plus de calendrier (REGLES.md #22).
+   Même format `targetWeeks` (« S45-S46 ») qu'avant : aucun autre écran à
+   toucher (Progression, Ruban, exports le consomment tel quel). */
 function getSequencePeriodValue() {
-  const startIso = $('#sequenceStartDate')?.value || '';
-  const endIso = $('#sequenceEndDate')?.value || '';
-  if (!startIso && !endIso) return ($('#sequenceWeeks')?.value || '').trim();
-  const sN = startIso ? weekNumberOf(weekForIsoDate(startIso) || {}) : 0;
-  const eN = endIso ? weekNumberOf(weekForIsoDate(endIso) || {}) : 0;
+  const numFrom = (v) => { const m = /\d{1,2}/.exec(v || ''); return m ? Number(m[0]) : null; };
+  const s = numFrom($('#sequenceWeekStart')?.value);
+  const e = numFrom($('#sequenceWeekEnd')?.value);
   const fmt = n => `S${String(n).padStart(2, '0')}`;
-  if (sN && !eN) return fmt(sN);
-  if (!sN && eN) return fmt(eN);
-  if (sN && eN) return sN === eN ? fmt(sN) : `${fmt(sN)}-${fmt(eN)}`;
+  if (s != null && e != null) return s === e ? fmt(s) : `${fmt(s)}-${fmt(e)}`;
+  if (s != null) return fmt(s);
+  if (e != null) return fmt(e);
   return ($('#sequenceWeeks')?.value || '').trim();
 }
 
@@ -5994,50 +7393,6 @@ function syncSequenceWeeksField() {
   if (target) target.value = value;
   const hint = $('#sequencePeriodWeeks');
   if (hint) hint.textContent = value ? `Semaines couvertes : ${value.replace('-', ' → ')}` : '';
-}
-
-function renderSequenceWeekPicker(selectedWeeksText = '') {
-  const container = $('#sequenceWeekPicker');
-  if (!container || !state) return;
-  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
-  const promotion = $('#sequencePromotion')?.value || '';
-  const weeks = weeksForSemester(semester);
-  const selectedNumbers = new Set(parseWeekRanges(selectedWeeksText).flatMap(range => {
-    const nums = [];
-    weeks.forEach(w => { const n = weekNumberOf(w); if (rangeIncludesWeek(range, n)) nums.push(n); });
-    return nums;
-  }));
-  container.innerHTML = weeks.map(w => {
-    const n = weekNumberOf(w);
-    const checked = selectedNumbers.has(n);
-    const constraints = constraintsForWeek(w, promotion);
-    return `<label class="week-chip ${checked ? 'selected' : ''} ${constraints.length ? 'has-constraint' : ''}" title="${escapeAttr(w.dateRange)}${constraints.length ? ' · ' + escapeAttr(constraints.map(c => c.label).join(', ')) : ''}"><input type="checkbox" value="${n}" ${checked ? 'checked' : ''}><span>${escapeHtml(w.label)}</span><small>${escapeHtml(compactDateRange(w.dateRange))}</small></label>`;
-  }).join('');
-  updateSequenceWeeksFromPicker(false);
-}
-
-function updateSequenceWeeksFromPicker(updateClasses = true) {
-  const inputs = $$('#sequenceWeekPicker input[type="checkbox"]');
-  const selected = inputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => a - b);
-  const target = $('#sequenceWeeks');
-  if (target) target.value = compressWeekNumbers(selected);
-  if (updateClasses) inputs.forEach(input => input.closest('.week-chip')?.classList.toggle('selected', input.checked));
-}
-
-function compressWeekNumbers(numbers = []) {
-  if (!numbers.length) return '';
-  const unique = [...new Set(numbers)].sort((a, b) => a - b);
-  const ranges = [];
-  let start = unique[0];
-  let prev = unique[0];
-  for (let i = 1; i <= unique.length; i += 1) {
-    const current = unique[i];
-    if (current === prev + 1) { prev = current; continue; }
-    ranges.push(start === prev ? `S${String(start).padStart(2, '0')}` : `S${String(start).padStart(2, '0')}-S${String(prev).padStart(2, '0')}`);
-    start = current;
-    prev = current;
-  }
-  return ranges.join(', ');
 }
 
 function uniqueWeeks(weeks = []) {
@@ -6061,12 +7416,6 @@ function typeSlug(type = '') {
   return String(type).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'autre';
 }
 
-function applySessionPlacementVisibility() {
-  const placement = $('#sessionPlacementStatus')?.value || 'fictif';
-  const section = $('#sessionPlacementSection');
-  if (!section) return;
-  section.dataset.mode = placement === 'definitif' ? 'definitive' : 'fictive';
-}
 
 function selectedCheckboxValues(containerSelector) {
   return $$(`${containerSelector} input[type="checkbox"]:checked`).map(input => input.value);
@@ -6433,8 +7782,10 @@ function mesurerBandeauCollant() {
 // écouteurs d'événements une deuxième fois.
 let ocAppDemarre = false;
 window.OC_APP = {
-  demarrer(initiales = '') {
+  demarrer(initiales = '', nom = '', prenom = '') {
     moiInitiales = String(initiales || '').toUpperCase();
+    moiNom = String(nom || '');
+    moiPrenom = String(prenom || '');
     if (!ocAppDemarre) {
       ocAppDemarre = true;
       bindEvents();

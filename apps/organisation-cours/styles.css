@@ -673,18 +673,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
 .form-grid.compact-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .two-column-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
-.sequence-period-field { grid-column: 1 / -1; }
 .period-grid { display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-2); }
-
-.placement-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-3); }
-.placement-subpanel {
-  margin-top: var(--sp-2);
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  border: 1px dashed var(--line-strong);
-  background: var(--surface);
-}
-.placement-subpanel h4 { margin-bottom: var(--sp-2); font-size: .85rem; }
 
 .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: .5rem; margin-bottom: .6rem; }
 .checkbox-item {
@@ -1584,15 +1573,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .cal-in-range, .cal-in-range:hover { background: var(--moss-soft); border-color: var(--moss-line); color: var(--moss-dark); }
 .cal-range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .cal-range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-.sequence-calendar { max-width: 340px; border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .65rem; background: var(--surface-alt); box-sizing: border-box; margin-bottom: var(--sp-2); }
-/* Bloc période en 2 colonnes : calendrier à gauche, champs à droite (optimise l'espace) */
-.sequence-period-layout { display: flex; gap: var(--sp-4); align-items: flex-start; flex-wrap: wrap; }
-.sequence-period-layout .sequence-calendar { flex: 0 0 340px; margin-bottom: 0; }
-.sequence-period-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: var(--sp-2); }
-.sequence-period-side .period-weeks-hint { margin: 0; }
-.sequence-period-side label { display: flex; flex-direction: column; }
-.sequence-calendar .week-cal-compact.seq-cal { gap: var(--sp-1); }
-.sequence-calendar .week-cal-hint { margin-top: .1rem; }
 .week-nav-chip {
   background: var(--surface-alt); color: var(--ink); border: 1px solid var(--line-strong);
   padding: .35rem .55rem; border-radius: var(--r-sm); text-align: center; min-width: 64px;
@@ -1817,17 +1797,21 @@ table { border-collapse: collapse; width: 100%; }
    mode qui les propose. */
 .ruban-gestes { margin: 0 0 var(--sp-2); }
 
-.reference-mode-switch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 0; padding: .2rem; }
-.reference-mode-switch button {
-  background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .8rem;
-  border-radius: 0; font-size: .82rem;
-}
-.reference-mode-switch button.active { background: var(--moss); color: #fff; }
 /* README : Ruban/Répartition sont un bouton à deux positions — regroupées et
    séparées des 3 autres modes par un filet, plutôt que 5 boutons équivalents. */
 .ruban-toggle-pair { display: inline-flex; gap: .25rem; padding-right: .45rem; margin-right: .2rem; border-right: 1px solid var(--line-strong); }
 .reference-mode-panel { display: none; }
 .reference-mode-panel.active-mode { display: block; }
+
+/* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ---- */
+.ruban-subtabs { justify-content: space-between; }
+.ruban-subtabs .design-subtab { padding: .3rem 0; border-bottom-width: 2px; }
+.ruban-unified-search { flex: 0 1 22rem; min-width: 12rem; margin-left: auto; }
+/* Même piège que .ruban-bar-filtres[hidden] plus haut : sans cette règle,
+   `hidden` ne suffirait pas si .ruban-tab-panel gagnait un jour une règle
+   `display` à elle (défense par précaution, aucune actuellement). */
+.ruban-tab-panel[hidden] { display: none; }
+.ruban-pdf-link { margin-left: auto; }
 
 /* ---- Répartition (06-referentiel-repartition.png) ---- */
 .repartition-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 var(--sp-2); }
@@ -1885,6 +1869,152 @@ tr.repartition-sem-row td {
 .tpl-cell .tpl-ue { font-family: var(--font-mono); font-size: .72rem; font-weight: 700; }
 .tpl-cell .tpl-title { font-size: .74rem; line-height: 1.15; margin-top: .1rem; }
 .tpl-cell .tpl-teachers { display: flex; flex-wrap: wrap; justify-content: center; gap: .15rem; margin-top: .25rem; }
+.tpl-cell .tpl-room { margin-top: .1rem; }
+
+/* ---- Écran 8 — Planning étudiant ---- */
+.student-toolbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 var(--sp-3); }
+.student-summary { font-size: .84rem; color: var(--ink-soft); display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
+.student-summary small { color: var(--muted); font-weight: 400; }
+.student-toolbar .mask-toggle { margin-left: auto; }
+.student-layout { display: flex; gap: var(--sp-3); align-items: flex-start; flex-wrap: wrap; }
+.student-layout #studentPlanningGrid { flex: 1 1 640px; min-width: 0; margin: 0; }
+.student-aside { display: flex; flex-direction: column; gap: var(--sp-3); flex: 0 0 300px; max-width: 100%; min-width: 0; }
+.student-aside h4 { margin: 0 0 .35rem; font-size: .85rem; }
+/* REGLES.md #21 : même valeur d'estompage que .repartition-td-ue.is-dim /
+   .ruban-ue.is-dim ailleurs dans ce fichier. */
+.student-dimmed { opacity: .45; }
+.student-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; font-size: .8rem; color: var(--ink-soft); }
+.student-legend li { display: flex; align-items: center; gap: .5rem; }
+.student-legend-swatch { width: 14px; height: 14px; border: 1px solid var(--line-strong); flex: 0 0 auto; }
+.student-legend-mine { background: var(--acc); }
+.student-legend-other { background: var(--surface-alt); }
+
+/* ---------- Écran 11 — Dossier (compositeur) ----------
+   Le contenu des pages elles-mêmes (.dossier-page…) est injecté en JS via
+   DOSSIER_PRINT_CSS (app.js) : une seule feuille de style pour l'aperçu
+   « Lecture » ET la fenêtre d'impression, pas de duplication ici. Ce bloc ne
+   couvre que la coquille de l'écran (jamais imprimée). */
+.dossier-layout { display: grid; grid-template-columns: 260px 1fr 260px; gap: var(--sp-5); align-items: start; }
+.dossier-sidebar { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
+.dossier-avant-imprimer { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; position: sticky; top: var(--sp-4); }
+.dossier-block { min-width: 0; }
+.dossier-block-title { margin: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); display: flex; align-items: baseline; gap: .4rem; }
+.dossier-block-count { font-weight: 400; color: var(--line-strong); }
+.dossier-ue-select { width: 100%; margin-bottom: var(--sp-2); }
+.dossier-ue-card { background: var(--moss-soft); border: 1px solid var(--moss-line); padding: var(--sp-3); }
+.dossier-ue-code { color: var(--moss-dark); font-weight: 600; font-size: .8rem; }
+.dossier-ue-title { font-weight: 600; margin-top: .15rem; }
+.dossier-ue-meta { font-size: .78rem; color: var(--ink-soft); margin-top: .2rem; }
+
+.dossier-sections-list { display: flex; flex-direction: column; }
+.dossier-section-row { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); }
+.dossier-section-row:last-child { border-bottom: none; }
+.dossier-section-row.locked .checkbox-inline { color: var(--muted); }
+.dossier-section-hint { margin: .25rem 0 0 1.55rem; font-size: .72rem; color: var(--muted); line-height: 1.4; max-width: 30ch; }
+.dossier-section-row:has(#dossierBilanText) { background: var(--clay-soft); margin: 0 calc(var(--sp-2) * -1); padding: var(--sp-2); border-bottom: none; }
+.dossier-subsections { margin: .35rem 0 0 1.55rem; display: flex; flex-direction: column; gap: .25rem; max-height: 220px; overflow-y: auto; }
+.dossier-subrow { font-size: .8rem; }
+.dossier-bilan-editor { width: 100%; margin: .5rem 0 0 1.55rem; max-width: calc(100% - 1.55rem); font: inherit; font-size: .82rem; }
+
+.dossier-preview { min-width: 0; }
+.dossier-preview-bar { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); flex-wrap: wrap; }
+.dossier-preview-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.dossier-preview-count { font-size: .82rem; color: var(--ink-soft); }
+.dossier-view-switch { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.dossier-view-switch-hint { font-size: .72rem; color: var(--line-strong); text-transform: lowercase; }
+.dossier-view-switch button { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); padding: .3rem .7rem; font-size: .8rem; font-weight: 600; }
+.dossier-view-switch button.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+.dossier-preview-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-4); }
+.dossier-preview-grille[hidden] { display: none; }
+.dossier-thumb { display: flex; flex-direction: column; gap: .35rem; }
+.dossier-thumb-page { aspect-ratio: 210 / 297; background: var(--surface); border: 1px solid var(--line); padding: 10% 9%; display: flex; flex-direction: column; gap: 8%; }
+.dossier-thumb-page .db-line { display: block; height: 6%; background: var(--surface-alt); border-radius: 1px; }
+.dossier-thumb-page .db-line.short { width: 45%; }
+.dossier-thumb-page .db-line.title { height: 12%; width: 80%; background: var(--line-strong); }
+.dossier-thumb-page .db-line.accent { width: 30%; background: var(--acc); opacity: .55; }
+.dossier-thumb-page .db-box { flex: 1; background: var(--surface-alt); }
+.dossier-thumb-page .db-box.tall { flex: 3; }
+.dossier-thumb-label { font-size: .74rem; color: var(--ink-soft); text-align: center; }
+
+.dossier-preview-lecture { display: flex; flex-direction: column; align-items: center; gap: var(--sp-5); background: var(--surface-alt); padding: var(--sp-5); max-height: 82vh; overflow-y: auto; }
+.dossier-preview-lecture[hidden] { display: none; }
+.dossier-preview-lecture .dossier-page { break-before: auto !important; margin: 0 !important; box-shadow: 0 0 0 1px var(--line); }
+
+.dossier-completeness-label { font-weight: 600; margin: 0 0 .2rem; }
+.dossier-completeness-bar { height: 6px; background: var(--surface-alt); border: 1px solid var(--line); margin-top: var(--sp-2); }
+.dossier-completeness-bar span { display: block; height: 100%; background: var(--success); }
+.dossier-gaps { display: flex; flex-direction: column; gap: var(--sp-2); }
+.dossier-gap { border-left: 3px solid var(--danger); background: var(--danger-soft); padding: .5rem .6rem; font-size: .82rem; }
+.dossier-gap p { margin: 0; }
+.dossier-gap .link-button { margin-top: .25rem; }
+.link-button { background: none; border: none; padding: 0; color: var(--acc); font-weight: 600; font-size: inherit; cursor: pointer; text-decoration: none; }
+.link-button:hover { color: var(--moss-dark); text-decoration: underline; }
+.dossier-print-options { display: flex; flex-direction: column; gap: .3rem; margin: var(--sp-2) 0; }
+.dossier-print-button { width: 100%; }
+@media (max-width: 1100px) {
+  .dossier-layout { grid-template-columns: 1fr; }
+  .dossier-avant-imprimer { position: static; }
+}
+
+/* ---------- Écran 13 — Ordre de mission ---------- */
+.mission-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) 0; border-bottom: 1px solid var(--line); margin-bottom: var(--sp-4); }
+.mission-back { font-family: var(--font-mono); }
+.mission-title { font-size: 1.05rem; margin: 0; flex: 1; }
+.mission-status { font-family: var(--font-mono); font-size: .78rem; color: var(--danger); background: var(--danger-soft); padding: .2rem .5rem; }
+.mission-hint { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+
+.mission-body { display: flex; justify-content: center; }
+.mission-document { background: var(--surface); border: 1px solid var(--line); max-width: 780px; width: 100%; padding: var(--sp-7); }
+
+.mission-doc-header { display: flex; align-items: center; gap: var(--sp-4); border-bottom: 1px solid var(--ink); padding-bottom: var(--sp-3); margin-bottom: var(--sp-5); }
+.mission-doc-header img { height: 44px; }
+.mission-doc-header h1 { font-size: 1.3rem; margin: 0; }
+
+.mission-field-line { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-3); font-size: .9rem; }
+.mission-field-label { color: var(--ink-soft); white-space: nowrap; }
+.mission-field { font: inherit; color: var(--ink); background: var(--moss-soft); border: none; border-bottom: 1px solid var(--ink); padding: .15rem .35rem; min-width: 8rem; }
+.mission-field:focus { outline: 2px solid var(--acc); outline-offset: 1px; }
+.mission-field-wide { flex: 1; min-width: 14rem; }
+.mission-field-narrow { width: 6rem; min-width: 0; }
+.mission-field-block { display: block; width: 100%; resize: vertical; border: 1px solid var(--ink); background: var(--moss-soft); padding: var(--sp-2); font: inherit; }
+
+.mission-block { margin: var(--sp-4) 0; }
+.mission-block-title { display: block; font-weight: 600; margin-bottom: var(--sp-2); }
+.mission-transport-title { color: var(--danger); text-transform: uppercase; font-size: .82rem; letter-spacing: .03em; }
+
+.mission-accompagnant-row { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.mission-accompagnant-row .mission-field-label { flex: 1; display: flex; align-items: center; gap: var(--sp-2); min-width: 14rem; }
+.mission-accompagnant-row .mission-field { flex: 1; }
+.mission-remove-accompagnant { color: var(--danger); }
+
+.mission-transport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.mission-check { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: .88rem; }
+.mission-vehicule-de { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.mission-vehicule-de .mission-field { flex: 1; }
+
+.mission-fait { margin-top: var(--sp-5); }
+
+.mission-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-top: var(--sp-6); }
+.mission-sig-box { border: 1px solid var(--ink); min-height: 90px; padding: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-2); }
+.mission-sig-title { font-weight: 600; font-size: .82rem; }
+.mission-sig-hint { font-size: .72rem; }
+.mission-signature-img { max-height: 60px; max-width: 100%; align-self: flex-start; }
+.mission-signature-add { align-self: flex-start; font-size: .78rem; }
+
+.mission-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
+.mission-destinataires { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.mission-footer-label { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.mission-chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.mission-chip { display: inline-flex; align-items: center; gap: .3rem; background: var(--surface-alt); border: 1px solid var(--line); padding: .15rem .5rem; font-size: .8rem; }
+.mission-chip button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: .9rem; line-height: 1; padding: 0; }
+.mission-footer-actions { display: flex; gap: var(--sp-2); }
+
+@media (max-width: 700px) {
+  .mission-document { padding: var(--sp-4); }
+  .mission-transport-grid { grid-template-columns: 1fr; }
+  .mission-signatures { grid-template-columns: 1fr; }
+}
 /* Cellule scindée gauche/droite (2 créneaux sur la même plage). Le conteneur est
    en absolu inset:0 pour remplir toute la hauteur de la case (rowspan) — sinon le
    contenu se rétrécissait au centre. */
@@ -2007,15 +2137,8 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-doc-card strong { font-size: .82rem; }
 .reference-doc-card span { color: var(--muted); font-size: .74rem; }
 
-.reference-full-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.reference-full-toolbar label { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; color: var(--muted); font-weight: 600; flex: 1 1 320px; }
-.reference-full-toolbar #referencePdfOpen { flex: 0 0 auto; align-self: center; white-space: nowrap; }
-.reference-pdf-panel { padding: var(--sp-2); }
-.reference-pdf-frame { width: 100%; height: 78vh; min-height: 520px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-alt); }
-.reference-pdf-fallback { margin-top: .5rem; }
-
 @media (max-width: 980px) {
-  .reference-layout, .interactive-reference-layout, .reference-full-toolbar { grid-template-columns: 1fr; }
+  .reference-layout, .interactive-reference-layout { grid-template-columns: 1fr; }
   .reference-structured-grid { grid-template-columns: 1fr; }
   .reference-tree-panel, .reference-detail-panel { max-height: none; }
 }
@@ -2057,13 +2180,6 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 @media (max-width: 760px) {
   .sequence-reference-grid { grid-template-columns: 1fr; }
 }
-
-/* Formulaire séance : un seul sous-panneau de placement visible à la fois,
-   piloté par data-mode (posé en JS selon le statut de placement choisi). */
-#sessionPlacementSection[data-mode="fictive"] .definitive-fields { display: none; }
-#sessionPlacementSection[data-mode="definitive"] .fictive-fields { display: none; }
-#sessionPlacementSection[data-mode="fictive"] { border-left: 3px solid var(--amber); }
-#sessionPlacementSection[data-mode="definitive"] { border-left: 3px solid var(--moss); }
 
 /* Frise semestre : bandeau de contrainte coloré par type (même logique que
    les pastilles de contraintes du tableau de bord). */
@@ -2536,6 +2652,80 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 .seq-color-field .meta { flex: 1 1 12rem; }
 
+/* ---------- Écran 12 — menus de saisie (modales séquence / séance) ---------- */
+.menu-header-fields { display: flex; flex-direction: column; gap: var(--sp-2); }
+.menu-divider { border: none; border-top: 1px solid var(--line); margin: var(--sp-3) 0; }
+.menu-optional-hint {
+  font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 0 0 var(--sp-2);
+}
+.menu-optional-hint span { text-transform: none; letter-spacing: normal; margin-left: .5rem; opacity: .85; }
+
+.week-range-field { display: flex; align-items: center; gap: var(--sp-2); }
+.week-input {
+  width: 4.4rem; text-align: center; font-family: var(--font-mono); font-weight: 600;
+  border: 1px solid var(--line); background: var(--surface); padding: .5rem 0;
+}
+.week-range-arrow { font-family: var(--font-mono); color: var(--muted); }
+
+.hours-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface); width: fit-content; }
+.hours-stepper-btn {
+  width: 2rem; height: 2.2rem; border: 0; background: var(--surface-alt); color: var(--ink);
+  font-family: var(--font-mono); font-size: 1rem; padding: 0;
+}
+.hours-stepper-btn:hover { background: var(--line); }
+.hours-stepper-value {
+  width: 3rem; text-align: center; font-family: var(--font-mono); font-weight: 600;
+  border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); height: 2.2rem;
+}
+.hours-stepper-unit { padding: 0 .6rem; font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+
+/* Grille figée de 12 teintes (JETONS.md) partagée par séquence et séance ;
+   la dernière case est le picker natif « autre… », superposé en transparence. */
+.color-picker-field { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.color-swatch-grid { display: grid; grid-template-columns: repeat(12, 1.25rem); gap: 5px; }
+.color-swatch { width: 1.25rem; height: 1.25rem; padding: 0; border: 1px solid var(--line-strong); }
+.color-swatch.active { box-shadow: inset 0 0 0 3px var(--surface); outline: 2px solid var(--ink); }
+.color-swatch-custom {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.25rem; height: 1.25rem; padding: 0; border: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(135deg, var(--surface-alt) 0 4px, var(--surface) 4px 8px);
+  font-size: .85rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+}
+.color-swatch-custom::after { content: '+'; pointer-events: none; }
+.color-swatch-custom input[type="color"] {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; padding: 0; margin: 0; cursor: pointer; opacity: 0;
+}
+
+.assessment-type-buttons { display: inline-flex; border: 1px solid var(--line-strong); }
+.assessment-type-buttons button {
+  padding: .4rem .75rem; font-size: .82rem; background: var(--surface); color: var(--ink-soft);
+  border: 0; border-right: 1px solid var(--line-strong);
+}
+.assessment-type-buttons button:last-child { border-right: 0; }
+.assessment-type-buttons button.active { background: var(--ink); color: #fff; }
+
+/* Sélecteur de créneaux libres (modale séance, REGLES.md #22 — jamais un
+   calendrier) : bande de semaine + grille de boutons, deux options fixes. */
+.slot-picker { border: 1px solid var(--line); background: var(--surface); padding: var(--sp-2) var(--sp-3); }
+.slot-picker-weekbar { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.slot-picker-week-label { font-family: var(--font-mono); font-size: .82rem; font-weight: 600; }
+.slot-picker-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-1); }
+.slot-picker-options-fixed { grid-template-columns: repeat(2, minmax(120px, 1fr)); margin-top: var(--sp-2); }
+.slot-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: .1rem;
+  padding: .4rem .55rem; border: 1px solid var(--line); background: var(--surface-alt); font-family: var(--font-mono);
+}
+.slot-option strong { font-size: .82rem; font-weight: 700; color: var(--ink); }
+.slot-option small { font-size: .68rem; color: var(--muted); }
+.slot-option:hover { border-color: var(--line-strong); }
+.slot-option.active { background: var(--acc); border-color: var(--acc); }
+.slot-option.active strong, .slot-option.active small { color: #fff; }
+.slot-option-other, .slot-option-none { background: var(--surface); border-style: dashed; }
+.slot-picker-custom { margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px dashed var(--line-strong); }
+.slot-picker-custom[hidden] { display: none; }
+
 /* ---------- Lot K — détail d'une semaine thématique / EIL (Conception) ---------- */
 .eil-detail-group { margin-top: var(--sp-3); border-top: 1px dashed var(--line-strong); padding-top: var(--sp-2); }
 .eil-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
@@ -2870,8 +3060,11 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .urgence-liste { display: flex; flex-direction: column; }
 #dashboard .urgence-row {
   display: flex; align-items: center; gap: .6rem; padding: .5rem .8rem; border-bottom: 1px solid var(--filet-interne, #ece8db);
-  flex-wrap: wrap;
+  flex-wrap: wrap; cursor: pointer;
 }
+#dashboard .urgence-row:hover { background: var(--surface-alt); }
+#dashboard .urgence-row:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+#dashboard .urgence-row.est-fait:hover { background: var(--success-soft); filter: brightness(.97); }
 #dashboard .urgence-type {
   flex: 0 0 96px; font-family: var(--font-mono); font-size: .58rem; font-weight: 600;
   letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
@@ -2890,6 +3083,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 #dashboard .urgence-verbe:hover, #dashboard .urgence-verbe:focus-visible { background: var(--moss-soft); }
 #dashboard .urgence-verbe input[type="checkbox"] { width: 0; height: 0; opacity: 0; position: absolute; }
+#dashboard .urgence-row.est-fait { background: var(--success-soft); }
+#dashboard .urgence-verbe.est-fait {
+  color: var(--success); border-color: var(--moss-line); background: var(--surface); font-weight: 600;
+}
+#dashboard .urgence-verbe.est-fait:hover, #dashboard .urgence-verbe.est-fait:focus-visible { background: var(--success-soft); }
+#dashboard .urgence-dismiss {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  font-size: 1rem; line-height: 1; color: var(--muted); border: 1px solid var(--moss-line);
+  background: var(--surface); cursor: pointer;
+}
+#dashboard .urgence-dismiss:hover, #dashboard .urgence-dismiss:focus-visible { color: var(--danger); background: var(--moss-soft); }
 #dashboard .urgence-pied { padding: .5rem .8rem; background: var(--fond-total, #faf8f0); font-size: .68rem; line-height: 1.5; color: var(--muted); }
 #dashboard .empty-hint { padding: var(--sp-3) .8rem; text-align: left; }
 
