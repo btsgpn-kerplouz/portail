@@ -20,22 +20,27 @@
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
         <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
         <!-- Refonte « papier technique froid » (écran 1, 16/08/2026) : bandeau
-             commun au 21 écrans (README) — statut de synchro + « Sauvegarder »
-             + année + avatar, au lieu d'un simple bloc de connexion. L'export/
-             import JSON (lot A [8], sauvegarde manuelle locale) n'est pas dans
-             la maquette mais reste une fonction utile : gardé, discret, avant
-             le groupe visible du mockup plutôt que supprimé. -->
+             commun au 21 écrans (README) — statut de synchro + année + avatar,
+             au lieu d'un simple bloc de connexion. L'export/import JSON (lot A
+             [8], sauvegarde manuelle locale) n'est pas dans la maquette mais
+             reste une fonction utile : gardé, discret, sous un intitulé
+             explicite plutôt que deux icônes nues.
+             Simplification demandée par Martin (17/08/2026, retours/) : le
+             bouton « Sauvegarder » faisait doublon avec l'auto-enregistrement
+             et n'était pas compris — il ne s'affiche plus qu'en cas d'erreur
+             de sauvegarde (voir setSaveStatus, app.js), en « Réessayer ». -->
         <div class="banner-right">
-          <div class="banner-data" aria-label="Sauvegarde des données">
-            <button type="button" id="exportDataBtn" class="lien" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)" aria-label="Exporter les données">⬇</button>
-            <button type="button" id="importDataBtn" class="lien" title="Restaurer vos données depuis un fichier JSON exporté" aria-label="Importer des données">⬆</button>
+          <div class="banner-data" aria-label="Sauvegarde locale">
+            <span class="banner-data-label">Sauvegarde locale</span>
+            <button type="button" id="exportDataBtn" class="lien" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)" aria-label="Télécharger">⬇</button>
+            <button type="button" id="importDataBtn" class="lien" title="Restaurer vos données depuis un fichier JSON exporté" aria-label="Restaurer">⬆</button>
             <input type="file" id="importDataInput" accept="application/json,.json" hidden />
           </div>
           <div class="banner-sync">
             <button type="button" id="btn-recharger" class="lien" title="Recharger les données (récupérer les dernières modifications des collègues)">⟳</button>
             <span id="saveStatus" role="status" aria-live="polite">Chargement…</span>
           </div>
-          <button type="button" id="btn-sauvegarder" class="banner-save-btn">Sauvegarder</button>
+          <button type="button" id="btn-sauvegarder" class="banner-save-btn" title="Retenter l'enregistrement" hidden>Réessayer</button>
           <span class="banner-year" id="bannerYear"></span>
           <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
         </div>
@@ -87,7 +92,11 @@
               </div>
               <div id="todoList" class="todo-list"></div>
               <input type="text" id="todoNewInput" class="todo-add-input" placeholder="+ ajouter une note" maxlength="200" />
-              <p class="todo-footnote meta">Une tâche cochée reste barrée jusqu’à la fin de la journée — le temps de la décocher si c’était une erreur — puis rejoint les tâches faites. <span id="todoDoneCount"></span></p>
+              <p class="todo-footnote meta">Une tâche cochée reste barrée jusqu’à la fin de la journée — le temps de la décocher si c’était une erreur — puis rejoint l’historique ci-dessous.</p>
+              <details class="todo-history">
+                <summary id="todoHistoryCount">Tâches faites</summary>
+                <ul id="todoHistoryList" class="todo-history-list"></ul>
+              </details>
             </section>
           </div>
         </div>
@@ -95,9 +104,9 @@
 
       <!-- Zone mensuelle : le rangement administratif, en cartes discrètes
            ouvertes à la demande (REGLES.md — « les modules qu'on ouvre de
-           temps en temps »). -->
+           temps en temps »). Titre retiré (retours/ 17/08/2026, demande
+           Martin) : le filet du haut suffit à séparer les deux zones. -->
       <div class="zone-basse">
-        <h4 class="zone-titre">Les modules qu'on ouvre de temps en temps</h4>
         <div class="zone-basse-grille">
       <details class="panel panel-collapsible frais-panel" id="fraisPanel" data-open-key="dash:frais">
         <summary>
@@ -117,13 +126,6 @@
                 <option value="Terminée">Terminée</option>
               </select>
             </label>
-            <label>Classe
-              <select id="fraisClasseFilter">
-                <option value="all">Toutes</option>
-                <option value="GPN1">GPN1</option>
-                <option value="GPN2">GPN2</option>
-              </select>
-            </label>
             <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
           </div>
           <div class="frais-export">
@@ -134,6 +136,13 @@
           </div>
         </div>
         <div id="fraisTableWrap" class="frais-table-wrap"></div>
+      </details>
+      <!-- Mise en page 2×2 (retours 17/08/2026) : l'ordre du DOM compte — grille
+           à 2 colonnes en remplissage naturel, donc Déplacements/Réunions à
+           gauche et Périodes/Amélioration à droite (voir .zone-basse-grille). -->
+      <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
+        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small secondary">+ Période</button></div></summary>
+        <div id="constraintsList" class="list"></div>
       </details>
       <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
         <summary>
@@ -146,11 +155,7 @@
           <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
           <button type="button" id="addReunionButton" class="small primary">+ Réunion</button>
         </div>
-        <div id="reunionsList" class="list reunions-list"></div>
-      </details>
-      <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
-        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small secondary">+ Période</button></div></summary>
-        <div id="constraintsList" class="list"></div>
+        <div id="reunionsList" class="frais-table-wrap"></div>
       </details>
       <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
         <summary>
@@ -160,7 +165,12 @@
           </div>
         </summary>
         <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
+        <div id="devNotesList" class="todo-list"></div>
+        <input type="text" id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée" maxlength="200" />
+        <details class="todo-history">
+          <summary id="devNotesHistoryCount">Tâches faites</summary>
+          <ul id="devNotesHistoryList" class="todo-history-list"></ul>
+        </details>
       </details>
         </div>
       </div>

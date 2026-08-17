@@ -289,10 +289,11 @@ html { scroll-padding-top: 6.4rem; }
 
 /* Export / import (lot A [8]) : pas dans le mockup, gardés discrets. */
 .banner-data {
-  display: flex; align-items: center; gap: .1rem;
+  display: flex; align-items: center; gap: .3rem;
   white-space: nowrap;
   color: rgba(255,255,255,.6);
 }
+.banner-data-label { font-size: .72rem; }
 .banner-data .lien {
   border: none; background: none; color: inherit; cursor: pointer;
   padding: .1rem .3rem; font-size: .95rem; line-height: 1; opacity: .85;
@@ -319,7 +320,7 @@ html { scroll-padding-top: 6.4rem; }
 
 .banner-year { font-family: var(--font-mono); font-size: .76rem; color: rgba(255,255,255,.6); }
 
-@media (max-width: 640px) { .banner-year, .banner-sync span:not(.lien) { display: none; } }
+@media (max-width: 640px) { .banner-year, .banner-data-label, .banner-sync span:not(.lien) { display: none; } }
 
 .tabs.header-tabs {
   display: flex;
@@ -341,7 +342,7 @@ html { scroll-padding-top: 6.4rem; }
   cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
-.tab:hover { color: var(--moss-dark); }
+.tab:hover { background: var(--acc); color: #fff; }
 .tab.active {
   background: var(--surface);
   color: var(--moss-dark);
@@ -518,16 +519,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 
 /* Notes libres « À faire » sur le tableau de bord */
 .todo-panel { margin-bottom: var(--sp-4); }
-.todo-actions { display: flex; align-items: center; gap: var(--sp-2); }
 .todo-status { font-size: .76rem; }
 .todo-status.has-todo { color: var(--clay); font-weight: 600; }
-.todo-notes {
-  width: 100%; min-height: 96px; resize: vertical; margin-top: var(--sp-2);
-  border: 1px solid var(--line-strong); border-radius: var(--r-md);
-  background: var(--surface-alt); padding: .6rem .7rem;
-  font: inherit; font-size: .9rem; line-height: 1.5; color: var(--ink);
-}
-.todo-notes:focus { outline: 2px solid var(--moss-soft); border-color: var(--moss-line); background: var(--surface); }
 
 /* « À faire » = entrée prioritaire du tableau de bord : pleine largeur, avant
    le bandeau de statistiques, traitement affirmé (accentué quand des notes
@@ -542,9 +535,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: color-mix(in srgb, var(--moss) 11%, var(--surface));
 }
 .priority-panel .todo-status.has-todo { color: var(--moss-dark); }
-/* Lot 5 — même correction que ci-dessus pour le panneau « Bugs & améliorations » :
-   .todo-status.has-todo seule (couleur --clay) tombait à 4,29 (illisible). */
-.dev-panel .todo-status.has-todo { color: var(--moss-dark); }
 
 /* Bannière d'alerte générique du tableau de bord (ex. salles à réserver sous 15 jours) */
 .alert-banner {
@@ -624,6 +614,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--line);
+  /* Retours 17/08/2026 — le fond sable, auparavant sur les fieldsets internes
+     (illisible : pourquoi CE champ précis ?), marque maintenant le bandeau de
+     titre : un seul repère visuel par menu de saisie, cohérent d'un menu à l'autre. */
+  background: var(--surface-alt);
 }
 .modal-header h3 { font-family: var(--font-display); font-size: 1.15rem; }
 .modal-footer {
@@ -644,7 +638,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-radius: var(--r-md);
   padding: var(--sp-3) var(--sp-4);
   margin: var(--sp-2) 0;
-  background: var(--surface-alt);
+  /* Retours 17/08/2026 — le fond sable ne distinguait aucune section en
+     particulier (« pourquoi CE champ ? », x2 retours) : retiré, le bandeau de
+     titre de la modale (.modal-header) porte maintenant seul ce repère. */
+  background: none;
 }
 .form-section legend {
   padding: 0 .4rem;
@@ -971,7 +968,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-size: .88rem; color: var(--muted); font-weight: 500;
 }
 .design-subtab .design-subtab-count { font-size: .78rem; color: inherit; }
-.design-subtab:hover { color: var(--ink-soft); }
+.design-subtab:hover { background: none; color: var(--ink-soft); }
 .design-subtab.active { color: var(--ink); font-weight: 700; border-bottom-color: var(--acc); }
 .design-subtab-panel[hidden] { display: none; }
 
@@ -2787,18 +2784,9 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 /* ---- Lot M — Réunions (journal du Tableau de bord) ---- */
 .form-grid .span-full { grid-column: 1 / -1; }
 .reunions-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
-.reunions-list { display: flex; flex-direction: column; gap: var(--sp-2); }
-.reunion-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .75rem; background: var(--surface-alt); cursor: pointer; }
-.reunion-card:hover { border-color: var(--moss-line); background: var(--moss-soft); }
-.reunion-card-head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.reunion-date { font-weight: 600; font-family: var(--font-mono); font-size: .82rem; }
-.reunion-lieu { color: var(--muted); font-size: .85rem; }
-.reunion-lieu::before { content: "· "; }
-.reunion-vehicle { font-size: .78rem; color: var(--moss); font-weight: 600; white-space: nowrap; }
-.reunion-card .reunion-edit { margin-left: auto; }
-.reunion-participants { margin: .35rem 0 0; font-size: .85rem; }
-.reunion-label { color: var(--muted); }
-.reunion-sujets { margin: .3rem 0 0; font-size: .85rem; white-space: pre-wrap; }
+/* Retours 17/08/2026 — tableau plutôt que des cartes (voir renderReunions) :
+   réutilise .frais-table, seule la ligne cliquable est spécifique ici. */
+.frais-table tbody tr[data-edit-reunion] { cursor: pointer; }
 
 /* ---- Écran de connexion (avant que l'app ne soit visible) ----
    Réutilise les tokens du système de design ci-dessus plutôt que des couleurs
@@ -2904,6 +2892,15 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .bloc-lien {
   margin-left: auto; font-size: .75rem; color: var(--acc); font-weight: 500; cursor: pointer; white-space: nowrap;
 }
+/* Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine de « Ma
+   semaine » : deux boutons discrets, pas de calendrier ni de champ de saisie. */
+#dashboard .dash-semaine-nav { display: flex; gap: .25rem; }
+#dashboard .dash-week-nav-btn {
+  min-height: 0; width: 1.6rem; height: 1.6rem; padding: 0; line-height: 1;
+  font-size: .9rem; background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line-strong);
+}
+#dashboard .dash-week-nav-btn:hover:not(:disabled) { background: var(--surface-alt); color: var(--moss-dark); }
+#dashboard .dash-week-nav-btn:disabled { opacity: .35; cursor: default; }
 #dashboard .bloc-lien:hover, #dashboard .bloc-lien:focus-visible { color: var(--moss-dark); }
 #dashboard .bloc-legende {
   display: inline-flex; align-items: center; gap: .3rem; font-family: var(--font-mono);
@@ -3018,6 +3015,10 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .act-urgent { background: var(--niv-retard); }
 /* Ni une échéance, ni une action : gris dans tous les cas. */
 #dashboard .act-reunion, #dashboard .act-periode { background: var(--niv-loin); }
+/* Retours 17/08/2026 — réservation faite / ordre de mission envoyé : vert,
+   pour que « Ma semaine » et « Les deux semaines suivantes » le confirment
+   au lieu de simplement faire disparaître l'étiquette. */
+#dashboard .act-fait { background: var(--success); }
 
 /* ---- Ce qui n'a pas de créneau cette semaine : urgent, donc rouge ---- */
 #dashboard .bande-sans-creneau { padding: .6rem .8rem; border-top: 1px solid var(--line); }
@@ -3049,7 +3050,16 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    REGLES.md #25 — liseré gauche 3px alerte, en-tête teinté, chaque ligne
    finit par un verbe. ---- */
 #dashboard .urgences-panel { border-left: 3px solid var(--danger); }
-#dashboard .urgences-tete { background: var(--alerte-fond-2, #f7e9e2); }
+/* Retours 17/08/2026 — l'en-tête n'avait pas de padding propre (héritait du
+   .panel-heading-inline nu) : le titre touchait le liseré, et
+   justify-content:space-between éclatait titre/compte/sous-texte au lieu de
+   les garder groupés à gauche. */
+#dashboard .urgences-tete {
+  background: var(--alerte-fond-2, #f7e9e2);
+  padding: .5rem .8rem;
+  justify-content: flex-start;
+  gap: var(--sp-2) var(--sp-3);
+}
 #dashboard .urgences-tete h3 { color: var(--alerte-fort, #8c3a15); }
 #dashboard .urgence-compte {
   display: inline-flex; align-items: center; justify-content: center; height: 16px; padding: 0 6px;
@@ -3088,6 +3098,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   color: var(--success); border-color: var(--moss-line); background: var(--surface); font-weight: 600;
 }
 #dashboard .urgence-verbe.est-fait:hover, #dashboard .urgence-verbe.est-fait:focus-visible { background: var(--success-soft); }
+/* Bascule rapide véhicule (retours 17/08/2026) — discrète, à côté de
+   « Réserver » : ce n'est pas l'action principale de la ligne. */
+#dashboard .urgence-bascule {
+  flex: 0 0 auto; height: 30px; padding: 0 .55rem; font-size: .72rem; font-weight: 500;
+  color: var(--muted); border: 1px dashed var(--line-strong); background: var(--surface); cursor: pointer;
+}
+#dashboard .urgence-bascule:hover, #dashboard .urgence-bascule:focus-visible { color: var(--ink); background: var(--moss-soft); border-color: var(--moss-line); }
 #dashboard .urgence-dismiss {
   flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
   font-size: 1rem; line-height: 1; color: var(--muted); border: 1px solid var(--moss-line);
@@ -3097,11 +3114,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .urgence-pied { padding: .5rem .8rem; background: var(--fond-total, #faf8f0); font-size: .68rem; line-height: 1.5; color: var(--muted); }
 #dashboard .empty-hint { padding: var(--sp-3) .8rem; text-align: left; }
 
-/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande. Fermées
-   ce sont des barres compactes en grille 4 colonnes ; ouvertes, la carte
+/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande, en grille
+   2×2 (retours 17/08/2026 : Déplacements/Réunions à gauche, Périodes/
+   Amélioration à droite — l'ordre du DOM porte cette disposition, voir
+   index.html). Fermées ce sont des barres compactes ; ouvertes, la carte
    s'étend sur toute la largeur pour ne pas écraser tableaux/filtres. ---- */
 #dashboard .zone-basse-grille {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
 }
 #dashboard .zone-basse-grille > .panel-collapsible {
   background: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0;
@@ -3114,10 +3133,6 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .panel-collapsible > summary::before { margin-top: .3rem; }
 #dashboard .panel-collapsible > summary .panel-heading-inline { align-items: center; }
 #dashboard .badge-groupe { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
-@media (max-width: 1100px) {
-  #dashboard .zone-basse-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
-}
 @media (max-width: 640px) {
   #dashboard .zone-basse-grille { grid-template-columns: 1fr; }
 }
@@ -3167,6 +3182,20 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 .todo-add-input:focus { border-style: solid; border-color: var(--acc); box-shadow: var(--halo-focus); }
 .todo-footnote { padding: 0 .8rem .7rem; margin: 0; line-height: 1.4; }
+
+/* Historique « Tâches faites » (retours 17/08/2026) — repli sobre, purgé au-delà
+   de 30 jours (purgerTachesFaites) : pas la peine d'en faire un vrai panneau. */
+.todo-history { border-top: 1px solid var(--line); padding: .4rem .8rem .6rem; }
+.todo-history summary {
+  font-size: .74rem; color: var(--muted); cursor: pointer; list-style: none;
+}
+.todo-history summary::-webkit-details-marker { display: none; }
+.todo-history summary::before { content: '▸ '; }
+.todo-history[open] summary::before { content: '▾ '; }
+.todo-history-list { list-style: none; margin: .4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+.todo-history-row { display: flex; justify-content: space-between; gap: .6rem; font-size: .78rem; color: var(--muted); }
+.todo-history-text { flex: 1 1 auto; text-decoration: line-through; }
+.todo-history-date { flex: 0 0 auto; font-family: var(--font-mono); font-size: .7rem; }
 
 @media (max-width: 1100px) {
   #dashboard .bande-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -231,9 +231,9 @@ function normalizeDeplacementFields(entity) {
 function normalizeData(data) {
   const normalized = {
     version: '5.0.0',
-    schoolYear: data.schoolYear || '2026-2027',
+    schoolYear: data.schoolYear || '',
     promotions: data.promotions || DEFAULT_PROMOTIONS,
-    weeks: data.weeks || [],
+    weeks: [],
     ues: data.ues || [],
     sequences: data.sequences || [],
     sessions: data.sessions || [],
@@ -246,7 +246,11 @@ function normalizeData(data) {
     // juste en dessous, pour ne pas perdre les notes déjà saisies.
     todoNotes: typeof data.todoNotes === 'string' ? data.todoNotes : '',
     todoItems: Array.isArray(data.todoItems) ? data.todoItems.map(normalizeTodoItem).filter(Boolean) : [],
+    // « Amélioration de l'appli » : même liste à cocher que « À faire » (retours
+    // 17/08/2026), mais partagée entre tous les comptes. `devNotes` (ancien
+    // format, texte libre) reste lu en migration juste en dessous.
     devNotes: typeof data.devNotes === 'string' ? data.devNotes : '',
+    devNotesItems: Array.isArray(data.devNotesItems) ? data.devNotesItems.map(normalizeTodoItem).filter(Boolean) : [],
     rubanOverrides: (data.rubanOverrides && typeof data.rubanOverrides === 'object') ? data.rubanOverrides : {},
     rubanUeCaps: (data.rubanUeCaps && typeof data.rubanUeCaps === 'object' && !Array.isArray(data.rubanUeCaps)) ? data.rubanUeCaps : {},
     weekTemplates: Array.isArray(data.weekTemplates) ? data.weekTemplates.map(normalizeTemplateSlot).filter(Boolean) : [],
@@ -258,10 +262,14 @@ function normalizeData(data) {
     lastSavedAt: data.lastSavedAt || null
   };
 
-  if (!normalized.weeks.some(w => w.id === '2026-S36') || normalized.schoolYear !== '2026-2027') {
-    normalized.schoolYear = '2026-2027';
-    normalized.weeks = buildAcademicWeeks(2026, 36, 2027, 22);
-  }
+  // Retours 17/08/2026 — fenêtre glissante (~26 semaines avant/après
+  // aujourd'hui) RECALCULÉE à chaque chargement, plutôt que persistée : plus
+  // de mur « hors année scolaire » l'été, plus de bornes en dur à retoucher
+  // à la main chaque rentrée (voir buildRollingWeeks). Les identifiants de
+  // semaine restent des clés ISO stables (année-Sxx) : une séance placée
+  // dans « 2026-S38 » retrouve toujours la même semaine calendaire.
+  normalized.weeks = buildRollingWeeks();
+  normalized.schoolYear = anneeScolaireLabel(normalized.weeks);
 
   normalized.ues = mergeReferenceUes(normalized.ues);
   normalized.ues = normalized.ues.map(ue => ({ ...ue, startWeekId: ue.startWeekId || '', endWeekId: ue.endWeekId || '', teacher: ue.teacher || ue.teachers || '', annual: !!ue.annual }));
@@ -368,6 +376,16 @@ function normalizeData(data) {
     normalized.todoItems = [{ id: uid('todo'), text: normalized.todoNotes.trim(), done: false, doneAt: '' }];
     normalized.todoNotes = '';
   }
+
+  // Migration « Amélioration de l'appli » (texte libre) → liste à cocher
+  // (retours 17/08/2026) : une ligne du texte devient une tâche.
+  if (!normalized.devNotesItems.length && normalized.devNotes.trim()) {
+    normalized.devNotesItems = normalized.devNotes.split('\n').map(l => l.trim()).filter(Boolean)
+      .map(text => ({ id: uid('devnote'), text, done: false, doneAt: '' }));
+    normalized.devNotes = '';
+  }
+  normalized.todoItems = purgerTachesFaites(normalized.todoItems);
+  normalized.devNotesItems = purgerTachesFaites(normalized.devNotesItems);
 
   return normalized;
 }
@@ -490,6 +508,15 @@ function normalizeStudentSlot(t = {}) {
     teacher: typeof t.teacher === 'string' ? t.teacher : '',
     color: isValidHexColor(t.color) ? t.color : ''
   };
+}
+
+// « Tâches faites » (retours 17/08/2026) : une tâche cochée rejoint un petit
+// historique consultable, purgé au-delà de 30 jours plutôt que conservé
+// indéfiniment en silence dans l'état.
+const CHECKLIST_HISTORIQUE_JOURS = 30;
+function purgerTachesFaites(items) {
+  const limite = new Date(); limite.setDate(limite.getDate() - CHECKLIST_HISTORIQUE_JOURS); limite.setHours(0, 0, 0, 0);
+  return items.filter(t => !t.done || !t.doneAt || new Date(t.doneAt) >= limite);
 }
 
 function normalizeTodoItem(t = {}) {
@@ -651,6 +678,11 @@ function setSaveStatus(text, { persistant = false } = {}) {
   const suffix = state?.lastSavedAt ? ` · ${relativeTimeFr(state.lastSavedAt)}` : '';
   el.textContent = text + suffix;
   el.classList.toggle('is-error', persistant);
+  // Simplification bandeau (17/08/2026) : « Réessayer » ne s'affiche qu'en cas
+  // d'erreur — l'auto-enregistrement se charge du cas normal, plus besoin d'un
+  // bouton permanent qui faisait doublon.
+  const retryBtn = $('#btn-sauvegarder');
+  if (retryBtn) retryBtn.hidden = !persistant;
   if (!saveStatusRefreshTimer) {
     saveStatusRefreshTimer = setInterval(() => {
       const el2 = $('#saveStatus');
@@ -911,11 +943,18 @@ function renderUrgences() {
       const faitCheckbox = r.kind === 'mission'
         ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
         : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
+      // Retours 17/08/2026 — bascule rapide depuis la ligne, quand le véhicule
+      // de l'établissement s'avère indisponible : plus besoin de rouvrir la
+      // fiche pour changer le menu Déplacement, ça bascule direct en
+      // personnel (l'ordre de mission remplace la réservation à la ligne suivante).
+      const basculeBtn = (r.kind === 'vehicule' && !r.fait)
+        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
+        : '';
       const verbe = r.fait
         ? `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>${dismissBtn}`
         : r.kind === 'mission'
           ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>`
-          : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>`;
+          : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
       // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
       // « Ma semaine »/« Prochainement ») — la case, le lien Éditer et le ×
       // gardent leur propre action (guard dans le gestionnaire de clic).
@@ -1286,7 +1325,6 @@ function renderFrais() {
   const wrap = $('#fraisTableWrap');
   if (!wrap) return;
   const statusFilter = $('#fraisStatusFilter')?.value || 'actives';
-  const classeFilter = $('#fraisClasseFilter')?.value || 'all';
   const all = [...(state.deplacements || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '') || String(a.id).localeCompare(String(b.id)));
   if (!all.length) {
     wrap.innerHTML = `<p class="empty-hint">Aucun déplacement enregistré. Cochez « Déplacement en véhicule personnel » sur une séance, ou ajoutez-en un avec « + Déplacement ».</p>`;
@@ -1295,7 +1333,7 @@ function renderFrais() {
   const matchStatus = d => statusFilter === 'all'
     ? true
     : (statusFilter === 'actives' ? d.statut !== 'Terminée' : d.statut === statusFilter);
-  const rows = all.filter(d => matchStatus(d) && (classeFilter === 'all' || d.classe === classeFilter));
+  const rows = all.filter(matchStatus);
   const totalFiltered = rows.reduce((s, d) => s + deplacementTotal(d), 0);
   const totalAll = all.reduce((s, d) => s + deplacementTotal(d), 0);
   const statusClass = st => st === 'Terminée' ? 'is-done' : (st === 'En cours' ? 'is-progress' : 'is-todo');
@@ -1425,25 +1463,26 @@ function renderReunions() {
     wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, sujets abordés).</p>`;
     return;
   }
-  wrap.innerHTML = list.map(r => {
-    const dep = r.deplacement === 'personnel' ? reunionDeplacement(r) : null;
-    const depTxt = dep && Number(dep.kmAR) ? ' ' + fmtEuro(deplacementTotal(dep)) : '';
-    // Lot B — la voiture dit maintenant LEQUEL des deux véhicules, et l'infobulle
-    // ce qu'il reste à faire : réserver, ou demander l'ordre de mission.
-    const vehiculeTitre = r.deplacement === 'etablissement'
-      ? (r.vehicleBooked ? 'Véhicule de l’établissement — réservé' : 'Véhicule de l’établissement — à réserver')
-      : (r.ordreMission ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)' : 'Véhicule personnel — ordre de mission à demander');
-    return `<article class="reunion-card" data-edit-reunion="${escapeAttr(r.id)}">
-      <div class="reunion-card-head">
-        <span class="reunion-date">${escapeHtml(r.date ? formatDateFr(r.date) : 'Date à préciser')}</span>
-        ${r.lieu ? `<span class="reunion-lieu">${escapeHtml(r.lieu)}</span>` : ''}
-        ${r.deplacement ? `<span class="reunion-vehicle" title="${escapeAttr(vehiculeTitre)}">${r.deplacement === 'etablissement' ? '🚐' : '🚗'}${escapeHtml(depTxt)}</span>` : ''}
-        <button type="button" class="icon-button small reunion-edit" data-edit-reunion="${escapeAttr(r.id)}" title="Modifier">✎</button>
-      </div>
-      ${r.participants ? `<p class="reunion-participants"><span class="reunion-label">Participants :</span> ${escapeHtml(r.participants)}</p>` : ''}
-      ${r.sujets ? `<p class="reunion-sujets">${escapeHtml(r.sujets)}</p>` : ''}
-    </article>`;
+  // Retours 17/08/2026 — tableau plutôt que des cartes : plus dense, plus
+  // facile à parcourir d'un coup d'œil (date, lieu, participants, sujet).
+  // L'icône voiture ne marque que le véhicule personnel (ordre de mission à
+  // suivre) ; le van d'établissement a sa propre étiquette de réservation
+  // ailleurs (Urgences), pas besoin de la dupliquer ici.
+  const rows = list.map(r => {
+    const vehiculeTitre = r.ordreMission
+      ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)'
+      : 'Véhicule personnel — ordre de mission à demander';
+    return `<tr data-edit-reunion="${escapeAttr(r.id)}">
+      <td>${escapeHtml(r.date ? formatDateFr(r.date) : '—')}</td>
+      <td>${escapeHtml(r.lieu || '—')}</td>
+      <td title="${escapeAttr(r.participants || '')}">${escapeHtml(r.participants ? truncate(r.participants, 40) : '—')}</td>
+      <td title="${escapeAttr(r.sujets || '')}">${escapeHtml(r.sujets ? truncate(r.sujets, 60) : '—')}</td>
+      <td>${r.deplacement === 'personnel' ? `<span title="${escapeAttr(vehiculeTitre)}">🚗</span>` : ''}</td>
+    </tr>`;
   }).join('');
+  wrap.innerHTML = `<table class="frais-table"><thead><tr>
+      <th>Date</th><th>Lieu</th><th>Participants</th><th>Sujet</th><th>Véhicule perso</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function openReunionModal(reunion = null) {
@@ -1611,8 +1650,25 @@ async function importDataFromFile(file) {
 
 
 function bootstrapWeeks() {
-  state.schoolYear = state.schoolYear || '2026-2027';
-  state.weeks = buildAcademicWeeks(2026, 36, 2027, 22);
+  state.weeks = buildRollingWeeks();
+  state.schoolYear = anneeScolaireLabel(state.weeks);
+}
+
+// Retours 17/08/2026 — remplace l'ancienne fenêtre fixe (S36→S22, années en
+// dur) : une fenêtre glissante centrée sur aujourd'hui, recalculée à chaque
+// chargement (voir normalizeData). L'app reste utilisable toute l'année,
+// vacances comprises, sans plus jamais avoir à mettre les bornes à jour.
+function buildRollingWeeks(centre = new Date(), avantSemaines = 26, apresSemaines = 26) {
+  const debut = addDays(centre, -avantSemaines * 7);
+  const fin = addDays(centre, apresSemaines * 7);
+  const { year: anDebut, week: semDebut } = isoWeekInfo(debut);
+  const { year: anFin, week: semFin } = isoWeekInfo(fin);
+  return buildAcademicWeeks(anDebut, semDebut, anFin, semFin);
+}
+function anneeScolaireLabel(weeks) {
+  if (!weeks.length) return '';
+  const premiere = weeks[0].isoYear, derniere = weeks[weeks.length - 1].isoYear;
+  return premiere === derniere ? String(premiere) : `${premiere}-${derniere}`;
 }
 
 function buildAcademicWeeks(startIsoYear, startWeek, endIsoYear, endWeek) {
@@ -1954,6 +2010,18 @@ function pruneOpenState() {
 const DASH_SEMAINES = 2;        // « Les deux semaines suivantes » (REGLES.md — un seul écran, pas de pagination)
 const FRAIS_RETARD_JOURS = 45;  // les frais partent au mois : pas d'alerte avant
 
+// Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine du bloc
+// « Ma semaine », indépendante de « Les deux semaines suivantes » (qui reste
+// ancré sur la semaine réelle). Décalage en nombre de semaines par rapport à
+// currentWeekId() ; remis à 0 au rechargement, pas persisté.
+let dashSemaineOffset = 0;
+function dashSemaineIdCourante() {
+  const i = state.weeks.findIndex(w => w.id === currentWeekId());
+  if (i < 0) return currentWeekId();
+  const idx = Math.min(Math.max(i + dashSemaineOffset, 0), state.weeks.length - 1);
+  return state.weeks[idx]?.id || currentWeekId();
+}
+
 const DASH_JOURS_COURTS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 const DASH_JOURS_LONGS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
@@ -1996,43 +2064,40 @@ function dashDateDeSeance(s) {
   return dayDatesForWeek(w)[Number(s.day) || 0] || null;
 }
 
-/* Ce qui fait qu'une séance demande une action. `date` sert à décider si une
-   réservation est devenue urgente (moins de ROOM_ALERT_DAYS jours). */
+/* Ce qui fait qu'une séance demande une action, ET ce qui a déjà été fait
+   (`fait: true`, retours 17/08/2026 — sinon une réservation/mission traitée
+   redevient invisible d'un coup, sans confirmation visuelle sur la carte).
+   `date` sert à décider si une réservation encore à faire est devenue
+   urgente (moins de ROOM_ALERT_DAYS jours). */
 function dashActionsDeSeance(s, date) {
   const out = [];
   const j = dashJoursEntre(date);
   if (isFictiveSession(s)) out.push({ cle: 'placer', texte: 'À placer' });
   const salle = sessionRoomToBook(s);
-  if (salle && !s.roomBooked) {
-    out.push({
-      cle: 'salle',
-      texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`,
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (salle) {
+    out.push(s.roomBooked
+      ? { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} réservée`, fait: true }
+      : { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`, urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
   // Lot B — les deux étiquettes du déplacement. Un véhicule de l'établissement
   // se réserve (même urgence qu'une salle) ; un véhicule personnel demande un
   // ordre de mission AVANT le départ — c'est donc aussi une échéance.
-  if (s.deplacement === 'etablissement' && !s.vehicleBooked) {
-    out.push({
-      cle: 'vehicule',
-      texte: 'Véhicule à réserver',
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (s.deplacement === 'etablissement') {
+    out.push(s.vehicleBooked
+      ? { cle: 'vehicule', texte: 'Véhicule réservé', fait: true }
+      : { cle: 'vehicule', texte: 'Véhicule à réserver', urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
-  if (s.deplacement === 'personnel' && !s.ordreMission) {
-    out.push({
-      cle: 'mission',
-      texte: 'Ordre de mission',
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (s.deplacement === 'personnel') {
+    out.push(s.ordreMission
+      ? { cle: 'mission', texte: 'Ordre de mission envoyé', fait: true }
+      : { cle: 'mission', texte: 'Ordre de mission', urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
   if (!s.sequenceId || !s.ueId) out.push({ cle: 'rattacher', texte: 'À rattacher' });
   return out;
 }
 
 function dashEtiquettes(actions) {
-  return actions.map(a => `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}">${escapeHtml(a.texte)}</span>`).join('');
+  return actions.map(a => `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''}">${escapeHtml(a.texte)}</span>`).join('');
 }
 
 /* Le retard : ce qui aurait dû être fait. Les frais de déplacement n'y entrent
@@ -2098,10 +2163,11 @@ function dashContenuSemaine(semaineId) {
 /* ---- Ligne 1 : « Ma semaine », un jour par colonne ---- */
 function dashCarteSeance(s, date) {
   const actions = dashActionsDeSeance(s, date);
+  const aTraiter = actions.some(a => !a.fait);
   const urgent = actions.some(a => a.urgent);
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, s.demiGroupe ? '½' + s.demiGroupe : '']
     .filter(Boolean).join(' · ');
-  return `<li class="carte${actions.length ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
+  return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
     <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
     <span class="carte-titre">${escapeHtml(s.title)}</span>
     <span class="carte-meta">${escapeHtml(meta)}</span>
@@ -2138,13 +2204,20 @@ function dashColonneJour(j, videHtml) {
 function renderDashSemaine() {
   const hote = $('#dashSemaine');
   if (!hote) return;
-  const c = dashContenuSemaine(currentWeekId());
+  const semaineId = dashSemaineIdCourante();
+  const iCourante = state.weeks.findIndex(w => w.id === currentWeekId());
+  const iAffichee = state.weeks.findIndex(w => w.id === semaineId);
+  const nav = iCourante >= 0 ? `<div class="dash-semaine-nav">
+      <button type="button" class="dash-week-nav-btn" data-dash-week-nav="-1" ${iAffichee <= 0 ? 'disabled' : ''} aria-label="Semaine précédente">‹</button>
+      <button type="button" class="dash-week-nav-btn" data-dash-week-nav="1" ${iAffichee < 0 || iAffichee >= state.weeks.length - 1 ? 'disabled' : ''} aria-label="Semaine suivante">›</button>
+    </div>` : '';
+  const c = dashContenuSemaine(semaineId);
   if (!c) {
-    hote.innerHTML = `<div class="panel-heading-inline bloc-tete"><h3>Ma semaine</h3></div>
+    hote.innerHTML = `<div class="panel-heading-inline bloc-tete"><h3>Ma semaine</h3>${nav}</div>
       ${dashBandeauRetard()}<p class="bloc-vide">Nous sommes hors année scolaire.</p>`;
     return;
   }
-  const nbActions = c.jours.reduce((n, j) => n + j.seances.filter(s => dashActionsDeSeance(s, j.date).length).length, 0) + c.aPlacer.length;
+  const nbActions = c.jours.reduce((n, j) => n + j.seances.filter(s => dashActionsDeSeance(s, j.date).some(a => !a.fait)).length, 0) + c.aPlacer.length;
 
   /* Une séance sans créneau dans la semaine en cours est urgente : rouge. */
   const sansCreneau = c.aPlacer.length
@@ -2159,6 +2232,7 @@ function renderDashSemaine() {
 
   hote.innerHTML = `<div class="panel-heading-inline bloc-tete">
       <h3>Ma semaine <span class="bloc-id">${escapeHtml(c.semaine.label)} · ${escapeHtml(dashDatesSemaine(c.semaine.id))}</span></h3>
+      ${nav}
       <span class="bloc-compte">${c.nbSeances} séance${c.nbSeances > 1 ? 's' : ''}${c.nbReunions ? ` · ${c.nbReunions} réunion${c.nbReunions > 1 ? 's' : ''}` : ''}${nbActions ? ` · <strong>${nbActions} à traiter</strong>` : ''}</span>
       <span class="bloc-lien" data-goto-view="week" tabindex="0" role="button">Ouvrir le planning hebdo →</span>
     </div>
@@ -2269,46 +2343,89 @@ function renderDashboard() {
     ? constraintsTriees.map(c => `<div class="row-item" data-edit-constraint="${escapeAttr(c.id)}"><div class="row-main"><strong class="row-title">${escapeHtml(c.label)}</strong><span class="row-meta">${escapeHtml(c.type)} · ${formatDateFr(c.start)} → ${formatDateFr(c.end)} · ${(c.promotions || []).length ? escapeHtml((c.promotions || []).join(', ')) : 'Toutes promotions'}</span></div></div>`).join('')
     : '<p class="meta">Aucune période enregistrée (vacances, stage, examen…).</p>';
 
-  renderTodoList();
-  // Notes libres « Bugs & améliorations » : même précaution (ne pas écraser pendant la saisie)
-  const dev = $('#devNotes');
-  if (dev && document.activeElement !== dev) dev.value = state.devNotes || '';
-  updateDevStatus();
+  renderChecklist('todo');
+  renderChecklist('devnotes');
 }
 
-/* « À faire » — refonte écran 1 (16/08/2026, mockup) : vraie liste à cocher au
-   lieu d'un texte libre. Une tâche cochée reste visible (barrée) jusqu'à la
-   fin de la journée où elle a été cochée (repérage par `doneAt === todayIso()`,
-   pas de purge/minuterie), puis rejoint le compteur « faites » d'elle-même dès
-   que la date change — aucune action explicite n'est nécessaire. */
-function renderTodoList() {
-  const host = $('#todoList');
+/* « À faire » et « Amélioration de l'appli » — refonte écran 1 (16/08/2026)
+   puis retours 17/08/2026 : deux listes à cocher de même forme (la seconde
+   partagée entre comptes plutôt que privée), un seul moteur pour les deux.
+   Une tâche cochée reste visible (barrée) jusqu'à la fin de la journée où
+   elle a été cochée (repérage par `doneAt === todayIso()`), puis rejoint un
+   historique consultable (⌄ Tâches faites) purgé au-delà de 30 jours
+   (purgerTachesFaites, appliqué au chargement). */
+const CHECKLISTS = {
+  todo: { list: '#todoList', input: '#todoNewInput', panel: '#todoPriorityPanel', history: '#todoHistoryList', historyCount: '#todoHistoryCount', idPrefix: 'todo' },
+  devnotes: { list: '#devNotesList', input: '#devNotesNewInput', panel: '#devNotesPanel', history: '#devNotesHistoryList', historyCount: '#devNotesHistoryCount', idPrefix: 'devnote', badge: '#devNotesBadge' }
+};
+function checklistItems(key) {
+  const field = key === 'todo' ? 'todoItems' : 'devNotesItems';
+  state[field] = state[field] || [];
+  return state[field];
+}
+function renderChecklist(key) {
+  const cfg = CHECKLISTS[key];
+  const host = $(cfg.list);
   if (!host) return;
   const today = todayIso();
-  const items = state.todoItems || [];
+  const items = checklistItems(key);
   const visibles = items.filter(t => !t.done || t.doneAt === today);
-  const faites = items.filter(t => t.done && t.doneAt !== today);
+  const faites = items.filter(t => t.done && t.doneAt !== today).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || ''));
   host.innerHTML = visibles.length
     ? visibles.map(t => `<label class="todo-row${t.done ? ' is-done' : ''}">
-        <input type="checkbox" data-todo-id="${escapeAttr(t.id)}" ${t.done ? 'checked' : ''} />
+        <input type="checkbox" data-checklist-check="${escapeAttr(t.id)}" ${t.done ? 'checked' : ''} />
         <span class="todo-row-text">${escapeHtml(t.text)}</span>
-        <button type="button" class="todo-row-remove" data-todo-remove="${escapeAttr(t.id)}" title="Supprimer" aria-label="Supprimer la tâche « ${escapeAttr(t.text)} »">✕</button>
+        <button type="button" class="todo-row-remove" data-checklist-remove="${escapeAttr(t.id)}" title="Supprimer" aria-label="Supprimer « ${escapeAttr(t.text)} »">✕</button>
       </label>`).join('')
     : '<p class="meta tight">Aucune tâche en attente.</p>';
-  const countEl = $('#todoDoneCount');
-  if (countEl) countEl.textContent = faites.length ? `${faites.length} faite${faites.length > 1 ? 's' : ''}` : '';
-  $('#todoPriorityPanel')?.classList.toggle('has-pending', items.some(t => !t.done));
-}
-
-function updateDevStatus() {
-  const value = ($('#devNotes')?.value ?? state?.devNotes ?? '').trim();
-  // Lot 9 (Q5) — badge « 1 note » sur le résumé replié, pour que le contenu ne
-  // passe pas inaperçu une fois le panneau fermé par défaut.
-  const badge = $('#devNotesBadge');
-  if (badge) {
-    badge.textContent = value ? '1 note' : '';
-    badge.classList.toggle('has-pending', !!value);
+  $(cfg.panel)?.classList.toggle('has-pending', items.some(t => !t.done));
+  if (cfg.badge) {
+    const nb = visibles.filter(t => !t.done).length;
+    const badge = $(cfg.badge);
+    if (badge) { badge.textContent = nb ? `${nb} à traiter` : ''; badge.classList.toggle('has-pending', nb > 0); }
   }
+
+  const histHost = $(cfg.history);
+  if (histHost) {
+    histHost.innerHTML = faites.length
+      ? faites.map(t => `<li class="todo-history-row"><span class="todo-history-text">${escapeHtml(t.text)}</span><span class="todo-history-date">${escapeHtml(formatDateFr(t.doneAt))}</span></li>`).join('')
+      : '<li class="meta tight">Aucune tâche faite ces 30 derniers jours.</li>';
+  }
+  const histCount = $(cfg.historyCount);
+  if (histCount) histCount.textContent = faites.length ? `Tâches faites (${faites.length})` : 'Tâches faites';
+}
+function wireChecklist(key) {
+  const cfg = CHECKLISTS[key];
+  $(cfg.input)?.addEventListener('keydown', async (event) => {
+    if (event.key !== 'Enter') return;
+    const input = event.target;
+    const text = input.value.trim();
+    if (!text) return;
+    checklistItems(key).push({ id: uid(cfg.idPrefix), text, done: false, doneAt: '' });
+    input.value = '';
+    renderChecklist(key);
+    await saveData('Tâche ajoutée', { rerender: false });
+  });
+  $(cfg.list)?.addEventListener('change', async (event) => {
+    const box = event.target.closest('[data-checklist-check]');
+    if (!box) return;
+    const item = checklistItems(key).find(t => t.id === box.dataset.checklistCheck);
+    if (!item) return;
+    item.done = box.checked;
+    item.doneAt = box.checked ? todayIso() : '';
+    renderChecklist(key);
+    await saveData(item.done ? 'Tâche cochée' : 'Tâche décochée', { rerender: false });
+  });
+  $(cfg.list)?.addEventListener('click', async (event) => {
+    const del = event.target.closest('[data-checklist-remove]');
+    if (!del) return;
+    const arr = checklistItems(key);
+    const idx = arr.findIndex(t => t.id === del.dataset.checklistRemove);
+    if (idx < 0) return;
+    arr.splice(idx, 1);
+    renderChecklist(key);
+    await saveData('Tâche supprimée', { rerender: false });
+  });
 }
 
 function setWeekNotesStatus(text) {
@@ -2702,7 +2819,13 @@ function renderSessionCard(s, number) {
 // placement (ici, aucune n'est placée — le signe serait le même partout).
 function renderBacklogSessionTile(s) {
   const color = sessionTint(s);
-  const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ');
+  // Retours 17/08/2026 — UE + promo remplacent le nombre d'heures : ce qui
+  // manque pour placer la séance (dans quelle UE, pour quelle promo), pas sa
+  // durée (déjà lisible dans la fiche). Le bandeau de type de séance (tête)
+  // ne change pas.
+  const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : ''].filter(Boolean).join(' · ');
+  const ueLabel = ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : '';
+  const infoLigne = [ueLabel, s.promotion].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 3);
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
@@ -2712,6 +2835,7 @@ function renderBacklogSessionTile(s) {
       <span class="session-card-headtype" title="${escapeAttr(s.type || '')}">${escapeHtml(s.type || 'Séance')}</span>
     </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
+    ${infoLigne ? `<p class="session-card-meta">${escapeHtml(infoLigne)}</p>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
   </article>`;
@@ -6038,6 +6162,19 @@ function bindEvents() {
     else if (kind === 'mission') entity.missionDismissed = true;
     saveData('Ligne retirée des urgences');
   });
+  // Bascule rapide « véhicule établissement indisponible → personnel »
+  // (retours 17/08/2026) : évite de rouvrir toute la fiche pour changer le
+  // menu Déplacement quand la réservation échoue.
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-bascule-vehicule]');
+    if (!btn) return;
+    const [source, id] = btn.dataset.basculeVehicule.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    entity.deplacement = 'personnel';
+    entity.vehicleBooked = false;
+    saveData('Basculé en véhicule personnel');
+  });
   $('#missionBackButton')?.addEventListener('click', closeMissionView);
   // Un seul écouteur « change » (pas blur) pour tous les champs du document :
   // évite le double déclenchement blur+change sur les <input type="date">.
@@ -6252,9 +6389,8 @@ function bindEvents() {
     bouton.disabled = true;
     Promise.resolve(window.OC_APP?.recharger()).finally(() => { bouton.disabled = false; });
   });
-  // « Sauvegarder » force un réenregistrement complet (forcer:true, comme un
-  // import) plutôt que de dépendre uniquement de la sauvegarde automatique à
-  // chaque action — utile pour rassurer, ou retenter après une erreur réseau.
+  // « Réessayer » (visible seulement après une erreur, voir setSaveStatus)
+  // force un réenregistrement complet (forcer:true, comme un import).
   $('#btn-sauvegarder')?.addEventListener('click', (event) => {
     const bouton = event.currentTarget;
     bouton.disabled = true;
@@ -6311,52 +6447,10 @@ function bindEvents() {
   });
   $('#weekNotes')?.addEventListener('blur', () => { clearTimeout(weekNotesTimer); persistWeekNotes(); });
 
-  // « À faire » — liste à cocher (voir renderTodoList) : ajout par Entrée,
-  // coche/décoche et suppression par délégation sur la liste.
-  $('#todoNewInput')?.addEventListener('keydown', async (event) => {
-    if (event.key !== 'Enter') return;
-    const input = event.target;
-    const text = input.value.trim();
-    if (!text) return;
-    state.todoItems = state.todoItems || [];
-    state.todoItems.push({ id: uid('todo'), text, done: false, doneAt: '' });
-    input.value = '';
-    renderTodoList();
-    await saveData('Tâche ajoutée', { rerender: false });
-  });
-  $('#todoList')?.addEventListener('change', async (event) => {
-    const box = event.target.closest('[data-todo-id]');
-    if (!box) return;
-    const item = (state.todoItems || []).find(t => t.id === box.dataset.todoId);
-    if (!item) return;
-    item.done = box.checked;
-    item.doneAt = box.checked ? todayIso() : '';
-    renderTodoList();
-    await saveData(item.done ? 'Tâche cochée' : 'Tâche décochée', { rerender: false });
-  });
-  $('#todoList')?.addEventListener('click', async (event) => {
-    const del = event.target.closest('[data-todo-remove]');
-    if (!del) return;
-    state.todoItems = (state.todoItems || []).filter(t => t.id !== del.dataset.todoRemove);
-    renderTodoList();
-    await saveData('Tâche supprimée', { rerender: false });
-  });
-
-  // Notes libres « Bugs & améliorations » — même mécanique que « À faire »
-  let devTimer;
-  const persistDev = async () => {
-    if (!state) return;
-    const value = $('#devNotes')?.value ?? '';
-    if (value === state.devNotes) return;
-    state.devNotes = value;
-    try { await saveData('Notes « Bugs & améliorations » enregistrées', { rerender: false }); updateDevStatus(); } catch (e) { setSaveStatus('Erreur d’enregistrement des notes'); }
-  };
-  $('#devNotes')?.addEventListener('input', () => {
-    updateDevStatus();
-    clearTimeout(devTimer);
-    devTimer = setTimeout(persistDev, 800);
-  });
-  $('#devNotes')?.addEventListener('blur', () => { clearTimeout(devTimer); persistDev(); });
+  // « À faire » et « Amélioration de l'appli » (voir renderChecklist) : ajout
+  // par Entrée, coche/décoche et suppression par délégation sur chaque liste.
+  wireChecklist('todo');
+  wireChecklist('devnotes');
 
   $('#weekBacklogScope')?.addEventListener('change', e => { weekBacklogScope = e.target.value; renderWeekBacklog(); });
   $('#weekBacklogUeFilter')?.addEventListener('change', e => { weekBacklogUeFilter = e.target.value; renderWeekBacklog(); });
@@ -6433,7 +6527,9 @@ function bindEvents() {
       // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
       // réservation, le lien « Éditer » (ordre de mission) et le × gardent
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule]')) return;
+      const nav = event.target.closest('[data-dash-week-nav]');
+      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
       if (ouvrir) {
         // « Séances pas encore placées » n'est plus un <details> repliable
@@ -6459,7 +6555,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule]')) return;
       const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
@@ -7093,7 +7189,6 @@ function bindModalActions() {
   // ---- Frais de déplacement (Lot E — encart du Tableau de bord) ----
   $('#addDeplacementButton')?.addEventListener('click', () => openDeplacementModal());
   $('#fraisStatusFilter')?.addEventListener('change', renderFrais);
-  $('#fraisClasseFilter')?.addEventListener('change', renderFrais);
   $$('[data-export-frais]').forEach(btn => btn.addEventListener('click', () => {
     const fmt = btn.dataset.exportFrais;
     if (fmt === 'csv') exportFraisCsv();
