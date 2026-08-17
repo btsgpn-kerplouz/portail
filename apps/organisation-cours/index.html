@@ -181,7 +181,8 @@
            UE est le SEUL mécanisme de filtrage de cette vue (REGLES.md #21, sa
            seule exception à l'estompage — cliquer une UE en sélectionne UNE
            seule). Plus de barre de filtres, plus de recherche, plus de menu UE
-           à cocher : Promotion + « j'y interviens »/« équipe » suffisent. -->
+           à cocher : Promotion + « j'y interviens » suffisent (case « équipe »
+           retirée le 17/08, retour Martin — une seule case simplifie l'estompage). -->
       <div class="design-layout">
         <aside class="design-sidebar">
           <div class="design-sidebar-top">
@@ -192,8 +193,7 @@
             <span class="design-sidebar-count" id="designSidebarCount"></span>
           </div>
           <div class="design-sidebar-legend">
-            <label><input type="checkbox" id="designMineFilter" checked /><span class="legend-dot legend-dot-filled" aria-hidden="true"></span>j’y interviens</label>
-            <label><input type="checkbox" id="designTeamFilter" checked /><span class="legend-dot legend-dot-hollow" aria-hidden="true"></span>équipe</label>
+            <label><input type="checkbox" id="designMineFilter" checked />j’y interviens</label>
           </div>
           <div id="designSidebarList" class="design-sidebar-list"></div>
         </aside>
@@ -270,35 +270,34 @@
            mensuel qui vivait dans la colonne latérale). Bascule de période pour
            parcourir l'année scolaire entière (trop de semaines pour une seule
            bande lisible) ; cliquer une semaine la sélectionne pour de vrai. -->
+      <!-- 17/08 — retour Martin : le texte « Septembre-décembre S36→S53 · cliquer
+           une semaine » doublonnait les boutons Sept./Janv. juste à côté ; ceux-ci
+           suffisent seuls. « Ma trame »/export remontent ici (à la place de ce
+           texte) — ils n'ont plus besoin d'être dans la barre collante une fois
+           les flèches et « + Séance » retirés de celle-ci (redondants avec la
+           bande de semaines et les cases cliquables). -->
       <div class="week-strip-bar">
-        <span class="week-strip-label" id="weekStripLabel"></span>
         <div class="promo-switch week-strip-switch" role="group" aria-label="Période affichée" id="weekStripPeriodSwitch">
           <button type="button" class="promo-switch-btn" data-week-period="autumn">Sept. – déc.</button>
           <button type="button" class="promo-switch-btn" data-week-period="spring">Janv. – mai</button>
-        </div>
-      </div>
-      <div id="weekStrip" class="week-strip" role="group" aria-label="Choisir la semaine affichée"></div>
-
-      <!-- Lot E [19] — même patron que la Conception : le titre de page et sa
-           description partent (l'onglet les dit déjà), et tout ce qui pilote la
-           vue tient sur une seule barre collée sous les onglets. Elle porte en
-           plus le rappel de la semaine affichée : une fois qu'on défile dans la
-           grille, c'était la seule information qu'on ne pouvait plus lire. -->
-      <div class="week-bar" role="toolbar" aria-label="Semaine affichée et actions du planning">
-        <div class="week-bar-group week-bar-semaine">
-          <button type="button" class="icon-button small" data-week-nav="prev" aria-label="Semaine précédente">‹</button>
-          <span class="week-bar-label" id="weekBarLabel"></span>
-          <button type="button" class="icon-button small" data-week-nav="next" aria-label="Semaine suivante">›</button>
-          <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
         </div>
         <div class="week-bar-group week-bar-actions">
           <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel &amp; Ruban) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
-          <button id="addSessionButton" class="small">+ Séance</button>
           <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
         </div>
+      </div>
+      <div id="weekStrip" class="week-strip" role="group" aria-label="Choisir la semaine affichée"></div>
+
+      <!-- Lot E [19] — le titre de page et sa description partent (l'onglet les
+           dit déjà) ; ne reste dans la barre collée sous les onglets que le
+           rappel de la semaine affichée, seule information qu'on ne peut plus
+           lire une fois qu'on a défilé dans la grille. -->
+      <div class="week-bar" role="toolbar" aria-label="Semaine affichée">
+        <span class="week-bar-label" id="weekBarLabel"></span>
+        <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
       </div>
       <div id="weekMeta" class="week-meta visually-hidden"></div>
       <div class="week-plan-top">
@@ -507,6 +506,7 @@
         <aside class="dossier-sidebar">
           <section class="dossier-block">
             <h3 class="dossier-block-title">1 · L'unité</h3>
+            <label class="checkbox-inline dossier-mine-filter"><input type="checkbox" id="dossierMineFilter" />Mes UE seulement</label>
             <select id="dossierUeSelect" class="dossier-ue-select"></select>
             <div id="dossierUeSummary" class="dossier-ue-summary"></div>
           </section>

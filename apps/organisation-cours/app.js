@@ -2454,8 +2454,7 @@ function renderDesignSidebar(promoUes) {
   $$('.promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.designPromo === designPromotionFilter));
   const countEl = $('#designSidebarCount');
   if (countEl) countEl.textContent = `${state.ues.length} UE`;
-  const mineChecked = $('#designMineFilter')?.checked !== false;
-  const teamChecked = $('#designTeamFilter')?.checked !== false;
+  const focusChecked = $('#designMineFilter')?.checked !== false;
   const semesters = [...new Set(promoUes.map(ue => ue.semester))].sort((a, b) => SEMESTERS.indexOf(a) - SEMESTERS.indexOf(b));
   const list = $('#designSidebarList');
   list.innerHTML = semesters.length
@@ -2465,27 +2464,29 @@ function renderDesignSidebar(promoUes) {
           .sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
         return `<div class="design-sidebar-group">
           <p class="design-sidebar-group-label">${escapeHtml(sem)}</p>
-          ${group.map(ue => renderDesignSidebarRow(ue, mineChecked, teamChecked)).join('')}
+          ${group.map(ue => renderDesignSidebarRow(ue, focusChecked)).join('')}
         </div>`;
       }).join('')
     : '<p class="meta tight">Aucune UE pour cette promotion.</p>';
 }
 
-function renderDesignSidebarRow(ue, mineChecked, teamChecked) {
+function renderDesignSidebarRow(ue, focusChecked) {
   const sequenceCount = state.sequences.filter(seq => seq.ueId === ue.id).length;
   const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
   // Pastille pleine = j'y interviens, pastille creuse = un·e collègue (JETONS.md).
   const enseignants = enseignantsDeLUe(ue);
   const pills = enseignants.map(initiale => `<span class="design-ue-pill${initiale === moiInitiales ? ' is-mine' : ''}">${escapeHtml(initiale)}</span>`).join('');
   const estMienne = moiInitiales && enseignants.includes(moiInitiales);
-  // Estompage (REGLES.md #21) : les deux cases filtrent en atténuant, jamais en retirant.
-  const dimmed = enseignants.length ? (estMienne ? !mineChecked : !teamChecked) : false;
+  // Estompage (REGLES.md #21) : atténue, ne retire jamais. Une seule case
+  // « j'y interviens » — cochée (défaut) = rien n'est atténué, décochée = les
+  // UE qui ne sont pas les miennes passent en fond sable (17/08, retour Martin).
+  const dimmed = enseignants.length ? (!estMienne && !focusChecked) : false;
   const selected = ue.id === designSelectedUeId;
   const compteLabel = (sequenceCount || sessionCount)
     ? `${sequenceCount} séq · ${sessionCount} séance${sessionCount > 1 ? 's' : ''}`
     : 'aucune séance';
-  return `<button type="button" class="design-ue-row${selected ? ' is-selected' : ''}${dimmed ? ' is-dimmed' : ''}${!sessionCount ? ' is-empty' : ''}" data-select-ue="${escapeAttr(ue.id)}" aria-pressed="${selected}">
-    <span class="design-ue-title"><span class="code-badge">${escapeHtml(compactUeCode(ue.code))}</span> ${escapeHtml(ue.title)}</span>
+  return `<button type="button" class="design-ue-row${selected ? ' is-selected' : ''}${dimmed ? ' is-dimmed' : ''}${!sessionCount ? ' is-empty' : ''}" style="--ue-color:${ueColor(ue.id)}" data-select-ue="${escapeAttr(ue.id)}" aria-pressed="${selected}">
+    <span class="design-ue-title">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</span>
     <span class="design-ue-sub">
       <span class="design-ue-count">${escapeHtml(compteLabel)}</span>
       ${pills ? `<span class="design-ue-pills">${pills}</span>` : ''}
@@ -2502,10 +2503,22 @@ function renderDesignDetail(ue) {
     $('#designCapacitiesPanel').innerHTML = '';
     return;
   }
-  const metaLine = renderMetaLine([ueDatePeriod(ue), ue.hoursTarget]);
+  // Volume horaire : le champ saisi (ue.hoursTarget) prime, mais tant qu'il vaut
+  // « à préciser » on affiche à la place le total des séances déjà enregistrées
+  // (mêmes fonctions que le Dossier, app.js:5559) plutôt qu'un texte creux.
+  const hoursDeclared = (ue.hoursTarget || '').trim();
+  const hoursComputed = hoursDeclared.toLowerCase() === 'à préciser' || !hoursDeclared
+    ? dossierHoursLabel(dossierUeSessions(ue).reduce((sum, s) => sum + dossierSessionMinutes(s), 0))
+    : '';
+  const hoursLabel = hoursComputed ? `${hoursComputed} · d’après les séances enregistrées` : (hoursDeclared || 'à préciser');
+  const metaLine = renderMetaLine([ueDatePeriod(ue), hoursLabel]);
+  const color = ueColor(ue.id);
+  head.style.setProperty('--ue-color', color);
+  head.style.setProperty('--ue-soft', hexToRgba(color, .1));
+  head.style.setProperty('--ue-ink', inkColor(color));
   head.innerHTML = `
     <div class="design-detail-headline">
-      <h2><span class="code-badge">${escapeHtml(compactUeCode(ue.code))}</span> ${escapeHtml(ue.title)}</h2>
+      <h2>${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</h2>
       ${metaLine}
     </div>
     <div class="entity-actions">
@@ -2639,10 +2652,20 @@ function sequencePeriodParts(seq = {}) {
   const first = ranges[0] || {};
   const start = first.start ? weekLabelFromNumber(first.start) : '';
   const end = first.end ? weekLabelFromNumber(first.end) : (first.start ? start : '');
+  // 17/08 — Martin veut garder l'indicatif de semaines mais y ajouter les vraies
+  // dates + le nombre de semaines couvertes (les deux se déduisent de state.weeks).
+  const startWeek = first.start ? state.weeks.find(w => weekNumberOf(w) === first.start) : null;
+  const endWeek = first.end ? state.weeks.find(w => weekNumberOf(w) === first.end) : startWeek;
+  const dateStart = startWeek ? weekDateStart(startWeek.id) : '';
+  const dateEnd = endWeek ? weekDateEnd(endWeek.id) : '';
+  const dates = dateStart && dateEnd ? (dateStart === dateEnd ? dateStart : `${dateStart} – ${dateEnd}`) : '';
+  const weeksCount = (first.start && first.end) ? (first.end - first.start + 1) : (first.start ? 1 : 0);
   return {
     start,
     end,
-    label: start && end ? (start === end ? start : `${start} → ${end}`) : (seq.targetWeeks || '')
+    label: start && end ? (start === end ? start : `${start} → ${end}`) : (seq.targetWeeks || ''),
+    dates,
+    weeksLabel: weeksCount ? `${weeksCount} semaine${weeksCount > 1 ? 's' : ''}` : ''
   };
 }
 
@@ -2715,10 +2738,9 @@ function compactUeCode(code = '') {
 function renderSequenceCard(seq) {
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
   const fictiveCount = sessions.filter(isFictiveSession).length;
-  const definitiveCount = sessions.filter(isDefinitiveSession).length;
   const color = sequenceColor(seq.id); // Lot L — couleur cohérente avec la frise
   const period = sequencePeriodParts(seq);
-  const periodLabel = period.start && period.end ? (period.start === period.end ? period.start : `${period.start} → ${period.end}`) : (period.label || '');
+  const periodLabel = [period.label, period.dates, period.weeksLabel].filter(Boolean).join(' · ');
   const teachers = compactTeacherInitials(seq.teacher || findUe(seq.ueId)?.teacher || '');
   const keywords = compactKeywords(seq.keywords, 8);
   const capCodes = (seq.capacityCodes || []).join(', ');
@@ -2730,7 +2752,7 @@ function renderSequenceCard(seq) {
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">Séquence</span>
       <span class="entity-title">${escapeHtml(seq.title)}</span>
-      <span class="entity-count">${fictiveCount} à placer · ${definitiveCount} EDT</span>
+      <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''} · ${fictiveCount} à placer</span>
     </summary>
     <div class="entity-body sequence-body">
       <div class="entity-headline">
@@ -2935,7 +2957,7 @@ function renderGanttUeCards(ues = []) {
     const selected = ue.id === ganttSelectedUeId;
     const countLabel = (seqCount || sessCount) ? `${seqCount} séq · ${sessCount} séance${sessCount > 1 ? 's' : ''}` : 'aucune séquence';
     return `<button type="button" class="progression-ue-card${selected ? ' is-selected' : ''}${!seqCount ? ' is-empty' : ''}" data-select-gantt-ue="${escapeAttr(ue.id)}" aria-pressed="${selected}">
-      <span class="progression-ue-card-title"><span class="code-badge">${escapeHtml(compactUeCode(ue.code))}</span> ${escapeHtml(ue.title)}</span>
+      <span class="progression-ue-card-title">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</span>
       <span class="progression-ue-card-sub"><span class="progression-ue-card-count">${escapeHtml(countLabel)}</span>${pills ? `<span class="design-ue-pills">${pills}</span>` : ''}</span>
     </button>`;
   }).join('') : '<p class="meta">Aucune UE pour ce semestre.</p>';
@@ -3009,7 +3031,7 @@ function renderGanttSequencesPanel(ues, weeks) {
     const lanes = Math.max(1, assignBandLanes(items));
     const bg = weeks.map((week, i) => `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${isThematicBlocked(week, promotion, ue.id, ueSessions) ? 'is-thematic' : ''}${week.id === currentWeekId() ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: ${rowCursor} / span ${lanes};" aria-hidden="true"></div>`).join('');
     const inner = items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
-    const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor} / span ${lanes};"><span class="code-badge">${escapeHtml(compactUeCode(ue.code))}</span> ${escapeHtml(ue.title)}</div>`;
+    const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor} / span ${lanes};">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</div>`;
     rowCursor += lanes;
     return bg + inner + label;
   }).join('');
@@ -3053,7 +3075,7 @@ function renderGanttSessionsPanel(ues, weeks) {
   let rowCursor = 2;
   const dayRows = DAY_LANES.map(lane => {
     const laneSessions = allSessions.filter(s => sessionLaneKey(s) === lane.key);
-    const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor};">${escapeHtml(shortLaneLabel(lane))} <span class="meta progression-day-count">${laneSessions.length} séance${laneSessions.length > 1 ? 's' : ''}</span></div>`;
+    const label = `<div class="timeline-row-label timeline-row-label-day" style="grid-row: ${rowCursor};"><span>${escapeHtml(shortLaneLabel(lane))}</span><span class="meta progression-day-count">${laneSessions.length} séance${laneSessions.length > 1 ? 's' : ''}</span></div>`;
     const cells = weeks.map((week, i) => timelineDayCell(ues, week, lane, allSessions, promotion, i, rowCursor)).join('');
     rowCursor += 1;
     return label + cells;
@@ -3453,14 +3475,9 @@ function renderWeekStrip() {
 
   $$('#weekStripPeriodSwitch .promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.weekPeriod === weekStripPeriod));
 
-  const period = TEMPLATE_PERIODS.find(p => p.key === weekStripPeriod) || TEMPLATE_PERIODS[0];
+  // 17/08 — le texte "Septembre-décembre S36→S53 · cliquer une semaine" (ex-#weekStripLabel)
+  // doublonnait les boutons Sept./Janv. ci-dessus : retiré, les boutons suffisent seuls.
   const weeks = state.weeks.filter(w => periodOfWeek(w) === weekStripPeriod);
-  const label = $('#weekStripLabel');
-  if (label) {
-    label.innerHTML = weeks.length
-      ? `<strong>${escapeHtml(period.label)}</strong> <span>${escapeHtml(weeks[0].label.replace('S0', 'S'))} → ${escapeHtml(weeks[weeks.length - 1].label.replace('S0', 'S'))} · cliquer une semaine</span>`
-      : escapeHtml(period.label);
-  }
 
   const strip = $('#weekStrip');
   if (!strip) return;
@@ -3494,14 +3511,6 @@ function mondayOf(date) {
   const offset = (d.getDay() + 6) % 7; // 0 = lundi
   d.setDate(d.getDate() - offset);
   return d;
-}
-
-function moveWeek(offset) {
-  const idx = state.weeks.findIndex(w => w.id === selectedWeek);
-  if (idx < 0) return;
-  const next = state.weeks[Math.max(0, Math.min(state.weeks.length - 1, idx + offset))];
-  selectedWeek = next.id;
-  renderPlanning();
 }
 
 function renderWeekBacklog() {
@@ -3877,7 +3886,7 @@ function renderInspection() {
   $('#inspectionSummary').innerHTML = `
     <div class="list-item"><strong>Année scolaire</strong><div class="meta">${escapeHtml(state.schoolYear || '')}</div></div>
     <div class="list-item"><strong>Structuration</strong><div class="meta">${state.ues.length} UE, ${state.sequences.length} séquence(s), ${state.sessions.length} séance(s), ${state.constraints.length} contrainte(s)</div></div>
-    <div class="list-item"><strong>Avancement de la planification</strong><div class="meta">${fictive.length} séance(s) à placer · ${definitive.length} plage(s) définitive(s) EDT</div></div>
+    <div class="list-item"><strong>Avancement de la planification</strong><div class="meta">${fictive.length} séance(s) à placer · ${definitive.length} placée(s)</div></div>
     <div class="list-item"><strong>Répartition semestrielle</strong><div class="meta">${escapeHtml(bySemester)}</div></div>
     <div class="list-item"><strong>Traçabilité pédagogique</strong><div class="meta">${linkedPercent}% des séances sont rattachées à une UE et une séquence.</div></div>
   `;
@@ -5537,11 +5546,17 @@ function renderDossier() {
   const select = $('#dossierUeSelect');
   if (!select) return;
   ensureDossierPrintStyle();
-  const sortedUes = state.ues.slice().sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+  // 17/08 — retour Martin : « réduire le filtre des UE à celles pour lesquelles je suis
+  // concerné ». Décoché par défaut (liste complète inchangée) : un filtre qu'on choisit
+  // d'activer, pas un repli silencieux qui viderait la liste tant que le Ruban n'est pas
+  // renseigné en prod (piège déjà rencontré ailleurs — voir organisation-cours-charte).
+  const mineOnly = !!$('#dossierMineFilter')?.checked;
+  const allUes = state.ues.slice().sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+  const sortedUes = mineOnly ? allUes.filter(ue => moiInitiales && enseignantsDeLUe(ue).includes(moiInitiales)) : allUes;
   select.innerHTML = sortedUes.length
     ? sortedUes.map(ue => `<option value="${escapeAttr(ue.id)}">${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</option>`).join('')
     : '<option value="">Aucune UE</option>';
-  if (!dossierUeId || !state.ues.some(u => u.id === dossierUeId)) dossierUeId = sortedUes[0]?.id || '';
+  if (!dossierUeId || !sortedUes.some(u => u.id === dossierUeId)) dossierUeId = sortedUes[0]?.id || '';
   select.value = dossierUeId;
 
   const ue = findUe(dossierUeId);
@@ -6087,6 +6102,7 @@ function bindEvents() {
   });
 
   // Écran 11 — Dossier
+  $('#dossierMineFilter')?.addEventListener('change', renderDossier);
   $('#dossierUeSelect')?.addEventListener('change', (event) => {
     dossierUeId = event.target.value;
     resetDossierSections(findUe(dossierUeId));
@@ -6417,14 +6433,6 @@ function bindEvents() {
     weekStripPeriod = btn.dataset.weekPeriod;
     renderWeekStrip();
   });
-  // Lot E [19] — les flèches de semaine ont quitté le calendrier pour la barre
-  // collante. Écouteur limité à `.week-bar` (et non posé sur <body>) : la leçon
-  // du lot C, où un écouteur délégué trop large happait les clics d'une autre
-  // vue.
-  document.querySelector('.week-bar')?.addEventListener('click', (event) => {
-    const nav = event.target.closest('[data-week-nav]');
-    if (nav) moveWeek(nav.dataset.weekNav === 'prev' ? -1 : 1);
-  });
   $('#weekMaskToggle')?.addEventListener('change', (event) => {
     weekMaskActive = event.target.checked;
     renderPlanning();
@@ -6463,7 +6471,6 @@ function bindEvents() {
     renderDesign();
   }));
   $('#designMineFilter')?.addEventListener('change', renderDesign);
-  $('#designTeamFilter')?.addEventListener('change', renderDesign);
   $('#designSidebarList')?.addEventListener('click', (event) => {
     const row = event.target.closest('[data-select-ue]');
     if (!row) return;
@@ -6498,8 +6505,9 @@ function bindEvents() {
   /* Les boutons « + » de la barre de la Conception ont été retirés : ils
      doublonnaient les créations déjà offertes là où elles ont du sens. Seule
      « Créer une UE » n'existait nulle part ailleurs — elle est reprise par la
-     bande d'ajout en fin de promotion (data-new-ue). */
-  $('#addSessionButton').addEventListener('click', () => openSessionModal(null, { placementStatus: 'definitif', forceDefinitive: true, weekId: selectedWeek, promotion: 'GPN1', day: 0, slot: 0 }));
+     bande d'ajout en fin de promotion (data-new-ue). Même logique pour le
+     Planning hebdo (17/08, retour Martin) : « + Séance » y doublonnait les
+     cases de séance, déjà toutes cliquables pour créer/modifier — retiré. */
 
   $('#constraintsList').addEventListener('click', (event) => {
     const el = event.target.closest('[data-edit-constraint]');

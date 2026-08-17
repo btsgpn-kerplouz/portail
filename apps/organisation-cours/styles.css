@@ -749,7 +749,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-radius: 0;
   background: var(--ue-color, var(--moss));
 }
-.entity-card > summary:hover { background: var(--ue-soft, var(--surface-alt)); }
+/* 17/08 — Martin veut un bandeau de séquence coloré en permanence, pas
+   seulement au survol (l'ancienne règle ne posait le fond qu'au :hover). */
+.entity-card > summary { background: var(--ue-soft, var(--surface-alt)); }
+.entity-card > summary:hover { background: color-mix(in srgb, var(--ue-color, var(--surface-alt)) 22%, var(--surface)); }
 
 .entity-chevron {
   flex: 0 0 auto;
@@ -939,15 +942,19 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .design-ue-row {
   display: flex; flex-direction: column; gap: .2rem; width: 100%;
   text-align: left; padding: .5rem .55rem; margin-bottom: 1px;
-  background: transparent; border: 0; border-bottom: 1px solid var(--line);
+  background: var(--surface); border: 0; border-bottom: 1px solid var(--line);
   cursor: pointer;
 }
 .design-ue-row:hover { background: var(--surface-alt); }
-.design-ue-row.is-selected { background: color-mix(in srgb, var(--acc) 9%, var(--surface)); border-left: 3px solid var(--acc); padding-left: calc(.55rem - 3px); }
-.design-ue-row.is-dimmed { opacity: .5; }
+/* 17/08 — l'UE sélectionnée doit être « plus visible, plus colorée » : on
+   reprend sa propre teinte (--ue-color, injectée en style inline) au lieu du
+   bleu d'accent fixe à 9 %. Le sable (--surface-alt) reste réservé à
+   l'atténuation « je n'y interviens pas », jamais à l'état de repos. */
+.design-ue-row.is-selected { background: color-mix(in srgb, var(--ue-color, var(--acc)) 16%, var(--surface)); border-left: 4px solid var(--ue-color, var(--acc)); padding-left: calc(.55rem - 4px); }
+.design-ue-row.is-dimmed { background: var(--surface-alt); color: var(--muted); }
+.design-ue-row.is-dimmed .design-ue-title { color: var(--muted); }
 .design-ue-row.is-empty .design-ue-count { color: var(--muted); font-style: italic; }
 .design-ue-title { font-weight: 700; font-size: .88rem; color: var(--ink); display: flex; align-items: baseline; gap: .4rem; }
-.design-ue-row .code-badge { font-size: .68rem; }
 .design-ue-sub { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
 .design-ue-count { font-size: .76rem; color: var(--ink-soft); }
 .design-ue-pills { display: flex; gap: .25rem; }
@@ -959,7 +966,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .design-ue-pill.is-mine { background: var(--acc); color: #fff; }
 
 .design-detail { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
-.design-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+/* 17/08 — Martin veut que l'espace d'infos basiques de l'UE sélectionnée soit
+   « mis en valeur » : bordure + fond teintés de la couleur de l'UE (--ue-color
+   posée en JS sur #designDetailHead à chaque rendu), aplat plat sans ombre. */
+.design-detail-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
+  border-left: 5px solid var(--ue-color, var(--acc)); background: var(--ue-soft, transparent);
+  padding: var(--sp-3);
+}
 .design-detail-headline h2 { margin: 0 0 .3rem; font-size: 1.15rem; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
 .design-detail-headline .meta-line { margin: 0; }
 .design-subtabs { display: flex; gap: var(--sp-4); border-bottom: 1px solid var(--line-strong); }
@@ -1104,7 +1118,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: var(--type-bg, var(--surface-alt)); color: var(--type-fg, var(--ink-soft));
 }
 .session-card-meta { margin: 0; font-size: .76rem; color: var(--ink-soft); }
-.session-card-keywords { margin: 0; font-size: .72rem; color: var(--muted); line-height: 1.25; }
+/* 17/08 — mots-clés dans une couleur proche du titre de la séance (--ue-ink),
+   au lieu du gris --muted générique, pour mieux les rattacher visuellement. */
+.session-card-keywords { margin: 0; font-size: .72rem; color: var(--ue-ink, var(--ink-soft)); line-height: 1.25; }
 .row-title {
   font-weight: 650; font-size: .87rem; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1214,7 +1230,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    ===================================================================== */
 .progression-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
 .progression-week-range { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); margin-left: auto; }
-.semester-switch .promo-switch-btn { padding: .5rem 1rem; }
+/* 17/08 — Martin veut les boutons Promo et Semestre harmonisés : plus de
+   padding propre au semestre, mêmes dimensions que .promo-switch-btn. */
 .semester-switch .promo-switch-btn.active { background: var(--surface); color: var(--ink); border-color: var(--ink); font-weight: 700; }
 
 .progression-ue-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-2); }
@@ -1278,6 +1295,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-weight: 650; font-size: .72rem; color: var(--ink-soft);
   display: flex; align-items: center;
 }
+/* 17/08 — Martin trouve « Mar 7 séances » trop condensé sur une seule ligne :
+   le compteur passe sous le nom du jour. */
+.timeline-row-label-day { flex-direction: column; align-items: flex-start; gap: .05rem; }
 .header-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 
 /* Ligne SEMAINES */
@@ -1456,7 +1476,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    plus bas) et n'ajoute ici que son contenu propre : le rappel de la semaine
    à gauche, les actions à droite. */
 .week-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
-.week-bar-semaine { gap: .15rem; }
 .week-bar-actions { margin-left: auto; gap: .5rem; }
 .week-bar-label {
   display: inline-flex; align-items: baseline; gap: .4rem;
@@ -1465,14 +1484,12 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 .week-bar-label strong { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
 .week-bar-label span { font-size: .78rem; color: var(--muted); }
-.week-bar .mask-toggle { white-space: nowrap; }
+.week-strip-bar .mask-toggle { white-space: nowrap; }
 
 .week-toolbar { gap: .5rem; }
 
 /* Bande de semaines (REGLES.md #22 — seul sélecteur de date de l'app). */
-.week-strip-bar { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
-.week-strip-label { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
-.week-strip-label strong { color: var(--ink); font-weight: 700; }
+.week-strip-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
 .week-strip-switch .promo-switch-btn { padding: .35rem .7rem; font-size: .72rem; }
 .week-strip {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
