@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Transect — Petite Mer de Gâvres</title>
+<title>Zonation — Petite Mer de Gâvres</title>
 <style>
 @font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/ibm-plex-sans.woff2') format('woff2');}
 @font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/ibm-plex-serif.woff2') format('woff2');}
@@ -89,26 +89,28 @@ input[type=text]:focus,input[type=number]:focus{
   position:sticky;top:0;z-index:20;
   background:var(--ink);
   color:var(--page);
-  padding:.7em 1em;
-  display:flex;align-items:center;gap:.6em;
+  padding:.75em 1.1em;
+  display:flex;align-items:center;gap:.85em;
   border-top:5px solid var(--acc);
 }
 .app-header .titre{
-  font-family:var(--serif);font-weight:700;font-size:1.02rem;flex:1;
+  font-family:var(--serif);font-weight:700;font-size:1.28rem;letter-spacing:.005em;flex:1;
 }
-.app-header .titre small{display:block;font-family:var(--sans);font-weight:400;font-size:.72rem;opacity:.7;}
+.app-header .titre small{display:block;font-family:var(--sans);font-weight:400;font-size:.72rem;opacity:.7;margin-top:.15em;}
 .portail-lien{font-family:var(--mono);font-size:.72rem;color:rgba(244,242,236,.55);text-decoration:none;white-space:nowrap;flex:0 0 auto;}
 .portail-lien:hover{color:var(--page);}
-.icon-btn{
-  background:transparent;
-  color:var(--page);
-  border:1px solid rgba(244,242,236,.35);
-  border-radius:0;
-  width:2.4em;height:2.4em;
+/* Badge-logo : reprend le geste central de l'appli (ligne de transect + quadrats
+   de recouvrement croissant) plutôt qu'un pictogramme générique. Carré plein
+   couleur d'accent, comme le badge de Phytoscope (app pilote du portail) — angle
+   droit, aucun dégradé ni ombre, conforme à la charte. */
+.app-logo{
+  flex:0 0 auto;width:2.7em;height:2.7em;padding:.45em;
+  background:var(--acc);color:var(--page);
+  border:none;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.1rem;
-  padding:0;
+  cursor:pointer;
 }
+.app-logo svg{width:100%;height:100%;display:block;}
 main{max-width:640px;margin:0 auto;padding:1em;}
 .ecran{display:none;}
 .ecran.actif{display:block;}
@@ -311,8 +313,15 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 <body>
 
 <div class="app-header">
-  <button class="icon-btn" id="btn-accueil" title="Accueil">⌂</button>
-  <div class="titre" id="titre-ecran">Transect<small>Petite Mer de Gâvres — BTS GPN</small></div>
+  <button class="app-logo" id="btn-accueil" title="Accueil" aria-label="Accueil">
+    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <line x1="4" y1="20" x2="36" y2="20"/>
+      <rect x="6" y="17" width="3" height="6"/>
+      <rect x="16" y="14" width="6" height="12"/>
+      <rect x="27" y="10" width="9" height="18" fill="currentColor" stroke="none"/>
+    </svg>
+  </button>
+  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN</small></div>
   <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
 </div>
 
@@ -437,8 +446,8 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div id="zone-historique"></div>
       <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
         <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Exporter tout en CSV</button>
-        <button class="secondaire" onclick="exporterPourPhytoscope()">⬇ Exporter tout pour Phytoscope (JSON)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Le fichier JSON s'importe directement dans Phytoscope (écran Administration → Import de relevés) pour poursuivre l'analyse (gradients, écogrammes…).</p>
+        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Exporter pour Phytoscope (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Fichier au format du gabarit d'import CSV de Phytoscope (bouton "Importer" sur son écran d'accueil) : chaque relevé est ajouté comme nouveau relevé, sans jamais écraser ceux déjà présents. Les espèces non référencées ne sont pas incluses (Phytoscope ne peut résoudre que des taxons connus).</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -536,10 +545,10 @@ function allerA(nom){
   document.querySelectorAll('.ecran').forEach(e=>e.classList.remove('actif'));
   document.getElementById('ecran-'+nom).classList.add('actif');
   const titres = {
-    accueil:"Transect", releve:"Nouveau relevé", resultats:"Résultat",
+    accueil:"Zonation", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat"
   };
-  document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Transect";
+  document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Zonation";
   if(nom==='releve'){
     initSaisieEspeces();
     majEnteteReleve();
@@ -988,7 +997,7 @@ function construireProfilSVG(svgId, opts){
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="17" fill="${g.couleur}" opacity="0.13"/>
       <rect x="${x0}" y="15" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
-      <text x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" font-weight="700" letter-spacing="0.05em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+      <text x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.3" font-weight="700" letter-spacing="0.04em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
   // Séparateurs verticaux entre grands ensembles
@@ -998,22 +1007,22 @@ function construireProfilSVG(svgId, opts){
   PROFIL_ZONATION.forEach((z,i)=>{
     const fichesAffiches = z.fiches;
     const lignes = decouperEnLignes(z.zone, 9);
-    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:9.5}">${l}</tspan>`).join('');
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:10.5}">${l}</tspan>`).join('');
     const selectionnee = opts.zoneSelectionnee === i;
     html += `<g class="zone-colonne" tabindex="0" role="button" aria-label="${z.zone} — voir uniquement les habitats de cette zone" onclick="selectionnerZoneFiches(${i})" style="cursor:pointer;">
       <rect x="${i*w}" y="20" width="${w-2}" height="158" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.05:0.01}"/>
       <rect x="${i*w}" y="42" width="${w-2}" height="100" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.9:0.55}"/>
       ${selectionnee ? `<rect x="${i*w+1}" y="43" width="${w-4}" height="98" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
-      <text x="${i*w+w/2}" y="162" text-anchor="middle" font-size="8.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
+      <text x="${i*w+w/2}" y="161" text-anchor="middle" font-size="9.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
     fichesAffiches.forEach((fid, k)=>{
       const cx = i*w + 13 + (k%4)*16;
       const cy = 56 + Math.floor(k/4)*16;
-      html += `<circle cx="${cx}" cy="${cy}" r="7" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
-        <text x="${cx}" y="${cy+2.6}" text-anchor="middle" font-size="7" fill="#191b16" style="pointer-events:none">${fid}</text>`;
+      html += `<circle cx="${cx}" cy="${cy}" r="7.5" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
+        <text x="${cx}" y="${cy+2.8}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
     });
     html += `</g>`;
   });
-  svg.innerHTML = html + `<text x="10" y="192" font-size="9" fill="#565a4e">slikke (mer) →</text><text x="590" y="192" font-size="9" fill="#565a4e" text-anchor="end">← dune</text>`;
+  svg.innerHTML = html + `<text x="10" y="192" font-size="9.8" fill="#565a4e">slikke (mer) →</text><text x="590" y="192" font-size="9.8" fill="#565a4e" text-anchor="end">← dune</text>`;
 }
 
 /* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
@@ -1027,24 +1036,24 @@ function construireMiniProfilSVG(idxZone){
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="14" fill="${g.couleur}" opacity="0.13"/>
       <rect x="${x0}" y="12" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
-      <text x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" font-weight="700" letter-spacing="0.05em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+      <text x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.3" font-weight="700" letter-spacing="0.03em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
   GRANDS_ENSEMBLES.slice(1).forEach(g=>{
-    html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="74" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
+    html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="82" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
   PROFIL_ZONATION.forEach((z,i)=>{
     const lignes = decouperEnLignes(z.zone, 9);
-    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:9}">${l}</tspan>`).join('');
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:10}">${l}</tspan>`).join('');
     html += `<g>
       <rect x="${i*w}" y="24" width="${w-2}" height="30" fill="${ZONES_LINES_COULEURS[i]}" opacity="${i===idxZone?0.9:0.4}"/>
-      <text x="${i*w+w/2}" y="66" text-anchor="middle" font-size="7.6" fill="#191b16">${tspans}</text>
+      <text x="${i*w+w/2}" y="66" text-anchor="middle" font-size="8.3" fill="#191b16">${tspans}</text>
     </g>`;
     if(i===idxZone){
       html += `<circle cx="${i*w+w/2}" cy="39" r="6.5" fill="#c0562b" stroke="#fff" stroke-width="1.6"/>`;
     }
   });
-  return `<svg class="zonation-diagram" viewBox="0 0 600 78" xmlns="http://www.w3.org/2000/svg">${html}</svg>`;
+  return `<svg class="zonation-diagram" viewBox="0 0 600 86" xmlns="http://www.w3.org/2000/svg">${html}</svg>`;
 }
 
 /* Ordre et couleur de référence pour toute liste de fiches : dérivés de PROFIL_ZONATION
@@ -1299,50 +1308,46 @@ function exporterHistoriqueCSV(){
 }
 
 /* ---------- Export compatible Phytoscope ----------
-   Reproduit le schéma JSON attendu par l'import de Phytoscope (apps/phytoscope du
-   portail btsgpn-kerplouz) : { releves:[ {id, name, date, ..., rows:[{name, mode:"bb",
-   cover, ...}]} ] }. Phytoscope résout les taxons d'abord par le nom latin exact
-   (row.name) : les espèces reconnues seront donc directement exploitables (gradients,
-   écogrammes...) une fois le fichier importé ; les espèces non référencées apparaîtront
-   comme "taxon inconnu" mais restent visibles, sans rien casser. */
+   Phytoscope importe des relevés externes via un CSV (bouton "Importer" sur son
+   écran d'accueil, gabarit "Télécharger le gabarit CSV") — chaque relevé du
+   fichier est ajouté comme NOUVEAU relevé, jamais fusionné ni en remplacement de
+   l'existant. C'est le bon chemin pour amener des relevés d'ici dans Phytoscope.
+   (Phytoscope propose aussi un import JSON, mais réservé à ses propres exports :
+   son écran Administration précise qu'il REMPLACE tous les relevés stockés —
+   inadapté et risqué pour un simple ajout de relevés de terrain, donc pas utilisé
+   ici.) Colonnes reprises telles quelles de CSV_LIGNES_HEADERS dans son code ;
+   seules celles réellement lues à l'import sont incluses. Le taxon est résolu par
+   Phytoscope via le nom scientifique exact (nom_scientifique) : les espèces non
+   référencées de l'appli (latin=null) n'ont pas de nom exploitable et sont donc
+   omises de l'export (Phytoscope les rejetterait de toute façon avec un
+   avertissement "taxon non reconnu"). */
 function idPhytoscope(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
 
-function exporterPourPhytoscope(){
+function exporterPourPhytoscopeCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const releves = liste.map(r=>{
-    const horodatage = r.date || new Date().toISOString();
-    const rows = (r.cortege||[]).map(e=>({
-      line_id: idPhytoscope(),
-      tid: null,
-      name: e.latin || e.fr,
-      stratum: "Herbacée",
-      mode: e.mode || "bb",
-      cover: e.cover
-    }));
+  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi"];
+  const lignes = [entetes];
+  liste.forEach(r=>{
+    const releveId = idPhytoscope();
     const nomReleve = `${r.transect || 'Transect'} — relevé n°${r.numero || '?'}`;
-    const notesIdentif = r.top ? `Identification proposée par l'appli terrain : ${r.top} (fiche ${r.topFiche}) — ${r.carMatch||''} espèces caractéristiques, indice global ${r.score}%.` : "";
-    return {
-      id: idPhytoscope(),
-      name: nomReleve,
-      date: horodatage.slice(0,10),
-      observer: "",
-      site: "Petite Mer de Gâvres — profil de Linés (Plouhinec)",
-      location: r.distance ? `Distance sur le transect : ${r.distance} m` : "",
-      area: "",
-      notes: [notesIdentif, r.observation].filter(Boolean).join(' — '),
-      codeProjet: r.transect || "TP zonation Gâvres",
-      rows,
-      created_at: horodatage,
-      updated_at: horodatage,
-      device_id: "app-zonation-gavres"
-    };
+    const date = (r.date || new Date().toISOString()).slice(0,10);
+    (r.cortege||[]).forEach(e=>{
+      if(!e.latin) return; // espèce non référencée : pas de nom scientifique résoluble par Phytoscope
+      lignes.push([
+        releveId, nomReleve,
+        "Petite Mer de Gâvres — profil de Linés (Plouhinec)", r.transect || "",
+        date, "",
+        r.distance ? `Distance sur le transect : ${r.distance} m` : "", "", "1 m²",
+        "", e.latin, "Herbacée", e.mode || "bb", e.cover
+      ]);
+    });
   });
-  const payload = { releves, selectedId: releves[0].id, selectedIds: releves.map(r=>r.id) };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8;'});
+  const csv = lignes.map(l => l.map(v => `"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.json';
+  a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.csv';
   a.click();
   URL.revokeObjectURL(url);
 }

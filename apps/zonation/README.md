@@ -1,4 +1,4 @@
-# Transect
+# Zonation
 
 Outil de terrain pour l'identification des habitats des marais salés de la
 **Petite Mer de Gâvres** (BTS GPN — Kerplouz), à partir du référentiel
@@ -17,8 +17,9 @@ végétaux trouvables sur le site.
   transects) — pas encore branché sur Supabase. La bascule vers Supabase
   (comme `apps/phytoscope`, modèle pilote) est prévue dans une étape
   ultérieure, une fois ce front validé en ligne.
-- Export CSV et export JSON compatible avec l'import de `apps/phytoscope`
-  (mêmes coefficients Braun-Blanquet, résolution des taxons par nom latin).
+- Export CSV (résumé) et export CSV compatible avec le gabarit d'import de
+  `apps/phytoscope` (mêmes coefficients Braun-Blanquet, résolution des taxons
+  par nom scientifique exact).
 
 ## Développement local
 

@@ -22,7 +22,7 @@ rester lisible pour un enseignant qui n'a pas suivi la conversation d'origine.
 
 Une même grammaire dessert deux familles d'outils : la **consultation seule**
 (Végétations du massif armoricain) et la **saisie multi-utilisateur** (Phytoscope,
-Transect, organisation-cours).
+Zonation, organisation-cours).
 
 ## Product Purpose
 
