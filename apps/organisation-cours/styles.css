@@ -1264,6 +1264,20 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .progression-panel-foot { display: flex; align-items: center; gap: .4rem; margin-top: var(--sp-2); font-size: .8rem; color: var(--ink-soft); }
 .progression-day-count { font-weight: 400; }
 
+/* 18/08 — bande Séquences seule : cadre + bandeau titre bleu (consigne
+   directe), pour la distinguer visuellement de la bande Séances en-dessous. */
+.progression-panel-framed { border: 2px solid var(--acc); }
+.progression-panel-framed .progression-panel-head {
+  margin: 0; padding: .4rem .6rem;
+  background: color-mix(in srgb, var(--acc) 10%, var(--surface));
+  border-bottom: 1px solid var(--acc);
+}
+.progression-panel-framed .progression-panel-head h3 {
+  color: var(--acc); text-transform: uppercase; letter-spacing: .04em; font-size: .82rem;
+}
+.progression-panel-framed .progression-direction { border-color: var(--acc); color: var(--acc); }
+.progression-panel-framed .timeline-grid { border: none; }
+
 /* Conteneur scrollable horizontal : la grille interne peut dépasser. Colonne
    d'étiquettes et coin "sticky" pour rester visibles au défilement. */
 .timeline-scroll { overflow-x: auto; }
@@ -1373,26 +1387,19 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, #d9b75a 55%, transparent) 7px 14px);
 }
 .timeline-sequence-band, .timeline-constraint-band { position: relative; z-index: 1; }
+/* 18/08 — bandes « beaucoup plus fines » (consigne directe) : une seule ligne
+   flexible (titre tronqué + mots-clés + pastilles) au lieu d'un empilement de
+   2-3 lignes. min-width:0 sur les enfants flex évite qu'un titre long ne
+   pousse malgré tout la largeur de colonne (même piège que Lot 8 (Q6)). */
 .timeline-sequence-band, .timeline-constraint-band {
-  min-height: 30px; min-width: 0; margin: 3px; border-radius: var(--r-sm);
-  padding: .2rem .45rem; text-align: left; overflow: hidden;
+  min-height: 22px; min-width: 0; margin: 2px; border-radius: var(--r-sm);
+  padding: .1rem .4rem; text-align: left; overflow: hidden;
   border: 1px solid #e7d39e; background: #fbf3df; color: #6b4f12;
-  display: flex; flex-direction: column; justify-content: center;
+  display: flex; align-items: center; gap: .4rem;
 }
-.timeline-sequence-band span, .timeline-constraint-band span {
-  font-size: .56rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; opacity: .8;
-}
-/* Lot 8 (Q6) — un seul titre de séquence non tronqué forçait TOUTES les
-   colonnes de la frise à s'élargir (grille flexible : le calcul des fr
-   partage l'espace requis par un item entre toutes les pistes). Le min-width:0
-   ci-dessus supprime la contrainte de largeur minimale implicite des items de
-   grille ; le clamp 2 lignes (plutôt qu'une ellipse 1 ligne) donne au titre la
-   place de rester lisible sans repousser la colonne. */
 .timeline-sequence-band strong, .timeline-constraint-band strong {
-  font-size: .72rem; line-height: 1.15; max-height: 2.3em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.timeline-sequence-band em, .timeline-constraint-band em {
-  font-style: normal; font-size: .6rem; opacity: .85;
+  font-size: .7rem; line-height: 1.2; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;
 }
 .timeline-sequence-band { cursor: grab; }
 .timeline-sequence-band.has-blocked-week { opacity: .55; }
@@ -1404,20 +1411,19 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-left: 4px solid var(--ue-color, #e7d39e);
   color: var(--ink);
 }
-.timeline-sequence-band.seq-colored span,
-.timeline-sequence-band.seq-colored em { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
 .timeline-sequence-band.seq-colored strong { color: var(--ink); }
-/* Mots-clés (B1) sous le titre de la bande de séquence, clampés à 2 lignes. */
+/* Mots-clés (B1), sur la même ligne que le titre, tronqués si besoin. */
 .timeline-sequence-band .timeline-band-keywords {
-  font-size: .56rem; line-height: 1.15; margin-top: 1px;
+  font-size: .6rem; line-height: 1.2; min-width: 0; flex: 1 1 auto;
   color: var(--ink-soft); opacity: .9;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* Pastilles d'initiales d'enseignants (B2) en bas de la bande de séquence. */
+/* Pastilles d'initiales d'enseignants (B2), calées à droite de la bande. */
 .timeline-sequence-band .timeline-band-teachers {
-  display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px;
+  display: flex; flex-wrap: nowrap; gap: 3px; flex-shrink: 0; margin-left: auto;
 }
-.timeline-sequence-band.seq-colored .teacher-pip {
+.timeline-sequence-band.seq-colored .teacher-pip,
+.timeline-session.seq-tinted .teacher-pip {
   font-size: .55rem; font-weight: 700; line-height: 1;
   text-transform: none; letter-spacing: 0; opacity: 1;
   padding: 2px 5px; border-radius: 0; white-space: nowrap;
@@ -1433,6 +1439,11 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--ink);
 }
 .timeline-session.seq-tinted .timeline-session-type { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
+/* 18/08 — tête de tuile : bandeau de type (déjà là) + pastilles enseignants
+   (nouveau, consigne « cohérence visuelle » avec les tuiles de Conception
+   pédagogique) sur la même ligne, alignés aux extrémités. */
+.timeline-session-head { display: flex; align-items: center; justify-content: space-between; gap: .3rem; min-width: 0; }
+.timeline-session-head .timeline-band-teachers { margin-left: 0; flex-shrink: 0; display: flex; gap: 3px; }
 .timeline-constraint-band {
   background: repeating-linear-gradient(135deg, var(--surface-alt) 0 6px, var(--line) 6px 12px);
   border-color: var(--line-strong); color: var(--ink-soft);
@@ -1458,7 +1469,15 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   display: flex; flex-direction: column; gap: .05rem;
 }
 .timeline-session:hover { filter: brightness(.97); }
-.timeline-session-type { font-size: .58rem; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; opacity: .75; }
+/* 18/08 — un type de séance long (« Cours en salle informatique ») pouvait
+   repousser la pastille enseignant hors du cadre de la tuile (flex sans
+   min-width:0 : le texte passait à la ligne au lieu de se tronquer). Une
+   ligne, tronquée par ellipse — même traitement que dans la maquette
+   (« COURS EN SAL… »). */
+.timeline-session-type {
+  font-size: .58rem; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; opacity: .75;
+  min-width: 0; flex: 1 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .timeline-session-title { font-size: .74rem; line-height: 1.15; font-weight: 650; }
 .timeline-session-meta { font-style: normal; font-size: .64rem; opacity: .9; }
 .timeline-session-keywords { font-size: .6rem; opacity: .72; line-height: 1.1; }
@@ -1633,8 +1652,16 @@ table { border-collapse: collapse; width: 100%; }
    leurs colonnes de journées s'alignent verticalement (fini l'élargissement au
    contenu qui décalait un planning par rapport à l'autre). */
 .schedule-table { table-layout: fixed; min-width: 840px; }
+/* 18/08 — retour Martin : « les espaces de séances ne doivent pas changer de
+   taille d'une semaine à l'autre ». Cause : `height` sur une cellule de tableau
+   n'est qu'un minimum, une séance chargée (titre long + type + enseignant/lieu +
+   mots-clés) poussait sa ligne bien au-delà de 58px (mesuré : jusqu'à 115px sur
+   un créneau d'1h), donc une grille différente selon ce qui est rempli cette
+   semaine-là. `overflow: hidden` fige la hauteur : le contenu qui déborde est
+   coupé plutôt que d'élargir la ligne (l'infobulle — sessionTooltip — porte déjà
+   séquence/type/durée/mots-clés en repli). */
 .schedule-table th, .schedule-table td {
-  border: 1px solid var(--line); height: 58px;
+  border: 1px solid var(--line); height: 58px; overflow: hidden;
   vertical-align: middle; text-align: center; overflow-wrap: anywhere;
 }
 .schedule-table th { background: var(--surface-alt); font-weight: 700; font-size: .82rem; }
@@ -1661,6 +1688,11 @@ table { border-collapse: collapse; width: 100%; }
   background: color-mix(in srgb, var(--seq-color, var(--type-bg, var(--moss))) 34%, transparent);
 }
 .event-cell:hover { outline: 2px solid color-mix(in srgb, var(--type-fg, var(--moss)) 45%, transparent); outline-offset: -2px; }
+/* 18/08 — voir le commentaire sur `.event-body` dans renderSessionEventContent :
+   ce bloc fige la hauteur disponible (celle de la cellule, fixe) et coupe
+   l'excédent au lieu de l'étirer, pour que la grille ne varie plus selon ce qui
+   est saisi cette semaine-là. */
+.event-body { overflow: hidden; }
 .event-ue { font-family: var(--font-mono); font-size: .68rem; font-weight: 700; opacity: .8; }
 .event-session-title { font-weight: 700; font-size: .8rem; line-height: 1.18; margin-top: .1rem; }
 .event-title { font-size: .72rem; opacity: .85; line-height: 1.15; }
@@ -2299,6 +2331,11 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refread-toc-item.refread-toc-general { font-weight: 700; border-bottom-color: var(--line-strong); }
 .refread-toc-code { font-family: var(--font-mono); font-size: .7rem; font-weight: 700; color: var(--moss-dark); white-space: nowrap; }
 .refread-toc-item.active .refread-toc-code { color: var(--acc); }
+/* 18/08 — sous-parties (blocs/feuilles de la capacité affichée), indentées sous
+   leur capacité pour rester lisibles comme sommaire à plat plutôt qu'imbriqué. */
+.refread-toc-item.refread-toc-subpart { padding-left: 1.1rem; font-size: .75rem; color: var(--ink-soft); }
+.refread-toc-item.refread-toc-leaf { padding-left: 1.65rem; font-size: .72rem; color: var(--muted); }
+.refread-toc-item.refread-toc-subpart:hover, .refread-toc-item.refread-toc-leaf:hover { color: var(--ink); }
 
 .refread-body { border: 1px solid var(--line-strong); background: var(--card, var(--surface)); padding: var(--sp-4); max-height: 80vh; overflow-y: auto; }
 .refread-cap-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: var(--sp-3); border-bottom: 1px solid var(--line-strong); padding-bottom: var(--sp-2); }
@@ -2319,6 +2356,20 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refread-seq-item:hover { background: var(--card, var(--surface)); }
 .refread-seq-item strong { display: block; font-size: .82rem; }
 .refread-seq-item .meta { display: block; margin-top: .1rem; font-size: .7rem; }
+
+/* 18/08 — Lot F : sous-onglet « PDF d'origine ». Même géométrie que
+   .refread-layout (sidebar + panneau), sans 3e colonne. */
+.pdf-lib-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--sp-3); align-items: start; }
+@media (max-width: 900px) { .pdf-lib-layout { grid-template-columns: 1fr; } }
+.pdf-lib-toc { border: 1px solid var(--line-strong); background: var(--surface); max-height: 80vh; overflow-y: auto; }
+.pdf-lib-group-label {
+  margin: 0; padding: .4rem .6rem .2rem; font-family: var(--font-mono); font-size: .66rem;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+}
+.pdf-lib-item { border-left-width: 3px; }
+.pdf-lib-viewer { border: 1px solid var(--line-strong); background: var(--card, var(--surface)); height: 80vh; }
+.pdf-lib-viewer iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--surface); }
 
 /* En-tête de module */
 .rm-head { margin-bottom: var(--sp-3); }
@@ -2382,6 +2433,26 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 }
 .rm-leaf > summary::before { width: 20px; height: 20px; background: var(--surface-alt); color: var(--clay); }
 .rm-leafpanel { border-left: 2px solid var(--line); margin-left: .65rem; padding: .5rem .6rem .2rem .9rem; }
+
+/* 18/08 — refBlocs (blocs encadrés/sous-parties d'une capacité) : plus de
+   <details>/<summary>, tout est affiché ; mêmes bandeaux colorés que la version
+   dépliable (repères visuels identiques), en titres de section fixes ancrables
+   (voir refBlocAnchorId/refLeafAnchorId, ciblés par le sommaire). */
+.rm-part { margin: 0 0 .55rem; scroll-margin-top: .5rem; }
+.rm-part-title {
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: .7rem .85rem; font-size: 1rem; font-weight: 700; color: var(--moss-dark);
+}
+.rm-sub { margin-top: .5rem; scroll-margin-top: .5rem; }
+.rm-sub-title {
+  background: var(--moss-dark); color: #fff; border: 1px solid var(--moss-dark); border-radius: var(--r-sm);
+  padding: .6rem .8rem; font-size: .96rem; font-weight: 750;
+}
+.rm-leaf { margin-top: .45rem; scroll-margin-top: .5rem; }
+.rm-leaf-title {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: .55rem .75rem; font-size: .92rem; font-weight: 650; color: var(--ink);
+}
 
 /* Cartes de contenu */
 .rm-card {

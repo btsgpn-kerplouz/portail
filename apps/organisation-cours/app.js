@@ -90,14 +90,22 @@ const UE_REFERENCE = [
   ] }
 ];
 
+/* 18/08 — Lot F : « PDF d'origine » devient une vraie page (liste + lecteur),
+   voir #rubanTabPdf/renderPdfLibrary. La liste s'était arrêtée à M4-M8 alors que
+   docs/ contient déjà M1-M3 (mêmes intitulés que les onglets du référentiel
+   interactif, ci-dessous) : complétée pour couvrir tout le dossier. */
 const REFERENCE_DOCS = [
   { id: 'referentiel', title: 'Référentiel de diplôme BTSA GPN 2024', file: 'referentiel-diplome-2024.pdf', type: 'Référentiel de diplôme' },
+  { id: 'm1', title: 'Module 1 — Inscription dans le monde d’aujourd’hui', file: 'module-1-inscription-monde-aujourdhui.pdf', type: 'Document d’accompagnement' },
+  { id: 'm2', title: 'Module 2 — Construction du projet personnel et professionnel', file: 'module-2-projet-personnel-professionnel.pdf', type: 'Document d’accompagnement' },
+  { id: 'm3', title: 'Module 3 — Communication', file: 'module-3-communication.pdf', type: 'Document d’accompagnement' },
   { id: 'm4', title: 'Module 4 — Expertise naturaliste', file: 'module-4-expertise-naturaliste.pdf', type: 'Document d’accompagnement' },
   { id: 'm5', title: 'Module 5 — Opérations de gestion environnementale', file: 'module-5-operations-gestion-environnementale.pdf', type: 'Document d’accompagnement' },
   { id: 'm6', title: 'Module 6 — Éducation à l’environnement et médiation scientifique', file: 'module-6-education-environnement-mediation.pdf', type: 'Document d’accompagnement' },
   { id: 'm7', title: 'Module 7 — Montage de projet de gestion environnementale et de valorisation de la nature', file: 'module-7-montage-projet.pdf', type: 'Document d’accompagnement' },
   { id: 'm8', title: 'Module 8 — Concertation territoriale et communication', file: 'module-8-concertation-territoriale.pdf', type: 'Document d’accompagnement' },
-  { id: 'maths', title: 'Mathématiques appliquées — exemples de mobilisation', file: 'mathematiques-appliquees-exemples.pdf', type: 'Document thématique' }
+  { id: 'maths', title: 'Mathématiques appliquées — exemples de mobilisation', file: 'mathematiques-appliquees-exemples.pdf', type: 'Document thématique' },
+  { id: 'ruban', title: 'Ruban semestriel (document d’origine)', file: 'ruban-semestres.pdf', type: 'Ruban pédagogique' }
 ];
 
 // Référentiel structuré par capacités, chargé depuis reference-capacities.js
@@ -3043,19 +3051,25 @@ function renderGanttSequencesPanel(ues, weeks) {
     : weekRow + constraintLabel + constraintBg + constraintInner + `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Sélectionner une UE à afficher.</div>`;
 }
 
+/* 18/08 — bande réduite à sa couleur (catégorie du type, via .period-*) + son
+   nom, sur consigne directe (« créneaux de période particulière réduits à
+   leur bande + nom »). Le type et la période restent lisibles en infobulle. */
 function renderConstraintBandHtml(segment, gridRow) {
   const c = segment.constraint;
-  return `<button class="timeline-sequence-band timeline-constraint-band period-${typeSlug(c.type)}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow};" data-edit-constraint="${escapeAttr(c.id)}" title="${escapeAttr(examConstraintTooltip(c) || c.notes || '')}"><span>${escapeHtml(c.type || 'Contrainte')}</span><strong>${escapeHtml(c.label)}${c.exam ? '<span class="exam-flag">jaquette</span>' : ''}</strong><em>${escapeHtml(segment.label)}</em></button>`;
+  const tooltip = [c.type || 'Contrainte', segment.label, examConstraintTooltip(c) || c.notes].filter(Boolean).join(' — ');
+  return `<button class="timeline-sequence-band timeline-constraint-band period-${typeSlug(c.type)}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow};" data-edit-constraint="${escapeAttr(c.id)}" title="${escapeAttr(tooltip)}"><strong>${escapeHtml(c.label)}${c.exam ? '<span class="exam-flag">jaquette</span>' : ''}</strong></button>`;
 }
 
+/* 18/08 — bande allégée à nom + mots-clés + pastilles seulement (consigne
+   directe : « beaucoup plus fines »), plus de libellé « Séquence » ni de ligne
+   heures/période (visibles dans le détail de la séquence, pas ici). */
 function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
   const seq = segment.seq;
   const blockedCols = weeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
   const sc = sequenceColor(seq.id);
-  const bandMeta = seq.hoursEstimate || segment.label || '';
   const bandKeywords = compactKeywords(seq.keywords, 5);
   const bandTeachers = teacherPips(seq.teacher || findUe(seq.ueId)?.teacher || '');
-  return `<button draggable="true" class="timeline-sequence-band seq-colored ${typeClass(seq.sequenceType || seq.title)} ${blockedCols ? 'has-blocked-week' : ''}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)};" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}"><span>Séquence</span><strong>${escapeHtml(seq.title)}</strong>${bandMeta ? `<em>${escapeHtml(bandMeta)}</em>` : ''}${bandKeywords.length ? `<small class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</small>` : ''}${bandTeachers.length ? `<span class="timeline-band-teachers">${bandTeachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}</button>`;
+  return `<button draggable="true" class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)};" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}" title="${escapeAttr(seq.title)}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers.length ? `<span class="timeline-band-teachers">${bandTeachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}</button>`;
 }
 
 /* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
@@ -3224,9 +3238,13 @@ function timelineSessionCard(session) {
   const meta = [hours, dayLabel, session.room].filter(Boolean).join(' · ');
   const keywords = compactKeywords(session.keywords, 4);
   const color = sessionTint(session);
+  const teachers = teacherPips(session.teacher || findUe(session.ueId)?.teacher || '');
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
   return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
-    <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
+    <span class="timeline-session-head">
+      <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
+      ${teachers.length ? `<span class="timeline-band-teachers">${teachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}
+    </span>
     <strong class="timeline-session-title">${escapeHtml(session.title)}</strong>
     ${meta ? `<em class="timeline-session-meta">${escapeHtml(meta)}</em>` : ''}
     ${keywords.length ? `<small class="timeline-session-keywords">${escapeHtml(keywords.join(', '))}</small>` : ''}
@@ -3556,12 +3574,24 @@ function renderSessionEventContent(session, duration, compact = false) {
   // standard de la grille : on l'affiche donc explicitement quand les deux bornes
   // sont renseignées, pour qu'il ne soit plus un champ « saisi et ignoré ».
   const customHours = session.customStart && session.customEnd ? `${session.customStart}–${session.customEnd}` : '';
-  return `<div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
+  // 18/08 — retour Martin : « les espaces de séances ne doivent pas changer de
+  // taille d'une semaine à l'autre ». Une case de tableau n'impose sa hauteur
+  // qu'en minimum : une séance chargée (titre long + type + enseignant/lieu +
+  // mots-clés) poussait sa ligne bien au-delà — vérifié : jusqu'à 115px sur un
+  // créneau d'1h censé faire 58px, et `height:100%` seul ne suffit pas à borner
+  // une cellule de tableau (elle reste elle-même « auto » tant que son contenu
+  // n'est pas plafonné ailleurs — vérifié aussi). Hauteur figée en dur, calquée
+  // sur la géométrie réelle de la grille (58px/créneau, `duration` = nombre de
+  // créneaux occupés) : l'excédent est coupé net plutôt que d'étirer la ligne.
+  const maxBodyHeight = Math.max(1, Number(duration) || 1) * 58 - 10;
+  return `<div class="event-body" style="max-height:${maxBodyHeight}px">
+    <div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
     <div class="event-session-title">${escapeHtml(truncate(session.title, compact ? 26 : 40))}</div>
     ${customHours ? `<div class="event-hours" title="Horaire libre saisi pour cette séance">${escapeHtml(customHours)}</div>` : ''}
     ${detail ? `<div class="event-details">${escapeHtml(detail)}</div>` : ''}
     ${typeText}
-    ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}`;
+    ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}
+  </div>`;
 }
 
 /* Libellé court du type de séance pour la pastille du Planning hebdo (les types
@@ -4622,19 +4652,38 @@ function refDeclinaison(c) {
     </div>`;
 }
 
+/* 18/08 — retour Martin : « la navigation dans les sous blocs encadrés et
+   sous-parties avec des encarts repliés dépliables n'est pas du tout pratique
+   […] un sommaire plus exhaustif dans la barre latérale […] sans sous-partie
+   repliée ». Les ids ci-dessous sont la clé commune entre le sommaire
+   (renderRefToc, qui pointe dessus en <a href="#…">) et le contenu (ici, qui
+   les porte) : plus de <details> imbriqués, tout est affiché, on saute d'une
+   sous-partie à l'autre par ancre plutôt que par un clic-pour-déplier. */
+function refBlocAnchorId(moduleId, capId, blocIdx) { return `refblock-${moduleId}-${capId}-${blocIdx}`; }
+function refLeafAnchorId(moduleId, capId, blocIdx, leafIdx) { return `refleaf-${moduleId}-${capId}-${blocIdx}-${leafIdx}`; }
+
 function refBlocs(module, c) {
   const blocks = (module.blocks && module.blocks[c.id]) || [];
   if (!blocks.length) return ''; // Modules 1-3 : pas de blocs encadrés → pas de section vide
-  const body = blocks.map(b => {
-    const leaves = (b.items || []).map(i => {
+  const body = blocks.map((b, bIdx) => {
+    const leaves = (b.items || []).map((i, lIdx) => {
       const sub = c.subsections[i];
       if (!sub) return '';
-      return refDetails('rm-leaf', escapeHtml(sub.title), `<div class="rm-leafpanel">${sub.html}</div>`);
+      return `<div class="rm-leaf" id="${refLeafAnchorId(module.id, c.id, bIdx, lIdx)}">
+        <div class="rm-leaf-title">${escapeHtml(sub.title)}</div>
+        <div class="rm-leafpanel">${sub.html}</div>
+      </div>`;
     }).join('');
     const intro = b.intro ? `<div class="rm-card rm-compact">${b.intro}</div>` : '';
-    return refDetails('rm-sub', escapeHtml(b.title), `<div class="rm-subpanel">${intro}${leaves}</div>`);
+    return `<div class="rm-sub" id="${refBlocAnchorId(module.id, c.id, bIdx)}">
+      <div class="rm-sub-title">${escapeHtml(b.title)}</div>
+      <div class="rm-subpanel">${intro}${leaves}</div>
+    </div>`;
   }).join('');
-  return refDetails('rm-part', 'Blocs encadrés et sous-parties', `<div class="rm-panel">${body}</div>`);
+  return `<div class="rm-part">
+    <div class="rm-part-title">Blocs encadrés et sous-parties</div>
+    <div class="rm-panel">${body}</div>
+  </div>`;
 }
 
 /* Annexe officielle : item de même niveau que les capacités (html = contenu riche, non échappé). */
@@ -4682,8 +4731,28 @@ function renderRefToc() {
   if (!module) { toc.innerHTML = ''; return; }
   const items = refModuleSections(module);
   if (!items.some(i => i.id === refReadSection)) refReadSection = (items[1] || items[0]).id;
+  // 18/08 — « sommaire plus exhaustif […] sauter d'une sous-partie à l'autre » :
+  // sous la capacité affichée, on liste aussi ses blocs/sous-parties (mêmes ids
+  // que refBlocs) comme entrées de sommaire indentées — pas un second niveau
+  // replié, juste des ancres dans le même sommaire plat.
+  const rows = items.map(i => {
+    const row = `<li><button type="button" class="refread-toc-item refread-toc-${i.kind}${i.id === refReadSection ? ' active' : ''}" data-refread-section="${escapeAttr(i.id)}">${i.kind === 'cap' ? `<span class="refread-toc-code">${escapeHtml(i.code)}</span>` : ''}<span>${escapeHtml(i.kind === 'cap' ? truncate(i.label, 40) : i.label)}</span></button></li>`;
+    if (i.kind !== 'cap' || i.id !== refReadSection) return row;
+    const blocks = (module.blocks && module.blocks[i.id]) || [];
+    if (!blocks.length) return row;
+    const subRows = blocks.map((b, bIdx) => {
+      const blocRow = `<li><button type="button" class="refread-toc-item refread-toc-subpart" data-refread-jump="${refBlocAnchorId(module.id, i.id, bIdx)}"><span>${escapeHtml(truncate(b.title, 42))}</span></button></li>`;
+      const leafRows = (b.items || []).map((leafKey, lIdx) => {
+        const sub = i.cap.subsections[leafKey];
+        if (!sub) return '';
+        return `<li><button type="button" class="refread-toc-item refread-toc-leaf" data-refread-jump="${refLeafAnchorId(module.id, i.id, bIdx, lIdx)}"><span>${escapeHtml(truncate(sub.title, 42))}</span></button></li>`;
+      }).join('');
+      return blocRow + leafRows;
+    }).join('');
+    return row + subRows;
+  }).join('');
   toc.innerHTML = `<div class="refread-toc-head">${escapeHtml(module.code)} · ${escapeHtml(truncate(module.title, 30))}</div>
-    <ul class="refread-toc-list">${items.map(i => `<li><button type="button" class="refread-toc-item refread-toc-${i.kind}${i.id === refReadSection ? ' active' : ''}" data-refread-section="${escapeAttr(i.id)}">${i.kind === 'cap' ? `<span class="refread-toc-code">${escapeHtml(i.code)}</span>` : ''}<span>${escapeHtml(i.kind === 'cap' ? truncate(i.label, 40) : i.label)}</span></button></li>`).join('')}</ul>`;
+    <ul class="refread-toc-list">${rows}</ul>`;
 }
 
 function renderRefBody() {
@@ -5411,15 +5480,44 @@ function setRubanTab(tab) {
   $('#rubanTabRepartition').hidden = tab !== 'repartition';
   $('#rubanTabEtudiant').hidden = tab !== 'etudiant';
   $('#rubanModeCreneaux').hidden = tab !== 'creneaux';
+  $('#rubanTabPdf').hidden = tab !== 'pdf';
   const search = $('#rubanUnifiedSearch');
   if (search) {
     search.value = '';
-    search.disabled = (tab === 'etudiant' || tab === 'creneaux');
+    search.disabled = (tab === 'etudiant' || tab === 'creneaux' || tab === 'pdf');
   }
   if (tab === 'reference') renderReferenceModule();
   else if (tab === 'repartition') renderRuban();
   else if (tab === 'etudiant') renderStudentPlanning();
   else if (tab === 'creneaux') renderCreneaux();
+  else if (tab === 'pdf') renderPdfLibrary();
+}
+
+/* 18/08 — Lot F : sous-onglet « PDF d'origine ». Sidebar = liste organisée des
+   documents (REFERENCE_DOCS) groupée par type, cliquer un document le charge
+   dans le lecteur central (iframe, rendu PDF natif du navigateur). */
+let pdfLibSelected = REFERENCE_DOCS[0]?.id || '';
+function renderPdfLibrary() {
+  const toc = $('#pdfLibToc');
+  if (!toc) return;
+  if (!pdfLibSelected) pdfLibSelected = REFERENCE_DOCS[0]?.id || '';
+  const groups = [];
+  REFERENCE_DOCS.forEach(doc => {
+    let group = groups.find(g => g.type === doc.type);
+    if (!group) { group = { type: doc.type, docs: [] }; groups.push(group); }
+    group.docs.push(doc);
+  });
+  toc.innerHTML = `<div class="refread-toc-head">Documents</div>` + groups.map(g => `
+    <p class="pdf-lib-group-label">${escapeHtml(g.type)}</p>
+    <ul class="refread-toc-list">
+      ${g.docs.map(doc => `<li><button type="button" class="refread-toc-item pdf-lib-item ${doc.id === pdfLibSelected ? 'active' : ''}" data-pdf-doc="${escapeAttr(doc.id)}">${escapeHtml(doc.title)}</button></li>`).join('')}
+    </ul>`).join('');
+  const selected = REFERENCE_DOCS.find(d => d.id === pdfLibSelected) || REFERENCE_DOCS[0];
+  const frame = $('#pdfLibFrame');
+  if (frame && selected) {
+    const src = `docs/${selected.file}`;
+    if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+  }
 }
 
 /* ============================================================
@@ -6067,8 +6165,14 @@ function bindEvents() {
     const input = $('#rubanUnifiedSearch'); if (input) input.value = '';
     renderReferenceModule();
   }));
-  // Barre latérale du référentiel : Général / une capacité / une annexe.
+  // Barre latérale du référentiel : Général / une capacité / une annexe, ou —
+  // sous la capacité affichée — une de ses sous-parties (ancre, pas de re-rendu).
   $('#refreadToc')?.addEventListener('click', (event) => {
+    const jump = event.target.closest('[data-refread-jump]');
+    if (jump) {
+      $('#' + CSS.escape(jump.dataset.refreadJump))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     const item = event.target.closest('[data-refread-section]');
     if (!item) return;
     refReadSection = item.dataset.refreadSection;
@@ -6253,6 +6357,13 @@ function bindEvents() {
   $$('[data-ruban-mode]').forEach(btn => btn.addEventListener('click', () => setRubanMode(btn.dataset.rubanMode)));
   // Écran 8 — sous-onglets Référentiel & Ruban.
   $$('[data-ruban-tab]').forEach(btn => btn.addEventListener('click', () => setRubanTab(btn.dataset.rubanTab)));
+  // Lot F — sous-onglet « PDF d'origine » : clic sur un document de la sidebar.
+  $('#pdfLibToc')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-pdf-doc]');
+    if (!btn) return;
+    pdfLibSelected = btn.dataset.pdfDoc;
+    renderPdfLibrary();
+  });
 
   // Créneaux de cours type
   $$('[data-creneaux-period]').forEach(btn => btn.addEventListener('click', () => {

@@ -239,7 +239,7 @@
       <p class="choice-row-note meta" id="ganttUeNote"></p>
 
       <div id="ganttTimeline">
-        <section class="panel progression-panel" id="ganttSequencesPanel">
+        <section class="panel progression-panel progression-panel-framed" id="ganttSequencesPanel">
           <div class="progression-panel-head">
             <h3>Séquences</h3>
             <span class="progression-direction" aria-hidden="true" title="Se lit de gauche à droite">↔</span>
@@ -337,22 +337,22 @@
 
 
     <section id="ruban" class="view">
-      <!-- Écrans 5/6/7/9/10 — 4 sous-onglets (Le référentiel interactif / Référentiel
-           & répartition / Planning étudiant / Mes créneaux types) + une recherche
-           unifiée, communs aux 5 écrans de la maquette. Les panneaux existants
-           gardent leur contenu et leurs fonctions de rendu à l'identique : seule la
-           coquille qui les affiche/masque change (setRubanTab, nouveau, remplace les
-           anciens boutons plats data-ruban-mode="creneaux"/"reference"/"pdf" —
-           data-ruban-mode ne pilote plus que la paire Ruban/Répartition, imbriquée
-           dans le sous-onglet Référentiel & répartition, via setRubanMode inchangé).
-           « PDF d'origine » n'a pas d'équivalent maquette (un seul document derrière
-           un select à une option) : remplacé par un simple lien dans la barre locale
-           du sous-onglet Répartition, sa place logique (c'est le PDF DU ruban). -->
+      <!-- Écrans 5/6/7/9/10 — 5 sous-onglets + une recherche unifiée. Les panneaux
+           existants gardent leur contenu et leurs fonctions de rendu à l'identique :
+           seule la coquille qui les affiche/masque change (setRubanTab).
+           18/08 — retour Martin, ordre des sous-onglets : « binôme Ruban + Répartition,
+           puis Créneaux type et Planning étudiant, puis Référentiel + Pdf d'origine » —
+           Ruban/Répartition restent une paire imbriquée dans un seul sous-onglet
+           (bascule data-ruban-mode, inchangée) plutôt que deux onglets séparés, sur le
+           même principe. « PDF d'origine » redevient un vrai sous-onglet (liste +
+           lecteur, #rubanTabPdf/renderPdfLibrary) au lieu du simple lien qui vivait
+           dans la barre du sous-onglet Répartition. -->
       <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
-        <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Le référentiel interactif</button>
         <button type="button" class="design-subtab active" data-ruban-tab="repartition" role="tab" aria-selected="true">Référentiel &amp; répartition</button>
-        <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
         <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
+        <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+        <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Le référentiel interactif</button>
+        <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
         <label class="refmod-search ruban-unified-search">
           <span aria-hidden="true">🔎</span>
           <input id="rubanUnifiedSearch" type="search" placeholder="Rechercher un mot-clé, une capacité, une UE…" aria-label="Rechercher" />
@@ -402,7 +402,6 @@
           </span>
           <select id="rubanTeacherFilter" title="Enseignant / évaluateur" aria-label="Filtrer par enseignant ou évaluateur"></select>
           <span class="ruban-count meta" id="rubanCount"></span>
-          <a class="secondary small ruban-pdf-link" href="docs/ruban-semestres.pdf" target="_blank" rel="noopener">Ouvrir le PDF d'origine (ruban semestriel) ↗</a>
         </div>
 
         <div id="rubanModeRuban" class="reference-mode-panel active-mode">
@@ -490,6 +489,20 @@
           <p class="meta tight">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
         </section>
         <div id="creneauxGrids" class="creneaux-grids"></div>
+      </div>
+
+      <!-- 18/08 — Lot F : « une page avec les liens vers les PDF du référentiel ou
+           ruban […] barre latérale gauche avec la liste organisée des PDF
+           disponibles et un espace central d'ouverture/lecture ». Même géométrie que
+           #refread-layout (sidebar + panneau central), sans la 3e colonne « Chez
+           vous » qui n'a pas de sens ici (pas de capacité, juste des documents). -->
+      <div id="rubanTabPdf" class="ruban-tab-panel" hidden>
+        <div class="pdf-lib-layout">
+          <aside class="pdf-lib-toc" id="pdfLibToc"></aside>
+          <div class="pdf-lib-viewer" id="pdfLibViewer">
+            <iframe id="pdfLibFrame" title="Aperçu du PDF sélectionné"></iframe>
+          </div>
+        </div>
       </div>
     </section>
 
