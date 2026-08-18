@@ -22,6 +22,11 @@
   --text-2:#565a4e;
   --text-3:#6b6a5e;
   --text-4:#8a958c;
+  /* Adoucissement inspiré de « Végétations armoricaines » : un seul jeton pilote tous
+     les arrondis. Le remettre à 0 rétablit l'angle droit strict de la charte
+     « papier technique froid » du portail. */
+  --rayon:12px;
+  --rayon-petit:8px;
   --acc:#0b5f7d;
   --acc-dark:#083f54;
   --acc-soft:#e6eef0;
@@ -51,7 +56,7 @@ button{
   font:inherit;
   cursor:pointer;
   border:1px solid var(--acc);
-  border-radius:0;
+  border-radius:var(--rayon);
   padding:.7em 1.1em;
   background:var(--acc);
   color:#fff;
@@ -75,7 +80,7 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 input[type=text],input[type=number]{
   font:inherit;
   padding:.6em .7em;
-  border-radius:0;
+  border-radius:var(--rayon);
   border:1px solid var(--line);
   width:100%;
   background:#fff;
@@ -106,7 +111,7 @@ input[type=text]:focus,input[type=number]:focus{
 .app-logo{
   flex:0 0 auto;width:2.7em;height:2.7em;padding:.45em;
   background:var(--acc);color:var(--page);
-  border:none;border-radius:0;
+  border:none;border-radius:var(--rayon);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
 }
@@ -121,9 +126,17 @@ main{max-width:640px;margin:0 auto;padding:1em;}
    droit, pas de texture ni d'ombre. Prolonge visuellement le bandeau d'en-tête
    (marges négatives = pleine largeur de la colonne de contenu). */
 .accueil-hero{
+  position:relative;overflow:hidden;
   background:var(--ink);color:var(--page);
   margin:-1em -1em 1em;padding:1.6em 1.1em 1.4em;
+  border-radius:0 0 var(--rayon) var(--rayon);
 }
+/* Motif de fond : le profil de zonation lui-même (ceintures de végétation de la
+   slikke à la dune), dessiné au canvas dans les couleurs des zones — même principe
+   que le bandeau de « Végétations armoricaines », mais avec le motif propre à cette
+   appli plutôt qu'un dendrogramme. Purement décoratif, sous le contenu. */
+.hero-motif{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;}
+.accueil-hero > *:not(.hero-motif){position:relative;z-index:1;}
 .hero-source{
   display:flex;gap:1em;align-items:flex-start;flex-wrap:wrap;
 }
@@ -133,7 +146,7 @@ main{max-width:640px;margin:0 auto;padding:1em;}
    Ni ombre ni rotation (charte) — un simple filet clair suffit à la détacher. */
 .hero-couv{flex:0 0 auto;display:block;line-height:0;}
 .hero-couv img{
-  display:block;width:clamp(76px,22vw,96px);height:auto;
+  display:block;width:clamp(76px,22vw,96px);height:auto;border-radius:var(--rayon-petit);
   border:1px solid rgba(244,242,236,.35);
 }
 .hero-kicker{
@@ -146,16 +159,19 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .hero-meta{
   font-size:.76rem;line-height:1.45;color:rgba(244,242,236,.6);margin:0;
 }
+/* Lien discret, à la manière de Phytoscope/Végétations : pas un bouton, juste un
+   libellé souligné en mono — le document est une référence, pas une action. */
 .hero-lien{
-  display:inline-block;margin-top:.7em;
-  font-family:var(--mono);font-size:.72rem;color:var(--page);
-  border:1px solid rgba(244,242,236,.4);padding:.45em .8em;text-decoration:none;
+  display:inline-block;margin-top:.6em;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.02em;
+  color:rgba(244,242,236,.62);text-decoration:none;border-bottom:1px solid rgba(244,242,236,.28);
+  padding-bottom:1px;
 }
-.hero-lien:hover{background:rgba(244,242,236,.12);}
+.hero-lien:hover{color:var(--page);border-bottom-color:var(--page);}
 .carte{
   background:var(--card);
   border:1px solid var(--line);
-  border-radius:0;
+  border-radius:var(--rayon);
   padding:1em 1.1em;
   margin-bottom:1em;
 }
@@ -164,9 +180,14 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   width:100%;text-align:left;
   margin-bottom:.8em;
   padding:1em 1.1em;
-  border-radius:0;
+  border-radius:var(--rayon);
 }
-.accueil-bouton .emoji{font-family:var(--mono);font-weight:700;font-size:1.1rem;color:inherit;border:1px solid currentColor;width:1.8em;height:1.8em;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.accueil-bouton .picto{
+  width:2.4em;height:2.4em;flex-shrink:0;padding:.35em;
+  border:1px solid currentColor;border-radius:var(--rayon-petit);
+  display:flex;align-items:center;justify-content:center;color:inherit;opacity:.9;
+}
+.accueil-bouton .picto svg{width:100%;height:100%;display:block;}
 .accueil-bouton .txt b{display:block;font-size:1rem;font-family:var(--serif);}
 .accueil-bouton .txt span{font-size:.8rem;opacity:.85;font-weight:400;}
 .accueil-bouton.principal{background:var(--acc);color:#fff;border:1px solid var(--acc);}
@@ -177,13 +198,13 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .ligne2 .champ{flex:1;}
 /* ---- Module de saisie (recherche + ajout + cortège), inspiré de Phytoscope ---- */
 .addbar{
-  background:var(--page-chantier);border:1px solid var(--line);border-radius:0;padding:.9em;margin:.6em 0 1em;
+  background:var(--page-chantier);border:1px solid var(--line);border-radius:var(--rayon);padding:.9em;margin:.6em 0 1em;
 }
 .search-wrap{position:relative;}
 #recherche-espece{margin-bottom:0;}
 .suggestions{
   position:absolute;left:0;right:0;top:calc(100% + 4px);
-  background:#fff;border:1px solid var(--line);border-radius:0;
+  background:#fff;border:1px solid var(--line);border-radius:var(--rayon);
   z-index:30;max-height:280px;overflow:auto;display:none;
 }
 .suggestions.ouvert{display:block;}
@@ -209,8 +230,20 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .etat-transect{font-size:.76rem;color:var(--text-2);margin:-.5em 0 .9em;min-height:1.1em;}
 .etat-transect b{color:var(--acc-dark);}
 .masque{display:none;}
-.espece-en-cours{font-size:.95rem;margin-bottom:.3em;}
-.espece-en-cours b{font-family:var(--serif);}
+/* Encadré du nom de l'espèce en cours : c'est le sujet de toute l'étape, il doit se
+   détacher franchement du texte courant qui l'entoure. Aplat clair + filet d'accent
+   à gauche, nom en serif large, latin en dessous. */
+.espece-en-cours:not(:empty){
+  display:block;background:var(--acc-soft);
+  border:1px solid var(--line);border-left:4px solid var(--acc);
+  padding:.6em .8em;margin:0 0 .8em;
+}
+.espece-etiquette{
+  display:block;font-family:var(--mono);font-size:.62rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:.25em;
+}
+.espece-nom{display:block;font-family:var(--serif);font-size:1.15rem;font-weight:700;color:var(--ink);line-height:1.25;}
+.espece-latin{display:block;font-size:.82rem;color:var(--text-2);margin-top:.1em;}
 .lien-retour-etape{display:inline-block;font-family:var(--mono);font-size:.75rem;color:var(--acc-dark);text-decoration:none;margin-bottom:.9em;cursor:pointer;}
 .lien-retour-etape:hover{text-decoration:underline;}
 .btn-add{width:100%;}
@@ -218,7 +251,7 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .chip-libre{
   display:inline-flex;align-items:center;gap:.4em;
   background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);
-  border-radius:0;padding:.3em .5em .3em .8em;margin:.2em .3em .2em 0;font-size:.85rem;
+  border-radius:var(--rayon-petit);padding:.3em .5em .3em .8em;margin:.2em .3em .2em 0;font-size:.85rem;
 }
 .chip-libre button{background:transparent;border:none;color:var(--acc-dark);padding:0 .3em;font-size:1rem;font-weight:700;}
 .chip-libre.absent{background:#f6ece4;color:var(--status-invalide);}
@@ -229,7 +262,7 @@ table.cortege .fr{font-weight:700;}
 table.cortege .latin{font-style:italic;color:var(--text-2);font-size:.85em;}
 table.cortege .latin.non-reconnue{color:var(--status-invalide);font-style:normal;}
 table.cortege td.num{text-align:center;white-space:nowrap;}
-.puce-abond{display:inline-flex;align-items:center;justify-content:center;min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:0;background:var(--acc);color:#fff;font-weight:700;font-family:var(--mono);font-size:.85rem;}
+.puce-abond{display:inline-flex;align-items:center;justify-content:center;min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:var(--rayon-petit);background:var(--acc);color:#fff;font-weight:700;font-family:var(--mono);font-size:.85rem;}
 .puce-abond.non-reconnue{background:var(--line-chantier);color:var(--ink);}
 table.cortege button.retirer{background:transparent;border:none;color:var(--status-invalide);text-decoration:underline;padding:.2em;font-size:.82rem;}
 .barre-actions{
@@ -242,11 +275,11 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
 .barre-actions button{flex:1;}
 .barre-actions button:disabled{background:var(--line);border-color:var(--line);color:var(--text-2);cursor:not-allowed;}
 .compteur-badge{
-  background:var(--status-invalide);color:#fff;border-radius:0;
+  background:var(--status-invalide);color:#fff;border-radius:var(--rayon-petit);
   font-family:var(--mono);font-size:.7rem;padding:.1em .5em;margin-left:.4em;
 }
 .resultat-carte{
-  background:var(--card);border:1px solid var(--line);border-radius:0;padding:1em 1.1em;margin-bottom:.9em;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--rayon);padding:1em 1.1em;margin-bottom:.9em;
   border-left:5px solid var(--line-chantier);
 }
 .resultat-carte.top1{border-left-color:var(--acc);}
@@ -258,24 +291,30 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
 .resultat-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:.6em;}
 .resultat-entete .score{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--acc-dark);white-space:nowrap;}
 .resultat-entete .score small{display:block;font-weight:400;font-size:.65rem;color:var(--text-2);}
-.barre-score{height:6px;background:var(--line-soft);border-radius:0;overflow:hidden;margin:.5em 0;}
+.barre-score{height:6px;background:var(--line-soft);border-radius:999px;overflow:hidden;margin:.5em 0;}
 .barre-score>div{height:100%;background:var(--acc);}
 .syntaxon{font-style:italic;color:var(--text-2);font-size:.85rem;margin-bottom:.4em;}
-.tag{display:inline-block;background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);border-radius:0;padding:.1em .5em;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.03em;margin-right:.3em;}
+.tag{display:inline-block;background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);border-radius:999px;padding:.1em .5em;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.03em;margin-right:.3em;}
 .detail-bloc{margin-top:.6em;font-size:.9rem;}
 .liste-especes-resultat{display:flex;flex-wrap:wrap;gap:.3em;margin:.3em 0;}
-.puce-espece{border-radius:0;border:1px solid var(--line);padding:.15em .5em;font-size:.78rem;}
+.puce-espece{border-radius:999px;border:1px solid var(--line);padding:.15em .5em;font-size:.78rem;}
 .puce-espece.ok{background:#e7f1ec;color:var(--status-valide);border-color:var(--status-valide);}
 .puce-espece.freq{background:var(--acc-soft);color:var(--acc-dark);}
 .puce-espece.manque{background:#f6ece4;color:var(--status-invalide);border-color:var(--status-invalide);}
-.avertissement{background:#f7efdc;color:var(--status-reserve);border:1px solid var(--status-reserve);border-radius:0;padding:.6em .8em;font-size:.85rem;margin-bottom:1em;}
+.avertissement{background:#f7efdc;color:var(--status-reserve);border:1px solid var(--status-reserve);border-radius:var(--rayon);padding:.6em .8em;font-size:.85rem;margin-bottom:1em;}
+/* La barre de couleur de zone sort de la carte : posée à gauche, en colonne
+   continue, elle laisse voir d'un coup d'œil la progression slikke → dune en
+   faisant défiler la liste (la carte, elle, garde ses angles arrondis). */
+.fiche-liste-ligne{display:flex;align-items:stretch;gap:.6em;margin-bottom:.6em;}
+.fiche-liste-barre{flex:0 0 6px;border-radius:999px;align-self:stretch;}
 .fiche-liste-item{
-  background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:0;padding:.8em 1em;margin-bottom:.6em;cursor:pointer;
+  flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--rayon);
+  padding:.8em 1em;cursor:pointer;
 }
 .fiche-liste-item:hover{border-color:var(--acc);}
 .fiche-liste-item .num{
   display:inline-flex;align-items:center;justify-content:center;
-  min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:0;background:var(--acc);color:#fff;font-family:var(--mono);font-weight:700;font-size:.75rem;margin-right:.5em;
+  min-width:1.8em;height:1.8em;padding:0 .3em;border-radius:var(--rayon-petit);background:var(--acc);color:#fff;font-family:var(--mono);font-weight:700;font-size:.75rem;margin-right:.5em;
 }
 .fiche-liste-item .zonation-tag{float:right;font-size:.72rem;color:var(--text-2);}
 .retour-lien{margin-bottom:.7em;display:inline-block;color:var(--acc);font-family:var(--mono);font-size:.78rem;text-decoration:none;}
@@ -287,24 +326,14 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 .vide-msg{color:var(--text-2);text-align:center;padding:2em 1em;}
 .filtre-groupe{display:flex;gap:.4em;flex-wrap:wrap;margin-bottom:.6em;}
 .filtre-chip{
-  background:var(--card);border:1px solid var(--line);border-radius:0;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--rayon);
   padding:.3em .8em;font-size:.78rem;color:var(--ink);
 }
 .filtre-chip.actif{background:var(--acc);color:#fff;border-color:var(--acc);}
-.abondance-select{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(46px,1fr));gap:.5em;
-  width:100%;margin:.7em 0 0;padding:.5em;
-  background:#fff;border:1px solid var(--line);border-radius:0;
-}
-.abondance-label{grid-column:1/-1;font-size:.78rem;color:var(--text-2);font-weight:700;margin-right:.1em;width:100%;}
-.abondance-select button{
-  min-height:3.2em;padding:.2em;font-family:var(--mono);font-size:1.35rem;border-radius:0;
-  background:var(--page);color:var(--text-2);font-weight:700;border:1px solid var(--line);
-}
-.abondance-select button.actif{background:var(--acc);color:#fff;border-color:var(--acc);}
+.abondance-label{display:block;font-size:.78rem;color:var(--text-2);font-weight:700;}
 .fourchette-affichage{
   display:flex;flex-direction:column;gap:.15em;min-height:2.2em;
-  margin:.5em 0 0;padding:.5em .7em;background:var(--acc-soft);border:1px solid var(--line);border-radius:0;
+  margin:.5em 0 0;padding:.5em .7em;background:var(--acc-soft);border:1px solid var(--line);border-radius:var(--rayon);
 }
 .fourchette-ligne1{display:flex;align-items:baseline;gap:.6em;}
 .fourchette-code{
@@ -313,30 +342,28 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 }
 .fourchette-intervalle{font-family:var(--mono);font-weight:700;color:var(--acc-dark);font-size:1rem;}
 .fourchette-desc{font-weight:400;color:var(--text-2);font-size:.8rem;}
-/* ---- Schéma comparateur de recouvrement (quadrats 1 m²), toujours visible ---- */
+/* ---- Repère visuel : lignes cliquables, 3 dispositions par coefficient ---- */
 .comparateur-detail{margin:.9em 0 0;}
 .comparateur-detail p{font-size:.78rem;color:var(--text-2);margin:.2em 0 .6em;}
-/* Grille responsive plutôt qu'une rangée à défilement horizontal (débordait sur
-   téléphone) : le nombre de colonnes s'adapte tout seul à la largeur disponible
-   (jusqu'à 8 en une rangée sur écran large, moins et sur plusieurs lignes sur
-   téléphone), sans jamais dépasser la largeur de l'écran. */
-.comparateur-scroll{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));
-  gap:.8em .5em;padding:.3em .1em .6em;
+.comparateur-scroll{display:flex;flex-direction:column;gap:.4em;padding:.2em 0 .4em;}
+.bb-choix{
+  display:grid;grid-template-columns:auto 1fr;grid-template-areas:"entete vignettes" "desc desc";
+  align-items:center;gap:.3em .7em;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--rayon);
+  padding:.5em .6em;cursor:pointer;
 }
-.quadrat{text-align:center;}
-.quadrat-grille{
-  width:60px;height:60px;margin:0 auto;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);
-  border:2px solid var(--ink);border-radius:0;overflow:hidden;background:#fff;
+.bb-choix:hover{border-color:var(--acc);}
+.bb-choix.selectionne{border-color:var(--acc);border-width:2px;background:var(--acc-soft);padding:calc(.5em - 1px) calc(.6em - 1px);}
+.bb-choix-entete{grid-area:entete;display:flex;flex-direction:column;align-items:center;gap:.1em;min-width:3.4em;}
+.bb-choix-code{font-family:var(--mono);font-size:1.35rem;font-weight:700;color:var(--acc-dark);line-height:1;}
+.bb-choix.selectionne .bb-choix-code{color:var(--acc);}
+.bb-choix-plage{font-family:var(--mono);font-size:.62rem;color:var(--text-2);white-space:nowrap;}
+.bb-choix-vignettes{grid-area:vignettes;display:flex;gap:.35em;justify-content:flex-start;}
+.bb-choix-vignettes img{
+  width:auto;height:52px;aspect-ratio:1;display:block;border-radius:6px;
+  border:1px solid var(--line);background:#fff;
 }
-.quadrat-grille.grand{width:84px;height:84px;}
-.quadrat.selectionne .quadrat-grille{border-color:var(--status-invalide);border-width:3px;}
-.quadrat.selectionne .quadrat-legende b{color:var(--status-invalide);}
-.quadrat-cellule{background:transparent;display:flex;align-items:center;justify-content:center;}
-.quadrat-cellule.pleine{background:var(--status-valide);}
-.quadrat-cellule.croix{color:var(--status-valide);font-weight:700;font-size:7px;line-height:1;}
-.quadrat-legende{font-family:var(--mono);font-size:.66rem;color:var(--text-2);margin-top:.3em;font-weight:700;line-height:1.3;}
-.quadrat-legende b{color:var(--acc-dark);display:block;font-size:.85rem;}
+.bb-choix-desc{grid-area:desc;font-size:.72rem;color:var(--text-2);line-height:1.35;font-weight:400;}
 .score-box{display:flex;flex-direction:column;align-items:flex-end;gap:.25em;flex-shrink:0;}
 .score-principal{font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--acc-dark);white-space:nowrap;line-height:1;}
 .score-principal small{display:block;font-family:var(--sans);font-weight:400;font-size:.62rem;color:var(--text-2);margin-top:.15em;}
@@ -349,11 +376,11 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 .legende-especes{font-size:.8rem;color:var(--text-2);}
 .etiquette-top{
   display:inline-block;background:var(--acc);color:#fff;font-family:var(--mono);font-weight:700;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;
-  border-radius:0;padding:.3em .7em;margin:-1em -1.1em .7em;
+  border-radius:var(--rayon-petit);padding:.3em .7em;margin:-1em -1.1em .7em;
 }
 .etiquette-autre{
   display:inline-block;background:var(--line-soft);color:var(--text-2);font-family:var(--mono);font-weight:700;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;
-  border-radius:0;padding:.3em .7em;margin:-1em -1.1em .7em;
+  border-radius:var(--rayon-petit);padding:.3em .7em;margin:-1em -1.1em .7em;
 }
 .tag-zone{background:var(--acc-soft);color:var(--acc-dark);border-color:var(--line);}
 .qualificatif{font-weight:700;font-size:.88rem;margin:.3em 0;}
@@ -382,25 +409,27 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <!-- ECRAN ACCUEIL -->
   <section class="ecran actif" id="ecran-accueil">
     <div class="accueil-hero">
+      <canvas class="hero-motif" id="hero-motif" aria-hidden="true"></canvas>
       <div class="hero-source">
-        <span class="hero-couv"><img src="documents/couverture.jpg" width="340" height="481" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy"></span>
+        <a class="hero-couv" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener" title="Ouvrir le rapport (PDF) sur le site du CBN de Brest"><img src="documents/couverture.jpg" width="340" height="481" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy"></a>
         <div class="hero-source-txt">
           <span class="hero-kicker">Typologie de référence</span>
           <p class="hero-doc">Typologie des végétations et des habitats des marais salés de la Petite Mer de Gâvres (56)</p>
           <p class="hero-meta">COLASSE V., avril 2019 — Conservatoire botanique national de Brest.<br>Site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ».</p>
+          <a class="hero-lien" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener">Télécharger le rapport (PDF) ↗</a>
         </div>
       </div>
     </div>
     <button class="accueil-bouton principal" onclick="allerA('identite')">
-      <span class="emoji">🌿</span>
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="7" y="7" width="26" height="26"></rect><line x1="7" y1="20" x2="33" y2="20"></line><line x1="20" y1="7" x2="20" y2="33"></line><circle cx="14" cy="14" r="2.4" fill="currentColor" stroke="none"></circle><circle cx="26" cy="25" r="3.4" fill="currentColor" stroke="none"></circle></svg></span>
       <span class="txt"><b>Nouveau relevé</b><span>Saisir les espèces observées à un point</span></span>
     </button>
     <button class="accueil-bouton secondaire2" onclick="allerA('fiches')">
-      <span class="emoji">📖</span>
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="6" width="22" height="28" rx="2"></rect><line x1="14" y1="14" x2="26" y2="14"></line><line x1="14" y1="20" x2="26" y2="20"></line><line x1="14" y1="26" x2="22" y2="26"></line></svg></span>
       <span class="txt"><b>Fiches habitats</b><span>Les 16 groupements trouvables sur le site</span></span>
     </button>
     <button class="accueil-bouton secondaire2" onclick="allerA('historique')">
-      <span class="emoji">📍</span>
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
     </button>
   </section>
@@ -478,14 +507,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
           <span class="etape-label">Étape 3/3 — Abondance-dominance</span>
           <div class="espece-en-cours" id="espece-en-cours"></div>
           <a class="lien-retour-etape" onclick="retourEtapeEspece()">← Changer d'espèce</a>
-
           <div class="comparateur-detail">
-            <div class="abondance-select" id="abondance-ajout">
-              <!-- contenu généré par JS -->
-            </div>
+            <p class="abondance-label" style="margin:.2em 0 .3em;">Choisissez un coefficient d'abondance-dominance</p>
+            <p>Chaque carré est un quadrat d'1 m² ; le vert montre la surface couverte par l'espèce en cours de saisie. Les trois carrés d'une même ligne ont le <b>même recouvrement</b> mais une répartition différente (en une tache, intermédiaire, éparpillée).<br><b>Touchez une ligne pour choisir ce coefficient.</b></p>
             <div class="fourchette-affichage" id="fourchette-affichage"></div>
-            <p class="abondance-label" style="margin:.8em 0 .1em;">Repère visuel : à quoi ressemble chaque niveau dans 1 m² ?</p>
-            <p>Chaque carré représente un placeau d'1 m² ; la partie verte montre la proportion couverte par l'espèce que vous êtes en train de saisir, pour ce niveau (pas la végétation dans son ensemble).</p>
             <div class="comparateur-scroll" id="comparateur-recouvrement"></div>
           </div>
 
@@ -570,23 +595,16 @@ const HABITATS_ACTIFS = HABITATS;
    est un coefficient plus mesuré utilisé uniquement pour l'indice global secondaire,
    afin qu'une espèce simplement "présente" garde un poids raisonnable dans le score). */
 const COEF_ABONDANCE = {
-  'i': {label:'i', desc:'1 individu isolé, unique au sein du quadrat', intervalle:'< 1 %', pct:0.01, mult:0.5},
-  'r': {label:'r', desc:'rare : quelques individus (2-3), recouvrement très faible', intervalle:'< 1 %', pct:0.1, mult:0.6},
-  '+': {label:'+', desc:'peu abondant mais plusieurs individus, recouvrement faible', intervalle:'< 5 %', pct:0.5, mult:0.7},
-  '1': {label:'1', desc:'nombreux individus, recouvrement toujours faible', intervalle:'0 – 5 %', pct:2.5, mult:0.9},
-  '2': {label:'2', desc:'quel que soit le nombre d\'individus', intervalle:'5 – 25 %', pct:15, mult:1.1},
-  '3': {label:'3', desc:'quel que soit le nombre d\'individus', intervalle:'25 – 50 %', pct:37.5, mult:1.3},
-  '4': {label:'4', desc:'quel que soit le nombre d\'individus', intervalle:'50 – 75 %', pct:62.5, mult:1.6},
-  '5': {label:'5', desc:'quel que soit le nombre d\'individus', intervalle:'75 – 100 %', pct:87.5, mult:2.0}
+'i': {label:'i', desc:'Individu isolé.', intervalle:'n.d.', pct:0.01, mult:0.5},
+  'r': {label:'r', desc:'Très rare.', intervalle:'0 → 0,10 %', pct:0.1, mult:0.6},
+  '+': {label:'+', desc:'Peu abondant, recouvrement négligeable.', intervalle:'0,10 → 1 %', pct:0.5, mult:0.7},
+  '1': {label:'1', desc:'Abondant mais faible recouvrement.', intervalle:'1 → 5 %', pct:2.5, mult:0.9},
+  '2': {label:'2', desc:'Recouvrement intermédiaire.', intervalle:'5 → 25 %', pct:15, mult:1.1},
+  '3': {label:'3', desc:'Recouvrement important.', intervalle:'25 → 50 %', pct:37.5, mult:1.3},
+  '4': {label:'4', desc:'Recouvrement très important.', intervalle:'50 → 75 %', pct:62.5, mult:1.6},
+  '5': {label:'5', desc:'Recouvrement quasi continu.', intervalle:'75 → 100 %', pct:87.5, mult:2.0}
 };
 const CODES_ABONDANCE = ['i','r','+','1','2','3','4','5'];
-/* i, r, + se distinguent d'abord par le NOMBRE d'individus (abondance), pas par la
-   surface couverte (dominance) : le comparateur les représente donc par des croix
-   (une croix = un individu) plutôt que par un remplissage de cellules, pour que les
-   élèves voient clairement la nuance entre "un seul pied" (i), "quelques pieds" (r)
-   et "plusieurs pieds mais peu de recouvrement" (+). À partir de 1, la dominance
-   (proportion de la surface couverte) prend le relais et redevient un remplissage. */
-const CROIX_ABONDANCE = {'i':1, 'r':3, '+':7};
 const ABONDANCE_DEFAUT = '+';
 
 /* Équivalent en % de recouvrement, quel que soit le mode de saisie (comme la fonction
@@ -659,7 +677,6 @@ document.getElementById('btn-accueil').onclick = ()=>allerA('accueil');
 function initSaisieEspeces(){
   // Aucun coefficient présélectionné : l'élève doit en choisir un consciemment
   // avant de pouvoir ajouter l'espèce (cf. majEtatBoutonAjouter).
-  construireSelecteurAbondance();
   construireComparateurRecouvrement();
   afficherFourchette();
   majEtatBoutonAjouter();
@@ -690,8 +707,8 @@ function afficherEspeceEnCours(){
   const cont = document.getElementById('espece-en-cours');
   if(!cont) return;
   cont.innerHTML = !e ? '' : (e.reconnue
-    ? `Espèce : <b>${e.fr}</b> <i>(${e.latin})</i>`
-    : `Espèce (non référencée, ajoutée pour mémoire) : <b>${e.fr}</b>`);
+    ? `<span class="espece-etiquette">Espèce en cours de saisie</span><b class="espece-nom">${e.fr}</b><i class="espece-latin">${e.latin}</i>`
+    : `<span class="espece-etiquette">Espèce en cours de saisie</span><b class="espece-nom">${e.fr}</b><i class="espece-latin">Non référencée — ajoutée pour mémoire, sans effet sur le score</i>`);
 }
 
 function passerEtapeAbondance(){
@@ -713,72 +730,54 @@ function passerEtapeAbondance(){
 
 function retourEtapeEspece(){
   etat.coefCourant = null;
-  construireSelecteurAbondance();
   construireComparateurRecouvrement();
   afficherFourchette();
   majEtatBoutonAjouter();
   afficherEtape(1);
 }
 
-/* ---- Schéma comparateur : quadrats 1 m² à remplissage proportionnel ----
-   Un même ordre de remplissage (mélange déterministe, seed fixe) est réutilisé pour
-   tous les quadrats : les cellules d'un petit pourcentage sont un sous-ensemble de
-   celles d'un pourcentage plus grand, ce qui donne un aspect de recouvrement naturel
-   et cohérent d'un quadrat à l'autre plutôt qu'un simple bloc plein en haut à gauche. */
-const ORDRE_QUADRAT = (function(){
-  const arr = Array.from({length:100}, (_,i)=>i);
-  let graine = 42;
-  function alea(){ graine = (graine*9301+49297) % 233280; return graine/233280; }
-  for(let i=arr.length-1;i>0;i--){ const j = Math.floor(alea()*(i+1)); [arr[i],arr[j]] = [arr[j],arr[i]]; }
-  return arr;
-})();
-
-function construireGrilleQuadrat(code){
-  const nCroix = CROIX_ABONDANCE[code];
-  if(nCroix){
-    // i / r / + : le nombre d'INDIVIDUS prime, pas la surface — une croix = un individu.
-    const croix = new Set(ORDRE_QUADRAT.slice(0, nCroix));
-    let html = '';
-    for(let i=0;i<100;i++) html += `<div class="quadrat-cellule ${croix.has(i)?'croix':''}">${croix.has(i)?'✕':''}</div>`;
-    return html;
-  }
-  // 1 à 5 : la surface couverte (dominance) prime — remplissage proportionnel des cellules.
-  const pct = COEF_ABONDANCE[code].pct;
-  const nPleines = pct>0 ? Math.max(1, Math.round(pct)) : 0;
-  const pleines = new Set(ORDRE_QUADRAT.slice(0, nPleines));
-  let html = '';
-  for(let i=0;i<100;i++) html += `<div class="quadrat-cellule ${pleines.has(i)?'pleine':''}"></div>`;
-  return html;
+/* ---- Repère visuel : vignettes réelles de placeaux 1 m² ----
+   Vignettes reprises de Phytoscope (apps/phytoscope/documents/bb-taches/) plutôt
+   que des grilles générées : pour un même recouvrement, elles montrent 3
+   dispositions possibles (agrégée / intermédiaire / éclatée). C'est justement la
+   nuance difficile à saisir sur le terrain — « 15 %, ça peut être une grosse tache
+   comme des dizaines de petites ». Chaque ligne est cliquable et vaut sélection du
+   coefficient : l'élève peut choisir par l'image plutôt que par le code. */
+const BB_DOSSIER_TACHES = 'documents/bb-taches/';
+const BB_DISPOSITIONS = [
+  {cle:'agregee',  libelle:'Agrégée'},
+  {cle:'mixte',    libelle:'Intermédiaire'},
+  {cle:'eclatee',  libelle:'Éclatée'}
+];
+/* % nominal de chaque vignette (nom de fichier), repris tel quel du jeu d'images. */
+const BB_PCT_VIGNETTE = {i:'0p05', r:'0p1', '+':'0p5', '1':'2p5', '2':'15', '3':'37p5', '4':'62p5', '5':'87p5'};
+function srcVignette(code, disposition){
+  return `${BB_DOSSIER_TACHES}BB_${code}_${disposition}_${BB_PCT_VIGNETTE[code]}pct.png`;
 }
 
-/* La ligne de quadrats de référence reste affichée en permanence sous les boutons de
-   coefficients ("il faut du visuel") ; le quadrat du coefficient actuellement sélectionné
-   est mis en évidence (classe "selectionne"), pour relier directement le clic à son repère
-   visuel sans avoir besoin d'un quadrat interactif séparé. */
 function construireComparateurRecouvrement(){
   const cont = document.getElementById('comparateur-recouvrement');
   if(!cont) return;
   cont.innerHTML = CODES_ABONDANCE.map(c=>{
-    return `<div class="quadrat ${etat.coefCourant===c?'selectionne':''}" data-c="${c}">
-      <div class="quadrat-grille">${construireGrilleQuadrat(c)}</div>
-      <div class="quadrat-legende"><b>${c}</b>${COEF_ABONDANCE[c].intervalle}</div>
-    </div>`;
+    const info = COEF_ABONDANCE[c];
+    const vignettes = BB_DISPOSITIONS.map(d=>
+      `<img src="${srcVignette(c, d.cle)}" alt="Recouvrement ${info.intervalle}, répartition ${d.libelle.toLowerCase()}" title="${d.libelle}" loading="lazy" width="120" height="120">`
+    ).join('');
+    return `<button type="button" class="bb-choix ${etat.coefCourant===c?'selectionne':''}" data-c="${c}" onclick="choisirCoefficient('${c}')">
+      <span class="bb-choix-entete"><span class="bb-choix-code">${c}</span><span class="bb-choix-plage">${info.intervalle}</span></span>
+      <span class="bb-choix-vignettes">${vignettes}</span>
+      <span class="bb-choix-desc">${info.desc}</span>
+    </button>`;
   }).join('');
-}
-
-function construireSelecteurAbondance(){
-  const cont = document.getElementById('abondance-ajout');
-  cont.innerHTML = `<span class="abondance-label">Coefficient d'abondance-dominance :</span>` +
-    CODES_ABONDANCE.map(c=>`<button type="button" data-c="${c}" class="${etat.coefCourant===c?'actif':''}" onclick="choisirCoefficient('${c}')" title="${COEF_ABONDANCE[c].desc}">${c}</button>`).join('');
 }
 
 function afficherFourchette(){
   const c = etat.coefCourant;
   const cont = document.getElementById('fourchette-affichage');
-  if(!c){
-    cont.innerHTML = `<div class="fourchette-desc">Choisissez un coefficient d'abondance-dominance ci-dessus pour pouvoir ajouter l'espèce.</div>`;
-    return;
-  }
+  // Tant que rien n'est choisi, l'encadré resterait redondant avec la consigne
+  // juste au-dessus : on ne l'affiche qu'une fois le coefficient sélectionné.
+  if(!c){ cont.innerHTML = ''; cont.hidden = true; return; }
+  cont.hidden = false;
   const info = COEF_ABONDANCE[c];
   cont.innerHTML = `
     <div class="fourchette-ligne1"><span class="fourchette-code">${c}</span><span class="fourchette-intervalle">${info.intervalle}</span></div>
@@ -793,8 +792,7 @@ function majEtatBoutonAjouter(){
 
 function choisirCoefficient(code){
   etat.coefCourant = code;
-  document.querySelectorAll('#abondance-ajout button').forEach(b=> b.classList.toggle('actif', b.dataset.c===code));
-  document.querySelectorAll('#comparateur-recouvrement .quadrat').forEach(q=> q.classList.toggle('selectionne', q.dataset.c===code));
+  document.querySelectorAll('#comparateur-recouvrement .bb-choix').forEach(q=> q.classList.toggle('selectionne', q.dataset.c===code));
   afficherFourchette();
   majEtatBoutonAjouter();
 }
@@ -884,7 +882,6 @@ function ajouterAuCortege(){
   etat.especeSelectionnee = null;
   etat.especeEnCours = null;
   etat.coefCourant = null;
-  construireSelecteurAbondance();
   construireComparateurRecouvrement();
   afficherFourchette();
   majEtatBoutonAjouter();
@@ -1005,7 +1002,7 @@ function carteResultatHTML(r, i){
 const CARTE_ENREGISTREMENT = `<div class="carte">
   <div class="champ">
     <label for="in-observation">Observations / remarques (optionnel)</label>
-    <textarea id="in-observation" rows="3" placeholder="Ex : sol très piétiné, mosaïque avec la zone voisine, doute sur une espèce…" style="width:100%;font-family:var(--sans);font-size:.9rem;padding:.5em;border:1px solid var(--line);border-radius:0;background:#fff;color:var(--ink);resize:vertical;"></textarea>
+    <textarea id="in-observation" rows="3" placeholder="Ex : sol très piétiné, mosaïque avec la zone voisine, doute sur une espèce…" style="width:100%;font-family:var(--sans);font-size:.9rem;padding:.5em;border:1px solid var(--line);border-radius:var(--rayon);background:#fff;color:var(--ink);resize:vertical;"></textarea>
   </div>
   <div style="text-align:center;margin-top:.8em;">
     <button onclick="enregistrerReleve()">💾 Enregistrer ce relevé</button>
@@ -1191,9 +1188,12 @@ function construireEcranFiches(){
     .slice()
     .sort((a,b)=> ORDRE_TRANSECT.indexOf(a.id) - ORDRE_TRANSECT.indexOf(b.id));
   cont.innerHTML = liste.map(h=>`
-    <div class="fiche-liste-item" style="border-left-color:${couleurZoneHabitat(h.id)};" onclick="allerVoirFiche(${idAttr(h.id)})">
-      <span class="num">${h.id}</span>${h.nomFr}
-      <div class="zonation-tag">${h.zonation}</div>
+    <div class="fiche-liste-ligne">
+      <span class="fiche-liste-barre" style="background:${couleurZoneHabitat(h.id)};" aria-hidden="true"></span>
+      <div class="fiche-liste-item" onclick="allerVoirFiche(${idAttr(h.id)})">
+        <span class="num">${h.id}</span>${h.nomFr}
+        <div class="zonation-tag">${h.zonation}</div>
+      </div>
     </div>
   `).join('') || `<p class="vide-msg">Aucune fiche dans cette zone.</p>`;
 }
@@ -1463,6 +1463,7 @@ function enregistrerReleve(){
   });
   sauverHistorique(liste);
   majCompteurHistorique();
+  dessinerMotifHero();
   alert(`Relevé n°${numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
   nouveauPoint();
 }
@@ -1540,19 +1541,22 @@ function exporterPourPhytoscopeCSV(){
   if(!liste.length) return;
   const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi"];
   const lignes = [entetes];
+  const omises = new Set();   // espèces sans correspondance dans le référentiel de Phytoscope
   liste.forEach(r=>{
     const releveId = idPhytoscope();
     const nomReleve = `Transect ${r.transect || '?'} — relevé n°${r.numero || '?'}`;
     const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
     const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
     (r.cortege||[]).forEach(e=>{
-      if(!e.latin) return; // espèce non référencée : pas de nom scientifique résoluble par Phytoscope
+      if(!e.latin) return;                       // espèce libre : aucun taxon à résoudre
+      const tid = TAXON_PHYTOSCOPE[e.latin];
+      if(tid === undefined){ omises.add(e.latin); return; }  // sans correspondance : Phytoscope la rejetterait
       lignes.push([
         releveId, nomReleve,
         site, `Transect ${r.transect || ''}`,
         date, r.observateur || '',
         r.distance ? `Distance sur le transect : ${r.distance} m` : '', '', '1 m²',
-        '', e.latin, 'Herbacée', e.mode || 'bb', e.cover
+        tid, e.latin, 'Herbacée', e.mode || 'bb', e.cover
       ]);
     });
   });
@@ -1563,11 +1567,96 @@ function exporterPourPhytoscopeCSV(){
   a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.csv';
   a.click();
   URL.revokeObjectURL(url);
+  if(omises.size){
+    const liste = [...omises].map(n => '\u00b7 ' + n).join('\n');
+    alert('Export terminé.\n\n' + omises.size + ' espèce(s) sans correspondance dans le référentiel de Phytoscope ont été omises :\n\n'
+      + liste + '\n\nElles restent dans vos relevés et dans l\'export CSV de synthèse.');
+  }
 }
 
 /* Barre d'action fixe, adaptée à l'étape du bordereau en cours. */
+/* ---- Motif de fond du bandeau d'accueil ----
+   Reprend le geste de l'appli : les ceintures de végétation qui se succèdent de la
+   slikke à la dune, en courbes basses translucides aux couleurs de PROFIL_ZONATION.
+   Décoratif : aucune donnée n'en dépend, et l'absence de canvas ne casse rien. */
+function dessinerMotifHero(){
+  const cv = document.getElementById('hero-motif');
+  if(!cv || !cv.getContext) return;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if(!w || !h) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = w*dpr; cv.height = h*dpr;
+  const g = cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,w,h);
+
+  /* Profil de végétation en coupe, très discret (simple filigrane derrière le texte) :
+     le sol monte de la slikke immergée (gauche) au cordon dunaire (droite), et la
+     végétation gagne en hauteur le long du gradient. Silhouettes plutôt que traits :
+     touffes graminéennes basses sur le schorre, buissons sur la dune. */
+  const solY = x => h*0.99 - Math.pow(x/w, 1.9) * h*0.22;
+  const alea = (function(){ let s = 7; return ()=> (s = (s*1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; })();
+
+  // Plan d'eau (slikke), à peine perceptible.
+  g.globalAlpha = 0.10;
+  g.fillStyle = ZONES_LINES_COULEURS[0];
+  g.fillRect(0, solY(w*0.26), w*0.27, h);
+
+  // Ligne de sol, seul trait un peu net du motif.
+  g.globalAlpha = 0.14;
+  g.strokeStyle = '#f4f2ec';
+  g.lineWidth = 1;
+  g.beginPath();
+  for(let x=0; x<=w; x+=4) x===0 ? g.moveTo(x, solY(x)) : g.lineTo(x, solY(x));
+  g.stroke();
+
+  /* Végétation : touffes de silhouettes, densité et hauteur croissantes vers la dune.
+     Sous l'eau (gauche), on ne suggère que quelques pointes émergentes. */
+  const n = ZONES_LINES_COULEURS.length;
+  g.lineCap = 'round';
+  for(let x = w*0.02; x < w; x += w*0.014){
+    const t = x/w;
+    const zone = Math.min(n-1, Math.floor(t*n));
+    const sousEau = x < w*0.26;
+    if(sousEau && alea() > 0.35) continue;          // clairsemé dans la vase
+    const haut = h*(0.025 + Math.pow(t,1.6)*0.13) * (0.75 + alea()*0.5);
+    const base = solY(x) + 1;
+    g.globalAlpha = sousEau ? 0.07 : 0.10 + t*0.04;
+    g.strokeStyle = ZONES_LINES_COULEURS[zone];
+    if(t > 0.80){
+      /* Contact dune : ajoncs/baccharis suggérés par une touffe dense de brins
+         courts et divergents — silhouette irrégulière, jamais une forme pleine. */
+      const brins = 5 + Math.round(alea()*3);
+      g.lineWidth = 0.9;
+      for(let b=0;b<brins;b++){
+        const ang = -Math.PI/2 + (b - (brins-1)/2) * 0.34 + (alea()-0.5)*0.2;
+        const lg = haut * (0.6 + alea()*0.6);
+        g.beginPath();
+        g.moveTo(x, base);
+        g.lineTo(x + Math.cos(ang)*lg, base + Math.sin(ang)*lg);
+        g.stroke();
+      }
+    } else {
+      // Slikke et schorre : touffes de graminées, brins fins légèrement courbés.
+      const brins = 2 + Math.round(alea()*2 + t*2);
+      g.lineWidth = 0.9;
+      for(let b=0;b<brins;b++){
+        const ecart = (b - (brins-1)/2) * (1.4 + t*1.6);
+        g.beginPath();
+        g.moveTo(x, base);
+        g.quadraticCurveTo(x + ecart*0.5, base - haut*0.6, x + ecart*1.8, base - haut*(0.8 + alea()*0.3));
+        g.stroke();
+      }
+    }
+  }
+  g.globalAlpha = 1;
+}
+let _minuteurMotif;
+window.addEventListener('resize', ()=>{ clearTimeout(_minuteurMotif); _minuteurMotif = setTimeout(dessinerMotifHero, 120); });
+
 document.addEventListener('DOMContentLoaded', ()=>{
   majCompteurHistorique();
+  dessinerMotifHero();
   const barre = document.createElement('div');
   barre.className='barre-actions';
   barre.id='barre-releve';
