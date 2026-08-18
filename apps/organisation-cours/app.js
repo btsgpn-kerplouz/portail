@@ -1307,10 +1307,11 @@ async function missionChargerSignature() {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
     const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${user.id}/signature.png`, 3600);
-    if (error || !data) return;
+    if (error) { console.error('[signature] createSignedUrl', error); return; }
+    if (!data) return;
     missionSignatureUrlCache = data.signedUrl;
     if (missionViewTarget) renderMissionView();
-  } catch (e) { /* pas de signature déposée, ou bucket pas encore créé : silencieux */ }
+  } catch (e) { console.error('[signature] chargement', e); }
 }
 
 async function missionUploaderSignature(file) {
@@ -1322,10 +1323,10 @@ async function missionUploaderSignature(file) {
     if (!user) return;
     setSaveStatus('Envoi de la signature…');
     const { error } = await sb.storage.from('oc-signatures').upload(`${user.id}/signature.png`, file, { upsert: true, contentType: file.type });
-    if (error) { alert('Échec de l’envoi de la signature : ' + error.message); return; }
+    if (error) { console.error('[signature] upload', error); alert('Échec de l’envoi de la signature : ' + error.message); return; }
     await missionChargerSignature();
     setSaveStatus('Signature enregistrée (privée)');
-  } catch (e) { alert('Échec de l’envoi de la signature.'); }
+  } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
 }
 
 /* Badge du panneau Tableau de bord : nb + total des demandes NON terminées.

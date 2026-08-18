@@ -64,6 +64,11 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     autorisés » plus bas pour la gérer.
 15. (optionnel, recommandé) `test-rls.sql` — scénarios de vérification, tout
     dans une transaction annulée (`rollback`), ne modifie rien en base.
+16. `013-signatures-storage.sql` — bucket privé `oc-signatures` (écran 13,
+    Ordre de mission). **Le bucket se crée d'abord à la main** (Storage → New
+    bucket → nom exact `oc-signatures` → Public bucket : décoché), puis ce
+    fichier pose les policies RLS dessus — voir le commentaire en tête du
+    fichier pour le détail.
 
 ## Réglage obligatoire côté Auth
 
