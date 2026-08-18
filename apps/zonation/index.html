@@ -114,6 +114,44 @@ input[type=text]:focus,input[type=number]:focus{
 main{max-width:640px;margin:0 auto;padding:1em;}
 .ecran{display:none;}
 .ecran.actif{display:block;}
+/* ---- Bandeau d'accueil ----
+   Même intention que la page d'accueil de « Végétations du massif armoricain »
+   (mettre en avant le document source du CBNB dont l'appli est la mise en œuvre),
+   mais transposée dans la charte « papier technique froid » : aplat d'encre, angle
+   droit, pas de texture ni d'ombre. Prolonge visuellement le bandeau d'en-tête
+   (marges négatives = pleine largeur de la colonne de contenu). */
+.accueil-hero{
+  background:var(--ink);color:var(--page);
+  margin:-1em -1em 1em;padding:1.6em 1.1em 1.4em;
+}
+.hero-source{
+  display:flex;gap:1em;align-items:flex-start;flex-wrap:wrap;
+}
+.hero-source-txt{flex:1 1 150px;min-width:0;}
+/* Vignette de couverture du rapport : donne un visage au document source, comme
+   la couverture du cahier technique sur l'accueil de « Végétations armoricaines ».
+   Ni ombre ni rotation (charte) — un simple filet clair suffit à la détacher. */
+.hero-couv{flex:0 0 auto;display:block;line-height:0;}
+.hero-couv img{
+  display:block;width:clamp(76px,22vw,96px);height:auto;
+  border:1px solid rgba(244,242,236,.35);
+}
+.hero-kicker{
+  display:block;font-family:var(--mono);font-size:.62rem;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:rgba(244,242,236,.5);margin-bottom:.5em;
+}
+.hero-doc{
+  font-family:var(--serif);font-size:.95rem;line-height:1.4;color:var(--page);margin:0 0 .3em;
+}
+.hero-meta{
+  font-size:.76rem;line-height:1.45;color:rgba(244,242,236,.6);margin:0;
+}
+.hero-lien{
+  display:inline-block;margin-top:.7em;
+  font-family:var(--mono);font-size:.72rem;color:var(--page);
+  border:1px solid rgba(244,242,236,.4);padding:.45em .8em;text-decoration:none;
+}
+.hero-lien:hover{background:rgba(244,242,236,.12);}
 .carte{
   background:var(--card);
   border:1px solid var(--line);
@@ -157,6 +195,15 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .selected-hint{font-size:.82rem;color:var(--text-2);margin:.7em 0;min-height:1.2em;}
 .selected-hint b{color:var(--acc-dark);}
 .etape-label{display:block;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--acc-dark);font-weight:700;margin-bottom:.6em;}
+/* Rappel compact de l'en-tête du bordereau, sur les pages de saisie qui suivent :
+   l'élève garde sous les yeux de quel relevé il s'agit sans avoir à revenir en arrière. */
+.rappel-bordereau{
+  background:var(--page-chantier);border:1px solid var(--line);
+  padding:.6em .8em;margin-bottom:1em;
+  display:flex;flex-wrap:wrap;gap:.3em 1.1em;
+  font-family:var(--mono);font-size:.72rem;color:var(--text-2);
+}
+.rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
 .masque{display:none;}
 .espece-en-cours{font-size:.95rem;margin-bottom:.3em;}
 .espece-en-cours b{font-family:var(--serif);}
@@ -329,11 +376,17 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
   <!-- ECRAN ACCUEIL -->
   <section class="ecran actif" id="ecran-accueil">
-    <div class="carte">
-      <h1>Visualiser et comprendre la zonation végétale</h1>
-      <p>Le long d'un transect, réalisez un relevé floristique tous les m². L'application compare votre relevé à la typologie des habitats des marais salés de la Petite Mer de Gâvres (COLASSE, 2019, CBN de Brest) et vous propose l'habitat phytosociologique le plus probable.</p>
+    <div class="accueil-hero">
+      <div class="hero-source">
+        <span class="hero-couv"><img src="documents/couverture.jpg" width="340" height="481" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy"></span>
+        <div class="hero-source-txt">
+          <span class="hero-kicker">Typologie de référence</span>
+          <p class="hero-doc">Typologie des végétations et des habitats des marais salés de la Petite Mer de Gâvres (56)</p>
+          <p class="hero-meta">COLASSE V., avril 2019 — Conservatoire botanique national de Brest.<br>Site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ».</p>
+        </div>
+      </div>
     </div>
-    <button class="accueil-bouton principal" onclick="allerA('releve')">
+    <button class="accueil-bouton principal" onclick="allerA('identite')">
       <span class="emoji">🌿</span>
       <span class="txt"><b>Nouveau relevé</b><span>Saisir les espèces observées à un point</span></span>
     </button>
@@ -347,21 +400,55 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     </button>
   </section>
 
-  <!-- ECRAN RELEVE -->
-  <section class="ecran" id="ecran-releve">
+  <!-- ECRAN IDENTITE DU RELEVE (page 1 du bordereau) -->
+  <section class="ecran" id="ecran-identite">
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5em;flex-wrap:wrap;">
-        <span class="tag" id="badge-transect-actif"></span>
-        <button class="discret" onclick="changerTransect()" style="margin:0;">↻ Changer de transect</button>
+      <span class="etape-label">Étape 1/3 — Identité du relevé</span>
+      <h2 style="margin-top:.2em;">Relevé n°<span id="numero-releve-affiche">1</span></h2>
+      <p style="font-size:.78rem;color:var(--text-2);margin:-.1em 0 1.1em;">En-tête d'un bordereau de terrain : ces informations situent le relevé (qui, quand, où) et le rendent exploitable par quelqu'un d'autre que vous. Le numéro est attribué automatiquement selon la position sur le transect.</p>
+
+      <div class="ligne2">
+        <div class="champ">
+          <label for="in-transect">Transect n°</label>
+          <input type="text" id="in-transect" placeholder="Ex : 1" oninput="onSaisieIdentite()">
+        </div>
+        <div class="champ">
+          <label for="in-date">Date</label>
+          <input type="date" id="in-date">
+        </div>
       </div>
-      <h2 style="margin-top:.5em;">Relevé n°<span id="numero-releve-affiche">1</span></h2>
-      <p style="font-size:.78rem;color:var(--text-2);margin-top:-.2em;">Numéroté automatiquement selon sa position sur le transect en cours (1<sup>er</sup>, 2<sup>e</sup>, 3<sup>e</sup> mètre carré…).</p>
+
       <div class="champ">
-        <label for="in-distance">Distance transect (m)</label>
+        <label for="in-observateur">Observateur·ice</label>
+        <input type="text" id="in-observateur" list="liste-observateurs" autocomplete="off" placeholder="Prénom Nom">
+        <datalist id="liste-observateurs"></datalist>
+      </div>
+
+      <div class="ligne2">
+        <div class="champ">
+          <label for="in-site">Site</label>
+          <input type="text" id="in-site" list="liste-sites" autocomplete="off">
+          <datalist id="liste-sites"></datalist>
+        </div>
+        <div class="champ">
+          <label for="in-commune">Commune</label>
+          <input type="text" id="in-commune" list="liste-communes" autocomplete="off">
+          <datalist id="liste-communes"></datalist>
+        </div>
+      </div>
+
+      <div class="champ" style="margin-bottom:0;">
+        <label for="in-distance">Distance sur le transect (m)</label>
         <input type="number" id="in-distance" placeholder="Ex : 3">
       </div>
     </div>
+  </section>
+
+  <!-- ECRAN RELEVE -->
+  <section class="ecran" id="ecran-releve">
+    <a class="retour-lien" onclick="allerA('identite')">← Identité du relevé</a>
+    <div class="rappel-bordereau" id="rappel-bordereau"></div>
 
     <div class="carte">
       <h2>Espèces observées</h2>
@@ -370,7 +457,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div class="addbar">
         <!-- Étape 1/2 : choix de l'espèce -->
         <div id="etape-espece" class="etape-saisie">
-          <span class="etape-label">Étape 1/2 — Choisir l'espèce</span>
+          <span class="etape-label">Étape 2/3 — Choisir l'espèce</span>
           <div class="search-wrap">
             <input type="text" id="recherche-espece" autocomplete="off" placeholder="⌕ Rechercher une espèce (nom FR ou latin)…" oninput="onSaisieRecherche()" onkeydown="onToucheRecherche(event)">
             <div id="suggestions-especes" class="suggestions"></div>
@@ -381,7 +468,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
         <!-- Étape 2/2 : abondance-dominance -->
         <div id="etape-abondance" class="etape-saisie masque">
-          <span class="etape-label">Étape 2/2 — Abondance-dominance</span>
+          <span class="etape-label">Étape 3/3 — Abondance-dominance</span>
           <div class="espece-en-cours" id="espece-en-cours"></div>
           <a class="lien-retour-etape" onclick="retourEtapeEspece()">← Changer d'espèce</a>
 
@@ -545,13 +632,14 @@ function allerA(nom){
   document.querySelectorAll('.ecran').forEach(e=>e.classList.remove('actif'));
   document.getElementById('ecran-'+nom).classList.add('actif');
   const titres = {
-    accueil:"Zonation", releve:"Nouveau relevé", resultats:"Résultat",
+    accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat"
   };
   document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Zonation";
+  if(nom==='identite') majEcranIdentite();
   if(nom==='releve'){
     initSaisieEspeces();
-    majEnteteReleve();
+    majRappelBordereau();
   }
   if(nom==='fiches') construireEcranFiches();
   if(nom==='historique') afficherHistorique();
@@ -1148,13 +1236,18 @@ function majCompteurHistorique(){
   const n = chargerHistorique().length;
   document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
 }
-
-/* ---------- Transect en cours ----------
+/* ---------- Bordereau de terrain : identité du relevé ----------
    Chaque relevé appartient à un transect (une sortie terrain). La numérotation
    "Relevé n°X" repart de 1 à chaque nouveau transect : elle compte la position
    du point le long de CE transect (1er, 2e, 3e mètre carré...), jamais le total
-   de relevés enregistrés sur l'appareil toutes sorties confondues. */
+   de relevés enregistrés sur l'appareil toutes sorties confondues.
+   Les autres champs d'en-tête (observateur·ice, site, commune) sont mémorisés
+   d'une saisie à l'autre : saisis une fois, proposés ensuite — l'élève voit la
+   structure complète d'un bordereau sans avoir à tout retaper à chaque m². */
 const CLE_TRANSECT_ACTIF = 'pmg_transect_actif_v1';
+const CLE_BORDEREAU = 'pmg_bordereau_v1';
+const SITE_DEFAUT = 'Petite Mer de Gâvres';
+const COMMUNE_DEFAUT = 'Plouhinec';
 
 function nomTransectActif(){
   return localStorage.getItem(CLE_TRANSECT_ACTIF) || null;
@@ -1165,7 +1258,7 @@ function definirTransectActif(nom){
 function assurerTransectActif(){
   let nom = nomTransectActif();
   if(!nom){
-    nom = `Transect du ${new Date().toLocaleDateString('fr-FR')}`;
+    nom = '1';
     definirTransectActif(nom);
   }
   return nom;
@@ -1176,41 +1269,117 @@ function releveDuTransect(nom){
 function prochainNumeroTransect(nom){
   return releveDuTransect(nom).length + 1;
 }
-function demarrerNouveauTransect(){
-  const saisie = prompt('Nom du nouveau transect :', `Transect du ${new Date().toLocaleDateString('fr-FR')}`);
-  if(saisie === null) return;
-  definirTransectActif(saisie.trim() || `Transect du ${new Date().toLocaleDateString('fr-FR')}`);
-  nouveauPoint();
+
+/* Mémoire des valeurs d'en-tête déjà utilisées : {dernier:{...}, observateurs:[], sites:[], communes:[]} */
+function chargerBordereau(){
+  try{ return JSON.parse(localStorage.getItem(CLE_BORDEREAU)) || {}; }catch(e){ return {}; }
 }
-function changerTransect(){
+function memoriserBordereau(champs){
+  const m = chargerBordereau();
+  m.dernier = Object.assign({}, m.dernier, champs);
+  [['observateur','observateurs'],['site','sites'],['commune','communes']].forEach(([champ, liste])=>{
+    const val = (champs[champ]||'').trim();
+    if(!val) return;
+    m[liste] = m[liste] || [];
+    if(!m[liste].includes(val)) m[liste].unshift(val);
+    m[liste] = m[liste].slice(0,8);
+  });
+  localStorage.setItem(CLE_BORDEREAU, JSON.stringify(m));
+}
+function remplirDatalist(id, valeurs){
+  const dl = document.getElementById(id);
+  if(dl) dl.innerHTML = (valeurs||[]).map(v=>`<option value="${v.replace(/"/g,'&quot;')}"></option>`).join('');
+}
+
+function demarrerNouveauTransect(){
   const actuel = assurerTransectActif();
-  const saisie = prompt('Nom du transect en cours (laissez tel quel pour continuer, ou changez pour reprendre/démarrer un autre transect) :', actuel);
-  if(saisie === null) return;
-  const nouveauNom = saisie.trim() || actuel;
-  definirTransectActif(nouveauNom);
-  if(nouveauNom !== actuel){
-    // On change bien de transect : la distance suggérée pour l'ancien ne vaut plus rien.
-    document.getElementById('in-distance').value = '';
-  }
-  majEnteteReleve();
+  const suivant = String((parseInt(actuel,10) || 0) + 1);
+  definirTransectActif(isNaN(parseInt(actuel,10)) ? '' : suivant);
+  nouveauPoint();
 }
 function reprendreTransect(nom){
   definirTransectActif(nom);
   nouveauPoint();
 }
-function majEnteteReleve(){
+
+/* Appelé à chaque saisie du n° de transect : le numéro de relevé en dépend
+   (repartir de 1 quand on change de transect). */
+function onSaisieIdentite(){
+  const nom = (document.getElementById('in-transect').value || '').trim();
+  if(nom) definirTransectActif(nom);
+  const numero = prochainNumeroTransect(nom || assurerTransectActif());
+  document.getElementById('numero-releve-affiche').textContent = numero;
+  majDistanceSuggeree(nom || assurerTransectActif(), numero);
+}
+
+function majDistanceSuggeree(nomTransect, numero){
+  const inDistance = document.getElementById('in-distance');
+  if(!inDistance) return;
+  // Par défaut, un relevé par mètre à partir du début du transect : le relevé n°1
+  // est à 1 m, le n°2 à 2 m, etc. (reste éditable si l'espacement réel diffère).
+  const rs = releveDuTransect(nomTransect);
+  const derniere = rs.length ? parseFloat(rs[rs.length-1].distance) : NaN;
+  inDistance.value = !isNaN(derniere) ? (derniere + 1) : numero;
+}
+
+/* Prépare la page 1 (identité) : numéro calculé, valeurs mémorisées proposées. */
+function majEcranIdentite(){
   const nom = assurerTransectActif();
   const numero = prochainNumeroTransect(nom);
-  document.getElementById('badge-transect-actif').textContent = `📍 ${nom}`;
+  const m = chargerBordereau();
+  const d = m.dernier || {};
+
   document.getElementById('numero-releve-affiche').textContent = numero;
+  const set = (id, val)=>{ const el = document.getElementById(id); if(el && !el.value) el.value = val; };
+  set('in-transect', nom);
+  set('in-date', new Date().toISOString().slice(0,10));
+  set('in-observateur', d.observateur || '');
+  set('in-site', d.site || SITE_DEFAUT);
+  set('in-commune', d.commune || COMMUNE_DEFAUT);
+
+  remplirDatalist('liste-observateurs', m.observateurs);
+  remplirDatalist('liste-sites', (m.sites || []).concat(m.sites && m.sites.includes(SITE_DEFAUT) ? [] : [SITE_DEFAUT]));
+  remplirDatalist('liste-communes', (m.communes || []).concat(m.communes && m.communes.includes(COMMUNE_DEFAUT) ? [] : [COMMUNE_DEFAUT]));
+
   const inDistance = document.getElementById('in-distance');
-  if(inDistance && !inDistance.value){
-    // Par défaut, un relevé par mètre à partir du début du transect : le relevé n°1
-    // est à 1 m, le n°2 à 2 m, etc. (reste éditable si l'espacement réel diffère).
-    const rs = releveDuTransect(nom);
-    const derniere = rs.length ? parseFloat(rs[rs.length-1].distance) : NaN;
-    inDistance.value = !isNaN(derniere) ? (derniere + 1) : numero;
-  }
+  if(inDistance && !inDistance.value) majDistanceSuggeree(nom, numero);
+}
+
+/* Lit l'en-tête saisi en page 1 (sert au rappel, à l'enregistrement et aux exports). */
+function lireIdentite(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    transect: val('in-transect') || assurerTransectActif(),
+    date: val('in-date') || new Date().toISOString().slice(0,10),
+    observateur: val('in-observateur'),
+    site: val('in-site') || SITE_DEFAUT,
+    commune: val('in-commune') || COMMUNE_DEFAUT,
+    distance: val('in-distance')
+  };
+}
+
+/* Rappel compact de l'en-tête, affiché en haut des pages de saisie suivantes. */
+function majRappelBordereau(){
+  const cont = document.getElementById('rappel-bordereau');
+  if(!cont) return;
+  const id = lireIdentite();
+  const numero = prochainNumeroTransect(id.transect);
+  const bouts = [
+    `Transect <b>${id.transect || '—'}</b>`,
+    `Relevé <b>n°${numero}</b>`,
+    id.distance ? `<b>${id.distance} m</b>` : '',
+    id.observateur ? `<b>${id.observateur}</b>` : '',
+    id.date ? `<b>${id.date.split('-').reverse().join('/')}</b>` : ''
+  ].filter(Boolean);
+  cont.innerHTML = bouts.join('');
+}
+
+/* Page 1 → page 2 : on mémorise l'en-tête pour les prochains relevés. */
+function validerIdentite(){
+  const id = lireIdentite();
+  definirTransectActif(id.transect);
+  memoriserBordereau(id);
+  allerA('releve');
 }
 
 function resetReleve(){
@@ -1219,6 +1388,7 @@ function resetReleve(){
   etat.especeEnCours = null;
   etat.coefCourant = null;
   etat.dernierResultat = null;
+  // La distance est vidée pour être recalculée par majEcranIdentite (relevé suivant = +1 m).
   document.getElementById('in-distance').value = '';
   document.getElementById('recherche-espece').value = '';
   document.getElementById('espece-selectionnee').textContent = "Tapez un nom, choisissez-le dans la liste (ou laissez tel quel si l'espèce n'est pas référencée), puis validez.";
@@ -1226,20 +1396,26 @@ function resetReleve(){
 
 function nouveauPoint(){
   resetReleve();
-  allerA('releve');
+  allerA('identite');
 }
 
 function enregistrerReleve(){
   if(!etat.dernierResultat) return;
   const liste = chargerHistorique();
-  const transect = assurerTransectActif();
+  const id = lireIdentite();
+  const transect = id.transect;
   const numero = prochainNumeroTransect(transect);
+  memoriserBordereau(id);
   liste.push({
     date: new Date().toISOString(),
+    dateReleve: id.date,
     transect,
     numero,
+    observateur: id.observateur,
+    site: id.site,
+    commune: id.commune,
     observation: document.getElementById('in-observation')?.value || '',
-    distance: document.getElementById('in-distance').value || '',
+    distance: id.distance,
     cortege: etat.cortege.map(e=>({fr:e.fr, latin:e.latin, mode:e.mode, cover:e.cover, reconnue:e.reconnue})),
     top: etat.dernierResultat.habitat.nomFr,
     topFiche: etat.dernierResultat.habitat.id,
@@ -1249,7 +1425,7 @@ function enregistrerReleve(){
   });
   sauverHistorique(liste);
   majCompteurHistorique();
-  alert(`Relevé n°${numero} enregistré (${transect}). Vous pouvez passer au point suivant.`);
+  alert(`Relevé n°${numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
   nouveauPoint();
 }
 
@@ -1270,8 +1446,8 @@ function afficherHistorique(){
     const actif = nom === nomActif;
     return `
     <div style="margin-top:1.1em;display:flex;justify-content:space-between;align-items:center;gap:.5em;flex-wrap:wrap;">
-      <h3 style="margin:0;">${nom} ${actif ? '<span class="tag" style="margin-left:.4em;">en cours</span>' : ''}</h3>
-      <span style="font-family:var(--mono);font-size:.75rem;color:var(--text-2);">${rs.length} relevé${rs.length>1?'s':''}</span>
+      <h3 style="margin:0;">Transect ${nom} ${actif ? '<span class="tag" style="margin-left:.4em;">en cours</span>' : ''}</h3>
+      <span style="font-family:var(--mono);font-size:.75rem;color:var(--text-2);">${rs.length} relevé${rs.length>1?'s':''}${rs[0] && rs[0].observateur ? ' · '+rs[0].observateur : ''}${rs[0] && rs[0].dateReleve ? ' · '+rs[0].dateReleve.split('-').reverse().join('/') : ''}</span>
     </div>
     <table class="historique"><thead><tr><th>N°</th><th>Dist. (m)</th><th>Habitat probable</th><th>Espèces caract.</th><th>Remarque</th></tr></thead><tbody>
       ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td></tr>`).join('')}
@@ -1289,15 +1465,14 @@ function viderHistorique(){
     majCompteurHistorique();
   }
 }
-
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const lignes = [['Transect','N°','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Date'].join(';')];
+  const lignes = [['Transect','N°','Date','Observateur','Site','Commune','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Enregistré le'].join(';')];
   liste.forEach(r=>{
     const especesAvecAbond = (r.cortege||[]).map(e => `${e.fr}${e.latin?' ('+e.latin+')':' [non référencée]'}:${libelleCouverture(e.mode, e.cover)}`).join(', ');
     const remarque = (r.observation||'').replace(/[\r\n;]+/g,' ').trim();
-    lignes.push([r.transect||'', r.numero||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond, remarque, r.date].join(';'));
+    lignes.push([r.transect||'', r.numero||'', r.dateReleve||(r.date||'').slice(0,10), r.observateur||'', r.site||'', r.commune||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond, remarque, r.date].join(';'));
   });
   const blob = new Blob([lignes.join('\n')], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
@@ -1322,7 +1497,6 @@ function exporterHistoriqueCSV(){
    omises de l'export (Phytoscope les rejetterait de toute façon avec un
    avertissement "taxon non reconnu"). */
 function idPhytoscope(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
-
 function exporterPourPhytoscopeCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
@@ -1330,16 +1504,17 @@ function exporterPourPhytoscopeCSV(){
   const lignes = [entetes];
   liste.forEach(r=>{
     const releveId = idPhytoscope();
-    const nomReleve = `${r.transect || 'Transect'} — relevé n°${r.numero || '?'}`;
-    const date = (r.date || new Date().toISOString()).slice(0,10);
+    const nomReleve = `Transect ${r.transect || '?'} — relevé n°${r.numero || '?'}`;
+    const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
+    const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
     (r.cortege||[]).forEach(e=>{
       if(!e.latin) return; // espèce non référencée : pas de nom scientifique résoluble par Phytoscope
       lignes.push([
         releveId, nomReleve,
-        "Petite Mer de Gâvres — profil de Linés (Plouhinec)", r.transect || "",
-        date, "",
-        r.distance ? `Distance sur le transect : ${r.distance} m` : "", "", "1 m²",
-        "", e.latin, "Herbacée", e.mode || "bb", e.cover
+        site, `Transect ${r.transect || ''}`,
+        date, r.observateur || '',
+        r.distance ? `Distance sur le transect : ${r.distance} m` : '', '', '1 m²',
+        '', e.latin, 'Herbacée', e.mode || 'bb', e.cover
       ]);
     });
   });
@@ -1352,21 +1527,28 @@ function exporterPourPhytoscopeCSV(){
   URL.revokeObjectURL(url);
 }
 
-/* barre d'action fixe pour l'écran relevé */
+/* Barre d'action fixe, adaptée à l'étape du bordereau en cours. */
 document.addEventListener('DOMContentLoaded', ()=>{
   majCompteurHistorique();
   const barre = document.createElement('div');
   barre.className='barre-actions';
   barre.id='barre-releve';
-  barre.innerHTML = `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="afficherResultats()">Analyser le relevé</button>`;
   document.body.appendChild(barre);
   majBarreActions();
 });
 
+const ACTIONS_PAR_ECRAN = {
+  'ecran-identite': `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="validerIdentite()">Suivant : espèces →</button>`,
+  'ecran-releve': `<button class="secondaire" onclick="allerA('identite')">← Identité</button><button onclick="afficherResultats()">Analyser le relevé</button>`
+};
+
 function majBarreActions(){
   const barre = document.getElementById('barre-releve');
-  const surReleve = document.getElementById('ecran-releve').classList.contains('actif');
-  barre.style.display = surReleve ? 'flex' : 'none';
+  if(!barre) return;
+  const actif = document.querySelector('.ecran.actif');
+  const actions = actif ? ACTIONS_PAR_ECRAN[actif.id] : null;
+  barre.innerHTML = actions || '';
+  barre.style.display = actions ? 'flex' : 'none';
 }
 const _allerA = allerA;
 allerA = function(nom){ _allerA(nom); majBarreActions(); };
