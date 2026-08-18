@@ -341,8 +341,11 @@ html { scroll-padding-top: 6.4rem; scrollbar-gutter: stable; }
   border: 0;
   color: var(--ink-soft);
   padding: .65rem .7rem .6rem;
-  font-size: .85rem;
-  font-weight: 600;
+  /* Retours #3 (18-19/08/2026) : agrandi pour que la ligne principale reste
+     clairement au-dessus des sous-onglets (.design-subtab, ci-dessous), qui
+     étaient jusque-là plus grands qu'elle. */
+  font-size: .92rem;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
   transition: background .12s ease, color .12s ease;
@@ -796,6 +799,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .entity-ue > summary .entity-title { font-size: 1.02rem; }
 .entity-sequence > summary .entity-title { font-size: .92rem; }
 .entity-tag { flex: 0 0 auto; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+/* Retours #3 (18-19/08/2026) — pastilles initiales déplacées ici depuis la
+   description de la séquence (fond pastel --ue-soft → pastille .on-tint). */
+.entity-teachers.design-ue-pills { flex: 0 0 auto; gap: .2rem; }
 .entity-count {
   flex: 0 0 auto;
   font-size: .76rem;
@@ -894,7 +900,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    parmi d'autres. Voir .design-* plus bas pour le sidebar et l'en-tête. */
 .entity-sequence { border-style: solid; }
 .entity-sequence > summary { padding: .5rem .7rem; }
-.entity-sequence > summary::before { width: 8px; height: 8px; }
+/* Retours #3 (18-19/08/2026) : Martin ne veut plus du petit carré de couleur
+   devant les bandeaux titres de séquence (la couleur reste lisible par le
+   fond teinté et la bordure gauche du bandeau — inutile en double). */
+.entity-sequence > summary::before { display: none; }
 
 /* Séance : volontairement une ligne plate (.row-item.session-row, voir plus
    bas), pas une carte — pour qu'on ne confonde pas ce niveau avec UE/séquence. */
@@ -959,6 +968,11 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: var(--surface);
 }
 .design-ue-pill.is-mine { background: var(--acc); color: #fff; }
+/* Retours #3 (18-19/08/2026) — sur un fond coloré par UE/séquence (bandeau,
+   tuile séance), la pastille suit cette teinte (--ue-deep, déjà garantie
+   lisible sur le pastel de la carte) au lieu du bleu générique. */
+.design-ue-pill.on-tint { border-color: var(--ue-deep, var(--acc)); color: var(--ue-deep, var(--acc)); background: var(--surface); }
+.design-ue-pill.on-tint.is-mine { background: var(--ue-deep, var(--acc)); border-color: var(--ue-deep, var(--acc)); color: #fff; }
 
 .design-detail { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
 /* 17/08 — Martin veut que l'espace d'infos basiques de l'UE sélectionnée soit
@@ -974,11 +988,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .design-subtabs { display: flex; gap: var(--sp-4); border-bottom: 1px solid var(--line-strong); }
 .design-subtab {
   padding: .5rem 0; background: none; border: 0; border-bottom: 2px solid transparent;
-  font-size: .88rem; color: var(--muted); font-weight: 500;
+  /* Retours #3 (18-19/08/2026) : nettement plus petit que .tab (ligne
+     principale, ci-dessus) — avant, ce sous-onglet était PLUS grand qu'elle,
+     brouillant la hiérarchie entre les deux barres. */
+  font-size: .76rem; color: var(--muted); font-weight: 500;
 }
 .design-subtab .design-subtab-count { font-size: .78rem; color: inherit; }
 .design-subtab:hover { background: none; color: var(--ink-soft); }
-.design-subtab.active { color: var(--ink); font-weight: 700; border-bottom-color: var(--acc); }
+.design-subtab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--acc); }
 .design-subtab-panel[hidden] { display: none; }
 
 @media (max-width: 900px) {
@@ -1105,6 +1122,34 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .session-card-head .placement-flag.is-placed { color: #fff; }
 .session-card-head .placement-flag.is-unplaced { color: rgba(255, 255, 255, .88); }
 
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants :
+   tuile d'un ou plusieurs collègues seuls (je suis enseignant·e de l'UE, pas
+   de cette séquence/séance précise). Visible, mais sans couleur et non
+   cliquable — les 4 jetons --ue-* posés en style inline sont neutralisés en
+   !important (rien d'autre ne s'en distingue à l'œil que la couleur). */
+.session-card.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  --ue-ink: var(--ink-soft) !important;
+  --ue-deep: var(--muted) !important;
+  border-style: dashed;
+  cursor: default;
+}
+.entity-sequence.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  --ue-ink: var(--ink-soft) !important;
+  border-style: dashed;
+  cursor: default;
+}
+.entity-sequence.is-collegue .entity-card-locked-head {
+  display: flex; align-items: center; gap: .6rem; padding: .5rem .7rem;
+  background: var(--ue-soft, var(--surface-alt));
+}
+.entity-sequence.is-collegue .entity-title { flex: 1 1 auto; min-width: 0; font-family: var(--font-display); font-weight: 600; font-size: .92rem; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entity-sequence.is-collegue .entity-count { flex: 0 0 auto; font-size: .78rem; color: var(--muted); }
+.design-not-mine-hint { padding: var(--sp-3); border: 1px dashed var(--line-strong); background: var(--surface-alt); color: var(--ink-soft); }
+
 .session-card-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; line-height: 1.2; color: var(--ue-ink, var(--ink)); }
 .session-card-type {
   align-self: flex-start;
@@ -1113,6 +1158,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: var(--type-bg, var(--surface-alt)); color: var(--type-fg, var(--ink-soft));
 }
 .session-card-meta { margin: 0; font-size: .76rem; color: var(--ink-soft); }
+/* Retours #3 (18-19/08/2026) — pastilles initiales, tuile Conception péda +
+   réserve du Planning hebdo (fond pastel --ue-soft → pastille .on-tint). */
+.tile-teachers.design-ue-pills { gap: .2rem; }
+.tile-teachers .design-ue-pill { font-size: .6rem; padding: 0 .22rem; }
 /* 17/08 — mots-clés dans une couleur proche du titre de la séance (--ue-ink),
    au lieu du gris --muted générique, pour mieux les rattacher visuellement. */
 .session-card-keywords { margin: 0; font-size: .72rem; color: var(--ue-ink, var(--ink-soft)); line-height: 1.25; }
@@ -1229,9 +1278,12 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    ===================================================================== */
 .progression-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
 .progression-week-range { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); margin-left: auto; }
-/* 17/08 — Martin veut les boutons Promo et Semestre harmonisés : plus de
-   padding propre au semestre, mêmes dimensions que .promo-switch-btn. */
-.semester-switch .promo-switch-btn.active { background: var(--surface); color: var(--ink); border-color: var(--ink); font-weight: 700; }
+/* 17/08 — Martin veut les boutons Promo et Semestre harmonisés : mêmes
+   dimensions que .promo-switch-btn (plus de padding propre au semestre).
+   Retours #4 (18/08/2026) : l'état sélectionné doit aussi s'« allumer »
+   comme les boutons promo — l'ancien fond clair ici propre au semestre le
+   rendait à peine visible ; retiré, .promo-switch-btn.active (fond encre,
+   texte blanc) s'applique donc identiquement aux deux. */
 
 .progression-ue-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-2); }
 .progression-ue-cards { display: flex; gap: var(--sp-2); flex-wrap: wrap; flex: 1 1 auto; }
@@ -1246,7 +1298,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-color: var(--acc); border-width: 2px; padding: calc(.5rem - 1px) calc(.65rem - 1px);
   background: color-mix(in srgb, var(--acc) 6%, var(--surface));
 }
-.progression-ue-card.is-empty { opacity: .65; }
+/* Retours #4 (18/08/2026) — l'opacité réduite (jusqu'ici .65 sur TOUTE la
+   carte) faisait aussi pâlir la pastille d'initiales pleine (celle qui dit
+   « c'est votre UE »), lisible comme « pas pour vous » alors que « aucune
+   séquence » n'a rien à voir avec qui enseigne l'UE. Remplacé par un
+   pointillé + fond neutre : signale « rien dedans pour l'instant », sans
+   toucher à la lisibilité du reste de la carte (pastilles comprises). */
+.progression-ue-card.is-empty { border-style: dashed; background: var(--surface-alt); }
 .progression-ue-card-title { font-weight: 700; font-size: .84rem; color: var(--ink); display: flex; align-items: baseline; gap: .35rem; }
 .progression-ue-card-sub { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--ink-soft); }
 .progression-stack-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
@@ -1397,6 +1455,17 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 .timeline-sequence-band { cursor: grab; }
 .timeline-sequence-band.has-blocked-week { opacity: .55; }
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants :
+   séquence de collègue(s) seul(s), visible mais pas ouvrable/glissable —
+   neutralise les jetons --ue-* posés en style inline (!important nécessaire,
+   un style inline l'emporterait sinon sur ces mêmes propriétés). */
+.timeline-sequence-band.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  border-left-style: dashed;
+  cursor: default;
+}
+.timeline-sequence-band.is-collegue strong { color: var(--ink-soft); }
 /* Bande de séquence colorée par la couleur de la séquence (famille UE).
    La même teinte est reprise par les séances associées dans les lignes jours. */
 .timeline-sequence-band.seq-colored {
@@ -1416,14 +1485,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .timeline-sequence-band .timeline-band-teachers {
   display: flex; flex-wrap: nowrap; gap: 3px; flex-shrink: 0; margin-left: auto;
 }
-.timeline-sequence-band.seq-colored .teacher-pip,
-.timeline-session.seq-tinted .teacher-pip {
-  font-size: .55rem; font-weight: 700; line-height: 1;
-  text-transform: none; letter-spacing: 0; opacity: 1;
-  padding: 2px 5px; border-radius: 0; white-space: nowrap;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ue-color, var(--moss)) 20%, #fff);
-  border: 1px solid color-mix(in srgb, var(--ue-color, var(--moss)) 45%, transparent);
+/* Retours #3 (18-19/08/2026) — remplace l'ancien .teacher-pip (pas de style
+   « plein/vide », couleur figée) par .design-ue-pill.on-tint, harmonisé avec
+   le reste de l'appli ; ici juste resserré pour la densité de la bande. */
+.timeline-band-teachers.design-ue-pills { gap: 3px; }
+.timeline-sequence-band.seq-colored .timeline-band-teachers .design-ue-pill,
+.timeline-session.seq-tinted .timeline-band-teachers .design-ue-pill {
+  font-size: .55rem; padding: 1px 4px;
 }
 /* Séance dont le fond reprend la teinte de sa séquence. */
 .timeline-session.seq-tinted {
@@ -1433,6 +1501,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--ink);
 }
 .timeline-session.seq-tinted .timeline-session-type { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
+/* Retours #3 (18-19/08/2026) — Cas 2, même principe que .timeline-sequence-band.is-collegue. */
+.timeline-session.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  border-left-style: dashed;
+  cursor: default;
+}
 /* 18/08 — tête de tuile : bandeau de type (déjà là) + pastilles enseignants
    (nouveau, consigne « cohérence visuelle » avec les tuiles de Conception
    pédagogique) sur la même ligne, alignés aux extrémités. */
@@ -1628,11 +1703,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-size: 1.05rem;
   font-weight: 650;
 }
-/* REGLES.md #14 — couleur de promotion fixe (GPN1 ambre, GPN2 sarcelle), ne
-   varie jamais avec la période affichée (l'ancienne variante par saison,
-   Lot R, datait de la charte Atlas naturaliste). */
-.schedule-title.gpn1 { background: var(--gpn1-soft); color: #6b3013; }
-.schedule-title.gpn2 { background: var(--gpn2-soft); color: #154a5c; }
+/* Retours #4 (18/08/2026) — couleur posée en style inline (renderPromotionTable),
+   suit désormais le code couleur semestre du Ruban et varie avec la période. */
 .table-scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; }
 /* Lot S(d) — largeurs de colonnes FIXES : la colonne horaire (1re) est calée à
@@ -1687,13 +1759,30 @@ table { border-collapse: collapse; width: 100%; }
 .event-title { font-size: .72rem; opacity: .85; line-height: 1.15; }
 .event-hours { margin-top: .12rem; font-size: .66rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--clay); line-height: 1.1; }
 .demi-col .event-hours { font-size: .6rem; }
-.event-teachers { margin-top: .15rem; display: flex; flex-wrap: wrap; gap: .15rem; }
+.event-teachers { margin-top: .15rem; display: flex; flex-wrap: wrap; justify-content: center; gap: .15rem; }
 .event-teachers .design-ue-pill { font-size: .6rem; padding: 0 .22rem; }
 .event-details { margin-top: .2rem; font-size: .68rem; opacity: .85; line-height: 1.15; }
 .event-keywords { margin-top: .15rem; font-size: .64rem; opacity: .7; line-height: 1.1; }
 /* Type de séance en texte simple (après enseignant/lieu, avant les mots-clés). */
 .event-type { margin-top: .15rem; font-size: .66rem; font-weight: 600; opacity: .85; line-height: 1.15; }
 .demi-col .event-type { font-size: .6rem; }
+
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants,
+   sur les 4 gabarits de case du Planning hebdo (pleine, demi, superposée,
+   samedi) : neutralise --seq-color (posé en style inline, d'où !important) et
+   marque la case en pointillé, non cliquable. */
+.event-cell.is-collegue,
+.demi-col.is-collegue,
+.overlap-event.is-collegue,
+.saturday-session.is-collegue {
+  --seq-color: var(--line-strong) !important;
+  cursor: default;
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -1px;
+}
+.event-cell.is-collegue:hover,
+.demi-col.is-collegue:hover,
+.overlap-event.is-collegue:hover { outline: 1px dashed var(--line-strong); }
 
 .overlap-cell { background: var(--clay-soft) !important; padding: .2rem !important; }
 .overlap-warning { font-size: .66rem; font-weight: 700; color: #6b3013; margin-bottom: .15rem; }
@@ -1836,11 +1925,14 @@ table { border-collapse: collapse; width: 100%; }
    mode qui les propose. */
 .ruban-gestes { margin: 0 0 var(--sp-2); }
 
-/* README : Ruban/Répartition sont un bouton à deux positions — regroupées et
-   séparées des 3 autres modes par un filet, plutôt que 5 boutons équivalents. */
-.ruban-toggle-pair { display: inline-flex; gap: .25rem; padding-right: .45rem; margin-right: .2rem; border-right: 1px solid var(--line-strong); }
-.reference-mode-panel { display: none; }
-.reference-mode-panel.active-mode { display: block; }
+/* Retours #3 (18-19/08/2026) — 3 binômes de sous-onglets sur la même ligne :
+   chaque paire se resserre (gap réduit) et se sépare de la suivante par un
+   filet, plus lisible que 6 boutons à écart constant. */
+.ruban-subtab-pair {
+  display: inline-flex; align-items: center; gap: .7rem;
+  padding-right: var(--sp-4); border-right: 1px solid var(--line-strong);
+}
+.ruban-subtab-pair:last-of-type { border-right: 0; padding-right: 0; }
 
 /* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ----
    Ajustements #2 (18/08/2026, retour Martin) : cette barre doit être collée à
@@ -2695,7 +2787,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-line-total strong { font-size: 1.05rem; color: var(--moss-dark); }
 
 /* Badge du panneau Frais (visible même replié) */
-.frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); }
+/* Retours #4 (18/08/2026) — quand un bouton « + » cohabite avec ce badge dans
+   le même bandeau (Déplacements, Réunions), le bouton doit rester juste après
+   le titre (comme sur les encarts sans badge, ex. « + Période ») ; la marge
+   auto pousse le badge seul vers la droite plutôt que de laisser
+   `justify-content: space-between` centrer le bouton entre les deux. */
+.frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); margin-left: auto; }
 /* Lot 5 (Q3) — même recette que .room-urgent : le blanc sur ambre plein
    tombait à 3,92 ; ambre pâle + texte foncé reste une alerte, en restant lisible. */
 .frais-badge.has-pending { color: #7a5b16; background: var(--amber-soft); border-radius: 0; padding: .1rem .55rem; }
@@ -3050,6 +3147,18 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .bloc-vide { padding: var(--sp-3) .8rem; margin: 0; color: var(--muted); font-size: .75rem; }
 #dashboard .backlog-panel .badge-groupe { margin-left: auto; }
 
+/* Retours #3 (18-19/08/2026) — bandeaux colorés pour distinguer « Ma semaine »
+   (vive) des « Deux semaines suivantes » (même teinte, plus douce), au même
+   principe que l'ambre du backlog ci-dessus. */
+#dashSemaine .bloc-tete {
+  background: color-mix(in srgb, var(--acc) 12%, var(--surface-alt));
+  border-bottom: 1px solid var(--acc);
+}
+#dashSemaine .bloc-tete h3 { color: var(--acc); }
+#dashProchainement .bloc-tete {
+  background: color-mix(in srgb, var(--acc) 5%, var(--surface-alt));
+}
+
 /* « Séances pas encore placées » — en-tête ambre (attention douce, distincte
    du rouge des Urgences) + pastille de compte pleine, conformes au mockup. */
 #dashboard .backlog-panel { border-left: 3px solid var(--amber); }
@@ -3133,6 +3242,8 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .carte-heure { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
 #dashboard .carte-titre { font-size: .8125rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
 #dashboard .carte-meta { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
+#dashboard .carte-teachers.design-ue-pills { gap: .2rem; }
+#dashboard .carte-teachers .design-ue-pill { font-size: .58rem; padding: 0 .22rem; }
 #dashboard .carte-actions { display: flex; flex-wrap: wrap; gap: .22rem .3rem; margin-top: .3rem; }
 #dashboard .carte-tete { display: flex; align-items: center; justify-content: space-between; gap: .4rem; flex-wrap: wrap; }
 #dashboard .carte-tete .carte-actions { margin-top: 0; }
@@ -3222,6 +3333,9 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
 #dashboard .urgence-delai.est-urgent { color: var(--danger); }
 #dashboard .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
+/* Retours #3 (18-19/08/2026) — pastilles initiales, ligne plate (pas de fond
+   coloré ici : contexte lié à la séance/UE générique) → style bleu habituel. */
+#dashboard .urgence-teachers { flex: 0 0 auto; }
 #dashboard .urgence-detail {
   flex: 1 1 200px; min-width: 0; font-size: .78rem; color: var(--ink-soft);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -3309,7 +3423,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .todo-row:hover { background: var(--surface-alt); }
 .todo-row:hover .todo-row-remove { opacity: 1; }
 .todo-row input[type="checkbox"] { margin-top: .15rem; flex: 0 0 auto; }
-.todo-row-text { flex: 1 1 auto; font-size: .84rem; color: var(--ink); line-height: 1.35; }
+.todo-row-text { flex: 1 1 auto; font-size: .84rem; color: var(--ink); line-height: 1.35; white-space: pre-wrap; }
 .todo-row.is-done .todo-row-text { text-decoration: line-through; color: var(--muted); }
 .todo-row-remove {
   flex: 0 0 auto; border: 0; background: none; color: var(--muted); cursor: pointer;
@@ -3319,6 +3433,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .todo-add-input {
   margin: .5rem .8rem; width: calc(100% - 1.6rem); border: 1px dashed var(--line-strong);
   background: transparent; padding: .5rem .6rem; font-size: .82rem;
+  font-family: inherit; line-height: 1.35; resize: vertical; min-height: 2.6rem;
 }
 .todo-add-input:focus { border-style: solid; border-color: var(--acc); box-shadow: var(--halo-focus); }
 .todo-footnote { padding: 0 .8rem .7rem; margin: 0; line-height: 1.4; }
@@ -3334,7 +3449,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .todo-history[open] summary::before { content: '▾ '; }
 .todo-history-list { list-style: none; margin: .4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
 .todo-history-row { display: flex; justify-content: space-between; gap: .6rem; font-size: .78rem; color: var(--muted); }
-.todo-history-text { flex: 1 1 auto; text-decoration: line-through; }
+.todo-history-text { flex: 1 1 auto; text-decoration: line-through; white-space: pre-wrap; }
 .todo-history-date { flex: 0 0 auto; font-family: var(--font-mono); font-size: .7rem; }
 
 @media (max-width: 1100px) {

@@ -91,7 +91,7 @@
                 <span class="meta-etiquette">privé</span>
               </div>
               <div id="todoList" class="todo-list"></div>
-              <input type="text" id="todoNewInput" class="todo-add-input" placeholder="+ ajouter une note" maxlength="200" />
+              <textarea id="todoNewInput" class="todo-add-input" placeholder="+ ajouter une note (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
               <p class="todo-footnote meta">Une tâche cochée reste barrée jusqu’à la fin de la journée — le temps de la décocher si c’était une erreur — puis rejoint l’historique ci-dessous.</p>
               <details class="todo-history">
                 <summary id="todoHistoryCount">Tâches faites</summary>
@@ -112,6 +112,12 @@
         <summary>
           <div class="panel-heading-inline">
             <h3>Déplacements &amp; frais</h3>
+            <!-- Retours #3 (18-19/08/2026) : comme « + Période », reste visible
+                 et actionnable encart replié — remonté depuis .frais-filters.
+                 Retours #4 (18/08/2026) : bouton avant le compteur (et non
+                 après), pour retomber juste à droite du titre comme sur les
+                 autres encarts (ex. « + Période », sans badge entre les deux). -->
+            <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
             <span id="fraisSummaryBadge" class="frais-badge"></span>
           </div>
         </summary>
@@ -126,7 +132,6 @@
                 <option value="Terminée">Terminée</option>
               </select>
             </label>
-            <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
           </div>
           <div class="frais-export">
             <span class="meta">Exporter (toutes lignes) :</span>
@@ -141,19 +146,19 @@
            à 2 colonnes en remplissage naturel, donc Déplacements/Réunions à
            gauche et Périodes/Amélioration à droite (voir .zone-basse-grille). -->
       <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
-        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small secondary">+ Période</button></div></summary>
+        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small">+ Période</button></div></summary>
         <div id="constraintsList" class="list"></div>
       </details>
       <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
         <summary>
           <div class="panel-heading-inline">
             <h3>Réunions</h3>
+            <button type="button" id="addReunionButton" class="small">+ Réunion</button>
             <span id="reunionsSummaryBadge" class="frais-badge"></span>
           </div>
         </summary>
         <div class="reunions-toolbar">
           <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
-          <button type="button" id="addReunionButton" class="small primary">+ Réunion</button>
         </div>
         <div id="reunionsList" class="frais-table-wrap"></div>
       </details>
@@ -166,7 +171,7 @@
         </summary>
         <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
         <div id="devNotesList" class="todo-list"></div>
-        <input type="text" id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée" maxlength="200" />
+        <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
         <details class="todo-history">
           <summary id="devNotesHistoryCount">Tâches faites</summary>
           <ul id="devNotesHistoryList" class="todo-history-list"></ul>
@@ -275,6 +280,7 @@
         <div class="promo-switch week-strip-switch" role="group" aria-label="Période affichée" id="weekStripPeriodSwitch">
           <button type="button" class="promo-switch-btn" data-week-period="autumn">Sept. – déc.</button>
           <button type="button" class="promo-switch-btn" data-week-period="spring">Janv. – mai</button>
+          <button type="button" class="promo-switch-btn" data-week-period="summer">Juin – août</button>
         </div>
         <div class="week-bar-group week-bar-actions">
           <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel) sur les cases libres">
@@ -329,24 +335,32 @@
 
 
     <section id="ruban" class="view">
-      <!-- Écrans 5/6/7/9/10 — 5 sous-onglets + une recherche unifiée. Les panneaux
-           existants gardent leur contenu et leurs fonctions de rendu à l'identique :
-           seule la coquille qui les affiche/masque change (setRubanTab).
-           Ajustements #2 (18/08/2026, retour Martin) : 3 binômes, dans cet ordre —
-           Référentiel/PDF d'origine, Ruban/Répartition, Planning étudiant/Mes
-           créneaux types. Onglet principal renommé "Référentiel" (était
-           "Référentiel & Ruban") : le sous-onglet "référentiel interactif" perd
-           donc ce mot, gardé implicite par sa position dans son binôme (à côté de
-           "PDF d'origine"). Ruban/Répartition restent une paire imbriquée dans un
-           seul sous-onglet (bascule data-ruban-mode, inchangée), relabellisé
-           "Ruban" — le sous-onglet ne s'appelait plus "Référentiel" pour éviter le
-           doublon avec le sous-onglet référentiel lui-même. -->
+      <!-- Écrans 5/6/7/9/10 — 3 binômes de sous-onglets sur une même ligne + une
+           recherche unifiée. Retours #3 (18-19/08/2026) : Ruban et Répartition
+           étaient un binôme imbriqué dans un seul sous-onglet (bascule interne,
+           3e barre visible seulement une fois "Ruban" ouvert) — Martin voulait
+           les 3 binômes visibles ensemble sur la même ligne dès le départ. Ruban
+           et Répartition sont donc devenus deux sous-onglets à part entière
+           (rubanTab="ruban"/"repartition"), plus de bascule imbriquée ; le
+           filtre enseignant (#rubanFilters), commun aux deux données, est
+           remonté dans cette barre plutôt que dupliqué dans chaque panneau. -->
       <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
-        <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
-        <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
-        <button type="button" class="design-subtab active" data-ruban-tab="repartition" role="tab" aria-selected="true">Ruban</button>
-        <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
-        <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
+          <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
+        </span>
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab active" data-ruban-tab="ruban" role="tab" aria-selected="true">Ruban</button>
+          <button type="button" class="design-subtab" data-ruban-tab="repartition" role="tab" aria-selected="false">Répartition</button>
+        </span>
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+          <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
+        </span>
+        <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
+          <select id="rubanTeacherFilter" title="Enseignant / évaluateur" aria-label="Filtrer par enseignant ou évaluateur"></select>
+          <span class="ruban-count meta" id="rubanCount"></span>
+        </div>
         <label class="refmod-search ruban-unified-search">
           <span aria-hidden="true">🔎</span>
           <input id="rubanUnifiedSearch" type="search" placeholder="Rechercher un mot-clé, une capacité, une UE…" aria-label="Rechercher" />
@@ -385,39 +399,25 @@
         </div>
       </div>
 
-      <div id="rubanTabRepartition" class="ruban-tab-panel">
-        <!-- README : « Ruban / Répartition sont deux vues de la même donnée — un
-             bouton à deux positions ». data-ruban-mode/setRubanMode inchangés,
-             seulement imbriqués dans ce sous-onglet plutôt qu'au niveau supérieur. -->
-        <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
-          <span class="ruban-toggle-pair">
-            <button type="button" class="active" aria-pressed="true" data-ruban-mode="ruban">Ruban</button>
-            <button type="button" aria-pressed="false" data-ruban-mode="table">Répartition</button>
-          </span>
-          <select id="rubanTeacherFilter" title="Enseignant / évaluateur" aria-label="Filtrer par enseignant ou évaluateur"></select>
-          <span class="ruban-count meta" id="rubanCount"></span>
-        </div>
+      <div id="rubanTabRuban" class="ruban-tab-panel" hidden>
+        <!-- Les deux gestes de cette vue ne se devinent pas : ils restent écrits,
+             mais sur une ligne. -->
+        <p class="meta tight ruban-gestes">✎ pour modifier la composition d'une UE · cliquer une capacité pour l'ouvrir dans le référentiel.</p>
+        <div id="rubanGrid" class="ruban-grid"></div>
+      </div>
 
-        <div id="rubanModeRuban" class="reference-mode-panel active-mode">
-          <!-- Les deux gestes de cette vue ne se devinent pas : ils restent écrits,
-               mais sur une ligne et seulement dans le mode concerné. -->
-          <p class="meta tight ruban-gestes">✎ pour modifier la composition d'une UE · cliquer une capacité pour l'ouvrir dans le référentiel.</p>
-          <div id="rubanGrid" class="ruban-grid"></div>
+      <div id="rubanTabRepartition" class="ruban-tab-panel" hidden>
+        <div class="repartition-bar">
+          <span class="repartition-summary" id="repartitionSummary"></span>
+          <!-- REGLES.md #21 : estompage, jamais un retrait de lignes. -->
+          <label class="mask-toggle">
+            <input type="checkbox" id="repartitionMineToggle" checked />
+            <span>Mes UE</span>
+          </label>
         </div>
-
-        <div id="rubanModeTable" class="reference-mode-panel">
-          <div class="repartition-bar">
-            <span class="repartition-summary" id="repartitionSummary"></span>
-            <!-- REGLES.md #21 : estompage, jamais un retrait de lignes. -->
-            <label class="mask-toggle">
-              <input type="checkbox" id="repartitionMineToggle" checked />
-              <span>Mettre mes UE en avant</span>
-            </label>
-          </div>
-          <section class="panel">
-            <div id="rubanTable" class="ruban-table-wrap"></div>
-          </section>
-        </div>
+        <section class="panel">
+          <div id="rubanTable" class="ruban-table-wrap"></div>
+        </section>
       </div>
 
       <!-- Écran 8, neuf : semaine type de la promotion, saisie à la main (pas
@@ -431,6 +431,13 @@
             <button type="button" class="promo-switch-btn active" data-student-promo="GPN1" aria-pressed="true">GPN1</button>
             <button type="button" class="promo-switch-btn" data-student-promo="GPN2" aria-pressed="false">GPN2</button>
           </span>
+          <!-- Retours #3 (18-19/08/2026) : 2 périodes comme « Mes créneaux
+               types », la semaine type d'une promotion n'étant pas forcément
+               la même en septembre-décembre qu'en janvier-mai. -->
+          <div class="creneaux-period-switch student-period-switch" aria-label="Période de l'année">
+            <button type="button" data-student-period="autumn" class="active" aria-pressed="true">Sept. – déc.</button>
+            <button type="button" data-student-period="spring" aria-pressed="false">Janv. – mai</button>
+          </div>
           <span class="student-summary"><strong>Semaine type de la promotion</strong> <small>saisie et modifiée à la main, pas déduite</small> <span id="studentSummaryCount" class="meta"></span></span>
           <label class="mask-toggle">
             <input type="checkbox" id="studentMineToggle" checked />
@@ -714,6 +721,7 @@
       </header>
       <input type="hidden" id="studentSlotId" />
       <input type="hidden" id="studentSlotPromotion" />
+      <input type="hidden" id="studentSlotPeriod" />
       <div class="form-grid">
         <label>Jour
           <select id="studentSlotDay"></select>
@@ -1019,6 +1027,12 @@
         </label>
         <label>Matériel
           <textarea id="sessionMaterials" rows="2" placeholder="Ex. 24 loupes, flore de Bretagne × 12"></textarea>
+        </label>
+        <!-- Retours #3 (18-19/08/2026) : même mécanique que la salle/le véhicule
+             à réserver (pile Urgences du Tableau de bord). -->
+        <label class="checkbox-inline">
+          <input type="checkbox" id="sessionMaterielReserver" />
+          <span>Matériel à réserver</span>
         </label>
         <label>Groupe
           <select id="sessionDemiGroupe">

@@ -19,6 +19,7 @@ const DEPLACEMENT_STATUSES = ['Demande à faire', 'En cours', 'Terminée'];
 const DEFAULT_TAUX = 0.55;
 const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre' };
 const VEHICULE_LABEL = 'Véhicule de l’établissement';
+const MATERIEL_LABEL = 'Matériel à réserver';
 const ROOM_ALERT_DAYS = 15;
 const DAY_LANES = [
   { key: 'd0', day: 0, part: 'day', label: 'Lundi' },
@@ -163,10 +164,13 @@ let ueCapacitesPrecedente = '';
 let selectedReferenceCode = 'C4.2';
 let selectedReferenceModule = 'm4';
 let rubanTeacher = 'Tous';
-let rubanMode = 'ruban';
 let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneaux type
 let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
 let studentPlanningPromo = ''; // Écran 8 — promotion affichée, résolue au premier rendu (state.promotions[0])
+// Retours #3 (18-19/08/2026) — comme creneauxPeriod (Mes créneaux types) :
+// la semaine type d'une promotion n'est pas forcément la même sur les 2
+// périodes de l'année.
+let studentPlanningPeriod = 'autumn';
 let studentPlanningMineOnly = true; // case « Mettre mes cours en avant »
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
 
@@ -509,6 +513,10 @@ function normalizeStudentSlot(t = {}) {
   return {
     id: t.id || uid('etu'),
     promotion: DEFAULT_PROMOTIONS.includes(t.promotion) ? t.promotion : DEFAULT_PROMOTIONS[0],
+    // Retours #3 (18-19/08/2026) — 2 périodes comme « Mes créneaux types » :
+    // pas de notion de semestre ici (juste promotion + période), donc un champ
+    // à plat plutôt que la dérivation periodOfSemester() des créneaux types.
+    period: t.period === 'spring' ? 'spring' : 'autumn',
     day: Math.max(0, Math.min(4, Number(t.day) || 0)),
     startSlot: start.start,
     endSlot: start.end,
@@ -554,6 +562,22 @@ function clampTemplateSlots(start, endRaw) {
 
 function promoOfSemester(sem) { return (sem === 'Semestre 1' || sem === 'Semestre 2') ? 'GPN1' : 'GPN2'; }
 function periodOfSemester(sem) { return (sem === 'Semestre 1' || sem === 'Semestre 3') ? 'autumn' : 'spring'; }
+
+// Retours #4 (18/08/2026) — code couleur semestre repris du Ruban (S1 bleu,
+// S2 ambre, S3 rouge, S4 vert — S1/S2 = GPN1, S3/S4 = GPN2), généralisé à tout
+// ce qui teintait jusqu'ici une UE (Conception, Progression, Planning hebdo) :
+// remplace l'ancienne palette arbitraire par index d'UE (ueColor) et la
+// couleur de promo fixe du bandeau Planning hebdo (voir renderPromotionTable).
+const SEMESTER_COLORS = { 'Semestre 1': '#3a6ea5', 'Semestre 2': '#c08a12', 'Semestre 3': '#b0423f', 'Semestre 4': '#41874f' };
+function semesterColorOf(semester) { return SEMESTER_COLORS[semester] || '#5b6f92'; }
+// Semestre correspondant à une promo + une période (automne/printemps) du
+// Planning hebdo — utilisé pour teinter le bandeau promo (été = gris, hors
+// mapping, géré à part).
+function semesterForPromoPeriod(promo, period) {
+  return promo === 'GPN2'
+    ? (period === 'spring' ? 'Semestre 4' : 'Semestre 3')
+    : (period === 'spring' ? 'Semestre 2' : 'Semestre 1');
+}
 function templateSemester(periodKey, promo) {
   const period = TEMPLATE_PERIODS.find(p => p.key === periodKey) || TEMPLATE_PERIODS[0];
   return period.semesters[promo] || period.semesters.GPN1;
@@ -570,6 +594,19 @@ function templateSemester(periodKey, promo) {
    Basé sur le numéro de semaine (indépendant de l'année civile) : ça résout
    les deux à la fois. */
 function periodOfWeek(week) { return weekNumberOf(week) >= 36 ? 'autumn' : 'spring'; }
+
+// Retours #3 (18-19/08/2026) — la frise du Planning hebdo (weekStripPeriod)
+// gagne une 3e période « Juin – août » : le seul découpage en 2 de
+// periodOfWeek rangeait tout l'été dans « Janvier – mai », frise illisible
+// (jusqu'à S35 pour un printemps qui finit en pratique vers S22). Fonction à
+// part : periodOfWeek reste binaire pour templateSemester/TEMPLATE_PERIODS
+// (créneaux types, seulement 2 semestres par promo, pas de « été »).
+function weekStripPeriodOf(week) {
+  const n = weekNumberOf(week);
+  if (n >= 36) return 'autumn';
+  if (n >= 22) return 'summer';
+  return 'spring';
+}
 function templateSlotsFor(semester) { return (state?.weekTemplates || []).filter(t => t.semester === semester); }
 function findTemplateSlot(id) { return state?.weekTemplates?.find(t => t.id === id); }
 
@@ -879,6 +916,13 @@ function reservationRows() {
       pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked, !!s.vehicleBookedDismissed,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
+    // Retours #3 (18-19/08/2026) — case « matériel à réserver » à côté du champ
+    // Matériel : même mécanique que salle/véhicule (reprend la même date de
+    // référence que la séance).
+    if (s.materielAReserver) {
+      pousser('materiel', 'session', s, MATERIEL_LABEL, !!s.materielReserve, !!s.materielReserveDismissed,
+        date, s.title || 'Séance sans titre', s.promotion || '');
+    }
   });
 
   (state.reunions || []).forEach(r => {
@@ -908,8 +952,8 @@ function activeRoomBookingRows() {
   });
 }
 
-const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', mission: 'Ordre de mission' };
-const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver' };
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission' };
+const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
 
 /* Pile unique « Urgences » (REGLES.md #25) : salles et véhicules à réserver
    (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire),
@@ -920,19 +964,29 @@ function urgenceRows() {
   const out = [];
   activeRoomBookingRows().forEach(r => {
     const horaire = r.source === 'session' ? dashHoraire(r.entity) : '';
+    // Retours #3 (18-19/08/2026) : le titre en gras affichait l'étiquette
+    // générique (« Salle informatique », « Véhicule de l'établissement »)
+    // plutôt que le nom de la séance — au clic sur « Non dispo → perso »/
+    // « Perso → établissement », le nom bougeait donc de place par rapport à
+    // une ligne « Ordre de mission » (qui, elle, l'a toujours mis en titre).
+    // Le nom de la séance reste maintenant le titre dans tous les cas ;
+    // l'étiquette générique rejoint le détail.
     out.push({
-      kind: r.kind, titre: r.label,
-      detail: [r.titre, r.detail, horaire].filter(Boolean).join(' · '),
+      kind: r.kind, titre: r.titre,
+      detail: [r.label, r.detail, horaire].filter(Boolean).join(' · '),
       date: r.date, daysUntil: r.daysUntil,
-      source: r.source, id: r.id, fait: r.booked
+      source: r.source, id: r.id, fait: r.booked,
+      teacher: r.entity?.teacher || ''
     });
   });
   ordresDeMissionAFaire().forEach(o => {
+    const entity = o.source === 'reunion' ? (state.reunions || []).find(r => r.id === o.id) : findSession(o.id);
     out.push({
       kind: 'mission', titre: o.titre,
       detail: o.detail || '',
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
-      source: o.source, id: o.id, fait: o.fait
+      source: o.source, id: o.id, fait: o.fait,
+      teacher: entity?.teacher || ''
     });
   });
   return out.sort((a, b) => {
@@ -970,19 +1024,26 @@ function renderUrgences() {
       const basculeBtn = (r.kind === 'vehicule' && !r.fait)
         ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
         : '';
+      // Retours #3 (18-19/08/2026) : bascule inverse, pour revenir en arrière
+      // facilement après un clic "Non dispo → perso" fait par erreur.
+      const basculeRetourBtn = (r.kind === 'mission' && !r.fait)
+        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule-retour="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Revenir à un déplacement en véhicule de l’établissement">Perso → établissement</button>`
+        : '';
       const verbe = r.fait
         ? `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>${dismissBtn}`
         : r.kind === 'mission'
-          ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>`
+          ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
           : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
       // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
       // « Ma semaine »/« Prochainement ») — la case, le lien Éditer et le ×
       // gardent leur propre action (guard dans le gestionnaire de clic).
       const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
+      const teachers = teacherPillsMarkup(r.teacher);
       return `<div class="urgence-row${urgent ? ' est-urgent' : ''}${r.fait ? ' est-fait' : ''}" ${editAttr} tabindex="0" role="button">
         <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
         <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
         <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
+        ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
         <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
         ${verbe}
       </div>`;
@@ -1220,6 +1281,7 @@ function missionSetField(path, value) {
 }
 
 const MISSION_PRINT_CSS = `
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 @page { size: A4 portrait; margin: 12mm; }
 body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
 .mission-print-page{background:#fffefb;max-width:190mm;margin:0 auto;padding:14mm;}
@@ -1905,6 +1967,32 @@ function visibleUes() { return state.ues.filter(estVisiblePourMoi); }
 function visibleSequences() { return state.sequences.filter(estVisiblePourMoi); }
 function visibleSessions() { return state.sessions.filter(estVisiblePourMoi); }
 
+/* Retours #3 (18-19/08/2026) — 3 cas de visibilité entre comptes enseignants,
+   distincts du périmètre « strictement personnel » ci-dessus (propre au
+   Tableau de bord). Portée : tuiles séquence/séance (Conception pédagogique,
+   Progression, Planning hebdo, Dossier). Le Référentiel/Ruban reste la vue de
+   référence, toujours non filtrée (cf. commentaire sur estVisiblePourMoi).
+   Cas 1 — je ne suis PAS enseignant de l'UE : aucun contenu de séquence/séance
+     ne m'est montré, seuls les affichages génériques (l'UE elle-même) restent.
+   Cas 2 — je SUIS enseignant de l'UE, mais pas sur CETTE séquence/séance
+     précise (collègues seuls) : tuile visible, en style atténué, non ouvrable.
+   Cas 3 — je SUIS enseignant de l'UE ET sur cette séquence/séance : normal,
+     entièrement interactif (comportement déjà existant, inchangé). */
+function jeSuisEnseignantDeLUe(ue) {
+  if (!moiInitiales || !ue) return true;
+  const enseignants = enseignantsDeLUe(ue);
+  // Même convention que estVisiblePourMoi : une UE sans AUCUN enseignant
+  // déclaré (fréquent tant que la Répartition n'a pas été remplie, cf.
+  // ruban-pedagogique.js livré vide) n'est le Cas 1 de personne — elle reste
+  // visible de tous, faute de savoir à qui l'exclure.
+  if (!enseignants.length) return true;
+  return enseignants.includes(moiInitiales);
+}
+// Cas 2 vs Cas 3, une fois établi que le contenu est au moins visible (Cas ≥ 2).
+function contenuInteractifPourMoi(entity) {
+  return estVisiblePourMoi(entity);
+}
+
 function refreshSessionSequenceSelect(preferredValue = '') {
   const ueId = $('#sessionUe')?.value || '';
   const uePromo = findUe(ueId)?.promotion || '';
@@ -2117,6 +2205,12 @@ function dashActionsDeSeance(s, date) {
       ? { cle: 'mission', texte: 'Ordre de mission envoyé', fait: true }
       : { cle: 'mission', texte: 'Ordre de mission', urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
+  // Retours #3 (18-19/08/2026) — même mécanique que salle/véhicule ci-dessus.
+  if (s.materielAReserver) {
+    out.push(s.materielReserve
+      ? { cle: 'materiel', texte: 'Matériel réservé', fait: true }
+      : { cle: 'materiel', texte: 'Matériel à réserver', urgent: j !== null && j <= ROOM_ALERT_DAYS });
+  }
   if (!s.sequenceId || !s.ueId) out.push({ cle: 'rattacher', texte: 'À rattacher' });
   return out;
 }
@@ -2204,10 +2298,12 @@ function dashCarteSeance(s, date, compact) {
   }
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, s.demiGroupe ? '½' + s.demiGroupe : '']
     .filter(Boolean).join(' · ');
+  const teachers = teacherPillsMarkup(s.teacher);
   return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
     <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
     <span class="carte-titre">${escapeHtml(s.title)}</span>
     <span class="carte-meta">${escapeHtml(meta)}</span>
+    ${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}
     ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions)}</span>` : ''}
   </li>`;
 }
@@ -2322,11 +2418,14 @@ function renderDashProchainement() {
 /* Badges de l'encart « Séances à placer » : visibles panneau replié.
    Ajustements #2 [B2.3] (18/08/2026) — le compteur « à rattacher » est
    retiré (redondant avec la pastille « À rattacher » déjà posée sur chaque
-   carte concernée) ; le compteur « à placer » ne garde que le chiffre. */
-function renderDashBacklogBadges() {
+   carte concernée) ; le compteur « à placer » ne garde que le chiffre.
+   Retours #3 (18-19/08/2026) — le compteur portait sur TOUTES les séances
+   fictives alors que les tuiles n'affichent que celles dans la fenêtre de
+   DASH_BACKLOG_FENETRE_JOURS (dashBacklogSessions) : les deux chiffres
+   pouvaient diverger. On compte désormais exactement ce qui est affiché. */
+function renderDashBacklogBadges(nb) {
   const hote = $('#backlogBadges');
   if (!hote) return;
-  const nb = visibleSessions().filter(isFictiveSession).length;
   hote.innerHTML = `<span class="frais-badge${nb ? ' has-pending' : ''}">${nb || 'à jour'}</span>`;
 }
 
@@ -2380,7 +2479,7 @@ function renderDashboard() {
 
   renderDashSemaine();
   renderDashProchainement();
-  renderDashBacklogBadges();
+  renderDashBacklogBadges(fictive.length);
   renderUrgences();
 
   // Lot A [7] — mêmes tuiles qu'en Conception pédagogique et qu'au Planning
@@ -2450,8 +2549,12 @@ function renderChecklist(key) {
 }
 function wireChecklist(key) {
   const cfg = CHECKLISTS[key];
+  // Retours #4 (18/08/2026) — champ passé en <textarea> pour laisser plus de
+  // place à la rédaction ; Entrée valide toujours, Maj+Entrée insère un saut
+  // de ligne (sinon impossible d'écrire une note sur plusieurs lignes).
   $(cfg.input)?.addEventListener('keydown', async (event) => {
-    if (event.key !== 'Enter') return;
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
     const input = event.target;
     const text = input.value.trim();
     if (!text) return;
@@ -2496,9 +2599,16 @@ function renderDesign() {
   if (!state.promotions.includes(designPromotionFilter)) designPromotionFilter = state.promotions[0] || 'GPN1';
   const promoUes = state.ues.filter(ue => ue.promotion === designPromotionFilter);
   if (!promoUes.some(ue => ue.id === designSelectedUeId)) {
-    // Même règle de repli que la frise (mesUesParDefaut) : mes UE d'abord.
-    const miennes = moiInitiales ? promoUes.filter(ue => enseignantsDeLUe(ue).includes(moiInitiales)) : [];
-    designSelectedUeId = (miennes[0] || promoUes[0] || {}).id || '';
+    // Même règle de repli que la frise (mesUesParDefaut) : mes UE d'abord, dans
+    // l'ordre où la sidebar les affiche réellement (semestre puis code) — sinon
+    // « la première UE sur la liste » (retours #3, 18-19/08/2026) pouvait
+    // différer de l'ordre d'itération brut de state.ues.
+    const ordonnees = [...promoUes].sort((a, b) => {
+      const parSemestre = SEMESTERS.indexOf(a.semester) - SEMESTERS.indexOf(b.semester);
+      return parSemestre !== 0 ? parSemestre : compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true });
+    });
+    const miennes = moiInitiales ? ordonnees.filter(ue => enseignantsDeLUe(ue).includes(moiInitiales)) : [];
+    designSelectedUeId = (miennes[0] || ordonnees[0] || {}).id || '';
   }
   renderDesignSidebar(promoUes);
   renderDesignDetail(findUe(designSelectedUeId));
@@ -2592,9 +2702,11 @@ function renderDesignDetail(ue) {
   tree.innerHTML = renderDesignSequencesPanel(ue, sequences);
   restoreOpenKeys(tree, openKeys);
 
-  $('#designSessionsPanel').innerHTML = allSessions.length
-    ? allSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
-    : '<p class="meta">Aucune séance dans cette UE.</p>';
+  $('#designSessionsPanel').innerHTML = !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son contenu pédagogique (séquences, séances) n’est pas affiché.</p>'
+    : allSessions.length
+      ? allSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
+      : '<p class="meta">Aucune séance dans cette UE.</p>';
 
   $('#designCapacitiesPanel').innerHTML = renderCapacityList(capacities);
 
@@ -2605,6 +2717,12 @@ function renderDesignDetail(ue) {
    bandeau UE (devenu l'en-tête du panneau de détail) — la sélection d'UE se
    fait maintenant dans le sidebar, une seule à la fois. */
 function renderDesignSequencesPanel(ue, sequences) {
+  // Retours #3 (18-19/08/2026) — Cas 1 : pas enseignant·e de cette UE, aucun
+  // contenu de séquence/séance (les affichages génériques — en-tête d'UE,
+  // capacités du référentiel — restent, eux, dans renderDesignDetail).
+  if (!jeSuisEnseignantDeLUe(ue)) {
+    return '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son contenu pédagogique (séquences, séances) n’est pas affiché.</p>';
+  }
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
   // UE : regroupées par contrainte thématique, sous les séquences.
   const eilGroups = {};
@@ -2754,15 +2872,24 @@ function teacherInitialsOf(token = '') {
   return parts.map(part => part[0] || '').join('').slice(0, 4).toUpperCase();
 }
 
-function compactTeacherInitials(value = '') {
-  return teacherTokens(value).map(teacherInitialsOf).filter(Boolean).join(', ');
-}
-
 /* Liste { name, initials } pour afficher une pastille par enseignant. */
 function teacherPips(value = '') {
   return teacherTokens(value)
     .map(name => ({ name, initials: teacherInitialsOf(name) }))
     .filter(t => t.initials);
+}
+
+// Retours #3 (18-19/08/2026) — « pastilles initiales d'enseignant » :
+// harmonisation demandée sur tous les écrans. `onTint` bascule le pourtour/
+// texte sur --ue-deep (teinte du fond coloré : bandeau de séquence, tuile
+// séance) au lieu du bleu générique --acc, utilisé partout ailleurs (contexte
+// lié à une UE plutôt qu'à un fond coloré — Martin a confirmé garder le bleu
+// actuel dans ce cas). Plein pour moi (.is-mine), vide pour les collègues.
+function teacherPillsMarkup(value = '', onTint = false) {
+  const cls = 'design-ue-pill' + (onTint ? ' on-tint' : '');
+  return teacherPips(value)
+    .map(p => `<span class="${cls}${p.initials.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`)
+    .join('');
 }
 
 function compactKeywords(value = '', max = 4) {
@@ -2794,17 +2921,33 @@ function renderSequenceCard(seq) {
   const color = sequenceColor(seq.id); // Lot L — couleur cohérente avec la frise
   const period = sequencePeriodParts(seq);
   const periodLabel = [period.label, period.dates, period.weeksLabel].filter(Boolean).join(' · ');
-  const teachers = compactTeacherInitials(seq.teacher || findUe(seq.ueId)?.teacher || '');
+  const teacherValue = seq.teacher || findUe(seq.ueId)?.teacher || '';
+  const teacherPillsHtml = teacherPillsMarkup(teacherValue, true);
   const keywords = compactKeywords(seq.keywords, 8);
   const capCodes = (seq.capacityCodes || []).join(', ');
-  const metaLine = renderMetaLine([periodLabel, seq.hoursEstimate, teachers, capCodes]);
+  const metaLine = renderMetaLine([periodLabel, seq.hoursEstimate, capCodes]);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séquence d'un ou plusieurs collègues
+  // seuls (je suis enseignant·e de l'UE, mais pas rattaché·e à CETTE séquence).
+  // Visible, en style atténué, mais pas ouvrable — un <div> statique plutôt
+  // qu'un <details> : pas de bascule d'ouverture possible.
+  if (!contenuInteractifPourMoi(seq)) {
+    return `<div class="entity-card entity-sequence is-collegue" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}" title="Séquence d'un ou plusieurs collègues — pas la vôtre">
+      <div class="entity-card-locked-head">
+        <span class="entity-level-label">Séquence</span>
+        <span class="entity-title">${escapeHtml(seq.title)}</span>
+        ${teacherPillsHtml ? `<span class="design-ue-pills entity-teachers">${teacherPillsHtml}</span>` : ''}
+        <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''}</span>
+      </div>
+    </div>`;
+  }
   // Séances numérotées à partir de 1 dans l'ordre de la séquence.
   const orderedSessions = [...sessions].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-  return `<details class="entity-card entity-sequence" data-open-key="seq:${escapeAttr(seq.id)}" data-seq-drop="${escapeAttr(seq.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}">
+  return `<details class="entity-card entity-sequence" data-open-key="seq:${escapeAttr(seq.id)}" data-seq-drop="${escapeAttr(seq.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}">
     <summary>
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">Séquence</span>
       <span class="entity-title">${escapeHtml(seq.title)}</span>
+      ${teacherPillsHtml ? `<span class="design-ue-pills entity-teachers">${teacherPillsHtml}</span>` : ''}
       <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''} · ${fictiveCount} à placer</span>
     </summary>
     <div class="entity-body sequence-body">
@@ -2869,13 +3012,22 @@ function renderSessionCard(s, number) {
   // pastel réellement obtenu, pas sur la surface nue.
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
-  return `<article class="session-card ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  const teachers = teacherPillsMarkup(s.teacher, true);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séance d'un ou plusieurs collègues
+  // seuls, visible mais pas ouvrable (ni glissable) ; Cas 3 (mienne, ou sans
+  // enseignant assigné) : comportement inchangé.
+  const mien = contenuInteractifPourMoi(s);
+  const interactiveAttrs = mien
+    ? `draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}"`
+    : `aria-label="Séance « ${escapeAttr(s.title)} » — collègue(s) seul(s), pas la vôtre" title="Collègue(s) seul(s) — pas la vôtre"`;
+  return `<article class="session-card ${typeClass(s.type)}${mien ? '' : ' is-collegue'}" ${interactiveAttrs} style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
       ${s.type ? `<span class="session-card-headtype" title="${escapeAttr(s.type)}">${escapeHtml(s.type)}</span>` : '<span class="session-card-headtype"></span>'}
       ${placementFlag(s)}
     </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
+    ${teachers ? `<span class="design-ue-pills tile-teachers">${teachers}</span>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
     ${s.room ? `<p class="session-card-meta">${escapeHtml(s.room)}</p>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
@@ -2904,6 +3056,7 @@ function renderBacklogSessionTile(s) {
   const keywords = compactKeywords(s.keywords, 3);
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
+  const teachers = teacherPillsMarkup(s.teacher, true);
   return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <header class="session-card-head">
       <span class="drag-handle" aria-hidden="true">⠿</span>
@@ -2912,6 +3065,7 @@ function renderBacklogSessionTile(s) {
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
     ${infoLigne ? `<p class="session-card-meta">${escapeHtml(infoLigne)}</p>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
+    ${teachers ? `<span class="design-ue-pills tile-teachers">${teachers}</span>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
   </article>`;
 }
@@ -3077,13 +3231,20 @@ function renderGanttSequencesPanel(ues, weeks) {
   rowCursor += constraintLanes;
 
   const ueBlocks = ues.map(ue => {
-    const ueSessions = state.sessions.filter(s => s.ueId === ue.id);
-    const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
+    // Retours #3 (18-19/08/2026) — Cas 1 : pas enseignant·e de cette UE, aucune
+    // séquence n'est positionnée dans sa ligne (message dédié, distinct de
+    // « aucune séquence positionnée » qui donnerait à tort l'impression qu'il
+    // suffit d'en créer une).
+    const mienne = jeSuisEnseignantDeLUe(ue);
+    const ueSessions = mienne ? state.sessions.filter(s => s.ueId === ue.id) : [];
+    const sequences = mienne ? state.sequences.filter(seq => seq.ueId === ue.id) : [];
     const bands = sequences.flatMap(seq => sequenceWeekSegments(seq, weeks).map(segment => ({ ...segment, seq })));
     const items = bands.map(segment => ({ startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
     const lanes = Math.max(1, assignBandLanes(items));
     const bg = weeks.map((week, i) => `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${isThematicBlocked(week, promotion, ue.id, ueSessions) ? 'is-thematic' : ''}${week.id === currentWeekId() ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: ${rowCursor} / span ${lanes};" aria-hidden="true"></div>`).join('');
-    const inner = items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
+    const inner = !mienne
+      ? `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE.</div>`
+      : items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
     const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor} / span ${lanes};">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</div>`;
     rowCursor += lanes;
     return bg + inner + label;
@@ -3113,8 +3274,15 @@ function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
   const blockedCols = weeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
   const sc = sequenceColor(seq.id);
   const bandKeywords = compactKeywords(seq.keywords, 5);
-  const bandTeachers = teacherPips(seq.teacher || findUe(seq.ueId)?.teacher || '');
-  return `<button draggable="true" class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)};" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}" title="${escapeAttr(seq.title)}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers.length ? `<span class="timeline-band-teachers">${bandTeachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}</button>`;
+  const bandTeachers = teacherPillsMarkup(seq.teacher || findUe(seq.ueId)?.teacher || '', true);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séquence de collègue(s) seul(s) au
+  // sein d'une UE que j'enseigne par ailleurs. Visible, non colorée, non
+  // glissable/ouvrable (pas de data-drag-sequence/data-edit-sequence).
+  const mienne = contenuInteractifPourMoi(seq);
+  const interactiveAttrs = mienne
+    ? `draggable="true" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}"`
+    : '';
+  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
 }
 
 /* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
@@ -3126,7 +3294,10 @@ function renderGanttSessionsPanel(ues, weeks) {
   const promotion = ganttPromo;
   grid.style.cssText = `grid-template-columns: var(--timeline-label-col) repeat(${weeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${weeks.length};`;
 
-  const ueIds = new Set(ues.map(ue => ue.id));
+  // Retours #3 (18-19/08/2026) — Cas 1 : les séances d'une UE que je n'enseigne
+  // pas ne remontent pas dans cette grille jour par jour (même règle que le
+  // panneau Séquences ci-dessus, via jeSuisEnseignantDeLUe).
+  const ueIds = new Set(ues.filter(jeSuisEnseignantDeLUe).map(ue => ue.id));
   const allSessions = state.sessions.filter(s => ueIds.has(s.ueId));
 
   const weekRow = renderGanttWeekHeaderRow(weeks, promotion, 'Jour');
@@ -3156,18 +3327,26 @@ function computeGanttHorsFenetre(ues, weeks) {
   const foot = $('#ganttHorsFenetre');
   if (!foot) return;
   const scrollEl = $('#ganttSequencesScroll');
-  const weekEl = $('#ganttSequencesGrid .timeline-week-head');
-  const cornerEl = $('#ganttSequencesGrid .timeline-corner');
-  if (!scrollEl || !weekEl || !scrollEl.clientWidth) { foot.textContent = ''; return; }
-  const weekWidth = weekEl.getBoundingClientRect().width;
-  const labelWidth = cornerEl ? cornerEl.getBoundingClientRect().width : 0;
-  const visibleCount = weekWidth ? Math.max(0, Math.floor((scrollEl.clientWidth - labelWidth) / weekWidth)) : weeks.length;
-  if (visibleCount >= weeks.length) { foot.textContent = ''; return; }
+  const weekHeads = scrollEl ? [...scrollEl.querySelectorAll('.timeline-week-head')] : [];
+  if (!scrollEl || !scrollEl.clientWidth || !weekHeads.length) { foot.textContent = ''; return; }
+  // Retours #4 (18/08/2026) — bug : la frise se recentre sur la semaine en
+  // cours à l'ouverture de l'onglet (scrollGanttToCurrentWeek), donc la
+  // fenêtre visible ne commence plus forcément à l'indice 0 ; l'ancien calcul
+  // (nombre de semaines visibles déduit de la seule largeur du conteneur)
+  // supposait un scroll à 0 et annonçait « hors fenêtre » des séquences en
+  // réalité déjà visibles après recentrage. On mesure ici le chevauchement
+  // RÉEL de chaque en-tête de semaine avec le viewport du scroll.
+  const viewport = scrollEl.getBoundingClientRect();
+  const lastVisibleIndex = weekHeads.reduce((last, el, i) => {
+    const r = el.getBoundingClientRect();
+    return (r.left < viewport.right - 1 && r.right > viewport.left + 1) ? i : last;
+  }, -1);
+  if (lastVisibleIndex >= weeks.length - 1) { foot.textContent = ''; return; }
   const items = [];
   ues.forEach(ue => {
     state.sequences.filter(seq => seq.ueId === ue.id).forEach(seq => {
       const segments = sequenceWeekSegments(seq, weeks);
-      if (segments.length && segments[0].startIndex >= visibleCount) items.push({ title: seq.title, start: segments[0].startIndex });
+      if (segments.length && segments[0].startIndex > lastVisibleIndex) items.push({ title: seq.title, start: segments[0].startIndex });
     });
   });
   if (!items.length) { foot.textContent = ''; return; }
@@ -3225,7 +3404,12 @@ function timelineDayCell(ues, week, lane, allSessions, promotion, weekIndex, gri
   // rejoint la première UE affichée — cas ambigu et rare en pratique.
   const drop = JSON.stringify({ ueId: ues[0]?.id || '', weekId: week.id, laneKey: lane.key, day: lane.day, part: lane.part });
   const isCurrent = week.id === currentWeekId(); // Lot 4
-  return `<div class="timeline-day-cell ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${eilBlocked ? 'thematic-week' : ''} ${dayItems.length ? 'is-holiday' : ''} ${cellSessions.length ? 'has-session' : 'is-empty-day'}${isCurrent ? ' is-current-week' : ''}" style="grid-column: ${weekIndex + 2}; grid-row: ${gridRow};" data-timeline-drop='${escapeAttr(drop)}'${eilBlocked ? ` title="${escapeAttr('Semaine thématique : ' + eilTitle)}"` : ''}>
+  // Retours #3 (18-19/08/2026) : une séquence se dépose maintenant n'importe où
+  // dans sa frise (comme une tuile séance), pas seulement sur l'en-tête de
+  // semaine tout en haut — data-week-drop rejoint data-timeline-drop ici, sans
+  // rien retirer (moveSessionToTimeline/moveSequenceToWeek se distinguent déjà
+  // par le type de drag, pas par la cible).
+  return `<div class="timeline-day-cell ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${eilBlocked ? 'thematic-week' : ''} ${dayItems.length ? 'is-holiday' : ''} ${cellSessions.length ? 'has-session' : 'is-empty-day'}${isCurrent ? ' is-current-week' : ''}" style="grid-column: ${weekIndex + 2}; grid-row: ${gridRow};" data-timeline-drop='${escapeAttr(drop)}' data-week-drop="${escapeAttr(week.id)}"${eilBlocked ? ` title="${escapeAttr('Semaine thématique : ' + eilTitle)}"` : ''}>
     ${off
       ? (blocked ? '<span class="timeline-blocked-label">sans cours</span>' : '')
       : `${dayItemChips}${cellSessions.map(timelineSessionCard).join('')}`}
@@ -3283,12 +3467,15 @@ function timelineSessionCard(session) {
   const meta = [hours, dayLabel, session.room].filter(Boolean).join(' · ');
   const keywords = compactKeywords(session.keywords, 4);
   const color = sessionTint(session);
-  const teachers = teacherPips(session.teacher || findUe(session.ueId)?.teacher || '');
+  const teachers = teacherPillsMarkup(session.teacher || findUe(session.ueId)?.teacher || '', true);
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
-  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
+  // Retours #3 (18-19/08/2026) — Cas 2 : séance de collègue(s) seul(s).
+  const mienne = contenuInteractifPourMoi(session);
+  const interactiveAttrs = mienne ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"` : '';
+  return `<button ${interactiveAttrs} class="timeline-session seq-tinted ${typeClass(session.type)}${mienne ? '' : ' is-collegue'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)};--ue-deep:${deepColor(color)}" title="${escapeAttr(tooltip)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">
     <span class="timeline-session-head">
       <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
-      ${teachers.length ? `<span class="timeline-band-teachers">${teachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}
+      ${teachers ? `<span class="timeline-band-teachers design-ue-pills">${teachers}</span>` : ''}
     </span>
     <strong class="timeline-session-title">${escapeHtml(session.title)}</strong>
     ${meta ? `<em class="timeline-session-meta">${escapeHtml(meta)}</em>` : ''}
@@ -3505,13 +3692,29 @@ function compactDateRange(dateRange = '') {
   return String(dateRange).replace(/\/2025|\/2026|\/2027/g, '').replace(/\s+/g, ' ');
 }
 
+// Retours #4 (18/08/2026) — couleur du bandeau promo (code couleur semestre
+// du Ruban), appliquée à part de renderPromotionTable : appelée à la fois
+// après un rendu complet et depuis le clic sur l'onglet de période seul (qui
+// ne redessine pas la grille), pour que la couleur suive weekStripPeriod
+// dans les deux cas.
+function applyScheduleTitleColors() {
+  $$('.schedule-title').forEach(el => {
+    const promotion = el.dataset.promotion;
+    const summer = weekStripPeriod === 'summer';
+    const semester = semesterForPromoPeriod(promotion, weekStripPeriod);
+    el.style.background = summer ? '#e4e1d6' : hexToRgba(semesterColorOf(semester), .22);
+    el.style.color = summer ? '#5b584c' : deepColor(semesterColorOf(semester));
+  });
+}
+
 function renderPlanning() {
   $('#weekSelect').value = selectedWeek;
   const currentWeek = state.weeks.find(w => w.id === selectedWeek);
-  if (currentWeek) weekStripPeriod = periodOfWeek(currentWeek);
+  if (currentWeek) weekStripPeriod = weekStripPeriodOf(currentWeek);
   renderWeekStrip();
   renderWeekBacklog();
   $('#planningContainer').innerHTML = state.promotions.map(renderPromotionTable).join('');
+  applyScheduleTitleColors();
   const weekNotesEl = $('#weekNotes');
   if (weekNotesEl && document.activeElement !== weekNotesEl) {
     weekNotesEl.value = state.weekNotes[selectedWeek] || '';
@@ -3530,7 +3733,7 @@ function renderWeekStrip() {
 
   // 17/08 — le texte "Septembre-décembre S36→S53 · cliquer une semaine" (ex-#weekStripLabel)
   // doublonnait les boutons Sept./Janv. ci-dessus : retiré, les boutons suffisent seuls.
-  const weeks = state.weeks.filter(w => periodOfWeek(w) === weekStripPeriod);
+  const weeks = state.weeks.filter(w => weekStripPeriodOf(w) === weekStripPeriod);
 
   const strip = $('#weekStrip');
   if (!strip) return;
@@ -3614,6 +3817,27 @@ function renderWeekBacklog() {
   restoreOpenKeys(backlog, openKeys);
 }
 
+/* Retours #3 (18-19/08/2026) — Cas 2/3 de visibilité entre comptes enseignants
+   pour une case du Planning hebdo. data-session-id est le vrai déclencheur du
+   clic (#planningContainer, cf. plus bas) : Cas 2 = tous les attributs
+   d'interaction (draggable/data-drag-session/data-session-id/data-edit-session)
+   omis d'un coup, plus de bouton « ↩ Ressortir » (action réservée au Cas 3).
+   data-drop-target n'est PAS concerné : déposer une de mes séances reste
+   possible même sur le créneau d'un·e collègue, géré séparément par l'appelant. */
+function planningSessionAttrs(session) {
+  const mienne = contenuInteractifPourMoi(session);
+  return {
+    mienne,
+    classSuffix: mienne ? '' : ' is-collegue',
+    idAttrs: mienne
+      ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"`
+      : '',
+    unplaceBtn: mienne
+      ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>`
+      : ''
+  };
+}
+
 function renderSessionEventContent(session, duration, compact = false) {
   const ue = findUe(session.ueId);
   const ueCode = ue ? ue.code : 'UE ?'; // « UE 3.2 » (préfixe conservé)
@@ -3624,7 +3848,7 @@ function renderSessionEventContent(session, duration, compact = false) {
   // pastilles (.design-ue-pill, même composant que Conception/Répartition/
   // Créneaux types), plutôt qu'en texte brut, pour homogénéiser avec le reste
   // de l'appli. Le lieu reste en texte simple juste en dessous.
-  const eventTeachers = teacherPips(session.teacher || '');
+  const eventTeachers = teacherPillsMarkup(session.teacher || '', true);
   const detail = session.room || '';
   // Mots-clés affichés dans les cases PLEINES (police réduite) ; pas en demi-groupe (place).
   const keywords = compact ? [] : compactKeywords(session.keywords, 4);
@@ -3649,7 +3873,7 @@ function renderSessionEventContent(session, duration, compact = false) {
     <div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
     <div class="event-session-title">${escapeHtml(truncate(session.title, compact ? 26 : 40))}</div>
     ${customHours ? `<div class="event-hours" title="Horaire libre saisi pour cette séance">${escapeHtml(customHours)}</div>` : ''}
-    ${eventTeachers.length ? `<div class="event-teachers">${eventTeachers.map(t => `<span class="design-ue-pill${t.initials.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}" title="${escapeAttr(t.name)}">${escapeHtml(t.initials)}</span>`).join('')}</div>` : ''}
+    ${eventTeachers ? `<div class="event-teachers design-ue-pills">${eventTeachers}</div>` : ''}
     ${detail ? `<div class="event-details">${escapeHtml(detail)}</div>` : ''}
     ${typeText}
     ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}
@@ -3729,24 +3953,22 @@ function renderPromotionTable(promotion) {
               if (!isHead) return '<div class="demi-col demi-empty is-continuation" aria-hidden="true"></div>';
               return `<div class="demi-col demi-empty drop-slot" data-create='${cj}' data-drop-target='${cj}' title="Créer / déposer le demi-groupe ${side}"><span class="drop-hint">+ ½${side}</span></div>`;
             }
-            const inner = isHead
-              ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(sess.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(sess, rowspan, true)}`
-              : '';
-            return `<div class="demi-col drop-slot ${typeClass(sess.type)}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
+            const p = planningSessionAttrs(sess);
+            const inner = isHead ? `${p.unplaceBtn}${renderSessionEventContent(sess, rowspan, true)}` : '';
+            return `<div class="demi-col drop-slot ${typeClass(sess.type)}${p.classSuffix}" style="--seq-color:${sessionTint(sess)}; --ue-deep:${deepColor(sessionTint(sess))}" ${p.idAttrs} data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</div>`;
           };
           return `<td class="event-cell demi-cell${contClass}" rowspan="${rowspan}"><div class="demi-split">${halfCol(halfA[0], 'A')}${halfCol(halfB[0], 'B')}</div></td>`;
         }
         if (starting.length === 1) {
           const session = starting[0];
           const cls = typeClass(session.type);
-          const inner = isHead
-            ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan)}`
-            : '';
-          return `<td class="event-cell drop-slot ${cls}${contClass}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
+          const p = planningSessionAttrs(session);
+          const inner = isHead ? `${p.unplaceBtn}${renderSessionEventContent(session, rowspan)}` : '';
+          return `<td class="event-cell drop-slot ${cls}${contClass}${p.classSuffix}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}; --ue-deep:${deepColor(sessionTint(session))}" ${p.idAttrs} data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</td>`;
         }
         return `<td class="event-cell overlap-cell drop-slot${contClass}" rowspan="${rowspan}" data-drop-target='${escapeAttr(contextJson)}' title="${starting.length} séances en chevauchement">
           <div class="overlap-warning">${starting.length} séances superposées</div>
-          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
+          ${starting.map(session => { const p = planningSessionAttrs(session); return `<div class="overlap-event ${typeClass(session.type)}${p.classSuffix}" style="--ue-deep:${deepColor(sessionTint(session))}" ${p.idAttrs} title="${escapeAttr(sessionTooltip(session))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${p.unplaceBtn}${renderSessionEventContent(session, rowspan, true)}</div>`; }).join('')}
         </td>`;
       }
       const contextJson = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
@@ -3789,16 +4011,20 @@ function renderPromotionTable(promotion) {
   const satSessions = sessions.filter(s => Number(s.day) === 5);
   const satConstraints = saturdayDate ? constraintsForDate(saturdayDate, promotion).filter(c => !isThematicConstraint(c)) : [];
   const saturdayRow = (satSessions.length || satConstraints.length)
-    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
+    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => { const p = planningSessionAttrs(s); return `<span class="saturday-session ${typeClass(s.type)}${p.classSuffix}" style="--seq-color:${sessionTint(s)}" ${p.idAttrs} title="${escapeAttr(sessionTooltip(s))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${p.unplaceBtn}${escapeHtml(s.title)} · journée</span>`; }).join('')}</td></tr>`
     : '';
   const eilRow = eilBannerRow(eilSelf, eilOther, DAYS.length);
 
-  // REGLES.md #14 — les couleurs de promotion (GPN1 ambre, GPN2 sarcelle) sont
-  // fixes sur les bandeaux des grilles empilées, elles ne varient jamais avec
-  // la période (l'ancienne variante bleu/rouge/jaune/vert par saison, Lot R,
-  // datait de la charte Atlas naturaliste et n'a plus lieu d'être).
+  // Retours #4 (18/08/2026) — décision inversée : le bandeau promo reprend
+  // désormais le code couleur semestre du Ruban (S1/S3 en septembre-décembre,
+  // S2/S4 en janvier-mai, gris en juin-août). La couleur elle-même est posée
+  // à part par applyScheduleTitleColors() plutôt qu'ici : elle doit changer
+  // dès qu'on coche un onglet de période (weekStripPeriod), même quand ce
+  // clic seul ne redessine pas la grille (cf. le commentaire sur
+  // #weekStripPeriodSwitch dans bindEvents — la bascule ne fait que parcourir
+  // la bande, elle ne déclenche pas renderPlanning()).
   return `<section class="schedule-section">
-    <div class="schedule-title ${promotion.toLowerCase()}">${escapeHtml(promotion)}</div>
+    <div class="schedule-title" data-promotion="${escapeAttr(promotion)}">${escapeHtml(promotion)}</div>
     <div class="table-scroll"><table class="schedule-table">
       <thead><tr><th>Créneau</th>${DAYS.map((d, i) => `<th>${d}${dayDates[i] ? `<br><small class="th-date">${escapeHtml(fmtDayDate(dayDates[i]))}</small>` : ''}</th>`).join('')}</tr></thead>
       <tbody>${eilRow}${constraintRow}${rows}${saturdayRow}</tbody>
@@ -4191,6 +4417,7 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionActivities').value = session?.activities || '';
   $('#sessionNotions').value = session?.notions || '';
   $('#sessionMaterials').value = session?.materials || '';
+  if ($('#sessionMaterielReserver')) $('#sessionMaterielReserver').checked = !!session?.materielAReserver;
   $('#sessionDifferentiation').value = session?.differentiation || '';
   $('#sessionNotes').value = session?.notes || '';
   $('#deleteSessionButton').hidden = isNew;
@@ -4275,13 +4502,14 @@ function renderConstraintExamCapacities(ueId = '', selectedCodes = []) {
 
 
 
+// Retours #4 (18/08/2026) — la couleur d'une UE suit désormais son semestre
+// (S1 bleu, S2 ambre, S3 rouge, S4 vert, cf. SEMESTER_COLORS), pas un index
+// arbitraire dans state.ues : Martin veut retrouver le code couleur du Ruban
+// partout où une UE est teintée (sidebar/titre Conception, bandeaux séquences/
+// séances de Progression, via sequenceColor/sessionTint qui en dérivent).
 function ueColor(ueId = '') {
-  // Lot 5 (Q1) — les 3 teintes les plus claires de la palette (violet, terre
-  // cuite, prune) assombries : elles restaient limites à l'écriture même une
-  // fois « encrées » (voir inkColor) et distinguaient mal leurs séquences.
-  const palette = ['#2f6f73', '#684da3', '#985541', '#4f7cac', '#7a8f3a', '#864a63', '#5b6f92', '#b08a2e', '#558b6e', '#7b6d8d', '#8a6f3d'];
-  const index = Math.max(0, state?.ues?.findIndex(ue => ue.id === ueId) ?? 0);
-  return palette[index % palette.length];
+  const ue = state?.ues?.find(u => u.id === ueId);
+  return semesterColorOf(ue?.semester);
 }
 
 /* Couleur d'une séquence : dérivée de la couleur de son UE, mais nettement
@@ -5496,9 +5724,14 @@ function renderStudentPlanning() {
     b.classList.toggle('active', isActive);
     b.setAttribute('aria-pressed', String(isActive));
   });
+  $$('#rubanTabEtudiant [data-student-period]').forEach(b => {
+    const isActive = b.dataset.studentPeriod === studentPlanningPeriod;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-pressed', String(isActive));
+  });
   const mineToggle = $('#studentMineToggle');
   if (mineToggle) studentPlanningMineOnly = mineToggle.checked;
-  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === studentPlanningPromo);
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === studentPlanningPromo && t.period === studentPlanningPeriod);
   const countEl = $('#studentSummaryCount');
   if (countEl) countEl.textContent = `· ${slots.length} créneaux sur 40`;
   renderStudentGrid(studentPlanningPromo);
@@ -5507,7 +5740,7 @@ function renderStudentPlanning() {
 function renderStudentGrid(promotion) {
   const container = $('#studentPlanningGrid');
   if (!container) return;
-  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === promotion);
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === promotion && t.period === studentPlanningPeriod);
   const skip = new Set();
   const rows = SLOTS.map((slotLbl, slotIndex) => {
     if (slotIndex === 4) {
@@ -5526,7 +5759,7 @@ function renderStudentGrid(promotion) {
         const dimmed = studentPlanningMineOnly && !isMyStudentSlot(t);
         return `<td class="tpl-cell${dimmed ? ' student-dimmed' : ''}" rowspan="${rowspan}" style="--seq-color:${studentSlotTint(t)}" data-edit-student-slot="${escapeAttr(t.id)}" title="Modifier ce cours">${studentSlotCellInner(t)}</td>`;
       }
-      const ctx = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
+      const ctx = JSON.stringify({ promotion, period: studentPlanningPeriod, day: dayIndex, slot: slotIndex });
       return `<td class="tpl-empty" data-create-student-slot='${escapeAttr(ctx)}' title="Ajouter un cours"><span class="drop-hint">+</span></td>`;
     }).join('');
     return `<tr class="${afterBreak}"><td class="time-cell">${slotLbl}</td>${cells}</tr>`;
@@ -5545,8 +5778,10 @@ function openStudentSlotModal(slot, context = {}) {
   const dialog = $('#studentSlotDialog');
   if (!dialog) return;
   const promotion = slot?.promotion || context.promotion || studentPlanningPromo || state.promotions[0] || 'GPN1';
+  const period = slot?.period || context.period || studentPlanningPeriod;
   $('#studentSlotId').value = slot?.id || '';
   $('#studentSlotPromotion').value = promotion;
+  $('#studentSlotPeriod').value = period;
   $('#studentSlotModalTitle').textContent = slot ? 'Modifier un cours' : 'Ajouter un cours';
   setOptions('#studentSlotDay', DAYS.map((d, i) => `<option value="${i}">${d}</option>`).join(''), String(slot?.day ?? context.day ?? 0));
   const slotOpts = SLOTS.map((s, i) => i === 4 ? '' : `<option value="${i}">${s}</option>`).join('');
@@ -5588,6 +5823,7 @@ async function saveStudentSlot(event) {
   const slot = normalizeStudentSlot({
     id: id || undefined,
     promotion: $('#studentSlotPromotion').value,
+    period: $('#studentSlotPeriod').value,
     day: Number($('#studentSlotDay').value),
     startSlot: clamp.start,
     endSlot: clamp.end,
@@ -5612,27 +5848,17 @@ async function deleteStudentSlot() {
   await saveData('Cours (planning étudiant) supprimé');
 }
 
-/* Bascule Ruban/Répartition — inchangée, seulement imbriquée dans le sous-onglet
-   « Référentiel & répartition » depuis la réorg écran 8 (setRubanTab ci-dessous). */
-function setRubanMode(mode) {
-  rubanMode = mode;
-  $$('[data-ruban-mode]').forEach(b => {
-    const isActive = b.dataset.rubanMode === mode;
-    b.classList.toggle('active', isActive);
-    b.setAttribute('aria-pressed', String(isActive));
-  });
-  $('#rubanModeRuban')?.classList.toggle('active-mode', mode === 'ruban');
-  $('#rubanModeTable')?.classList.toggle('active-mode', mode === 'table');
-}
-
-/* Écran 8 — 4 sous-onglets (reference/repartition/etudiant/creneaux) qui
-   remplacent les anciens boutons plats data-ruban-mode="reference"/"pdf"/
-   "creneaux". Chaque panneau garde son id et son contenu d'origine ; seule la
-   visibilité change (attribut `hidden`, plus `.active-mode`). La recherche
-   unifiée n'a de sens que sur reference/repartition : vidée et neutralisée
-   ailleurs, comme « Réglages d'année » (Créneaux types) n'a pas de comportement
-   défini par la maquette non plus. */
-let rubanTab = 'repartition';
+/* Écran 8 — 3 binômes de sous-onglets (reference/pdf, ruban/repartition,
+   etudiant/creneaux), tous au même niveau (retours #3, 18-19/08/2026 : Ruban
+   et Répartition étaient un seul sous-onglet avec bascule interne, promus en
+   deux sous-onglets à part entière). Chaque panneau garde son id et son
+   contenu d'origine ; seule la visibilité change (attribut `hidden`). Le
+   filtre enseignant (#rubanFilters) est commun à ruban/repartition, qui
+   partagent la même donnée. La recherche unifiée n'a de sens que sur
+   reference/ruban/repartition : vidée et neutralisée ailleurs, comme « Réglages
+   d'année » (Créneaux types) n'a pas de comportement défini par la maquette
+   non plus. */
+let rubanTab = 'reference';
 function setRubanTab(tab) {
   rubanTab = tab;
   $$('[data-ruban-tab]').forEach(b => {
@@ -5641,17 +5867,20 @@ function setRubanTab(tab) {
     b.setAttribute('aria-selected', String(isActive));
   });
   $('#rubanModeReference').hidden = tab !== 'reference';
+  $('#rubanTabRuban').hidden = tab !== 'ruban';
   $('#rubanTabRepartition').hidden = tab !== 'repartition';
   $('#rubanTabEtudiant').hidden = tab !== 'etudiant';
   $('#rubanModeCreneaux').hidden = tab !== 'creneaux';
   $('#rubanTabPdf').hidden = tab !== 'pdf';
+  const filtres = $('#rubanFilters');
+  if (filtres) filtres.hidden = !(tab === 'ruban' || tab === 'repartition');
   const search = $('#rubanUnifiedSearch');
   if (search) {
     search.value = '';
     search.disabled = (tab === 'etudiant' || tab === 'creneaux' || tab === 'pdf');
   }
   if (tab === 'reference') renderReferenceModule();
-  else if (tab === 'repartition') renderRuban();
+  else if (tab === 'ruban' || tab === 'repartition') renderRuban();
   else if (tab === 'etudiant') renderStudentPlanning();
   else if (tab === 'creneaux') renderCreneaux();
   else if (tab === 'pdf') renderPdfLibrary();
@@ -5700,6 +5929,13 @@ function renderPdfLibrary() {
    et des sections cochées, conformément au Known Gap #3). */
 
 const DOSSIER_PRINT_CSS = `
+/* Retours #3 (18-19/08/2026) : Chrome n'imprime pas les background-color par
+   défaut (case « Graphiques d'arrière-plan » décochée), ce qui faisait
+   disparaître les barres colorées de la frise de progression (.dossier-frise-bar
+   et consorts, qui portent leur information PAR la couleur de fond, pas par
+   une bordure) — comportement indépendant du réglage réel de la case, cette
+   propriété l'impose. */
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .dossier-page{box-sizing:border-box;width:210mm;min-height:297mm;margin:0 auto 8mm;padding:16mm 15mm 20mm;background:#fffefb;border:1px solid #d8d4c6;font-family:'IBM Plex Sans',sans-serif;color:#191b16;break-before:page;position:relative}
 .dossier-page:first-child{break-before:auto}
 .dossier-page .mono{font-family:'JetBrains Mono',monospace}
@@ -5881,6 +6117,12 @@ function dossierUnitShortLabel(u) {
 /* Liste ordonnée des unités (= pages) à sortir, selon les cases cochées. Une
    unité = une page A4 exactement (voir note d'en-tête du bloc). */
 function dossierBuildUnits(ue, sections) {
+  // Retours #3 (18-19/08/2026) — Cas 1 (visibilité entre comptes enseignants,
+  // renforcé sur demande explicite) : aucun contenu de dossier pour une UE que
+  // je n'enseigne pas, PAS MÊME la page de garde — ni affiché, ni imprimable.
+  // Point de passage unique : aperçus (grille/lecture), complétude et
+  // dossierOpenPrintWindow en dépendent tous, via units.length === 0.
+  if (!jeSuisEnseignantDeLUe(ue)) return [];
   const seqs = state.sequences.filter(s => s.ueId === ue.id).slice()
     .sort((a, b) => dossierSequenceOrder(a) - dossierSequenceOrder(b));
   const units = [{ key: 'garde', kind: 'garde', title: 'Page de garde' }];
@@ -6032,10 +6274,13 @@ function dossierPageReferentiel(ue, sections, footerOpts) {
   </article>`;
 }
 
-function dossierProgressionTableHtml(seqs) {
+function dossierProgressionTableHtml(seqs, ue) {
   if (!seqs.length) return '';
-  return `<table class="dossier-table dossier-table-compact"><thead><tr><th>Séquence</th><th>Semaines</th><th>Durée</th><th>Séances</th></tr></thead><tbody>
-    ${seqs.map(seq => `<tr><td><strong>${escapeHtml(seq.title || 'Sans titre')}</strong></td><td class="mono">${escapeHtml(seq.targetWeeks || '—')}</td><td class="mono">${escapeHtml(seq.hoursEstimate || '—')}</td><td class="mono">${state.sessions.filter(s => s.sequenceId === seq.id).length}</td></tr>`).join('')}
+  // Retours #3 (18-19/08/2026) : distinguer mon ressort de celui des
+  // collègues quand plusieurs enseignent l'UE sans co-concevoir les mêmes
+  // séquences (même chip .mine qu'ailleurs dans le dossier).
+  return `<table class="dossier-table dossier-table-compact"><thead><tr><th>Séquence</th><th>Semaines</th><th>Durée</th><th>Séances</th><th>Ens.</th></tr></thead><tbody>
+    ${seqs.map(seq => { const teachers = teacherTokens(seq.teacher || ue?.teacher); return `<tr><td><strong>${escapeHtml(seq.title || 'Sans titre')}</strong></td><td class="mono">${escapeHtml(seq.targetWeeks || '—')}</td><td class="mono">${escapeHtml(seq.hoursEstimate || '—')}</td><td class="mono">${state.sessions.filter(s => s.sequenceId === seq.id).length}</td><td class="mono">${teachers.length ? teachers.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td></tr>`; }).join('')}
   </tbody></table>`;
 }
 
@@ -6077,21 +6322,22 @@ function dossierPageProgression(ue, footerOpts) {
     <h2 class="dossier-h2">Progression de l'unité</h2><div class="dossier-h2-rule"></div>
     ${seqs.length ? `<div class="dossier-frise-grid" style="grid-template-columns:${cols}">${grid}</div>` : '<p class="dossier-body-text meta">Aucune séquence pour cette UE.</p>'}
     ${legend}
-    ${dossierProgressionTableHtml(seqs)}
+    ${dossierProgressionTableHtml(seqs, ue)}
     ${dossierPageFooter(ue, footerOpts)}
   </article>`;
 }
 
 function dossierSequenceBlock(seq, ue, footerOpts) {
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id).slice().sort(dossierSessionSort);
-  const rows = sessions.map((s, i) => `<tr>
+  const rows = sessions.map((s, i) => { const teachers = teacherTokens(s.teacher || seq.teacher || ue.teacher); return `<tr>
     <td class="mono">${i + 1}</td>
     <td><strong>${escapeHtml(s.title || 'Sans titre')}</strong>${s.objectives ? `<span class="dossier-table-sub">${escapeHtml(truncate(s.objectives, 160))}</span>` : ''}</td>
     <td class="mono">${escapeHtml(s.type || '—')}</td>
     <td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}</td>
     <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
     <td>${escapeHtml(s.room || '—')}</td>
-  </tr>`).join('') || `<tr><td colspan="6" class="meta">Aucune séance rattachée à cette séquence.</td></tr>`;
+    <td class="mono">${teachers.length ? teachers.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td>
+  </tr>`; }).join('') || `<tr><td colspan="7" class="meta">Aucune séance rattachée à cette séquence.</td></tr>`;
   return `<article class="dossier-page">
     <header class="dossier-page-header mono"><span>${escapeHtml(ue.code)} · Séquences</span><span>${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)}</span></header>
     <div class="dossier-sequence-head" style="--seq-color:${sequenceColor(seq.id)}">
@@ -6105,7 +6351,7 @@ function dossierSequenceBlock(seq, ue, footerOpts) {
         ${teacherTokens(seq.teacher || ue.teacher).map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('')}
       </div>
     </div>
-    <table class="dossier-table"><thead><tr><th>Nº</th><th>Séance</th><th>Type</th><th>Sem.</th><th>Durée</th><th>Lieu</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="dossier-table"><thead><tr><th>Nº</th><th>Séance</th><th>Type</th><th>Sem.</th><th>Durée</th><th>Lieu</th><th>Ens.</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="dossier-sequence-meta">
       ${seq.objectives ? `<div><span class="dossier-label">Objectifs</span><p>${escapeHtml(seq.objectives)}</p></div>` : ''}
       ${seq.learningOutcomes ? `<div><span class="dossier-label">Acquis visés</span><p>${escapeHtml(seq.learningOutcomes)}</p></div>` : ''}
@@ -6129,7 +6375,10 @@ function dossierPageRecapitulatif(ue, footerOpts) {
     <td class="mono">${escapeHtml(s.type || '—')}</td>
     <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
     <td>${escapeHtml(s.room || '—')}</td>
-    <td class="mono">${escapeHtml(teacherTokens(s.teacher).join('·')) || '—'}</td>
+    <!-- Retours #3 (18-19/08/2026) : distinguer mon ressort de celui des
+         collègues, même chip .mine que la fiche de séquence et le référentiel
+         (dossier-chip-row), plutôt qu'une liste d'initiales indifférenciée. -->
+    <td class="mono">${teacherTokens(s.teacher).length ? teacherTokens(s.teacher).map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td>
     <td class="mono ${isFictiveSession(s) ? 'dossier-flag-warn' : 'dossier-flag-ok'}">${escapeHtml(displayPlacementStatus(s.placementStatus) || 'placée')}</td>
   </tr>`).join('') || `<tr><td colspan="8" class="meta">Aucune séance pour cette UE.</td></tr>`;
   return `<article class="dossier-page">
@@ -6249,23 +6498,29 @@ function renderDossierPreviewGrille(ue, units) {
   const footerDate = !!$('#dossierOptFooterDate')?.checked;
   const pageOf = !!$('#dossierOptPageOf')?.checked;
   const total = units.length;
-  el.innerHTML = ue && units.length
-    ? units.map((u, i) => `<div class="dossier-thumb">
+  el.innerHTML = ue && !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son dossier n’est ni affiché ni imprimable.</p>'
+    : ue && units.length
+      ? units.map((u, i) => `<div class="dossier-thumb">
         <div class="dossier-thumb-page">${dossierPageContentHtml(u, ue, dossierSections, { show: footerDate, pageOf, index: i + 1, total }, total)}</div>
         <div class="dossier-thumb-label">${i + 1} · ${escapeHtml(dossierUnitShortLabel(u))}</div>
       </div>`).join('')
-    : '<p class="meta">Choisir une UE et au moins une section.</p>';
+      : '<p class="meta">Choisir une UE et au moins une section.</p>';
 }
 function renderDossierPreviewLecture(ue, units) {
   const el = $('#dossierPreviewLecture');
   if (!el) return;
-  el.innerHTML = ue && units.length ? dossierPagesHtml(ue, units) : '<p class="meta">Choisir une UE et au moins une section.</p>';
+  el.innerHTML = ue && !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son dossier n’est ni affiché ni imprimable.</p>'
+    : ue && units.length ? dossierPagesHtml(ue, units) : '<p class="meta">Choisir une UE et au moins une section.</p>';
 }
 
 /* ---- Colonne 3 : complétude + manques + impression ---- */
 
 function dossierCompleteness(ue) {
-  if (!ue) return { percent: 0, gaps: [] };
+  // Retours #3 (18-19/08/2026) — Cas 1 : les manques révèlent du contenu
+  // (titres de séances/séquences) même sans afficher le dossier lui-même.
+  if (!ue || !jeSuisEnseignantDeLUe(ue)) return { percent: 0, gaps: [] };
   const sessions = dossierUeSessions(ue);
   const seqs = state.sequences.filter(s => s.ueId === ue.id);
   const gaps = [];
@@ -6287,12 +6542,15 @@ function dossierCompleteness(ue) {
 
 function renderDossierAvantImprimer(ue, units) {
   const total = units.length;
+  const nonMienne = ue && !jeSuisEnseignantDeLUe(ue);
   const countEl = $('#dossierPageCount');
-  if (countEl) countEl.textContent = ue ? `${total} page${total > 1 ? 's' : ''} · A4 portrait` : '';
+  if (countEl) countEl.textContent = nonMienne ? '' : ue ? `${total} page${total > 1 ? 's' : ''} · A4 portrait` : '';
   const { percent, gaps } = dossierCompleteness(ue);
   const barEl = $('#dossierCompleteness');
   if (barEl) {
-    barEl.innerHTML = ue ? `
+    barEl.innerHTML = nonMienne
+      ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE.</p>'
+      : ue ? `
       <p class="dossier-completeness-label">Le dossier est complet à ${percent} %</p>
       <p class="meta tight">${gaps.length ? `${gaps.length} manque(s) repéré(s). Le dossier s'imprime quand même : les champs vides ne sortent pas.` : 'Aucun manque repéré.'}</p>
       <div class="dossier-completeness-bar"><span style="width:${percent}%"></span></div>` : '';
@@ -6345,6 +6603,10 @@ function bindEvents() {
     // n'a aucun effet tant qu'elle n'est pas mise en page. Refaire le calcul
     // une fois la vue affichée, comme scrollGanttToCurrentWeek juste au-dessus.
     if (tab.dataset.view === 'week') renderWeekStrip();
+    // Retours #3 (18-19/08/2026) : l'onglet principal « Référentiel » doit
+    // toujours rouvrir sur son sous-onglet Référentiel, pas sur le dernier
+    // sous-onglet consulté (Répartition, Ruban…).
+    if (tab.dataset.view === 'ruban') setRubanTab('reference');
   }));
 
   // Chip de capacité (conception pédagogique) -> ouvrir le module correspondant dans le Référentiel.
@@ -6477,6 +6739,7 @@ function bindEvents() {
     if (!entity) return;
     if (kind === 'vehicule') entity.vehicleBookedDismissed = true;
     else if (kind === 'salle') entity.roomBookedDismissed = true;
+    else if (kind === 'materiel') entity.materielReserveDismissed = true;
     else if (kind === 'mission') entity.missionDismissed = true;
     saveData('Ligne retirée des urgences');
   });
@@ -6492,6 +6755,15 @@ function bindEvents() {
     entity.deplacement = 'personnel';
     entity.vehicleBooked = false;
     saveData('Basculé en véhicule personnel');
+  });
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-bascule-vehicule-retour]');
+    if (!btn) return;
+    const [source, id] = btn.dataset.basculeVehiculeRetour.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    entity.deplacement = 'etablissement';
+    saveData('Repassé en véhicule de l’établissement');
   });
   $('#missionBackButton')?.addEventListener('click', closeMissionView);
   // Un seul écouteur « change » (pas blur) pour tous les champs du document :
@@ -6552,7 +6824,6 @@ function bindEvents() {
   missionChargerSignature();
 
   // Ruban pédagogique
-  $$('[data-ruban-mode]').forEach(btn => btn.addEventListener('click', () => setRubanMode(btn.dataset.rubanMode)));
   // Écran 8 — sous-onglets Référentiel & Ruban.
   $$('[data-ruban-tab]').forEach(btn => btn.addEventListener('click', () => setRubanTab(btn.dataset.rubanTab)));
   // Lot F — sous-onglet « PDF d'origine » : clic sur un document de la sidebar.
@@ -6619,6 +6890,10 @@ function bindEvents() {
   // Écran 8 — Planning étudiant.
   $$('#rubanTabEtudiant [data-student-promo]').forEach(btn => btn.addEventListener('click', () => {
     studentPlanningPromo = btn.dataset.studentPromo;
+    renderStudentPlanning();
+  }));
+  $$('#rubanTabEtudiant [data-student-period]').forEach(btn => btn.addEventListener('click', () => {
+    studentPlanningPeriod = btn.dataset.studentPeriod;
     renderStudentPlanning();
   }));
   $('#studentMineToggle')?.addEventListener('change', () => renderStudentPlanning());
@@ -6756,6 +7031,10 @@ function bindEvents() {
     if (!btn) return;
     weekStripPeriod = btn.dataset.weekPeriod;
     renderWeekStrip();
+    // Retours #4 (18/08/2026) : le bandeau promo (code couleur semestre) doit
+    // suivre l'onglet de période coché, même si la grille affichée ne change
+    // pas tant qu'aucune semaine précise n'est cliquée.
+    applyScheduleTitleColors();
   });
   $('#weekMaskToggle')?.addEventListener('change', (event) => {
     weekMaskActive = event.target.checked;
@@ -6818,6 +7097,19 @@ function bindEvents() {
     renderGantt();
   });
   $('#ganttStackedToggle')?.addEventListener('change', (event) => { ganttStacked = event.target.checked; renderGantt(); });
+  // Retours #4 (18/08/2026) — le texte « hors fenêtre » ne se recalculait
+  // qu'au clic sur l'onglet Progression (scrollGanttToCurrentWeek) : un
+  // défilement manuel de la frise (barre de défilement, molette, flèches)
+  // le laissait ensuite périmé. Recalcul à chaque scroll (rAF pour ne pas
+  // spammer le calcul de mise en page pendant le défilement).
+  let ganttHorsFenetreRaf = null;
+  $('#ganttSequencesScroll')?.addEventListener('scroll', () => {
+    if (ganttHorsFenetreRaf) return;
+    ganttHorsFenetreRaf = requestAnimationFrame(() => {
+      ganttHorsFenetreRaf = null;
+      computeGanttHorsFenetre(ganttLastUes, ganttLastWeeks);
+    });
+  });
   $('#ganttUeCards')?.addEventListener('click', (event) => {
     const card = event.target.closest('[data-select-gantt-ue]');
     if (!card) return;
@@ -6843,6 +7135,15 @@ function bindEvents() {
     if (row) openSessionModal(findSession(row.dataset.editSession));
   });
 
+  // Retours #3 (18-19/08/2026) : « Les placer dans le planning → » ne
+  // réagissait à aucun clic — c'est un frère de #dashboardBacklog (pas un
+  // enfant), donc hors de portée du data-goto-view géré plus bas, qui n'écoute
+  // que #dashSemaine/#dashProchainement/#urgencesList. Écouteur dédié ici.
+  $('.backlog-panel-link[data-goto-view]')?.addEventListener('click', function () {
+    $(`.tab[data-view="${this.dataset.gotoView}"]`)?.click();
+    $('.week-sidebar')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+
   /* « Ma semaine » et « Prochainement » : chaque ligne ouvre sa fiche, et une
      ligne de retard déplie l'encart concerné. Deux écouteurs ciblés plutôt
      qu'un seul sur #dashboard, pour ne pas doubler ceux qui existent déjà sur
@@ -6859,7 +7160,7 @@ function bindEvents() {
       // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
       // réservation, le lien « Éditer » (ordre de mission) et le × gardent
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule]')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
       if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
@@ -6887,7 +7188,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule]')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
@@ -7420,6 +7721,7 @@ function bindModalActions() {
     // roomBooked se coche depuis l'encart « Salles à réserver » du tableau de
     // bord, jamais dans ce formulaire : on le préserve tel quel à l'édition.
     const existingRoomBooked = existingSession?.roomBooked || false;
+    const existingMaterielReserve = existingSession?.materielReserve || false;
     // Lot C-bis — le champ « Statut pédagogique » a quitté la modale : il était
     // saisi mais affiché NULLE PART (seul un export le sortait), pendant que la
     // pastille de la tuile montre le PLACEMENT, qui est autre chose. La donnée
@@ -7467,6 +7769,9 @@ function bindModalActions() {
       activities: $('#sessionActivities').value.trim(),
       notions: $('#sessionNotions').value.trim(),
       materials: $('#sessionMaterials').value.trim(),
+      materielAReserver: $('#sessionMaterielReserver')?.checked || false,
+      materielReserve: existingMaterielReserve,
+      materielReserveDismissed: existingSession?.materielReserveDismissed || false,
       assessment: existingSession?.assessment || '',
       homework: existingSession?.homework || '',
       differentiation: $('#sessionDifferentiation').value.trim(),
@@ -7565,7 +7870,10 @@ function bindModalActions() {
   });
 
   // ---- Frais de déplacement (Lot E — encart du Tableau de bord) ----
-  $('#addDeplacementButton')?.addEventListener('click', () => openDeplacementModal());
+  // Retours #3 (18-19/08/2026) : bouton remonté dans le <summary> (visible
+  // encart replié, comme « + Période ») — stopPropagation indispensable, sinon
+  // le clic bascule aussi l'ouverture/fermeture du <details>.
+  $('#addDeplacementButton')?.addEventListener('click', (e) => { e.stopPropagation(); openDeplacementModal(); });
   $('#fraisStatusFilter')?.addEventListener('change', renderFrais);
   $$('[data-export-frais]').forEach(btn => btn.addEventListener('click', () => {
     const fmt = btn.dataset.exportFrais;
@@ -7586,8 +7894,9 @@ function bindModalActions() {
         : findSession(reservationId);
       if (!entity) return;
       if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
+      else if (reservationKind === 'materiel') entity.materielReserve = cb.checked;
       else entity.roomBooked = cb.checked;
-      const quoi = reservationKind === 'vehicule' ? 'Véhicule' : 'Salle';
+      const quoi = reservationKind === 'vehicule' ? 'Véhicule' : reservationKind === 'materiel' ? 'Matériel' : 'Salle';
       saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
       return;
     }
@@ -7654,7 +7963,7 @@ function bindModalActions() {
   });
 
   // ---- Réunions (Lot M — journal du Tableau de bord) ----
-  $('#addReunionButton')?.addEventListener('click', () => openReunionModal());
+  $('#addReunionButton')?.addEventListener('click', (e) => { e.stopPropagation(); openReunionModal(); });
   $('#reunionsList')?.addEventListener('click', (event) => {
     const el = event.target.closest('[data-edit-reunion]');
     if (!el) return;
