@@ -122,6 +122,9 @@ let selectedWeek = currentWeekId();
 // « sans date »). État UI pur, jamais persisté tel quel (voir submitSessionForm).
 let sessionSlotPickerWeekId = '';
 let sessionSlotChoice = null;
+// 18/08 — calendrier de la modale séquence (exception assumée à REGLES.md #22 pour cet
+// écran précis, décision de Martin) : mois affiché ('AAAA-MM'), null = pas encore navigué.
+let seqCalMonthKey = null;
 // Écran 12 — « Créer et enchaîner » : le prochain submit du formulaire séance
 // doit rouvrir le formulaire au lieu de fermer la modale.
 let sessionChainRequested = false;
@@ -3855,25 +3858,31 @@ function autoSlotStart(promotion, weekId, day, durationSlots, excludeId) {
   return 0;
 }
 
-/* Écran 12 — généralisation d'autoSlotStart : au lieu du premier créneau libre,
-   la liste de TOUS les créneaux standards libres de la semaine (5 jours ×
-   8 créneaux, hors Repas), pour le sélecteur de créneaux de la modale séance. */
-function freeSlotsForWeek(promotion, weekId, excludeId) {
-  if (!weekId) return [];
-  const results = [];
+/* 18/08 — grille complète des créneaux de la semaine (5 jours × 8 créneaux, hors Repas)
+   pour le sélecteur de créneau de la modale séance : remplace l'ancienne
+   `freeSlotsForWeek` qui ne retournait QUE les créneaux libres (retour de Martin — « je
+   veux avoir toutes les possibilités de créneaux »). Un créneau occupé reste dans le
+   résultat (flag `occupied`+`title`) : il reste cliquable, le garde-fou de chevauchement
+   existe déjà au submit (`findPlanningConflict`). Indexé `[day][slotIndex]` pour un accès
+   direct au rendu de la grille. */
+function weekSlotGrid(promotion, weekId, excludeId) {
+  const grid = {};
   DAYS.forEach((_, day) => {
-    const occupied = new Set();
-    state.sessions.forEach(s => {
-      if (s.id === excludeId || !isDefinitiveSession(s)) return;
-      if (s.weekId !== weekId || s.promotion !== promotion || Number(s.day) !== day) return;
-      for (let i = Number(s.startSlot); i <= Number(s.endSlot); i += 1) occupied.add(i);
-    });
+    const occ = {};
+    if (weekId) {
+      state.sessions.forEach(s => {
+        if (s.id === excludeId || !isDefinitiveSession(s)) return;
+        if (s.weekId !== weekId || s.promotion !== promotion || Number(s.day) !== day) return;
+        for (let i = Number(s.startSlot); i <= Number(s.endSlot); i += 1) occ[i] = s.title || 'Occupé';
+      });
+    }
+    grid[day] = {};
     SLOTS.forEach((label, slotIndex) => {
-      if (slotIndex === 4 || occupied.has(slotIndex)) return; // Repas — jamais un créneau
-      results.push({ day, slotIndex, label: `${DAY_NAMES[day].slice(0, 3).toUpperCase()} ${label.split(' – ')[0]}` });
+      if (slotIndex === 4) return; // Repas — jamais un créneau
+      grid[day][slotIndex] = { occupied: slotIndex in occ, title: occ[slotIndex] || '' };
     });
   });
-  return results;
+  return grid;
 }
 
 /* #6 — les récréations sont des lignes <tr> pleine largeur intercalées dans la
@@ -3891,6 +3900,14 @@ function blockEndSlot(slot) {
   if (slot <= 3) return 3;
   if (slot <= 6) return 6;
   return SLOTS.length - 1;
+}
+/* 18/08 — borne DURE du sélecteur de créneau de la modale séance : une séance ne doit
+   jamais enjamber le Repas (index 4), contrairement à `blockEndSlot` ci-dessus qui borne
+   à la petite pause suivante (pour le rendu en segments visuels, une séance PEUT
+   enjamber une récréation). Matin = 0-3, après-midi = 5-8 — mêmes demi-journées que le
+   tableau local `blocks` d'`autoSlotStart` ci-dessous. */
+function halfDayEndSlot(slot) {
+  return Number(slot) < 4 ? 3 : SLOTS.length - 1;
 }
 /* Un segment de la séance `s` commence-t-il au créneau `slot` ? (vrai début, ou
    reprise juste après une récréation enjambée). */
@@ -3958,12 +3975,15 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceSemester').value = sequence?.semester || ue?.semester || 'Semestre 1';
   $('#sequenceWeeks').value = sequence?.targetWeeks || '';
   $('#sequencePeriodNote').value = sequence?.periodNote || '';
-  // Écran 12 — semaines saisies directement (S45 → S46), plus de calendrier
-  // (REGLES.md #22). `parseWeekRanges` est la même fonction que la Progression.
+  // Écran 12 — semaines saisies dans #sequenceWeekStart/#sequenceWeekEnd (S45 → S46), à
+  // la main ou via le calendrier (18/08). `parseWeekRanges` est la même fonction que la
+  // Progression.
   const [firstRange] = parseWeekRanges(sequence?.targetWeeks || '');
   $('#sequenceWeekStart').value = firstRange ? `S${String(firstRange.start).padStart(2, '0')}` : '';
   $('#sequenceWeekEnd').value = firstRange ? `S${String(firstRange.end).padStart(2, '0')}` : '';
   syncSequenceWeeksField();
+  seqCalMonthKey = null; // recentre le calendrier sur la période de cette séquence
+  renderSequenceCalendar();
   // Toujours une chaîne (« 5 h », « 12 h »…) : on n'affiche que le nombre dans
   // le stepper, le reste du texte éventuel (arbitrage ancien) est ignoré ici
   // mais reste conservé tel quel s'il n'est jamais réenregistré.
@@ -4048,17 +4068,18 @@ function openSessionModal(session = null, context = {}) {
         || ue?.startWeekId
         || '')
     : '';
-  // Écran 12 — créneau choisi via le sélecteur de créneaux libres (plus de
-  // jour/début/fin/statut de placement saisis à la main, REGLES.md #22).
+  // Écran 12 — créneau choisi via la grille hebdomadaire (plus de jour/début/fin/statut
+  // de placement saisis à la main ; exception assumée à REGLES.md #22 pour cet écran, cf.
+  // renderSessionSlotPicker).
   sessionSlotPickerWeekId = session?.targetWeekId || session?.weekId || context.weekId || designDefaultWeek || selectedWeek;
   if (session && isDefinitiveSession(session) && !session.customStart && !session.customEnd) {
-    sessionSlotChoice = { type: 'slot', day: Number(session.day), slotIndex: Number(session.startSlot) };
+    sessionSlotChoice = { type: 'range', day: Number(session.day), startSlot: Number(session.startSlot), endSlot: Number(session.endSlot) };
   } else if (session && isDefinitiveSession(session)) {
     sessionSlotChoice = { type: 'other' };
   } else if (session) {
     sessionSlotChoice = { type: 'none' };
   } else if (context.day != null && context.slot != null) {
-    sessionSlotChoice = { type: 'slot', day: Number(context.day), slotIndex: Number(context.slot) };
+    sessionSlotChoice = { type: 'range', day: Number(context.day), startSlot: Number(context.slot), endSlot: Number(context.slot) };
   } else {
     sessionSlotChoice = null;
   }
@@ -4289,10 +4310,14 @@ function syncColorSwatchActive(gridSelector, hiddenInputId) {
   });
 }
 
-/* Écran 12 — sélecteur de créneaux libres de la modale séance (REGLES.md #22,
-   remplace jour/début-fin/semaine/statut de placement). `sessionSlotPickerWeekId`/
-   `sessionSlotChoice` sont l'état UI (déclarés en haut du fichier) ; le submit
-   du formulaire séance les traduit en day/startSlot/endSlot/weekId/placementStatus. */
+/* 18/08 — sélecteur de créneau de la modale séance, en mini-grille hebdomadaire complète
+   (exception assumée à REGLES.md #22 pour cet écran précis, décision de Martin — « je
+   veux avoir toutes les possibilités de créneaux »). `sessionSlotPickerWeekId`/
+   `sessionSlotChoice` sont l'état UI (déclarés en haut du fichier) ; le submit du
+   formulaire séance les traduit en day/startSlot/endSlot/weekId/placementStatus. Un clic
+   simple pose 1 créneau (cas courant, inchangé en nombre de clics) ; un 2e clic sur le
+   même jour étend la plage (`applySlotClick`), plafonnée à la demi-journée
+   (`blockEndSlot`, jamais au-delà du Repas). */
 function renderSessionSlotPicker() {
   const weekId = sessionSlotPickerWeekId || selectedWeek;
   sessionSlotPickerWeekId = weekId;
@@ -4301,22 +4326,90 @@ function renderSessionSlotPicker() {
   if (label) label.textContent = week ? `${week.label.replace('S0', 'S')} · ${compactDateRange(week.dateRange)}` : 'Semaine à choisir';
   const promotion = $('#sessionPromotion')?.value || state.promotions[0] || 'GPN1';
   const excludeId = $('#sessionId')?.value || '';
-  const options = $('#sessionSlotOptions');
-  if (options) {
-    const slots = freeSlotsForWeek(promotion, weekId, excludeId);
-    options.innerHTML = slots.length
-      ? slots.map(s => `<button type="button" class="slot-option" data-slot-day="${s.day}" data-slot-index="${s.slotIndex}"><strong>${escapeHtml(s.label)}</strong></button>`).join('')
-      : '<p class="meta tight">Aucun créneau libre cette semaine pour cette promotion.</p>';
+  const grid = $('#sessionSlotGrid');
+  if (grid) {
+    const occ = weekSlotGrid(promotion, weekId, excludeId);
+    const header = `<span class="slot-grid-corner" aria-hidden="true"></span>${DAYS.map(d => `<span class="slot-grid-day">${escapeHtml(d.slice(0, 3))}</span>`).join('')}`;
+    const rows = SLOTS.map((slotLabel, slotIndex) => {
+      if (slotIndex === 4) {
+        return `<span class="slot-grid-time slot-grid-lunch">Repas</span>${DAYS.map(() => '<span class="slot-cell-lunch" aria-hidden="true"></span>').join('')}`;
+      }
+      const time = `<span class="slot-grid-time">${escapeHtml(slotLabel.split(' – ')[0])}</span>`;
+      const cells = DAYS.map((_, day) => {
+        const cell = occ[day]?.[slotIndex];
+        const occupied = !!cell?.occupied;
+        const title = occupied ? ` title="${escapeAttr(cell.title)}"` : '';
+        return `<button type="button" class="slot-cell${occupied ? ' is-occupied' : ''}" data-slot-day="${day}" data-slot-index="${slotIndex}"${title}>${occupied ? escapeHtml(truncate(cell.title, 12)) : ''}</button>`;
+      }).join('');
+      return time + cells;
+    }).join('');
+    grid.innerHTML = header + rows;
   }
   syncSessionSlotPickerActive();
+  renderSessionSlotSummary();
+}
+
+/* Bandeau au-dessus/en dessous de la grille : lecture de la plage/durée choisie, plus des
+   boutons de durée rapide (voie alternative au 2e clic — répond au retour de Martin
+   « il manque la possibilité de renseigner la durée »). Boutons en nombre de créneaux
+   (pas un texte libre : évite un 2e parseur de durée à côté de celui du backlog). */
+function formatSlotDuration(minutes) {
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
+
+function renderSessionSlotSummary() {
+  const el = $('#sessionSlotSummary');
+  if (!el) return;
+  if (sessionSlotChoice?.type !== 'range') { el.innerHTML = ''; return; }
+  const { day, startSlot, endSlot } = sessionSlotChoice;
+  const count = endSlot - startSlot + 1;
+  const startLabel = SLOTS[startSlot].split(' – ')[0];
+  const endLabel = SLOTS[endSlot].split(' – ')[1];
+  const duree = formatSlotDuration(count * 55);
+  const maxSlots = halfDayEndSlot(startSlot) - startSlot + 1;
+  const quickButtons = [];
+  for (let n = 1; n <= maxSlots; n += 1) {
+    const durLabel = formatSlotDuration(n * 55);
+    quickButtons.push(`<button type="button" class="quick-duration-btn${n === count ? ' active' : ''}" data-quick-duration="${n}">${n} créneau${n > 1 ? 'x' : ''} · ${durLabel}</button>`);
+  }
+  el.innerHTML = `<p class="slot-picker-summary-text"><strong>${escapeHtml(DAY_NAMES[day])}</strong> · ${escapeHtml(startLabel)}–${escapeHtml(endLabel)} · ${count} créneau${count > 1 ? 'x' : ''} (${duree})</p><div class="quick-duration-buttons">${quickButtons.join('')}</div>`;
+}
+
+/* Logique d'interaction de la grille : pas de sélection sur ce jour (ou sélection sur un
+   autre jour), ou plage déjà complète (2e clic déjà fait), ou clic avant le départ actuel
+   → redémarre une plage à 1 créneau sur le slot cliqué. Sélection à 1 créneau sur ce même
+   jour et clic postérieur → étend la fin (plafonnée à la demi-journée). Jamais plus de
+   2 clics pour une plage complète. */
+function applySlotClick(day, slotIndex) {
+  const cur = sessionSlotChoice?.type === 'range' ? sessionSlotChoice : null;
+  const canExtend = cur && cur.day === day && cur.startSlot === cur.endSlot && slotIndex > cur.startSlot;
+  if (canExtend) {
+    const maxEnd = halfDayEndSlot(cur.startSlot);
+    sessionSlotChoice = { type: 'range', day, startSlot: cur.startSlot, endSlot: Math.min(slotIndex, maxEnd) };
+  } else {
+    sessionSlotChoice = { type: 'range', day, startSlot: slotIndex, endSlot: slotIndex };
+  }
+}
+
+/* Bouton de durée rapide : pose la fin depuis le début déjà choisi, sans second clic sur
+   la grille — plafonnée à la demi-journée comme applySlotClick. */
+function applyQuickDuration(slots) {
+  if (sessionSlotChoice?.type !== 'range') return;
+  const maxEnd = halfDayEndSlot(sessionSlotChoice.startSlot);
+  sessionSlotChoice = { ...sessionSlotChoice, endSlot: Math.min(sessionSlotChoice.startSlot + slots - 1, maxEnd) };
 }
 
 function syncSessionSlotPickerActive() {
-  $$('#sessionSlotOptions .slot-option').forEach(btn => {
-    const isActive = sessionSlotChoice?.type === 'slot'
-      && Number(btn.dataset.slotDay) === sessionSlotChoice.day
-      && Number(btn.dataset.slotIndex) === sessionSlotChoice.slotIndex;
-    btn.classList.toggle('active', isActive);
+  const cur = sessionSlotChoice?.type === 'range' ? sessionSlotChoice : null;
+  $$('#sessionSlotGrid .slot-cell').forEach(btn => {
+    const day = Number(btn.dataset.slotDay), idx = Number(btn.dataset.slotIndex);
+    const inRange = !!cur && day === cur.day && idx >= cur.startSlot && idx <= cur.endSlot;
+    btn.classList.toggle('is-selected', inRange);
+    btn.classList.toggle('is-range-start', inRange && idx === cur.startSlot);
+    btn.classList.toggle('is-range-end', inRange && idx === cur.endSlot);
+    btn.classList.toggle('is-in-range', inRange && idx !== cur.startSlot && idx !== cur.endSlot);
   });
   $('.slot-option-other')?.classList.toggle('active', sessionSlotChoice?.type === 'other');
   $('.slot-option-none')?.classList.toggle('active', sessionSlotChoice?.type === 'none');
@@ -5726,8 +5819,15 @@ function dossierBuildUnits(ue, sections) {
   return units;
 }
 function dossierSequenceOrder(seq) {
+  // Trier par vraie position chronologique (index dans state.weeks, qui couvre
+  // l'année scolaire dans l'ordre) plutôt que par simple numéro de semaine —
+  // sinon une séquence de janvier (S3) passait avant une séquence de décembre
+  // (S50) puisque 3 < 50 numériquement, alors qu'elle est plus tardive.
+  const weekId = firstWeekIdOfSequence(seq);
+  const idx = weekId ? state.weeks.findIndex(w => w.id === weekId) : -1;
+  if (idx !== -1) return idx;
   const m = String(seq.targetWeeks || '').match(/\d{1,2}/);
-  return m ? Number(m[0]) : 999;
+  return m ? 100000 + Number(m[0]) : 999999;
 }
 
 function dossierSessionSort(a, b) {
@@ -6047,18 +6147,15 @@ function renderDossierSectionsList(ue) {
 
 /* ---- Colonne centrale : Aperçu (Grille / Lecture) ---- */
 
-function dossierThumbAbstract(u) {
-  if (u.kind === 'garde') return '<span class="db-line short accent"></span><span class="db-line title"></span><span class="db-box tall"></span>';
-  if (u.kind === 'sequence') return '<span class="db-line accent"></span><span class="db-box"></span><span class="db-line"></span><span class="db-line short"></span>';
-  if (u.kind === 'recapitulatif') return '<span class="db-line accent"></span><span class="db-box tall"></span>';
-  return '<span class="db-line accent"></span><span class="db-box"></span><span class="db-line"></span>';
-}
 function renderDossierPreviewGrille(ue, units) {
   const el = $('#dossierPreviewGrille');
   if (!el) return;
+  const footerDate = !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = !!$('#dossierOptPageOf')?.checked;
+  const total = units.length;
   el.innerHTML = ue && units.length
     ? units.map((u, i) => `<div class="dossier-thumb">
-        <div class="dossier-thumb-page">${dossierThumbAbstract(u)}</div>
+        <div class="dossier-thumb-page">${dossierPageContentHtml(u, ue, dossierSections, { show: footerDate, pageOf, index: i + 1, total }, total)}</div>
         <div class="dossier-thumb-label">${i + 1} · ${escapeHtml(dossierUnitShortLabel(u))}</div>
       </div>`).join('')
     : '<p class="meta">Choisir une UE et au moins une section.</p>';
@@ -6881,11 +6978,48 @@ function bindEvents() {
     $('#sequencePromotion').value = ue.promotion;
     $('#sequenceSemester').value = ue.semester;
     renderSequenceCapacityChoices([], ue);
+    // 18/08 — l'UE change le semestre donc la plage de semaines cliquables du calendrier.
+    seqCalMonthKey = null;
+    renderSequenceCalendar();
   });
   $('#ueCode').addEventListener('input', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || { code: $('#ueCode').value, capacities: [] }));
   $('#uePromotion').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
   $('#ueSemester').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
-  ['#sequenceWeekStart', '#sequenceWeekEnd'].forEach(sel => $(sel)?.addEventListener('input', syncSequenceWeeksField));
+  ['#sequenceWeekStart', '#sequenceWeekEnd'].forEach(sel => $(sel)?.addEventListener('input', () => { syncSequenceWeeksField(); renderSequenceCalendar(); }));
+  // 18/08 — calendrier de semaines (exception assumée à REGLES.md #22 pour cet écran).
+  $('#sequenceCalendar')?.addEventListener('click', (event) => {
+    const nav = event.target.closest('[data-seqcal-nav]');
+    if (nav) { if (!nav.disabled) moveSequenceCalendarMonth(nav.dataset.seqcalNav === 'next' ? 1 : -1); return; }
+    const btn = event.target.closest('[data-seqpick-week]');
+    if (!btn) return;
+    const key = btn.dataset.seqpickWeek; // clé lundi (AAAA-MM-JJ) de la semaine cliquée
+    const semester = $('#sequenceSemester')?.value || 'Semestre 1';
+    const weeks = weeksForSemesterSpan(semester);
+    const weekOfKey = (k) => weeks.find(x => { const [mon] = weekDateRange(x); return mon && isoKey(mon) === k; });
+    const keyOfField = (fieldValue) => {
+      const m = /\d{1,2}/.exec(fieldValue || '');
+      const w = m ? weeks.find(x => weekNumberOf(x) === Number(m[0])) : null;
+      return w ? isoKey(weekDateRange(w)[0]) : '';
+    };
+    const clickedWeek = weekOfKey(key);
+    if (!clickedWeek) return;
+    const s = keyOfField($('#sequenceWeekStart')?.value);
+    const e = keyOfField($('#sequenceWeekEnd')?.value);
+    if (!s || (s && e)) {
+      // (re)commence une plage.
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'start');
+      $('#sequenceWeekEnd').value = '';
+    } else if (key < s) {
+      // Clic avant le début déjà posé → on inverse (le clic devient le début).
+      const startField = $('#sequenceWeekStart').value;
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'start');
+      $('#sequenceWeekEnd').value = startField;
+    } else {
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'end');
+    }
+    syncSequenceWeeksField();
+    renderSequenceCalendar();
+  });
   $('#sequenceHoursMinus')?.addEventListener('click', () => {
     const input = $('#sequenceHours');
     input.value = String(Math.max(0, (parseInt(input.value, 10) || 0) - 1));
@@ -6910,15 +7044,24 @@ function bindEvents() {
     const idx = state.weeks.findIndex(w => w.id === sessionSlotPickerWeekId);
     if (idx >= 0 && idx < state.weeks.length - 1) { sessionSlotPickerWeekId = state.weeks[idx + 1].id; renderSessionSlotPicker(); }
   });
-  $('#sessionSlotOptions')?.addEventListener('click', (event) => {
-    const btn = event.target.closest('.slot-option');
+  $('#sessionSlotGrid')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('.slot-cell');
     if (!btn) return;
-    sessionSlotChoice = { type: 'slot', day: Number(btn.dataset.slotDay), slotIndex: Number(btn.dataset.slotIndex) };
+    applySlotClick(Number(btn.dataset.slotDay), Number(btn.dataset.slotIndex));
     syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
+  });
+  $('#sessionSlotSummary')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-quick-duration]');
+    if (!btn) return;
+    applyQuickDuration(Number(btn.dataset.quickDuration));
+    syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
   });
   $$('.slot-picker-options-fixed .slot-option').forEach(btn => btn.addEventListener('click', () => {
     sessionSlotChoice = { type: btn.dataset.slotChoice };
     syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
   }));
   $('#sessionPromotion')?.addEventListener('change', renderSessionSlotPicker);
   $('#sessionNoSequence')?.addEventListener('change', (event) => {
@@ -7138,10 +7281,10 @@ function bindModalActions() {
     // Écran 12 — le créneau vient du sélecteur (sessionSlotChoice), plus des
     // anciens champs jour/début/fin/semaine/statut saisis à la main.
     let day = 0, startSlot = 0, endSlot = 0, placementStatus = 'fictif', selectedSessionWeek = '', customStart = '', customEnd = '';
-    if (sessionSlotChoice?.type === 'slot') {
+    if (sessionSlotChoice?.type === 'range') {
       day = sessionSlotChoice.day;
-      startSlot = sessionSlotChoice.slotIndex;
-      endSlot = sessionSlotChoice.slotIndex;
+      startSlot = sessionSlotChoice.startSlot;
+      endSlot = sessionSlotChoice.endSlot;
       placementStatus = 'definitif';
       selectedSessionWeek = sessionSlotPickerWeekId;
     } else if (sessionSlotChoice?.type === 'other') {
@@ -7586,10 +7729,11 @@ function weekForIsoDate(iso) {
   return prior || weeks[0] || null;
 }
 
-/* Écran 12 — semaines de séquence saisies directement dans #sequenceWeekStart/
-   #sequenceWeekEnd (« S45 » → « S46 »), plus de calendrier (REGLES.md #22).
-   Même format `targetWeeks` (« S45-S46 ») qu'avant : aucun autre écran à
-   toucher (Progression, Ruban, exports le consomment tel quel). */
+/* Écran 12 — semaines de séquence saisies dans #sequenceWeekStart/#sequenceWeekEnd
+   (« S45 » → « S46 »), à la main OU via le calendrier ci-dessous (18/08 — exception
+   assumée à REGLES.md #22 pour cet écran précis, décision de Martin). Même format
+   `targetWeeks` (« S45-S46 ») qu'avant : aucun autre écran à toucher (Progression, Ruban,
+   exports le consomment tel quel). */
 function getSequencePeriodValue() {
   const numFrom = (v) => { const m = /\d{1,2}/.exec(v || ''); return m ? Number(m[0]) : null; };
   const s = numFrom($('#sequenceWeekStart')?.value);
@@ -7607,6 +7751,162 @@ function syncSequenceWeeksField() {
   if (target) target.value = value;
   const hint = $('#sequencePeriodWeeks');
   if (hint) hint.textContent = value ? `Semaines couvertes : ${value.replace('-', ' → ')}` : '';
+}
+
+/* Rendu générique d'un mois calendaire en grille (colonne n° de semaine + 7 jours) —
+   18/08, réintroduit pour le calendrier de la modale séquence (seul appelant à ce jour).
+   Mode « selection » : objet {start,end} (clés lundi ISO) = plage surlignée, sinon chaîne
+   = sélection simple. `opts.pickAttr` = attribut data- posé sur chaque jour cliquable. */
+function renderCalendarMonth(monthDate, mondayToWeek, selection, showLabel = true, opts = {}) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const monthLabel = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstOffset = (new Date(year, month, 1).getDay() + 6) % 7; // colonne du 1er (lun=0)
+  const dows = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const pickAttr = opts.pickAttr || 'set-week';
+  const rangeMode = selection && typeof selection === 'object';
+  const singleKey = rangeMode ? '' : (selection || '');
+  const rStart = rangeMode ? (selection.start || '') : '';
+  const rEnd = rangeMode ? (selection.end || '') : '';
+  const lo = rStart && rEnd ? (rStart <= rEnd ? rStart : rEnd) : (rStart || rEnd);
+  const hi = rStart && rEnd ? (rStart <= rEnd ? rEnd : rStart) : (rStart || rEnd);
+  const days = [];
+  for (let i = 0; i < firstOffset; i += 1) days.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
+  while (days.length % 7 !== 0) days.push(null);
+  const wkNumberOf = (weekId) => {
+    const w = state.weeks.find(x => x.id === weekId);
+    return w ? `S${String(weekNumberOf(w)).padStart(2, '0')}` : '';
+  };
+  let body = `<span class="cal-wk cal-wk-head">Sem.</span>${dows.map(d => `<span class="cal-dow">${d}</span>`).join('')}`;
+  for (let i = 0; i < days.length; i += 7) {
+    const row = days.slice(i, i + 7);
+    let wk = '';
+    for (const day of row) {
+      if (!day) continue;
+      const id = mondayToWeek.get(isoKey(mondayOf(new Date(year, month, day))));
+      if (id) { wk = wkNumberOf(id); break; }
+    }
+    body += `<span class="cal-wk">${escapeHtml(wk)}</span>`;
+    for (const day of row) {
+      if (!day) { body += '<span class="cal-day cal-empty"></span>'; continue; }
+      const date = new Date(year, month, day);
+      const mKey = isoKey(mondayOf(date));
+      const weekId = mondayToWeek.get(mKey);
+      if (!weekId) { body += `<span class="cal-day cal-off">${day}</span>`; continue; }
+      const wObj = state.weeks.find(x => x.id === weekId);
+      const tip = wObj ? `${wObj.label.replace('S0', 'S')} · ${wObj.dateRange || ''}` : '';
+      let cls = 'cal-day cal-active';
+      let dataAttr;
+      if (rangeMode) {
+        const isStart = rStart && mKey === rStart;
+        const isEnd = rEnd && mKey === rEnd;
+        if (isStart || isEnd) cls += ' cal-selected';
+        if (isStart) cls += ' cal-range-start';
+        if (isEnd) cls += ' cal-range-end';
+        if (lo && hi && mKey >= lo && mKey <= hi && !isStart && !isEnd) cls += ' cal-in-range';
+        dataAttr = `data-${pickAttr}="${escapeAttr(mKey)}"`;
+      } else {
+        if (mKey === singleKey) cls += ' cal-selected';
+        dataAttr = `data-${pickAttr}="${escapeAttr(weekId)}"`;
+      }
+      body += `<button type="button" class="${cls}" ${dataAttr} title="${escapeAttr(tip)}">${day}</button>`;
+    }
+  }
+  const labelHtml = showLabel ? `<div class="cal-month-label">${escapeHtml(monthLabel)}</div>` : '';
+  return `<div class="cal-month${showLabel ? '' : ' single'}">${labelHtml}<div class="cal-grid cal-grid-wk">${body}</div></div>`;
+}
+
+/* 18/08 — calendrier de la modale séquence, sélection de PLAGE (1er clic = semaine de
+   début, 2e = semaine de fin, surlignage). Semaines cliquables = toute l'année de la
+   promo (paire de semestres, weeksForSemesterSpan), pour couvrir les UE à cheval et les
+   EIL hors semestre nominal. Lit/écrit directement #sequenceWeekStart/#sequenceWeekEnd
+   (format "S37") : pas de champ caché séparé, contrairement à l'ancienne version
+   (retirée le 17/08) qui passait par des dates ISO dédiées. */
+function renderSequenceCalendar() {
+  const container = $('#sequenceCalendar');
+  if (!container) return;
+  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
+  const weeks = weeksForSemesterSpan(semester);
+  const mondayToWeek = new Map();
+  let minDate = null, maxDate = null;
+  weeks.forEach(w => {
+    const [s, e] = weekDateRange(w);
+    if (!s) return;
+    mondayToWeek.set(isoKey(s), w.id);
+    if (!minDate || s < minDate) minDate = s;
+    if (!maxDate || (e || s) > maxDate) maxDate = e || s;
+  });
+  if (!minDate) { container.innerHTML = '<p class="meta">Aucune semaine disponible.</p>'; return; }
+
+  const numFrom = (v) => { const m = /\d{1,2}/.exec(v || ''); return m ? Number(m[0]) : null; };
+  const keyOfField = (fieldValue) => {
+    const n = numFrom(fieldValue);
+    const w = n != null ? weeks.find(x => weekNumberOf(x) === n) : null;
+    return w ? isoKey(weekDateRange(w)[0]) : '';
+  };
+  const startKey = keyOfField($('#sequenceWeekStart')?.value);
+  const endKey = keyOfField($('#sequenceWeekEnd')?.value);
+
+  const firstMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  const lastMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+  const clampMonth = (d) => new Date(Math.min(Math.max(d.getTime(), firstMonth.getTime()), lastMonth.getTime()));
+  let shown;
+  if (seqCalMonthKey) {
+    const [y, m] = seqCalMonthKey.split('-').map(Number);
+    shown = new Date(y, m - 1, 1);
+  } else {
+    const base = (startKey && parseIsoDate(startKey)) || minDate;
+    shown = new Date(base.getFullYear(), base.getMonth(), 1);
+  }
+  shown = clampMonth(shown);
+  const atFirst = shown.getTime() <= firstMonth.getTime();
+  const atLast = shown.getTime() >= lastMonth.getTime();
+  const monthLabel = shown.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  const header = `<div class="week-cal-header">
+    <button type="button" class="week-cal-nav" data-seqcal-nav="prev"${atFirst ? ' disabled' : ''} aria-label="Mois précédent">‹</button>
+    <div class="week-cal-monthlabel">${escapeHtml(monthLabel)}</div>
+    <button type="button" class="week-cal-nav" data-seqcal-nav="next"${atLast ? ' disabled' : ''} aria-label="Mois suivant">›</button>
+  </div>`;
+  const grid = renderCalendarMonth(shown, mondayToWeek, { start: startKey, end: endKey }, false, { pickAttr: 'seqpick-week' });
+  let hint;
+  if (startKey && endKey) hint = 'Plage définie — recliquez une semaine pour repartir d’un nouveau début.';
+  else if (startKey) hint = 'Cliquez la semaine de fin (ou la même pour une seule semaine).';
+  else hint = 'Cliquez la semaine de début.';
+  container.innerHTML = `<div class="week-cal-compact seq-cal">${header}${grid}<p class="week-cal-hint">${hint}</p></div>`;
+}
+
+/* Décale le mois affiché dans le calendrier de la modale séquence. */
+function moveSequenceCalendarMonth(offset) {
+  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
+  const weeks = weeksForSemesterSpan(semester);
+  let base;
+  if (seqCalMonthKey) {
+    const [y, m] = seqCalMonthKey.split('-').map(Number);
+    base = new Date(y, m - 1, 1);
+  } else {
+    const numFrom = (v) => { const m2 = /\d{1,2}/.exec(v || ''); return m2 ? Number(m2[0]) : null; };
+    const n = numFrom($('#sequenceWeekStart')?.value);
+    const w = n != null ? weeks.find(x => weekNumberOf(x) === n) : null;
+    const d = (w && weekDateRange(w)[0]) || (weeks[0] ? weekDateRange(weeks[0])[0] : new Date());
+    base = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+  base.setMonth(base.getMonth() + offset);
+  seqCalMonthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
+  renderSequenceCalendar();
+}
+
+/* Pont clic calendrier → champ texte : `weekId` cliqué -> "S37" écrit dans le champ de
+   début ou de fin. N'appelle PAS syncSequenceWeeksField/renderSequenceCalendar (à la
+   charge de l'appelant, qui sait s'il doit aussi toucher l'autre champ dans le même geste
+   — cf. logique de plage du handler de clic). */
+function setSequenceWeekFieldsFromWeek(weekId, which) {
+  const week = state.weeks.find(w => w.id === weekId);
+  if (!week) return;
+  const field = which === 'end' ? $('#sequenceWeekEnd') : $('#sequenceWeekStart');
+  if (field) field.value = `S${String(weekNumberOf(week)).padStart(2, '0')}`;
 }
 
 function uniqueWeeks(weeks = []) {

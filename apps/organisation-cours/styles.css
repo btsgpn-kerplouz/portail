@@ -1539,6 +1539,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .week-plan-top .notes-panel { margin: 0; }
 .week-plan-top .week-planning-main { flex: 1 1 640px; min-width: 0; }
 .period-weeks-hint { display: block; margin: .2rem 0 .1rem; font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--moss-dark); }
+/* 18/08 — calendrier de semaines de la modale séquence : simple conteneur, le composant
+   lui-même (.week-cal-compact) porte déjà tout son layout. */
+.sequence-calendar { margin-top: .4rem; max-width: 340px; }
 .week-calendar-title { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; }
 .week-calendar-title strong { font-size: 1rem; }
 .week-calendar-title span { color: var(--muted); font-size: .85rem; }
@@ -1971,16 +1974,17 @@ tr.repartition-sem-row td {
 .dossier-view-switch button { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); padding: .3rem .7rem; font-size: .8rem; font-weight: 600; }
 .dossier-view-switch button.active { background: var(--acc); color: #fff; border-color: var(--acc); }
 
-.dossier-preview-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-4); }
+/* Miniatures = le vrai contenu de page (.dossier-page, DOSSIER_PRINT_CSS) réduit
+   par transform:scale plutôt qu'un gabarit décoratif — la case « Numéroter en
+   page n sur N » (Avant d'imprimer) devient enfin visible ici aussi, puisque le
+   pied de page réel fait partie du contenu miniaturisé. Largeur fixe (pas
+   minmax en %) : le facteur d'échelle ci-dessous est calculé pour cette taille
+   précise (176px / 210mm ≈ .2218) et ne peut pas suivre une largeur variable. */
+.dossier-preview-grille { display: grid; grid-template-columns: repeat(auto-fill, 176px); justify-content: start; gap: var(--sp-4); }
 .dossier-preview-grille[hidden] { display: none; }
 .dossier-thumb { display: flex; flex-direction: column; gap: .35rem; }
-.dossier-thumb-page { aspect-ratio: 210 / 297; background: var(--surface); border: 1px solid var(--line); padding: 10% 9%; display: flex; flex-direction: column; gap: 8%; }
-.dossier-thumb-page .db-line { display: block; height: 6%; background: var(--surface-alt); border-radius: 1px; }
-.dossier-thumb-page .db-line.short { width: 45%; }
-.dossier-thumb-page .db-line.title { height: 12%; width: 80%; background: var(--line-strong); }
-.dossier-thumb-page .db-line.accent { width: 30%; background: var(--acc); opacity: .55; }
-.dossier-thumb-page .db-box { flex: 1; background: var(--surface-alt); }
-.dossier-thumb-page .db-box.tall { flex: 3; }
+.dossier-thumb-page { width: 176px; height: 249px; overflow: hidden; position: relative; background: var(--surface); border: 1px solid var(--line); }
+.dossier-thumb-page .dossier-page { transform: scale(.2218); transform-origin: top left; margin: 0 !important; }
 .dossier-thumb-label { font-size: .74rem; color: var(--ink-soft); text-align: center; }
 
 .dossier-preview-lecture { display: flex; flex-direction: column; align-items: center; gap: var(--sp-5); background: var(--surface-alt); padding: var(--sp-5); max-height: 82vh; overflow-y: auto; }
@@ -2791,8 +2795,9 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .assessment-type-buttons button:last-child { border-right: 0; }
 .assessment-type-buttons button.active { background: var(--ink); color: #fff; }
 
-/* Sélecteur de créneaux libres (modale séance, REGLES.md #22 — jamais un
-   calendrier) : bande de semaine + grille de boutons, deux options fixes. */
+/* Sélecteur de créneau (modale séance) : bande de semaine + grille hebdomadaire complète
+   (18/08 — retour de Martin, « je veux avoir toutes les possibilités de créneaux ») + deux
+   options fixes (Autre créneau/Sans date). */
 .slot-picker { border: 1px solid var(--line); background: var(--surface); padding: var(--sp-2) var(--sp-3); }
 .slot-picker-weekbar { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .slot-picker-week-label { font-family: var(--font-mono); font-size: .82rem; font-weight: 600; }
@@ -2810,6 +2815,52 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .slot-option-other, .slot-option-none { background: var(--surface); border-style: dashed; }
 .slot-picker-custom { margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px dashed var(--line-strong); }
 .slot-picker-custom[hidden] { display: none; }
+
+/* Grille hebdomadaire complète (5 jours × 8 créneaux, Repas en séparateur non cliquable) —
+   tous les créneaux visibles, libres ET occupés (ces derniers restent cliquables, le
+   garde-fou de chevauchement existe déjà au submit). Éléments à plat dans l'ordre du DOM :
+   la grille CSS remplit les lignes toute seule (en-tête puis 1 étiquette horaire + 5
+   cellules par ligne). */
+.slot-grid {
+  display: grid; grid-template-columns: 3.4rem repeat(5, 1fr); gap: 2px;
+  font-family: var(--font-mono); margin-bottom: var(--sp-2);
+}
+.slot-grid-corner { background: var(--surface); }
+.slot-grid-day {
+  display: flex; align-items: center; justify-content: center; padding: .25rem 0;
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); background: var(--surface);
+}
+.slot-grid-time {
+  display: flex; align-items: center; justify-content: flex-end; padding: 0 .4rem;
+  font-size: .68rem; color: var(--muted); background: var(--surface);
+}
+.slot-grid-time.slot-grid-lunch { color: var(--ink-soft); font-weight: 650; }
+.slot-cell-lunch { background: var(--line); }
+.slot-cell {
+  min-height: 2.1rem; padding: .2rem .35rem; border: 1px solid var(--line);
+  background: var(--surface-alt); font-family: var(--font-mono); font-size: .68rem;
+  color: var(--ink-soft); text-align: left; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; cursor: pointer;
+}
+.slot-cell:hover { border-color: var(--line-strong); }
+.slot-cell.is-occupied { background: repeating-linear-gradient(135deg, var(--surface-alt) 0 5px, var(--surface) 5px 10px); color: var(--muted); }
+.slot-cell.is-selected { background: var(--acc); border-color: var(--acc); color: #fff; }
+.slot-cell.is-range-start { border-top-width: 2px; border-left-width: 2px; }
+.slot-cell.is-range-end { border-bottom-width: 2px; border-right-width: 2px; }
+.slot-cell.is-in-range { background: color-mix(in srgb, var(--acc) 55%, var(--surface)); }
+
+/* Bandeau de lecture de plage/durée + boutons de durée rapide (voie alternative au 2e
+   clic, en nombre de créneaux — pas un texte libre, cf. inferEndSlot du backlog). */
+.slot-picker-summary:empty { display: none; }
+.slot-picker-summary-text { margin: 0 0 var(--sp-1); font-size: .82rem; }
+.quick-duration-buttons { display: flex; flex-wrap: wrap; gap: .3rem; }
+.quick-duration-btn {
+  padding: .3rem .55rem; font-size: .72rem; font-family: var(--font-mono);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+}
+.quick-duration-btn:hover { border-color: var(--acc); }
+.quick-duration-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 
 /* ---------- Lot K — détail d'une semaine thématique / EIL (Conception) ---------- */
 .eil-detail-group { margin-top: var(--sp-3); border-top: 1px dashed var(--line-strong); padding-top: var(--sp-2); }

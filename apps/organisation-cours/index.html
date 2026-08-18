@@ -800,6 +800,7 @@
               <input id="sequenceWeekEnd" class="week-input" placeholder="S38" maxlength="4" autocomplete="off" />
             </div>
             <small id="sequencePeriodWeeks" class="period-weeks-hint"></small>
+            <div id="sequenceCalendar" class="sequence-calendar"></div>
           </div>
           <div class="field-block">
             <span class="field-label">Volume horaire prévu</span>
@@ -951,14 +952,15 @@
              qui est une autre information). La donnée déjà enregistrée est
              conservée à l'identique, cf. `existingStatus` dans app.js. -->
         <div class="field-block span-full">
-          <span class="field-label">Quand · un créneau <small>— créneaux libres de la semaine, jamais un calendrier</small></span>
+          <span class="field-label">Quand · un créneau <small>— toute la semaine, cliquer un créneau puis un second pour une plage</small></span>
           <div id="sessionSlotPicker" class="slot-picker">
             <div class="slot-picker-weekbar">
               <button type="button" id="sessionSlotWeekPrev" class="icon-button" aria-label="Semaine précédente">‹</button>
               <span id="sessionSlotWeekLabel" class="slot-picker-week-label"></span>
               <button type="button" id="sessionSlotWeekNext" class="icon-button" aria-label="Semaine suivante">›</button>
             </div>
-            <div id="sessionSlotOptions" class="slot-picker-options"></div>
+            <div id="sessionSlotGrid" class="slot-grid"></div>
+            <div id="sessionSlotSummary" class="slot-picker-summary"></div>
             <div class="slot-picker-options slot-picker-options-fixed">
               <button type="button" class="slot-option slot-option-other" data-slot-choice="other">
                 <strong>Autre créneau</strong><small>hors trame</small>
