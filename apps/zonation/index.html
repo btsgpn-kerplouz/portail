@@ -227,7 +227,8 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
 /* Indique si le n° de transect saisi reprend un transect déjà commencé (et où il
    en est) ou en ouvre un nouveau — sinon rien ne signale qu'on repart de zéro. */
-.etat-transect{font-size:.76rem;color:var(--text-2);margin:-.5em 0 .9em;min-height:1.1em;}
+.etat-transect{font-size:.76rem;color:var(--text-2);margin:-.5em 0 .9em;}
+.etat-transect:empty{display:none;}   /* pas de vide réservé quand aucun transect n'est saisi */
 .etat-transect b{color:var(--acc-dark);}
 .masque{display:none;}
 /* Encadré du nom de l'espèce en cours : c'est le sujet de toute l'étape, il doit se
@@ -335,6 +336,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   display:flex;flex-direction:column;gap:.15em;min-height:2.2em;
   margin:.5em 0 0;padding:.5em .7em;background:var(--acc-soft);border:1px solid var(--line);border-radius:var(--rayon);
 }
+.fourchette-affichage[hidden]{display:none;}   /* sinon display:flex l'emporte sur [hidden] et laisse un encadré vide */
 .fourchette-ligne1{display:flex;align-items:baseline;gap:.6em;}
 .fourchette-code{
   display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;
@@ -488,7 +490,6 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
     <div class="carte">
       <h2>Espèces observées</h2>
-      <p style="font-size:.8rem;color:var(--text-2);margin-top:-.3em;">Si une espèce n'est pas reconnue, elle peut quand même être ajoutée (pour mémoire, sans effet sur le score).</p>
 
       <div class="addbar">
         <!-- Étape 1/2 : choix de l'espèce -->
@@ -558,15 +559,16 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5em;flex-wrap:wrap;">
-        <h2 style="margin:0;">Mes transects</h2>
+        <h2 style="margin:0;">Relevés enregistrés</h2>
         <button class="secondaire" onclick="demarrerNouveauTransect()">+ Nouveau transect</button>
       </div>
       <p style="font-size:.78rem;color:var(--text-2);">Tout est enregistré uniquement sur cet appareil (hors-ligne). Exportez régulièrement pour ne rien perdre.</p>
       <div id="zone-historique"></div>
       <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
-        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Exporter tout en CSV</button>
-        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Exporter pour Phytoscope (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Fichier au format du gabarit d'import CSV de Phytoscope (bouton "Importer" sur son écran d'accueil) : chaque relevé est ajouté comme nouveau relevé, sans jamais écraser ceux déjà présents. Les espèces non référencées ne sont pas incluses (Phytoscope ne peut résoudre que des taxons connus).</p>
+        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Tableau de synthèse (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par relevé, avec l'habitat proposé et le cortège. Pour archiver ou travailler dans un tableur.</p>
+        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export vers Phytoscope (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -606,6 +608,7 @@ const COEF_ABONDANCE = {
 };
 const CODES_ABONDANCE = ['i','r','+','1','2','3','4','5'];
 const ABONDANCE_DEFAUT = '+';
+/* Consigne de l'étape « choisir l'espèce », réaffichée après chaque ajout. */const CONSIGNE_ESPECE = "Tapez un nom, choisissez-le dans la liste (ou laissez tel quel si l'espèce n'est pas référencée), puis validez.";
 
 /* Équivalent en % de recouvrement, quel que soit le mode de saisie (comme la fonction
    pct(row) de Phytoscope) — sert à l'affichage et au calcul du score. */
@@ -820,7 +823,7 @@ function rechercherEspeces(q){
 
 function onSaisieRecherche(){
   etat.especeSelectionnee = null;
-  document.getElementById('espece-selectionnee').textContent = "Tapez un nom, choisissez-le dans la liste (ou laissez tel quel si l'espèce n'est pas référencée), puis validez.";
+  document.getElementById('espece-selectionnee').textContent = CONSIGNE_ESPECE;
   afficherSuggestions(rechercherEspeces(document.getElementById('recherche-espece').value));
   majEtatBoutonSuivant();
 }
@@ -886,7 +889,7 @@ function ajouterAuCortege(){
   afficherFourchette();
   majEtatBoutonAjouter();
   recherche.value = '';
-  document.getElementById('espece-selectionnee').textContent = "Tapez un nom, choisissez-le dans la liste (ou laissez tel quel si l'espèce n'est pas référencée), puis validez.";
+  document.getElementById('espece-selectionnee').textContent = CONSIGNE_ESPECE;
   document.getElementById('suggestions-especes').classList.remove('ouvert');
   majEtatBoutonSuivant();
   construireTableauCortege();
@@ -1429,7 +1432,7 @@ function resetReleve(){
   // La distance est vidée pour être recalculée par majEcranIdentite (relevé suivant = +1 m).
   document.getElementById('in-distance').value = '';
   document.getElementById('recherche-espece').value = '';
-  document.getElementById('espece-selectionnee').textContent = "Tapez un nom, choisissez-le dans la liste (ou laissez tel quel si l'espèce n'est pas référencée), puis validez.";
+  document.getElementById('espece-selectionnee').textContent = CONSIGNE_ESPECE;
 }
 
 function nouveauPoint(){
@@ -1541,14 +1544,15 @@ function exporterPourPhytoscopeCSV(){
   if(!liste.length) return;
   const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi"];
   const lignes = [entetes];
-  const omises = new Set();   // espèces sans correspondance dans le référentiel de Phytoscope
+  const omises = new Set();       // espèces référencées mais sans équivalent chez Phytoscope
+  const libres = new Set();       // espèces saisies au clavier, sans nom scientifique
   liste.forEach(r=>{
     const releveId = idPhytoscope();
     const nomReleve = `Transect ${r.transect || '?'} — relevé n°${r.numero || '?'}`;
     const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
     const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
     (r.cortege||[]).forEach(e=>{
-      if(!e.latin) return;                       // espèce libre : aucun taxon à résoudre
+      if(!e.latin){ libres.add(e.fr); return; }   // saisie libre : aucun nom scientifique à résoudre
       const tid = TAXON_PHYTOSCOPE[e.latin];
       if(tid === undefined){ omises.add(e.latin); return; }  // sans correspondance : Phytoscope la rejetterait
       lignes.push([
@@ -1567,10 +1571,15 @@ function exporterPourPhytoscopeCSV(){
   a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.csv';
   a.click();
   URL.revokeObjectURL(url);
-  if(omises.size){
-    const liste = [...omises].map(n => '\u00b7 ' + n).join('\n');
-    alert('Export terminé.\n\n' + omises.size + ' espèce(s) sans correspondance dans le référentiel de Phytoscope ont été omises :\n\n'
-      + liste + '\n\nElles restent dans vos relevés et dans l\'export CSV de synthèse.');
+  if(omises.size || libres.size){
+    const bloc = [];
+    if(omises.size) bloc.push('Sans équivalent dans le référentiel de Phytoscope :\n'
+      + [...omises].map(n => '· ' + n).join('\n'));
+    if(libres.size) bloc.push('Saisies au clavier, sans nom scientifique :\n'
+      + [...libres].map(n => '· ' + n).join('\n'));
+    alert('Export terminé.\n\nCes espèces ne figurent pas dans le fichier :\n\n'
+      + bloc.join('\n\n')
+      + '\n\nElles restent enregistrées dans vos relevés et présentes dans le tableau de synthèse.');
   }
 }
 
