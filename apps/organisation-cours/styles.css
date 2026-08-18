@@ -218,7 +218,12 @@ input::placeholder, textarea::placeholder { color: #9aa494; }
    Bandeau sur une seule ligne : retour portail, titre + sous-titre entre
    parenthèses, bloc connexion à droite — la pastille d'équipe et le badge de
    version sortent du bandeau pour tenir la hauteur sur une seule ligne. */
-html { scroll-padding-top: 6.4rem; }
+/* Ajustements #2 [D2.1] (18/08/2026) — sans ça, changer d'UE/de promo en
+   Progression change la hauteur totale de la page, ce qui fait apparaître ou
+   disparaître la barre de défilement verticale (10px, voir plus bas) et
+   décale tout le contenu de ces quelques pixels. `scrollbar-gutter: stable`
+   réserve la place en permanence, que la barre soit visible ou non. */
+html { scroll-padding-top: 6.4rem; scrollbar-gutter: stable; }
 .app-sticky-header {
   position: sticky;
   top: 0;
@@ -415,11 +420,11 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    barre « Tout déplier » : quatre bandes horizontales devenues une.
    `--hauteur-collante` est mesurée en JS (mesurerBandeauCollant) parce que les
    onglets passent sur deux lignes quand la fenêtre rétrécit.
-   Lot E [19] puis lot F [5] — le Planning hebdo (`.week-bar`) et le Référentiel
-   (`.ruban-bar`) reprennent le même patron : mêmes règles de collage, contenu
-   différent. Quatre vues sur cinq ont ainsi la même grammaire, une barre par
-   onglet, toujours au même endroit. */
-.week-bar,
+   Lot E [19] puis lot F [5] — le Référentiel (`.ruban-bar`) reprend le même
+   patron : mêmes règles de collage, contenu différent. Le Planning hebdo
+   (`.week-bar`) le partageait aussi jusqu'aux Ajustements #2 [E2.1]
+   (18/08/2026, retiré — doublonnait la case en surbrillance de la bande de
+   semaines). */
 .ruban-bar {
   position: sticky;
   /* Un pixel de recouvrement : sans lui, l'arrondi du sous-pixel laisse
@@ -440,13 +445,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    d'un écran court coûteraient plus qu'elles ne rendent. Les menus se serrent
    à deux par ligne au lieu d'une chacun. */
 @media (max-width: 700px) {
-  .week-bar, .ruban-bar { position: static; gap: .35rem; }
+  .ruban-bar { position: static; gap: .35rem; }
   /* Les cinq boutons de mode occupent déjà deux lignes sur téléphone : les
      filtres repassent dessous, alignés à gauche, plutôt que serrés à droite. */
   .ruban-bar-filtres { margin-left: 0; }
-  /* La barre du planning n'a que deux groupes : ils se rangent l'un sous
-     l'autre plutôt que de laisser le second à demi vide à droite. */
-  .week-bar-actions { margin-left: 0; }
 }
 
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
@@ -581,7 +583,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   body { background: #fff; }
   .banner, .tabs, .header-tabs, .header-actions, .toolbar,
   .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title,
-  .design-layout aside, .design-subtabs, .week-bar, .ruban-bar { display: none !important; }
+  .design-layout aside, .design-subtabs, .ruban-bar { display: none !important; }
   main { max-width: none; padding: .4rem; }
   .view { display: block; }
   .panel, .kpi-strip { box-shadow: none; }
@@ -1146,15 +1148,19 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   margin-bottom: .5rem;
   overflow: hidden;
 }
-.backlog-ue-group > summary, .backlog-seq-group > summary {
+.backlog-ue-group > summary {
   list-style: none; cursor: pointer;
   display: flex; align-items: center; gap: .5rem;
   padding: .5rem .65rem; font-weight: 650; font-size: .85rem;
 }
-.backlog-ue-group > summary::-webkit-details-marker,
-.backlog-seq-group > summary::-webkit-details-marker { display: none; }
-.backlog-seq-group > summary { font-weight: 600; font-size: .82rem; color: var(--ink-soft); background: var(--surface); }
-.backlog-ue-group > summary span, .backlog-seq-group > summary span {
+.backlog-ue-group > summary::-webkit-details-marker { display: none; }
+/* Ajustements #2 [E2.7] — niveau séquence non repliable : simple étiquette,
+   plus de <details> (voir renderWeekBacklog). */
+.backlog-seq-label {
+  display: flex; align-items: center; gap: .5rem; margin: 0;
+  padding: .5rem .65rem; font-weight: 600; font-size: .82rem; color: var(--ink-soft); background: var(--surface);
+}
+.backlog-ue-group > summary span, .backlog-seq-label span {
   margin-left: auto; color: var(--muted); font-size: .76rem; font-weight: 600;
 }
 /* Lot 10 — tuile « séance à placer » : plus de pastille « À placer » ni de
@@ -1245,31 +1251,26 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .progression-ue-card-sub { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--ink-soft); }
 .progression-stack-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
 
-.progression-panel { margin-top: var(--sp-3); }
-.progression-panel-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: var(--sp-2); flex-wrap: wrap; }
-.progression-panel-head h3 { margin: 0; }
-.progression-direction {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border: 1px solid var(--line-strong);
-  font-family: var(--font-mono); color: var(--ink-soft);
+/* Ajustements #2 [D2.3] (18/08/2026) — un seul niveau de cadre par bande, au
+   lieu de deux (la carte `.panel` générique — fond blanc, bordure, padding —
+   PUIS le cadre propre du `.timeline-grid`) : `.progression-panel` neutralise
+   le style `.panel` hérité, la seule ligne de cadre qui reste est celle de
+   `.timeline-grid`, directement autour de l'espace de frise. Le bandeau bleu
+   (avant réservé à Séquences seule) est commun aux deux bandes. */
+.progression-panel {
+  margin-top: var(--sp-3);
+  background: none; border: none; box-shadow: none; padding: 0; border-radius: 0;
 }
-.progression-hors-fenetre { padding: .35rem .5rem; font-size: .78rem; font-style: italic; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
-.progression-panel-foot { display: flex; align-items: center; gap: .4rem; margin-top: var(--sp-2); font-size: .8rem; color: var(--ink-soft); }
-.progression-day-count { font-weight: 400; }
-
-/* 18/08 — bande Séquences seule : cadre + bandeau titre bleu (consigne
-   directe), pour la distinguer visuellement de la bande Séances en-dessous. */
-.progression-panel-framed { border: 2px solid var(--acc); }
-.progression-panel-framed .progression-panel-head {
+.progression-panel-head {
+  display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
   margin: 0; padding: .4rem .6rem;
   background: color-mix(in srgb, var(--acc) 10%, var(--surface));
   border-bottom: 1px solid var(--acc);
 }
-.progression-panel-framed .progression-panel-head h3 {
-  color: var(--acc); text-transform: uppercase; letter-spacing: .04em; font-size: .82rem;
-}
-.progression-panel-framed .progression-direction { border-color: var(--acc); color: var(--acc); }
-.progression-panel-framed .timeline-grid { border: none; }
+.progression-panel-head h3 { margin: 0; color: var(--acc); text-transform: uppercase; letter-spacing: .04em; font-size: .82rem; }
+.progression-hors-fenetre { padding: .35rem .5rem; font-size: .78rem; font-style: italic; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
+.progression-panel-foot { display: flex; align-items: center; gap: .4rem; margin-top: var(--sp-2); padding: 0 .6rem; font-size: .8rem; color: var(--ink-soft); }
+.progression-day-count { font-weight: 400; }
 
 /* Conteneur scrollable horizontal : la grille interne peut dépasser. Colonne
    d'étiquettes et coin "sticky" pour rester visibles au défilement. */
@@ -1483,19 +1484,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* =====================================================================
    PLANNING SEMAINE — grille horaire opérationnelle
    ===================================================================== */
-/* ---------- Barre du Planning hebdo (lot E [19]) ----------
-   Elle hérite du collage et de l'habillage partagés avec `.ruban-bar` (voir
-   plus bas) et n'ajoute ici que son contenu propre : le rappel de la semaine
-   à gauche, les actions à droite. */
-.week-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
-.week-bar-actions { margin-left: auto; gap: .5rem; }
-.week-bar-label {
-  display: inline-flex; align-items: baseline; gap: .4rem;
-  padding: 0 .35rem; min-width: 9rem;
-  font-size: .84rem; color: var(--ink);
-}
-.week-bar-label strong { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
-.week-bar-label span { font-size: .78rem; color: var(--muted); }
 .week-strip-bar .mask-toggle { white-space: nowrap; }
 
 .week-toolbar { gap: .5rem; }
@@ -1503,16 +1491,21 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* Bande de semaines (REGLES.md #22 — seul sélecteur de date de l'app). */
 .week-strip-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
 .week-strip-switch .promo-switch-btn { padding: .35rem .7rem; font-size: .72rem; }
+/* Ajustements #2 [E2.2] (18/08/2026) — une seule ligne qui défile
+   horizontalement (au lieu d'une grille qui repassait sur 2-3 lignes pour
+   caser toutes les semaines de la période) ; [E2.3] la semaine affichée est
+   positionnée en 2e case visible au premier rendu (voir renderWeekStrip). */
 .week-strip {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
-  gap: 2px; margin: 0 0 var(--sp-3);
+  display: flex; overflow-x: auto; gap: 2px; margin: 0 0 var(--sp-3);
 }
 .week-strip-tile {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
+  flex: 0 0 62px;
   border: 1px solid var(--line-strong); background: var(--surface);
   padding: .3rem 0 .35rem; cursor: pointer; font: inherit;
 }
 .week-strip-tile:hover { background: var(--surface-alt); }
+.week-strip-tile:focus-visible { outline-offset: -2px; z-index: 1; }
 .week-strip-num { font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--ink-soft); }
 .week-strip-date { font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
 .week-strip-tile-bar { display: block; height: 3px; width: calc(100% - 14px); margin-top: 2px; background: var(--line-strong); }
@@ -1694,6 +1687,8 @@ table { border-collapse: collapse; width: 100%; }
 .event-title { font-size: .72rem; opacity: .85; line-height: 1.15; }
 .event-hours { margin-top: .12rem; font-size: .66rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--clay); line-height: 1.1; }
 .demi-col .event-hours { font-size: .6rem; }
+.event-teachers { margin-top: .15rem; display: flex; flex-wrap: wrap; gap: .15rem; }
+.event-teachers .design-ue-pill { font-size: .6rem; padding: 0 .22rem; }
 .event-details { margin-top: .2rem; font-size: .68rem; opacity: .85; line-height: 1.15; }
 .event-keywords { margin-top: .15rem; font-size: .64rem; opacity: .7; line-height: 1.1; }
 /* Type de séance en texte simple (après enseignant/lieu, avant les mots-clés). */
@@ -1742,6 +1737,8 @@ table { border-collapse: collapse; width: 100%; }
 .demi-col .event-ue { font-size: .64rem; }
 .demi-col .event-session-title { font-size: .72rem; line-height: 1.12; margin-top: .05rem; }
 .demi-col .event-details { font-size: .6rem; margin-top: .08rem; }
+.demi-col .event-teachers { margin-top: .08rem; }
+.demi-col .event-teachers .design-ue-pill { font-size: .55rem; padding: 0 .18rem; }
 
 .drop-slot { transition: background .12s ease, outline .12s ease; }
 .drop-slot.drop-hover { background: var(--water-soft) !important; outline: 2px solid var(--water); outline-offset: -2px; }

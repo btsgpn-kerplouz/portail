@@ -558,9 +558,18 @@ function templateSemester(periodKey, promo) {
   const period = TEMPLATE_PERIODS.find(p => p.key === periodKey) || TEMPLATE_PERIODS[0];
   return period.semesters[promo] || period.semesters.GPN1;
 }
-/* Période (automne / printemps) d'une semaine du planning : les semaines 2026
-   (S36→S53) = septembre-décembre, les semaines 2027 = janvier-mai. */
-function periodOfWeek(week) { return Number(week?.isoYear) === 2026 ? 'autumn' : 'spring'; }
+/* Période (automne / printemps) d'une semaine du planning : S36→S53 =
+   septembre-décembre, S01→S26 = janvier-mai (et le creux d'été, sans
+   séances en pratique). Ajustements #2 [E2.5] (18/08/2026) — bug trouvé :
+   l'ancienne version comparait l'année calendaire à 2026 en dur, correcte
+   uniquement pour LA fenêtre fixe 2026-2027 d'origine. Depuis le passage à
+   `buildRollingWeeks` (fenêtre glissante, n'importe quelle année), ce test
+   cassait dès qu'on avançait dans le temps — et la fenêtre glissante de 26
+   semaines après aujourd'hui n'atteint qu'une petite portion de « janvier-
+   mai » de l'année suivante, d'où les « seulement 7 cases » observées.
+   Basé sur le numéro de semaine (indépendant de l'année civile) : ça résout
+   les deux à la fois. */
+function periodOfWeek(week) { return weekNumberOf(week) >= 36 ? 'autumn' : 'spring'; }
 function templateSlotsFor(semester) { return (state?.weekTemplates || []).filter(t => t.semester === semester); }
 function findTemplateSlot(id) { return state?.weekTemplates?.find(t => t.id === id); }
 
@@ -2057,8 +2066,12 @@ function dashSemaineDe(date) {
 }
 function dashSemaineObjet(id) { return state.weeks.find(w => w.id === id) || null; }
 function dashDatesSemaine(id) { const w = dashSemaineObjet(id); return w ? w.dateRange.replace(/\/\d{4}/g, '') : ''; }
+// Ajustements #2 [B2.1] (18/08/2026) — « les deux semaines suivantes » suit
+// désormais la semaine affichée dans « Ma semaine » (dashSemaineIdCourante,
+// pilotée par dashSemaineOffset), plus la semaine réelle fixe : les 3 blocs
+// forment ensemble une fenêtre glissante de 3 semaines.
 function dashSemainesApres(n) {
-  const i = state.weeks.findIndex(w => w.id === currentWeekId());
+  const i = state.weeks.findIndex(w => w.id === dashSemaineIdCourante());
   if (i < 0) return [];
   return state.weeks.slice(i + 1, i + 1 + n).map(w => w.id);
 }
@@ -2172,10 +2185,22 @@ function dashContenuSemaine(semaineId) {
 }
 
 /* ---- Ligne 1 : « Ma semaine », un jour par colonne ---- */
-function dashCarteSeance(s, date) {
+// Ajustements #2 [B2.2] (18/08/2026) — `reduit` : version abrégée (heure +
+// titre seulement) pour « les deux semaines suivantes », SAUF si la séance a
+// une action réelle en attente (réservation, matériel, déplacement…) — dans
+// ce cas elle garde l'affichage complet, quitte à être moins compacte, pour
+// que l'urgence reste visible là où elle doit l'être.
+function dashCarteSeance(s, date, compact) {
   const actions = dashActionsDeSeance(s, date);
   const aTraiter = actions.some(a => !a.fait);
   const urgent = actions.some(a => a.urgent);
+  const reduit = compact && !aTraiter;
+  if (reduit) {
+    return `<li class="carte carte-reduite" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
+      <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
+      <span class="carte-titre">${escapeHtml(s.title)}</span>
+    </li>`;
+  }
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, s.demiGroupe ? '½' + s.demiGroupe : '']
     .filter(Boolean).join(' · ');
   return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
@@ -2195,13 +2220,13 @@ function dashCarteReunion(r) {
   </li>`;
 }
 
-function dashColonneJour(j, videHtml) {
+function dashColonneJour(j, videHtml, compact) {
   const classes = ['col-jour'];
   if (j.estAujourdhui) classes.push('est-aujourdhui');
   if (j.estPasse) classes.push('est-passe');
   const periodes = j.periodes.length
     ? `<p class="col-periode">${escapeHtml(j.periodes.map(p => p.label).join(' · '))}</p>` : '';
-  const cartes = [...j.seances.map(s => dashCarteSeance(s, j.date)), ...j.reunions.map(dashCarteReunion)];
+  const cartes = [...j.seances.map(s => dashCarteSeance(s, j.date, compact)), ...j.reunions.map(dashCarteReunion)];
   return `<div class="${classes.join(' ')}">
     <div class="col-tete">
       <span class="col-nom">${escapeHtml(j.estAujourdhui ? "Aujourd'hui" : j.nomLong)}</span>
@@ -2267,7 +2292,7 @@ function dashLigneSemaine(semaineId) {
       aPlacerMontre = true;
       videHtml = `<p class="col-vide col-vide-libre"><span>créneau libre</span><span class="col-vide-lien" data-ouvrir="dash:backlog" tabindex="0" role="button">${c.aPlacer.length} séance${c.aPlacer.length > 1 ? 's' : ''} à placer</span></p>`;
     }
-    return dashColonneJour(j, videHtml);
+    return dashColonneJour(j, videHtml, true);
   }).join('');
   return `<div class="ligne-semaine">
     <div class="col-semaine-num"><span class="sem-nom">${escapeHtml(c.semaine.label)}</span><span class="sem-date">${escapeHtml(dashDatesSemaine(semaineId))}</span></div>
@@ -2293,14 +2318,15 @@ function renderDashProchainement() {
     <div class="bande-compacte">${ids.map(dashLigneSemaine).join('')}</div>`;
 }
 
-/* Badges de l'encart « Séances à placer » : visibles panneau replié. */
+/* Badges de l'encart « Séances à placer » : visibles panneau replié.
+   Ajustements #2 [B2.3] (18/08/2026) — le compteur « à rattacher » est
+   retiré (redondant avec la pastille « À rattacher » déjà posée sur chaque
+   carte concernée) ; le compteur « à placer » ne garde que le chiffre. */
 function renderDashBacklogBadges() {
   const hote = $('#backlogBadges');
   if (!hote) return;
   const nb = visibleSessions().filter(isFictiveSession).length;
-  const nonRatt = visibleSessions().filter(s => !s.sequenceId || !s.ueId).length;
-  hote.innerHTML = `<span class="frais-badge${nb ? ' has-pending' : ''}">${nb ? `${nb} à placer` : 'à jour'}</span>`
-    + (nonRatt ? `<span class="frais-badge has-pending">${nonRatt} à rattacher</span>` : '');
+  hote.innerHTML = `<span class="frais-badge${nb ? ' has-pending' : ''}">${nb || 'à jour'}</span>`;
 }
 
 /* Les ordres de mission : séances et réunions en véhicule PERSONNEL. Une
@@ -2332,8 +2358,24 @@ function ordresDeMissionAFaire() {
   });
 }
 
+// Ajustements #2 [B2.4] (18/08/2026) — les séances encore à placer, triées
+// chronologiquement (sessionSortKey, déjà utilisée pour le backlog du
+// Planning hebdo) et bornées à une fenêtre de 2 mois : au-delà, elles
+// resteraient visibles dans le Planning hebdo/la Conception pédagogique,
+// juste plus dans cet encart. Une séance sans semaine cible connue n'a pas
+// de date à comparer : gardée (pas cachée) plutôt que perdue de vue.
+const DASH_BACKLOG_FENETRE_JOURS = 61; // ≈ 2 mois
+function dashBacklogSessions() {
+  return visibleSessions().filter(isFictiveSession).filter(s => {
+    const w = dashSemaineObjet(sessionCanonicalWeekId(s));
+    if (!w) return true;
+    const j = dashJoursEntre(dayDatesForWeek(w)[0]);
+    return j === null || j <= DASH_BACKLOG_FENETRE_JOURS;
+  }).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
+}
+
 function renderDashboard() {
-  const fictive = visibleSessions().filter(isFictiveSession);
+  const fictive = dashBacklogSessions();
 
   renderDashSemaine();
   renderDashProchainement();
@@ -2344,7 +2386,7 @@ function renderDashboard() {
   // hebdo (renderBacklogSessionTile), au lieu des lignes de liste : une séance à
   // placer se reconnaît à sa couleur d'UE, et se glisse depuis les trois vues.
   $('#dashboardBacklog').innerHTML = fictive.length
-    ? fictive.slice(0, 12).map(s => renderBacklogSessionTile(s)).join('')
+    ? fictive.map(s => renderBacklogSessionTile(s)).join('')
     : '<p class="meta">Aucune séance à placer en attente.</p>';
 
   // Triées par ordre chronologique (date de début) : une liste de périodes se
@@ -3483,16 +3525,6 @@ function renderPlanning() {
    `weekStripPeriod` est resynchronisée sur la semaine réellement affichée à
    chaque renderPlanning() (cf. plus haut). */
 function renderWeekStrip() {
-  const week = state.weeks.find(w => w.id === selectedWeek);
-  // Lot E [19] — le rappel de la semaine vit dans la barre collante : c'est le
-  // seul endroit qui reste lisible une fois qu'on a défilé dans la grille.
-  const rappel = $('#weekBarLabel');
-  if (rappel) {
-    rappel.innerHTML = week
-      ? `<strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong> <span>${escapeHtml(compactDateRange(week.dateRange))}</span>`
-      : '<span>Aucune semaine</span>';
-  }
-
   $$('#weekStripPeriodSwitch .promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.weekPeriod === weekStripPeriod));
 
   // 17/08 — le texte "Septembre-décembre S36→S53 · cliquer une semaine" (ex-#weekStripLabel)
@@ -3518,6 +3550,20 @@ function renderWeekStrip() {
       <span class="week-strip-tile-bar" aria-hidden="true"></span>
     </button>`;
   }).join('');
+
+  // Ajustements #2 [E2.3] (18/08/2026) — au premier affichage (pas après un
+  // simple clic sur une case déjà visible), la semaine affichée doit être la
+  // 2e case VISIBLE du défilement : on cale le défilement une case avant elle,
+  // plutôt que sur la première semaine de toute la période.
+  const idx = weeks.findIndex(w => w.id === selectedWeek);
+  if (idx >= 0) {
+    // `.week-strip` n'étant pas positionné (pas de `position:relative`),
+    // `offsetLeft` remontait au mauvais ancêtre — scrollIntoView calcule la
+    // bonne distance lui-même, quel que soit l'ancêtre positionné.
+    const tiles = strip.querySelectorAll('.week-strip-tile');
+    const cible = tiles[Math.max(0, idx - 1)];
+    cible?.scrollIntoView({ inline: 'start', block: 'nearest' });
+  }
 }
 
 /* Clé jour (AAAA-MM-JJ) en heure locale, sans décalage de fuseau. */
@@ -3552,10 +3598,17 @@ function renderWeekBacklog() {
     backlog.innerHTML = '<p class="meta">Aucune séance à placer ne correspond aux filtres.</p>';
     return;
   }
+  // Ajustements #2 [E2.7] (18/08/2026) — retour de Martin : deux niveaux de
+  // tiroirs repliés (UE puis séquence) pour atteindre une tuile, c'est trop.
+  // Le niveau séquence perd son `<details>` (simple étiquette non repliable,
+  // les tuiles restent toujours visibles en dessous) ; le niveau UE reste
+  // repliable (utile s'il y a beaucoup d'UE) mais s'ouvre par défaut (`open`)
+  // au lieu de partir fermé — restoreOpenKeys respecte ensuite un repli
+  // explicite de Martin d'un rendu à l'autre, comme avant.
   const byUe = groupBy(sessions, s => s.ueId || 'none');
   backlog.innerHTML = `<div class="backlog-count">${escapeHtml(title)}</div>` + Object.entries(byUe).map(([ueId, ueSessions]) => {
     const bySeq = groupBy(ueSessions, s => s.sequenceId || 'none');
-    return `<details class="backlog-ue-group" data-open-key="wbUe:${escapeAttr(ueId)}"><summary><strong>${escapeHtml(ueLabel(ueId))}</strong><span>${ueSessions.length} séance(s)</span></summary>${Object.entries(bySeq).map(([seqId, seqSessions]) => `<details class="backlog-seq-group" data-open-key="wbSeq:${escapeAttr(ueId)}:${escapeAttr(seqId)}"><summary>${escapeHtml(sequenceLabel(seqId))}<span>${seqSessions.length}</span></summary>${seqSessions.map(s => renderBacklogSessionTile(s)).join('')}</details>`).join('')}</details>`;
+    return `<details class="backlog-ue-group" data-open-key="wbUe:${escapeAttr(ueId)}" open><summary><strong>${escapeHtml(ueLabel(ueId))}</strong><span>${ueSessions.length} séance(s)</span></summary>${Object.entries(bySeq).map(([seqId, seqSessions]) => `<div class="backlog-seq-group"><p class="backlog-seq-label">${escapeHtml(sequenceLabel(seqId))}<span>${seqSessions.length}</span></p>${seqSessions.map(s => renderBacklogSessionTile(s)).join('')}</div>`).join('')}</details>`;
   }).join('');
   restoreOpenKeys(backlog, openKeys);
 }
@@ -3566,7 +3619,12 @@ function renderSessionEventContent(session, duration, compact = false) {
   // Lot V — demi-groupe : pastille courte (« A »/« B ») sur la MÊME ligne que l'UE.
   // La demi-largeur d'affichage suffit à signaler le demi-groupe → pas de « ½ ».
   const badge = session.demiGroupe ? `<span class="demi-badge demi-inline demi-${session.demiGroupe.toLowerCase()}" title="Demi-groupe ${session.demiGroupe}">${session.demiGroupe}</span>` : '';
-  const detail = [session.teacher || '', session.room || ''].filter(Boolean).join(' · ');
+  // Ajustements #2 [E2.6] (18/08/2026) — les initiales de l'enseignant en
+  // pastilles (.design-ue-pill, même composant que Conception/Répartition/
+  // Créneaux types), plutôt qu'en texte brut, pour homogénéiser avec le reste
+  // de l'appli. Le lieu reste en texte simple juste en dessous.
+  const eventTeachers = teacherPips(session.teacher || '');
+  const detail = session.room || '';
   // Mots-clés affichés dans les cases PLEINES (police réduite) ; pas en demi-groupe (place).
   const keywords = compact ? [] : compactKeywords(session.keywords, 4);
   // Type de séance en texte simple (repère rapide Cours/TP/Pluri…), après les
@@ -3590,6 +3648,7 @@ function renderSessionEventContent(session, duration, compact = false) {
     <div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
     <div class="event-session-title">${escapeHtml(truncate(session.title, compact ? 26 : 40))}</div>
     ${customHours ? `<div class="event-hours" title="Horaire libre saisi pour cette séance">${escapeHtml(customHours)}</div>` : ''}
+    ${eventTeachers.length ? `<div class="event-teachers">${eventTeachers.map(t => `<span class="design-ue-pill${t.initials.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}" title="${escapeAttr(t.name)}">${escapeHtml(t.initials)}</span>`).join('')}</div>` : ''}
     ${detail ? `<div class="event-details">${escapeHtml(detail)}</div>` : ''}
     ${typeText}
     ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}
@@ -4696,7 +4755,7 @@ function printWeekPlanning() {
   const html = $('#planningContainer')?.innerHTML || '';
   const css = [...document.styleSheets].map(sheet => { try { return [...sheet.cssRules].map(rule => rule.cssText).join('\n'); } catch (e) { return ''; } }).join('\n');
   const win = window.open('', '_blank');
-  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.week-bar,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
   win.document.close();
   win.focus();
 }
@@ -6280,6 +6339,11 @@ function bindEvents() {
     $(`#${tab.dataset.view}`).classList.add('active-view');
     // Lot 4 — s'ouvrir sur la semaine en cours à chaque entrée dans l'onglet.
     if (tab.dataset.view === 'gantt') scrollGanttToCurrentWeek();
+    // Ajustements #2 [E2.3] (18/08/2026) — même piège : positionner le
+    // défilement d'une bande cachée (`display:none`, vue pas encore active)
+    // n'a aucun effet tant qu'elle n'est pas mise en page. Refaire le calcul
+    // une fois la vue affichée, comme scrollGanttToCurrentWeek juste au-dessus.
+    if (tab.dataset.view === 'week') renderWeekStrip();
   }));
 
   // Chip de capacité (conception pédagogique) -> ouvrir le module correspondant dans le Référentiel.
@@ -6669,6 +6733,21 @@ function bindEvents() {
     selectedWeek = btn.dataset.setWeek;
     renderPlanning();
   });
+  // Ajustements #2 [E2.2] (18/08/2026) — « un défilement par touches droite et
+  // gauche du clavier est-il possible ? » : déplace le focus d'une case à
+  // l'autre (comme un groupe de boutons classique) et la ramène dans la zone
+  // visible ; le clic/Entrée sélectionne déjà la semaine, inchangé.
+  $('#weekStrip')?.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    const tiles = [...$('#weekStrip').querySelectorAll('.week-strip-tile')];
+    const i = tiles.indexOf(document.activeElement);
+    if (i < 0) return;
+    const suivante = tiles[i + (event.key === 'ArrowRight' ? 1 : -1)];
+    if (!suivante) return;
+    event.preventDefault();
+    suivante.focus();
+    suivante.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  });
   // La bascule de période ne fait que parcourir la bande : elle ne touche pas
   // à la semaine affichée dans les grilles (renderWeekStrip seul, pas renderPlanning).
   $('#weekStripPeriodSwitch')?.addEventListener('click', (event) => {
@@ -6781,7 +6860,7 @@ function bindEvents() {
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
       if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
-      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); return; }
+      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
       if (ouvrir) {
         // « Séances pas encore placées » n'est plus un <details> repliable
@@ -8058,12 +8137,16 @@ function typeClass(type = '') {
   return '';
 }
 
+// Ajustements #2 [E2.5], correctif jumeau (18/08/2026) — même bug que
+// periodOfWeek ci-dessus (année civile en dur, cassé par buildRollingWeeks) :
+// trouvé en cherchant d'autres `isoYear === 2026/2027` pendant l'investigation
+// du ticket « 7 cases en janvier-mai ». Même correctif, au numéro de semaine.
 function weeksForSemester(semester) {
   return state.weeks.filter(w => {
-    const n = Number(w.weekNumber ?? String(w.label).replace(/\D/g, ''));
-    if (semester === 'Semestre 1' || semester === 'Semestre 3') return (Number(w.isoYear) === 2026 && n >= 36 && n <= 53);
-    if (semester === 'Semestre 2') return (Number(w.isoYear) === 2027 && n >= 1 && n <= 17);
-    if (semester === 'Semestre 4') return (Number(w.isoYear) === 2027 && n >= 1 && n <= 22);
+    const n = weekNumberOf(w);
+    if (semester === 'Semestre 1' || semester === 'Semestre 3') return n >= 36 && n <= 53;
+    if (semester === 'Semestre 2') return n >= 1 && n <= 17;
+    if (semester === 'Semestre 4') return n >= 1 && n <= 22;
     return true;
   });
 }

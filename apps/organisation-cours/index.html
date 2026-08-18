@@ -238,11 +238,9 @@
       <p class="choice-row-note meta" id="ganttUeNote"></p>
 
       <div id="ganttTimeline">
-        <section class="panel progression-panel progression-panel-framed" id="ganttSequencesPanel">
+        <section class="panel progression-panel" id="ganttSequencesPanel">
           <div class="progression-panel-head">
             <h3>Séquences</h3>
-            <span class="progression-direction" aria-hidden="true" title="Se lit de gauche à droite">↔</span>
-            <span class="meta">se lit de gauche à droite · une ligne par UE</span>
           </div>
           <div class="timeline-scroll" id="ganttSequencesScroll">
             <div id="ganttSequencesGrid" class="timeline-grid"></div>
@@ -252,8 +250,6 @@
         <section class="panel progression-panel" id="ganttSessionsPanel">
           <div class="progression-panel-head">
             <h3>Séances</h3>
-            <span class="progression-direction" aria-hidden="true" title="Se lit de haut en bas">↕</span>
-            <span class="meta">se lit de haut en bas · une ligne par jour, colonnes alignées sur la bande 1</span>
           </div>
           <div class="timeline-scroll" id="ganttSessionsScroll">
             <div id="ganttSessionsGrid" class="timeline-grid"></div>
@@ -289,17 +285,15 @@
         </div>
       </div>
       <div id="weekStrip" class="week-strip" role="group" aria-label="Choisir la semaine affichée"></div>
-
-      <!-- Lot E [19] — le titre de page et sa description partent (l'onglet les
-           dit déjà) ; ne reste dans la barre collée sous les onglets que le
-           rappel de la semaine affichée, seule information qu'on ne peut plus
-           lire une fois qu'on a défilé dans la grille. -->
-      <div class="week-bar" role="toolbar" aria-label="Semaine affichée">
-        <span class="week-bar-label" id="weekBarLabel"></span>
-        <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
-      </div>
+      <!-- Ajustements #2 [E2.1] (18/08/2026) — le rappel textuel de la semaine
+           sélectionnée (« S45 02/11-06/11 ») est retiré : doublon de la case
+           en surbrillance dans la bande ci-dessus. Le <select> accessible
+           reste (choix clavier/lecteur d'écran), juste plus dans une barre
+           dédiée qui n'avait plus que lui. -->
+      <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
       <div id="weekMeta" class="week-meta visually-hidden"></div>
       <div class="week-plan-top">
+      <div id="planningContainer" class="week-planning-main"></div>
       <aside class="week-sidebar">
         <!-- Ordre conforme à la maquette : « Séances à placer » avant les notes
              (04-planning-hebdo.png — la pile à traiter prime sur le mémo). -->
@@ -330,7 +324,6 @@
           <textarea id="weekNotes" rows="3" placeholder="Ex. collecte de sang, semaine EIL, absences de groupe, sortie terrain… (enregistré automatiquement)"></textarea>
         </section>
       </aside>
-      <div id="planningContainer" class="week-planning-main"></div>
       </div>
     </section>
 
