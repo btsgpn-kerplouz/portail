@@ -484,3 +484,102 @@ const PROFIL_ZONATION = [
   { zone:"Contact schorre/dune", fiches:[13, 15],
     note:"Prés salés à statices/Frankénie lisse, pelouse annuelle à Lepture et Sagine." }
 ];
+
+/* =========================================================
+   CORRESPONDANCE AVEC LE RÉFÉRENTIEL DE PHYTOSCOPE
+   Identifiants BaseFlor (champ "id" de apps/phytoscope/taxa.json), utilisés par
+   l'export CSV : Phytoscope résout un taxon d'abord par taxon_id, avant le nom
+   scientifique. Sans cet id, 35 de nos 85 espèces étaient rejetées à l'import
+   ("taxon non reconnu"), faute de correspondance exacte des noms (auteurs,
+   sous-espèces, synonymies de genre).
+
+   Établie en rejouant la logique de résolution de Phytoscope, avec trois voies :
+   - correspondance exacte ou normalisée du nom (50 espèces) ;
+   - repli au rang espèce quand la sous-espèce/variété est absente de leur
+     référentiel (16, ex. Festuca rubra subsp. litoralis → Festuca rubra L.) ;
+   - synonymie vérifiée à la main (8, ex. Matricaria maritima subsp. maritima →
+     Tripleurospermum maritimum, Anagallis arvensis → Lysimachia arvensis).
+
+   ⚠️ 11 espèces restent sans correspondance et seront omises de l'export :
+   Agrostis x murbeckii, Melilotus albus, et surtout 9 salicornes (dolichostachya,
+   fragilis, obscura, ramosissima, x marshallii, sp., et les déterminations
+   incertaines "A/B"). Le référentiel de Phytoscope ne connaît que S. europaea,
+   S. procumbens et S. perennans : rattacher les autres relève d'un choix
+   taxonomique à trancher, pas d'un simple appariement de chaînes.
+   ========================================================= */
+const TAXON_PHYTOSCOPE = {
+  "Agrostis stolonifera var. pseudopungens": 145,
+  "Anagallis arvensis subsp. arvensis": 380,
+  "Apium graveolens": 526,
+  "Arenaria serpyllifolia subsp. serpyllifolia": 7672,
+  "Armeria maritima": 631,
+  "Arthrocnemum fruticosum": 6139,
+  "Arthrocnemum perenne": 683,
+  "Aster tripolium": 787,
+  "Atriplex laciniata": 853,
+  "Atriplex littoralis": 854,
+  "Atriplex prostrata": 850,
+  "Baccharis halimifolia": 8183,
+  "Beta vulgaris subsp. maritima": 938,
+  "Calystegia sepium": 1209,
+  "Carex distans": 1365,
+  "Carex extensa": 1377,
+  "Catapodium marinum": 2157,
+  "Catapodium rigidum": 2159,
+  "Cochlearia anglica": 1797,
+  "Cochlearia danica": 1798,
+  "Crithmum maritimum": 1941,
+  "Cynodon dactylon": 2000,
+  "Dactylis glomerata": 2063,
+  "Daucus carota subsp. carota": 2129,
+  "Elymus pycnanthus": 2375,
+  "Eupatorium cannabinum": 2564,
+  "Festuca rubra gr.": 2766,
+  "Festuca rubra subsp. litoralis": 2766,
+  "Frankenia laevis": 2807,
+  "Glaux maritima": 3056,
+  "Halimione portulacoides": 3109,
+  "Herniaria ciliolata": 3197,
+  "Holcus lanatus": 3483,
+  "Inula crithmoides": 3621,
+  "Juncus ambiguus": 3721,
+  "Juncus bufonius subsp. minutulus": 3697,
+  "Juncus gerardi": 3712,
+  "Juncus maritimus": 3718,
+  "Limonium auriculae-ursifolium": 4010,
+  "Limonium dodartii": 4014,
+  "Limonium ovalifolium": 4038,
+  "Limonium vulgare": 4051,
+  "Linaria arenaria": 4058,
+  "Lycopus europaeus": 4223,
+  "Matricaria maritima subsp. maritima": 4270,
+  "Oenanthe lachenalii": 4624,
+  "Parapholis strigosa": 4947,
+  "Phragmites australis": 5076,
+  "Plantago coronopus": 5193,
+  "Plantago maritima": 5206,
+  "Polypogon monspeliensis": 5328,
+  "Puccinellia maritima": 5501,
+  "Pulicaria dysenterica": 5503,
+  "Sagina maritima": 6033,
+  "Salicornia europaea": 6050,
+  "Salicornia europaea/obscura": 6050,
+  "Salicornia procumbens gr.": 6052,
+  "Salicornia pusilla": 7602,
+  "Samolus valerandi": 6118,
+  "Schoenus nigricans": 6250,
+  "Scirpus maritimus": 6277,
+  "Sedum anglicum": 6359,
+  "Silene vulgaris subsp. maritima": 6611,
+  "Sonchus oleraceus": 6688,
+  "Spartina maritima": 6712,
+  "Spartina x townsendii var. anglica": 6714,
+  "Spergularia marina": 6724,
+  "Spergularia media": 6726,
+  "Suaeda maritima": 6802,
+  "Suaeda vera": 6806,
+  "Thelypteris palustris": 6998,
+  "Triglochin bulbosum subsp. barrelieri": 7199,
+  "Triglochin maritima": 7202,
+  "Zostera noltii": 7600
+};
