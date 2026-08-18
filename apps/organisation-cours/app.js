@@ -2465,7 +2465,6 @@ function renderDesignSidebar(promoUes) {
   $$('.promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.designPromo === designPromotionFilter));
   const countEl = $('#designSidebarCount');
   if (countEl) countEl.textContent = `${state.ues.length} UE`;
-  const focusChecked = $('#designMineFilter')?.checked !== false;
   const semesters = [...new Set(promoUes.map(ue => ue.semester))].sort((a, b) => SEMESTERS.indexOf(a) - SEMESTERS.indexOf(b));
   const list = $('#designSidebarList');
   list.innerHTML = semesters.length
@@ -2475,23 +2474,23 @@ function renderDesignSidebar(promoUes) {
           .sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
         return `<div class="design-sidebar-group">
           <p class="design-sidebar-group-label">${escapeHtml(sem)}</p>
-          ${group.map(ue => renderDesignSidebarRow(ue, focusChecked)).join('')}
+          ${group.map(ue => renderDesignSidebarRow(ue)).join('')}
         </div>`;
       }).join('')
     : '<p class="meta tight">Aucune UE pour cette promotion.</p>';
 }
 
-function renderDesignSidebarRow(ue, focusChecked) {
+function renderDesignSidebarRow(ue) {
   const sequenceCount = state.sequences.filter(seq => seq.ueId === ue.id).length;
   const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
   // Pastille pleine = j'y interviens, pastille creuse = un·e collègue (JETONS.md).
   const enseignants = enseignantsDeLUe(ue);
   const pills = enseignants.map(initiale => `<span class="design-ue-pill${initiale === moiInitiales ? ' is-mine' : ''}">${escapeHtml(initiale)}</span>`).join('');
   const estMienne = moiInitiales && enseignants.includes(moiInitiales);
-  // Estompage (REGLES.md #21) : atténue, ne retire jamais. Une seule case
-  // « j'y interviens » — cochée (défaut) = rien n'est atténué, décochée = les
-  // UE qui ne sont pas les miennes passent en fond sable (17/08, retour Martin).
-  const dimmed = enseignants.length ? (!estMienne && !focusChecked) : false;
+  // Estompage (REGLES.md #21) : atténue, ne retire jamais. Appliqué en
+  // permanence depuis le retrait de la case « j'y interviens » (18/08/2026,
+  // Ajustements #2) — 3 niveaux fixes : sélectionnée / mes UE / collègues.
+  const dimmed = (enseignants.length && moiInitiales) ? !estMienne : false;
   const selected = ue.id === designSelectedUeId;
   const compteLabel = (sequenceCount || sessionCount)
     ? `${sequenceCount} séq · ${sessionCount} séance${sessionCount > 1 ? 's' : ''}`
@@ -2952,7 +2951,7 @@ function mesUesParDefaut(ues = []) {
     return miennes;
   }
   ganttDefautMessage = moiInitiales
-    ? `Aucune UE de ce semestre ne porte vos initiales (${moiInitiales}) dans le Ruban : sélection par défaut. Renseigner la colonne « Enseignants » du Tableau détaillé (onglet Référentiel & Ruban) pour que la frise s'ouvre sur votre UE.`
+    ? `Aucune UE de ce semestre ne porte vos initiales (${moiInitiales}) dans le Ruban : sélection par défaut. Renseigner la colonne « Enseignants » du Tableau détaillé (onglet Référentiel) pour que la frise s'ouvre sur votre UE.`
     : '';
   return ues.slice(0, 1);
 }
@@ -4025,13 +4024,24 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceDialog')._dirty = false;
 }
 
+/* Séance : simple coche depuis Ajustements #2 (18/08/2026) — le mode réel
+   ('etablissement'/'personnel') est gardé sur dataset.mode plutôt que redemandé
+   à la saisie, pour ne pas écraser une bascule « personnel » déjà faite depuis
+   le tableau de bord (data-bascule-vehicule) quand on rouvre la fiche. Cochée
+   sans mode connu (nouvelle séance) → établissement, la priorité voulue. */
+function deplacementModeOf(prefixe) {
+  if (prefixe === 'reunion') return $('#reunionDeplacement')?.value || '';
+  const cb = $('#sessionDeplacement');
+  return cb?.checked ? (cb.dataset.mode || 'etablissement') : '';
+}
+
 /* N'affiche que la suite qui correspond au mode choisi : une réservation de
    véhicule pour l'établissement, un ordre de mission pour le véhicule personnel.
    Même fonction pour les deux modales — les identifiants ne diffèrent que par le
    préfixe. */
 function syncDeplacementFields(prefixe) {
   const p = prefixe === 'reunion' ? 'reunion' : 'session';
-  const mode = $(`#${p}Deplacement`)?.value || '';
+  const mode = deplacementModeOf(prefixe);
   const suite = $('#sessionDeplacementSuite');
   const vehicule = $(`#${p}VehicleBookedField`);
   const mission = $(`#${p}OrdreMissionField`);
@@ -4106,7 +4116,8 @@ function openSessionModal(session = null, context = {}) {
   }
   renderSessionSlotPicker();
   if ($('#sessionDeplacement')) {
-    $('#sessionDeplacement').value = session?.deplacement || '';
+    $('#sessionDeplacement').checked = !!session?.deplacement;
+    $('#sessionDeplacement').dataset.mode = session?.deplacement || '';
     if ($('#sessionVehicleBooked')) $('#sessionVehicleBooked').checked = !!session?.vehicleBooked;
     if ($('#sessionOrdreMission')) $('#sessionOrdreMission').checked = !!session?.ordreMission;
     syncDeplacementFields('session');
@@ -5692,6 +5703,13 @@ const DOSSIER_PRINT_CSS = `
 .dossier-frise-label{font-size:11px;padding:4px 6px 4px 0;align-self:center}
 .dossier-frise-cell{background:#f4f2ec;height:20px}
 .dossier-frise-bar{background:var(--seq-color,#1a5fb4);height:20px}
+.dossier-frise-week.is-thematic,.dossier-frise-cell.is-thematic{background:#f3e6c2}
+.dossier-frise-week.is-blocked,.dossier-frise-cell.is-blocked{background:#e8e6dd}
+.dossier-frise-legend{margin:-6px 0 12px;font-size:10px;color:#6b6a5e}
+.dossier-frise-swatch{display:inline-block;width:9px;height:9px;margin:0 4px 0 14px;vertical-align:middle}
+.dossier-frise-swatch:first-child{margin-left:0}
+.dossier-frise-swatch.is-thematic{background:#f3e6c2;border:1px solid #d9b75a}
+.dossier-frise-swatch.is-blocked{background:#e8e6dd;border:1px solid #b3ac93}
 .dossier-table-compact th,.dossier-table-compact td{padding:5px 8px;font-size:11px}
 /* Fiche de séquence */
 .dossier-sequence-head{border-left:4px solid var(--seq-color,#1a5fb4);padding-left:14px;margin-bottom:14px}
@@ -5939,7 +5957,7 @@ function dossierEvaluationTableHtml(ue) {
 function dossierPageReferentiel(ue, sections, footerOpts) {
   const caps = dossierUeCapacitiesFull(ue);
   const capsHtml = caps.length ? caps.map(cap => dossierCapacityBlockHtml(cap, sections)).join('')
-    : '<p class="dossier-body-text meta">Aucune capacité déclarée pour cette UE dans Référentiel &amp; Ruban.</p>';
+    : '<p class="dossier-body-text meta">Aucune capacité déclarée pour cette UE dans Référentiel.</p>';
   const seqsWithoutCap = state.sequences.filter(s => s.ueId === ue.id && !(s.capacityCodes || []).length);
   return `<article class="dossier-page">
     <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
@@ -5963,24 +5981,42 @@ function dossierProgressionTableHtml(seqs) {
 
 function dossierPageProgression(ue, footerOpts) {
   const weeks = weeksForSemester(ue.semester);
-  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  // Même tri chronologique que dossierBuildUnits (app.js) — sans lui, l'ordre
+  // suivait la création des séquences, pas leur position dans l'année
+  // (Ajustements #2, 18/08/2026, retour Martin : régression du même bug que
+  // le Lot G avait corrigé ailleurs).
+  const seqs = state.sequences.filter(s => s.ueId === ue.id).slice()
+    .sort((a, b) => dossierSequenceOrder(a) - dossierSequenceOrder(b));
   let grid = '';
+  // Ajustements #2 (18/08/2026, retour Martin) : marquer les semaines hors
+  // routine (vacances/stage, thématique·EIL non portée par cette UE) pour que
+  // les vides de la frise se comprennent au lieu de sembler des oublis.
+  // isThematicBlocked exclut la (les) UE porteuse(s) de l'EIL : chez elles la
+  // semaine a de vraies séances, ce n'est pas un vide.
+  let hasThematic = false, hasBlocked = false;
+  const weekMark = weeks.map(w => {
+    if (isThematicBlocked(w, ue.promotion, ue.id)) { hasThematic = true; return 'is-thematic'; }
+    if (isBlockedWeek(w, ue.promotion)) { hasBlocked = true; return 'is-blocked'; }
+    return '';
+  });
   if (seqs.length && weeks.length) {
-    weeks.forEach((w, i) => { grid += `<div class="dossier-frise-week mono" style="grid-column:${i + 2};grid-row:1">${escapeHtml(w.label)}</div>`; });
+    weeks.forEach((w, i) => { grid += `<div class="dossier-frise-week mono ${weekMark[i]}" style="grid-column:${i + 2};grid-row:1">${escapeHtml(w.label)}</div>`; });
     seqs.forEach((seq, idx) => {
       const row = idx + 2;
       grid += `<div class="dossier-frise-label" style="grid-row:${row}">${escapeHtml(seq.title || 'Séquence sans titre')}</div>`;
-      weeks.forEach((w, i) => { grid += `<div class="dossier-frise-cell" style="grid-column:${i + 2};grid-row:${row}"></div>`; });
+      weeks.forEach((w, i) => { grid += `<div class="dossier-frise-cell ${weekMark[i]}" style="grid-column:${i + 2};grid-row:${row}"></div>`; });
       sequenceWeekSegments(seq, weeks).forEach(seg => {
         grid += `<div class="dossier-frise-bar" style="grid-column:${seg.startIndex + 2} / ${seg.endIndex + 3};grid-row:${row};--seq-color:${sequenceColor(seq.id)}"></div>`;
       });
     });
   }
   const cols = `130px repeat(${weeks.length || 1}, 1fr)`;
+  const legend = (hasThematic || hasBlocked) ? `<p class="dossier-frise-legend meta tight">${hasThematic ? '<span class="dossier-frise-swatch is-thematic"></span>semaine thématique / EIL' : ''}${hasBlocked ? '<span class="dossier-frise-swatch is-blocked"></span>vacances / sans cours' : ''}</p>` : '';
   return `<article class="dossier-page">
     <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
     <h2 class="dossier-h2">Progression de l'unité</h2><div class="dossier-h2-rule"></div>
     ${seqs.length ? `<div class="dossier-frise-grid" style="grid-template-columns:${cols}">${grid}</div>` : '<p class="dossier-body-text meta">Aucune séquence pour cette UE.</p>'}
+    ${legend}
     ${dossierProgressionTableHtml(seqs)}
     ${dossierPageFooter(ue, footerOpts)}
   </article>`;
@@ -6672,13 +6708,13 @@ function bindEvents() {
   $('#weekBacklogUeFilter')?.addEventListener('change', e => { weekBacklogUeFilter = e.target.value; renderWeekBacklog(); });
 
   // Sidebar de la Conception (écran 2) : promotion (vrai sélecteur, REGLES.md #21),
-  // deux cases d'estompage, sélection d'UE, sous-onglets du panneau de détail.
+  // estompage permanent des UE des collègues, sélection d'UE, sous-onglets du
+  // panneau de détail.
   $$('.promo-switch-btn').forEach(btn => btn.addEventListener('click', () => {
     designPromotionFilter = btn.dataset.designPromo;
     designSelectedUeId = '';
     renderDesign();
   }));
-  $('#designMineFilter')?.addEventListener('change', renderDesign);
   $('#designSidebarList')?.addEventListener('click', (event) => {
     const row = event.target.closest('[data-select-ue]');
     if (!row) return;
@@ -7358,7 +7394,7 @@ function bindModalActions() {
       // Lot B — normalizeDeplacementFields borne les deux cases à leur branche et
       // tient `personalVehicle` à jour pour la compatibilité.
       ...normalizeDeplacementFields({
-        deplacement: $('#sessionDeplacement')?.value || '',
+        deplacement: deplacementModeOf('session'),
         vehicleBooked: $('#sessionVehicleBooked')?.checked || false,
         ordreMission: $('#sessionOrdreMission')?.checked || false
       })
@@ -7421,7 +7457,7 @@ function bindModalActions() {
     sessionChainRequested = true;
     $('#sessionForm').requestSubmit();
   });
-  // Lot B — changer de mode de déplacement change la suite à afficher.
+  // Cocher/décocher Déplacement change la suite à afficher (établissement/personnel).
   $('#sessionDeplacement')?.addEventListener('change', () => syncDeplacementFields('session'));
   $('#reunionDeplacement')?.addEventListener('change', () => syncDeplacementFields('reunion'));
 
@@ -7660,7 +7696,7 @@ function renderCapacityCheckboxes(containerSelector, capacities = [], selectedCo
   if (!container) return;
   const selected = new Set(selectedCodes || []);
   const emptyMessage = ue
-    ? `<p class="meta">Aucune capacité enregistrée pour l’UE ${escapeHtml(ue.code || '')}. Ajoutez-les dans l’onglet Référentiel &amp; Ruban.</p>`
+    ? `<p class="meta">Aucune capacité enregistrée pour l’UE ${escapeHtml(ue.code || '')}. Ajoutez-les dans l’onglet Référentiel.</p>`
     : '<p class="meta">Choisissez une UE pour afficher ses capacités.</p>';
   container.innerHTML = capacities.length
     ? capacities.map(cap => `<label class="checkbox-item"><input type="checkbox" value="${escapeAttr(cap.code)}" ${selected.has(cap.code) ? 'checked' : ''}><span><strong>${escapeHtml(cap.code)}</strong> — ${escapeHtml(cap.title)}</span></label>`).join('')

@@ -325,29 +325,27 @@ html { scroll-padding-top: 6.4rem; }
 .tabs.header-tabs {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: .2rem;
-  padding: .4rem var(--sp-6) 0;
+  padding: 0 var(--sp-6);
   background: var(--onglets-fond);
   border-bottom: 1px solid var(--onglets-filet);
 }
 .tab {
   background: transparent;
   border: 0;
-  border-top: 3px solid transparent;
   color: var(--ink-soft);
-  padding: .5rem .7rem;
+  padding: .65rem .7rem .6rem;
   font-size: .85rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
-.tab:hover { background: var(--acc); color: #fff; }
+.tab:hover,
 .tab.active {
-  background: var(--surface);
-  color: var(--moss-dark);
-  border-top-color: var(--acc);
-  margin-bottom: -1px;
+  background: var(--acc);
+  color: #fff;
 }
 /* Les actions « données » (export/import) ont quitté le Tableau de bord pour le
    bandeau titre au lot A [8] — voir `.banner-data`. */
@@ -573,7 +571,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* ---------- 9. Responsive de base ---------- */
 @media (max-width: 900px) {
   .banner { padding: .55rem var(--sp-4); }
-  .tabs.header-tabs { padding: .35rem var(--sp-4); }
+  .tabs.header-tabs { padding: 0 var(--sp-4); }
   .page-title { flex-direction: column; }
   .field-wide { grid-column: auto; }
 }
@@ -925,11 +923,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .promo-switch-btn:last-child { border-right: 0; }
 .promo-switch-btn.active { background: var(--ink); color: #fff; }
 .design-sidebar-count { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.design-sidebar-legend {
-  display: flex; gap: var(--sp-4); flex-wrap: wrap;
-  font-size: .8rem; color: var(--ink-soft);
-}
-.design-sidebar-legend label { display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; }
 .legend-dot { width: 9px; height: 9px; flex: 0 0 auto; border: 1.5px solid var(--acc); }
 .legend-dot-filled { background: var(--acc); }
 .legend-dot-hollow { background: var(--surface); }
@@ -1852,8 +1845,19 @@ table { border-collapse: collapse; width: 100%; }
 .reference-mode-panel { display: none; }
 .reference-mode-panel.active-mode { display: block; }
 
-/* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ---- */
-.ruban-subtabs { justify-content: space-between; }
+/* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ----
+   Ajustements #2 (18/08/2026, retour Martin) : cette barre doit être collée à
+   la barre d'onglets principale, avec une hiérarchie visible entre les deux —
+   pas un panneau flottant séparé. Marge négative pour annuler le padding-haut
+   de <main> (elle est toujours le premier élément de la vue), chrome de
+   « carte » (bordures hautes/latérales, ombre) retiré, ne garde qu'un filet
+   bas pour la séparer du contenu. */
+.ruban-subtabs {
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--sp-5));
+  border-width: 0 0 1px;
+  box-shadow: none;
+}
 .ruban-subtabs .design-subtab { padding: .3rem 0; border-bottom-width: 2px; }
 .ruban-unified-search { flex: 0 1 22rem; min-width: 12rem; margin-left: auto; }
 /* Même piège que .ruban-bar-filtres[hidden] plus haut : sans cette règle,

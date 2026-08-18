@@ -51,7 +51,7 @@
       <button class="tab" data-view="design">Conception pédagogique</button>
       <button class="tab" data-view="gantt">Progression</button>
       <button class="tab" data-view="week">Planning hebdo</button>
-      <button class="tab" data-view="ruban">Référentiel &amp; Ruban</button>
+      <button class="tab" data-view="ruban">Référentiel</button>
       <button class="tab" data-view="dossier">Dossier</button>
     </nav>
   </div>
@@ -181,8 +181,10 @@
            UE est le SEUL mécanisme de filtrage de cette vue (REGLES.md #21, sa
            seule exception à l'estompage — cliquer une UE en sélectionne UNE
            seule). Plus de barre de filtres, plus de recherche, plus de menu UE
-           à cocher : Promotion + « j'y interviens » suffisent (case « équipe »
-           retirée le 17/08, retour Martin — une seule case simplifie l'estompage). -->
+           à cocher : Promotion suffit. Case « j'y interviens » retirée le
+           18/08/2026 (retour Martin, Ajustements #2) — l'estompage des UE des
+           collègues (REGLES.md #21) reste appliqué en permanence, 3 niveaux
+           fixes : UE sélectionnée / mes UE / UE des collègues (estompées). -->
       <div class="design-layout">
         <aside class="design-sidebar">
           <div class="design-sidebar-top">
@@ -191,9 +193,6 @@
               <button type="button" class="promo-switch-btn" data-design-promo="GPN2">GPN2</button>
             </div>
             <span class="design-sidebar-count" id="designSidebarCount"></span>
-          </div>
-          <div class="design-sidebar-legend">
-            <label><input type="checkbox" id="designMineFilter" checked />j’y interviens</label>
           </div>
           <div id="designSidebarList" class="design-sidebar-list"></div>
         </aside>
@@ -282,7 +281,7 @@
           <button type="button" class="promo-switch-btn" data-week-period="spring">Janv. – mai</button>
         </div>
         <div class="week-bar-group week-bar-actions">
-          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel &amp; Ruban) sur les cases libres">
+          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
@@ -340,19 +339,21 @@
       <!-- Écrans 5/6/7/9/10 — 5 sous-onglets + une recherche unifiée. Les panneaux
            existants gardent leur contenu et leurs fonctions de rendu à l'identique :
            seule la coquille qui les affiche/masque change (setRubanTab).
-           18/08 — retour Martin, ordre des sous-onglets : « binôme Ruban + Répartition,
-           puis Créneaux type et Planning étudiant, puis Référentiel + Pdf d'origine » —
-           Ruban/Répartition restent une paire imbriquée dans un seul sous-onglet
-           (bascule data-ruban-mode, inchangée) plutôt que deux onglets séparés, sur le
-           même principe. « PDF d'origine » redevient un vrai sous-onglet (liste +
-           lecteur, #rubanTabPdf/renderPdfLibrary) au lieu du simple lien qui vivait
-           dans la barre du sous-onglet Répartition. -->
+           Ajustements #2 (18/08/2026, retour Martin) : 3 binômes, dans cet ordre —
+           Référentiel/PDF d'origine, Ruban/Répartition, Planning étudiant/Mes
+           créneaux types. Onglet principal renommé "Référentiel" (était
+           "Référentiel & Ruban") : le sous-onglet "référentiel interactif" perd
+           donc ce mot, gardé implicite par sa position dans son binôme (à côté de
+           "PDF d'origine"). Ruban/Répartition restent une paire imbriquée dans un
+           seul sous-onglet (bascule data-ruban-mode, inchangée), relabellisé
+           "Ruban" — le sous-onglet ne s'appelait plus "Référentiel" pour éviter le
+           doublon avec le sous-onglet référentiel lui-même. -->
       <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
-        <button type="button" class="design-subtab active" data-ruban-tab="repartition" role="tab" aria-selected="true">Référentiel &amp; répartition</button>
-        <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
-        <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
-        <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Le référentiel interactif</button>
+        <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
         <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
+        <button type="button" class="design-subtab active" data-ruban-tab="repartition" role="tab" aria-selected="true">Ruban</button>
+        <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+        <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
         <label class="refmod-search ruban-unified-search">
           <span aria-hidden="true">🔎</span>
           <input id="rubanUnifiedSearch" type="search" placeholder="Rechercher un mot-clé, une capacité, une UE…" aria-label="Rechercher" />
@@ -1009,7 +1010,6 @@
       </div>
 
       <hr class="menu-divider" />
-      <p class="menu-optional-hint">Le reste, si vous l’avez déjà <span>facultatif — se complète aussi sur la fiche</span></p>
 
       <div class="two-column-form">
         <label>Objectifs de séance
@@ -1056,15 +1056,14 @@
               <option value="amphi">Amphithéâtre</option>
             </select>
           </label>
-          <!-- Lot B — trois états, parce que la suite en dépend : véhicule de
-               l'établissement = une réservation ; véhicule personnel = un ordre
-               de mission avant, des frais après. -->
-          <label>Déplacement
-            <select id="sessionDeplacement">
-              <option value="">Aucun (sur place)</option>
-              <option value="etablissement">Véhicule de l'établissement</option>
-              <option value="personnel">Véhicule personnel</option>
-            </select>
+          <!-- Ajustements #2 (18/08/2026) : une simple coche remplace le menu à
+               3 états — cocher déclenche en priorité la recherche d'un véhicule
+               de l'établissement (réservation, encart Urgences). Bascule vers
+               véhicule personnel/ordre de mission si indisponible : bouton dédié
+               sur la ligne Urgences (retour 17/08/2026), pas ici. -->
+          <label class="checkbox-inline">
+            <input type="checkbox" id="sessionDeplacement" />
+            <span>Déplacement <small>→ véhicule de l'établissement en priorité</small></span>
           </label>
         </div>
         <div class="span-full session-inline-row" id="sessionDeplacementSuite" hidden>
