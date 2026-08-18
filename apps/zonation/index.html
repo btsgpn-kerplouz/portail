@@ -204,6 +204,10 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
+/* Indique si le n° de transect saisi reprend un transect déjà commencé (et où il
+   en est) ou en ouvre un nouveau — sinon rien ne signale qu'on repart de zéro. */
+.etat-transect{font-size:.76rem;color:var(--text-2);margin:-.5em 0 .9em;min-height:1.1em;}
+.etat-transect b{color:var(--acc-dark);}
 .masque{display:none;}
 .espece-en-cours{font-size:.95rem;margin-bottom:.3em;}
 .espece-en-cours b{font-family:var(--serif);}
@@ -236,6 +240,7 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
   display:flex;gap:.6em;z-index:20;
 }
 .barre-actions button{flex:1;}
+.barre-actions button:disabled{background:var(--line);border-color:var(--line);color:var(--text-2);cursor:not-allowed;}
 .compteur-badge{
   background:var(--status-invalide);color:#fff;border-radius:0;
   font-family:var(--mono);font-size:.7rem;padding:.1em .5em;margin-left:.4em;
@@ -411,7 +416,8 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div class="ligne2">
         <div class="champ">
           <label for="in-transect">Transect n°</label>
-          <input type="text" id="in-transect" placeholder="Ex : 1" oninput="onSaisieIdentite()">
+          <input type="text" id="in-transect" list="liste-transects" autocomplete="off" placeholder="Ex : 1" oninput="onSaisieIdentite()">
+          <datalist id="liste-transects"></datalist>
         </div>
         <div class="champ">
           <label for="in-date">Date</label>
@@ -419,6 +425,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         </div>
       </div>
 
+      <p class="etat-transect" id="etat-transect"></p>
       <div class="champ">
         <label for="in-observateur">Observateur·ice</label>
         <input type="text" id="in-observateur" list="liste-observateurs" autocomplete="off" placeholder="Prénom Nom">
@@ -507,7 +514,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran" id="ecran-fiches">
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
-      <h2>La zonation, du bas vers le haut</h2>
+      <h2>La zonation, de la vasière à la dune</h2>
       <svg class="zonation-diagram" id="svg-zonation" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"></svg>
       <p style="font-size:.8rem;color:var(--text-2);">D'après les profils de végétation relevés sur le site (Fig. 6, COLASSE 2019). L'ordre réel varie localement selon la topographie.</p>
     </div>
@@ -895,6 +902,7 @@ function retirerDuCortege(index){
 }
 
 function construireTableauCortege(){
+  if(typeof majBarreActions === "function") majBarreActions(); // le bouton « Analyser » dépend du cortège
   document.getElementById('nb-cortege').textContent = etat.cortege.length;
   const cont = document.getElementById('tableau-cortege');
   if(!etat.cortege.length){
@@ -1304,12 +1312,40 @@ function reprendreTransect(nom){
 
 /* Appelé à chaque saisie du n° de transect : le numéro de relevé en dépend
    (repartir de 1 quand on change de transect). */
+/* Liste des transects déjà enregistrés, du plus récemment utilisé au plus ancien :
+   sert à retrouver et compléter un transect commencé plus tôt (on peut alterner
+   entre plusieurs transects dans la même sortie). */
+function transectsEnregistres(){
+  const vus = [];
+  chargerHistorique().slice().reverse().forEach(r=>{
+    const t = r.transect || '';
+    if(t && !vus.includes(t)) vus.push(t);
+  });
+  return vus;
+}
+
+/* Rappelle où en est le transect saisi : reprise d'un transect existant ou nouveau. */
+function majEtatTransect(nom){
+  const cont = document.getElementById('etat-transect');
+  if(!cont) return;
+  const rs = releveDuTransect(nom);
+  if(!nom){ cont.innerHTML = ''; return; }
+  if(!rs.length){
+    cont.innerHTML = `Nouveau transect : ce relevé sera le <b>n°1</b>.`;
+    return;
+  }
+  const derniere = rs[rs.length-1].distance;
+  cont.innerHTML = `Transect déjà commencé : <b>${rs.length} relevé${rs.length>1?'s':''}</b> enregistré${rs.length>1?'s':''}${derniere ? `, dernier à <b>${derniere} m</b>` : ''}.`;
+}
+
 function onSaisieIdentite(){
   const nom = (document.getElementById('in-transect').value || '').trim();
   if(nom) definirTransectActif(nom);
-  const numero = prochainNumeroTransect(nom || assurerTransectActif());
+  const effectif = nom || assurerTransectActif();
+  const numero = prochainNumeroTransect(effectif);
   document.getElementById('numero-releve-affiche').textContent = numero;
-  majDistanceSuggeree(nom || assurerTransectActif(), numero);
+  majEtatTransect(nom);
+  majDistanceSuggeree(effectif, numero);
 }
 
 function majDistanceSuggeree(nomTransect, numero){
@@ -1340,9 +1376,11 @@ function majEcranIdentite(){
   remplirDatalist('liste-observateurs', m.observateurs);
   remplirDatalist('liste-sites', (m.sites || []).concat(m.sites && m.sites.includes(SITE_DEFAUT) ? [] : [SITE_DEFAUT]));
   remplirDatalist('liste-communes', (m.communes || []).concat(m.communes && m.communes.includes(COMMUNE_DEFAUT) ? [] : [COMMUNE_DEFAUT]));
+  remplirDatalist('liste-transects', transectsEnregistres());
 
   const inDistance = document.getElementById('in-distance');
   if(inDistance && !inDistance.value) majDistanceSuggeree(nom, numero);
+  majEtatTransect(document.getElementById('in-transect').value.trim());
 }
 
 /* Lit l'en-tête saisi en page 1 (sert au rappel, à l'enregistrement et aux exports). */
@@ -1537,17 +1575,38 @@ document.addEventListener('DOMContentLoaded', ()=>{
   majBarreActions();
 });
 
+/* Le bouton « Analyser » reste inactif tant que le cortège est vide : on ne peut
+   pas sauter l'ajout au relevé sans s'en rendre compte (cas le plus piégeux : le
+   quadrat monospécifique, où oublier « Ajouter » vide le relevé entier). */
+function actionsEcranReleve(){
+  const vide = etat.cortege.length === 0;
+  return `<button class="secondaire" onclick="allerA('identite')">← Identité</button>`
+    + `<button onclick="analyserDepuisBarre()"${vide?' disabled title="Ajoutez au moins une espèce au relevé"':''}>Analyser le relevé</button>`;
+}
+
 const ACTIONS_PAR_ECRAN = {
-  'ecran-identite': `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="validerIdentite()">Suivant : espèces →</button>`,
-  'ecran-releve': `<button class="secondaire" onclick="allerA('identite')">← Identité</button><button onclick="afficherResultats()">Analyser le relevé</button>`
+  'ecran-identite': ()=> `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="validerIdentite()">Suivant : espèces →</button>`,
+  'ecran-releve': actionsEcranReleve
 };
+
+/* Filet de sécurité : une espèce choisie et cotée mais pas encore ajoutée serait
+   perdue silencieusement. On la signale plutôt que de l'ignorer. */
+function analyserDepuisBarre(){
+  const e = etat.especeEnCours;
+  if(e && etat.coefCourant){
+    const ok = confirm(`« ${e.fr} » (coefficient ${etat.coefCourant}) n'a pas encore été ajoutée au relevé.\n\nOK : l'ajouter puis analyser.\nAnnuler : revenir à la saisie.`);
+    if(!ok) return;
+    ajouterAuCortege();
+  }
+  afficherResultats();
+}
 
 function majBarreActions(){
   const barre = document.getElementById('barre-releve');
   if(!barre) return;
   const actif = document.querySelector('.ecran.actif');
   const actions = actif ? ACTIONS_PAR_ECRAN[actif.id] : null;
-  barre.innerHTML = actions || '';
+  barre.innerHTML = actions ? actions() : '';
   barre.style.display = actions ? 'flex' : 'none';
 }
 const _allerA = allerA;
