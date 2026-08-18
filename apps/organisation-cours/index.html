@@ -19,100 +19,105 @@
       <div class="banner-inner">
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
         <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
-        <!-- Sauvegarde des données : dans le bandeau, à côté de ⟳ (lot A [8]).
-             Elle ne concerne pas le seul tableau de bord — sa place était une
-             ligne de boutons en haut d'un onglet, elle est désormais toujours
-             sous la main sans coûter de hauteur. -->
-        <div class="banner-data" aria-label="Sauvegarde des données">
-          <button type="button" id="exportDataBtn" class="lien" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)" aria-label="Exporter les données">⬇</button>
-          <button type="button" id="importDataBtn" class="lien" title="Restaurer vos données depuis un fichier JSON exporté" aria-label="Importer des données">⬆</button>
-          <input type="file" id="importDataInput" accept="application/json,.json" hidden />
+        <!-- Refonte « papier technique froid » (écran 1, 16/08/2026) : bandeau
+             commun au 21 écrans (README) — statut de synchro + année + avatar,
+             au lieu d'un simple bloc de connexion. L'export/import JSON (lot A
+             [8], sauvegarde manuelle locale) n'est pas dans la maquette mais
+             reste une fonction utile : gardé, discret, sous un intitulé
+             explicite plutôt que deux icônes nues.
+             Simplification demandée par Martin (17/08/2026, retours/) : le
+             bouton « Sauvegarder » faisait doublon avec l'auto-enregistrement
+             et n'était pas compris — il ne s'affiche plus qu'en cas d'erreur
+             de sauvegarde (voir setSaveStatus, app.js), en « Réessayer ». -->
+        <div class="banner-right">
+          <div class="banner-data" aria-label="Sauvegarde locale">
+            <span class="banner-data-label">Sauvegarde locale</span>
+            <button type="button" id="exportDataBtn" class="lien" title="Télécharger une sauvegarde de toutes vos données (fichier JSON)" aria-label="Télécharger">⬇</button>
+            <button type="button" id="importDataBtn" class="lien" title="Restaurer vos données depuis un fichier JSON exporté" aria-label="Restaurer">⬆</button>
+            <input type="file" id="importDataInput" accept="application/json,.json" hidden />
+          </div>
+          <div class="banner-sync">
+            <button type="button" id="btn-recharger" class="lien" title="Recharger les données (récupérer les dernières modifications des collègues)">⟳</button>
+            <span id="saveStatus" role="status" aria-live="polite">Chargement…</span>
+          </div>
+          <button type="button" id="btn-sauvegarder" class="banner-save-btn" title="Retenter l'enregistrement" hidden>Réessayer</button>
+          <span class="banner-year" id="bannerYear"></span>
+          <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
         </div>
-        <div id="auth-compact" class="auth-compact" aria-live="polite"></div>
       </div>
     </header>
     <nav class="tabs header-tabs" aria-label="Navigation principale">
       <button class="tab active" data-view="dashboard">Tableau de bord</button>
       <button class="tab" data-view="design">Conception pédagogique</button>
-      <button class="tab" data-view="gantt">Progressions semestres</button>
+      <button class="tab" data-view="gantt">Progression</button>
       <button class="tab" data-view="week">Planning hebdo</button>
-      <button class="tab" data-view="ruban">Référentiel &amp; Ruban</button>
+      <button class="tab" data-view="ruban">Référentiel</button>
+      <button class="tab" data-view="dossier">Dossier</button>
     </nav>
   </div>
 
   <main>
     <section id="dashboard" class="view active-view">
       <!-- Zone hebdomadaire : ce qu'on vient regarder tous les jours.
-           « Ma semaine » et « Prochainement » sont rendus par renderDashboard(). -->
+           « Ma semaine », « Prochainement » et « Urgences » (pile fusionnée
+           salle/véhicule/ordre de mission, REGLES.md #25) sont rendus par
+           renderDashboard(). -->
       <div class="zone-haute">
-        <section class="panel bande-bloc" id="dashSemaine"></section>
-        <section class="panel bande-bloc" id="dashProchainement"></section>
-
-        <div class="ligne-trois">
-          <section class="panel todo-panel priority-panel" id="todoPriorityPanel">
-            <div class="panel-heading-inline">
-              <h3>À faire</h3>
-            </div>
-            <textarea id="todoNotes" class="todo-notes" rows="4" placeholder="Noter rapidement ce qu'il reste à faire… (enregistré automatiquement)"></textarea>
-          </section>
-          <details class="panel panel-collapsible rooms-panel" id="roomsPanel" data-open-key="dash:rooms">
-            <summary>
-              <div class="panel-heading-inline">
-                <h3>À réserver</h3>
-                <span id="roomsSummaryBadge" class="frais-badge"></span>
+        <div class="dash-grille">
+          <div class="dash-col-gauche">
+            <section class="panel bande-bloc" id="dashSemaine"></section>
+            <section class="panel bande-bloc" id="dashProchainement"></section>
+            <section class="panel urgences-panel" id="urgencesPanel" hidden>
+              <div class="panel-heading-inline urgences-tete">
+                <h3>Urgences</h3>
+                <span id="urgencesBadge" class="urgence-compte"></span>
+                <span class="urgences-sous">salles, matériel, véhicules, ordres de mission — par échéance</span>
               </div>
-            </summary>
-            <label class="checkbox-inline checkbox-discreet">
-              <input type="checkbox" id="showBookedRoomsToggle" />
-              <span>Afficher les salles déjà réservées</span>
-            </label>
-            <div id="roomsList" class="list"></div>
-            <div class="rooms-export">
-              <span class="meta">Exporter :</span>
-              <button type="button" class="small secondary" data-export-rooms="csv">CSV</button>
-              <button type="button" class="small secondary" data-export-rooms="xls">Excel (.xls)</button>
-              <button type="button" class="small secondary" data-export-rooms="ods">LibreOffice (.fods)</button>
-            </div>
-            <p class="meta tight">Salle informatique ou amphithéâtre : à réserver auprès du référent, idéalement 15 jours à l'avance. Cochez « Réservée » une fois la demande faite — la ligne se retire d'elle-même.</p>
-          </details>
-          <!-- Troisième colonne, posée au lot A même vide : sa place dans la
-               charpente est décidée maintenant, son contenu (ordres de mission,
-               réservation de véhicule) arrive au lot B. Cet encart ne listera
-               PAS les frais — ceux-ci se consultent une fois par mois, en bas. -->
-          <details class="panel panel-collapsible deplacements-panel" id="deplacementsPanel" data-open-key="dash:deplacements">
-            <summary>
+              <div id="urgencesList" class="urgence-liste"></div>
+            </section>
+          </div>
+          <div class="dash-col-droite">
+            <section class="panel backlog-panel" id="backlogPanel">
               <div class="panel-heading-inline">
-                <h3>Déplacements</h3>
-                <span id="deplacementsSummaryBadge" class="frais-badge"></span>
+                <h3>Séances pas encore placées</h3>
+                <span class="badge-groupe" id="backlogBadges"></span>
               </div>
-            </summary>
-            <div id="deplacementsList" class="list"></div>
-          </details>
+              <div id="dashboardBacklog" class="session-card-grid"></div>
+              <span class="bloc-lien backlog-panel-link" data-goto-view="week" tabindex="0" role="button">Les placer dans le planning →</span>
+            </section>
+            <section class="panel todo-panel priority-panel" id="todoPriorityPanel">
+              <div class="panel-heading-inline">
+                <h3>À faire</h3>
+                <span class="meta-etiquette">privé</span>
+              </div>
+              <div id="todoList" class="todo-list"></div>
+              <textarea id="todoNewInput" class="todo-add-input" placeholder="+ ajouter une note (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+              <p class="todo-footnote meta">Une tâche cochée reste barrée jusqu’à la fin de la journée — le temps de la décocher si c’était une erreur — puis rejoint l’historique ci-dessous.</p>
+              <details class="todo-history">
+                <summary id="todoHistoryCount">Tâches faites</summary>
+                <ul id="todoHistoryList" class="todo-history-list"></ul>
+              </details>
+            </section>
+          </div>
         </div>
-
-        <details class="panel panel-collapsible" data-open-key="dash:backlog">
-          <summary>
-            <div class="panel-heading-inline">
-              <h3>Séances à placer</h3>
-              <span class="badge-groupe" id="backlogBadges"></span>
-            </div>
-          </summary>
-          <div id="dashboardBacklog" class="session-card-grid"></div>
-        </details>
       </div>
 
-      <!-- Zone mensuelle : le rangement administratif, en barres repliées. -->
+      <!-- Zone mensuelle : le rangement administratif, en cartes discrètes
+           ouvertes à la demande (REGLES.md — « les modules qu'on ouvre de
+           temps en temps »). Titre retiré (retours/ 17/08/2026, demande
+           Martin) : le filet du haut suffit à séparer les deux zones. -->
       <div class="zone-basse">
-        <h4 class="zone-titre">Une fois par mois environ</h4>
-        <div class="zone-basse-lignes">
-      <details class="panel panel-collapsible" data-open-key="dash:constraints">
-        <summary><div class="panel-heading-inline"><h3>Vacances, stages &amp; examens</h3><button id="addConstraintDashboardButton" class="small secondary">+ Période</button></div></summary>
-        <div id="constraintsList" class="list"></div>
-      </details>
+        <div class="zone-basse-grille">
       <details class="panel panel-collapsible frais-panel" id="fraisPanel" data-open-key="dash:frais">
         <summary>
           <div class="panel-heading-inline">
-            <h3>Frais de déplacement</h3>
+            <h3>Déplacements &amp; frais</h3>
+            <!-- Retours #3 (18-19/08/2026) : comme « + Période », reste visible
+                 et actionnable encart replié — remonté depuis .frais-filters.
+                 Retours #4 (18/08/2026) : bouton avant le compteur (et non
+                 après), pour retomber juste à droite du titre comme sur les
+                 autres encarts (ex. « + Période », sans badge entre les deux). -->
+            <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
             <span id="fraisSummaryBadge" class="frais-badge"></span>
           </div>
         </summary>
@@ -127,14 +132,6 @@
                 <option value="Terminée">Terminée</option>
               </select>
             </label>
-            <label>Classe
-              <select id="fraisClasseFilter">
-                <option value="all">Toutes</option>
-                <option value="GPN1">GPN1</option>
-                <option value="GPN2">GPN2</option>
-              </select>
-            </label>
-            <button type="button" id="addDeplacementButton" class="small primary">+ Déplacement</button>
           </div>
           <div class="frais-export">
             <span class="meta">Exporter (toutes lignes) :</span>
@@ -145,144 +142,167 @@
         </div>
         <div id="fraisTableWrap" class="frais-table-wrap"></div>
       </details>
+      <!-- Mise en page 2×2 (retours 17/08/2026) : l'ordre du DOM compte — grille
+           à 2 colonnes en remplissage naturel, donc Déplacements/Réunions à
+           gauche et Périodes/Amélioration à droite (voir .zone-basse-grille). -->
+      <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
+        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small">+ Période</button></div></summary>
+        <div id="constraintsList" class="list"></div>
+      </details>
       <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
         <summary>
           <div class="panel-heading-inline">
             <h3>Réunions</h3>
+            <button type="button" id="addReunionButton" class="small">+ Réunion</button>
             <span id="reunionsSummaryBadge" class="frais-badge"></span>
           </div>
         </summary>
         <div class="reunions-toolbar">
           <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
-          <button type="button" id="addReunionButton" class="small primary">+ Réunion</button>
         </div>
-        <div id="reunionsList" class="list reunions-list"></div>
+        <div id="reunionsList" class="frais-table-wrap"></div>
       </details>
       <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
         <summary>
           <div class="panel-heading-inline">
-            <h3>Bugs &amp; améliorations de l'appli</h3>
+            <h3>Améliorations de l'appli</h3>
             <span id="devNotesBadge" class="frais-badge"></span>
           </div>
         </summary>
         <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <textarea id="devNotes" class="todo-notes" rows="4" placeholder="Signaler un bug ou une idée d'amélioration de l'application… (enregistré automatiquement)"></textarea>
+        <div id="devNotesList" class="todo-list"></div>
+        <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+        <details class="todo-history">
+          <summary id="devNotesHistoryCount">Tâches faites</summary>
+          <ul id="devNotesHistoryList" class="todo-history-list"></ul>
+        </details>
       </details>
         </div>
       </div>
     </section>
 
     <section id="design" class="view">
-      <!-- Lot C [11] — une SEULE barre, fixée sous les onglets : créations,
-           filtres compactés et pliage de l'arbre. Elle remplace à elle seule le
-           titre de page, la ligne de boutons, l'encart de filtres dépliable et
-           la barre « Tout déplier ». Les menus n'ont plus d'étiquette visible :
-           leur option « tout » la porte (« Toutes promotions », « Tous
-           semestres », « Tous enseignants »), ce qui tient sur une ligne. -->
-      <div class="design-bar" role="toolbar" aria-label="Actions et filtres de la conception pédagogique">
-        <!-- Les boutons « + » ont quitté cette barre : chaque création se fait
-             désormais là où elle a du sens (tuile « + Séance » en fin de
-             séquence, « + Séquence » dans la carte d'UE, bande « + UE » en fin
-             de promotion). « + Période » reste accessible depuis le Tableau de
-             bord, les Progressions semestres et le Diagramme. -->
-        <div class="design-bar-group design-bar-filtres">
-          <select id="designPromotionFilter" title="Promotion" aria-label="Filtrer par promotion"></select>
-          <select id="designSemesterFilter" title="Semestre" aria-label="Filtrer par semestre"></select>
-          <select id="designTeacherFilter" title="Enseignant" aria-label="Filtrer par enseignant"></select>
-          <!-- Les UE restent nombreuses : elles vivent dans un petit menu déroulant
-               plutôt que d'occuper une deuxième ligne collante en permanence. -->
-          <details class="filter-pop" id="designUePop">
-            <summary title="Choisir les UE à afficher">UE<span id="designUeCount" class="filter-pop-count" hidden></span></summary>
-            <div class="filter-pop-body">
-              <p class="meta tight">Cocher des UE pour n’afficher que celles-là.</p>
-              <div id="designUeChoices" class="checkbox-row"></div>
+      <!-- Refonte « papier technique froid » (écran 2, 16/08/2026) : le sidebar
+           UE est le SEUL mécanisme de filtrage de cette vue (REGLES.md #21, sa
+           seule exception à l'estompage — cliquer une UE en sélectionne UNE
+           seule). Plus de barre de filtres, plus de recherche, plus de menu UE
+           à cocher : Promotion suffit. Case « j'y interviens » retirée le
+           18/08/2026 (retour Martin, Ajustements #2) — l'estompage des UE des
+           collègues (REGLES.md #21) reste appliqué en permanence, 3 niveaux
+           fixes : UE sélectionnée / mes UE / UE des collègues (estompées). -->
+      <div class="design-layout">
+        <aside class="design-sidebar">
+          <div class="design-sidebar-top">
+            <div class="promo-switch" role="group" aria-label="Promotion">
+              <button type="button" class="promo-switch-btn" data-design-promo="GPN1">GPN1</button>
+              <button type="button" class="promo-switch-btn" data-design-promo="GPN2">GPN2</button>
             </div>
-          </details>
-          <input id="designSearch" type="search" placeholder="Rechercher…" aria-label="Rechercher une UE, une capacité, une séquence, une séance ou un mot-clé" />
-        </div>
-        <div class="design-bar-group design-bar-arbre">
-          <button type="button" class="icon-button small" id="designExpandAll" title="Tout déplier" aria-label="Tout déplier">⊞</button>
-          <button type="button" class="icon-button small" id="designCollapseAll" title="Tout replier" aria-label="Tout replier">⊟</button>
+            <span class="design-sidebar-count" id="designSidebarCount"></span>
+          </div>
+          <div id="designSidebarList" class="design-sidebar-list"></div>
+        </aside>
+        <div class="design-detail">
+          <div id="designDetailHead" class="design-detail-head"></div>
+          <div class="design-subtabs" role="tablist" aria-label="Contenu de l’UE sélectionnée">
+            <button type="button" class="design-subtab active" data-design-tab="sequences" role="tab" aria-selected="true">Séquences <span id="designCountSequences" class="design-subtab-count"></span></button>
+            <button type="button" class="design-subtab" data-design-tab="sessions" role="tab" aria-selected="false">Séances <span id="designCountSessions" class="design-subtab-count"></span></button>
+            <button type="button" class="design-subtab" data-design-tab="capacities" role="tab" aria-selected="false">Capacités <span id="designCountCapacities" class="design-subtab-count"></span></button>
+          </div>
+          <div id="ueTree" class="ue-tree design-subtab-panel" role="tabpanel"></div>
+          <div id="designSessionsPanel" class="design-subtab-panel session-card-grid" role="tabpanel" hidden></div>
+          <div id="designCapacitiesPanel" class="design-subtab-panel" role="tabpanel" hidden></div>
         </div>
       </div>
-      <div id="ueTree" class="ue-tree"></div>
     </section>
 
     <section id="gantt" class="view">
-      <div class="page-title redundant-title">
-        <div>
-          <h2>Diagramme semestre</h2>
+      <!-- Refonte « papier technique froid » (écran 3, 16/08/2026) : bascule
+           GPN1/GPN2 + Semestre1/Semestre2 remplace les cases à cocher multi-
+           semestres ; le choix d'UE devient une rangée de cartes cliquables
+           (vrai sélecteur, comme Conception), avec « Empiler les N UE » pour
+           voir tout le semestre d'un coup. Les boutons de création disparaissent
+           d'ici (déjà atteignables : Tableau de bord/Planning pour « + Vacances »,
+           Conception pour « + Séquence »/« + Séance » en place). -->
+      <div class="progression-topbar">
+        <div class="promo-switch" role="group" aria-label="Promotion" id="ganttPromoSwitch">
+          <button type="button" class="promo-switch-btn" data-gantt-promo="GPN1">GPN1</button>
+          <button type="button" class="promo-switch-btn" data-gantt-promo="GPN2">GPN2</button>
         </div>
+        <div class="promo-switch semester-switch" role="group" aria-label="Semestre" id="ganttSemesterSwitch"></div>
+        <span class="progression-week-range" id="ganttWeekRange"></span>
+        <button type="button" class="small secondary" id="exportGanttButton">⎙ Exporter la frise</button>
       </div>
-      <!-- Lot D [17] — le filtre « Promotion » a disparu : choisir S1/S2 c'est
-           déjà choisir GPN1, et S3/S4 GPN2. Les semestres sont donc groupés par
-           promotion, ce qui rend le doublon visible et inutile. [18] — les trois
-           boutons de création rejoignent cet encart, la frise n'a plus de barre
-           d'outils à elle. -->
-      <section class="panel filters-panel">
-        <div class="filter-grid">
-          <div class="field-block field-wide">
-            <span class="field-label" id="ganttSemesterLabel">Semestres à visualiser</span>
-            <div id="ganttSemesterChoices" class="semester-pairs" role="group" aria-labelledby="ganttSemesterLabel"></div>
+
+      <div class="progression-ue-row">
+        <div class="progression-ue-cards" id="ganttUeCards"></div>
+        <label class="progression-stack-toggle">
+          <input type="checkbox" id="ganttStackedToggle" />
+          Empiler les <span id="ganttUeCount"></span> UE <span class="meta">un tableau par UE</span>
+        </label>
+      </div>
+      <p class="choice-row-note meta" id="ganttUeNote"></p>
+
+      <div id="ganttTimeline">
+        <section class="panel progression-panel" id="ganttSequencesPanel">
+          <div class="progression-panel-head">
+            <h3>Séquences</h3>
           </div>
-          <label>Densité de la frise
-            <select id="ganttDensity">
-              <option value="compact">Compacte — le semestre entier à l'écran</option>
-              <option value="comfort">Confort — titres de séquence plus lisibles</option>
-            </select>
-          </label>
-          <div class="field-block field-wide compact-ue-picker">
-            <span class="field-label">UE à afficher</span>
-            <div id="ganttUeChoices" class="checkbox-row scrollable-choice-row"></div>
+          <div class="timeline-scroll" id="ganttSequencesScroll">
+            <div id="ganttSequencesGrid" class="timeline-grid"></div>
           </div>
-        </div>
-        <div class="filter-actions">
-          <button id="addSequenceGanttButton" class="small">+ Séquence</button>
-          <button id="addSessionGanttButton" class="small">+ Séance</button>
-          <button id="addConstraintGanttButton" class="small secondary">+ Vacances / période / contrainte</button>
-        </div>
-      </section>
-      <section class="panel timeline-panel">
-        <div id="ganttTimeline" class="semester-timeline"></div>
-      </section>
+        </section>
+
+        <section class="panel progression-panel" id="ganttSessionsPanel">
+          <div class="progression-panel-head">
+            <h3>Séances</h3>
+          </div>
+          <div class="timeline-scroll" id="ganttSessionsScroll">
+            <div id="ganttSessionsGrid" class="timeline-grid"></div>
+          </div>
+          <div class="progression-panel-foot" id="ganttSessionsFoot"></div>
+        </section>
+      </div>
     </section>
 
     <section id="week" class="view">
-      <!-- Lot E [19] — même patron que la Conception : le titre de page et sa
-           description partent (l'onglet les dit déjà), et tout ce qui pilote la
-           vue tient sur une seule barre collée sous les onglets. Elle porte en
-           plus le rappel de la semaine affichée : une fois qu'on défile dans la
-           grille, c'était la seule information qu'on ne pouvait plus lire. -->
-      <div class="week-bar" role="toolbar" aria-label="Semaine affichée et actions du planning">
-        <div class="week-bar-group week-bar-semaine">
-          <button type="button" class="icon-button small" data-week-nav="prev" aria-label="Semaine précédente">‹</button>
-          <span class="week-bar-label" id="weekBarLabel"></span>
-          <button type="button" class="icon-button small" data-week-nav="next" aria-label="Semaine suivante">›</button>
-          <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
+      <!-- REGLES.md #22 : « jamais de calendrier » — le seul sélecteur de date de
+           toute l'app est cette bande de semaines (remplace l'ancien calendrier
+           mensuel qui vivait dans la colonne latérale). Bascule de période pour
+           parcourir l'année scolaire entière (trop de semaines pour une seule
+           bande lisible) ; cliquer une semaine la sélectionne pour de vrai. -->
+      <!-- 17/08 — retour Martin : le texte « Septembre-décembre S36→S53 · cliquer
+           une semaine » doublonnait les boutons Sept./Janv. juste à côté ; ceux-ci
+           suffisent seuls. « Ma trame »/export remontent ici (à la place de ce
+           texte) — ils n'ont plus besoin d'être dans la barre collante une fois
+           les flèches et « + Séance » retirés de celle-ci (redondants avec la
+           bande de semaines et les cases cliquables). -->
+      <div class="week-strip-bar">
+        <div class="promo-switch week-strip-switch" role="group" aria-label="Période affichée" id="weekStripPeriodSwitch">
+          <button type="button" class="promo-switch-btn" data-week-period="autumn">Sept. – déc.</button>
+          <button type="button" class="promo-switch-btn" data-week-period="spring">Janv. – mai</button>
+          <button type="button" class="promo-switch-btn" data-week-period="summer">Juin – août</button>
         </div>
         <div class="week-bar-group week-bar-actions">
-          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel &amp; Ruban) sur les cases libres">
+          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
-          <button id="addSessionButton" class="small">+ Séance</button>
           <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
         </div>
       </div>
+      <div id="weekStrip" class="week-strip" role="group" aria-label="Choisir la semaine affichée"></div>
+      <!-- Ajustements #2 [E2.1] (18/08/2026) — le rappel textuel de la semaine
+           sélectionnée (« S45 02/11-06/11 ») est retiré : doublon de la case
+           en surbrillance dans la bande ci-dessus. Le <select> accessible
+           reste (choix clavier/lecteur d'écran), juste plus dans une barre
+           dédiée qui n'avait plus que lui. -->
+      <select id="weekSelect" class="visually-hidden" aria-label="Semaine"></select>
       <div id="weekMeta" class="week-meta visually-hidden"></div>
       <div class="week-plan-top">
+      <div id="planningContainer" class="week-planning-main"></div>
       <aside class="week-sidebar">
-        <div id="weekCalendar" class="week-calendar-panel week-calendar-docked"></div>
-        <!-- [19] — les notes remontent du pied de page à la colonne : elles
-             parlent de la semaine affichée, elles se lisent donc à côté d'elle
-             et non après deux grilles horaires (≈ 1 500 px de défilement). -->
-        <section class="panel notes-panel">
-          <div class="panel-heading-inline">
-            <h3>Notes de semaine</h3>
-            <span class="todo-status meta" id="weekNotesStatus"></span>
-          </div>
-          <textarea id="weekNotes" rows="3" placeholder="Ex. collecte de sang, semaine EIL, absences de groupe, sortie terrain… (enregistré automatiquement)"></textarea>
-        </section>
+        <!-- Ordre conforme à la maquette : « Séances à placer » avant les notes
+             (04-planning-hebdo.png — la pile à traiter prime sur le mémo). -->
         <section class="panel backlog-panel">
           <div class="backlog-heading">
             <h3>Séances à placer</h3>
@@ -299,68 +319,55 @@
           </div>
           <div id="weekBacklog" class="backlog-list"></div>
         </section>
+        <!-- [19] — les notes remontent du pied de page à la colonne : elles
+             parlent de la semaine affichée, elles se lisent donc à côté d'elle
+             et non après deux grilles horaires (≈ 1 500 px de défilement). -->
+        <section class="panel notes-panel">
+          <div class="panel-heading-inline">
+            <h3>Notes de semaine</h3>
+            <span class="todo-status meta" id="weekNotesStatus"></span>
+          </div>
+          <textarea id="weekNotes" rows="3" placeholder="Ex. collecte de sang, semaine EIL, absences de groupe, sortie terrain… (enregistré automatiquement)"></textarea>
+        </section>
       </aside>
-      <div id="planningContainer" class="week-planning-main"></div>
       </div>
     </section>
 
 
     <section id="ruban" class="view">
-      <!-- Lot F [5] — quatrième vue au même patron que la Conception, les
-           Progressions et le Planning : titre et description retirés (l'onglet
-           les dit), modes d'affichage et filtres réunis sur une seule barre
-           collée sous les onglets. La case de recherche y devient ce qui était
-           demandé : « longue mais pas haute ». -->
-      <div class="ruban-bar" role="toolbar" aria-label="Mode d'affichage et filtres du référentiel">
-        <div class="ruban-bar-group reference-mode-switch" aria-label="Mode d'affichage">
-          <button type="button" class="active" aria-pressed="true" data-ruban-mode="ruban">Ruban</button>
-          <button type="button" aria-pressed="false" data-ruban-mode="table">Tableau détaillé</button>
-          <button type="button" aria-pressed="false" data-ruban-mode="creneaux">Créneaux type</button>
-          <button type="button" aria-pressed="false" data-ruban-mode="reference">Référentiel (M1–M8)</button>
-          <button type="button" aria-pressed="false" data-ruban-mode="pdf">PDF d'origine</button>
-        </div>
-        <!-- `#rubanFilters` garde son identifiant : setRubanMode() le masque déjà
-             par l'attribut `hidden` hors des modes Ruban et Tableau. -->
+      <!-- Écrans 5/6/7/9/10 — 3 binômes de sous-onglets sur une même ligne + une
+           recherche unifiée. Retours #3 (18-19/08/2026) : Ruban et Répartition
+           étaient un binôme imbriqué dans un seul sous-onglet (bascule interne,
+           3e barre visible seulement une fois "Ruban" ouvert) — Martin voulait
+           les 3 binômes visibles ensemble sur la même ligne dès le départ. Ruban
+           et Répartition sont donc devenus deux sous-onglets à part entière
+           (rubanTab="ruban"/"repartition"), plus de bascule imbriquée ; le
+           filtre enseignant (#rubanFilters), commun aux deux données, est
+           remonté dans cette barre plutôt que dupliqué dans chaque panneau. -->
+      <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
+          <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
+        </span>
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab active" data-ruban-tab="ruban" role="tab" aria-selected="true">Ruban</button>
+          <button type="button" class="design-subtab" data-ruban-tab="repartition" role="tab" aria-selected="false">Répartition</button>
+        </span>
+        <span class="ruban-subtab-pair">
+          <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+          <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
+        </span>
         <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
           <select id="rubanTeacherFilter" title="Enseignant / évaluateur" aria-label="Filtrer par enseignant ou évaluateur"></select>
-          <label class="refmod-search ruban-search">
-            <span aria-hidden="true">🔎</span>
-            <input id="rubanSearch" type="search" placeholder="Rechercher (capacité, UE, mot-clé)…" aria-label="Rechercher dans le ruban" />
-          </label>
           <span class="ruban-count meta" id="rubanCount"></span>
         </div>
+        <label class="refmod-search ruban-unified-search">
+          <span aria-hidden="true">🔎</span>
+          <input id="rubanUnifiedSearch" type="search" placeholder="Rechercher un mot-clé, une capacité, une UE…" aria-label="Rechercher" />
+        </label>
       </div>
 
-      <div id="rubanModeRuban" class="reference-mode-panel active-mode">
-        <!-- Les deux gestes de cette vue ne se devinent pas : ils restent écrits,
-             mais sur une ligne et seulement dans le mode concerné. -->
-        <p class="meta tight ruban-gestes">✎ pour modifier la composition d'une UE · cliquer une capacité pour l'ouvrir dans le référentiel.</p>
-        <div id="rubanGrid" class="ruban-grid"></div>
-      </div>
-
-      <div id="rubanModeTable" class="reference-mode-panel">
-        <section class="panel">
-          <div id="rubanTable" class="ruban-table-wrap"></div>
-        </section>
-      </div>
-
-      <div id="rubanModeCreneaux" class="reference-mode-panel">
-        <section class="panel filters-panel compact-filter-panel">
-          <div class="creneaux-toolbar">
-            <div class="creneaux-period-switch" aria-label="Période de l'année">
-              <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre – décembre</button>
-              <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier – mai</button>
-            </div>
-            <label>Créneaux affichés
-              <select id="creneauxTeacherFilter"></select>
-            </label>
-            <p class="meta">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
-          </div>
-        </section>
-        <div id="creneauxGrids" class="creneaux-grids"></div>
-      </div>
-
-      <div id="rubanModeReference" class="reference-mode-panel">
+      <div id="rubanModeReference" class="ruban-tab-panel" hidden>
         <section class="panel filters-panel compact-filter-panel">
           <div class="refmod-toolbar">
             <div class="refmod-modtabs" aria-label="Module du référentiel">
@@ -373,10 +380,6 @@
               <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m7" title="M7 · Montage de projet de gestion environnementale" aria-label="M7 · Montage de projet de gestion environnementale">M7</button>
               <button type="button" class="refmod-modtab" aria-pressed="false" data-ref-module="m8" title="M8 · Concertation territoriale et communication" aria-label="M8 · Concertation territoriale et communication">M8</button>
             </div>
-            <label class="refmod-search">
-              <span aria-hidden="true">🔎</span>
-              <input id="referenceModuleSearch" type="search" placeholder="Rechercher…" aria-label="Rechercher dans le module" />
-            </label>
             <div class="refmod-actions">
               <button type="button" class="secondary small" id="refmodExpand">Tout déplier</button>
               <button type="button" class="secondary small" id="refmodCollapse">Tout replier</button>
@@ -385,26 +388,207 @@
             </div>
           </div>
         </section>
-        <section class="panel refmod-panel">
-          <div id="referenceModuleContent" class="refmod-content"></div>
+        <!-- Version hybride (16/08/2026, retour de Martin) : la barre latérale de
+             navigation à plat (Général + capacités du module actif) est gardée,
+             mais le contenu central redevient exactement celui d'avant
+             (refDeclinaison/refBlocs/refGeneralSection réutilisées telles quelles). -->
+        <div class="refread-layout">
+          <aside class="refread-toc" id="refreadToc"></aside>
+          <div class="refread-body" id="refreadBody"></div>
+          <aside class="refread-chezvous" id="refreadChezVous"></aside>
+        </div>
+      </div>
+
+      <div id="rubanTabRuban" class="ruban-tab-panel" hidden>
+        <!-- Les deux gestes de cette vue ne se devinent pas : ils restent écrits,
+             mais sur une ligne. -->
+        <p class="meta tight ruban-gestes">✎ pour modifier la composition d'une UE · cliquer une capacité pour l'ouvrir dans le référentiel.</p>
+        <div id="rubanGrid" class="ruban-grid"></div>
+      </div>
+
+      <div id="rubanTabRepartition" class="ruban-tab-panel" hidden>
+        <div class="repartition-bar">
+          <span class="repartition-summary" id="repartitionSummary"></span>
+          <!-- REGLES.md #21 : estompage, jamais un retrait de lignes. -->
+          <label class="mask-toggle">
+            <input type="checkbox" id="repartitionMineToggle" checked />
+            <span>Mes UE</span>
+          </label>
+        </div>
+        <section class="panel">
+          <div id="rubanTable" class="ruban-table-wrap"></div>
         </section>
       </div>
 
-      <div id="rubanModePdf" class="reference-mode-panel">
-        <section class="panel filters-panel compact-filter-panel">
-          <div class="reference-full-toolbar">
-            <label>Document source (PDF d'origine)
-              <select id="rubanPdfSelect">
-                <option value="ruban-semestres.pdf">Ruban semestriel (vue d'ensemble)</option>
-              </select>
-            </label>
-            <a id="rubanPdfOpen" class="secondary small" href="#" target="_blank" rel="noopener">Ouvrir le PDF dans un nouvel onglet ↗</a>
+      <!-- Écran 8, neuf : semaine type de la promotion, saisie à la main (pas
+           déduite des séances réelles). Pas de glisser-déposer ni d'étirement par
+           glisser dans cette passe (voir la mémoire du chantier) : clic case vide =
+           créer, clic tuile = modifier/supprimer, même mécanique que « Mes créneaux
+           types » ci-dessous — la durée se choisit dans la modale. -->
+      <div id="rubanTabEtudiant" class="ruban-tab-panel" hidden>
+        <div class="student-toolbar">
+          <span class="promo-switch" role="group" aria-label="Promotion">
+            <button type="button" class="promo-switch-btn active" data-student-promo="GPN1" aria-pressed="true">GPN1</button>
+            <button type="button" class="promo-switch-btn" data-student-promo="GPN2" aria-pressed="false">GPN2</button>
+          </span>
+          <!-- Retours #3 (18-19/08/2026) : 2 périodes comme « Mes créneaux
+               types », la semaine type d'une promotion n'étant pas forcément
+               la même en septembre-décembre qu'en janvier-mai. -->
+          <div class="creneaux-period-switch student-period-switch" aria-label="Période de l'année">
+            <button type="button" data-student-period="autumn" class="active" aria-pressed="true">Sept. – déc.</button>
+            <button type="button" data-student-period="spring" aria-pressed="false">Janv. – mai</button>
           </div>
+          <span class="student-summary"><strong>Semaine type de la promotion</strong> <small>saisie et modifiée à la main, pas déduite</small> <span id="studentSummaryCount" class="meta"></span></span>
+          <label class="mask-toggle">
+            <input type="checkbox" id="studentMineToggle" checked />
+            <span>Mettre mes cours en avant</span>
+          </label>
+          <!-- Aucun comportement défini nulle part (même décision que « Réglages
+               d'année », Créneaux types) : présent pour la fidélité visuelle, inerte. -->
+          <button type="button" class="secondary small" id="studentExportButton" title="Pas encore branché — à définir avec Martin">⎙ Exporter</button>
+        </div>
+        <div class="student-layout">
+          <div id="studentPlanningGrid" class="tpl-grid-wrap"></div>
+          <aside class="student-aside">
+            <section class="panel compact-section">
+              <h4>Tout est modifiable</h4>
+              <p class="meta tight">Cliquer une case vide ajoute un cours ; cliquer une tuile l'ouvre pour la corriger ou la supprimer.</p>
+              <p class="meta tight">Chaque tuile porte son UE et les initiales de qui intervient.</p>
+            </section>
+            <section class="panel compact-section">
+              <h4>Lecture</h4>
+              <ul class="student-legend">
+                <li><span class="student-legend-swatch student-legend-mine"></span>mes cours — pleine couleur</li>
+                <li><span class="student-legend-swatch student-legend-other"></span>cours des collègues — en sourdine</li>
+                <li><span class="design-ue-pill is-mine">MD</span>pastille pleine = votre compte</li>
+              </ul>
+            </section>
+            <section class="panel compact-section">
+              <h4>À quoi ça sert</h4>
+              <p class="meta tight">Savoir quand la promotion est disponible avant de placer une sortie.</p>
+              <p class="meta tight">Repérer les collisions avec l'enseignement général.</p>
+              <p class="meta tight">Fournir la page « emploi du temps de la promotion » du dossier.</p>
+              <p class="meta tight">Rien n'en est déduit, rien n'en sort : pas d'accès étudiant.</p>
+            </section>
+          </aside>
+        </div>
+      </div>
+
+      <div id="rubanModeCreneaux" class="ruban-tab-panel" hidden>
+        <section class="panel filters-panel compact-filter-panel">
+          <div class="creneaux-toolbar">
+            <span class="creneaux-toolbar-label">Ma trame de l'année</span>
+            <div class="creneaux-period-switch" aria-label="Période de l'année">
+              <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre → décembre</button>
+              <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier → mai</button>
+            </div>
+            <span class="creneaux-summary" id="creneauxSummary"></span>
+            <label class="creneaux-teacher-filter">Créneaux affichés
+              <select id="creneauxTeacherFilter"></select>
+            </label>
+          </div>
+          <p class="meta tight">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
         </section>
-        <section class="panel reference-pdf-panel">
-          <iframe id="rubanPdfFrame" class="reference-pdf-frame" title="PDF du ruban pédagogique" src=""></iframe>
-          <p class="reference-pdf-fallback meta">Si le PDF ne s'affiche pas ici, utilisez le bouton « Ouvrir le PDF dans un nouvel onglet ».</p>
-        </section>
+        <div id="creneauxGrids" class="creneaux-grids"></div>
+      </div>
+
+      <!-- 18/08 — Lot F : « une page avec les liens vers les PDF du référentiel ou
+           ruban […] barre latérale gauche avec la liste organisée des PDF
+           disponibles et un espace central d'ouverture/lecture ». Même géométrie que
+           #refread-layout (sidebar + panneau central), sans la 3e colonne « Chez
+           vous » qui n'a pas de sens ici (pas de capacité, juste des documents). -->
+      <div id="rubanTabPdf" class="ruban-tab-panel" hidden>
+        <div class="pdf-lib-layout">
+          <aside class="pdf-lib-toc" id="pdfLibToc"></aside>
+          <div class="pdf-lib-viewer" id="pdfLibViewer">
+            <iframe id="pdfLibFrame" title="Aperçu du PDF sélectionné"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Écran 11 — Dossier : compositeur (3 colonnes) + document imprimé qui en
+         est la vraie sortie. Le contenu des pages vient entièrement des données
+         réelles déjà saisies ailleurs (UE/séquences/séances/référentiel) : rien
+         de nouveau à ressaisir ici, seul le CHOIX des sections à sortir et la
+         case « Bilan de l'unité » (state.ues[].bilan, nouveau champ, seul ajout
+         de donnée de ce chantier) vivent dans cet écran. Pagination réelle : le
+         nombre de pages dépend du contenu de l'UE choisie (pas figé à 7 — c'est
+         le cas de l'UE 1.1 du dossier de référence, pas une constante). -->
+    <section id="dossier" class="view">
+      <div class="dossier-layout">
+        <aside class="dossier-sidebar">
+          <section class="dossier-block">
+            <h3 class="dossier-block-title">1 · L'unité</h3>
+            <label class="checkbox-inline dossier-mine-filter"><input type="checkbox" id="dossierMineFilter" />Mes UE seulement</label>
+            <select id="dossierUeSelect" class="dossier-ue-select"></select>
+            <div id="dossierUeSummary" class="dossier-ue-summary"></div>
+          </section>
+          <section class="dossier-block">
+            <h3 class="dossier-block-title">2 · Les sections <span id="dossierSectionsCount" class="dossier-block-count"></span></h3>
+            <div id="dossierSectionsList" class="dossier-sections-list"></div>
+          </section>
+        </aside>
+
+        <div class="dossier-preview">
+          <div class="dossier-preview-bar">
+            <span class="dossier-preview-label">Aperçu</span>
+            <span id="dossierPageCount" class="dossier-preview-count"></span>
+            <div class="dossier-view-switch" role="tablist" aria-label="Mode d'aperçu">
+              <span class="dossier-view-switch-hint">planches</span>
+              <button type="button" data-dossier-view="grille" class="active" aria-pressed="true">Grille</button>
+              <button type="button" data-dossier-view="lecture" aria-pressed="false">Lecture</button>
+            </div>
+          </div>
+          <div id="dossierPreviewGrille" class="dossier-preview-grille"></div>
+          <div id="dossierPreviewLecture" class="dossier-preview-lecture" hidden></div>
+        </div>
+
+        <aside class="dossier-avant-imprimer">
+          <h3 class="dossier-block-title">3 · Avant d'imprimer</h3>
+          <div id="dossierCompleteness" class="dossier-completeness"></div>
+          <div id="dossierGaps" class="dossier-gaps"></div>
+          <div class="dossier-print-options">
+            <label class="checkbox-inline">
+              <input type="checkbox" id="dossierOptFooterDate" checked />
+              <span>Pied de page avec la date d'édition</span>
+            </label>
+            <label class="checkbox-inline">
+              <input type="checkbox" id="dossierOptPageOf" />
+              <span>Numéroter en « page n sur N »</span>
+            </label>
+          </div>
+          <button type="button" id="dossierPrintButton" class="primary dossier-print-button"></button>
+          <button type="button" id="dossierPdfButton" class="secondary dossier-print-button">Enregistrer en PDF</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Écran 13 — Ordre de mission : pas un onglet permanent (absent de
+         .header-tabs), atteint uniquement depuis Urgences (data-open-mission
+         sur le Tableau de bord). Document A4 édité en place, cf. le vrai PDF
+         de l'établissement (retours/, non commité) et la maquette
+         13-ordre-de-mission-ordinateur.png. -->
+    <section id="missionView" class="view mission-view">
+      <div class="mission-topbar">
+        <button type="button" id="missionBackButton" class="lien mission-back">‹ Urgences</button>
+        <h2 id="missionTitle" class="mission-title"></h2>
+        <span id="missionStatus" class="mission-status"></span>
+        <span class="mission-hint">✎ cliquer un champ du document pour le modifier</span>
+      </div>
+      <div class="mission-body">
+        <article id="missionDocument" class="mission-document"></article>
+      </div>
+      <div class="mission-footer">
+        <div class="mission-destinataires">
+          <span class="mission-footer-label">ENVOYER À</span>
+          <div id="missionDestinatairesList" class="mission-chips"></div>
+          <button type="button" id="missionAddDestinataire" class="lien">+ adresse</button>
+        </div>
+        <div class="mission-footer-actions">
+          <button type="button" id="missionPdfButton" class="secondary">Enregistrer le PDF</button>
+          <button type="button" id="missionSendButton" class="primary">Envoyer</button>
+        </div>
       </div>
     </section>
   </main>
@@ -525,6 +709,64 @@
     </form>
   </dialog>
 
+  <!-- Écran 8 — Planning étudiant : même patron que #templateDialog (Créneaux
+       types), dupliqué plutôt que paramétré pour ne pas risquer de régression sur
+       Créneaux types (déjà approuvé). Pas de champ Position L/R : la maquette ne
+       montre aucune cellule scindée pour cet écran. -->
+  <dialog id="studentSlotDialog" class="modal">
+    <form method="dialog" id="studentSlotForm">
+      <header class="modal-header">
+        <h3 id="studentSlotModalTitle">Ajouter un cours</h3>
+        <button type="button" class="icon-button" id="closeStudentSlotModal">×</button>
+      </header>
+      <input type="hidden" id="studentSlotId" />
+      <input type="hidden" id="studentSlotPromotion" />
+      <input type="hidden" id="studentSlotPeriod" />
+      <div class="form-grid">
+        <label>Jour
+          <select id="studentSlotDay"></select>
+        </label>
+        <label>Début
+          <select id="studentSlotStart"></select>
+        </label>
+        <label>Fin
+          <select id="studentSlotEnd"></select>
+        </label>
+        <label>UE concernée
+          <select id="studentSlotUe"></select>
+        </label>
+        <label id="studentSlotUeCodeField" hidden>Code / libellé libre
+          <input id="studentSlotUeCode" placeholder="Ex. PLURI, EPS…" />
+        </label>
+        <label>Intitulé
+          <input id="studentSlotTitle" placeholder="Ex. Botanique, Mathématiques…" />
+        </label>
+        <label>Salle / lieu
+          <input id="studentSlotRoom" placeholder="Salle, labo, terrain, salle info…" />
+        </label>
+        <label>Enseignant(s)
+          <input id="studentSlotTeacher" placeholder="Initiales séparées par des virgules" />
+        </label>
+        <div class="field-block span-full">
+          <span class="field-label">Couleur</span>
+          <div class="color-picker-field">
+            <div id="studentSlotColorSwatches" class="color-swatch-grid"></div>
+            <label class="color-swatch color-swatch-custom" title="Autre couleur…">
+              <input type="color" id="studentSlotColorInput" value="#9aa0ad" />
+            </label>
+            <button type="button" id="studentSlotColorAuto" class="small secondary" title="Revenir à la couleur de l'UE">Auto</button>
+          </div>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" id="deleteStudentSlotButton" class="danger">Supprimer</button>
+        <span class="spacer"></span>
+        <button type="button" class="secondary" id="cancelStudentSlotButton">Annuler</button>
+        <button type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
   <dialog id="sequenceDialog" class="modal large-modal">
     <form method="dialog" id="sequenceForm">
       <header class="modal-header">
@@ -532,110 +774,132 @@
         <button type="button" class="icon-button" id="closeSequenceModal">×</button>
       </header>
       <input type="hidden" id="sequenceId" />
-      <fieldset class="form-section">
-        <legend>1. Entête et rattachements</legend>
+      <!-- Écran 12 : le haut du menu porte ce qui rend l'objet identifiable et
+           situable (nom, rattachement, semaines, qui intervient, couleur).
+           UE/Promotion restent de vrais champs modifiables (pas juste un
+           contexte figé comme dans la maquette) : cette modale sert aussi à
+           éditer une séquence existante, dont on peut vouloir changer l'UE. -->
+      <div class="menu-header-fields">
         <div class="form-grid">
+          <label>Nom de la séquence
+            <input id="sequenceTitle" required placeholder="Ex. Botanique" />
+          </label>
           <label>UE de rattachement
             <select id="sequenceUe" required></select>
-          </label>
-          <label>Titre de séquence
-            <input id="sequenceTitle" required placeholder="Ex. Botanique" />
           </label>
           <label>Promotion
             <select id="sequencePromotion"></select>
           </label>
-          <input type="hidden" id="sequenceSemester" />
-          <input type="hidden" id="sequenceWeeks" />
-          <input type="hidden" id="sequenceStartDate" />
-          <input type="hidden" id="sequenceEndDate" />
-          <div class="field-block sequence-period-field">
-            <span class="field-label">Période temporelle envisagée</span>
-            <div class="sequence-period-layout">
-              <div id="sequenceCalendar" class="sequence-calendar"></div>
-              <div class="sequence-period-side">
-                <small id="sequencePeriodWeeks" class="period-weeks-hint"></small>
-                <p class="form-help tight">Choisissez la période dans le calendrier : un clic pour la semaine de début, un second pour la semaine de fin (n° de semaine S.. affichés).</p>
-                <label>Commentaire de période
-                  <input id="sequencePeriodNote" placeholder="Ex. avant les vacances d’automne, janvier-février, après sortie terrain…" />
-                </label>
-                <label>Volume horaire estimatif
-                  <input id="sequenceHours" placeholder="Optionnel : à arbitrer, 6h, 8h-10h…" />
-                </label>
-              </div>
+        </div>
+        <input type="hidden" id="sequenceSemester" />
+        <input type="hidden" id="sequenceWeeks" />
+        <div class="form-grid compact-grid">
+          <div class="field-block">
+            <span class="field-label">Quand · en semaines</span>
+            <div class="week-range-field">
+              <input id="sequenceWeekStart" class="week-input" placeholder="S37" maxlength="4" autocomplete="off" />
+              <span class="week-range-arrow">→</span>
+              <input id="sequenceWeekEnd" class="week-input" placeholder="S38" maxlength="4" autocomplete="off" />
+            </div>
+            <small id="sequencePeriodWeeks" class="period-weeks-hint"></small>
+            <div id="sequenceCalendar" class="sequence-calendar"></div>
+          </div>
+          <div class="field-block">
+            <span class="field-label">Volume horaire prévu</span>
+            <div class="hours-stepper">
+              <button type="button" class="hours-stepper-btn" id="sequenceHoursMinus" aria-label="Diminuer le volume horaire">−</button>
+              <input id="sequenceHours" class="hours-stepper-value" inputmode="numeric" placeholder="0" />
+              <button type="button" class="hours-stepper-btn" id="sequenceHoursPlus" aria-label="Augmenter le volume horaire">+</button>
+              <span class="hours-stepper-unit">h</span>
             </div>
           </div>
-          <!-- Lot C-bis — « Type de séquence » et « Statut » retirés du formulaire.
-               Le statut ne pilotait rien, il ne faisait que s'afficher. Le type ne
-               servait plus qu'à teinter la bande de frise, et seulement quand il
-               était renseigné (le cas « Standard » retombait déjà sur le titre).
-               Les valeurs déjà enregistrées sont CONSERVÉES telles quelles (voir
-               `existingSeqType` / `existingSeqStatus` dans app.js) : les frises
-               existantes gardent donc leur couleur. -->
-          <label>Couleur de la séquence
-            <span class="seq-color-field">
+        </div>
+        <!-- Lot C-bis — « Type de séquence » et « Statut » retirés du formulaire.
+             Le statut ne pilotait rien, il ne faisait que s'afficher. Le type ne
+             servait plus qu'à teinter la bande de frise, et seulement quand il
+             était renseigné (le cas « Standard » retombait déjà sur le titre).
+             Les valeurs déjà enregistrées sont CONSERVÉES telles quelles (voir
+             `existingSeqType` / `existingSeqStatus` dans app.js) : les frises
+             existantes gardent donc leur couleur. -->
+        <div class="field-block span-full">
+          <span class="field-label">Qui intervient</span>
+          <div id="sequenceTeacherChoices" class="checkbox-row"></div>
+          <input type="hidden" id="sequenceTeacher" />
+          <input id="sequenceTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+        </div>
+        <div class="field-block span-full">
+          <span class="field-label">Couleur de la séquence <small>— ses séances en héritent</small></span>
+          <div class="color-picker-field">
+            <div id="sequenceColorSwatches" class="color-swatch-grid"></div>
+            <label class="color-swatch color-swatch-custom" title="Autre couleur…">
               <input type="color" id="sequenceColorInput" value="#2f6f73" />
-              <button type="button" id="sequenceColorAuto" class="small secondary" title="Revenir à la couleur automatique">Auto</button>
-              <span class="meta">Les séances héritent de cette couleur (Conception, Progression semestre, Planning hebdo).</span>
-            </span>
-          </label>
-          <div class="field-block span-full">
-            <span class="field-label">Enseignant(s) impliqué(s)</span>
-            <div id="sequenceTeacherChoices" class="checkbox-row"></div>
-            <input type="hidden" id="sequenceTeacher" />
-            <input id="sequenceTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+            </label>
+            <button type="button" id="sequenceColorAuto" class="small secondary" title="Revenir à la couleur automatique">Auto</button>
           </div>
         </div>
-      </fieldset>
+      </div>
+
+      <hr class="menu-divider" />
+      <p class="menu-optional-hint">Le reste, si vous l’avez déjà <span>facultatif — se complète aussi sur la fiche</span></p>
+
       <fieldset class="form-section">
-        <legend>2. Capacités et cadrage référentiel</legend>
+        <legend>Capacités et cadrage référentiel</legend>
         <p class="form-help">Cocher les capacités effectivement travaillées dans la séquence. La liste se met à jour selon l’UE choisie.</p>
         <div id="sequenceCapacityChoices" class="checkbox-grid"></div>
         <div id="sequenceCapacityDetails" class="reference-capacity-details"></div>
         <input type="hidden" id="sequenceCapacities" />
       </fieldset>
-      <fieldset class="form-section">
-        <legend>3. Contenu pédagogique</legend>
-        <div class="two-column-form">
-          <label>Objectifs de la séquence
-            <textarea id="sequenceObjectives" rows="5"></textarea>
-          </label>
-          <label>Apprentissages à réaliser / savoir-faire visés
-            <textarea id="sequenceLearningOutcomes" rows="5"></textarea>
-          </label>
-          <label>Prérequis
-            <textarea id="sequencePrerequisites" rows="4"></textarea>
-          </label>
-          <label>Mots-clés / notions structurantes
-            <textarea id="sequenceKeywords" rows="4" placeholder="Séparer par virgules ou retours ligne"></textarea>
-          </label>
-          <input type="hidden" id="sequenceTeachingMethods" />
-          <label>Point de vigilance
-            <textarea id="sequenceDifferentiation" rows="4" placeholder="Besoins élèves, vigilance terrain, points bloquants, classe, contraintes particulières…"></textarea>
-          </label>
+
+      <div class="two-column-form">
+        <label>Objectifs de la séquence
+          <textarea id="sequenceObjectives" rows="4"></textarea>
+        </label>
+        <label>Mots-clés / notions structurantes
+          <textarea id="sequenceKeywords" rows="4" placeholder="Séparer par virgules ou retours ligne"></textarea>
+        </label>
+        <label>Apprentissages à réaliser / savoir-faire visés
+          <textarea id="sequenceLearningOutcomes" rows="4"></textarea>
+        </label>
+        <label>Prérequis
+          <textarea id="sequencePrerequisites" rows="3"></textarea>
+        </label>
+        <label>Point de vigilance <small>— lu avant la séance, ne sort jamais</small>
+          <textarea id="sequenceDifferentiation" rows="4" placeholder="Besoins élèves, vigilance terrain, points bloquants, classe, contraintes particulières…"></textarea>
+        </label>
+        <div class="field-block">
+          <span class="field-label">Évaluation</span>
+          <div class="assessment-type-buttons" id="sequenceAssessmentTypeButtons">
+            <button type="button" class="active" data-assessment-type="">aucune</button>
+            <button type="button" data-assessment-type="ccf">CCF</button>
+            <button type="button" data-assessment-type="formative">évaluation formative</button>
+          </div>
+          <input type="hidden" id="sequenceAssessmentType" />
         </div>
-      </fieldset>
-      <fieldset class="form-section">
-        <legend>4. Évaluation</legend>
-        <div class="two-column-form">
-          <label>Évaluation prévue
-            <textarea id="sequenceAssessment" rows="4"></textarea>
-          </label>
-          <label>Production attendue / traces élèves
-            <textarea id="sequenceDeliverables" rows="4" placeholder="Compte rendu, carte, diagnostic, support de médiation, restitution orale…"></textarea>
-          </label>
-        </div>
-        <input type="hidden" id="sequenceResources" />
-        <input type="hidden" id="sequenceAdjustmentNotes" />
-      </fieldset>
-      <label>Notes internes
-        <textarea id="sequenceNotes" rows="4" placeholder="Contraintes, arbitrages horaires, points à confirmer…"></textarea>
+        <label>Évaluation prévue — précisions
+          <textarea id="sequenceAssessment" rows="3"></textarea>
+        </label>
+        <label>Production attendue / traces élèves
+          <textarea id="sequenceDeliverables" rows="3" placeholder="Compte rendu, carte, diagnostic, support de médiation, restitution orale…"></textarea>
+        </label>
+        <label>Commentaire de période
+          <input id="sequencePeriodNote" placeholder="Ex. avant les vacances d’automne, janvier-février, après sortie terrain…" />
+        </label>
+      </div>
+
+      <input type="hidden" id="sequenceTeachingMethods" />
+      <input type="hidden" id="sequenceResources" />
+      <input type="hidden" id="sequenceAdjustmentNotes" />
+
+      <label>Notes internes / bilan <small>— s’écrit en cours de route</small>
+        <textarea id="sequenceNotes" rows="3" placeholder="Contraintes, arbitrages horaires, points à confirmer…"></textarea>
       </label>
+
       <footer class="modal-footer">
         <button type="button" id="exportSequenceButton" class="secondary">Export séquence</button>
         <button type="button" id="deleteSequenceButton" class="danger">Supprimer</button>
         <span class="spacer"></span>
         <button type="button" class="secondary" id="cancelSequenceButton">Annuler</button>
-        <button type="submit">Enregistrer</button>
+        <button type="submit" id="submitSequenceButton">Créer la séquence</button>
       </footer>
     </form>
   </dialog>
@@ -647,194 +911,198 @@
         <button type="button" class="icon-button" id="closeSessionModal">×</button>
       </header>
       <input type="hidden" id="sessionId" />
-      <fieldset class="form-section">
-        <legend>1. Entête et rattachements</legend>
+      <div class="menu-header-fields">
         <div class="form-grid">
-          <label>Titre de séance
+          <label>Nom de la séance
             <input id="sessionTitle" required placeholder="Ex. TP détermination botanique" />
           </label>
           <label>UE
             <select id="sessionUe"></select>
           </label>
-          <label>Séquence
+          <div class="field-block">
+            <span class="field-label">Rattachement à une séquence</span>
             <select id="sessionSequence"></select>
-          </label>
+            <label class="checkbox-inline checkbox-discreet">
+              <input type="checkbox" id="sessionNoSequence" />
+              <span>Sans séquence <small>— la séance existe seule et se range en « hors séquence »</small></span>
+            </label>
+          </div>
           <label>Promotion
             <select id="sessionPromotion"></select>
           </label>
-          <label>Type
-            <select id="sessionType">
-              <option>Cours en salle</option>
-              <option>Cours en salle informatique</option>
-              <option>TD</option>
-              <option>TP</option>
-              <option>Terrain</option>
-              <option>PLURI</option>
-              <option>Autonomie</option>
-              <option>Projet tutoré</option>
-              <option>Évaluation</option>
-              <option>Sortie</option>
-              <option>Stage</option>
-              <option>Semaine thématique</option>
-              <option>Autre</option>
-            </select>
-          </label>
-          <label>Groupe
-            <select id="sessionDemiGroupe">
-              <option value="">Classe entière</option>
-              <option value="A">Groupe A</option>
-              <option value="B">Groupe B</option>
-            </select>
-          </label>
-          <div class="field-block span-full">
-            <span class="field-label">Enseignant(s)</span>
-            <div id="sessionTeacherChoices" class="checkbox-row"></div>
-            <input type="hidden" id="sessionTeacher" />
-            <input id="sessionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
-          </div>
-          <!-- Lot C-bis — champ « Statut pédagogique » retiré : il était saisi ici
-               mais affiché nulle part (la pastille de la tuile montre le PLACEMENT,
-               qui est une autre information). La donnée déjà enregistrée est
-               conservée à l'identique, cf. `existingStatus` dans app.js. -->
-          <div class="span-full session-inline-row">
-            <label>Salle / lieu
-              <input id="sessionRoom" placeholder="Salle, labo, terrain, salle info…" />
-            </label>
-            <label>Salle à réserver
-              <select id="sessionRoomToBook">
-                <option value="">Aucune</option>
-                <option value="info">Salle informatique</option>
-                <option value="amphi">Amphithéâtre</option>
-              </select>
-            </label>
-            <label>Couleur de la séance
-              <span class="seq-color-field">
-                <input type="color" id="sessionColorInput" value="#2f6f73" />
-                <button type="button" id="sessionColorAuto" class="small secondary" title="Revenir à la couleur héritée de la séquence">Auto</button>
-              </span>
-            </label>
-            <!-- Lot B — trois états, parce que la suite en dépend : véhicule de
-                 l'établissement = une réservation ; véhicule personnel = un ordre
-                 de mission avant, des frais après. -->
-            <label>Déplacement
-              <select id="sessionDeplacement">
-                <option value="">Aucun (sur place)</option>
-                <option value="etablissement">Véhicule de l'établissement</option>
-                <option value="personnel">Véhicule personnel</option>
-              </select>
-            </label>
-          </div>
-          <div class="span-full session-inline-row" id="sessionDeplacementSuite" hidden>
-            <label class="checkbox-inline checkbox-discreet" id="sessionVehicleBookedField" hidden>
-              <input type="checkbox" id="sessionVehicleBooked" />
-              <span>Véhicule réservé <small>→ sinon il reste dans « À réserver », alerte à 15 jours</small></span>
-            </label>
-            <label class="checkbox-inline checkbox-discreet" id="sessionOrdreMissionField" hidden>
-              <input type="checkbox" id="sessionOrdreMission" />
-              <span>Ordre de mission demandé <small>→ à faire avant le départ ; les frais se déclarent après</small></span>
-            </label>
-          </div>
         </div>
-      </fieldset>
-      <fieldset class="form-section placement-section" id="sessionPlacementSection">
-        <legend>2. Placement temporel</legend>
-        <div class="placement-choice">
-          <label>Statut de placement
-            <select id="sessionPlacementStatus">
-              <option value="fictif">Pas encore placée</option>
-              <option value="definitif">Placée à l'emploi du temps</option>
-            </select>
-          </label>
-          <label>Semaine visée
-            <select id="sessionWeek"></select>
-          </label>
-          <label>Durée prévue
-            <input id="sessionExpectedDuration" placeholder="Ex. 55 min, 2h, demi-journée" />
-            <small class="field-hint">Ajuste automatiquement la fin du créneau ci-dessous.</small>
-          </label>
-        </div>
-        <div class="placement-subpanel fictive-fields session-prediction-hidden" aria-hidden="true">
-          <select id="sessionFictiveDay">
-            <option value="">À préciser</option>
-            <option value="0">Lundi</option>
-            <option value="1">Mardi</option>
-            <option value="2">Mercredi</option>
-            <option value="3">Jeudi</option>
-            <option value="4">Vendredi</option>
+        <div class="field-block">
+          <span class="field-label">Type</span>
+          <select id="sessionType">
+            <option>Cours en salle</option>
+            <option>Cours en salle informatique</option>
+            <option>TD</option>
+            <option>TP</option>
+            <option>Terrain</option>
+            <option>PLURI</option>
+            <option>Autonomie</option>
+            <option>Projet tutoré</option>
+            <option>Évaluation</option>
+            <option>Sortie</option>
+            <option>Stage</option>
+            <option>Semaine thématique</option>
+            <option>Autre</option>
           </select>
-          <input id="sessionOrder" />
-          <input id="sessionFictiveSlot" />
         </div>
-        <div class="placement-subpanel definitive-fields">
-          <h4>Jour et horaire précis</h4>
-          <div class="form-grid compact-grid">
-            <label>Jour
-              <select id="sessionDay"></select>
+        <!-- Lot C-bis — champ « Statut pédagogique » retiré : il était saisi ici
+             mais affiché nulle part (la pastille de la tuile montre le PLACEMENT,
+             qui est une autre information). La donnée déjà enregistrée est
+             conservée à l'identique, cf. `existingStatus` dans app.js. -->
+        <div class="field-block span-full">
+          <span class="field-label">Quand · un créneau <small>— toute la semaine, cliquer un créneau puis un second pour une plage</small></span>
+          <div id="sessionSlotPicker" class="slot-picker">
+            <div class="slot-picker-weekbar">
+              <button type="button" id="sessionSlotWeekPrev" class="icon-button" aria-label="Semaine précédente">‹</button>
+              <span id="sessionSlotWeekLabel" class="slot-picker-week-label"></span>
+              <button type="button" id="sessionSlotWeekNext" class="icon-button" aria-label="Semaine suivante">›</button>
+            </div>
+            <div id="sessionSlotGrid" class="slot-grid"></div>
+            <div id="sessionSlotSummary" class="slot-picker-summary"></div>
+            <div class="slot-picker-options slot-picker-options-fixed">
+              <button type="button" class="slot-option slot-option-other" data-slot-choice="other">
+                <strong>Autre créneau</strong><small>hors trame</small>
+              </button>
+              <button type="button" class="slot-option slot-option-none" data-slot-choice="none">
+                <strong>Sans date</strong><small>à placer plus tard</small>
+              </button>
+            </div>
+            <div class="form-grid compact-grid slot-picker-custom" id="sessionCustomSlotFields" hidden>
+              <label>Jour
+                <select id="sessionDay"></select>
+              </label>
+              <label>Créneau de départ (grille)
+                <select id="sessionStart"></select>
+              </label>
+              <label>Créneau de fin (grille)
+                <select id="sessionEnd"></select>
+              </label>
+              <label>Horaire affiché — début
+                <input id="sessionCustomStart" placeholder="Ex. 8h30" />
+              </label>
+              <label>Horaire affiché — fin
+                <input id="sessionCustomEnd" placeholder="Ex. 12h00" />
+              </label>
+            </div>
+          </div>
+          <input type="hidden" id="sessionWeek" />
+          <input type="hidden" id="sessionPlacementStatus" value="fictif" />
+        </div>
+        <div class="field-block span-full">
+          <span class="field-label">Enseignants concernés</span>
+          <div id="sessionTeacherChoices" class="checkbox-row"></div>
+          <input type="hidden" id="sessionTeacher" />
+          <input id="sessionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
+        </div>
+        <div class="field-block span-full">
+          <span class="field-label">Couleur <small>— celle de la séquence par défaut</small></span>
+          <div class="color-picker-field">
+            <div id="sessionColorSwatches" class="color-swatch-grid"></div>
+            <label class="color-swatch color-swatch-custom" title="Autre couleur…">
+              <input type="color" id="sessionColorInput" value="#2f6f73" />
             </label>
-            <label>Début standard
-              <select id="sessionStart"></select>
-            </label>
-            <label>Fin standard
-              <select id="sessionEnd"></select>
-            </label>
-            <label>Date exacte si connue
-              <input id="sessionExactDate" type="date" />
-            </label>
-            <label>Horaire libre début
-              <input id="sessionCustomStart" placeholder="Ex. 8h30" />
-            </label>
-            <label>Horaire libre fin
-              <input id="sessionCustomEnd" placeholder="Ex. 12h00" />
-            </label>
+            <button type="button" id="sessionColorAuto" class="small secondary" title="Revenir à la couleur héritée de la séquence">Auto</button>
           </div>
         </div>
-      </fieldset>
-      <fieldset class="form-section">
-        <legend>3. Capacités travaillées</legend>
-        <p class="form-help">Cocher les capacités effectivement travaillées ; pré-cochées d’après la séquence rattachée.</p>
-        <!-- Lot G — le message est écrit en JS selon le cas : changer d'UE et
-             changer de séquence ne vident pas la sélection pour la même raison. -->
-        <p class="form-help tight" id="sessionCapacityResetHint" hidden></p>
-        <div id="sessionCapacityChoices" class="checkbox-grid"></div>
-      </fieldset>
-      <fieldset class="form-section">
-        <legend>4. Contenu de séance</legend>
-        <div class="two-column-form">
-          <label>Objectifs de séance
-            <textarea id="sessionObjectives" rows="3"></textarea>
+      </div>
+
+      <hr class="menu-divider" />
+
+      <div class="two-column-form">
+        <label>Objectifs de séance
+          <textarea id="sessionObjectives" rows="3"></textarea>
+        </label>
+        <label>Mots-clefs
+          <textarea id="sessionKeywords" rows="3" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
+        </label>
+        <label>Déroulé
+          <textarea id="sessionActivities" rows="3"></textarea>
+        </label>
+        <label>Points de vigilance <small>— lus avant la séance, ne sortent jamais</small>
+          <textarea id="sessionDifferentiation" rows="3"></textarea>
+        </label>
+        <label>Matériel
+          <textarea id="sessionMaterials" rows="2" placeholder="Ex. 24 loupes, flore de Bretagne × 12"></textarea>
+        </label>
+        <!-- Retours #3 (18-19/08/2026) : même mécanique que la salle/le véhicule
+             à réserver (pile Urgences du Tableau de bord). -->
+        <label class="checkbox-inline">
+          <input type="checkbox" id="sessionMaterielReserver" />
+          <span>Matériel à réserver</span>
+        </label>
+        <label>Groupe
+          <select id="sessionDemiGroupe">
+            <option value="">Classe entière</option>
+            <option value="A">Groupe A</option>
+            <option value="B">Groupe B</option>
+          </select>
+        </label>
+        <label>Notions abordées
+          <textarea id="sessionNotions" rows="2"></textarea>
+        </label>
+      </div>
+
+      <!-- Champs réels sans équivalent dans la maquette (écran 12) : la logistique
+           d'une séance alimente le tableau de bord (salle/véhicule à réserver,
+           ordre de mission, frais) — pas montrée dans le handoff mais impossible
+           à retirer sans casser ces fonctionnalités. Regroupée à part, sobrement. -->
+      <fieldset class="form-section compact-section">
+        <legend>Logistique</legend>
+        <div class="span-full session-inline-row">
+          <label>Salle / lieu
+            <input id="sessionRoom" placeholder="Salle, labo, terrain, salle info…" />
           </label>
-          <label>Mots-clefs
-            <textarea id="sessionKeywords" rows="3" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
+          <label>Salle à réserver
+            <select id="sessionRoomToBook">
+              <option value="">Aucune</option>
+              <option value="info">Salle informatique</option>
+              <option value="amphi">Amphithéâtre</option>
+            </select>
           </label>
-          <label>Déroulé
-            <textarea id="sessionActivities" rows="3"></textarea>
+          <!-- Ajustements #2 (18/08/2026) : une simple coche remplace le menu à
+               3 états — cocher déclenche en priorité la recherche d'un véhicule
+               de l'établissement (réservation, encart Urgences). Bascule vers
+               véhicule personnel/ordre de mission si indisponible : bouton dédié
+               sur la ligne Urgences (retour 17/08/2026), pas ici. -->
+          <label class="checkbox-inline">
+            <input type="checkbox" id="sessionDeplacement" />
+            <span>Déplacement <small>→ véhicule de l'établissement en priorité</small></span>
           </label>
-          <label>Notions abordées
-            <textarea id="sessionNotions" rows="3"></textarea>
+        </div>
+        <div class="span-full session-inline-row" id="sessionDeplacementSuite" hidden>
+          <label class="checkbox-inline checkbox-discreet" id="sessionVehicleBookedField" hidden>
+            <input type="checkbox" id="sessionVehicleBooked" />
+            <span>Véhicule réservé <small>→ sinon il reste dans « À réserver », alerte à 15 jours</small></span>
           </label>
-          <label>Besoins matériels
-            <textarea id="sessionMaterials" rows="3"></textarea>
-          </label>
-          <label class="session-field-hidden">Évaluation / trace attendue
-            <textarea id="sessionAssessment" rows="3"></textarea>
-          </label>
-          <label class="session-field-hidden">Travail maison / suite
-            <textarea id="sessionHomework" rows="3"></textarea>
-          </label>
-          <label>Points de vigilance
-            <textarea id="sessionDifferentiation" rows="4"></textarea>
+          <label class="checkbox-inline checkbox-discreet" id="sessionOrdreMissionField" hidden>
+            <input type="checkbox" id="sessionOrdreMission" />
+            <span>Ordre de mission demandé <small>→ à faire avant le départ ; les frais se déclarent après</small></span>
           </label>
         </div>
       </fieldset>
-      <label>Notes internes
+
+      <!-- Lot G — le message est écrit en JS selon le cas : changer d'UE et
+           changer de séquence ne vident pas la sélection pour la même raison.
+           Capacités de séance retirées du formulaire (écran 12) : aucun écran
+           ne les lit (seule une colonne d'export PDF, déjà redondante avec
+           celle de la séquence) — la case reste en base si déjà renseignée. -->
+      <p class="form-help tight" id="sessionCapacityResetHint" hidden></p>
+
+      <label>Notes internes / bilan <small>— s’écrit après la séance</small>
         <textarea id="sessionNotes" rows="3"></textarea>
       </label>
+
       <footer class="modal-footer">
         <button type="button" id="deleteSessionButton" class="danger">Supprimer</button>
         <button type="button" id="duplicateSessionButton" class="secondary" title="Créer une copie « à placer » de cette séance (semaine suivante si elle était placée)">Dupliquer</button>
         <span class="spacer"></span>
         <button type="button" class="secondary" id="cancelSessionButton">Annuler</button>
-        <button type="submit">Enregistrer</button>
+        <button type="button" id="chainSessionButton" class="secondary">Créer et enchaîner</button>
+        <button type="submit" id="submitSessionButton">Créer la séance</button>
       </footer>
     </form>
   </dialog>
@@ -1060,7 +1328,6 @@
     </form>
   </dialog>
 
-  <div id="saveStatus" class="save-toast" role="status" aria-live="polite">Chargement…</div>
   </div>
 
   <script src="reference-capacities.js"></script>

@@ -1,56 +1,54 @@
 /* =====================================================================
-   ORGANISATION DES COURS — BTS GPN — V7.0
-   Charte « Atlas naturaliste » (voir shared/theme.css / DESIGN.md) : mêmes
-   tokens structurels que Phytoscope et Végétations, couleur d'app = bleu
-   d'encre « Organisation » (#23458c, réservée dans DESIGN.md/theme.css,
-   remplace l'ocre #8a6d3d jugé peu satisfaisant à l'usage). Les NOMS de
+   ORGANISATION DES COURS — BTS GPN — V8.0
+   Charte « papier technique froid » (voir refonte claude design/
+   design_handoff_organisation_cours/ — REGLES.md, JETONS.md) : angle droit
+   partout, aucune ombre portée, IBM Plex Sans + JetBrains Mono, accent
+   #23458c. Remplace la charte « Atlas naturaliste » (V7.0). Les NOMS de
    variables historiques (--moss, --clay…) sont conservés tels quels (des
    centaines d'usages dans ce fichier) — seules leurs VALEURS changent.
    ===================================================================== */
 
 /* ---------- 0. Polices embarquées (copie de shared/fonts/, app déployée
    séparément sur Cloudflare Workers → shared/ n'est pas servi) ---------- */
-@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/atkinson.woff2') format('woff2')}
-@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/atkinson-bold.woff2') format('woff2')}
-@font-face{font-family:'Atkinson Hyperlegible';font-style:italic;font-weight:400;font-display:swap;src:url('./fonts/atkinson-italic.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/ibm-plex-sans.woff2') format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
 
 /* ---------- 1. Design tokens ---------- */
 :root {
-  /* Couleurs neutres (charte Atlas) */
-  --ink: #141d17;
-  --ink-soft: #2c362f;
-  --muted: #55605a;
-  --paper: #e2e7e0;
-  --surface: #fbfcf9;
-  --surface-alt: #f2f5ef;
-  --line: #d0d9ce;
-  --line-strong: #b9c4b3;
+  /* Couleurs neutres (charte papier technique froid) */
+  --ink: #191b16;
+  --ink-soft: #3b3e36;
+  --muted: #6b6a5e;
+  --paper: #f4f2ec;
+  --surface: #fffefb;
+  --surface-alt: #f0ede2;
+  --line: #d8d4c6;
+  --line-strong: #b3ac93;
 
   /* Couleur de marque — Organisation = bleu d'encre (--acc, alias charte) */
   --acc: #23458c;
   --moss: var(--acc);
   --moss-dark: #17305f;
-  --moss-soft: #dde4f2;
+  --moss-soft: #eef2f9;
   --moss-line: #b7c5e0;
 
   /* Accents fonctionnels (sémantiques, indépendants de la marque) */
-  --clay: #b8602f;
-  --clay-soft: #f4e2d3;
-  --water: #2c7a93;
+  --clay: #c08a12;
+  --clay-soft: #f4ead0;
+  --water: #2f6f73;
   --water-soft: #dcedf1;
-  --amber: #a9772a;
+  --amber: #7a5b16;
   --amber-soft: #f4ead0;
   --plum: #6e4f82;
   --plum-soft: #ece4f0;
-  --danger: #a8392b;
-  --danger-soft: #f5ded9;
-  --success: #2e7d4f;
-  --success-soft: #e1efe6;
+  --danger: #C0562B;
+  --danger-soft: #fdf3ec;
+  --success: #1F7A5C;
+  --success-soft: #eaf4ee;
 
-  /* Typographie (Atkinson Hyperlegible + JetBrains Mono, réglages inclusifs) */
-  --font-display: 'Atkinson Hyperlegible', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Typographie (IBM Plex Sans + JetBrains Mono — pas de serif dans cette app) */
+  --font-display: 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Échelle d'espacement (base 4px) */
@@ -63,13 +61,21 @@
   --sp-7: 32px;
   --sp-8: 40px;
 
-  /* Rayons & ombres */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(20, 30, 20, .07);
-  --shadow-md: 0 6px 20px rgba(20, 30, 20, .10);
-  --shadow-lg: 0 16px 40px rgba(20, 30, 20, .16);
+  /* Rayons & ombres — angle droit partout, aucune ombre portée (REGLES.md #1, #2) */
+  --r-sm: 0;
+  --r-md: 0;
+  --r-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --halo-focus: 0 0 0 3px rgba(35, 69, 140, .15); /* seule exception : champ actif */
+
+  /* Bandeau des onglets principaux (REGLES.md #4) */
+  --onglets-fond: #dedac9;
+  --onglets-filet: #c6c1ae;
+
+  /* Texte très atténué (étiquettes de section, unités, texte fantôme) */
+  --muted-2: #8a958c;
 
   /* Couleurs de groupe (promotions) */
   --gpn1: var(--clay);
@@ -101,14 +107,14 @@ a { color: var(--moss-dark); }
 ::selection { background: var(--moss-soft); }
 
 :focus-visible {
-  outline: 2.5px solid var(--water);
+  outline: 2.5px solid var(--acc);
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }
 
 /* Barre de défilement discrète (Webkit) */
 ::-webkit-scrollbar { height: 10px; width: 10px; }
-::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- 3. Utilitaires fonctionnels (ne pas styler visuellement) ---------- */
@@ -200,20 +206,24 @@ input, select, textarea {
   background: var(--surface);
   color: var(--ink);
 }
-input:focus, select:focus, textarea:focus { border-color: var(--water); }
+input:focus, select:focus, textarea:focus { border-color: var(--acc); box-shadow: var(--halo-focus); }
 textarea { resize: vertical; min-height: 5.5em; line-height: 1.4; }
 input::placeholder, textarea::placeholder { color: #9aa494; }
 
 /* ---------- 6. Coquille / layout ---------- */
 /* Bandeau foncé à fond uni + barre d'onglets, tous deux collés en haut comme
    un seul bloc (.app-sticky-header) : le bandeau étant désormais compact
-   (une seule ligne), le fixer ne mange plus de hauteur utile. Couleur du
-   bandeau pilotée par --acc (ocre « Organisation »). Texture retirée
-   (nuisait à la lecture) : fond uni --bg1.
+   (une seule ligne), le fixer ne mange plus de hauteur utile. Fond uni
+   --ink (#191b16), commun à tous les écrans desktop (REGLES.md #4).
    Bandeau sur une seule ligne : retour portail, titre + sous-titre entre
    parenthèses, bloc connexion à droite — la pastille d'équipe et le badge de
    version sortent du bandeau pour tenir la hauteur sur une seule ligne. */
-html { scroll-padding-top: 6.4rem; }
+/* Ajustements #2 [D2.1] (18/08/2026) — sans ça, changer d'UE/de promo en
+   Progression change la hauteur totale de la page, ce qui fait apparaître ou
+   disparaître la barre de défilement verticale (10px, voir plus bas) et
+   décale tout le contenu de ces quelques pixels. `scrollbar-gutter: stable`
+   réserve la place en permanence, que la barre soit visible ou non. */
+html { scroll-padding-top: 6.4rem; scrollbar-gutter: stable; }
 .app-sticky-header {
   position: sticky;
   top: 0;
@@ -222,8 +232,8 @@ html { scroll-padding-top: 6.4rem; }
 .banner {
   position: relative;
   padding: .55rem var(--sp-6);
-  --bg1: color-mix(in srgb, var(--acc) 82%, #0a1510);
-  background: var(--bg1);
+  background: var(--ink);
+  border-top: 5px solid var(--acc);
 }
 .banner-inner {
   position: relative;
@@ -245,30 +255,30 @@ html { scroll-padding-top: 6.4rem; }
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0;
-  text-shadow: 0 1px 2px rgba(0,0,0,.18);
 }
 .app-subtitle {
   font-size: .74rem;
   font-weight: 500;
   color: rgba(238,244,238,.68);
   letter-spacing: .01em;
-  text-shadow: none;
 }
-/* Indicateur de connexion, discret, dans le bandeau : remplace la grande
-   carte "Connecté" qui s'affichait au-dessus de toute l'app (peu ergonomique
-   — retour utilisateur). */
+/* Refonte « papier technique froid » (écran 1, 16/08/2026) — groupe de droite
+   du bandeau, conforme au mockup : export/import JSON (discret, hors mockup
+   mais gardé, voir index.html) puis statut de synchro + « Sauvegarder » +
+   année + avatar, dans cet ordre. Seul `.banner-right` porte `margin-left:auto`. */
+.banner-right { display: flex; align-items: center; gap: .7rem; margin-left: auto; white-space: nowrap; }
+
 .auth-compact {
   display: flex;
   align-items: center;
   gap: .35rem;
-  margin-left: auto;
   font-size: .82rem;
   color: rgba(255,255,255,.85);
   white-space: nowrap;
 }
 .auth-compact #initiales-affichees {
   font-family: var(--font-mono); font-weight: 700; letter-spacing: .02em;
-  padding: .12rem .48rem; border-radius: 999px; background: rgba(255,255,255,.16);
+  padding: .12rem .48rem; border-radius: 0; background: rgba(255,255,255,.16);
 }
 .auth-compact .lien {
   border: none;
@@ -282,15 +292,13 @@ html { scroll-padding-top: 6.4rem; }
 .auth-compact .lien:hover { opacity: 1; color: #fff; }
 .auth-compact .lien:disabled { opacity: .4; cursor: default; }
 
-/* Export / import dans le bandeau (lot A [8]). `margin-left:auto` ici : c'est ce
-   bloc qui pousse tout le groupe de droite, `.auth-compact` se range à sa suite.
-   Réduits à leur icône — le bandeau doit rester sur UNE ligne jusqu'à 390 px. */
+/* Export / import (lot A [8]) : pas dans le mockup, gardés discrets. */
 .banner-data {
-  display: flex; align-items: center; gap: .1rem;
-  margin-left: auto; white-space: nowrap;
-  color: rgba(255,255,255,.85);
+  display: flex; align-items: center; gap: .3rem;
+  white-space: nowrap;
+  color: rgba(255,255,255,.6);
 }
-.banner-data + .auth-compact { margin-left: .35rem; }
+.banner-data-label { font-size: .72rem; }
 .banner-data .lien {
   border: none; background: none; color: inherit; cursor: pointer;
   padding: .1rem .3rem; font-size: .95rem; line-height: 1; opacity: .85;
@@ -298,56 +306,63 @@ html { scroll-padding-top: 6.4rem; }
 .banner-data .lien:hover { opacity: 1; color: #fff; }
 .banner-data .lien:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
+/* Statut de synchro : ⟳ + texte persistant (remplace l'ancien toast flottant
+   .save-toast — voir #saveStatus plus bas). */
+.banner-sync { display: flex; align-items: center; gap: .3rem; font-size: .78rem; color: rgba(255,255,255,.7); }
+.banner-sync .lien {
+  border: none; background: none; color: inherit; cursor: pointer;
+  padding: .1rem .2rem; font-size: 1rem; line-height: 1; opacity: .85;
+}
+.banner-sync .lien:hover { opacity: 1; color: #fff; }
+.banner-sync .lien:disabled { opacity: .4; cursor: default; }
+
+.banner-save-btn {
+  padding: .35rem .8rem; font-size: .8rem; font-weight: 600;
+  background: var(--surface); color: var(--ink); border: 1px solid rgba(255,255,255,.3);
+  min-height: 0;
+}
+.banner-save-btn:hover { background: var(--surface-alt); }
+
+.banner-year { font-family: var(--font-mono); font-size: .76rem; color: rgba(255,255,255,.6); }
+
+@media (max-width: 640px) { .banner-year, .banner-data-label, .banner-sync span:not(.lien) { display: none; } }
+
 .tabs.header-tabs {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: .2rem;
-  padding: .4rem var(--sp-6);
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+  padding: 0 var(--sp-6);
+  background: var(--onglets-fond);
+  border-bottom: 1px solid var(--onglets-filet);
 }
 .tab {
   background: transparent;
   border: 0;
-  color: var(--muted);
-  padding: .5rem .7rem;
-  border-radius: var(--r-sm);
-  font-size: .85rem;
-  font-weight: 600;
+  color: var(--ink-soft);
+  padding: .65rem .7rem .6rem;
+  /* Retours #3 (18-19/08/2026) : agrandi pour que la ligne principale reste
+     clairement au-dessus des sous-onglets (.design-subtab, ci-dessous), qui
+     étaient jusque-là plus grands qu'elle. */
+  font-size: .92rem;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
   transition: background .12s ease, color .12s ease;
 }
-.tab:hover { background: var(--moss-soft); color: var(--moss-dark); }
-.tab.active { background: var(--moss); color: #fff; }
+.tab:hover,
+.tab.active {
+  background: var(--acc);
+  color: #fff;
+}
 /* Les actions « données » (export/import) ont quitté le Tableau de bord pour le
    bandeau titre au lot A [8] — voir `.banner-data`. */
 
-/* N5 — message d'enregistrement : toast discret et transitoire (coin bas-droit),
-   au lieu d'un texte permanent dans le bandeau titre. */
-.save-toast {
-  position: fixed;
-  right: var(--sp-4);
-  bottom: var(--sp-4);
-  z-index: 200;
-  max-width: min(70vw, 24rem);
-  padding: .5rem .8rem;
-  border-radius: var(--r-md);
-  background: var(--moss-dark);
-  color: #eef5ee;
-  font-size: .8rem;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(0,0,0,.22);
-  opacity: 0;
-  transform: translateY(.4rem);
-  pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
-}
-.save-toast.is-visible { opacity: 1; transform: translateY(0); }
-/* Étape 4 — persiste (pas de fondu automatique) tant qu'un enregistrement
-   n'est pas reparti sans erreur : sinon un échec réseau passerait inaperçu. */
-.save-toast.is-error { background: var(--danger); color: #fff; }
+/* Refonte écran 1 (16/08/2026) — le statut de synchro rejoint le bandeau
+   (mockup), texte persistant plutôt qu'un toast flottant (ancienne décision
+   N5, périmée). #saveStatus vit maintenant dans .banner-sync (voir plus haut). */
+#saveStatus { max-width: 20rem; overflow: hidden; text-overflow: ellipsis; }
+#saveStatus.is-error { color: #ffb4a0; font-weight: 700; }
 
 /* Écran large mieux exploité (tous les onglets) — 1640px laissait des bandes
    vides sur les moniteurs larges ; le contenu (grilles, tableaux) s'étire
@@ -399,7 +414,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .filters-panel { margin-bottom: var(--sp-4); }
 .filter-active-count {
   font-size: .74rem; font-weight: 600; color: #154a5c; background: var(--water-soft);
-  border-radius: 999px; padding: .15rem .6rem; white-space: nowrap;
+  border-radius: 0; padding: .15rem .6rem; white-space: nowrap;
 }
 
 /* ---------- Barre de la Conception pédagogique (lot C [11]) ----------
@@ -408,12 +423,11 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    barre « Tout déplier » : quatre bandes horizontales devenues une.
    `--hauteur-collante` est mesurée en JS (mesurerBandeauCollant) parce que les
    onglets passent sur deux lignes quand la fenêtre rétrécit.
-   Lot E [19] puis lot F [5] — le Planning hebdo (`.week-bar`) et le Référentiel
-   (`.ruban-bar`) reprennent le même patron : mêmes règles de collage, contenu
-   différent. Quatre vues sur cinq ont ainsi la même grammaire, une barre par
-   onglet, toujours au même endroit. */
-.design-bar,
-.week-bar,
+   Lot E [19] puis lot F [5] — le Référentiel (`.ruban-bar`) reprend le même
+   patron : mêmes règles de collage, contenu différent. Le Planning hebdo
+   (`.week-bar`) le partageait aussi jusqu'aux Ajustements #2 [E2.1]
+   (18/08/2026, retiré — doublonnait la case en surbrillance de la bande de
+   semaines). */
 .ruban-bar {
   position: sticky;
   /* Un pixel de recouvrement : sans lui, l'arrondi du sous-pixel laisse
@@ -430,67 +444,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
 }
-.design-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
-.design-bar-filtres { flex: 1 1 22rem; min-width: 0; }
-.design-bar-arbre { margin-left: auto; }
-/* `width: 100%` est le défaut des champs de formulaire de cette app : ici on le
-   reprend, sinon chaque menu occuperait une ligne entière et la barre ne
-   tiendrait plus sur une seule. */
-.design-bar select,
-.design-bar input[type="search"] {
-  width: auto; flex: 0 1 auto;
-  height: 1.9rem; padding: 0 .45rem;
-  font-size: .8rem; font-family: inherit;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  background: var(--surface); color: var(--ink);
-  max-width: 11rem;
-}
-.design-bar input[type="search"] { flex: 1 1 8rem; min-width: 6rem; max-width: 18rem; }
-/* Un filtre qui s'écarte de « tout » se voit : sinon, une fois l'étiquette
-   retirée, on cherche longtemps pourquoi une UE a disparu de l'arbre. */
-.design-bar select[data-actif] { border-color: var(--acc); font-weight: 600; color: var(--acc); }
-
-/* Menu « UE » : les UE sont trop nombreuses pour une barre d'une ligne, elles
-   vivent dans un petit volet flottant plutôt que sur une deuxième ligne. */
-.filter-pop { position: relative; }
-.filter-pop > summary {
-  display: flex; align-items: center; gap: .25rem;
-  height: 1.9rem; padding: 0 .5rem;
-  font-size: .8rem; font-weight: 600; color: var(--ink-soft);
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  cursor: pointer; list-style: none; white-space: nowrap;
-}
-.filter-pop > summary::-webkit-details-marker { display: none; }
-.filter-pop > summary::after { content: '▾'; font-size: .7rem; color: var(--muted); }
-.filter-pop.has-selection > summary { border-color: var(--acc); color: var(--acc); }
-.filter-pop-count {
-  font-size: .68rem; font-weight: 700; line-height: 1;
-  color: #fff; background: var(--acc);
-  border-radius: 999px; padding: .12rem .35rem;
-}
-.filter-pop-count[hidden] { display: none; }
-.filter-pop-body {
-  position: absolute; top: calc(100% + .3rem); left: 0; z-index: 5;
-  min-width: 16rem; max-width: min(30rem, 90vw);
-  max-height: 50vh; overflow-y: auto;
-  padding: var(--sp-3);
-  background: var(--surface);
-  border: 1px solid var(--line-strong); border-radius: var(--r-md);
-  box-shadow: var(--shadow-md, 0 6px 20px rgba(0,0,0,.14));
-}
 /* Sur téléphone la barre cesse d'être collante : trois lignes figées en haut
    d'un écran court coûteraient plus qu'elles ne rendent. Les menus se serrent
    à deux par ligne au lieu d'une chacun. */
 @media (max-width: 700px) {
-  .design-bar, .week-bar, .ruban-bar { position: static; gap: .35rem; }
+  .ruban-bar { position: static; gap: .35rem; }
   /* Les cinq boutons de mode occupent déjà deux lignes sur téléphone : les
      filtres repassent dessous, alignés à gauche, plutôt que serrés à droite. */
   .ruban-bar-filtres { margin-left: 0; }
-  .design-bar select { flex: 1 1 8rem; max-width: none; }
-  .design-bar input[type="search"] { flex: 1 1 7rem; max-width: none; }
-  /* La barre du planning n'a que deux groupes : ils se rangent l'un sous
-     l'autre plutôt que de laisser le second à demi vide à droite. */
-  .week-bar-actions { margin-left: 0; }
 }
 
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
@@ -561,16 +522,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 
 /* Notes libres « À faire » sur le tableau de bord */
 .todo-panel { margin-bottom: var(--sp-4); }
-.todo-actions { display: flex; align-items: center; gap: var(--sp-2); }
 .todo-status { font-size: .76rem; }
 .todo-status.has-todo { color: var(--clay); font-weight: 600; }
-.todo-notes {
-  width: 100%; min-height: 96px; resize: vertical; margin-top: var(--sp-2);
-  border: 1px solid var(--line-strong); border-radius: var(--r-md);
-  background: var(--surface-alt); padding: .6rem .7rem;
-  font: inherit; font-size: .9rem; line-height: 1.5; color: var(--ink);
-}
-.todo-notes:focus { outline: 2px solid var(--moss-soft); border-color: var(--moss-line); background: var(--surface); }
 
 /* « À faire » = entrée prioritaire du tableau de bord : pleine largeur, avant
    le bandeau de statistiques, traitement affirmé (accentué quand des notes
@@ -585,9 +538,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: color-mix(in srgb, var(--moss) 11%, var(--surface));
 }
 .priority-panel .todo-status.has-todo { color: var(--moss-dark); }
-/* Lot 5 — même correction que ci-dessus pour le panneau « Bugs & améliorations » :
-   .todo-status.has-todo seule (couleur --clay) tombait à 4,29 (illisible). */
-.dev-panel .todo-status.has-todo { color: var(--moss-dark); }
 
 /* Bannière d'alerte générique du tableau de bord (ex. salles à réserver sous 15 jours) */
 .alert-banner {
@@ -600,32 +550,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .alert-banner-ico { font-size: 1rem; }
 .alert-banner-text { flex: 1; }
 
-/* Encart « Salles à réserver » : lignes de séance + case de délestage (lecture
-   seule, pas d'édition au clic — cursor par défaut, hover neutre). */
-.room-row { align-items: center; gap: .5rem .6rem; cursor: default; flex-wrap: wrap; }
-.room-row:hover { background: var(--surface-alt); border-color: var(--line); }
-.room-row .row-main { flex: 1 1 160px; min-width: 0; }
-/* Réservée devient un vrai petit bouton (44px de cible tactile compris dans
-   la hauteur de ligne) plutôt qu'une case nue de 13px — geste le plus répété
-   de cet encart. Décochage possible grâce à la case "Afficher les salles
-   déjà réservées" (garde-fou ajouté en même temps, sans quoi une ligne
-   cochée disparaîtrait sans retour possible). */
-.room-booked-check {
-  flex: 0 0 auto; display: flex; align-items: center; gap: .4rem;
-  height: 2.2rem; padding: 0 .7rem;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
-  background: var(--surface);
-  font-size: .82rem; color: var(--ink-soft); white-space: nowrap; cursor: pointer;
-  margin-left: auto;
-}
-.room-booked-check:hover { background: var(--surface-alt); }
-.room-booked-check input[type="checkbox"] { accent-color: var(--water); width: 1.1rem; height: 1.1rem; }
-.room-row-booked { opacity: .65; }
-.room-row-booked .room-booked-check { background: var(--surface-alt); }
-@media (max-width: 900px) {
-  .room-booked-check { flex: 1 1 100%; justify-content: center; margin-left: 0; }
-}
-.room-urgent { background: var(--amber-soft); color: #7a5b16; }
+/* Bouton « Marquer réservée / Réserver » d'une ligne d'Urgences (checkbox
+   déguisée en bouton, voir #dashboard .urgence-verbe pour l'habillage). */
+.room-booked-check { cursor: pointer; }
+.room-booked-check input[type="checkbox"] { accent-color: var(--acc); }
 
 
 /* ---------- 8. Code badges (signature graphique) ---------- */
@@ -648,7 +576,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* ---------- 9. Responsive de base ---------- */
 @media (max-width: 900px) {
   .banner { padding: .55rem var(--sp-4); }
-  .tabs.header-tabs { padding: .35rem var(--sp-4); }
+  .tabs.header-tabs { padding: 0 var(--sp-4); }
   .page-title { flex-direction: column; }
   .field-wide { grid-column: auto; }
 }
@@ -658,7 +586,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   body { background: #fff; }
   .banner, .tabs, .header-tabs, .header-actions, .toolbar,
   .filters-panel, .no-print, dialog, .backlog-panel, .notes-panel, .page-title,
-  .design-bar, .week-bar, .ruban-bar { display: none !important; }
+  .design-layout aside, .design-subtabs, .ruban-bar { display: none !important; }
   main { max-width: none; padding: .4rem; }
   .view { display: block; }
   .panel, .kpi-strip { box-shadow: none; }
@@ -689,6 +617,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--line);
+  /* Retours 17/08/2026 — le fond sable, auparavant sur les fieldsets internes
+     (illisible : pourquoi CE champ précis ?), marque maintenant le bandeau de
+     titre : un seul repère visuel par menu de saisie, cohérent d'un menu à l'autre. */
+  background: var(--surface-alt);
 }
 .modal-header h3 { font-family: var(--font-display); font-size: 1.15rem; }
 .modal-footer {
@@ -709,7 +641,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-radius: var(--r-md);
   padding: var(--sp-3) var(--sp-4);
   margin: var(--sp-2) 0;
-  background: var(--surface-alt);
+  /* Retours 17/08/2026 — le fond sable ne distinguait aucune section en
+     particulier (« pourquoi CE champ ? », x2 retours) : retiré, le bandeau de
+     titre de la modale (.modal-header) porte maintenant seul ce repère. */
+  background: none;
 }
 .form-section legend {
   padding: 0 .4rem;
@@ -738,18 +673,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
 .form-grid.compact-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .two-column-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-2); }
-.sequence-period-field { grid-column: 1 / -1; }
 .period-grid { display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-2); }
-
-.placement-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-3); }
-.placement-subpanel {
-  margin-top: var(--sp-2);
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  border: 1px dashed var(--line-strong);
-  background: var(--surface);
-}
-.placement-subpanel h4 { margin-bottom: var(--sp-2); font-size: .85rem; }
 
 .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: .5rem; margin-bottom: .6rem; }
 .checkbox-item {
@@ -764,23 +688,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .checkbox-row { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
 .checkbox-chip {
   display: inline-flex; align-items: center; gap: .35rem;
-  border: 1px solid var(--line-strong); border-radius: 999px;
+  border: 1px solid var(--line-strong); border-radius: 0;
   padding: .3rem .6rem; background: var(--surface); font-size: .8rem; font-weight: 600;
 }
 .checkbox-chip input { width: 13px; height: 13px; }
-.scrollable-choice-row { max-height: none; overflow: visible; }
-.compact-ue-picker .ue-choice { padding: .2rem .5rem; }
-
-/* Lot D [17] — Progressions semestres : les 4 semestres rangés en 2 binômes de
-   promotion. C'est le groupe qui porte l'information « GPN1 / GPN2 », ce qui a
-   permis de retirer le filtre « Promotion » qui la donnait une seconde fois. */
-.semester-pairs { display: flex; flex-wrap: wrap; gap: .45rem var(--sp-4); align-items: center; }
-.semester-pair { display: inline-flex; align-items: center; gap: .45rem; }
-.semester-pair-label {
-  font-family: var(--font-mono); font-size: .74rem; font-weight: 700;
-  letter-spacing: .04em; color: var(--ink-soft);
-}
-.ue-choice { border-color: color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong)); }
 /* Lot D [16] — pourquoi ces UE-là sont cochées : sans cette phrase, un cochage
    par défaut passe pour une erreur de l'app. Occupe toute la ligne sous les cases. */
 .choice-row-note { flex: 1 0 100%; margin: .15rem 0 0; font-size: .78rem; line-height: 1.35; }
@@ -838,10 +749,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   content: '';
   flex: 0 0 auto;
   width: 10px; height: 10px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--ue-color, var(--moss));
 }
-.entity-card > summary:hover { background: var(--ue-soft, var(--surface-alt)); }
+/* 17/08 — Martin veut un bandeau de séquence coloré en permanence, pas
+   seulement au survol (l'ancienne règle ne posait le fond qu'au :hover). */
+.entity-card > summary { background: var(--ue-soft, var(--surface-alt)); }
+.entity-card > summary:hover { background: color-mix(in srgb, var(--ue-color, var(--surface-alt)) 22%, var(--surface)); }
 
 .entity-chevron {
   flex: 0 0 auto;
@@ -885,6 +799,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .entity-ue > summary .entity-title { font-size: 1.02rem; }
 .entity-sequence > summary .entity-title { font-size: .92rem; }
 .entity-tag { flex: 0 0 auto; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+/* Retours #3 (18-19/08/2026) — pastilles initiales déplacées ici depuis la
+   description de la séquence (fond pastel --ue-soft → pastille .on-tint). */
+.entity-teachers.design-ue-pills { flex: 0 0 auto; gap: .2rem; }
 .entity-count {
   flex: 0 0 auto;
   font-size: .76rem;
@@ -910,7 +827,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .keyword-chip {
   display: inline-flex; align-items: center;
   font-size: .72rem; font-weight: 600;
-  padding: .12rem .5rem; border-radius: 999px;
+  padding: .12rem .5rem; border-radius: 0;
   background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
   max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -919,7 +836,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .status-pill {
   flex: 0 0 auto;
   font-size: .72rem; font-weight: 700;
-  padding: .12rem .55rem; border-radius: 999px;
+  padding: .12rem .55rem; border-radius: 0;
   border: 1px solid transparent;
   white-space: nowrap;
 }
@@ -977,67 +894,114 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .nested-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nested-session-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
 
-/* =====================================================================
-   Lot C-bis — TROIS NIVEAUX, TROIS DENSITÉS DE COULEUR
-   Jusqu'ici UE et séquence portaient le même bandeau clair à pastille : seule
-   l'étiquette « UE »/« Séquence » les séparait, et le lot C a supprimé leur
-   dernière différence de contenu (les deux portent « Modifier »). On rend donc
-   la hiérarchie à la couleur, du plus dense au plus dilué :
-     1. UE       — aplat FONCÉ, écriture blanche (--ue-deep, garanti 4,5:1).
-     2. Séquence — bandeau clair à pastille de couleur (inchangé, l'échelon
-                   intermédiaire ne bouge pas : c'est lui qui donne l'écart).
-     3. Séance   — bandeau clair, titre encré, corps PASTEL (plus bas).
-   Les trois vont ensemble : colorer l'UE sans diluer la tuile de séance les
-   aurait rapprochées au lieu de les séparer.
-   ===================================================================== */
-.entity-ue > summary {
-  background: var(--ue-deep, var(--moss-dark));
-  padding: .6rem .75rem;
-}
-/* La pastille ronde disait « voici la couleur de cette UE » : sur un aplat de
-   cette même couleur, elle ne dit plus rien. */
-.entity-ue > summary::before { display: none; }
-.entity-ue > summary:hover { background: color-mix(in srgb, var(--ue-deep, var(--moss-dark)) 88%, #fff); }
-.entity-ue > summary .entity-chevron,
-.entity-ue > summary .entity-title { color: #fff; }
-/* Mentions secondaires : atténuées, mais pas au point de descendre sous 4,5:1 —
-   à .72rem elles restent du « petit texte » aux yeux du WCAG. C'est la marge
-   prise par deepColor (5,5) qui rend ce 88 % possible. */
-.entity-ue > summary .entity-level-label,
-.entity-ue > summary .entity-tag,
-.entity-ue > summary .entity-count { color: rgba(255, 255, 255, .88); }
-.entity-ue > summary .entity-code {
-  /* Blanc PUR : à 94 % la pastille se teintait du fond foncé et le code passait
-     sous le seuil sur les 4 teintes les plus claires de la palette. */
-  background: #fff;
-  color: var(--ue-deep, var(--moss-dark));
-  border-color: transparent;
-}
-
-/* Séquence : un ton plus discret que l'UE, toujours rattachée visuellement */
-.entity-sequence { margin-left: var(--sp-3); border-style: solid; }
+/* Séquence : le seul niveau de carte dépliable qui reste dans l'onglet
+   « Séquences » depuis la refonte écran 2 (16/08/2026) — l'UE est devenue
+   l'en-tête fixe du panneau de détail (.design-detail-head), plus une carte
+   parmi d'autres. Voir .design-* plus bas pour le sidebar et l'en-tête. */
+.entity-sequence { border-style: solid; }
 .entity-sequence > summary { padding: .5rem .7rem; }
-.entity-sequence > summary::before { width: 8px; height: 8px; }
+/* Retours #3 (18-19/08/2026) : Martin ne veut plus du petit carré de couleur
+   devant les bandeaux titres de séquence (la couleur reste lisible par le
+   fond teinté et la bordure gauche du bandeau — inutile en double). */
+.entity-sequence > summary::before { display: none; }
 
 /* Séance : volontairement une ligne plate (.row-item.session-row, voir plus
    bas), pas une carte — pour qu'on ne confonde pas ce niveau avec UE/séquence. */
 
-.promo-group {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface-alt);
-  margin-bottom: var(--sp-3);
-  overflow: hidden;
-}
-.promo-group > summary {
-  padding: .65rem var(--sp-4);
-  border-left: 0;
-  font-weight: 700;
-}
-.promo-group > summary span:first-child { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-right: .5rem; }
-.promo-group > summary strong { font-size: 1rem; color: var(--ink); }
-.promo-group > summary em { margin-left: auto; font-style: normal; color: var(--muted); font-size: .8rem; }
 .ue-tree { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* =====================================================================
+   CONCEPTION PÉDAGOGIQUE — sidebar UE + panneau de détail (écran 2, refonte
+   « papier technique froid » du 16/08/2026). Le sidebar est le SEUL filtrage
+   de cette vue (REGLES.md #21) : une promotion active, une UE sélectionnée à
+   la fois — vrai sélecteur, pas de l'estompage. 274px de large (README).
+   ===================================================================== */
+.design-layout { display: grid; grid-template-columns: 274px minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.design-sidebar {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  border-right: 1px solid var(--line); padding-right: var(--sp-3);
+  position: sticky; top: calc(var(--hauteur-collante, 6.4rem) - 1px);
+  max-height: calc(100vh - var(--hauteur-collante, 6.4rem) - var(--sp-4));
+  overflow-y: auto;
+}
+.design-sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.promo-switch { display: inline-flex; border: 1px solid var(--line-strong); }
+.promo-switch-btn {
+  padding: .35rem .8rem; font-size: .82rem; font-weight: 600;
+  background: var(--surface); color: var(--ink-soft); border: 0;
+  border-right: 1px solid var(--line-strong);
+}
+.promo-switch-btn:last-child { border-right: 0; }
+.promo-switch-btn.active { background: var(--ink); color: #fff; }
+.design-sidebar-count { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.legend-dot { width: 9px; height: 9px; flex: 0 0 auto; border: 1.5px solid var(--acc); }
+.legend-dot-filled { background: var(--acc); }
+.legend-dot-hollow { background: var(--surface); }
+.design-sidebar-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.design-sidebar-group-label {
+  font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  margin: 0 0 .3rem;
+}
+.design-ue-row {
+  display: flex; flex-direction: column; gap: .2rem; width: 100%;
+  text-align: left; padding: .5rem .55rem; margin-bottom: 1px;
+  background: var(--surface); border: 0; border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.design-ue-row:hover { background: var(--surface-alt); }
+/* 17/08 — l'UE sélectionnée doit être « plus visible, plus colorée » : on
+   reprend sa propre teinte (--ue-color, injectée en style inline) au lieu du
+   bleu d'accent fixe à 9 %. Le sable (--surface-alt) reste réservé à
+   l'atténuation « je n'y interviens pas », jamais à l'état de repos. */
+.design-ue-row.is-selected { background: color-mix(in srgb, var(--ue-color, var(--acc)) 16%, var(--surface)); border-left: 4px solid var(--ue-color, var(--acc)); padding-left: calc(.55rem - 4px); }
+.design-ue-row.is-dimmed { background: var(--surface-alt); color: var(--muted); }
+.design-ue-row.is-dimmed .design-ue-title { color: var(--muted); }
+.design-ue-row.is-empty .design-ue-count { color: var(--muted); font-style: italic; }
+.design-ue-title { font-weight: 700; font-size: .88rem; color: var(--ink); display: flex; align-items: baseline; gap: .4rem; }
+.design-ue-sub { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.design-ue-count { font-size: .76rem; color: var(--ink-soft); }
+.design-ue-pills { display: flex; gap: .25rem; }
+.design-ue-pill {
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 700;
+  padding: .05rem .3rem; border: 1.5px solid var(--acc); color: var(--acc);
+  background: var(--surface);
+}
+.design-ue-pill.is-mine { background: var(--acc); color: #fff; }
+/* Retours #3 (18-19/08/2026) — sur un fond coloré par UE/séquence (bandeau,
+   tuile séance), la pastille suit cette teinte (--ue-deep, déjà garantie
+   lisible sur le pastel de la carte) au lieu du bleu générique. */
+.design-ue-pill.on-tint { border-color: var(--ue-deep, var(--acc)); color: var(--ue-deep, var(--acc)); background: var(--surface); }
+.design-ue-pill.on-tint.is-mine { background: var(--ue-deep, var(--acc)); border-color: var(--ue-deep, var(--acc)); color: #fff; }
+
+.design-detail { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+/* 17/08 — Martin veut que l'espace d'infos basiques de l'UE sélectionnée soit
+   « mis en valeur » : bordure + fond teintés de la couleur de l'UE (--ue-color
+   posée en JS sur #designDetailHead à chaque rendu), aplat plat sans ombre. */
+.design-detail-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
+  border-left: 5px solid var(--ue-color, var(--acc)); background: var(--ue-soft, transparent);
+  padding: var(--sp-3);
+}
+.design-detail-headline h2 { margin: 0 0 .3rem; font-size: 1.15rem; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.design-detail-headline .meta-line { margin: 0; }
+.design-subtabs { display: flex; gap: var(--sp-4); border-bottom: 1px solid var(--line-strong); }
+.design-subtab {
+  padding: .5rem 0; background: none; border: 0; border-bottom: 2px solid transparent;
+  /* Retours #3 (18-19/08/2026) : nettement plus petit que .tab (ligne
+     principale, ci-dessus) — avant, ce sous-onglet était PLUS grand qu'elle,
+     brouillant la hiérarchie entre les deux barres. */
+  font-size: .76rem; color: var(--muted); font-weight: 500;
+}
+.design-subtab .design-subtab-count { font-size: .78rem; color: inherit; }
+.design-subtab:hover { background: none; color: var(--ink-soft); }
+.design-subtab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--acc); }
+.design-subtab-panel[hidden] { display: none; }
+
+@media (max-width: 900px) {
+  .design-layout { grid-template-columns: 1fr; }
+  .design-sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: var(--sp-3); position: static; max-height: none; }
+}
 
 @media (max-width: 760px) {
   .entity-card > summary { flex-wrap: wrap; }
@@ -1118,7 +1082,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .session-card-number {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 0 0 auto;
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 20px; height: 20px; border-radius: 0;
   /* Lot 5 — encre : le numéro dans le rond blanc tombait à 1,89 (illisible).
      Lot C-bis — le rond redevient blanc PUR sur l'aplat foncé : --ue-deep étant
      garanti à 5,5:1 sous du blanc, le chiffre l'est aussi par symétrie. */
@@ -1158,6 +1122,34 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .session-card-head .placement-flag.is-placed { color: #fff; }
 .session-card-head .placement-flag.is-unplaced { color: rgba(255, 255, 255, .88); }
 
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants :
+   tuile d'un ou plusieurs collègues seuls (je suis enseignant·e de l'UE, pas
+   de cette séquence/séance précise). Visible, mais sans couleur et non
+   cliquable — les 4 jetons --ue-* posés en style inline sont neutralisés en
+   !important (rien d'autre ne s'en distingue à l'œil que la couleur). */
+.session-card.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  --ue-ink: var(--ink-soft) !important;
+  --ue-deep: var(--muted) !important;
+  border-style: dashed;
+  cursor: default;
+}
+.entity-sequence.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  --ue-ink: var(--ink-soft) !important;
+  border-style: dashed;
+  cursor: default;
+}
+.entity-sequence.is-collegue .entity-card-locked-head {
+  display: flex; align-items: center; gap: .6rem; padding: .5rem .7rem;
+  background: var(--ue-soft, var(--surface-alt));
+}
+.entity-sequence.is-collegue .entity-title { flex: 1 1 auto; min-width: 0; font-family: var(--font-display); font-weight: 600; font-size: .92rem; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entity-sequence.is-collegue .entity-count { flex: 0 0 auto; font-size: .78rem; color: var(--muted); }
+.design-not-mine-hint { padding: var(--sp-3); border: 1px dashed var(--line-strong); background: var(--surface-alt); color: var(--ink-soft); }
+
 .session-card-title { font-family: var(--font-display); font-size: .9rem; font-weight: 600; line-height: 1.2; color: var(--ue-ink, var(--ink)); }
 .session-card-type {
   align-self: flex-start;
@@ -1166,7 +1158,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   background: var(--type-bg, var(--surface-alt)); color: var(--type-fg, var(--ink-soft));
 }
 .session-card-meta { margin: 0; font-size: .76rem; color: var(--ink-soft); }
-.session-card-keywords { margin: 0; font-size: .72rem; color: var(--muted); line-height: 1.25; }
+/* Retours #3 (18-19/08/2026) — pastilles initiales, tuile Conception péda +
+   réserve du Planning hebdo (fond pastel --ue-soft → pastille .on-tint). */
+.tile-teachers.design-ue-pills { gap: .2rem; }
+.tile-teachers .design-ue-pill { font-size: .6rem; padding: 0 .22rem; }
+/* 17/08 — mots-clés dans une couleur proche du titre de la séance (--ue-ink),
+   au lieu du gris --muted générique, pour mieux les rattacher visuellement. */
+.session-card-keywords { margin: 0; font-size: .72rem; color: var(--ue-ink, var(--ink-soft)); line-height: 1.25; }
 .row-title {
   font-weight: 650; font-size: .87rem; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1199,15 +1197,19 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   margin-bottom: .5rem;
   overflow: hidden;
 }
-.backlog-ue-group > summary, .backlog-seq-group > summary {
+.backlog-ue-group > summary {
   list-style: none; cursor: pointer;
   display: flex; align-items: center; gap: .5rem;
   padding: .5rem .65rem; font-weight: 650; font-size: .85rem;
 }
-.backlog-ue-group > summary::-webkit-details-marker,
-.backlog-seq-group > summary::-webkit-details-marker { display: none; }
-.backlog-seq-group > summary { font-weight: 600; font-size: .82rem; color: var(--ink-soft); background: var(--surface); }
-.backlog-ue-group > summary span, .backlog-seq-group > summary span {
+.backlog-ue-group > summary::-webkit-details-marker { display: none; }
+/* Ajustements #2 [E2.7] — niveau séquence non repliable : simple étiquette,
+   plus de <details> (voir renderWeekBacklog). */
+.backlog-seq-label {
+  display: flex; align-items: center; gap: .5rem; margin: 0;
+  padding: .5rem .65rem; font-weight: 600; font-size: .82rem; color: var(--ink-soft); background: var(--surface);
+}
+.backlog-ue-group > summary span, .backlog-seq-label span {
   margin-left: auto; color: var(--muted); font-size: .76rem; font-weight: 600;
 }
 /* Lot 10 — tuile « séance à placer » : plus de pastille « À placer » ni de
@@ -1266,48 +1268,86 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .constraint-evenement-etablissement { border-left-color: var(--water); background: var(--water-soft); color: #154a5c; }
 
 /* =====================================================================
-   DIAGRAMME SEMESTRE — frise hebdomadaire par UE
-   TOUTE la frise est une seule grille CSS (.timeline-grid). Les bandeaux
-   mois / semaines / séquences / jours sont des cellules de cette même grille,
-   donc les colonnes de semaines restent parfaitement alignées sur toutes les
-   lignes, à n'importe quelle largeur de fenêtre. La colonne d'étiquettes (à
-   gauche) est "sticky" pour rester visible au défilement horizontal.
+   PROGRESSION — refonte « papier technique froid » (écran 3, 16/08/2026).
+   Bascule GPN1/GPN2 + Semestre1/Semestre2 (mêmes classes .promo-switch que
+   Conception), rangée de cartes UE (vrai sélecteur — REGLES.md #21, exception
+   « Empiler » assumée : voir README), deux bandes encadrées et titrées
+   séparément (Séquences ↔, Séances ↕). Les deux bandes NE sont PAS imbriquées
+   dans une grille commune : elles se relient par la couleur de séquence
+   reportée sur les séances, pas par un alignement mécanique des colonnes.
    ===================================================================== */
-.timeline-panel { margin-top: var(--sp-3); }
-.semester-timeline { display: flex; flex-direction: column; gap: var(--sp-4); padding-bottom: var(--sp-2); }
-.timeline-card {
-  --timeline-label-col: 54px;
-  --timeline-week-min: 60px;
-  --timeline-row-min: 30px;
-  border: 1px solid color-mix(in srgb, var(--ue-color, var(--line-strong)) 45%, var(--line-strong));
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.timeline-title {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  padding: .55rem .8rem;
-  border-bottom: 1px solid var(--line);
-  border-left: 6px solid var(--ue-color, var(--moss));
-  background: var(--ue-soft, var(--surface-alt));
-}
-.timeline-title h4 { font-family: var(--font-display); font-size: 1rem; margin-bottom: .1rem; }
-.timeline-title p { margin: 0; color: var(--ink-soft); font-size: .76rem; }
+.progression-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+.progression-week-range { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); margin-left: auto; }
+/* 17/08 — Martin veut les boutons Promo et Semestre harmonisés : mêmes
+   dimensions que .promo-switch-btn (plus de padding propre au semestre).
+   Retours #4 (18/08/2026) : l'état sélectionné doit aussi s'« allumer »
+   comme les boutons promo — l'ancien fond clair ici propre au semestre le
+   rendait à peine visible ; retiré, .promo-switch-btn.active (fond encre,
+   texte blanc) s'applique donc identiquement aux deux. */
 
-/* Conteneur scrollable horizontal : la grille interne peut dépasser. */
+.progression-ue-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.progression-ue-cards { display: flex; gap: var(--sp-2); flex-wrap: wrap; flex: 1 1 auto; }
+.progression-ue-card {
+  display: flex; flex-direction: column; gap: .3rem; text-align: left;
+  min-width: 190px; padding: .5rem .65rem;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  cursor: pointer;
+}
+.progression-ue-card:hover { background: var(--surface-alt); }
+.progression-ue-card.is-selected {
+  border-color: var(--acc); border-width: 2px; padding: calc(.5rem - 1px) calc(.65rem - 1px);
+  background: color-mix(in srgb, var(--acc) 6%, var(--surface));
+}
+/* Retours #4 (18/08/2026) — l'opacité réduite (jusqu'ici .65 sur TOUTE la
+   carte) faisait aussi pâlir la pastille d'initiales pleine (celle qui dit
+   « c'est votre UE »), lisible comme « pas pour vous » alors que « aucune
+   séquence » n'a rien à voir avec qui enseigne l'UE. Remplacé par un
+   pointillé + fond neutre : signale « rien dedans pour l'instant », sans
+   toucher à la lisibilité du reste de la carte (pastilles comprises). */
+.progression-ue-card.is-empty { border-style: dashed; background: var(--surface-alt); }
+.progression-ue-card-title { font-weight: 700; font-size: .84rem; color: var(--ink); display: flex; align-items: baseline; gap: .35rem; }
+.progression-ue-card-sub { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--ink-soft); }
+.progression-stack-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
+
+/* Ajustements #2 [D2.3] (18/08/2026) — un seul niveau de cadre par bande, au
+   lieu de deux (la carte `.panel` générique — fond blanc, bordure, padding —
+   PUIS le cadre propre du `.timeline-grid`) : `.progression-panel` neutralise
+   le style `.panel` hérité, la seule ligne de cadre qui reste est celle de
+   `.timeline-grid`, directement autour de l'espace de frise. Le bandeau bleu
+   (avant réservé à Séquences seule) est commun aux deux bandes. */
+.progression-panel {
+  margin-top: var(--sp-3);
+  background: none; border: none; box-shadow: none; padding: 0; border-radius: 0;
+}
+.progression-panel-head {
+  display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+  margin: 0; padding: .4rem .6rem;
+  background: color-mix(in srgb, var(--acc) 10%, var(--surface));
+  border-bottom: 1px solid var(--acc);
+}
+.progression-panel-head h3 { margin: 0; color: var(--acc); text-transform: uppercase; letter-spacing: .04em; font-size: .82rem; }
+.progression-hors-fenetre { padding: .35rem .5rem; font-size: .78rem; font-style: italic; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
+.progression-panel-foot { display: flex; align-items: center; gap: .4rem; margin-top: var(--sp-2); padding: 0 .6rem; font-size: .8rem; color: var(--ink-soft); }
+.progression-day-count { font-weight: 400; }
+
+/* Conteneur scrollable horizontal : la grille interne peut dépasser. Colonne
+   d'étiquettes et coin "sticky" pour rester visibles au défilement. */
 .timeline-scroll { overflow-x: auto; }
 .timeline-grid {
+  --timeline-label-col: 130px;
+  --timeline-week-min: 92px;
+  --timeline-row-min: 34px;
   display: grid;
   /* grid-template-columns est posé inline (dépend du nombre de semaines). */
   align-items: stretch;
+  border: 1px solid var(--line-strong);
   /* Lot 8 (Q6) — PAS de min-width: max-content ici : cette règle forçait la
      grille (et donc CHAQUE colonne, via le partage des fr) à la largeur
      réclamée par le titre de séquence le plus long, même avec des colonnes en
      minmax(60px, 1fr). Sans elle, une grille CSS overflow naturellement à la
-     somme des minimums de pistes (54px + N × --timeline-week-min) quand ça ne
-     tient pas, et .timeline-scroll prend le relais avec un défilement — c'est
-     précisément le comportement voulu. */
+     somme des minimums de pistes (label + N × --timeline-week-min) quand ça
+     ne tient pas, et .timeline-scroll prend le relais avec un défilement —
+     c'est précisément le comportement voulu. */
 }
 /* Étiquettes de ligne + coins : collés à gauche. */
 .timeline-row-label, .timeline-corner {
@@ -1321,16 +1361,10 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-weight: 650; font-size: .72rem; color: var(--ink-soft);
   display: flex; align-items: center;
 }
-.header-label, .sequence-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-
-/* Ligne MOIS */
-.timeline-corner-month { background: var(--moss-dark); border-bottom-color: rgba(255,255,255,.12); }
-.timeline-month {
-  padding: .3rem .4rem; text-align: center;
-  font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: capitalize;
-  color: #e3ede4; background: var(--moss-dark);
-  border-right: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid var(--line);
-}
+/* 17/08 — Martin trouve « Mar 7 séances » trop condensé sur une seule ligne :
+   le compteur passe sous le nom du jour. */
+.timeline-row-label-day { flex-direction: column; align-items: flex-start; gap: .05rem; }
+.header-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 
 /* Ligne SEMAINES */
 .timeline-week-head {
@@ -1386,24 +1420,9 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--acc); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Ligne SÉQUENCES : une piste unique sur toute la largeur des semaines, qui
-   contient sa propre sous-grille calée sur le même nombre de colonnes. La
-   sous-grille hérite des colonnes de semaines via subgrid quand c'est
-   supporté, sinon repeat() identique. */
-.timeline-sequence-row .sequence-label { border-bottom: 1px solid var(--line); }
-.timeline-sequence-track {
-  display: grid;
-  grid-template-columns: subgrid;
-  /* Un couloir (lane) par ligne : hauteur régulière, extensible si le contenu
-     déborde. Les bandes reçoivent leur grid-row explicite en JS. */
-  grid-auto-rows: minmax(34px, auto);
-  /* Teinte chaude mais discrète : distingue la lecture HORIZONTALE de cette
-     ligne séquences de la lecture VERTICALE des journées, sans crier. */
-  background: color-mix(in srgb, var(--amber-soft) 42%, var(--surface));
-  border-bottom: 1px solid var(--line);
-  min-height: 38px; align-items: center;
-  position: relative;
-}
+/* Bandes SÉQUENCES/contraintes : bandes explicitement placées (grid-column /
+   grid-row posés en JS) à même niveau que les cases-jours, plus de sous-grille
+   dédiée depuis la refonte écran 3 (16/08/2026, deux bandes séparées). */
 /* Fond de colonne (une par semaine), derrière les bandes : maillage vertical
    léger + hachures « sans cours » pour les semaines bloquées (vacances, fériés). */
 .timeline-seq-bg {
@@ -1419,42 +1438,34 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .timeline-seq-bg.is-thematic {
   background: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, #d9b75a 55%, transparent) 7px 14px);
 }
-/* Filet sous la zone réservée aux périodes/contraintes (couloir(s) du haut). */
-.timeline-seq-zone {
-  align-self: stretch; justify-self: stretch;
-  border-bottom: 1px solid color-mix(in srgb, var(--line-strong) 70%, transparent);
-  pointer-events: none;
-}
 .timeline-sequence-band, .timeline-constraint-band { position: relative; z-index: 1; }
-@supports not (grid-template-columns: subgrid) {
-  /* Repli pour les navigateurs sans subgrid : la piste reprend exactement le
-     même patron de colonnes que la grille principale (posé inline en JS via
-     une variable identique), garantissant le même alignement. */
-  .timeline-sequence-track { grid-template-columns: repeat(var(--timeline-week-count, 1), minmax(var(--timeline-week-min), 1fr)); }
-}
+/* 18/08 — bandes « beaucoup plus fines » (consigne directe) : une seule ligne
+   flexible (titre tronqué + mots-clés + pastilles) au lieu d'un empilement de
+   2-3 lignes. min-width:0 sur les enfants flex évite qu'un titre long ne
+   pousse malgré tout la largeur de colonne (même piège que Lot 8 (Q6)). */
 .timeline-sequence-band, .timeline-constraint-band {
-  min-height: 30px; min-width: 0; margin: 3px; border-radius: var(--r-sm);
-  padding: .2rem .45rem; text-align: left; overflow: hidden;
+  min-height: 22px; min-width: 0; margin: 2px; border-radius: var(--r-sm);
+  padding: .1rem .4rem; text-align: left; overflow: hidden;
   border: 1px solid #e7d39e; background: #fbf3df; color: #6b4f12;
-  display: flex; flex-direction: column; justify-content: center;
+  display: flex; align-items: center; gap: .4rem;
 }
-.timeline-sequence-band span, .timeline-constraint-band span {
-  font-size: .56rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; opacity: .8;
-}
-/* Lot 8 (Q6) — un seul titre de séquence non tronqué forçait TOUTES les
-   colonnes de la frise à s'élargir (grille flexible : le calcul des fr
-   partage l'espace requis par un item entre toutes les pistes). Le min-width:0
-   ci-dessus supprime la contrainte de largeur minimale implicite des items de
-   grille ; le clamp 2 lignes (plutôt qu'une ellipse 1 ligne) donne au titre la
-   place de rester lisible sans repousser la colonne. */
 .timeline-sequence-band strong, .timeline-constraint-band strong {
-  font-size: .72rem; line-height: 1.15; max-height: 2.3em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.timeline-sequence-band em, .timeline-constraint-band em {
-  font-style: normal; font-size: .6rem; opacity: .85;
+  font-size: .7rem; line-height: 1.2; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;
 }
 .timeline-sequence-band { cursor: grab; }
 .timeline-sequence-band.has-blocked-week { opacity: .55; }
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants :
+   séquence de collègue(s) seul(s), visible mais pas ouvrable/glissable —
+   neutralise les jetons --ue-* posés en style inline (!important nécessaire,
+   un style inline l'emporterait sinon sur ces mêmes propriétés). */
+.timeline-sequence-band.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  border-left-style: dashed;
+  cursor: default;
+}
+.timeline-sequence-band.is-collegue strong { color: var(--ink-soft); }
 /* Bande de séquence colorée par la couleur de la séquence (famille UE).
    La même teinte est reprise par les séances associées dans les lignes jours. */
 .timeline-sequence-band.seq-colored {
@@ -1463,26 +1474,24 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   border-left: 4px solid var(--ue-color, #e7d39e);
   color: var(--ink);
 }
-.timeline-sequence-band.seq-colored span,
-.timeline-sequence-band.seq-colored em { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
 .timeline-sequence-band.seq-colored strong { color: var(--ink); }
-/* Mots-clés (B1) sous le titre de la bande de séquence, clampés à 2 lignes. */
+/* Mots-clés (B1), sur la même ligne que le titre, tronqués si besoin. */
 .timeline-sequence-band .timeline-band-keywords {
-  font-size: .56rem; line-height: 1.15; margin-top: 1px;
+  font-size: .6rem; line-height: 1.2; min-width: 0; flex: 1 1 auto;
   color: var(--ink-soft); opacity: .9;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* Pastilles d'initiales d'enseignants (B2) en bas de la bande de séquence. */
+/* Pastilles d'initiales d'enseignants (B2), calées à droite de la bande. */
 .timeline-sequence-band .timeline-band-teachers {
-  display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px;
+  display: flex; flex-wrap: nowrap; gap: 3px; flex-shrink: 0; margin-left: auto;
 }
-.timeline-sequence-band.seq-colored .teacher-pip {
-  font-size: .55rem; font-weight: 700; line-height: 1;
-  text-transform: none; letter-spacing: 0; opacity: 1;
-  padding: 2px 5px; border-radius: 999px; white-space: nowrap;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ue-color, var(--moss)) 20%, #fff);
-  border: 1px solid color-mix(in srgb, var(--ue-color, var(--moss)) 45%, transparent);
+/* Retours #3 (18-19/08/2026) — remplace l'ancien .teacher-pip (pas de style
+   « plein/vide », couleur figée) par .design-ue-pill.on-tint, harmonisé avec
+   le reste de l'appli ; ici juste resserré pour la densité de la bande. */
+.timeline-band-teachers.design-ue-pills { gap: 3px; }
+.timeline-sequence-band.seq-colored .timeline-band-teachers .design-ue-pill,
+.timeline-session.seq-tinted .timeline-band-teachers .design-ue-pill {
+  font-size: .55rem; padding: 1px 4px;
 }
 /* Séance dont le fond reprend la teinte de sa séquence. */
 .timeline-session.seq-tinted {
@@ -1492,6 +1501,18 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--ink);
 }
 .timeline-session.seq-tinted .timeline-session-type { color: color-mix(in srgb, var(--ue-color) 68%, var(--ink)); opacity: 1; }
+/* Retours #3 (18-19/08/2026) — Cas 2, même principe que .timeline-sequence-band.is-collegue. */
+.timeline-session.is-collegue {
+  --ue-color: var(--line-strong) !important;
+  --ue-soft: var(--surface-alt) !important;
+  border-left-style: dashed;
+  cursor: default;
+}
+/* 18/08 — tête de tuile : bandeau de type (déjà là) + pastilles enseignants
+   (nouveau, consigne « cohérence visuelle » avec les tuiles de Conception
+   pédagogique) sur la même ligne, alignés aux extrémités. */
+.timeline-session-head { display: flex; align-items: center; justify-content: space-between; gap: .3rem; min-width: 0; }
+.timeline-session-head .timeline-band-teachers { margin-left: 0; flex-shrink: 0; display: flex; gap: 3px; }
 .timeline-constraint-band {
   background: repeating-linear-gradient(135deg, var(--surface-alt) 0 6px, var(--line) 6px 12px);
   border-color: var(--line-strong); color: var(--ink-soft);
@@ -1517,67 +1538,71 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   display: flex; flex-direction: column; gap: .05rem;
 }
 .timeline-session:hover { filter: brightness(.97); }
-.timeline-session-type { font-size: .58rem; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; opacity: .75; }
+/* 18/08 — un type de séance long (« Cours en salle informatique ») pouvait
+   repousser la pastille enseignant hors du cadre de la tuile (flex sans
+   min-width:0 : le texte passait à la ligne au lieu de se tronquer). Une
+   ligne, tronquée par ellipse — même traitement que dans la maquette
+   (« COURS EN SAL… »). */
+.timeline-session-type {
+  font-size: .58rem; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; opacity: .75;
+  min-width: 0; flex: 1 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .timeline-session-title { font-size: .74rem; line-height: 1.15; font-weight: 650; }
 .timeline-session-meta { font-style: normal; font-size: .64rem; opacity: .9; }
 .timeline-session-keywords { font-size: .6rem; opacity: .72; line-height: 1.1; }
 
-/* Lot 8 (Q6) — la densité pilote aussi la largeur de colonne (pas seulement la
-   hauteur de ligne) : compacte fait tenir un semestre entier à l'écran,
-   confort laisse plus de place aux titres de séquence. */
-.timeline-compact { --timeline-row-min: 28px; --timeline-week-min: 60px; }
-.timeline-compact .timeline-session { padding: .2rem .35rem; }
-.timeline-comfort { --timeline-row-min: 44px; --timeline-week-min: 110px; }
-
 @media print {
-  .timeline-card { break-inside: avoid; }
+  .progression-panel { break-inside: avoid; }
   .timeline-scroll { overflow: visible; }
 }
 
 /* =====================================================================
    PLANNING SEMAINE — grille horaire opérationnelle
    ===================================================================== */
-/* ---------- Barre du Planning hebdo (lot E [19]) ----------
-   Elle hérite du collage et de l'habillage de `.design-bar` (voir plus haut) et
-   n'ajoute ici que son contenu propre : le rappel de la semaine à gauche, les
-   actions à droite. */
-.week-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
-.week-bar-semaine { gap: .15rem; }
-.week-bar-actions { margin-left: auto; gap: .5rem; }
-.week-bar-label {
-  display: inline-flex; align-items: baseline; gap: .4rem;
-  padding: 0 .35rem; min-width: 9rem;
-  font-size: .84rem; color: var(--ink);
-}
-.week-bar-label strong { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
-.week-bar-label span { font-size: .78rem; color: var(--muted); }
-.week-bar .mask-toggle { white-space: nowrap; }
+.week-strip-bar .mask-toggle { white-space: nowrap; }
 
 .week-toolbar { gap: .5rem; }
-.week-calendar-panel {
-  margin: 0 0 var(--sp-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  padding: var(--sp-3);
-  box-shadow: var(--shadow-lg);
-  display: none;
-  width: 340px;
-  max-width: 100%;
-  box-sizing: border-box;
+
+/* Bande de semaines (REGLES.md #22 — seul sélecteur de date de l'app). */
+.week-strip-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
+.week-strip-switch .promo-switch-btn { padding: .35rem .7rem; font-size: .72rem; }
+/* Ajustements #2 [E2.2] (18/08/2026) — une seule ligne qui défile
+   horizontalement (au lieu d'une grille qui repassait sur 2-3 lignes pour
+   caser toutes les semaines de la période) ; [E2.3] la semaine affichée est
+   positionnée en 2e case visible au premier rendu (voir renderWeekStrip). */
+.week-strip {
+  display: flex; overflow-x: auto; gap: 2px; margin: 0 0 var(--sp-3);
 }
-.week-calendar-panel.is-open { display: block; }
-/* Calendrier « ancré » + « Séances à placer » : colonne de gauche, empilés ;
-   le planning occupe la colonne de droite, remonté au niveau du calendrier
-   au lieu d'être repoussé sous une bande pleine largeur. Sous ~1100px, la
-   colonne repasse au-dessus du planning (flex-wrap). */
+.week-strip-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  flex: 0 0 62px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  padding: .3rem 0 .35rem; cursor: pointer; font: inherit;
+}
+.week-strip-tile:hover { background: var(--surface-alt); }
+.week-strip-tile:focus-visible { outline-offset: -2px; z-index: 1; }
+.week-strip-num { font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--ink-soft); }
+.week-strip-date { font-family: var(--font-mono); font-size: .62rem; color: var(--muted); }
+.week-strip-tile-bar { display: block; height: 3px; width: calc(100% - 14px); margin-top: 2px; background: var(--line-strong); }
+/* Férié/vacances : hachure grise neutre, jamais ambrée (REGLES.md #15). */
+.week-strip-tile.is-blocked { background: repeating-linear-gradient(135deg, var(--surface) 0 5px, var(--surface-alt) 5px 10px); }
+.week-strip-tile.is-blocked .week-strip-tile-bar { background: var(--ink-soft); opacity: .35; }
+/* Semaine thématique / EIL : seul cas où l'ambre est permis (REGLES.md #15). */
+.week-strip-tile.is-thematic .week-strip-num { color: #6b5510; }
+.week-strip-tile.is-thematic .week-strip-tile-bar { background: var(--clay); }
+.week-strip-tile.is-selected, .week-strip-tile.is-selected:hover { background: var(--acc); border-color: var(--acc); }
+.week-strip-tile.is-selected .week-strip-num, .week-strip-tile.is-selected .week-strip-date { color: #fffefb; }
+.week-strip-tile.is-selected .week-strip-tile-bar { background: #fffefb; }
+
 .week-plan-top { display: flex; gap: var(--sp-3); align-items: flex-start; flex-wrap: wrap; margin: 0 0 var(--sp-3); }
 .week-sidebar { display: flex; flex-direction: column; gap: var(--sp-3); flex: 0 0 340px; max-width: 100%; min-width: 0; }
-.week-plan-top .week-calendar-panel.week-calendar-docked { display: block; margin: 0; max-width: 100%; }
 .week-plan-top .backlog-panel { flex: 1 1 auto; min-width: 0; margin: 0; }
 .week-plan-top .notes-panel { margin: 0; }
 .week-plan-top .week-planning-main { flex: 1 1 640px; min-width: 0; }
 .period-weeks-hint { display: block; margin: .2rem 0 .1rem; font-family: var(--font-mono); font-size: .72rem; font-weight: 600; color: var(--moss-dark); }
+/* 18/08 — calendrier de semaines de la modale séquence : simple conteneur, le composant
+   lui-même (.week-cal-compact) porte déjà tout son layout. */
+.sequence-calendar { margin-top: .4rem; max-width: 340px; }
 .week-calendar-title { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; }
 .week-calendar-title strong { font-size: 1rem; }
 .week-calendar-title span { color: var(--muted); font-size: .85rem; }
@@ -1645,15 +1670,6 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .cal-in-range, .cal-in-range:hover { background: var(--moss-soft); border-color: var(--moss-line); color: var(--moss-dark); }
 .cal-range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .cal-range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-.sequence-calendar { max-width: 340px; border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .65rem; background: var(--surface-alt); box-sizing: border-box; margin-bottom: var(--sp-2); }
-/* Bloc période en 2 colonnes : calendrier à gauche, champs à droite (optimise l'espace) */
-.sequence-period-layout { display: flex; gap: var(--sp-4); align-items: flex-start; flex-wrap: wrap; }
-.sequence-period-layout .sequence-calendar { flex: 0 0 340px; margin-bottom: 0; }
-.sequence-period-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: var(--sp-2); }
-.sequence-period-side .period-weeks-hint { margin: 0; }
-.sequence-period-side label { display: flex; flex-direction: column; }
-.sequence-calendar .week-cal-compact.seq-cal { gap: var(--sp-1); }
-.sequence-calendar .week-cal-hint { margin-top: .1rem; }
 .week-nav-chip {
   background: var(--surface-alt); color: var(--ink); border: 1px solid var(--line-strong);
   padding: .35rem .55rem; border-radius: var(--r-sm); text-align: center; min-width: 64px;
@@ -1670,7 +1686,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .tight-section legend { font-size: .82rem; }
 .constraint-pill .exam-flag, .timeline-constraint-band .exam-flag {
   display: inline-block; font-size: .58rem; font-weight: 700; margin-left: .3rem;
-  padding: 0 .3rem; border-radius: 999px; background: var(--clay, #b56952); color: #fff;
+  padding: 0 .3rem; border-radius: 0; background: var(--clay, #b56952); color: #fff;
 }
 
 .schedule-section {
@@ -1687,13 +1703,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   font-size: 1.05rem;
   font-weight: 650;
 }
-.schedule-title.gpn1 { background: var(--gpn1-soft); color: #6b3013; }
-.schedule-title.gpn2 { background: var(--gpn2-soft); color: #154a5c; }
-/* Lot R — teinte du bandeau de promo selon la période (spécificité 2 classes > base). */
-.schedule-title.period-autumn.gpn1 { background: #dbe8f5; color: #1d466b; box-shadow: inset 4px 0 0 #3a76ad; }
-.schedule-title.period-autumn.gpn2 { background: #f4dede; color: #7a2b2b; box-shadow: inset 4px 0 0 #b04a4a; }
-.schedule-title.period-spring.gpn1 { background: #f5edcb; color: #6b5510; box-shadow: inset 4px 0 0 #e0a526; }
-.schedule-title.period-spring.gpn2 { background: #dcecd7; color: #2f5d33; box-shadow: inset 4px 0 0 #5a9c5f; }
+/* Retours #4 (18/08/2026) — couleur posée en style inline (renderPromotionTable),
+   suit désormais le code couleur semestre du Ruban et varie avec la période. */
 .table-scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; }
 /* Lot S(d) — largeurs de colonnes FIXES : la colonne horaire (1re) est calée à
@@ -1702,8 +1713,16 @@ table { border-collapse: collapse; width: 100%; }
    leurs colonnes de journées s'alignent verticalement (fini l'élargissement au
    contenu qui décalait un planning par rapport à l'autre). */
 .schedule-table { table-layout: fixed; min-width: 840px; }
+/* 18/08 — retour Martin : « les espaces de séances ne doivent pas changer de
+   taille d'une semaine à l'autre ». Cause : `height` sur une cellule de tableau
+   n'est qu'un minimum, une séance chargée (titre long + type + enseignant/lieu +
+   mots-clés) poussait sa ligne bien au-delà de 58px (mesuré : jusqu'à 115px sur
+   un créneau d'1h), donc une grille différente selon ce qui est rempli cette
+   semaine-là. `overflow: hidden` fige la hauteur : le contenu qui déborde est
+   coupé plutôt que d'élargir la ligne (l'infobulle — sessionTooltip — porte déjà
+   séquence/type/durée/mots-clés en repli). */
 .schedule-table th, .schedule-table td {
-  border: 1px solid var(--line); height: 58px;
+  border: 1px solid var(--line); height: 58px; overflow: hidden;
   vertical-align: middle; text-align: center; overflow-wrap: anywhere;
 }
 .schedule-table th { background: var(--surface-alt); font-weight: 700; font-size: .82rem; }
@@ -1717,7 +1736,7 @@ table { border-collapse: collapse; width: 100%; }
 .empty-slot:hover { background: var(--moss-soft); }
 .drop-hint {
   display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+  border-radius: 0; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
 }
 .empty-slot:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
 
@@ -1730,16 +1749,40 @@ table { border-collapse: collapse; width: 100%; }
   background: color-mix(in srgb, var(--seq-color, var(--type-bg, var(--moss))) 34%, transparent);
 }
 .event-cell:hover { outline: 2px solid color-mix(in srgb, var(--type-fg, var(--moss)) 45%, transparent); outline-offset: -2px; }
+/* 18/08 — voir le commentaire sur `.event-body` dans renderSessionEventContent :
+   ce bloc fige la hauteur disponible (celle de la cellule, fixe) et coupe
+   l'excédent au lieu de l'étirer, pour que la grille ne varie plus selon ce qui
+   est saisi cette semaine-là. */
+.event-body { overflow: hidden; }
 .event-ue { font-family: var(--font-mono); font-size: .68rem; font-weight: 700; opacity: .8; }
 .event-session-title { font-weight: 700; font-size: .8rem; line-height: 1.18; margin-top: .1rem; }
 .event-title { font-size: .72rem; opacity: .85; line-height: 1.15; }
 .event-hours { margin-top: .12rem; font-size: .66rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--clay); line-height: 1.1; }
 .demi-col .event-hours { font-size: .6rem; }
+.event-teachers { margin-top: .15rem; display: flex; flex-wrap: wrap; justify-content: center; gap: .15rem; }
+.event-teachers .design-ue-pill { font-size: .6rem; padding: 0 .22rem; }
 .event-details { margin-top: .2rem; font-size: .68rem; opacity: .85; line-height: 1.15; }
 .event-keywords { margin-top: .15rem; font-size: .64rem; opacity: .7; line-height: 1.1; }
 /* Type de séance en texte simple (après enseignant/lieu, avant les mots-clés). */
 .event-type { margin-top: .15rem; font-size: .66rem; font-weight: 600; opacity: .85; line-height: 1.15; }
 .demi-col .event-type { font-size: .6rem; }
+
+/* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants,
+   sur les 4 gabarits de case du Planning hebdo (pleine, demi, superposée,
+   samedi) : neutralise --seq-color (posé en style inline, d'où !important) et
+   marque la case en pointillé, non cliquable. */
+.event-cell.is-collegue,
+.demi-col.is-collegue,
+.overlap-event.is-collegue,
+.saturday-session.is-collegue {
+  --seq-color: var(--line-strong) !important;
+  cursor: default;
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -1px;
+}
+.event-cell.is-collegue:hover,
+.demi-col.is-collegue:hover,
+.overlap-event.is-collegue:hover { outline: 1px dashed var(--line-strong); }
 
 .overlap-cell { background: var(--clay-soft) !important; padding: .2rem !important; }
 .overlap-warning { font-size: .66rem; font-weight: 700; color: #6b3013; margin-bottom: .15rem; }
@@ -1767,11 +1810,11 @@ table { border-collapse: collapse; width: 100%; }
   background: repeating-linear-gradient(45deg, var(--surface) 0 6px, var(--surface-alt) 6px 12px);
   color: var(--muted);
 }
-.demi-col.demi-empty .drop-hint { width: auto; height: auto; padding: .1rem .45rem; border-radius: 999px; font-size: .66rem; }
+.demi-col.demi-empty .drop-hint { width: auto; height: auto; padding: .1rem .45rem; border-radius: 0; font-size: .66rem; }
 /* Badge ½A / ½B, réutilisé dans le planning et la frise. */
 .demi-badge {
   display: inline-block; margin-right: .25rem; padding: 0 .28rem;
-  border-radius: 999px; font-size: .6rem; font-weight: 800; line-height: 1.5;
+  border-radius: 0; font-size: .6rem; font-weight: 800; line-height: 1.5;
   background: rgba(0,0,0,.14); color: inherit; vertical-align: baseline;
 }
 .demi-badge.demi-a { background: color-mix(in srgb, var(--water) 32%, transparent); }
@@ -1783,6 +1826,8 @@ table { border-collapse: collapse; width: 100%; }
 .demi-col .event-ue { font-size: .64rem; }
 .demi-col .event-session-title { font-size: .72rem; line-height: 1.12; margin-top: .05rem; }
 .demi-col .event-details { font-size: .6rem; margin-top: .08rem; }
+.demi-col .event-teachers { margin-top: .08rem; }
+.demi-col .event-teachers .design-ue-pill { font-size: .55rem; padding: 0 .18rem; }
 
 .drop-slot { transition: background .12s ease, outline .12s ease; }
 .drop-slot.drop-hover { background: var(--water-soft) !important; outline: 2px solid var(--water); outline-offset: -2px; }
@@ -1793,7 +1838,7 @@ table { border-collapse: collapse; width: 100%; }
   position: absolute; top: 2px; right: 2px; z-index: 2;
   width: 18px; height: 18px; padding: 0; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid rgba(0,0,0,.16);
+  border-radius: 0; border: 1px solid rgba(0,0,0,.16);
   background: rgba(255,255,255,.82); color: #444;
   font-size: .72rem; cursor: pointer;
   opacity: 0; transition: opacity .12s ease, background .12s ease, transform .12s ease;
@@ -1826,7 +1871,7 @@ table { border-collapse: collapse; width: 100%; }
 .day-constraint-chip .dcc-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-constraint-chip.is-exam { border-left-color: var(--clay); background: var(--clay-soft); color: #6b3013; }
 .day-constraint-chip.is-blocked { border-left-color: var(--amber); background: var(--amber-soft); color: #6b4f12; }
-.day-constraint-chip:hover { filter: brightness(.97); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.day-constraint-chip:hover { filter: brightness(.97); }
 
 /* C2 — créneaux grisés des jours « sans cours » (vacances/stage/férié) */
 .empty-slot.day-off-slot {
@@ -1859,10 +1904,10 @@ table { border-collapse: collapse; width: 100%; }
    RÉFÉRENTIEL — capacités structurées + texte intégral des PDF
    ===================================================================== */
 /* ---------- Barre du Référentiel & Ruban (lot F [5]) ----------
-   Quatrième vue à reprendre le patron de `.design-bar` (voir le bloc de collage
-   plus haut) : modes d'affichage à gauche, filtres à droite, une seule ligne
-   collée sous les onglets. Ces règles sont posées AVANT `.reference-mode-switch`
-   pour que la pilule des modes garde son fond et son `gap` propres. */
+   Reprend le patron collé sous les onglets partagé avec `.week-bar` : modes
+   d'affichage à gauche, filtres à droite, une seule ligne. Ces règles sont
+   posées AVANT `.reference-mode-switch` pour que la pilule des modes garde
+   son fond et son `gap` propres. */
 .ruban-bar-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
 .ruban-bar-filtres { flex: 1 1 20rem; min-width: 0; margin-left: auto; gap: .4rem; }
 /* ⚠️ setRubanMode() masque ce groupe par l'attribut `hidden` : sans cette règle,
@@ -1880,22 +1925,62 @@ table { border-collapse: collapse; width: 100%; }
    mode qui les propose. */
 .ruban-gestes { margin: 0 0 var(--sp-2); }
 
-.reference-mode-switch { display: inline-flex; flex-wrap: wrap; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
-.reference-mode-switch button {
-  background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .8rem;
-  border-radius: 999px; font-size: .82rem;
+/* Retours #3 (18-19/08/2026) — 3 binômes de sous-onglets sur la même ligne :
+   chaque paire se resserre (gap réduit) et se sépare de la suivante par un
+   filet, plus lisible que 6 boutons à écart constant. */
+.ruban-subtab-pair {
+  display: inline-flex; align-items: center; gap: .7rem;
+  padding-right: var(--sp-4); border-right: 1px solid var(--line-strong);
 }
-.reference-mode-switch button.active { background: var(--moss); color: #fff; }
-.reference-mode-panel { display: none; }
-.reference-mode-panel.active-mode { display: block; }
+.ruban-subtab-pair:last-of-type { border-right: 0; padding-right: 0; }
+
+/* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ----
+   Ajustements #2 (18/08/2026, retour Martin) : cette barre doit être collée à
+   la barre d'onglets principale, avec une hiérarchie visible entre les deux —
+   pas un panneau flottant séparé. Marge négative pour annuler le padding-haut
+   de <main> (elle est toujours le premier élément de la vue), chrome de
+   « carte » (bordures hautes/latérales, ombre) retiré, ne garde qu'un filet
+   bas pour la séparer du contenu. */
+.ruban-subtabs {
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--sp-5));
+  border-width: 0 0 1px;
+  box-shadow: none;
+}
+.ruban-subtabs .design-subtab { padding: .3rem 0; border-bottom-width: 2px; }
+.ruban-unified-search { flex: 0 1 22rem; min-width: 12rem; margin-left: auto; }
+/* Même piège que .ruban-bar-filtres[hidden] plus haut : sans cette règle,
+   `hidden` ne suffirait pas si .ruban-tab-panel gagnait un jour une règle
+   `display` à elle (défense par précaution, aucune actuellement). */
+.ruban-tab-panel[hidden] { display: none; }
+.ruban-pdf-link { margin-left: auto; }
+
+/* ---- Répartition (06-referentiel-repartition.png) ---- */
+.repartition-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 var(--sp-2); }
+.repartition-summary { font-size: .84rem; color: var(--ink-soft); }
+.repartition-table th:first-child, .repartition-table td.repartition-td-ue { width: 15rem; }
+.repartition-td-ue { vertical-align: top; display: table-cell; }
+.repartition-td-ue.is-dim { opacity: .45; }
+.repartition-seq-count { display: block; font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+tr.repartition-sem-row td {
+  background: var(--surface-alt); border-bottom: 1px solid var(--line-strong);
+  padding: .4rem .55rem; font-family: var(--font-mono); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--moss-dark);
+}
+.repartition-sem-period { margin-left: .6rem; text-transform: none; letter-spacing: 0; color: var(--muted); }
+.repartition-table tr.is-dim td { opacity: .45; }
+.ruban-td-cap { font-family: var(--font-mono); font-weight: 700; font-size: .78rem; color: var(--moss-dark); white-space: nowrap; }
+.repartition-pills { display: flex; flex-wrap: wrap; gap: .2rem; }
 
 /* ---- Créneaux de cours type (planning hebdo type) ---- */
 .creneaux-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
-.creneaux-toolbar .meta { margin: 0; flex: 1 1 320px; }
-.creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 999px; padding: .2rem; }
+.creneaux-toolbar-label { font-weight: 700; font-size: .88rem; color: var(--ink); }
+.creneaux-summary { font-size: .82rem; color: var(--ink-soft); }
+.creneaux-teacher-filter { margin-left: auto; font-size: .8rem; color: var(--ink-soft); display: flex; align-items: center; gap: .35rem; }
+.creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 0; padding: .2rem; }
 .creneaux-period-switch button {
   background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .9rem;
-  border-radius: 999px; font-size: .82rem; cursor: pointer;
+  border-radius: 0; font-size: .82rem; cursor: pointer;
 }
 .creneaux-period-switch button.active { background: var(--moss); color: #fff; }
 .creneaux-grids { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: var(--sp-4); align-items: start; }
@@ -1915,7 +2000,7 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-empty:hover { background: var(--moss-soft); }
 .tpl-empty .drop-hint {
   display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
+  border-radius: 0; border: 1px dashed var(--line-strong); color: var(--line-strong); font-weight: 500;
 }
 .tpl-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); background: var(--moss-soft); }
 .tpl-cell {
@@ -1925,7 +2010,154 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-cell:hover { outline: 2px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent); outline-offset: -2px; }
 .tpl-cell .tpl-ue { font-family: var(--font-mono); font-size: .72rem; font-weight: 700; }
 .tpl-cell .tpl-title { font-size: .74rem; line-height: 1.15; margin-top: .1rem; }
-.tpl-cell .tpl-teacher { font-size: .68rem; color: var(--ink-soft); margin-top: .1rem; }
+.tpl-cell .tpl-teachers { display: flex; flex-wrap: wrap; justify-content: center; gap: .15rem; margin-top: .25rem; }
+.tpl-cell .tpl-room { margin-top: .1rem; }
+
+/* ---- Écran 8 — Planning étudiant ---- */
+.student-toolbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 var(--sp-3); }
+.student-summary { font-size: .84rem; color: var(--ink-soft); display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
+.student-summary small { color: var(--muted); font-weight: 400; }
+.student-toolbar .mask-toggle { margin-left: auto; }
+.student-layout { display: flex; gap: var(--sp-3); align-items: flex-start; flex-wrap: wrap; }
+.student-layout #studentPlanningGrid { flex: 1 1 640px; min-width: 0; margin: 0; }
+.student-aside { display: flex; flex-direction: column; gap: var(--sp-3); flex: 0 0 300px; max-width: 100%; min-width: 0; }
+.student-aside h4 { margin: 0 0 .35rem; font-size: .85rem; }
+/* REGLES.md #21 : même valeur d'estompage que .repartition-td-ue.is-dim /
+   .ruban-ue.is-dim ailleurs dans ce fichier. */
+.student-dimmed { opacity: .45; }
+.student-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; font-size: .8rem; color: var(--ink-soft); }
+.student-legend li { display: flex; align-items: center; gap: .5rem; }
+.student-legend-swatch { width: 14px; height: 14px; border: 1px solid var(--line-strong); flex: 0 0 auto; }
+.student-legend-mine { background: var(--acc); }
+.student-legend-other { background: var(--surface-alt); }
+
+/* ---------- Écran 11 — Dossier (compositeur) ----------
+   Le contenu des pages elles-mêmes (.dossier-page…) est injecté en JS via
+   DOSSIER_PRINT_CSS (app.js) : une seule feuille de style pour l'aperçu
+   « Lecture » ET la fenêtre d'impression, pas de duplication ici. Ce bloc ne
+   couvre que la coquille de l'écran (jamais imprimée). */
+.dossier-layout { display: grid; grid-template-columns: 260px 1fr 260px; gap: var(--sp-5); align-items: start; }
+.dossier-sidebar { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
+.dossier-avant-imprimer { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; position: sticky; top: var(--sp-4); }
+.dossier-block { min-width: 0; }
+.dossier-block-title { margin: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); display: flex; align-items: baseline; gap: .4rem; }
+.dossier-block-count { font-weight: 400; color: var(--line-strong); }
+.dossier-ue-select { width: 100%; margin-bottom: var(--sp-2); }
+.dossier-ue-card { background: var(--moss-soft); border: 1px solid var(--moss-line); padding: var(--sp-3); }
+.dossier-ue-code { color: var(--moss-dark); font-weight: 600; font-size: .8rem; }
+.dossier-ue-title { font-weight: 600; margin-top: .15rem; }
+.dossier-ue-meta { font-size: .78rem; color: var(--ink-soft); margin-top: .2rem; }
+
+.dossier-sections-list { display: flex; flex-direction: column; }
+.dossier-section-row { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); }
+.dossier-section-row:last-child { border-bottom: none; }
+.dossier-section-row.locked .checkbox-inline { color: var(--muted); }
+.dossier-section-hint { margin: .25rem 0 0 1.55rem; font-size: .72rem; color: var(--muted); line-height: 1.4; max-width: 30ch; }
+.dossier-section-row:has(#dossierBilanText) { background: var(--clay-soft); margin: 0 calc(var(--sp-2) * -1); padding: var(--sp-2); border-bottom: none; }
+.dossier-subsections { margin: .35rem 0 0 1.55rem; display: flex; flex-direction: column; gap: .25rem; max-height: 220px; overflow-y: auto; }
+.dossier-subrow { font-size: .8rem; }
+.dossier-bilan-editor { width: 100%; margin: .5rem 0 0 1.55rem; max-width: calc(100% - 1.55rem); font: inherit; font-size: .82rem; }
+
+.dossier-preview { min-width: 0; }
+.dossier-preview-bar { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); flex-wrap: wrap; }
+.dossier-preview-label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.dossier-preview-count { font-size: .82rem; color: var(--ink-soft); }
+.dossier-view-switch { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.dossier-view-switch-hint { font-size: .72rem; color: var(--line-strong); text-transform: lowercase; }
+.dossier-view-switch button { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); padding: .3rem .7rem; font-size: .8rem; font-weight: 600; }
+.dossier-view-switch button.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+/* Miniatures = le vrai contenu de page (.dossier-page, DOSSIER_PRINT_CSS) réduit
+   par transform:scale plutôt qu'un gabarit décoratif — la case « Numéroter en
+   page n sur N » (Avant d'imprimer) devient enfin visible ici aussi, puisque le
+   pied de page réel fait partie du contenu miniaturisé. Largeur fixe (pas
+   minmax en %) : le facteur d'échelle ci-dessous est calculé pour cette taille
+   précise (176px / 210mm ≈ .2218) et ne peut pas suivre une largeur variable. */
+.dossier-preview-grille { display: grid; grid-template-columns: repeat(auto-fill, 176px); justify-content: start; gap: var(--sp-4); }
+.dossier-preview-grille[hidden] { display: none; }
+.dossier-thumb { display: flex; flex-direction: column; gap: .35rem; }
+.dossier-thumb-page { width: 176px; height: 249px; overflow: hidden; position: relative; background: var(--surface); border: 1px solid var(--line); }
+.dossier-thumb-page .dossier-page { transform: scale(.2218); transform-origin: top left; margin: 0 !important; }
+.dossier-thumb-label { font-size: .74rem; color: var(--ink-soft); text-align: center; }
+
+.dossier-preview-lecture { display: flex; flex-direction: column; align-items: center; gap: var(--sp-5); background: var(--surface-alt); padding: var(--sp-5); max-height: 82vh; overflow-y: auto; }
+.dossier-preview-lecture[hidden] { display: none; }
+.dossier-preview-lecture .dossier-page { break-before: auto !important; margin: 0 !important; box-shadow: 0 0 0 1px var(--line); }
+
+.dossier-completeness-label { font-weight: 600; margin: 0 0 .2rem; }
+.dossier-completeness-bar { height: 6px; background: var(--surface-alt); border: 1px solid var(--line); margin-top: var(--sp-2); }
+.dossier-completeness-bar span { display: block; height: 100%; background: var(--success); }
+.dossier-gaps { display: flex; flex-direction: column; gap: var(--sp-2); }
+.dossier-gap { border-left: 3px solid var(--danger); background: var(--danger-soft); padding: .5rem .6rem; font-size: .82rem; }
+.dossier-gap p { margin: 0; }
+.dossier-gap .link-button { margin-top: .25rem; }
+.link-button { background: none; border: none; padding: 0; color: var(--acc); font-weight: 600; font-size: inherit; cursor: pointer; text-decoration: none; }
+.link-button:hover { color: var(--moss-dark); text-decoration: underline; }
+.dossier-print-options { display: flex; flex-direction: column; gap: .3rem; margin: var(--sp-2) 0; }
+.dossier-print-button { width: 100%; }
+@media (max-width: 1100px) {
+  .dossier-layout { grid-template-columns: 1fr; }
+  .dossier-avant-imprimer { position: static; }
+}
+
+/* ---------- Écran 13 — Ordre de mission ---------- */
+.mission-topbar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) 0; border-bottom: 1px solid var(--line); margin-bottom: var(--sp-4); }
+.mission-back { font-family: var(--font-mono); }
+.mission-title { font-size: 1.05rem; margin: 0; flex: 1; }
+.mission-status { font-family: var(--font-mono); font-size: .78rem; color: var(--danger); background: var(--danger-soft); padding: .2rem .5rem; }
+.mission-hint { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+
+.mission-body { display: flex; justify-content: center; }
+.mission-document { background: var(--surface); border: 1px solid var(--line); max-width: 780px; width: 100%; padding: var(--sp-7); }
+
+.mission-doc-header { display: flex; align-items: center; gap: var(--sp-4); border-bottom: 1px solid var(--ink); padding-bottom: var(--sp-3); margin-bottom: var(--sp-5); }
+.mission-doc-header img { height: 44px; }
+.mission-doc-header h1 { font-size: 1.3rem; margin: 0; }
+
+.mission-field-line { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-3); font-size: .9rem; }
+.mission-field-label { color: var(--ink-soft); white-space: nowrap; }
+.mission-field { font: inherit; color: var(--ink); background: var(--moss-soft); border: none; border-bottom: 1px solid var(--ink); padding: .15rem .35rem; min-width: 8rem; }
+.mission-field:focus { outline: 2px solid var(--acc); outline-offset: 1px; }
+.mission-field-wide { flex: 1; min-width: 14rem; }
+.mission-field-narrow { width: 6rem; min-width: 0; }
+.mission-field-block { display: block; width: 100%; resize: vertical; border: 1px solid var(--ink); background: var(--moss-soft); padding: var(--sp-2); font: inherit; }
+
+.mission-block { margin: var(--sp-4) 0; }
+.mission-block-title { display: block; font-weight: 600; margin-bottom: var(--sp-2); }
+.mission-transport-title { color: var(--danger); text-transform: uppercase; font-size: .82rem; letter-spacing: .03em; }
+
+.mission-accompagnant-row { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.mission-accompagnant-row .mission-field-label { flex: 1; display: flex; align-items: center; gap: var(--sp-2); min-width: 14rem; }
+.mission-accompagnant-row .mission-field { flex: 1; }
+.mission-remove-accompagnant { color: var(--danger); }
+
+.mission-transport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.mission-check { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: .88rem; }
+.mission-vehicule-de { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.mission-vehicule-de .mission-field { flex: 1; }
+
+.mission-fait { margin-top: var(--sp-5); }
+
+.mission-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-top: var(--sp-6); }
+.mission-sig-box { border: 1px solid var(--ink); min-height: 90px; padding: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-2); }
+.mission-sig-title { font-weight: 600; font-size: .82rem; }
+.mission-sig-hint { font-size: .72rem; }
+.mission-signature-img { max-height: 60px; max-width: 100%; align-self: flex-start; }
+.mission-signature-add { align-self: flex-start; font-size: .78rem; }
+
+.mission-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
+.mission-destinataires { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.mission-footer-label { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.mission-chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.mission-chip { display: inline-flex; align-items: center; gap: .3rem; background: var(--surface-alt); border: 1px solid var(--line); padding: .15rem .5rem; font-size: .8rem; }
+.mission-chip button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: .9rem; line-height: 1; padding: 0; }
+.mission-footer-actions { display: flex; gap: var(--sp-2); }
+
+@media (max-width: 700px) {
+  .mission-document { padding: var(--sp-4); }
+  .mission-transport-grid { grid-template-columns: 1fr; }
+  .mission-signatures { grid-template-columns: 1fr; }
+}
 /* Cellule scindée gauche/droite (2 créneaux sur la même plage). Le conteneur est
    en absolu inset:0 pour remplir toute la hauteur de la case (rowspan) — sinon le
    contenu se rétrécissait au centre. */
@@ -1941,7 +2173,7 @@ table { border-collapse: collapse; width: 100%; }
 .tpl-col.tpl-half-empty { background: var(--surface); display: flex; align-items: center; justify-content: center; }
 .tpl-col.tpl-half-empty:hover { background: var(--moss-soft); }
 .tpl-col.tpl-half-empty .drop-hint {
-  width: auto; height: auto; padding: .1rem .4rem; border-radius: 999px; font-size: .66rem;
+  width: auto; height: auto; padding: .1rem .4rem; border-radius: 0; font-size: .66rem;
   border: 1px dashed var(--line-strong); color: var(--line-strong);
 }
 .tpl-col.tpl-half-empty:hover .drop-hint { color: var(--moss); border-color: var(--moss); }
@@ -2023,7 +2255,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-chip-block div { display: flex; flex-wrap: wrap; gap: .25rem; }
 .reference-chip-block span {
   display: inline-flex; border: 1px solid var(--water-soft); background: var(--water-soft);
-  color: #154a5c; border-radius: 999px; padding: .1rem .5rem; font-size: .74rem; font-weight: 650;
+  color: #154a5c; border-radius: 0; padding: .1rem .5rem; font-size: .74rem; font-weight: 650;
 }
 .reference-raw-source, .inline-reference-section, .reference-source-drawer {
   border: 1px dashed var(--line-strong); border-radius: var(--r-sm); padding: .4rem .6rem; margin-top: .4rem;
@@ -2048,15 +2280,8 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-doc-card strong { font-size: .82rem; }
 .reference-doc-card span { color: var(--muted); font-size: .74rem; }
 
-.reference-full-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.reference-full-toolbar label { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; color: var(--muted); font-weight: 600; flex: 1 1 320px; }
-.reference-full-toolbar #referencePdfOpen { flex: 0 0 auto; align-self: center; white-space: nowrap; }
-.reference-pdf-panel { padding: var(--sp-2); }
-.reference-pdf-frame { width: 100%; height: 78vh; min-height: 520px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-alt); }
-.reference-pdf-fallback { margin-top: .5rem; }
-
 @media (max-width: 980px) {
-  .reference-layout, .interactive-reference-layout, .reference-full-toolbar { grid-template-columns: 1fr; }
+  .reference-layout, .interactive-reference-layout { grid-template-columns: 1fr; }
   .reference-structured-grid { grid-template-columns: 1fr; }
   .reference-tree-panel, .reference-detail-panel { max-height: none; }
 }
@@ -2099,13 +2324,6 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
   .sequence-reference-grid { grid-template-columns: 1fr; }
 }
 
-/* Formulaire séance : un seul sous-panneau de placement visible à la fois,
-   piloté par data-mode (posé en JS selon le statut de placement choisi). */
-#sessionPlacementSection[data-mode="fictive"] .definitive-fields { display: none; }
-#sessionPlacementSection[data-mode="definitive"] .fictive-fields { display: none; }
-#sessionPlacementSection[data-mode="fictive"] { border-left: 3px solid var(--amber); }
-#sessionPlacementSection[data-mode="definitive"] { border-left: 3px solid var(--moss); }
-
 /* Frise semestre : bandeau de contrainte coloré par type (même logique que
    les pastilles de contraintes du tableau de bord). */
 .timeline-constraint-band.period-vacances { background: var(--surface-alt); border-color: var(--line-strong); color: var(--ink-soft); }
@@ -2123,7 +2341,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .reference-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .4rem; }
 .reference-tag {
   font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
-  padding: .12rem .45rem; border-radius: 999px; background: var(--moss-soft, #e3ece0); color: var(--moss-dark);
+  padding: .12rem .45rem; border-radius: 0; background: var(--moss-soft, #e3ece0); color: var(--moss-dark);
 }
 .reference-finality { font-size: .82rem; color: var(--ink-soft); margin-bottom: .5rem; }
 
@@ -2156,15 +2374,15 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
    Référentiel — consultation interactive par module (accordéon)
    ============================================================ */
 .refmod-toolbar { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.refmod-modtabs { display: inline-flex; gap: 4px; flex-wrap: nowrap; background: var(--surface-alt); border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px; }
+.refmod-modtabs { display: inline-flex; gap: 4px; flex-wrap: nowrap; background: var(--surface-alt); border: 1px solid var(--line-strong); border-radius: 0; padding: 3px; }
 .refmod-modtab {
   border: 0; background: transparent; color: var(--ink-soft);
-  padding: .3rem .6rem; border-radius: 999px; font-weight: 700; font-size: .8rem; cursor: pointer;
+  padding: .3rem .6rem; border-radius: 0; font-weight: 700; font-size: .8rem; cursor: pointer;
   min-width: 2.4rem; text-align: center; letter-spacing: .01em;
   transition: background .12s, color .12s;
 }
 .refmod-modtab:hover { background: var(--moss-soft); color: var(--moss-dark); }
-.refmod-modtab.active { background: var(--moss); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.refmod-modtab.active { background: var(--moss); color: #fff; }
 /* Lot F [5] — ⚠️ `flex-direction: row` n'est PAS décoratif : cette classe est
    posée sur un <label>, et la règle `label` (voir « Champs de formulaire ») met
    `flex-direction: column`. Sans ce mot-clé, la loupe se plaçait AU-DESSUS du
@@ -2174,7 +2392,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-search {
   flex: 1 1 12rem; max-width: 20rem; margin-left: auto;
   display: flex; flex-direction: row; align-items: center; gap: .35rem;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: .22rem .55rem;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 0; padding: .22rem .55rem;
 }
 .refmod-search span { opacity: .7; font-size: .8rem; }
 /* Le `padding: .55rem .65rem` de la règle générale des champs ajoutait 13 px de
@@ -2188,6 +2406,67 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-count { font-size: .8rem; color: var(--muted); padding: 0 .35rem; min-width: 5ch; }
 .refmod-panel { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
 .refmod-content { margin-top: 0; }
+
+/* =====================================================================
+   RÉFÉRENTIEL — version hybride (16/08/2026) : barre latérale plate (Général +
+   capacités du module actif) + contenu central identique à l'ancien accordéon
+   (refDeclinaison/refBlocs/refGeneralSection réutilisées telles quelles).
+   ===================================================================== */
+.refread-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr) 280px; gap: var(--sp-3); align-items: start; }
+@media (max-width: 1100px) { .refread-layout { grid-template-columns: 1fr; } }
+
+.refread-toc { border: 1px solid var(--line-strong); background: var(--surface); max-height: 80vh; overflow-y: auto; }
+.refread-toc-head { font-family: var(--font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: .55rem .6rem; border-bottom: 1px solid var(--line-strong); background: var(--surface-alt); }
+.refread-toc-list { list-style: none; margin: 0; padding: 0; }
+.refread-toc-item {
+  display: flex; align-items: baseline; gap: .4rem; width: 100%; text-align: left;
+  background: transparent; border: 0; border-left: 3px solid transparent; border-bottom: 1px solid var(--line);
+  padding: .45rem .6rem .45rem .55rem; font: inherit; font-size: .8rem; color: var(--ink-soft); cursor: pointer;
+}
+.refread-toc-item:hover { background: var(--surface-alt); color: var(--ink); }
+.refread-toc-item.active { background: color-mix(in srgb, var(--acc) 8%, var(--surface)); border-left-color: var(--acc); color: var(--ink); font-weight: 700; }
+.refread-toc-item.refread-toc-general { font-weight: 700; border-bottom-color: var(--line-strong); }
+.refread-toc-code { font-family: var(--font-mono); font-size: .7rem; font-weight: 700; color: var(--moss-dark); white-space: nowrap; }
+.refread-toc-item.active .refread-toc-code { color: var(--acc); }
+/* 18/08 — sous-parties (blocs/feuilles de la capacité affichée), indentées sous
+   leur capacité pour rester lisibles comme sommaire à plat plutôt qu'imbriqué. */
+.refread-toc-item.refread-toc-subpart { padding-left: 1.1rem; font-size: .75rem; color: var(--ink-soft); }
+.refread-toc-item.refread-toc-leaf { padding-left: 1.65rem; font-size: .72rem; color: var(--muted); }
+.refread-toc-item.refread-toc-subpart:hover, .refread-toc-item.refread-toc-leaf:hover { color: var(--ink); }
+
+.refread-body { border: 1px solid var(--line-strong); background: var(--card, var(--surface)); padding: var(--sp-4); max-height: 80vh; overflow-y: auto; }
+.refread-cap-head { display: flex; align-items: baseline; gap: .5rem; margin-bottom: var(--sp-3); border-bottom: 1px solid var(--line-strong); padding-bottom: var(--sp-2); }
+.refread-cap-code { font-family: var(--font-mono); font-weight: 700; font-size: .8rem; color: var(--acc); }
+.refread-cap-head h3 { font-size: 1.1rem; }
+
+.refread-chezvous { border: 1px solid var(--line-strong); background: var(--surface); padding: var(--sp-3); max-height: 80vh; overflow-y: auto; }
+.refread-chezvous h4 { font-size: .92rem; display: flex; align-items: baseline; gap: .4rem; margin: 0 0 var(--sp-2); }
+.refread-cv-block { margin: 0 0 var(--sp-3); }
+.refread-cv-label { display: flex; align-items: baseline; justify-content: space-between; font-family: var(--font-mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .3rem; }
+.refread-cv-count { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.refread-cv-disc { margin: 0; font-size: .82rem; color: var(--ink-soft); }
+.refread-seq-item {
+  display: block; width: 100%; text-align: left; background: var(--surface-alt);
+  border: 1px solid var(--line-strong); border-left: 3px solid var(--seq-color, var(--moss));
+  padding: .4rem .55rem; margin-bottom: .3rem; font: inherit; cursor: pointer;
+}
+.refread-seq-item:hover { background: var(--card, var(--surface)); }
+.refread-seq-item strong { display: block; font-size: .82rem; }
+.refread-seq-item .meta { display: block; margin-top: .1rem; font-size: .7rem; }
+
+/* 18/08 — Lot F : sous-onglet « PDF d'origine ». Même géométrie que
+   .refread-layout (sidebar + panneau), sans 3e colonne. */
+.pdf-lib-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--sp-3); align-items: start; }
+@media (max-width: 900px) { .pdf-lib-layout { grid-template-columns: 1fr; } }
+.pdf-lib-toc { border: 1px solid var(--line-strong); background: var(--surface); max-height: 80vh; overflow-y: auto; }
+.pdf-lib-group-label {
+  margin: 0; padding: .4rem .6rem .2rem; font-family: var(--font-mono); font-size: .66rem;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+}
+.pdf-lib-item { border-left-width: 3px; }
+.pdf-lib-viewer { border: 1px solid var(--line-strong); background: var(--card, var(--surface)); height: 80vh; }
+.pdf-lib-viewer iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--surface); }
 
 /* En-tête de module */
 .rm-head { margin-bottom: var(--sp-3); }
@@ -2204,7 +2483,7 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 .refmod-content summary::-webkit-details-marker { display: none; }
 .refmod-content summary::before {
   content: "+"; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
-  width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 1rem; line-height: 1;
+  width: 24px; height: 24px; border-radius: 0; font-weight: 800; font-size: 1rem; line-height: 1;
 }
 .refmod-content details[open] > summary::before { content: "\2212"; }
 
@@ -2251,6 +2530,26 @@ td.empty-slot.mask-slot.mask-split { padding: 0; }
 }
 .rm-leaf > summary::before { width: 20px; height: 20px; background: var(--surface-alt); color: var(--clay); }
 .rm-leafpanel { border-left: 2px solid var(--line); margin-left: .65rem; padding: .5rem .6rem .2rem .9rem; }
+
+/* 18/08 — refBlocs (blocs encadrés/sous-parties d'une capacité) : plus de
+   <details>/<summary>, tout est affiché ; mêmes bandeaux colorés que la version
+   dépliable (repères visuels identiques), en titres de section fixes ancrables
+   (voir refBlocAnchorId/refLeafAnchorId, ciblés par le sommaire). */
+.rm-part { margin: 0 0 .55rem; scroll-margin-top: .5rem; }
+.rm-part-title {
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  padding: .7rem .85rem; font-size: 1rem; font-weight: 700; color: var(--moss-dark);
+}
+.rm-sub { margin-top: .5rem; scroll-margin-top: .5rem; }
+.rm-sub-title {
+  background: var(--moss-dark); color: #fff; border: 1px solid var(--moss-dark); border-radius: var(--r-sm);
+  padding: .6rem .8rem; font-size: .96rem; font-weight: 750;
+}
+.rm-leaf { margin-top: .45rem; scroll-margin-top: .5rem; }
+.rm-leaf-title {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: .55rem .75rem; font-size: .92rem; font-weight: 650; color: var(--ink);
+}
 
 /* Cartes de contenu */
 .rm-card {
@@ -2301,7 +2600,7 @@ table.rm-eval ul { margin: .1rem 0 .1rem .9rem; }
 .rm-linkentry a { word-break: break-word; }
 
 /* Surlignage de recherche */
-mark.rm-mark { background: var(--amber-soft); color: var(--ink); border-radius: 3px; padding: 0 .08em; box-shadow: inset 0 -2px 0 var(--amber); }
+mark.rm-mark { background: var(--amber-soft); color: var(--ink); border-radius: 0; padding: 0 .08em; box-shadow: inset 0 -2px 0 var(--amber); }
 
 /* Annexes du référentiel (même niveau que les capacités, accent « eau ») */
 .rm-annexe > summary {
@@ -2334,27 +2633,31 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); align-items: start; }
 .ruban-col { display: flex; flex-direction: column; gap: var(--sp-2); }
 .ruban-col-head {
+  display: flex; align-items: baseline; justify-content: center; gap: .4rem;
   background: var(--moss); color: #fff; font-weight: 700; font-size: .9rem;
-  text-align: center; padding: .45rem .5rem; border-radius: 999px; letter-spacing: .01em;
+  text-align: center; padding: .45rem .5rem; border-radius: 0; letter-spacing: .01em;
 }
-/* Lot R (harmonisation ruban) — bandeau de semestre aux mêmes tons que le planning. */
-.ruban-col.sem-s1 .ruban-col-head { background: #3a76ad; } /* GPN1 automne — bleu */
-.ruban-col.sem-s2 .ruban-col-head { background: #e0a526; color: #4a3806; } /* GPN1 printemps — jaune vif (texte foncé pour le contraste) */
-.ruban-col.sem-s3 .ruban-col-head { background: #b04a4a; } /* GPN2 automne — rouge */
-.ruban-col.sem-s4 .ruban-col-head { background: #5a9c5f; color: #0d2410; } /* GPN2 printemps — vert (texte foncé pour le contraste, cf. Lot 5) */
+.ruban-col-promo { font-family: var(--font-mono); font-size: .68rem; font-weight: 600; opacity: .85; }
+/* REGLES.md #14 — couleurs de semestre (JETONS.md, Ruban uniquement) : S1 bleu,
+   S2 ambre, S3 rouge/rust, S4 vert. Corrigé le 16/08/2026 (l'ancien jaune vif
+   #e0a526 était un reliquat non touché de la charte Atlas naturaliste). */
+.ruban-col.sem-s1 .ruban-col-head { background: #3a6ea5; }
+.ruban-col.sem-s2 .ruban-col-head { background: #c08a12; }
+.ruban-col.sem-s3 .ruban-col-head { background: #b0423f; }
+.ruban-col.sem-s4 .ruban-col-head { background: #41874f; }
 .ruban-ue {
   background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--moss);
   border-radius: var(--r-md); padding: .6rem .7rem; box-shadow: var(--shadow-sm);
   transition: opacity .15s;
 }
 .ruban-ue.is-dim { opacity: .42; }
-/* Lot R (harmonisation ruban) — liseré gauche par semestre, mêmes tons que les
-   bandeaux de promo du planning. Placé AVANT .is-modified (amber) pour qu'une UE
-   éditée conserve son liseré ambré prioritaire. */
-.ruban-ue.sem-s1 { border-left-color: #3a76ad; } /* GPN1 automne — bleu */
-.ruban-ue.sem-s2 { border-left-color: #e0a526; } /* GPN1 printemps — jaune */
-.ruban-ue.sem-s3 { border-left-color: #b04a4a; } /* GPN2 automne — rouge */
-.ruban-ue.sem-s4 { border-left-color: #5a9c5f; } /* GPN2 printemps — vert */
+/* REGLES.md #5 — une tuile colorée ne porte jamais une couleur à part : fond =
+   teinte+14 (8 % alpha), filet gauche = teinte pleine. Couleur de semestre
+   reportée sur la carte ET sur ses capacités liées (07-ruban.png). */
+.ruban-ue.sem-s1 { background: #3a6ea514; border-left-color: #3a6ea5; }
+.ruban-ue.sem-s2 { background: #c08a1214; border-left-color: #c08a12; }
+.ruban-ue.sem-s3 { background: #b0423f14; border-left-color: #b0423f; }
+.ruban-ue.sem-s4 { background: #41874f14; border-left-color: #41874f; }
 .ruban-ue-head { display: flex; flex-direction: column; gap: .1rem; margin-bottom: .25rem; }
 .ruban-ue-code { font-size: .72rem; font-weight: 700; color: var(--moss-dark); letter-spacing: .03em; }
 .ruban-ue-head strong { font-size: .92rem; color: var(--ink); }
@@ -2374,6 +2677,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-cap-code { font-family: var(--font-mono); font-size: .74rem; font-weight: 700; color: var(--water); white-space: nowrap; }
 .ruban-cap.has-ref .ruban-cap-code::after { content: " ↗"; font-size: .7rem; opacity: .7; }
 .ruban-cap-title { font-size: .78rem; line-height: 1.3; }
+/* Capacité « liée » : le filet/code reprend la couleur du semestre de sa carte,
+   pas une teinte fixe (07-ruban.png — bleu en S1, ambre en S2, rouge en S3, vert
+   en S4). Le fond au survol (--water-soft) reste inchangé, hors-sujet ici. */
+.ruban-ue.sem-s1 .ruban-cap.has-ref { border-left-color: #3a6ea5; }
+.ruban-ue.sem-s1 .ruban-cap-code { color: #3a6ea5; }
+.ruban-ue.sem-s2 .ruban-cap.has-ref { border-left-color: #c08a12; }
+.ruban-ue.sem-s2 .ruban-cap-code { color: #8c6a10; }
+.ruban-ue.sem-s3 .ruban-cap.has-ref { border-left-color: #b0423f; }
+.ruban-ue.sem-s3 .ruban-cap-code { color: #b0423f; }
+.ruban-ue.sem-s4 .ruban-cap.has-ref { border-left-color: #41874f; }
+.ruban-ue.sem-s4 .ruban-cap-code { color: #326a3d; }
 
 /* Tableau détaillé */
 .ruban-table-wrap { overflow-x: auto; }
@@ -2385,7 +2699,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .ruban-cap-link { border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: .82rem; padding: 0; }
 .ruban-cap-link:hover { color: var(--water); text-decoration: underline; }
 .ruban-cap-link.has-ref strong { color: var(--water); }
-.ruban-mark { background: var(--amber-soft); color: #6b4f12; padding: 0 .2rem; border-radius: 3px; font-weight: 700; }
+.ruban-mark { background: var(--amber-soft); color: #6b4f12; padding: 0 .2rem; border-radius: 0; font-weight: 700; }
 
 /* Modale de détail capacité */
 .ruban-cap-modal { max-width: 520px; }
@@ -2441,10 +2755,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .empty-hint { color: var(--muted); font-style: italic; padding: var(--sp-4); text-align: center; }
 
 .frais-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-.frais-filters { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+/* align-items:flex-end — sans lui, le bouton « + Déplacement » (pas de label
+   au-dessus, contrairement à Statut/Classe) s'étire par défaut (stretch) à la
+   hauteur label+select et paraît disproportionné. */
+.frais-filters { display: flex; align-items: flex-end; gap: var(--sp-3); flex-wrap: wrap; }
 .frais-filters label { display: flex; flex-direction: column; font-size: .78rem; color: var(--muted); gap: .2rem; }
-.frais-export, .rooms-export { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; margin-top: var(--sp-2); }
-.frais-export .meta, .rooms-export .meta { margin-right: .3rem; }
+.frais-export { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; margin-top: var(--sp-2); }
+.frais-export .meta { margin-right: .3rem; }
 
 .frais-totals { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-bottom: var(--sp-2); font-size: .92rem; }
 .frais-table-wrap { }
@@ -2461,7 +2778,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-row-actions { text-align: right; width: 2.4rem; }
 .frais-link { opacity: .7; font-size: .8rem; }
 
-.frais-status { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .74rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.frais-status { display: inline-block; padding: .1rem .5rem; border-radius: 0; font-size: .74rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
 .frais-status.is-todo { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
 .frais-status.is-progress { background: var(--water-soft); color: var(--water); border-color: var(--water); }
 .frais-status.is-done { background: var(--success-soft); color: var(--success); border-color: var(--moss-line); }
@@ -2470,10 +2787,15 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .frais-line-total strong { font-size: 1.05rem; color: var(--moss-dark); }
 
 /* Badge du panneau Frais (visible même replié) */
-.frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); }
+/* Retours #4 (18/08/2026) — quand un bouton « + » cohabite avec ce badge dans
+   le même bandeau (Déplacements, Réunions), le bouton doit rester juste après
+   le titre (comme sur les encarts sans badge, ex. « + Période ») ; la marge
+   auto pousse le badge seul vers la droite plutôt que de laisser
+   `justify-content: space-between` centrer le bouton entre les deux. */
+.frais-badge { font-size: .78rem; font-weight: 600; color: var(--muted); font-family: var(--font-mono); margin-left: auto; }
 /* Lot 5 (Q3) — même recette que .room-urgent : le blanc sur ambre plein
    tombait à 3,92 ; ambre pâle + texte foncé reste une alerte, en restant lisible. */
-.frais-badge.has-pending { color: #7a5b16; background: var(--amber-soft); border-radius: 999px; padding: .1rem .55rem; }
+.frais-badge.has-pending { color: #7a5b16; background: var(--amber-soft); border-radius: 0; padding: .1rem .55rem; }
 .frais-panel .frais-toolbar { margin-top: var(--sp-2); }
 
 /* ---------- Lot F — édition composition d'UE (Ruban) ---------- */
@@ -2505,7 +2827,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .row-keywords { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .25rem; }
 .kw-chip {
   display: inline-flex; align-items: center; font-size: .66rem; font-weight: 600;
-  padding: .04rem .4rem; border-radius: 999px; background: var(--amber-soft); color: #7a5b16;
+  padding: .04rem .4rem; border-radius: 0; background: var(--amber-soft); color: #7a5b16;
   border: 1px solid #e7d39e; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -2517,12 +2839,133 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 .seq-color-field .meta { flex: 1 1 12rem; }
 
+/* ---------- Écran 12 — menus de saisie (modales séquence / séance) ---------- */
+.menu-header-fields { display: flex; flex-direction: column; gap: var(--sp-2); }
+.menu-divider { border: none; border-top: 1px solid var(--line); margin: var(--sp-3) 0; }
+.menu-optional-hint {
+  font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 0 0 var(--sp-2);
+}
+.menu-optional-hint span { text-transform: none; letter-spacing: normal; margin-left: .5rem; opacity: .85; }
+
+.week-range-field { display: flex; align-items: center; gap: var(--sp-2); }
+.week-input {
+  width: 4.4rem; text-align: center; font-family: var(--font-mono); font-weight: 600;
+  border: 1px solid var(--line); background: var(--surface); padding: .5rem 0;
+}
+.week-range-arrow { font-family: var(--font-mono); color: var(--muted); }
+
+.hours-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface); width: fit-content; }
+.hours-stepper-btn {
+  width: 2rem; height: 2.2rem; border: 0; background: var(--surface-alt); color: var(--ink);
+  font-family: var(--font-mono); font-size: 1rem; padding: 0;
+}
+.hours-stepper-btn:hover { background: var(--line); }
+.hours-stepper-value {
+  width: 3rem; text-align: center; font-family: var(--font-mono); font-weight: 600;
+  border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); height: 2.2rem;
+}
+.hours-stepper-unit { padding: 0 .6rem; font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
+
+/* Grille figée de 12 teintes (JETONS.md) partagée par séquence et séance ;
+   la dernière case est le picker natif « autre… », superposé en transparence. */
+.color-picker-field { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.color-swatch-grid { display: grid; grid-template-columns: repeat(12, 1.25rem); gap: 5px; }
+.color-swatch { width: 1.25rem; height: 1.25rem; padding: 0; border: 1px solid var(--line-strong); }
+.color-swatch.active { box-shadow: inset 0 0 0 3px var(--surface); outline: 2px solid var(--ink); }
+.color-swatch-custom {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.25rem; height: 1.25rem; padding: 0; border: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(135deg, var(--surface-alt) 0 4px, var(--surface) 4px 8px);
+  font-size: .85rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+}
+.color-swatch-custom::after { content: '+'; pointer-events: none; }
+.color-swatch-custom input[type="color"] {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; padding: 0; margin: 0; cursor: pointer; opacity: 0;
+}
+
+.assessment-type-buttons { display: inline-flex; border: 1px solid var(--line-strong); }
+.assessment-type-buttons button {
+  padding: .4rem .75rem; font-size: .82rem; background: var(--surface); color: var(--ink-soft);
+  border: 0; border-right: 1px solid var(--line-strong);
+}
+.assessment-type-buttons button:last-child { border-right: 0; }
+.assessment-type-buttons button.active { background: var(--ink); color: #fff; }
+
+/* Sélecteur de créneau (modale séance) : bande de semaine + grille hebdomadaire complète
+   (18/08 — retour de Martin, « je veux avoir toutes les possibilités de créneaux ») + deux
+   options fixes (Autre créneau/Sans date). */
+.slot-picker { border: 1px solid var(--line); background: var(--surface); padding: var(--sp-2) var(--sp-3); }
+.slot-picker-weekbar { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.slot-picker-week-label { font-family: var(--font-mono); font-size: .82rem; font-weight: 600; }
+.slot-picker-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-1); }
+.slot-picker-options-fixed { grid-template-columns: repeat(2, minmax(120px, 1fr)); margin-top: var(--sp-2); }
+.slot-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: .1rem;
+  padding: .4rem .55rem; border: 1px solid var(--line); background: var(--surface-alt); font-family: var(--font-mono);
+}
+.slot-option strong { font-size: .82rem; font-weight: 700; color: var(--ink); }
+.slot-option small { font-size: .68rem; color: var(--muted); }
+.slot-option:hover { border-color: var(--line-strong); }
+.slot-option.active { background: var(--acc); border-color: var(--acc); }
+.slot-option.active strong, .slot-option.active small { color: #fff; }
+.slot-option-other, .slot-option-none { background: var(--surface); border-style: dashed; }
+.slot-picker-custom { margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px dashed var(--line-strong); }
+.slot-picker-custom[hidden] { display: none; }
+
+/* Grille hebdomadaire complète (5 jours × 8 créneaux, Repas en séparateur non cliquable) —
+   tous les créneaux visibles, libres ET occupés (ces derniers restent cliquables, le
+   garde-fou de chevauchement existe déjà au submit). Éléments à plat dans l'ordre du DOM :
+   la grille CSS remplit les lignes toute seule (en-tête puis 1 étiquette horaire + 5
+   cellules par ligne). */
+.slot-grid {
+  display: grid; grid-template-columns: 3.4rem repeat(5, 1fr); gap: 2px;
+  font-family: var(--font-mono); margin-bottom: var(--sp-2);
+}
+.slot-grid-corner { background: var(--surface); }
+.slot-grid-day {
+  display: flex; align-items: center; justify-content: center; padding: .25rem 0;
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); background: var(--surface);
+}
+.slot-grid-time {
+  display: flex; align-items: center; justify-content: flex-end; padding: 0 .4rem;
+  font-size: .68rem; color: var(--muted); background: var(--surface);
+}
+.slot-grid-time.slot-grid-lunch { color: var(--ink-soft); font-weight: 650; }
+.slot-cell-lunch { background: var(--line); }
+.slot-cell {
+  min-height: 2.1rem; padding: .2rem .35rem; border: 1px solid var(--line);
+  background: var(--surface-alt); font-family: var(--font-mono); font-size: .68rem;
+  color: var(--ink-soft); text-align: left; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; cursor: pointer;
+}
+.slot-cell:hover { border-color: var(--line-strong); }
+.slot-cell.is-occupied { background: repeating-linear-gradient(135deg, var(--surface-alt) 0 5px, var(--surface) 5px 10px); color: var(--muted); }
+.slot-cell.is-selected { background: var(--acc); border-color: var(--acc); color: #fff; }
+.slot-cell.is-range-start { border-top-width: 2px; border-left-width: 2px; }
+.slot-cell.is-range-end { border-bottom-width: 2px; border-right-width: 2px; }
+.slot-cell.is-in-range { background: color-mix(in srgb, var(--acc) 55%, var(--surface)); }
+
+/* Bandeau de lecture de plage/durée + boutons de durée rapide (voie alternative au 2e
+   clic, en nombre de créneaux — pas un texte libre, cf. inferEndSlot du backlog). */
+.slot-picker-summary:empty { display: none; }
+.slot-picker-summary-text { margin: 0 0 var(--sp-1); font-size: .82rem; }
+.quick-duration-buttons { display: flex; flex-wrap: wrap; gap: .3rem; }
+.quick-duration-btn {
+  padding: .3rem .55rem; font-size: .72rem; font-family: var(--font-mono);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+}
+.quick-duration-btn:hover { border-color: var(--acc); }
+.quick-duration-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
 /* ---------- Lot K — détail d'une semaine thématique / EIL (Conception) ---------- */
 .eil-detail-group { margin-top: var(--sp-3); border-top: 1px dashed var(--line-strong); padding-top: var(--sp-2); }
 .eil-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .eil-detail-head .entity-level-label {
   background: var(--amber-soft); color: #7a5b16; border: 1px solid #e7d39e;
-  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  padding: .05rem .45rem; border-radius: 0; font-size: .6rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .04em;
 }
 .eil-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
@@ -2533,7 +2976,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .loose-detail-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .loose-detail-head .entity-level-label {
   background: var(--line); color: var(--ink-soft); border: 1px solid var(--line-strong);
-  padding: .05rem .45rem; border-radius: 999px; font-size: .6rem; font-weight: 700;
+  padding: .05rem .45rem; border-radius: 0; font-size: .6rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .04em; font-style: normal;
 }
 .loose-detail-head strong { flex: 1 1 auto; font-size: .9rem; color: var(--ink); }
@@ -2567,7 +3010,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .saturday-cell > * { margin-right: .4rem; vertical-align: middle; }
 .saturday-session {
   display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .55rem;
-  border-radius: 999px; font-size: .74rem; font-weight: 600; color: var(--ink);
+  border-radius: 0; font-size: .74rem; font-weight: 600; color: var(--ink);
   background: color-mix(in srgb, var(--seq-color, var(--moss)) 34%, transparent);
   border: 1px solid color-mix(in srgb, var(--seq-color, var(--moss)) 55%, transparent);
 }
@@ -2578,18 +3021,9 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 /* ---- Lot M — Réunions (journal du Tableau de bord) ---- */
 .form-grid .span-full { grid-column: 1 / -1; }
 .reunions-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
-.reunions-list { display: flex; flex-direction: column; gap: var(--sp-2); }
-.reunion-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: .55rem .75rem; background: var(--surface-alt); cursor: pointer; }
-.reunion-card:hover { border-color: var(--moss-line); background: var(--moss-soft); }
-.reunion-card-head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.reunion-date { font-weight: 600; font-family: var(--font-mono); font-size: .82rem; }
-.reunion-lieu { color: var(--muted); font-size: .85rem; }
-.reunion-lieu::before { content: "· "; }
-.reunion-vehicle { font-size: .78rem; color: var(--moss); font-weight: 600; white-space: nowrap; }
-.reunion-card .reunion-edit { margin-left: auto; }
-.reunion-participants { margin: .35rem 0 0; font-size: .85rem; }
-.reunion-label { color: var(--muted); }
-.reunion-sujets { margin: .3rem 0 0; font-size: .85rem; white-space: pre-wrap; }
+/* Retours 17/08/2026 — tableau plutôt que des cartes (voir renderReunions) :
+   réutilise .frais-table, seule la ligne cliquable est spécifique ici. */
+.frais-table tbody tr[data-edit-reunion] { cursor: pointer; }
 
 /* ---- Écran de connexion (avant que l'app ne soit visible) ----
    Réutilise les tokens du système de design ci-dessus plutôt que des couleurs
@@ -2621,7 +3055,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   font-family: var(--font-mono); font-size: .72rem; letter-spacing: .03em;
   font-weight: 500; color: var(--muted); margin-bottom: var(--sp-3);
 }
-.atlas-pastille-light .pdot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--acc); }
+.atlas-pastille-light .pdot { width: .55rem; height: .55rem; border-radius: 0; background: var(--acc); }
 .auth-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -2644,82 +3078,109 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .auth-card .lien:hover { color: var(--ink); }
 
 /* =====================================================================
-   TABLEAU DE BORD — mise en page validée (audit en 8 tours, 2026)
-   Structure : conception I. Habillage : « le carnet » (K) + le code
-   couleur de la variante N — LA COULEUR DIT QUAND.
-     rouge  = en retard, ou urgent (réservation sous 15 j, séance sans
-              créneau cette semaine)
-     ambre  = dans la quinzaine
-     gris   = plus tard
+   TABLEAU DE BORD — charte « papier technique froid » (refonte août 2026,
+   design_handoff_organisation_cours/, écran 1 « Tableau de bord vue globale »)
+   Vraies cartes bordées (fond blanc, filet, en-tête sable), pas des lignes
+   plates : REGLES.md #1/#2/#18. La couleur dit l'échéance :
+     rouge  = urgent (réservation/ordre sous ROOM_ALERT_DAYS jours, séance
+              sans créneau cette semaine) — --alerte
+     ambre  = à anticiper mais pas urgent — --reserve
+     gris   = plus tard / neutre
    Tout est préfixé par #dashboard : les autres onglets ne bougent pas.
    ===================================================================== */
 
 #dashboard {
-  --niv-retard: #b4342a;   /* blanc dessus : 6,1 */
-  --niv-proche: #835913;   /* deux contraintes à la fois : lisible en TEXTE sur
-                              le fond de page (4,9 sur --paper) et porteur de
-                              texte BLANC en pastille (6,2). L'ambre de la
-                              charte (#a9772a) échoue aux deux (3,9 / 3,9). */
-  --niv-loin: #5b5f66;     /* blanc dessus : 6,4 */
-  --bleu-titre: var(--acc);/* « Aujourd'hui », blanc dessus : 9,1 */
+  --niv-retard: var(--danger);  /* #C0562B — REGLES.md #12 : alerte/échéance */
+  --niv-proche: var(--amber);   /* #7a5b16 — réserve/incertitude, à anticiper */
+  --niv-loin: var(--muted);     /* #6b6a5e — plus tard, neutre */
+  --bleu-titre: var(--acc);
 }
 
-/* ---- Charpente : zone hebdomadaire puis zone mensuelle ----
-   Ni titre de page (l'onglet suffit) ni barre d'actions (export/import sont
-   passés dans le bandeau) : la vue commence par « Ma semaine ». ---- */
-#dashboard .zone-haute { display: flex; flex-direction: column; gap: var(--sp-5); margin-bottom: var(--sp-6); }
-#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-3); }
+/* ---- Charpente : zone hebdomadaire puis zone mensuelle ---- */
+#dashboard .zone-haute { margin-bottom: var(--sp-6); }
+#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-4); }
 #dashboard .zone-titre {
-  margin: 0 0 var(--sp-3); font-size: .6875rem; font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
-}
-/* Zone mensuelle sur DEUX colonnes (lot A [20]) : repliées, ces quatre barres
-   ne portent qu'un titre et un badge — les mettre en pile gaspillait la moitié
-   de la largeur. Les encarts gardent leur position MÊME DÉPLIÉS : plutôt que de
-   rendre la pleine largeur à « Frais », on a raccourci son tableau (Classe, UE
-   et Taux retirés de l'affichage, voir renderFrais()). */
-#dashboard .zone-basse-lignes {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 var(--sp-5); align-items: start;
-}
-#dashboard .zone-basse-lignes > * { min-width: 0; }
-/* Même filet de séparation qu'en zone haute : deux colonnes de barres côte à
-   côte sans limite se lisaient comme une seule liste en désordre. */
-#dashboard .zone-basse-lignes > :nth-child(even) {
-  border-left: 1px solid var(--line-strong);
-  padding-left: var(--sp-5);
-}
-@media (max-width: 700px) {
-  #dashboard .zone-basse-lignes { grid-template-columns: 1fr; }
-  #dashboard .zone-basse-lignes > * { border-left: 0; padding-left: 0; }
+  margin: 0 0 var(--sp-3); font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2);
 }
 
-/* ---- Un bloc n'est plus une boîte : un titre sur un trait, et du contenu.
-   Lot A [2] — le bloc est aussi FERMÉ en bas par un filet fin. Ouvert des deux
-   côtés, on ne voyait plus où un espace de travail finissait et où le suivant
-   commençait ; c'est ce que « pas clairement identifiables » désignait. ---- */
-#dashboard .bande-bloc {
-  background: transparent; border: 0; border-top: 2px solid var(--ink);
-  border-bottom: 1px solid var(--line);
-  border-radius: 0; box-shadow: none; padding: 0; margin-bottom: 0; overflow: hidden;
+/* ---- Grille principale : colonne large (Ma semaine/Prochainement/Urgences)
+   + colonne fixe 330px (Séances pas encore placées / À faire) — REGLES.md,
+   écran 1 : `grid-template-columns:1fr 330px`. ---- */
+#dashboard .dash-grille { display: grid; grid-template-columns: 1fr 330px; gap: var(--sp-4); align-items: start; }
+#dashboard .dash-col-gauche, #dashboard .dash-col-droite { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+@media (max-width: 1000px) { #dashboard .dash-grille { grid-template-columns: 1fr; } }
+
+/* ---- Bloc = une vraie carte (fond blanc, filet, en-tête sable) ---- */
+#dashboard .bande-bloc, #dashboard .backlog-panel, #dashboard .urgences-panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 0; box-shadow: none; padding: 0; overflow: hidden;
+}
+#dashboard .bande-bloc[hidden], #dashboard .urgences-panel[hidden] { display: none; }
+#dashboard .bloc-tete, #dashboard .backlog-panel > .panel-heading-inline {
+  display: flex; align-items: center; gap: var(--sp-2) var(--sp-3); flex-wrap: wrap;
+  padding: .5rem .8rem; background: var(--surface-alt); border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+#dashboard .bloc-tete h3, #dashboard .backlog-panel h3 { font-size: .85rem; font-weight: 700; color: var(--ink); margin: 0; }
+#dashboard .bloc-id { font-family: var(--font-mono); font-size: .6875rem; font-weight: 400; color: var(--muted); margin-left: .35rem; }
+#dashboard .bloc-compte { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); white-space: nowrap; }
+#dashboard .bloc-compte strong { color: var(--niv-retard); }
+#dashboard .bloc-lien {
+  margin-left: auto; font-size: .75rem; color: var(--acc); font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+/* Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine de « Ma
+   semaine » : deux boutons discrets, pas de calendrier ni de champ de saisie. */
+#dashboard .dash-semaine-nav { display: flex; gap: .25rem; }
+#dashboard .dash-week-nav-btn {
+  min-height: 0; width: 1.6rem; height: 1.6rem; padding: 0; line-height: 1;
+  font-size: .9rem; background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line-strong);
+}
+#dashboard .dash-week-nav-btn:hover:not(:disabled) { background: var(--surface-alt); color: var(--moss-dark); }
+#dashboard .dash-week-nav-btn:disabled { opacity: .35; cursor: default; }
+#dashboard .bloc-lien:hover, #dashboard .bloc-lien:focus-visible { color: var(--moss-dark); }
+#dashboard .bloc-legende {
+  display: inline-flex; align-items: center; gap: .3rem; font-family: var(--font-mono);
+  font-size: .6875rem; color: var(--niv-retard); white-space: nowrap;
+}
+#dashboard .bloc-legende-puce { width: 9px; height: 9px; flex: 0 0 auto; background: var(--danger-soft); border: 1px solid #e0bfa4; border-left: 3px solid var(--danger); }
+#dashboard .bloc-vide { padding: var(--sp-3) .8rem; margin: 0; color: var(--muted); font-size: .75rem; }
+#dashboard .backlog-panel .badge-groupe { margin-left: auto; }
+
+/* Retours #3 (18-19/08/2026) — bandeaux colorés pour distinguer « Ma semaine »
+   (vive) des « Deux semaines suivantes » (même teinte, plus douce), au même
+   principe que l'ambre du backlog ci-dessus. */
+#dashSemaine .bloc-tete {
+  background: color-mix(in srgb, var(--acc) 12%, var(--surface-alt));
+  border-bottom: 1px solid var(--acc);
+}
+#dashSemaine .bloc-tete h3 { color: var(--acc); }
+#dashProchainement .bloc-tete {
+  background: color-mix(in srgb, var(--acc) 5%, var(--surface-alt));
 }
 
-/* [9] Les titres d'encart prennent le bleu du bandeau : un repère de début de
-   bloc qui se lit de loin, sans surface colorée (on reste à ~1,5 % de couleur). */
-#dashboard .bloc-tete h3,
-#dashboard .ligne-trois h3,
-#dashboard .zone-basse-lignes h3,
-#dashboard .zone-haute > .panel-collapsible h3 { color: var(--bleu-titre); }
-#dashboard .bande-bloc[hidden] { display: none; }
-#dashboard .bloc-tete { padding: var(--sp-3) 0 var(--sp-2); }
-#dashboard .bloc-tete h3 { font-size: 1.05rem; margin: 0; }
-#dashboard .bloc-id { font-family: var(--font-mono); font-size: .6875rem; font-weight: 600; color: var(--muted); margin-left: .4rem; }
-#dashboard .bloc-compte { font-size: .75rem; color: var(--muted); white-space: nowrap; }
-#dashboard .bloc-compte strong { color: var(--niv-proche); }
-#dashboard .bloc-vide { padding: 0 0 var(--sp-4); margin: 0; color: var(--muted); font-size: .75rem; }
+/* « Séances pas encore placées » — en-tête ambre (attention douce, distincte
+   du rouge des Urgences) + pastille de compte pleine, conformes au mockup. */
+#dashboard .backlog-panel { border-left: 3px solid var(--amber); }
+#dashboard .backlog-panel > .panel-heading-inline { background: var(--amber-soft); }
+#dashboard .backlog-panel h3 { color: #6b4f12; }
+#dashboard .backlog-panel .frais-badge:first-child {
+  display: inline-flex; align-items: center; justify-content: center; height: 16px; padding: 0 6px;
+  background: var(--amber); font-family: var(--font-mono); font-size: .6rem; font-weight: 700; color: #fff;
+}
+#dashboard .backlog-panel-link {
+  display: block; width: 100%; text-align: center; padding: .5rem .8rem;
+  border: 0; border-top: 1px solid var(--line); background: var(--surface-alt);
+  font-size: .78rem; color: var(--acc); font-weight: 600; cursor: pointer;
+}
+#dashboard .backlog-panel-link:hover { background: var(--amber-soft); }
+.drag-handle { color: var(--muted); opacity: .7; margin-right: .1rem; cursor: grab; }
+/* Dans .session-card-head (fond foncé --ue-deep, texte blanc) : la poignée
+   suit la même teinte claire, sinon invisible sur ce fond. */
+.session-card-head .drag-handle { color: rgba(255,255,255,.75); }
 
 /* ---- Le retard, pleine largeur, au-dessus des jours ---- */
-#dashboard .retard-bandeau { padding: .5rem 0 .6rem; }
+#dashboard .retard-bandeau { padding: .5rem .8rem .6rem; border-bottom: 1px solid var(--line); }
 #dashboard .retard-titre {
   display: inline-block; font-family: var(--font-mono); font-size: .6875rem;
   font-weight: 700; letter-spacing: .06em; margin-bottom: .35rem;
@@ -2735,188 +3196,274 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .retard-quand { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--niv-retard); min-width: 5.2rem; }
 #dashboard .retard-detail { font-size: .75rem; color: var(--ink-soft); }
 
-/* ---- La bande : des colonnes côte à côte, séparées par un filet ---- */
-#dashboard .bande { display: grid; border-top: 1px solid var(--line); }
+/* ---- La bande : colonnes de jours séparées par un filet de grille clair,
+   fond du bandeau de jour légèrement distinct du fond de carte (REGLES.md
+   #16 : la structure reste plus foncée que le fond général). ---- */
+#dashboard .bande { display: grid; gap: 1px; background: var(--filet-interne, #ece8db); }
 #dashboard .bande-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-#dashboard .col-jour { border-right: 1px solid var(--line); padding: var(--sp-3); min-width: 0; }
-#dashboard .col-jour:first-child { padding-left: 0; }
-#dashboard .col-jour:last-child { border-right: 0; padding-right: 0; }
-#dashboard .col-tete { display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; margin-bottom: var(--sp-2); }
-#dashboard .col-nom { font-weight: 700; font-size: .8125rem; color: var(--ink); }
-#dashboard .col-date { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
+#dashboard .col-jour { background: var(--surface); padding: 0; min-width: 0; display: flex; flex-direction: column; }
+#dashboard .col-tete {
+  display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap;
+  padding: .3rem .5rem; background: var(--paper); border-bottom: 1px solid var(--filet-interne, #ece8db);
+}
+#dashboard .col-nom { font-family: var(--font-mono); font-weight: 600; font-size: .68rem; color: var(--ink-soft); }
+#dashboard .col-date { font-family: var(--font-mono); font-size: .625rem; color: var(--muted-2); }
 #dashboard .col-compte {
   margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
-  color: var(--muted); background: var(--surface-alt); border-radius: 999px; padding: 0 .4rem;
+  color: var(--muted); background: var(--surface-alt); padding: 0 .4rem;
 }
-#dashboard .col-vide { margin: 0; font-size: .75rem; color: var(--line-strong); }
+#dashboard .col-vide { margin: 0; padding: .5rem; font-size: .72rem; color: var(--muted-2); }
+#dashboard .col-vide-libre { display: flex; flex-direction: column; gap: .25rem; border: 1px dashed var(--moss-line); padding: .4rem .5rem; margin: .4rem; }
+#dashboard .col-vide-lien { font-size: .72rem; color: var(--acc); font-weight: 600; cursor: pointer; }
 #dashboard .col-periode {
-  margin: 0 0 .35rem; padding: .05rem .45rem; border-radius: 0;
+  margin: .3rem .5rem 0; padding: .05rem .45rem;
   border-left: 2px solid var(--ink-soft); color: var(--ink-soft);
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 600;
 }
 
-/* « Aujourd'hui » : une étiquette pleine dans le bleu du bandeau titre. */
-#dashboard .col-jour.est-aujourdhui .col-tete {
-  background: var(--bleu-titre); border-radius: 3px;
-  padding: .3rem .5rem; margin-bottom: var(--sp-2);
-}
-#dashboard .col-jour.est-aujourdhui .col-nom { color: #fff; }
-#dashboard .col-jour.est-aujourdhui .col-date { color: #ccd5e8; }
-#dashboard .col-jour.est-passe .col-nom,
-#dashboard .col-jour.est-passe .col-date { color: var(--muted); }
+/* « Aujourd'hui » : bandeau teinté dans l'accent, comme la maquette (#dde4f2). */
+#dashboard .col-jour.est-aujourdhui .col-tete { background: #dde4f2; border-bottom-color: #c7d5ec; }
+#dashboard .col-jour.est-aujourdhui .col-nom { color: var(--moss-dark); }
+#dashboard .col-jour.est-aujourdhui .col-date { color: #4a68a0; }
+#dashboard .col-jour.est-passe .col-nom, #dashboard .col-jour.est-passe .col-date { color: var(--muted-2); }
 #dashboard .col-jour.est-passe .carte-titre { color: var(--muted); }
 
-/* ---- La carte : une ligne réglée, pas une tuile ---- */
-#dashboard .col-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+/* ---- La carte : une vraie tuile bordée, liseré gauche = échéance (REGLES.md
+   #5, adapté : le liseré porte l'urgence plutôt qu'une couleur de séquence,
+   le rendu actuel ne trace pas encore la couleur de séquence jusqu'ici). ---- */
+#dashboard .col-liste { list-style: none; margin: 0; padding: .35rem; display: flex; flex-direction: column; gap: .3rem; }
 #dashboard .carte {
   display: flex; flex-direction: column; gap: .1rem;
-  background: transparent; border: 0; border-left: 3px solid var(--line);
-  border-radius: 0; padding: .3rem 0 .35rem .6rem; min-height: 44px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-strong);
+  padding: .3rem .45rem; min-height: 40px; cursor: pointer;
 }
-#dashboard .carte:hover { background: var(--surface-alt); border-left-color: var(--ink-soft); }
+#dashboard .carte:hover { background: var(--surface-alt); }
 #dashboard .carte:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 #dashboard .carte-heure { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
-#dashboard .carte-titre { font-size: .875rem; font-weight: 700; line-height: 1.25; color: var(--ink); }
+#dashboard .carte-titre { font-size: .8125rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
 #dashboard .carte-meta { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
+#dashboard .carte-teachers.design-ue-pills { gap: .2rem; }
+#dashboard .carte-teachers .design-ue-pill { font-size: .58rem; padding: 0 .22rem; }
 #dashboard .carte-actions { display: flex; flex-wrap: wrap; gap: .22rem .3rem; margin-top: .3rem; }
 #dashboard .carte-tete { display: flex; align-items: center; justify-content: space-between; gap: .4rem; flex-wrap: wrap; }
 #dashboard .carte-tete .carte-actions { margin-top: 0; }
 
-/* Le trait porte le délai — c'est lui qui se lit de loin. */
-#dashboard .carte.a-traiter { border-left-color: var(--niv-proche); }
+/* Le liseré porte le délai — c'est lui qui se lit de loin. */
+#dashboard .carte.a-traiter { border-left-color: var(--niv-proche); background: var(--reserve-fond, var(--amber-soft)); }
 #dashboard .carte.a-traiter .carte-heure { color: var(--niv-proche); }
-#dashboard .carte.est-urgent { border-left-color: var(--niv-retard); }
+#dashboard .carte.est-urgent { border-left-color: var(--niv-retard); background: var(--danger-soft); }
 #dashboard .carte.est-urgent .carte-heure { color: var(--niv-retard); }
-/* Une réunion n'est pas une action : trait pointillé, choix validé en revue. */
-#dashboard .carte.est-reunion { border-left: 2px dotted var(--muted); }
-
-/* Au-delà de la quinzaine, la couleur s'éteint : l'étiquette seule parle. */
-#dashboard .col-lointaine .col-nom, #dashboard .col-lointaine .col-date { color: var(--muted); }
-#dashboard .col-lointaine .carte.a-traiter,
-#dashboard .col-lointaine .carte.est-reunion { border-left-color: var(--line-strong); }
-#dashboard .col-lointaine .carte.a-traiter .carte-heure { color: var(--muted); }
-#dashboard .col-lointaine .act { background: var(--niv-loin); }
+/* Une réunion n'est pas une action : liseré pointillé, choix validé en revue. */
+#dashboard .carte.est-reunion { border-left: 2px dotted var(--muted); background: var(--surface); }
 
 /* ---- Les pastilles : pleines, texte clair ---- */
 #dashboard .act {
   display: inline-flex; align-items: center;
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
-  padding: .14rem .5rem; border-radius: 999px; white-space: nowrap;
+  padding: .14rem .5rem; white-space: nowrap;
   background: var(--niv-proche); color: #fff; border: 0;
 }
 #dashboard .act-urgent { background: var(--niv-retard); }
 /* Ni une échéance, ni une action : gris dans tous les cas. */
-#dashboard .act-reunion, #dashboard .act-periode,
-#dashboard .col-lointaine .act-reunion,
-#dashboard .col-lointaine .act-periode { background: var(--niv-loin); }
+#dashboard .act-reunion, #dashboard .act-periode { background: var(--niv-loin); }
+/* Retours 17/08/2026 — réservation faite / ordre de mission envoyé : vert,
+   pour que « Ma semaine » et « Les deux semaines suivantes » le confirment
+   au lieu de simplement faire disparaître l'étiquette. */
+#dashboard .act-fait { background: var(--success); }
 
-/* ---- Ce qui n'a pas de créneau : urgent, donc rouge ---- */
-#dashboard .bande-sans-creneau { border-top: 1px solid var(--line); padding: var(--sp-3) 0; }
-#dashboard .sc-titre { display: block; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--ink-soft); margin-bottom: .35rem; }
+/* ---- Ce qui n'a pas de créneau cette semaine : urgent, donc rouge ---- */
+#dashboard .bande-sans-creneau { padding: .6rem .8rem; border-top: 1px solid var(--line); }
+#dashboard .sc-titre { display: block; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--niv-retard); margin-bottom: .35rem; }
 #dashboard .sc-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
 #dashboard .sc-liste > .carte { flex: 1 1 280px; max-width: 460px; }
-#dashboard .bande-audela { margin: 0; padding: .5rem 0 .7rem; border-top: 1px solid var(--line); font-size: .75rem; color: var(--muted); }
-#dashboard .bande-audela strong { color: var(--ink-soft); }
 
-/* ---- Ligne des encarts de travail : « À faire », « À réserver »,
-   « Déplacements ». Paliers explicites depuis le lot A — avec trois encarts,
-   `auto-fit` produisait à largeur moyenne un 3e élément seul sur une deuxième
-   ligne, que les filets de séparation ci-dessous auraient mal habillé.
-   align-items:start — un encart déplié n'étire pas ses voisins. ---- */
-#dashboard .ligne-trois {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-4); align-items: start;
+/* ---- « Les deux semaines suivantes » : mêmes cartes, en compact, une ligne
+   par semaine avec sa colonne de numéro (44px, REGLES.md gabarit). ---- */
+#dashboard .bande-compacte { display: flex; flex-direction: column; gap: 1px; background: var(--filet-interne, #ece8db); }
+#dashboard .ligne-semaine { display: grid; grid-template-columns: 44px 1fr; gap: 1px; background: var(--filet-interne, #ece8db); }
+#dashboard .col-semaine-num {
+  background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: .2rem;
 }
-#dashboard .ligne-trois > * { min-width: 0; margin-bottom: 0; }
+#dashboard .sem-nom { font-family: var(--font-mono); font-size: .68rem; font-weight: 600; color: var(--ink-soft); }
+#dashboard .sem-date { font-family: var(--font-mono); font-size: .58rem; color: var(--muted-2); }
+#dashboard .bande-compacte .col-tete { padding: .2rem .4rem; }
+#dashboard .bande-compacte .col-nom { font-size: .6rem; }
+#dashboard .bande-compacte .col-date { font-size: .58rem; }
+#dashboard .bande-compacte .col-liste { padding: .25rem; gap: .2rem; }
+#dashboard .bande-compacte .carte { padding: .2rem .35rem; min-height: 0; }
+#dashboard .bande-compacte .carte-titre { font-size: .72rem; }
+#dashboard .bande-compacte .carte-meta { font-size: .6rem; }
+#dashboard .bande-compacte .col-vide { font-size: .62rem; padding: .3rem; }
+#dashboard .bande-compacte .col-vide-libre { margin: .25rem; padding: .25rem .35rem; }
+#dashboard .bande-compacte .col-vide-lien { font-size: .62rem; }
 
-/* [2] Chaque encart est un ESPACE DE TRAVAIL, pas un bloc de texte qui flotte :
-   un filet vertical fin le sépare de son voisin et le rend dénombrable d'un
-   coup d'œil. C'est la réponse à « trop sobre » — une limite, pas une couleur. */
-#dashboard .ligne-trois > * + * {
-  border-left: 1px solid var(--line-strong);
-  padding-left: var(--sp-4);
+/* ---- Urgences : pile fusionnée salle/véhicule/matériel/ordre de mission,
+   REGLES.md #25 — liseré gauche 3px alerte, en-tête teinté, chaque ligne
+   finit par un verbe. ---- */
+#dashboard .urgences-panel { border-left: 3px solid var(--danger); }
+/* Retours 17/08/2026 — l'en-tête n'avait pas de padding propre (héritait du
+   .panel-heading-inline nu) : le titre touchait le liseré, et
+   justify-content:space-between éclatait titre/compte/sous-texte au lieu de
+   les garder groupés à gauche. */
+#dashboard .urgences-tete {
+  background: var(--alerte-fond-2, #f7e9e2);
+  padding: .5rem .8rem;
+  justify-content: flex-start;
+  gap: var(--sp-2) var(--sp-3);
 }
-@media (max-width: 1000px) {
-  #dashboard .ligne-trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* À deux colonnes, seul l'encart de droite porte le filet : celui qui passe à
-     la ligne redevient un début de rangée. */
-  #dashboard .ligne-trois > :nth-child(odd) { border-left: 0; padding-left: 0; }
+#dashboard .urgences-tete h3 { color: var(--alerte-fort, #8c3a15); }
+#dashboard .urgence-compte {
+  display: inline-flex; align-items: center; justify-content: center; height: 16px; padding: 0 6px;
+  background: var(--danger); font-family: var(--font-mono); font-size: .6rem; font-weight: 700; color: #fff;
 }
-@media (max-width: 700px) {
-  #dashboard .ligne-trois { grid-template-columns: 1fr; gap: 0; }
-  #dashboard .ligne-trois > * { border-left: 0; padding-left: 0; }
+#dashboard .urgences-sous { font-size: .7rem; color: var(--alerte-fort, #8c3a15); flex-basis: 100%; }
+@media (min-width: 640px) { #dashboard .urgences-sous { flex-basis: auto; } }
+#dashboard .urgence-liste { display: flex; flex-direction: column; }
+#dashboard .urgence-row {
+  display: flex; align-items: center; gap: .6rem; padding: .5rem .8rem; border-bottom: 1px solid var(--filet-interne, #ece8db);
+  flex-wrap: wrap; cursor: pointer;
 }
-#dashboard .ligne-trois h3 { font-size: 1.05rem; }
-#dashboard .ligne-trois > .panel-collapsible,
-#dashboard .ligne-trois > .priority-panel {
-  background: transparent; border: 0; border-top: 2px solid var(--ink);
-  border-radius: 0; box-shadow: none;
+#dashboard .urgence-row:hover { background: var(--surface-alt); }
+#dashboard .urgence-row:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+#dashboard .urgence-row.est-fait:hover { background: var(--success-soft); filter: brightness(.97); }
+#dashboard .urgence-type {
+  flex: 0 0 96px; font-family: var(--font-mono); font-size: .58rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
-#dashboard .ligne-trois > .panel-collapsible > summary { padding: var(--sp-3) 0 var(--sp-2); }
-#dashboard .ligne-trois > .panel-collapsible > *:not(summary) { padding-left: 0; padding-right: 0; }
-#dashboard .priority-panel { padding: var(--sp-3) 0 var(--sp-4); }
-#dashboard .priority-panel .todo-notes {
-  border: 0; border-radius: 0; background: transparent; padding: 0; margin-top: .35rem;
+#dashboard .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
+#dashboard .urgence-delai.est-urgent { color: var(--danger); }
+#dashboard .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
+/* Retours #3 (18-19/08/2026) — pastilles initiales, ligne plate (pas de fond
+   coloré ici : contexte lié à la séance/UE générique) → style bleu habituel. */
+#dashboard .urgence-teachers { flex: 0 0 auto; }
+#dashboard .urgence-detail {
+  flex: 1 1 200px; min-width: 0; font-size: .78rem; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#dashboard .priority-panel .todo-notes:focus { outline: none; background: transparent; }
-#dashboard .priority-panel:focus-within { border-top-color: var(--acc); box-shadow: none; }
-/* En colonne, « À faire » a besoin de hauteur d'écriture — mais seulement sur
-   grand écran : empilé sur téléphone, ce serait du défilement pour rien. */
-@media (min-width: 701px) {
-  #dashboard .ligne-trois .priority-panel .todo-notes { min-height: 190px; }
+#dashboard .urgence-verbe {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .3rem; height: 30px; padding: 0 .6rem;
+  font-size: .75rem; font-weight: 500; color: var(--acc); border: 1px solid var(--moss-line);
+  background: var(--surface); cursor: pointer; margin-left: auto;
 }
+#dashboard .urgence-verbe:hover, #dashboard .urgence-verbe:focus-visible { background: var(--moss-soft); }
+#dashboard .urgence-verbe input[type="checkbox"] { width: 0; height: 0; opacity: 0; position: absolute; }
+#dashboard .urgence-row.est-fait { background: var(--success-soft); }
+#dashboard .urgence-verbe.est-fait {
+  color: var(--success); border-color: var(--moss-line); background: var(--surface); font-weight: 600;
+}
+#dashboard .urgence-verbe.est-fait:hover, #dashboard .urgence-verbe.est-fait:focus-visible { background: var(--success-soft); }
+/* Bascule rapide véhicule (retours 17/08/2026) — discrète, à côté de
+   « Réserver » : ce n'est pas l'action principale de la ligne. */
+#dashboard .urgence-bascule {
+  flex: 0 0 auto; height: 30px; padding: 0 .55rem; font-size: .72rem; font-weight: 500;
+  color: var(--muted); border: 1px dashed var(--line-strong); background: var(--surface); cursor: pointer;
+}
+#dashboard .urgence-bascule:hover, #dashboard .urgence-bascule:focus-visible { color: var(--ink); background: var(--moss-soft); border-color: var(--moss-line); }
+#dashboard .urgence-dismiss {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  font-size: 1rem; line-height: 1; color: var(--muted); border: 1px solid var(--moss-line);
+  background: var(--surface); cursor: pointer;
+}
+#dashboard .urgence-dismiss:hover, #dashboard .urgence-dismiss:focus-visible { color: var(--danger); background: var(--moss-soft); }
+#dashboard .urgence-pied { padding: .5rem .8rem; background: var(--fond-total, #faf8f0); font-size: .68rem; line-height: 1.5; color: var(--muted); }
+#dashboard .empty-hint { padding: var(--sp-3) .8rem; text-align: left; }
 
-/* ---- Les encarts repliés : des barres pleine largeur ---- */
-#dashboard .zone-basse-lignes > .panel-collapsible,
-#dashboard .zone-haute > .panel-collapsible {
-  background: transparent; border: 0; border-bottom: 1px solid var(--line);
-  border-radius: 0; box-shadow: none;
+/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande, en grille
+   2×2 (retours 17/08/2026 : Déplacements/Réunions à gauche, Périodes/
+   Amélioration à droite — l'ordre du DOM porte cette disposition, voir
+   index.html). Fermées ce sont des barres compactes ; ouvertes, la carte
+   s'étend sur toute la largeur pour ne pas écraser tableaux/filtres. ---- */
+#dashboard .zone-basse-grille {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
 }
-#dashboard .zone-basse-lignes > .panel-collapsible > summary,
-#dashboard .zone-haute > .panel-collapsible > summary { padding: .6rem 0; }
-#dashboard .zone-basse-lignes > .panel-collapsible > *:not(summary),
-#dashboard .zone-haute > .panel-collapsible > *:not(summary) { padding-left: 0; padding-right: 0; }
-#dashboard .zone-basse-lignes h3,
-#dashboard .zone-haute > .panel-collapsible h3 { font-size: 1.05rem; }
+#dashboard .zone-basse-grille > .panel-collapsible {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0;
+}
+#dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
+#dashboard .zone-basse-grille > .panel-collapsible > summary { padding: .55rem .7rem; }
+#dashboard .zone-basse-grille > .panel-collapsible > *:not(summary) { padding: 0 .8rem .8rem; }
+#dashboard .zone-basse-grille h3 { font-size: .82rem; }
 #dashboard .panel-collapsible > summary { align-items: flex-start; }
 #dashboard .panel-collapsible > summary::before { margin-top: .3rem; }
 #dashboard .panel-collapsible > summary .panel-heading-inline { align-items: center; }
 #dashboard .badge-groupe { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  #dashboard .zone-basse-grille { grid-template-columns: 1fr; }
+}
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }
-#dashboard .frais-badge.has-pending { background: var(--niv-proche); color: #fff; border-radius: 999px; padding: .1rem .55rem; }
-#dashboard .row-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+#dashboard .frais-badge.has-pending { background: var(--niv-proche); color: #fff; padding: .1rem .55rem; }
+#dashboard .row-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); }
 #dashboard .row-item:hover { background: var(--surface-alt); border-color: var(--line); }
-/* Une réservation à moins de 15 jours est rouge — demande de l'enseignant. */
-#dashboard .status-pill.room-urgent { background: var(--niv-retard); color: #fff; border-radius: 999px; padding: .1rem .5rem; }
-/* Lot B — lignes de l'encart « Déplacements » : un ordre de mission à demander
-   s'ouvre d'un clic sur la séance ou la réunion d'origine, comme les cartes.
-   Les pastilles « Véhicule à réserver » / « Ordre de mission » n'ont pas de
-   couleur propre : c'est le DÉLAI qui les teinte, règle commune à toutes. */
-/* Dans une colonne étroite, « 22/09/2026 · Véhicule de l'établissement · GPN1 »
-   ne tient pas sur une ligne et l'ellipse mangeait justement ce qu'on cherche à
-   lire : QUOI réserver. Ici la ligne se replie plutôt que de se couper. */
-#dashboard .room-row .row-meta,
-#dashboard .om-row .row-meta { white-space: normal; overflow: visible; line-height: 1.35; }
+#dashboard .meta-etiquette {
+  margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted-2);
+}
 
-#dashboard .om-row { cursor: pointer; min-height: 44px; }
-#dashboard .om-row:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+/* « À faire » : carte blanche ordinaire, liseré encre (pas de teinte bleue —
+   REGLES.md #11 : l'accent est réservé à l'action, pas à la mise en avant
+   décorative d'un panneau). Remplace le fond teinté générique .priority-panel. */
+#dashboard .priority-panel, #dashboard .priority-panel.has-pending {
+  border: 1px solid var(--line); border-left: 3px solid var(--ink); background: var(--surface);
+}
+#dashboard .priority-panel > .panel-heading-inline {
+  padding: .5rem .8rem; background: var(--surface-alt); border-bottom: 1px solid var(--line);
+}
+#dashboard .priority-panel h3 { font-size: .85rem; }
 
-#dashboard .empty-hint { padding: var(--sp-3) 0; text-align: left; }
-#dashboard .rooms-panel > .meta.tight { margin-top: var(--sp-3); }
+/* Liste à cocher « À faire » (refonte écran 1, 16/08/2026 — mockup) : une
+   tâche cochée reste barrée le temps de la décocher par erreur (voir
+   renderTodoList), un « ✕ » discret pour la supprimer sans confirmation. */
+.todo-list { display: flex; flex-direction: column; }
+.todo-row {
+  display: flex; align-items: flex-start; gap: .5rem; padding: .5rem .8rem;
+  border-bottom: 1px solid var(--line); cursor: pointer;
+}
+.todo-row:hover { background: var(--surface-alt); }
+.todo-row:hover .todo-row-remove { opacity: 1; }
+.todo-row input[type="checkbox"] { margin-top: .15rem; flex: 0 0 auto; }
+.todo-row-text { flex: 1 1 auto; font-size: .84rem; color: var(--ink); line-height: 1.35; white-space: pre-wrap; }
+.todo-row.is-done .todo-row-text { text-decoration: line-through; color: var(--muted); }
+.todo-row-remove {
+  flex: 0 0 auto; border: 0; background: none; color: var(--muted); cursor: pointer;
+  padding: 0 .2rem; font-size: .8rem; opacity: 0; transition: opacity .12s ease;
+}
+.todo-row-remove:hover { color: var(--danger); }
+.todo-add-input {
+  margin: .5rem .8rem; width: calc(100% - 1.6rem); border: 1px dashed var(--line-strong);
+  background: transparent; padding: .5rem .6rem; font-size: .82rem;
+  font-family: inherit; line-height: 1.35; resize: vertical; min-height: 2.6rem;
+}
+.todo-add-input:focus { border-style: solid; border-color: var(--acc); box-shadow: var(--halo-focus); }
+.todo-footnote { padding: 0 .8rem .7rem; margin: 0; line-height: 1.4; }
+
+/* Historique « Tâches faites » (retours 17/08/2026) — repli sobre, purgé au-delà
+   de 30 jours (purgerTachesFaites) : pas la peine d'en faire un vrai panneau. */
+.todo-history { border-top: 1px solid var(--line); padding: .4rem .8rem .6rem; }
+.todo-history summary {
+  font-size: .74rem; color: var(--muted); cursor: pointer; list-style: none;
+}
+.todo-history summary::-webkit-details-marker { display: none; }
+.todo-history summary::before { content: '▸ '; }
+.todo-history[open] summary::before { content: '▾ '; }
+.todo-history-list { list-style: none; margin: .4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+.todo-history-row { display: flex; justify-content: space-between; gap: .6rem; font-size: .78rem; color: var(--muted); }
+.todo-history-text { flex: 1 1 auto; text-decoration: line-through; white-space: pre-wrap; }
+.todo-history-date { flex: 0 0 auto; font-family: var(--font-mono); font-size: .7rem; }
 
 @media (max-width: 1100px) {
   #dashboard .bande-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #dashboard .col-jour { border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 700px) {
   #dashboard .bande-5 { grid-template-columns: 1fr; }
-  #dashboard .col-jour { border-right: 0; padding-left: 0; padding-right: 0; }
-  /* Empilée, une bande n'a plus besoin de montrer les jours déjà passés ni les
-     semaines sans rien à traiter. */
+  #dashboard .ligne-semaine { grid-template-columns: 1fr; }
+  #dashboard .col-semaine-num { flex-direction: row; gap: .4rem; justify-content: flex-start; padding: .2rem .5rem; }
+  /* Empilée, une bande n'a plus besoin de montrer les jours déjà passés. */
   #dashboard .col-jour.est-passe:not(.est-aujourdhui) { display: none; }
-  #dashboard .col-jour.col-semaine:has(> .col-vide) { display: none; }
   #dashboard .zone-haute { gap: var(--sp-4); }
   #dashboard .sc-liste > .carte { max-width: none; }
+  #dashboard .urgence-row { padding: .5rem; }
+  #dashboard .urgence-type { flex-basis: 100%; }
 }
+

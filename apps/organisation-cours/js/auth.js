@@ -241,13 +241,16 @@ async function modifierInitiales(nouvellesInitiales) {
 // Après connexion, la grande carte de connexion disparaît complètement (elle
 // prenait toute la largeur au-dessus du bandeau titre — retour utilisateur) :
 // il ne reste qu'un indicateur discret dans le bandeau, à côté des onglets.
+// Refonte écran 1 (16/08/2026) — le bouton « Recharger » est désormais un
+// élément STATIQUE du bandeau (index.html, branché une seule fois par
+// app.js/bindEvents), plus recréé ici à chaque connexion : il vit à côté du
+// statut de synchro persistant du mockup, pas dans ce bloc avatar.
 function afficherEtatActif(profil) {
   elAuthShell.hidden = true;
   elCarte.innerHTML = "";
   elAuthCompact.innerHTML = `
     <span id="initiales-affichees" title="${escapeAttrLocal(profil.prenom)} ${escapeAttrLocal(profil.nom)}">${escapeAttrLocal(profil.initiales)}</span>
     <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>
-    <button type="button" id="btn-recharger" class="lien" title="Recharger les données (récupérer les dernières modifications des collègues)">⟳</button>
     <button type="button" id="btn-deconnexion" class="lien" title="Se déconnecter">Déconnexion</button>
   `;
   document.getElementById("btn-modifier-initiales").addEventListener("click", () => {
@@ -258,17 +261,9 @@ function afficherEtatActif(profil) {
       .then((p) => afficherEtatActif(p))
       .catch((e) => window.alert(e.message || "Échec de la modification des initiales."));
   });
-  document.getElementById("btn-recharger").addEventListener("click", (ev) => {
-    const bouton = ev.currentTarget;
-    if (bouton.disabled) return; // évite un double-clic pendant le rechargement
-    bouton.disabled = true;
-    Promise.resolve(window.OC_APP?.recharger()).finally(() => {
-      bouton.disabled = false;
-    });
-  });
   brancherDeconnexion();
   elAppShell.hidden = false;
-  window.OC_APP.demarrer(profil.initiales);
+  window.OC_APP.demarrer(profil.initiales, profil.nom, profil.prenom);
 }
 
 // Compte créé mais pas encore activé : l'app reste inaccessible (RLS), donc

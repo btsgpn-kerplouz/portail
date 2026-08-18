@@ -19,6 +19,7 @@ const DEPLACEMENT_STATUSES = ['Demande à faire', 'En cours', 'Terminée'];
 const DEFAULT_TAUX = 0.55;
 const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre' };
 const VEHICULE_LABEL = 'Véhicule de l’établissement';
+const MATERIEL_LABEL = 'Matériel à réserver';
 const ROOM_ALERT_DAYS = 15;
 const DAY_LANES = [
   { key: 'd0', day: 0, part: 'day', label: 'Lundi' },
@@ -90,14 +91,22 @@ const UE_REFERENCE = [
   ] }
 ];
 
+/* 18/08 — Lot F : « PDF d'origine » devient une vraie page (liste + lecteur),
+   voir #rubanTabPdf/renderPdfLibrary. La liste s'était arrêtée à M4-M8 alors que
+   docs/ contient déjà M1-M3 (mêmes intitulés que les onglets du référentiel
+   interactif, ci-dessous) : complétée pour couvrir tout le dossier. */
 const REFERENCE_DOCS = [
   { id: 'referentiel', title: 'Référentiel de diplôme BTSA GPN 2024', file: 'referentiel-diplome-2024.pdf', type: 'Référentiel de diplôme' },
+  { id: 'm1', title: 'Module 1 — Inscription dans le monde d’aujourd’hui', file: 'module-1-inscription-monde-aujourdhui.pdf', type: 'Document d’accompagnement' },
+  { id: 'm2', title: 'Module 2 — Construction du projet personnel et professionnel', file: 'module-2-projet-personnel-professionnel.pdf', type: 'Document d’accompagnement' },
+  { id: 'm3', title: 'Module 3 — Communication', file: 'module-3-communication.pdf', type: 'Document d’accompagnement' },
   { id: 'm4', title: 'Module 4 — Expertise naturaliste', file: 'module-4-expertise-naturaliste.pdf', type: 'Document d’accompagnement' },
   { id: 'm5', title: 'Module 5 — Opérations de gestion environnementale', file: 'module-5-operations-gestion-environnementale.pdf', type: 'Document d’accompagnement' },
   { id: 'm6', title: 'Module 6 — Éducation à l’environnement et médiation scientifique', file: 'module-6-education-environnement-mediation.pdf', type: 'Document d’accompagnement' },
   { id: 'm7', title: 'Module 7 — Montage de projet de gestion environnementale et de valorisation de la nature', file: 'module-7-montage-projet.pdf', type: 'Document d’accompagnement' },
   { id: 'm8', title: 'Module 8 — Concertation territoriale et communication', file: 'module-8-concertation-territoriale.pdf', type: 'Document d’accompagnement' },
-  { id: 'maths', title: 'Mathématiques appliquées — exemples de mobilisation', file: 'mathematiques-appliquees-exemples.pdf', type: 'Document thématique' }
+  { id: 'maths', title: 'Mathématiques appliquées — exemples de mobilisation', file: 'mathematiques-appliquees-exemples.pdf', type: 'Document thématique' },
+  { id: 'ruban', title: 'Ruban semestriel (document d’origine)', file: 'ruban-semestres.pdf', type: 'Ruban pédagogique' }
 ];
 
 // Référentiel structuré par capacités, chargé depuis reference-capacities.js
@@ -109,17 +118,41 @@ let state = null;
 // hors année scolaire, cf. loadData() qui retombe sur state.weeks[0] quand
 // cette semaine n'existe pas dans le planning).
 let selectedWeek = currentWeekId();
-let weekPickerMonthKey = null; // AAAA-MM du mois affiché dans le sélecteur compact
-let seqCalMonthKey = null; // AAAA-MM du mois affiché dans le calendrier de la modale séquence
-let designPromotionFilter = 'Tous';
-let designSemesterFilter = 'Tous';
-/* Lot D [16] — la frise s'ouvre sur le binôme de semestres de la SAISON en
-   cours, et sur MES UE. Les deux sont des défauts calculés une fois les données
-   chargées (les semaines n'existent pas encore ici) : `null` = « pas encore
-   décidé », une liste vide reste un choix délibéré de l'utilisateur. */
-let ganttSemesterFilters = null;
-let ganttFocusedUeIds = null;
-let ganttDensity = 'compact';
+// Écran 12 — modale séance : semaine affichée par le sélecteur de créneaux et
+// choix courant de l'utilisateur (un créneau standard, « autre créneau » ou
+// « sans date »). État UI pur, jamais persisté tel quel (voir submitSessionForm).
+let sessionSlotPickerWeekId = '';
+let sessionSlotChoice = null;
+// 18/08 — calendrier de la modale séquence (exception assumée à REGLES.md #22 pour cet
+// écran précis, décision de Martin) : mois affiché ('AAAA-MM'), null = pas encore navigué.
+let seqCalMonthKey = null;
+// Écran 12 — « Créer et enchaîner » : le prochain submit du formulaire séance
+// doit rouvrir le formulaire au lieu de fermer la modale.
+let sessionChainRequested = false;
+// Refonte écran 4 (16/08/2026) — période affichée par la bande de semaines du
+// Planning hebdo (REGLES.md #22, seul sélecteur de date de l'app). Resynchronisée
+// sur la semaine sélectionnée à chaque renderPlanning() ; la bascule Sept–déc/
+// Janv–mai ne fait que parcourir, elle ne déplace pas la semaine affichée.
+let weekStripPeriod = 'autumn';
+// Refonte écran 2 (16/08/2026) — le sidebar UE est le seul filtrage de la
+// Conception (REGLES.md #21) : une promotion active, une UE sélectionnée à la
+// fois (vrai sélecteur, seule exception à l'estompage), un sous-onglet actif.
+let designPromotionFilter = 'GPN1';
+let designSelectedUeId = '';
+let designActiveTab = 'sequences';
+/* Refonte écran 3 (16/08/2026) — la frise s'ouvre sur la promotion/semestre de
+   la SAISON en cours, et sur MON UE (vrai sélecteur, comme Conception). `null`
+   = « pas encore décidé », calculé une fois les données chargées (les semaines
+   n'existent pas encore avant ça). */
+let ganttPromo = null;
+let ganttSemester = null;
+let ganttSelectedUeId = '';
+let ganttStacked = false;
+// Mémoire de la dernière frise rendue, pour recalculer « hors fenêtre » et
+// recadrer sur la semaine en cours à l'activation de l'onglet (panneau alors
+// caché → clientWidth invalide au moment du rendu programmé par renderAll()).
+let ganttLastUes = [];
+let ganttLastWeeks = [];
 let weekBacklogScope = 'week';
 let weekBacklogUeFilter = 'Tous';
 /* Lot G — mémoire de travail de la modale de séance : les capacités cochées,
@@ -128,28 +161,39 @@ let weekBacklogUeFilter = 'Tous';
    ouverture (openSessionModal). */
 let capacitesParUe = {};
 let ueCapacitesPrecedente = '';
-let designTeacherFilter = 'Tous';
-/* Lot C [10] — « paramétrage de base = rien de coché ». On garde donc la liste
-   des UE CHOISIES (et non plus celle des UE masquées) : vide au démarrage, ce
-   qui affiche tout. Cocher une UE devient un geste d'affinage volontaire. */
-let designSelectedUeIds = [];
 let selectedReferenceCode = 'C4.2';
 let selectedReferenceModule = 'm4';
 let rubanTeacher = 'Tous';
-let rubanMode = 'ruban';
 let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneaux type
 let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
+let studentPlanningPromo = ''; // Écran 8 — promotion affichée, résolue au premier rendu (state.promotions[0])
+// Retours #3 (18-19/08/2026) — comme creneauxPeriod (Mes créneaux types) :
+// la semaine type d'une promotion n'est pas forcément la même sur les 2
+// périodes de l'année.
+let studentPlanningPeriod = 'autumn';
+let studentPlanningMineOnly = true; // case « Mettre mes cours en avant »
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
 
 // initiales transmises par js/auth.js via OC_APP.demarrer(initiales) — sert
 // au périmètre strictement personnel du Tableau de bord (voir estVisiblePourMoi).
 let moiInitiales = '';
+// Nom/prénom transmis en même temps (écran 13, Ordre de mission — préremplissage
+// de « Commandé par »). Absents si non fournis (ex. anciens appels non mis à jour).
+let moiNom = '';
+let moiPrenom = '';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 function uid(prefix = 'id') {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/* Date du jour en LOCAL (pas toISOString, qui bascule en UTC — décalerait la
+   journée de la case « À faire » autour de minuit). */
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /* Lot 7 — la modale séance affichait la valeur brute enregistrée (« Fictif à
@@ -202,9 +246,9 @@ function normalizeDeplacementFields(entity) {
 function normalizeData(data) {
   const normalized = {
     version: '5.0.0',
-    schoolYear: data.schoolYear || '2026-2027',
+    schoolYear: data.schoolYear || '',
     promotions: data.promotions || DEFAULT_PROMOTIONS,
-    weeks: data.weeks || [],
+    weeks: [],
     ues: data.ues || [],
     sequences: data.sequences || [],
     sessions: data.sessions || [],
@@ -212,18 +256,35 @@ function normalizeData(data) {
     deplacements: Array.isArray(data.deplacements) ? data.deplacements : [],
     reunions: Array.isArray(data.reunions) ? data.reunions : [],
     weekNotes: data.weekNotes || {},
+    // « À faire » : vraie liste à cocher (refonte écran 1, 16/08/2026), pas du
+    // texte libre. `todoNotes` (ancien format, string) reste lu en migration
+    // juste en dessous, pour ne pas perdre les notes déjà saisies.
     todoNotes: typeof data.todoNotes === 'string' ? data.todoNotes : '',
+    todoItems: Array.isArray(data.todoItems) ? data.todoItems.map(normalizeTodoItem).filter(Boolean) : [],
+    // « Amélioration de l'appli » : même liste à cocher que « À faire » (retours
+    // 17/08/2026), mais partagée entre tous les comptes. `devNotes` (ancien
+    // format, texte libre) reste lu en migration juste en dessous.
     devNotes: typeof data.devNotes === 'string' ? data.devNotes : '',
+    devNotesItems: Array.isArray(data.devNotesItems) ? data.devNotesItems.map(normalizeTodoItem).filter(Boolean) : [],
     rubanOverrides: (data.rubanOverrides && typeof data.rubanOverrides === 'object') ? data.rubanOverrides : {},
     rubanUeCaps: (data.rubanUeCaps && typeof data.rubanUeCaps === 'object' && !Array.isArray(data.rubanUeCaps)) ? data.rubanUeCaps : {},
     weekTemplates: Array.isArray(data.weekTemplates) ? data.weekTemplates.map(normalizeTemplateSlot).filter(Boolean) : [],
+    // Écran 8 — Planning étudiant : semaine type PAR PROMOTION, saisie à la main.
+    // Même forme que weekTemplates mais sans semestre ni colonne L/R (aucune
+    // cellule scindée dans la maquette de cet écran) et une promotion propre
+    // (weekTemplates la déduit du semestre ; ici il n'y a pas de semestre).
+    studentWeekTemplate: Array.isArray(data.studentWeekTemplate) ? data.studentWeekTemplate.map(normalizeStudentSlot).filter(Boolean) : [],
     lastSavedAt: data.lastSavedAt || null
   };
 
-  if (!normalized.weeks.some(w => w.id === '2026-S36') || normalized.schoolYear !== '2026-2027') {
-    normalized.schoolYear = '2026-2027';
-    normalized.weeks = buildAcademicWeeks(2026, 36, 2027, 22);
-  }
+  // Retours 17/08/2026 — fenêtre glissante (~26 semaines avant/après
+  // aujourd'hui) RECALCULÉE à chaque chargement, plutôt que persistée : plus
+  // de mur « hors année scolaire » l'été, plus de bornes en dur à retoucher
+  // à la main chaque rentrée (voir buildRollingWeeks). Les identifiants de
+  // semaine restent des clés ISO stables (année-Sxx) : une séance placée
+  // dans « 2026-S38 » retrouve toujours la même semaine calendaire.
+  normalized.weeks = buildRollingWeeks();
+  normalized.schoolYear = anneeScolaireLabel(normalized.weeks);
 
   normalized.ues = mergeReferenceUes(normalized.ues);
   normalized.ues = normalized.ues.map(ue => ({ ...ue, startWeekId: ue.startWeekId || '', endWeekId: ue.endWeekId || '', teacher: ue.teacher || ue.teachers || '', annual: !!ue.annual }));
@@ -322,6 +383,24 @@ function normalizeData(data) {
     promotions: Array.isArray(c.promotions) ? c.promotions : [],
     notes: c.notes || ''
   }));
+
+  // Migration ancien format « À faire » (texte libre) → liste à cocher : une
+  // seule fois, à la première ouverture après la refonte — sans quoi les
+  // notes déjà saisies par Martin disparaîtraient silencieusement.
+  if (!normalized.todoItems.length && normalized.todoNotes.trim()) {
+    normalized.todoItems = [{ id: uid('todo'), text: normalized.todoNotes.trim(), done: false, doneAt: '' }];
+    normalized.todoNotes = '';
+  }
+
+  // Migration « Amélioration de l'appli » (texte libre) → liste à cocher
+  // (retours 17/08/2026) : une ligne du texte devient une tâche.
+  if (!normalized.devNotesItems.length && normalized.devNotes.trim()) {
+    normalized.devNotesItems = normalized.devNotes.split('\n').map(l => l.trim()).filter(Boolean)
+      .map(text => ({ id: uid('devnote'), text, done: false, doneAt: '' }));
+    normalized.devNotes = '';
+  }
+  normalized.todoItems = purgerTachesFaites(normalized.todoItems);
+  normalized.devNotesItems = purgerTachesFaites(normalized.devNotesItems);
 
   return normalized;
 }
@@ -428,6 +507,47 @@ function normalizeTemplateSlot(t = {}) {
   };
 }
 
+function normalizeStudentSlot(t = {}) {
+  if (!t || typeof t !== 'object') return null;
+  const start = clampTemplateSlots(Number(t.startSlot) || 0, Number(t.endSlot));
+  return {
+    id: t.id || uid('etu'),
+    promotion: DEFAULT_PROMOTIONS.includes(t.promotion) ? t.promotion : DEFAULT_PROMOTIONS[0],
+    // Retours #3 (18-19/08/2026) — 2 périodes comme « Mes créneaux types » :
+    // pas de notion de semestre ici (juste promotion + période), donc un champ
+    // à plat plutôt que la dérivation periodOfSemester() des créneaux types.
+    period: t.period === 'spring' ? 'spring' : 'autumn',
+    day: Math.max(0, Math.min(4, Number(t.day) || 0)),
+    startSlot: start.start,
+    endSlot: start.end,
+    ueId: t.ueId || '',
+    ueCode: typeof t.ueCode === 'string' ? t.ueCode : '',
+    title: typeof t.title === 'string' ? t.title : '',
+    room: typeof t.room === 'string' ? t.room : '',
+    teacher: typeof t.teacher === 'string' ? t.teacher : '',
+    color: isValidHexColor(t.color) ? t.color : ''
+  };
+}
+
+// « Tâches faites » (retours 17/08/2026) : une tâche cochée rejoint un petit
+// historique consultable, purgé au-delà de 30 jours plutôt que conservé
+// indéfiniment en silence dans l'état.
+const CHECKLIST_HISTORIQUE_JOURS = 30;
+function purgerTachesFaites(items) {
+  const limite = new Date(); limite.setDate(limite.getDate() - CHECKLIST_HISTORIQUE_JOURS); limite.setHours(0, 0, 0, 0);
+  return items.filter(t => !t.done || !t.doneAt || new Date(t.doneAt) >= limite);
+}
+
+function normalizeTodoItem(t = {}) {
+  if (!t || typeof t !== 'object' || !String(t.text || '').trim()) return null;
+  return {
+    id: t.id || uid('todo'),
+    text: String(t.text).trim(),
+    done: !!t.done,
+    doneAt: typeof t.doneAt === 'string' ? t.doneAt : ''
+  };
+}
+
 /* Contraint début/fin à rester dans la même demi-journée (jamais à cheval sur le
    repas, index 4) et fin ≥ début. */
 function clampTemplateSlots(start, endRaw) {
@@ -442,13 +562,51 @@ function clampTemplateSlots(start, endRaw) {
 
 function promoOfSemester(sem) { return (sem === 'Semestre 1' || sem === 'Semestre 2') ? 'GPN1' : 'GPN2'; }
 function periodOfSemester(sem) { return (sem === 'Semestre 1' || sem === 'Semestre 3') ? 'autumn' : 'spring'; }
+
+// Retours #4 (18/08/2026) — code couleur semestre repris du Ruban (S1 bleu,
+// S2 ambre, S3 rouge, S4 vert — S1/S2 = GPN1, S3/S4 = GPN2), généralisé à tout
+// ce qui teintait jusqu'ici une UE (Conception, Progression, Planning hebdo) :
+// remplace l'ancienne palette arbitraire par index d'UE (ueColor) et la
+// couleur de promo fixe du bandeau Planning hebdo (voir renderPromotionTable).
+const SEMESTER_COLORS = { 'Semestre 1': '#3a6ea5', 'Semestre 2': '#c08a12', 'Semestre 3': '#b0423f', 'Semestre 4': '#41874f' };
+function semesterColorOf(semester) { return SEMESTER_COLORS[semester] || '#5b6f92'; }
+// Semestre correspondant à une promo + une période (automne/printemps) du
+// Planning hebdo — utilisé pour teinter le bandeau promo (été = gris, hors
+// mapping, géré à part).
+function semesterForPromoPeriod(promo, period) {
+  return promo === 'GPN2'
+    ? (period === 'spring' ? 'Semestre 4' : 'Semestre 3')
+    : (period === 'spring' ? 'Semestre 2' : 'Semestre 1');
+}
 function templateSemester(periodKey, promo) {
   const period = TEMPLATE_PERIODS.find(p => p.key === periodKey) || TEMPLATE_PERIODS[0];
   return period.semesters[promo] || period.semesters.GPN1;
 }
-/* Période (automne / printemps) d'une semaine du planning : les semaines 2026
-   (S36→S53) = septembre-décembre, les semaines 2027 = janvier-mai. */
-function periodOfWeek(week) { return Number(week?.isoYear) === 2026 ? 'autumn' : 'spring'; }
+/* Période (automne / printemps) d'une semaine du planning : S36→S53 =
+   septembre-décembre, S01→S26 = janvier-mai (et le creux d'été, sans
+   séances en pratique). Ajustements #2 [E2.5] (18/08/2026) — bug trouvé :
+   l'ancienne version comparait l'année calendaire à 2026 en dur, correcte
+   uniquement pour LA fenêtre fixe 2026-2027 d'origine. Depuis le passage à
+   `buildRollingWeeks` (fenêtre glissante, n'importe quelle année), ce test
+   cassait dès qu'on avançait dans le temps — et la fenêtre glissante de 26
+   semaines après aujourd'hui n'atteint qu'une petite portion de « janvier-
+   mai » de l'année suivante, d'où les « seulement 7 cases » observées.
+   Basé sur le numéro de semaine (indépendant de l'année civile) : ça résout
+   les deux à la fois. */
+function periodOfWeek(week) { return weekNumberOf(week) >= 36 ? 'autumn' : 'spring'; }
+
+// Retours #3 (18-19/08/2026) — la frise du Planning hebdo (weekStripPeriod)
+// gagne une 3e période « Juin – août » : le seul découpage en 2 de
+// periodOfWeek rangeait tout l'été dans « Janvier – mai », frise illisible
+// (jusqu'à S35 pour un printemps qui finit en pratique vers S22). Fonction à
+// part : periodOfWeek reste binaire pour templateSemester/TEMPLATE_PERIODS
+// (créneaux types, seulement 2 semestres par promo, pas de « été »).
+function weekStripPeriodOf(week) {
+  const n = weekNumberOf(week);
+  if (n >= 36) return 'autumn';
+  if (n >= 22) return 'summer';
+  return 'spring';
+}
 function templateSlotsFor(semester) { return (state?.weekTemplates || []).filter(t => t.semester === semester); }
 function findTemplateSlot(id) { return state?.weekTemplates?.find(t => t.id === id); }
 
@@ -472,13 +630,47 @@ function templateMaskLabel(t) {
   if (/^\s*ue\b/i.test(code)) return code.trim();
   return truncate((t.title || code || '').trim(), 16);
 }
-/* Contenu interne d'une cellule de l'éditeur (croix + code UE + intitulé + enseignant). */
+/* Contenu interne d'une cellule de l'éditeur (croix + code UE + intitulé + intervenants).
+   09/10-creneaux-types.png — les intervenants sont des pastilles (pleine = vous,
+   creuse = collègue), pas du texte brut, et peuvent être plusieurs sur un créneau. */
 function templateCellInner(t) {
   const code = templateSlotCode(t);
+  const teachers = teacherTokens(t.teacher);
   return `<button type="button" class="tpl-del" data-del-template="${escapeAttr(t.id)}" title="Supprimer ce créneau" aria-label="Supprimer ce créneau">×</button>
     ${code ? `<div class="tpl-ue">${escapeHtml(code)}</div>` : ''}
     ${t.title ? `<div class="tpl-title">${escapeHtml(t.title)}</div>` : ''}
-    ${t.teacher ? `<div class="tpl-teacher">${escapeHtml(t.teacher)}</div>` : ''}`;
+    ${teachers.length ? `<div class="tpl-teachers">${teachers.map(x => `<span class="design-ue-pill${x.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(x)}</span>`).join('')}</div>` : ''}`;
+}
+
+/* Écran 8 — Planning étudiant. Dupliqué depuis les fonctions ci-dessus
+   (templateSlotCode/templateSlotTint/templateCellInner) plutôt que paramétré :
+   voir la mémoire du chantier, on évite de toucher au code déjà approuvé de
+   « Mes créneaux types ». */
+function findStudentSlot(id) { return state?.studentWeekTemplate?.find(t => t.id === id); }
+function studentSlotCode(t) {
+  if (!t) return '';
+  if (t.ueId) return findUe(t.ueId)?.code || t.ueCode || '';
+  return t.ueCode || '';
+}
+function studentSlotTint(t) {
+  if (!t) return '#9aa0ad';
+  if (isValidHexColor(t.color)) return t.color;
+  if (t.ueId) return ueColor(t.ueId);
+  return '#9aa0ad';
+}
+/* REGLES.md #21 : « mes cours » = un intervenant du créneau porte mes initiales
+   (même comparaison que rubanUeIsMine ailleurs dans le fichier). */
+function isMyStudentSlot(t) {
+  return teacherTokens(t?.teacher).some(x => x.toLowerCase() === moiInitiales.toLowerCase());
+}
+function studentSlotCellInner(t) {
+  const code = studentSlotCode(t);
+  const teachers = teacherTokens(t.teacher);
+  return `<button type="button" class="tpl-del" data-del-student-slot="${escapeAttr(t.id)}" title="Supprimer ce cours" aria-label="Supprimer ce cours">×</button>
+    ${code ? `<div class="tpl-ue">${escapeHtml(code)}</div>` : ''}
+    ${t.title ? `<div class="tpl-title">${escapeHtml(t.title)}</div>` : ''}
+    ${t.room ? `<div class="tpl-room meta">${escapeHtml(t.room)}</div>` : ''}
+    ${teachers.length ? `<div class="tpl-teachers">${teachers.map(x => `<span class="design-ue-pill${x.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(x)}</span>`).join('')}</div>` : ''}`;
 }
 
 async function loadData() {
@@ -521,17 +713,40 @@ async function saveData(message = 'Enregistré', { rerender = true, forcer = fal
   }
 }
 
-let saveToastTimer = null;
+/* Refonte écran 1 (16/08/2026) — le statut de synchro rejoint le bandeau
+   (mockup : « synchronisé il y a 2 min »), texte PERSISTANT au lieu d'un
+   toast qui s'efface après 2,4 s (ancienne décision N5, périmée par le
+   mockup). L'heure relative se rafraîchit seule, sans re-render complet. */
+let lastStatusMessage = '';
+let saveStatusRefreshTimer = null;
+function relativeTimeFr(iso) {
+  if (!iso) return '';
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min <= 0) return 'à l’instant';
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `il y a ${h} h`;
+  return `il y a ${Math.round(h / 24)} j`;
+}
 function setSaveStatus(text, { persistant = false } = {}) {
   const el = $('#saveStatus');
   if (!el) return;
-  // N5 — toast discret : l'heure suffit (le message est transitoire).
-  const suffix = state?.lastSavedAt ? ` · ${new Date(state.lastSavedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : '';
+  lastStatusMessage = text;
+  const suffix = state?.lastSavedAt ? ` · ${relativeTimeFr(state.lastSavedAt)}` : '';
   el.textContent = text + suffix;
-  el.classList.add('is-visible');
   el.classList.toggle('is-error', persistant);
-  clearTimeout(saveToastTimer);
-  if (!persistant) saveToastTimer = setTimeout(() => el.classList.remove('is-visible'), 2400);
+  // Simplification bandeau (17/08/2026) : « Réessayer » ne s'affiche qu'en cas
+  // d'erreur — l'auto-enregistrement se charge du cas normal, plus besoin d'un
+  // bouton permanent qui faisait doublon.
+  const retryBtn = $('#btn-sauvegarder');
+  if (retryBtn) retryBtn.hidden = !persistant;
+  if (!saveStatusRefreshTimer) {
+    saveStatusRefreshTimer = setInterval(() => {
+      const el2 = $('#saveStatus');
+      if (!el2 || !state?.lastSavedAt) return;
+      el2.textContent = lastStatusMessage + ` · ${relativeTimeFr(state.lastSavedAt)}`;
+    }, 30000);
+  }
 }
 
 /* ===== Export / import des données (sauvegarde manuelle, transfert entre postes) ===== */
@@ -682,9 +897,9 @@ function roomBookingDaysUntil(date) {
    véhicule) : ce sont deux démarches distinctes auprès de deux personnes. */
 function reservationRows() {
   const rows = [];
-  const pousser = (kind, source, entity, label, booked, date, titre, detail) => {
+  const pousser = (kind, source, entity, label, booked, dismissed, date, titre, detail) => {
     rows.push({
-      kind, source, entity, label, booked,
+      kind, source, entity, label, booked, dismissed,
       id: entity.id, titre, detail,
       date, daysUntil: roomBookingDaysUntil(date)
     });
@@ -694,18 +909,25 @@ function reservationRows() {
     const salle = sessionRoomToBook(s);
     const date = roomBookingDate(s);
     if (salle) {
-      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked,
+      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked, !!s.roomBookedDismissed,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
     if (s.deplacement === 'etablissement') {
-      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked,
+      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked, !!s.vehicleBookedDismissed,
+        date, s.title || 'Séance sans titre', s.promotion || '');
+    }
+    // Retours #3 (18-19/08/2026) — case « matériel à réserver » à côté du champ
+    // Matériel : même mécanique que salle/véhicule (reprend la même date de
+    // référence que la séance).
+    if (s.materielAReserver) {
+      pousser('materiel', 'session', s, MATERIEL_LABEL, !!s.materielReserve, !!s.materielReserveDismissed,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
   });
 
   (state.reunions || []).forEach(r => {
     if (r.deplacement !== 'etablissement') return;
-    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked,
+    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked, !!r.vehicleBookedDismissed,
       parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
   });
 
@@ -717,106 +939,456 @@ function reservationRows() {
   });
 }
 
-/* Lignes « actives » de l'encart : ni réservées, ni passées (délestage
-   demandé en revue — au fil de l'eau, et automatique une fois la date passée). */
+/* Lignes de l'encart : celles pas encore réservées (délestées d'elles-mêmes
+   une fois la date passée, sans action possible) + celles réservées mais pas
+   encore retirées à la main (persistent, affichées « fait », jusqu'au clic
+   sur ×) — une case cochée par erreur ne fait donc plus disparaître la ligne
+   sans recours. */
 function activeRoomBookingRows() {
-  return reservationRows().filter(r => !r.booked && (r.daysUntil === null || r.daysUntil >= 0));
+  return reservationRows().filter(r => {
+    if (r.dismissed) return false;
+    if (r.booked) return true;
+    return r.daysUntil === null || r.daysUntil >= 0;
+  });
 }
 
-/* Case « Afficher les salles déjà réservées » : garde-fou ajouté avec
-   l'agrandissement de la case à cocher « Réservée », pour qu'un décochage
-   accidentel reste possible sans devoir rouvrir la séance. Le délestage des
-   séances passées, lui, reste automatique et non désactivable. */
-let showBookedRooms = false;
-function roomsDisplayRows() {
-  const rows = reservationRows().filter(r => r.daysUntil === null || r.daysUntil >= 0);
-  return showBookedRooms ? rows : rows.filter(r => !r.booked);
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission' };
+const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
+
+/* Pile unique « Urgences » (REGLES.md #25) : salles et véhicules à réserver
+   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire),
+   fusionnés et triés par échéance seule — jamais groupés par UE, promotion ou
+   type. La nature (salle/véhicule/ordre de mission) n'est qu'une étiquette de
+   colonne, pas un panneau séparé comme avant cette refonte. */
+function urgenceRows() {
+  const out = [];
+  activeRoomBookingRows().forEach(r => {
+    const horaire = r.source === 'session' ? dashHoraire(r.entity) : '';
+    // Retours #3 (18-19/08/2026) : le titre en gras affichait l'étiquette
+    // générique (« Salle informatique », « Véhicule de l'établissement »)
+    // plutôt que le nom de la séance — au clic sur « Non dispo → perso »/
+    // « Perso → établissement », le nom bougeait donc de place par rapport à
+    // une ligne « Ordre de mission » (qui, elle, l'a toujours mis en titre).
+    // Le nom de la séance reste maintenant le titre dans tous les cas ;
+    // l'étiquette générique rejoint le détail.
+    out.push({
+      kind: r.kind, titre: r.titre,
+      detail: [r.label, r.detail, horaire].filter(Boolean).join(' · '),
+      date: r.date, daysUntil: r.daysUntil,
+      source: r.source, id: r.id, fait: r.booked,
+      teacher: r.entity?.teacher || ''
+    });
+  });
+  ordresDeMissionAFaire().forEach(o => {
+    const entity = o.source === 'reunion' ? (state.reunions || []).find(r => r.id === o.id) : findSession(o.id);
+    out.push({
+      kind: 'mission', titre: o.titre,
+      detail: o.detail || '',
+      date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
+      source: o.source, id: o.id, fait: o.fait,
+      teacher: entity?.teacher || ''
+    });
+  });
+  return out.sort((a, b) => {
+    if (a.daysUntil === null && b.daysUntil === null) return 0;
+    if (a.daysUntil === null) return 1;
+    if (b.daysUntil === null) return -1;
+    return a.daysUntil - b.daysUntil;
+  });
 }
 
-function updateRoomsBadge() {
-  const badge = $('#roomsSummaryBadge');
-  if (!badge) return;
-  const active = activeRoomBookingRows();
-  badge.textContent = active.length ? `${active.length} à réserver` : (reservationRows().length ? 'à jour' : '');
-  badge.classList.toggle('has-pending', active.length > 0);
+function renderUrgences() {
+  const rows = urgenceRows();
+  const badge = $('#urgencesBadge');
+  if (badge) { badge.textContent = rows.length ? String(rows.length) : ''; badge.hidden = !rows.length; }
+  const panel = $('#urgencesPanel');
+  if (panel) panel.hidden = !rows.length;
+  const wrap = $('#urgencesList');
+  if (!wrap) return;
+  wrap.innerHTML = rows.length
+    ? rows.map(r => {
+      const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
+      const delaiLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'J' : `J–${r.daysUntil}`);
+      const urgent = !r.fait && r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
+      const dismissBtn = `<button type="button" class="urgence-dismiss" data-dismiss-urgence="${escapeAttr(r.kind)}:${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Retirer de la liste" aria-label="Retirer de la liste">×</button>`;
+      // « Fait » reste une case à cocher (décochée = retour arrière immédiat)
+      // plutôt qu'une simple étiquette — même geste que la réservation
+      // salle/véhicule, y compris pour un ordre de mission (data-mission-toggle).
+      const faitCheckbox = r.kind === 'mission'
+        ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
+        : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
+      // Retours 17/08/2026 — bascule rapide depuis la ligne, quand le véhicule
+      // de l'établissement s'avère indisponible : plus besoin de rouvrir la
+      // fiche pour changer le menu Déplacement, ça bascule direct en
+      // personnel (l'ordre de mission remplace la réservation à la ligne suivante).
+      const basculeBtn = (r.kind === 'vehicule' && !r.fait)
+        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
+        : '';
+      // Retours #3 (18-19/08/2026) : bascule inverse, pour revenir en arrière
+      // facilement après un clic "Non dispo → perso" fait par erreur.
+      const basculeRetourBtn = (r.kind === 'mission' && !r.fait)
+        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule-retour="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Revenir à un déplacement en véhicule de l’établissement">Perso → établissement</button>`
+        : '';
+      const verbe = r.fait
+        ? `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>${dismissBtn}`
+        : r.kind === 'mission'
+          ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
+          : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
+      // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
+      // « Ma semaine »/« Prochainement ») — la case, le lien Éditer et le ×
+      // gardent leur propre action (guard dans le gestionnaire de clic).
+      const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
+      const teachers = teacherPillsMarkup(r.teacher);
+      return `<div class="urgence-row${urgent ? ' est-urgent' : ''}${r.fait ? ' est-fait' : ''}" ${editAttr} tabindex="0" role="button">
+        <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
+        <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
+        <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
+        ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
+        <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
+        ${verbe}
+      </div>`;
+    }).join('') + `<div class="urgence-pied">Cliquer une ligne ouvre la séance ou la réunion. Une fois faite, elle reste affichée en vert : décocher « Fait » revient en arrière, cliquer × la retire simplement de la liste. Une ligne pas encore faite disparaît d&rsquo;elle-même passé la date.</div>`
+    : '<p class="empty-hint">Rien d’urgent pour le moment.</p>';
 }
 
-/* Encart « Salles à réserver » (liste + délestage) et bannière d'alerte du
-   tableau de bord (séances à réserver sous ROOM_ALERT_DAYS jours). */
-function renderRooms() {
-  updateRoomsBadge();
-  const active = activeRoomBookingRows();
-  /* Au tout premier affichage, l'encart s'ouvre s'il y a quelque chose à
-     réserver — c'est ce qui a été validé sur maquette. Dès que l'utilisateur l'ouvre
-     ou le referme lui-même, son choix est mémorisé (openState) et prime. */
-  const panneau = $('#roomsPanel');
-  if (panneau && active.length && !('dash:rooms' in openState)) panneau.open = true;
-  const display = roomsDisplayRows();
-  const wrap = $('#roomsList');
-  if (wrap) {
-    wrap.innerHTML = display.length
-      ? display.map(r => {
-        const dateLabel = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date non définie';
-        const urgent = r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
-        const daysLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'Cette semaine' : `Dans ${r.daysUntil} j`);
-        return `<div class="row-item room-row${r.booked ? ' room-row-booked' : ''}">
-          <div class="row-main">
-            <strong class="row-title">${escapeHtml(r.titre)}</strong>
-            <span class="row-meta">${escapeHtml(dateLabel)} · ${escapeHtml(r.label)}${r.detail ? ' · ' + escapeHtml(r.detail) : ''}</span>
-          </div>
-          ${!r.booked && urgent && daysLabel ? `<span class="status-pill room-urgent">${escapeHtml(daysLabel)}</span>` : ''}
-          <label class="room-booked-check">
-            <input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"${r.booked ? ' checked' : ''}>
-            <span>Réservée</span>
+/* ============================================================
+   Écran 13 — Ordre de mission. Document A4 édité en place, atteint
+   uniquement depuis une ligne Urgences (data-open-mission="session:id" ou
+   "reunion:id") — PAS un onglet permanent de .header-tabs. Contenu calé sur
+   le vrai PDF de l'établissement (retours/, jamais commité — voir mémoire
+   Claude Code organisation-cours-refonte-papier-technique-froid).
+   ============================================================ */
+let missionViewTarget = null; // { kind: 'session' | 'reunion', id }
+
+function missionEntity() {
+  if (!missionViewTarget) return null;
+  return missionViewTarget.kind === 'reunion'
+    ? (state.reunions || []).find(r => r.id === missionViewTarget.id)
+    : findSession(missionViewTarget.id);
+}
+
+function missionDeplacementLie(entity) {
+  if (!entity) return null;
+  return missionViewTarget.kind === 'reunion'
+    ? reunionDeplacement(entity)
+    : (state.deplacements || []).find(d => d.sessionId === entity.id) || null;
+}
+
+function missionTitreEntite(entity) {
+  return missionViewTarget.kind === 'reunion'
+    ? (entity.sujets ? truncate(entity.sujets, 48) : 'Réunion')
+    : (entity.title || 'Séance sans titre');
+}
+
+// Préférences purement locales au poste (pas de colonne Supabase pour ça :
+// la fonction change rarement, les destinataires sont propres à chaque
+// enseignant) — jamais de vraie adresse codée en dur dans le dépôt.
+function missionFonctionMemorisee() {
+  try { return localStorage.getItem('oc-ma-fonction') || ''; } catch (e) { return ''; }
+}
+function memoriserMissionFonction(valeur) {
+  try { localStorage.setItem('oc-ma-fonction', valeur || ''); } catch (e) { /* stockage indisponible : tant pis */ }
+}
+function missionDestinatairesMemorises() {
+  try { return JSON.parse(localStorage.getItem('oc-mission-destinataires') || '[]'); } catch (e) { return []; }
+}
+function memoriserMissionDestinataires(liste) {
+  try { localStorage.setItem('oc-mission-destinataires', JSON.stringify(liste || [])); } catch (e) { /* tant pis */ }
+}
+
+function defaultMissionDetail(entity) {
+  const dep = missionDeplacementLie(entity);
+  const iso = missionViewTarget.kind === 'reunion' ? (entity.date || '') : sessionIsoDate(entity);
+  const horaire = missionViewTarget.kind === 'session' ? dashHoraire(entity) : '';
+  const [heureDebut, heureFin] = horaire ? horaire.split('–').map(x => x.trim()) : ['', ''];
+  return {
+    commandePar: { nom: `${moiNom} ${moiPrenom}`.trim(), fonction: missionFonctionMemorisee() },
+    destination: dep?.lieu || entity.room || '',
+    dateMission: iso || '',
+    heureDebut: heureDebut || '', heureFin: heureFin || '',
+    description: missionTitreEntite(entity),
+    accompagnants: [],
+    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
+    faitLe: new Date().toISOString().slice(0, 10),
+    faitA: 'Auray',
+    destinataires: missionDestinatairesMemorises(),
+    envoyeAt: null
+  };
+}
+
+function ensureMissionDetail(entity) {
+  if (!entity.missionDetail) entity.missionDetail = defaultMissionDetail(entity);
+  // Toujours au moins une ligne réelle en état : le champ affiché doit pouvoir
+  // s'écrire (accompagnants.0.nom) même avant tout clic sur « + Ajouter ».
+  if (!entity.missionDetail.accompagnants.length) entity.missionDetail.accompagnants.push({ nom: '', fonction: '' });
+  return entity.missionDetail;
+}
+
+function openMissionView(kind, id) {
+  if (!kind || !id) return;
+  missionViewTarget = { kind, id };
+  const entity = missionEntity();
+  if (!entity) { missionViewTarget = null; return; }
+  ensureMissionDetail(entity);
+  $$('.tab').forEach(t => t.classList.remove('active'));
+  $$('.view').forEach(v => v.classList.remove('active-view'));
+  $('#missionView')?.classList.add('active-view');
+  renderMissionView();
+  window.scrollTo(0, 0);
+}
+
+function closeMissionView() {
+  missionViewTarget = null;
+  $('.tab[data-view="dashboard"]')?.click();
+}
+
+function missionStatutLabel(entity, detail) {
+  if (detail.envoyeAt) return `envoyé le ${new Date(detail.envoyeAt).toLocaleDateString('fr-FR')}`;
+  const iso = detail.dateMission;
+  if (!iso) return 'date à préciser · non envoyé';
+  const j = dashJoursEntre(iso);
+  const delai = j === null ? '' : (j <= 0 ? 'J' : `J–${j}`);
+  return `${delai} · non envoyé`;
+}
+
+function missionAccompagnantRow(a, index) {
+  return `<div class="mission-accompagnant-row">
+    <label class="mission-field-label">Nom Prénom :
+      <input type="text" class="mission-field" data-mission-field="accompagnants.${index}.nom" value="${escapeAttr(a.nom || '')}" />
+    </label>
+    <label class="mission-field-label">Fonction :
+      <input type="text" class="mission-field" data-mission-field="accompagnants.${index}.fonction" value="${escapeAttr(a.fonction || '')}" />
+    </label>
+    <button type="button" class="icon-button mission-remove-accompagnant" data-mission-remove-accompagnant="${index}" title="Retirer">×</button>
+  </div>`;
+}
+
+function missionCheck(checked, field, label) {
+  return `<label class="checkbox-inline mission-check">
+    <input type="checkbox" data-mission-field="${escapeAttr(field)}" ${checked ? 'checked' : ''} />
+    <span>${escapeHtml(label)}</span>
+  </label>`;
+}
+
+function missionSignatureBoxHtml() {
+  const url = missionSignatureUrlCache;
+  if (url) return `<img src="${escapeAttr(url)}" alt="Signature" class="mission-signature-img" />`;
+  return `<button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Ajouter ma signature (privé)</button>
+    <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
+}
+
+function renderMissionView() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const titre = missionTitreEntite(entity);
+
+  const titleEl = $('#missionTitle');
+  if (titleEl) titleEl.textContent = `Ordre de mission — ${titre}`;
+  const statusEl = $('#missionStatus');
+  if (statusEl) statusEl.textContent = missionStatutLabel(entity, detail);
+
+  const accompagnants = detail.accompagnants; // toujours ≥ 1 (ensureMissionDetail)
+  const doc = $('#missionDocument');
+  if (doc) doc.innerHTML = `
+    <header class="mission-doc-header">
+      <img src="img/logo-kerplouz.png" alt="Kerplouz LaSalle — Auray" class="mission-logo" />
+      <h1>Ordre de mission</h1>
+    </header>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Commandé par (Nom/Prénom) :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="commandePar.nom" value="${escapeAttr(detail.commandePar.nom)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Fonction :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="commandePar.fonction" value="${escapeAttr(detail.commandePar.fonction)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Est autorisé(e) à se rendre le :</span>
+      <input type="date" class="mission-field" data-mission-field="dateMission" value="${escapeAttr(detail.dateMission)}" />
+      <span class="mission-field-label">à :</span>
+      <input type="text" class="mission-field mission-field-wide" data-mission-field="destination" value="${escapeAttr(detail.destination)}" />
+    </div>
+    <div class="mission-field-line">
+      <span class="mission-field-label">Heure début :</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="heureDebut" value="${escapeAttr(detail.heureDebut)}" />
+      <span class="mission-field-label">Heure fin :</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="heureFin" value="${escapeAttr(detail.heureFin)}" />
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title">Description de la mission :</span>
+      <textarea class="mission-field mission-field-block" rows="3" data-mission-field="description">${escapeHtml(detail.description)}</textarea>
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title">Accompagnants :</span>
+      <div id="missionAccompagnants">${accompagnants.map(missionAccompagnantRow).join('')}</div>
+      ${accompagnants.length < 4 ? '<button type="button" id="missionAddAccompagnant" class="lien">+ Ajouter un accompagnant</button>' : ''}
+    </div>
+    <div class="mission-block">
+      <span class="mission-block-title mission-transport-title">Moyens de transports</span>
+      <div class="mission-transport-grid">
+        <div>
+          ${missionCheck(detail.transport.vehiculePersonnel, 'transport.vehiculePersonnel', 'Véhicule personnel')}
+          <label class="mission-field-label mission-vehicule-de">Véhicule de :
+            <input type="text" class="mission-field" data-mission-field="transport.vehiculeDe" value="${escapeAttr(detail.transport.vehiculeDe)}" />
           </label>
-        </div>`;
-      }).join('')
-      : '<p class="empty-hint">Aucune réservation en attente.</p>';
-  }
-  /* La bannière d'alerte séparée a disparu avec la refonte du tableau de bord :
-     l'urgence est portée par « Ma semaine » et « Prochainement », où une
-     réservation à moins de ROOM_ALERT_DAYS jours s'affiche en rouge. */
+        </div>
+        <div>
+          ${missionCheck(detail.transport.verifAssurance, 'transport.verifAssurance', 'Vérification assurance avant départ')}
+          ${missionCheck(detail.transport.verifPermis, 'transport.verifPermis', 'Vérification permis avant départ')}
+          ${missionCheck(detail.transport.controleFormateur, 'transport.controleFormateur', 'Contrôle formateur avant départ')}
+        </div>
+      </div>
+    </div>
+    <div class="mission-field-line mission-fait">
+      <span class="mission-field-label">Fait à</span>
+      <input type="text" class="mission-field mission-field-narrow" data-mission-field="faitA" value="${escapeAttr(detail.faitA)}" />
+      <span class="mission-field-label">le :</span>
+      <input type="date" class="mission-field" data-mission-field="faitLe" value="${escapeAttr(detail.faitLe)}" />
+    </div>
+    <div class="mission-signatures">
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Le Demandeur :</span>
+        ${missionSignatureBoxHtml()}
+      </div>
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Formateur / Enseignant :</span>
+      </div>
+      <div class="mission-sig-box">
+        <span class="mission-sig-title">Direction (1 des 3 pers.) :</span>
+        <p class="meta mission-sig-hint">Chef d’établissement · Gestionnaire · Responsable UFA/CFA</p>
+      </div>
+    </div>`;
+
+  const chipsEl = $('#missionDestinatairesList');
+  if (chipsEl) chipsEl.innerHTML = detail.destinataires.map((email, i) => `
+    <span class="mission-chip">${escapeHtml(email)}<button type="button" data-mission-remove-destinataire="${i}" title="Retirer">×</button></span>`).join('')
+    || '<span class="meta">Aucun destinataire pour l’instant.</span>';
+
+  const pdfBtn = $('#missionPdfButton');
+  if (pdfBtn) pdfBtn.textContent = 'Enregistrer le PDF';
 }
 
-/* L'export part au référent : « À réserver » nomme maintenant salles ET
-   véhicules, la colonne s'appelle donc « À réserver » et non plus « Salle ». */
-function roomsStringMatrix() {
-  const header = ['Date', 'Jours restants', 'À réserver', 'Pour', 'Promotion / lieu', 'UE', 'Statut'];
-  const rows = reservationRows().map(r => [
-    r.date ? r.date.toLocaleDateString('fr-FR') : '',
-    r.daysUntil === null ? '' : String(r.daysUntil),
-    r.label,
-    r.titre,
-    r.detail || '',
-    r.source === 'session' ? (findUe(r.entity.ueId)?.code || '') : '',
-    r.booked ? 'Réservée' : 'À réserver'
-  ]);
-  return { header, rows };
+function missionSetField(path, value) {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const parts = path.split('.');
+  let target = detail;
+  for (let i = 0; i < parts.length - 1; i++) target = target[parts[i]];
+  target[parts[parts.length - 1]] = value;
+  if (path === 'commandePar.fonction') memoriserMissionFonction(value);
 }
 
-function exportRoomsCsv() {
-  const { header, rows } = roomsStringMatrix();
-  const esc = v => `"${String(v).replace(/"/g, '""')}"`;
-  const content = '﻿' + [header, ...rows].map(r => r.map(esc).join(';')).join('\r\n');
-  downloadBlob(content, 'text/csv;charset=utf-8', 'csv', 'salles-a-reserver', 'Salles exportées');
+const MISSION_PRINT_CSS = `
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@page { size: A4 portrait; margin: 12mm; }
+body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
+.mission-print-page{background:#fffefb;max-width:190mm;margin:0 auto;padding:14mm;}
+.mission-doc-header{display:flex;align-items:center;gap:16px;border-bottom:1px solid #191b16;padding-bottom:10px;margin-bottom:18px;}
+.mission-doc-header img{height:48px;}
+.mission-doc-header h1{font-size:22px;margin:0;}
+.mission-print-line{margin:0 0 10px;font-size:13px;}
+.mission-print-line strong{border-bottom:1px solid #191b16;padding:0 4px;}
+.mission-print-block{margin:14px 0;}
+.mission-print-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px;}
+.mission-print-desc{border:1px solid #191b16;padding:10px;min-height:50px;white-space:pre-wrap;font-size:13px;}
+.mission-print-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.mission-print-table td{padding:3px 6px;border-bottom:1px solid #d8d4c6;}
+.mission-print-check{margin:2px 0;font-size:12px;}
+.mission-print-sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}
+.mission-print-sigs div{border:1px solid #191b16;min-height:70px;padding:8px;font-size:11px;}
+.mission-print-sigs img{max-height:50px;}
+@media print{body{background:#fff;}.mission-print-page{box-shadow:none;padding:0;max-width:none;}}
+`;
+
+function missionPagePrintHtml(entity, detail) {
+  const acc = detail.accompagnants.filter(a => a.nom || a.fonction);
+  return `<div class="mission-print-page">
+    <div class="mission-doc-header"><img src="img/logo-kerplouz.png" alt="" /><h1>Ordre de mission</h1></div>
+    <p class="mission-print-line">Commandé par (Nom/Prénom) : <strong>${escapeHtml(detail.commandePar.nom || '—')}</strong></p>
+    <p class="mission-print-line">Fonction : <strong>${escapeHtml(detail.commandePar.fonction || '—')}</strong></p>
+    <p class="mission-print-line">Est autorisé(e) à se rendre le <strong>${escapeHtml(detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : '—')}</strong> à : <strong>${escapeHtml(detail.destination || '—')}</strong></p>
+    <p class="mission-print-line">Heure début : <strong>${escapeHtml(detail.heureDebut || '—')}</strong> Heure fin : <strong>${escapeHtml(detail.heureFin || '—')}</strong></p>
+    <div class="mission-print-block"><h3>Description de la mission</h3><div class="mission-print-desc">${escapeHtml(detail.description || '')}</div></div>
+    <div class="mission-print-block"><h3>Accompagnants</h3><table class="mission-print-table">${acc.length ? acc.map(a => `<tr><td>${escapeHtml(a.nom || '—')}</td><td>${escapeHtml(a.fonction || '—')}</td></tr>`).join('') : '<tr><td class="meta">Aucun</td></tr>'}</table></div>
+    <div class="mission-print-block"><h3>Moyens de transports</h3>
+      <p class="mission-print-check">${detail.transport.vehiculePersonnel ? '☒' : '☐'} Véhicule personnel</p>
+      <p class="mission-print-check">${detail.transport.vehiculeDe ? '☒' : '☐'} Véhicule de : ${escapeHtml(detail.transport.vehiculeDe || '')}</p>
+      <p class="mission-print-check">${detail.transport.verifAssurance ? '☒' : '☐'} Vérification assurance avant départ</p>
+      <p class="mission-print-check">${detail.transport.verifPermis ? '☒' : '☐'} Vérification permis avant départ</p>
+      <p class="mission-print-check">${detail.transport.controleFormateur ? '☒' : '☐'} Contrôle formateur avant départ</p>
+    </div>
+    <p class="mission-print-line">Fait à ${escapeHtml(detail.faitA || '—')} le ${escapeHtml(detail.faitLe ? new Date(detail.faitLe).toLocaleDateString('fr-FR') : '—')}</p>
+    <div class="mission-print-sigs">
+      <div>Le Demandeur${missionSignatureUrlCache ? `<br><img src="${escapeAttr(missionSignatureUrlCache)}" alt="" />` : ''}</div>
+      <div>Formateur / Enseignant</div>
+      <div>Direction (1 des 3 pers.)</div>
+    </div>
+  </div>`;
 }
 
-function exportRoomsXls() {
-  const { header, rows } = roomsStringMatrix();
-  const th = header.map(h => `<th>${escapeHtml(h)}</th>`).join('');
-  const trs = rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('');
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><table border="1"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table></body></html>`;
-  downloadBlob('﻿' + html, 'application/vnd.ms-excel', 'xls', 'salles-a-reserver', 'Salles exportées');
+function missionOpenPrintWindow() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const win = window.open('', '_blank');
+  if (!win) { alert('Le navigateur a bloqué l’ouverture de la fenêtre d’impression. Autorisez les pop-ups pour ce site.'); return; }
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Ordre de mission — ${escapeHtml(missionTitreEntite(entity))}</title><style>${MISSION_PRINT_CSS}</style></head><body>${missionPagePrintHtml(entity, detail)}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+  win.document.close();
 }
 
-function exportRoomsOds() {
-  const NS = 'urn:oasis:names:tc:opendocument:xmlns:';
-  const cellStr = v => `<table:table-cell office:value-type="string"><text:p>${escapeHtml(v)}</text:p></table:table-cell>`;
-  const header = ['Date', 'Jours restants', 'Salle', 'Titre', 'Promotion', 'UE', 'Statut'];
-  const headRow = `<table:table-row>${header.map(cellStr).join('')}</table:table-row>`;
-  const bodyRows = roomsStringMatrix().rows.map(r => `<table:table-row>${r.map(cellStr).join('')}</table:table-row>`).join('');
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<office:document xmlns:office="${NS}office:1.0" xmlns:table="${NS}table:1.0" xmlns:text="${NS}text:1.0" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.spreadsheet"><office:body><office:spreadsheet><table:table table:name="Salles à réserver">${headRow}${bodyRows}</table:table></office:spreadsheet></office:body></office:document>`;
-  downloadBlob(xml, 'application/vnd.oasis.opendocument.spreadsheet', 'fods', 'salles-a-reserver', 'Salles exportées');
+// mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app) —
+// on ouvre donc d'abord l'impression (l'utilisateur choisit « Enregistrer en
+// PDF »), puis le mail pré-rempli qui le rappelle dans le corps du message.
+function missionSendMail() {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  missionOpenPrintWindow();
+  const sujet = `Ordre de mission — ${missionTitreEntite(entity)}`;
+  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : ''} (${detail.destination || ''}).\nMerci de joindre le PDF que vous venez d’enregistrer avant l’envoi.\n\nCordialement,\n${detail.commandePar.nom}`;
+  const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+  window.location.href = href;
+  detail.envoyeAt = new Date().toISOString();
+  entity.ordreMission = true;
+  saveData('Ordre de mission marqué envoyé');
+}
+
+// Signature — stockage privé Supabase (bucket "oc-signatures", voir
+// supabase/013-signatures-storage.sql), jamais dans le dépôt. Non testable
+// depuis retours/preview.js (stub sans Supabase réel) : à vérifier par Martin
+// sur http://localhost:8765/index.html une fois le bucket créé.
+let missionSignatureUrlCache = '';
+
+async function missionChargerSignature() {
+  try {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient) return;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${user.id}/signature.png`, 3600);
+    if (error) { console.error('[signature] createSignedUrl', error); return; }
+    if (!data) return;
+    missionSignatureUrlCache = data.signedUrl;
+    if (missionViewTarget) renderMissionView();
+  } catch (e) { console.error('[signature] chargement', e); }
+}
+
+async function missionUploaderSignature(file) {
+  try {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient || !file) return;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    setSaveStatus('Envoi de la signature…');
+    const { error } = await sb.storage.from('oc-signatures').upload(`${user.id}/signature.png`, file, { upsert: true, contentType: file.type });
+    if (error) { console.error('[signature] upload', error); alert('Échec de l’envoi de la signature : ' + error.message); return; }
+    await missionChargerSignature();
+    setSaveStatus('Signature enregistrée (privée)');
+  } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
 }
 
 /* Badge du panneau Tableau de bord : nb + total des demandes NON terminées.
@@ -836,7 +1408,6 @@ function renderFrais() {
   const wrap = $('#fraisTableWrap');
   if (!wrap) return;
   const statusFilter = $('#fraisStatusFilter')?.value || 'actives';
-  const classeFilter = $('#fraisClasseFilter')?.value || 'all';
   const all = [...(state.deplacements || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '') || String(a.id).localeCompare(String(b.id)));
   if (!all.length) {
     wrap.innerHTML = `<p class="empty-hint">Aucun déplacement enregistré. Cochez « Déplacement en véhicule personnel » sur une séance, ou ajoutez-en un avec « + Déplacement ».</p>`;
@@ -845,7 +1416,7 @@ function renderFrais() {
   const matchStatus = d => statusFilter === 'all'
     ? true
     : (statusFilter === 'actives' ? d.statut !== 'Terminée' : d.statut === statusFilter);
-  const rows = all.filter(d => matchStatus(d) && (classeFilter === 'all' || d.classe === classeFilter));
+  const rows = all.filter(matchStatus);
   const totalFiltered = rows.reduce((s, d) => s + deplacementTotal(d), 0);
   const totalAll = all.reduce((s, d) => s + deplacementTotal(d), 0);
   const statusClass = st => st === 'Terminée' ? 'is-done' : (st === 'En cours' ? 'is-progress' : 'is-todo');
@@ -975,25 +1546,26 @@ function renderReunions() {
     wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, sujets abordés).</p>`;
     return;
   }
-  wrap.innerHTML = list.map(r => {
-    const dep = r.deplacement === 'personnel' ? reunionDeplacement(r) : null;
-    const depTxt = dep && Number(dep.kmAR) ? ' ' + fmtEuro(deplacementTotal(dep)) : '';
-    // Lot B — la voiture dit maintenant LEQUEL des deux véhicules, et l'infobulle
-    // ce qu'il reste à faire : réserver, ou demander l'ordre de mission.
-    const vehiculeTitre = r.deplacement === 'etablissement'
-      ? (r.vehicleBooked ? 'Véhicule de l’établissement — réservé' : 'Véhicule de l’établissement — à réserver')
-      : (r.ordreMission ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)' : 'Véhicule personnel — ordre de mission à demander');
-    return `<article class="reunion-card" data-edit-reunion="${escapeAttr(r.id)}">
-      <div class="reunion-card-head">
-        <span class="reunion-date">${escapeHtml(r.date ? formatDateFr(r.date) : 'Date à préciser')}</span>
-        ${r.lieu ? `<span class="reunion-lieu">${escapeHtml(r.lieu)}</span>` : ''}
-        ${r.deplacement ? `<span class="reunion-vehicle" title="${escapeAttr(vehiculeTitre)}">${r.deplacement === 'etablissement' ? '🚐' : '🚗'}${escapeHtml(depTxt)}</span>` : ''}
-        <button type="button" class="icon-button small reunion-edit" data-edit-reunion="${escapeAttr(r.id)}" title="Modifier">✎</button>
-      </div>
-      ${r.participants ? `<p class="reunion-participants"><span class="reunion-label">Participants :</span> ${escapeHtml(r.participants)}</p>` : ''}
-      ${r.sujets ? `<p class="reunion-sujets">${escapeHtml(r.sujets)}</p>` : ''}
-    </article>`;
+  // Retours 17/08/2026 — tableau plutôt que des cartes : plus dense, plus
+  // facile à parcourir d'un coup d'œil (date, lieu, participants, sujet).
+  // L'icône voiture ne marque que le véhicule personnel (ordre de mission à
+  // suivre) ; le van d'établissement a sa propre étiquette de réservation
+  // ailleurs (Urgences), pas besoin de la dupliquer ici.
+  const rows = list.map(r => {
+    const vehiculeTitre = r.ordreMission
+      ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)'
+      : 'Véhicule personnel — ordre de mission à demander';
+    return `<tr data-edit-reunion="${escapeAttr(r.id)}">
+      <td>${escapeHtml(r.date ? formatDateFr(r.date) : '—')}</td>
+      <td>${escapeHtml(r.lieu || '—')}</td>
+      <td title="${escapeAttr(r.participants || '')}">${escapeHtml(r.participants ? truncate(r.participants, 40) : '—')}</td>
+      <td title="${escapeAttr(r.sujets || '')}">${escapeHtml(r.sujets ? truncate(r.sujets, 60) : '—')}</td>
+      <td>${r.deplacement === 'personnel' ? `<span title="${escapeAttr(vehiculeTitre)}">🚗</span>` : ''}</td>
+    </tr>`;
   }).join('');
+  wrap.innerHTML = `<table class="frais-table"><thead><tr>
+      <th>Date</th><th>Lieu</th><th>Participants</th><th>Sujet</th><th>Véhicule perso</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function openReunionModal(reunion = null) {
@@ -1161,8 +1733,25 @@ async function importDataFromFile(file) {
 
 
 function bootstrapWeeks() {
-  state.schoolYear = state.schoolYear || '2026-2027';
-  state.weeks = buildAcademicWeeks(2026, 36, 2027, 22);
+  state.weeks = buildRollingWeeks();
+  state.schoolYear = anneeScolaireLabel(state.weeks);
+}
+
+// Retours 17/08/2026 — remplace l'ancienne fenêtre fixe (S36→S22, années en
+// dur) : une fenêtre glissante centrée sur aujourd'hui, recalculée à chaque
+// chargement (voir normalizeData). L'app reste utilisable toute l'année,
+// vacances comprises, sans plus jamais avoir à mettre les bornes à jour.
+function buildRollingWeeks(centre = new Date(), avantSemaines = 26, apresSemaines = 26) {
+  const debut = addDays(centre, -avantSemaines * 7);
+  const fin = addDays(centre, apresSemaines * 7);
+  const { year: anDebut, week: semDebut } = isoWeekInfo(debut);
+  const { year: anFin, week: semFin } = isoWeekInfo(fin);
+  return buildAcademicWeeks(anDebut, semDebut, anFin, semFin);
+}
+function anneeScolaireLabel(weeks) {
+  if (!weeks.length) return '';
+  const premiere = weeks[0].isoYear, derniere = weeks[weeks.length - 1].isoYear;
+  return premiere === derniere ? String(premiere) : `${premiere}-${derniere}`;
 }
 
 function buildAcademicWeeks(startIsoYear, startWeek, endIsoYear, endWeek) {
@@ -1229,13 +1818,6 @@ function hydrateSelectors() {
   setOptions('#ueStartWeek', `<option value="">À préciser</option>${weekOptions}`, $('#ueStartWeek')?.value || '');
   setOptions('#ueEndWeek', `<option value="">À préciser</option>${weekOptions}`, $('#ueEndWeek')?.value || '');
 
-  // Lot C [11] — dans la barre de la Conception, les menus n'ont plus
-  // d'étiquette à côté d'eux : leur option « tout » doit donc se suffire.
-  setOptions('#designPromotionFilter', `<option value="Tous">Toutes promotions</option>${promoOptions}`, designPromotionFilter);
-  setOptions('#designSemesterFilter', `<option value="Tous">Tous semestres</option>${semesterOptions}`, designSemesterFilter);
-  refreshTeacherFilters();
-  renderGanttSemesterChoices();
-
   setOptions('#uePromotion', promoOptions, state.promotions[0] || 'GPN1');
   setOptions('#ueSemester', semesterOptions, 'Semestre 1');
   setOptions('#sequencePromotion', promoOptions, state.promotions[0] || 'GPN1');
@@ -1286,15 +1868,16 @@ function semestresDeLaSaison() {
   return mois >= 8 ? ['Semestre 1', 'Semestre 3'] : ['Semestre 2', 'Semestre 4'];
 }
 
-function renderGanttSemesterChoices() {
-  const container = $('#ganttSemesterChoices');
-  if (!container) return;
-  if (!ganttSemesterFilters) ganttSemesterFilters = semestresDeLaSaison();
-  const selected = new Set(ganttSemesterFilters);
-  container.innerHTML = SEMESTER_PAIRS.map(pair => `<div class="semester-pair">
-    <span class="semester-pair-label">${escapeHtml(pair.promotion)}</span>
-    ${pair.semesters.map(sem => `<label class="checkbox-chip"><input type="checkbox" value="${escapeAttr(sem)}" ${selected.has(sem) ? 'checked' : ''}><span>${escapeHtml(sem.replace('Semestre ', 'S'))}</span></label>`).join('')}
-  </div>`).join('');
+function renderGanttTopBar() {
+  $$('#ganttPromoSwitch .promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.ganttPromo === ganttPromo));
+  const pair = SEMESTER_PAIRS.find(p => p.promotion === ganttPromo) || SEMESTER_PAIRS[0];
+  const semContainer = $('#ganttSemesterSwitch');
+  if (semContainer) {
+    semContainer.innerHTML = pair.semesters.map(sem => `<button type="button" class="promo-switch-btn${sem === ganttSemester ? ' active' : ''}" data-gantt-semester="${escapeAttr(sem)}">${escapeHtml(sem)}</button>`).join('');
+  }
+  const weeks = weeksForSemester(ganttSemester);
+  const range = $('#ganttWeekRange');
+  if (range) range.textContent = weeks.length ? `${weeks[0].label.replace('S0', 'S')} → ${weeks[weeks.length - 1].label.replace('S0', 'S')}` : '';
 }
 
 function renderConstraintPromotionChoices(selectedPromotions = state?.promotions || DEFAULT_PROMOTIONS) {
@@ -1337,20 +1920,6 @@ function allTeachers() {
   return [...set].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
-function refreshTeacherFilters() {
-  // Lot C [14] — « Enseignant / intervenant » simplifié en « Enseignant » :
-  // le libellé vit maintenant dans l'option « tout », faute d'étiquette visible.
-  const options = ['<option value="Tous">Tous enseignants</option>'].concat(allTeachers().map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`)).join('');
-  setOptions('#designTeacherFilter', options, designTeacherFilter);
-  if (!$('#designTeacherFilter') || ![...$('#designTeacherFilter').options].some(o => o.value === designTeacherFilter)) designTeacherFilter = 'Tous';
-}
-
-function matchesTeacherFilter(entity, related = []) {
-  if (designTeacherFilter === 'Tous') return true;
-  const tokens = [];
-  [entity, ...related].forEach(x => teacherTokens(x?.teacher).forEach(t => tokens.push(t)));
-  return tokens.some(t => t.toLowerCase() === designTeacherFilter.toLowerCase());
-}
 
 /* Référentiel & Ruban → Créneaux type : par défaut, seuls MES créneaux
    s'affichent (comme pour les ue/séquences/séances, un créneau sans
@@ -1377,9 +1946,8 @@ function matchesCreneauxTeacherFilter(slot) {
   return tokens.some(t => t.toLowerCase() === (creneauxTeacherFilter || '').toLowerCase());
 }
 
-/* Périmètre strictement personnel (distinct de matchesTeacherFilter
-   ci-dessus, qui est un filtre manuel mono-sélection propre à l'onglet
-   Conception) : l'entité me concerne-t-elle DIRECTEMENT (mes initiales dans
+/* Périmètre strictement personnel (distinct du filtre manuel ci-dessus, propre
+   aux Créneaux types) : l'entité me concerne-t-elle DIRECTEMENT (mes initiales dans
    `teacher`) ? Sert au Tableau de bord, dont les encarts personnels (séances
    à placer, à faire, frais, réunions) restent strictement les miens. Une
    entité sans enseignant assigné (teacher vide) est comptée comme mienne :
@@ -1398,6 +1966,32 @@ function estVisiblePourMoi(entity) {
 function visibleUes() { return state.ues.filter(estVisiblePourMoi); }
 function visibleSequences() { return state.sequences.filter(estVisiblePourMoi); }
 function visibleSessions() { return state.sessions.filter(estVisiblePourMoi); }
+
+/* Retours #3 (18-19/08/2026) — 3 cas de visibilité entre comptes enseignants,
+   distincts du périmètre « strictement personnel » ci-dessus (propre au
+   Tableau de bord). Portée : tuiles séquence/séance (Conception pédagogique,
+   Progression, Planning hebdo, Dossier). Le Référentiel/Ruban reste la vue de
+   référence, toujours non filtrée (cf. commentaire sur estVisiblePourMoi).
+   Cas 1 — je ne suis PAS enseignant de l'UE : aucun contenu de séquence/séance
+     ne m'est montré, seuls les affichages génériques (l'UE elle-même) restent.
+   Cas 2 — je SUIS enseignant de l'UE, mais pas sur CETTE séquence/séance
+     précise (collègues seuls) : tuile visible, en style atténué, non ouvrable.
+   Cas 3 — je SUIS enseignant de l'UE ET sur cette séquence/séance : normal,
+     entièrement interactif (comportement déjà existant, inchangé). */
+function jeSuisEnseignantDeLUe(ue) {
+  if (!moiInitiales || !ue) return true;
+  const enseignants = enseignantsDeLUe(ue);
+  // Même convention que estVisiblePourMoi : une UE sans AUCUN enseignant
+  // déclaré (fréquent tant que la Répartition n'a pas été remplie, cf.
+  // ruban-pedagogique.js livré vide) n'est le Cas 1 de personne — elle reste
+  // visible de tous, faute de savoir à qui l'exclure.
+  if (!enseignants.length) return true;
+  return enseignants.includes(moiInitiales);
+}
+// Cas 2 vs Cas 3, une fois établi que le contenu est au moins visible (Cas ≥ 2).
+function contenuInteractifPourMoi(entity) {
+  return estVisiblePourMoi(entity);
+}
 
 function refreshSessionSequenceSelect(preferredValue = '') {
   const ueId = $('#sessionUe')?.value || '';
@@ -1422,16 +2016,20 @@ function renderAll(resetSelectors = true) {
   // tout le portail, ce qui sinon ramène brutalement la vue en haut.
   const scrollY = window.scrollY;
   if (resetSelectors) hydrateSelectors();
+  const yearEl = $('#bannerYear');
+  if (yearEl) yearEl.textContent = state.schoolYear || '';
   renderDashboard();
   renderDesign();
   renderGantt();
   renderPlanning();
-  if ($('#referenceModuleContent')) renderReference();
+  if ($('#refreadToc')) renderReference();
   if ($('#rubanGrid')) renderRuban();
-  if ($('#creneauxGrids') && rubanMode === 'creneaux') renderCreneaux();
+  if ($('#creneauxGrids') && rubanTab === 'creneaux') renderCreneaux();
+  if ($('#studentPlanningGrid') && rubanTab === 'etudiant') renderStudentPlanning();
+  if ($('#dossierUeSelect')) renderDossier();
+  if (missionViewTarget) renderMissionView();
   if ($('#fraisTableWrap')) renderFrais();
   if ($('#reunionsList')) renderReunions();
-  if ($('#roomsList')) renderRooms();
   // Restaurer après le re-rendu (le DOM a la même hauteur, la position est conservée).
   window.scrollTo({ top: scrollY });
 }
@@ -1518,9 +2116,20 @@ function pruneOpenState() {
    créneau dans la semaine en cours est rouge d'emblée.
    ================================================================ */
 
-const DASH_SEMAINES = 5;        // colonnes de « Prochainement »
-const DASH_PROCHES = 2;         // au-delà, la couleur s'éteint (gris)
+const DASH_SEMAINES = 2;        // « Les deux semaines suivantes » (REGLES.md — un seul écran, pas de pagination)
 const FRAIS_RETARD_JOURS = 45;  // les frais partent au mois : pas d'alerte avant
+
+// Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine du bloc
+// « Ma semaine », indépendante de « Les deux semaines suivantes » (qui reste
+// ancré sur la semaine réelle). Décalage en nombre de semaines par rapport à
+// currentWeekId() ; remis à 0 au rechargement, pas persisté.
+let dashSemaineOffset = 0;
+function dashSemaineIdCourante() {
+  const i = state.weeks.findIndex(w => w.id === currentWeekId());
+  if (i < 0) return currentWeekId();
+  const idx = Math.min(Math.max(i + dashSemaineOffset, 0), state.weeks.length - 1);
+  return state.weeks[idx]?.id || currentWeekId();
+}
 
 const DASH_JOURS_COURTS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 const DASH_JOURS_LONGS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
@@ -1546,8 +2155,12 @@ function dashSemaineDe(date) {
 }
 function dashSemaineObjet(id) { return state.weeks.find(w => w.id === id) || null; }
 function dashDatesSemaine(id) { const w = dashSemaineObjet(id); return w ? w.dateRange.replace(/\/\d{4}/g, '') : ''; }
+// Ajustements #2 [B2.1] (18/08/2026) — « les deux semaines suivantes » suit
+// désormais la semaine affichée dans « Ma semaine » (dashSemaineIdCourante,
+// pilotée par dashSemaineOffset), plus la semaine réelle fixe : les 3 blocs
+// forment ensemble une fenêtre glissante de 3 semaines.
 function dashSemainesApres(n) {
-  const i = state.weeks.findIndex(w => w.id === currentWeekId());
+  const i = state.weeks.findIndex(w => w.id === dashSemaineIdCourante());
   if (i < 0) return [];
   return state.weeks.slice(i + 1, i + 1 + n).map(w => w.id);
 }
@@ -1564,43 +2177,46 @@ function dashDateDeSeance(s) {
   return dayDatesForWeek(w)[Number(s.day) || 0] || null;
 }
 
-/* Ce qui fait qu'une séance demande une action. `date` sert à décider si une
-   réservation est devenue urgente (moins de ROOM_ALERT_DAYS jours). */
+/* Ce qui fait qu'une séance demande une action, ET ce qui a déjà été fait
+   (`fait: true`, retours 17/08/2026 — sinon une réservation/mission traitée
+   redevient invisible d'un coup, sans confirmation visuelle sur la carte).
+   `date` sert à décider si une réservation encore à faire est devenue
+   urgente (moins de ROOM_ALERT_DAYS jours). */
 function dashActionsDeSeance(s, date) {
   const out = [];
   const j = dashJoursEntre(date);
   if (isFictiveSession(s)) out.push({ cle: 'placer', texte: 'À placer' });
   const salle = sessionRoomToBook(s);
-  if (salle && !s.roomBooked) {
-    out.push({
-      cle: 'salle',
-      texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`,
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (salle) {
+    out.push(s.roomBooked
+      ? { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} réservée`, fait: true }
+      : { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`, urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
   // Lot B — les deux étiquettes du déplacement. Un véhicule de l'établissement
   // se réserve (même urgence qu'une salle) ; un véhicule personnel demande un
   // ordre de mission AVANT le départ — c'est donc aussi une échéance.
-  if (s.deplacement === 'etablissement' && !s.vehicleBooked) {
-    out.push({
-      cle: 'vehicule',
-      texte: 'Véhicule à réserver',
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (s.deplacement === 'etablissement') {
+    out.push(s.vehicleBooked
+      ? { cle: 'vehicule', texte: 'Véhicule réservé', fait: true }
+      : { cle: 'vehicule', texte: 'Véhicule à réserver', urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
-  if (s.deplacement === 'personnel' && !s.ordreMission) {
-    out.push({
-      cle: 'mission',
-      texte: 'Ordre de mission',
-      urgent: j !== null && j <= ROOM_ALERT_DAYS
-    });
+  if (s.deplacement === 'personnel') {
+    out.push(s.ordreMission
+      ? { cle: 'mission', texte: 'Ordre de mission envoyé', fait: true }
+      : { cle: 'mission', texte: 'Ordre de mission', urgent: j !== null && j <= ROOM_ALERT_DAYS });
+  }
+  // Retours #3 (18-19/08/2026) — même mécanique que salle/véhicule ci-dessus.
+  if (s.materielAReserver) {
+    out.push(s.materielReserve
+      ? { cle: 'materiel', texte: 'Matériel réservé', fait: true }
+      : { cle: 'materiel', texte: 'Matériel à réserver', urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
   if (!s.sequenceId || !s.ueId) out.push({ cle: 'rattacher', texte: 'À rattacher' });
   return out;
 }
 
 function dashEtiquettes(actions) {
-  return actions.map(a => `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}">${escapeHtml(a.texte)}</span>`).join('');
+  return actions.map(a => `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''}">${escapeHtml(a.texte)}</span>`).join('');
 }
 
 /* Le retard : ce qui aurait dû être fait. Les frais de déplacement n'y entrent
@@ -1663,62 +2279,31 @@ function dashContenuSemaine(semaineId) {
   return { semaine: w, jours, aPlacer, nbSeances: seances.length, nbReunions: reunions.length };
 }
 
-/* Ce qui demande une action, pour une semaine à venir. */
-function dashActionsDeSemaine(semaineId) {
-  const w = dashSemaineObjet(semaineId);
-  if (!w) return [];
-  const out = [];
-  const dates = dayDatesForWeek(w);
-
-  visibleSessions().forEach(s => {
-    const ici = isDefinitiveSession(s) ? s.weekId === semaineId : (s.targetWeekId || s.weekId) === semaineId;
-    if (!ici) return;
-    const date = isDefinitiveSession(s) ? dates[Number(s.day) || 0] : dates[0];
-    const actions = dashActionsDeSeance(s, date);
-    if (!actions.length) return;
-    out.push({
-      type: 'seance', titre: s.title,
-      detail: [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : '', s.promotion,
-               isDefinitiveSession(s) ? `${DASH_JOURS_COURTS[Number(s.day) || 0]} ${dashJJMM(date)}` : 'sans créneau'].filter(Boolean).join(' · '),
-      actions, jours: dashJoursEntre(date), edit: `data-edit-session="${escapeAttr(s.id)}"`
-    });
-  });
-
-  (state.reunions || []).forEach(r => {
-    const d = parseIsoDate(r.date);
-    if (dashSemaineDe(d) !== semaineId || dashJoursEntre(d) < 0) return;
-    out.push({
-      type: 'reunion', titre: r.lieu ? `Réunion — ${r.lieu}` : 'Réunion',
-      detail: [r.participants, `${DASH_JOURS_COURTS[(d.getDay() + 6) % 7]} ${dashJJMM(d)}`].filter(Boolean).join(' · '),
-      actions: [{ cle: 'reunion', texte: 'Réunion' }],
-      jours: dashJoursEntre(d), edit: `data-edit-reunion="${escapeAttr(r.id)}"`
-    });
-  });
-
-  (state.constraints || []).forEach(c => {
-    const debut = parseIsoDate(c.start);
-    if (dashSemaineDe(debut) !== semaineId) return;
-    out.push({
-      type: 'periode', titre: c.label,
-      detail: `${c.type}${(c.promotions || []).length ? ' · ' + c.promotions.join('/') : ''}`,
-      actions: [{ cle: 'periode', texte: 'Période' }],
-      jours: dashJoursEntre(debut), edit: `data-edit-constraint="${escapeAttr(c.id)}"`
-    });
-  });
-
-  return out.sort((a, b) => (a.jours ?? 9999) - (b.jours ?? 9999));
-}
-
 /* ---- Ligne 1 : « Ma semaine », un jour par colonne ---- */
-function dashCarteSeance(s, date) {
+// Ajustements #2 [B2.2] (18/08/2026) — `reduit` : version abrégée (heure +
+// titre seulement) pour « les deux semaines suivantes », SAUF si la séance a
+// une action réelle en attente (réservation, matériel, déplacement…) — dans
+// ce cas elle garde l'affichage complet, quitte à être moins compacte, pour
+// que l'urgence reste visible là où elle doit l'être.
+function dashCarteSeance(s, date, compact) {
   const actions = dashActionsDeSeance(s, date);
+  const aTraiter = actions.some(a => !a.fait);
   const urgent = actions.some(a => a.urgent);
+  const reduit = compact && !aTraiter;
+  if (reduit) {
+    return `<li class="carte carte-reduite" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
+      <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
+      <span class="carte-titre">${escapeHtml(s.title)}</span>
+    </li>`;
+  }
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, s.demiGroupe ? '½' + s.demiGroupe : '']
     .filter(Boolean).join(' · ');
-  return `<li class="carte${actions.length ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
+  const teachers = teacherPillsMarkup(s.teacher);
+  return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
     <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
     <span class="carte-titre">${escapeHtml(s.title)}</span>
     <span class="carte-meta">${escapeHtml(meta)}</span>
+    ${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}
     ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions)}</span>` : ''}
   </li>`;
 }
@@ -1732,33 +2317,40 @@ function dashCarteReunion(r) {
   </li>`;
 }
 
-function dashColonneJour(j) {
+function dashColonneJour(j, videHtml, compact) {
   const classes = ['col-jour'];
   if (j.estAujourdhui) classes.push('est-aujourdhui');
   if (j.estPasse) classes.push('est-passe');
   const periodes = j.periodes.length
     ? `<p class="col-periode">${escapeHtml(j.periodes.map(p => p.label).join(' · '))}</p>` : '';
-  const cartes = [...j.seances.map(s => dashCarteSeance(s, j.date)), ...j.reunions.map(dashCarteReunion)];
+  const cartes = [...j.seances.map(s => dashCarteSeance(s, j.date, compact)), ...j.reunions.map(dashCarteReunion)];
   return `<div class="${classes.join(' ')}">
     <div class="col-tete">
       <span class="col-nom">${escapeHtml(j.estAujourdhui ? "Aujourd'hui" : j.nomLong)}</span>
       <span class="col-date">${escapeHtml(j.jjmm)}</span>
     </div>
     ${periodes}
-    ${cartes.length ? `<ul class="col-liste">${cartes.join('')}</ul>` : '<p class="col-vide">pas de cours</p>'}
+    ${cartes.length ? `<ul class="col-liste">${cartes.join('')}</ul>` : (videHtml || '<p class="col-vide">pas de cours</p>')}
   </div>`;
 }
 
 function renderDashSemaine() {
   const hote = $('#dashSemaine');
   if (!hote) return;
-  const c = dashContenuSemaine(currentWeekId());
+  const semaineId = dashSemaineIdCourante();
+  const iCourante = state.weeks.findIndex(w => w.id === currentWeekId());
+  const iAffichee = state.weeks.findIndex(w => w.id === semaineId);
+  const nav = iCourante >= 0 ? `<div class="dash-semaine-nav">
+      <button type="button" class="dash-week-nav-btn" data-dash-week-nav="-1" ${iAffichee <= 0 ? 'disabled' : ''} aria-label="Semaine précédente">‹</button>
+      <button type="button" class="dash-week-nav-btn" data-dash-week-nav="1" ${iAffichee < 0 || iAffichee >= state.weeks.length - 1 ? 'disabled' : ''} aria-label="Semaine suivante">›</button>
+    </div>` : '';
+  const c = dashContenuSemaine(semaineId);
   if (!c) {
-    hote.innerHTML = `<div class="panel-heading-inline bloc-tete"><h3>Ma semaine</h3></div>
+    hote.innerHTML = `<div class="panel-heading-inline bloc-tete"><h3>Ma semaine</h3>${nav}</div>
       ${dashBandeauRetard()}<p class="bloc-vide">Nous sommes hors année scolaire.</p>`;
     return;
   }
-  const nbActions = c.jours.reduce((n, j) => n + j.seances.filter(s => dashActionsDeSeance(s, j.date).length).length, 0) + c.aPlacer.length;
+  const nbActions = c.jours.reduce((n, j) => n + j.seances.filter(s => dashActionsDeSeance(s, j.date).some(a => !a.fait)).length, 0) + c.aPlacer.length;
 
   /* Une séance sans créneau dans la semaine en cours est urgente : rouge. */
   const sansCreneau = c.aPlacer.length
@@ -1773,50 +2365,36 @@ function renderDashSemaine() {
 
   hote.innerHTML = `<div class="panel-heading-inline bloc-tete">
       <h3>Ma semaine <span class="bloc-id">${escapeHtml(c.semaine.label)} · ${escapeHtml(dashDatesSemaine(c.semaine.id))}</span></h3>
+      ${nav}
       <span class="bloc-compte">${c.nbSeances} séance${c.nbSeances > 1 ? 's' : ''}${c.nbReunions ? ` · ${c.nbReunions} réunion${c.nbReunions > 1 ? 's' : ''}` : ''}${nbActions ? ` · <strong>${nbActions} à traiter</strong>` : ''}</span>
+      <span class="bloc-lien" data-goto-view="week" tabindex="0" role="button">Ouvrir le planning hebdo →</span>
     </div>
     ${dashBandeauRetard()}
-    <div class="bande bande-5">${c.jours.map(dashColonneJour).join('')}</div>
+    <div class="bande bande-5">${c.jours.map(j => dashColonneJour(j)).join('')}</div>
     ${sansCreneau}`;
 }
 
-/* ---- Ligne 2 : « Prochainement », une colonne par semaine ---- */
-function dashLigneAction(item) {
-  const urgent = item.actions.some(a => a.urgent);
-  return `<li class="carte carte-compacte${item.type === 'reunion' ? ' est-reunion' : ' a-traiter'}${urgent ? ' est-urgent' : ''}" ${item.edit || ''} tabindex="0" role="button">
-    <span class="carte-tete">
-      <span class="carte-heure">${escapeHtml(dashDelaiCourt(item.jours))}</span>
-      <span class="carte-actions">${dashEtiquettes(item.actions)}</span>
-    </span>
-    <span class="carte-titre">${escapeHtml(item.titre)}</span>
-    <span class="carte-meta">${escapeHtml(item.detail)}</span>
-  </li>`;
-}
-
-function dashColonneSemaine(id, rang) {
-  const items = dashActionsDeSemaine(id);
-  const loin = rang >= DASH_PROCHES;
-  return `<div class="col-jour col-semaine${loin ? ' col-lointaine' : ''}">
-    <div class="col-tete">
-      <span class="col-nom">${escapeHtml((dashSemaineObjet(id) || {}).label || id)}</span>
-      <span class="col-date">${escapeHtml(dashDatesSemaine(id))}</span>
-      ${items.length ? `<span class="col-compte">${items.length}</span>` : ''}
-    </div>
-    ${items.length ? `<ul class="col-liste">${items.map(dashLigneAction).join('')}</ul>` : '<p class="col-vide">rien à traiter</p>'}
+/* ---- Ligne 2 : « Les deux semaines suivantes » — même grille jour par jour
+   que « Ma semaine » (réutilise dashContenuSemaine/dashColonneJour), en plus
+   compact (voir .bande-compacte en CSS) : DASH_SEMAINES semaines qui suivent
+   celle affichée, sans sélecteur de date. Le premier jour vide de la semaine
+   signale, s'il y en a, les séances de cette semaine encore sans créneau. */
+function dashLigneSemaine(semaineId) {
+  const c = dashContenuSemaine(semaineId);
+  if (!c) return '';
+  let aPlacerMontre = false;
+  const joursHtml = c.jours.map(j => {
+    let videHtml;
+    if (!j.seances.length && !j.reunions.length && c.aPlacer.length && !aPlacerMontre) {
+      aPlacerMontre = true;
+      videHtml = `<p class="col-vide col-vide-libre"><span>créneau libre</span><span class="col-vide-lien" data-ouvrir="dash:backlog" tabindex="0" role="button">${c.aPlacer.length} séance${c.aPlacer.length > 1 ? 's' : ''} à placer</span></p>`;
+    }
+    return dashColonneJour(j, videHtml, true);
+  }).join('');
+  return `<div class="ligne-semaine">
+    <div class="col-semaine-num"><span class="sem-nom">${escapeHtml(c.semaine.label)}</span><span class="sem-date">${escapeHtml(dashDatesSemaine(semaineId))}</span></div>
+    <div class="bande bande-5">${joursHtml}</div>
   </div>`;
-}
-
-/* Ce qui attend au-delà des colonnes affichées : un seul chiffre, en pied. */
-function dashAuDela(idsAffiches) {
-  const dernier = state.weeks.findIndex(w => w.id === idsAffiches[idsAffiches.length - 1]);
-  if (dernier < 0) return '';
-  let n = 0; const semaines = [];
-  state.weeks.slice(dernier + 1).forEach(w => {
-    const k = dashActionsDeSemaine(w.id).length;
-    if (k) { n += k; semaines.push(w.label); }
-  });
-  if (!n) return '';
-  return `<p class="bande-audela">Au-delà : <strong>${n} à traiter</strong> · ${escapeHtml(semaines.slice(0, 4).join(', '))}${semaines.length > 4 ? '…' : ''}</p>`;
 }
 
 function renderDashProchainement() {
@@ -1825,129 +2403,186 @@ function renderDashProchainement() {
   const ids = dashSemainesApres(DASH_SEMAINES);
   if (!ids.length) { hote.innerHTML = ''; hote.hidden = true; return; }
   hote.hidden = false;
-  const total = ids.reduce((n, id) => n + dashActionsDeSemaine(id).length, 0);
+  const aAnticiper = ids.some(id => {
+    const c = dashContenuSemaine(id);
+    if (!c) return false;
+    return c.aPlacer.length || c.jours.some(j => j.seances.some(s => dashActionsDeSeance(s, j.date).some(a => a.urgent)));
+  });
   hote.innerHTML = `<div class="panel-heading-inline bloc-tete">
-      <h3>Prochainement <span class="bloc-id">les ${DASH_SEMAINES} semaines suivantes</span></h3>
-      <span class="bloc-compte">${total ? `<strong>${total} à traiter</strong>` : 'rien à traiter'}</span>
+      <h3>Les deux semaines suivantes <span class="bloc-id">ce qui demande d&rsquo;anticiper</span></h3>
+      ${aAnticiper ? `<span class="bloc-legende"><span class="bloc-legende-puce"></span>une réservation ou un ordre à produire</span>` : ''}
     </div>
-    <div class="bande bande-5">${ids.map(dashColonneSemaine).join('')}</div>
-    ${dashAuDela(ids)}`;
+    <div class="bande-compacte">${ids.map(dashLigneSemaine).join('')}</div>`;
 }
 
-/* Badges de l'encart « Séances à placer » : visibles panneau replié. */
-function renderDashBacklogBadges() {
+/* Badges de l'encart « Séances à placer » : visibles panneau replié.
+   Ajustements #2 [B2.3] (18/08/2026) — le compteur « à rattacher » est
+   retiré (redondant avec la pastille « À rattacher » déjà posée sur chaque
+   carte concernée) ; le compteur « à placer » ne garde que le chiffre.
+   Retours #3 (18-19/08/2026) — le compteur portait sur TOUTES les séances
+   fictives alors que les tuiles n'affichent que celles dans la fenêtre de
+   DASH_BACKLOG_FENETRE_JOURS (dashBacklogSessions) : les deux chiffres
+   pouvaient diverger. On compte désormais exactement ce qui est affiché. */
+function renderDashBacklogBadges(nb) {
   const hote = $('#backlogBadges');
   if (!hote) return;
-  const nb = visibleSessions().filter(isFictiveSession).length;
-  const nonRatt = visibleSessions().filter(s => !s.sequenceId || !s.ueId).length;
-  hote.innerHTML = `<span class="frais-badge${nb ? ' has-pending' : ''}">${nb ? `${nb} à placer` : 'à jour'}</span>`
-    + (nonRatt ? `<span class="frais-badge has-pending">${nonRatt} à rattacher</span>` : '');
+  hote.innerHTML = `<span class="frais-badge${nb ? ' has-pending' : ''}">${nb || 'à jour'}</span>`;
 }
 
-/* Les ordres de mission à établir : séances et réunions en véhicule PERSONNEL
-   dont l'ordre de mission n'est pas encore demandé, et qui n'ont pas eu lieu.
-   Triés par date, les plus proches en tête — c'est une échéance. */
+/* Les ordres de mission : séances et réunions en véhicule PERSONNEL. Une
+   mission pas encore demandée se déleste d'elle-même passé la date (rien à
+   demander pour un déplacement déjà eu lieu) ; une mission déjà envoyée reste
+   affichée (marquée « fait ») jusqu'à ce qu'elle soit retirée à la main —
+   voir missionDismissed, posé par le clic sur × dans renderUrgences. Triées
+   par date, les plus proches en tête. */
 function ordresDeMissionAFaire() {
   const out = [];
+  const pousser = (source, id, titre, date, detail, fait) => {
+    if (!fait && date && dashJoursEntre(date) < 0) return;
+    out.push({ source, id, titre, date, detail, fait });
+  };
   (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
-    if (s.deplacement !== 'personnel' || s.ordreMission) return;
+    if (s.deplacement !== 'personnel' || s.missionDismissed) return;
     const iso = sessionIsoDate(s);
-    out.push({ source: 'session', id: s.id, titre: s.title || 'Séance sans titre',
-      date: iso ? parseIsoDate(iso) : null, detail: s.promotion || '' });
+    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
   });
   (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    if (r.deplacement !== 'personnel' || r.ordreMission) return;
-    out.push({ source: 'reunion', id: r.id, titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
-      date: parseIsoDate(r.date), detail: r.lieu || '' });
+    if (r.deplacement !== 'personnel' || r.missionDismissed) return;
+    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
   });
-  return out
-    .filter(o => !o.date || dashJoursEntre(o.date) >= 0)
-    .sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return a.date - b.date;
-    });
+  return out.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date - b.date;
+  });
 }
 
-/* Encart « Déplacements » — les ORDRES DE MISSION à établir, et rien d'autre.
-   Volontairement PAS les frais : ceux-ci se consultent une fois par mois dans
-   leur encart dédié, en bas de page (choix explicite en revue). Les véhicules
-   à réserver vivent, eux, dans « À réserver », avec les salles : même démarche,
-   même délai de 15 jours. */
-function renderDashDeplacements() {
-  const hote = $('#deplacementsList');
-  if (!hote) return;
-  const list = ordresDeMissionAFaire();
-  hote.innerHTML = list.length
-    ? list.map(o => {
-      const j = o.date ? dashJoursEntre(o.date) : null;
-      const urgent = j !== null && j <= ROOM_ALERT_DAYS;
-      const quand = o.date ? o.date.toLocaleDateString('fr-FR') : 'Date à préciser';
-      const delai = j === null ? '' : (j <= 0 ? 'Cette semaine' : `Dans ${j} j`);
-      const attr = o.source === 'reunion' ? 'data-edit-reunion' : 'data-edit-session';
-      return `<div class="row-item om-row" ${attr}="${escapeAttr(o.id)}" tabindex="0" role="button">
-        <div class="row-main">
-          <strong class="row-title">${escapeHtml(o.titre)}</strong>
-          <span class="row-meta">${escapeHtml(quand)}${o.detail ? ' · ' + escapeHtml(o.detail) : ''}</span>
-        </div>
-        ${urgent && delai ? `<span class="status-pill room-urgent">${escapeHtml(delai)}</span>` : ''}
-      </div>`;
-    }).join('')
-    : '<p class="empty-hint">Aucun ordre de mission à demander. Les frais à déclarer se consultent dans « Frais de déplacement », plus bas.</p>';
-  const badge = $('#deplacementsSummaryBadge');
-  if (badge) {
-    badge.textContent = list.length ? `${list.length} à demander` : '';
-    badge.classList.toggle('has-pending', list.length > 0);
-  }
+// Ajustements #2 [B2.4] (18/08/2026) — les séances encore à placer, triées
+// chronologiquement (sessionSortKey, déjà utilisée pour le backlog du
+// Planning hebdo) et bornées à une fenêtre de 2 mois : au-delà, elles
+// resteraient visibles dans le Planning hebdo/la Conception pédagogique,
+// juste plus dans cet encart. Une séance sans semaine cible connue n'a pas
+// de date à comparer : gardée (pas cachée) plutôt que perdue de vue.
+const DASH_BACKLOG_FENETRE_JOURS = 61; // ≈ 2 mois
+function dashBacklogSessions() {
+  return visibleSessions().filter(isFictiveSession).filter(s => {
+    const w = dashSemaineObjet(sessionCanonicalWeekId(s));
+    if (!w) return true;
+    const j = dashJoursEntre(dayDatesForWeek(w)[0]);
+    return j === null || j <= DASH_BACKLOG_FENETRE_JOURS;
+  }).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
 }
 
 function renderDashboard() {
-  const fictive = visibleSessions().filter(isFictiveSession);
+  const fictive = dashBacklogSessions();
 
   renderDashSemaine();
   renderDashProchainement();
-  renderDashBacklogBadges();
-  renderDashDeplacements();
+  renderDashBacklogBadges(fictive.length);
+  renderUrgences();
 
   // Lot A [7] — mêmes tuiles qu'en Conception pédagogique et qu'au Planning
   // hebdo (renderBacklogSessionTile), au lieu des lignes de liste : une séance à
   // placer se reconnaît à sa couleur d'UE, et se glisse depuis les trois vues.
   $('#dashboardBacklog').innerHTML = fictive.length
-    ? fictive.slice(0, 12).map(s => renderBacklogSessionTile(s)).join('')
+    ? fictive.map(s => renderBacklogSessionTile(s)).join('')
     : '<p class="meta">Aucune séance à placer en attente.</p>';
 
-  $('#constraintsList').innerHTML = state.constraints.length
-    ? state.constraints.map(c => `<div class="row-item" data-edit-constraint="${escapeAttr(c.id)}"><div class="row-main"><strong class="row-title">${escapeHtml(c.label)}</strong><span class="row-meta">${escapeHtml(c.type)} · ${formatDateFr(c.start)} → ${formatDateFr(c.end)} · ${(c.promotions || []).length ? escapeHtml((c.promotions || []).join(', ')) : 'Toutes promotions'}</span></div></div>`).join('')
+  // Triées par ordre chronologique (date de début) : une liste de périodes se
+  // parcourt naturellement dans le temps, pas dans l'ordre de saisie.
+  const constraintsTriees = [...state.constraints].sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+  $('#constraintsList').innerHTML = constraintsTriees.length
+    ? constraintsTriees.map(c => `<div class="row-item" data-edit-constraint="${escapeAttr(c.id)}"><div class="row-main"><strong class="row-title">${escapeHtml(c.label)}</strong><span class="row-meta">${escapeHtml(c.type)} · ${formatDateFr(c.start)} → ${formatDateFr(c.end)} · ${(c.promotions || []).length ? escapeHtml((c.promotions || []).join(', ')) : 'Toutes promotions'}</span></div></div>`).join('')
     : '<p class="meta">Aucune période enregistrée (vacances, stage, examen…).</p>';
 
-  // Notes libres « À faire » : ne pas réécrire le champ pendant la saisie (sauvegarde auto)
-  const todo = $('#todoNotes');
-  if (todo && document.activeElement !== todo) todo.value = state.todoNotes || '';
-  updateTodoStatus();
-  // Notes libres « Bugs & améliorations » : même précaution (ne pas écraser pendant la saisie)
-  const dev = $('#devNotes');
-  if (dev && document.activeElement !== dev) dev.value = state.devNotes || '';
-  updateDevStatus();
+  renderChecklist('todo');
+  renderChecklist('devnotes');
 }
 
-/* Lot A [3] — l'étiquette « Notes en attente / Vide » a été retirée : le texte
-   saisi est sous les yeux, l'annoncer était redondant. Seule reste la classe
-   qui signale l'encart rempli. */
-function updateTodoStatus() {
-  const value = ($('#todoNotes')?.value ?? state?.todoNotes ?? '').trim();
-  $('#todoPriorityPanel')?.classList.toggle('has-pending', !!value);
+/* « À faire » et « Amélioration de l'appli » — refonte écran 1 (16/08/2026)
+   puis retours 17/08/2026 : deux listes à cocher de même forme (la seconde
+   partagée entre comptes plutôt que privée), un seul moteur pour les deux.
+   Une tâche cochée reste visible (barrée) jusqu'à la fin de la journée où
+   elle a été cochée (repérage par `doneAt === todayIso()`), puis rejoint un
+   historique consultable (⌄ Tâches faites) purgé au-delà de 30 jours
+   (purgerTachesFaites, appliqué au chargement). */
+const CHECKLISTS = {
+  todo: { list: '#todoList', input: '#todoNewInput', panel: '#todoPriorityPanel', history: '#todoHistoryList', historyCount: '#todoHistoryCount', idPrefix: 'todo' },
+  devnotes: { list: '#devNotesList', input: '#devNotesNewInput', panel: '#devNotesPanel', history: '#devNotesHistoryList', historyCount: '#devNotesHistoryCount', idPrefix: 'devnote', badge: '#devNotesBadge' }
+};
+function checklistItems(key) {
+  const field = key === 'todo' ? 'todoItems' : 'devNotesItems';
+  state[field] = state[field] || [];
+  return state[field];
 }
-
-function updateDevStatus() {
-  const value = ($('#devNotes')?.value ?? state?.devNotes ?? '').trim();
-  // Lot 9 (Q5) — badge « 1 note » sur le résumé replié, pour que le contenu ne
-  // passe pas inaperçu une fois le panneau fermé par défaut.
-  const badge = $('#devNotesBadge');
-  if (badge) {
-    badge.textContent = value ? '1 note' : '';
-    badge.classList.toggle('has-pending', !!value);
+function renderChecklist(key) {
+  const cfg = CHECKLISTS[key];
+  const host = $(cfg.list);
+  if (!host) return;
+  const today = todayIso();
+  const items = checklistItems(key);
+  const visibles = items.filter(t => !t.done || t.doneAt === today);
+  const faites = items.filter(t => t.done && t.doneAt !== today).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || ''));
+  host.innerHTML = visibles.length
+    ? visibles.map(t => `<label class="todo-row${t.done ? ' is-done' : ''}">
+        <input type="checkbox" data-checklist-check="${escapeAttr(t.id)}" ${t.done ? 'checked' : ''} />
+        <span class="todo-row-text">${escapeHtml(t.text)}</span>
+        <button type="button" class="todo-row-remove" data-checklist-remove="${escapeAttr(t.id)}" title="Supprimer" aria-label="Supprimer « ${escapeAttr(t.text)} »">✕</button>
+      </label>`).join('')
+    : '<p class="meta tight">Aucune tâche en attente.</p>';
+  $(cfg.panel)?.classList.toggle('has-pending', items.some(t => !t.done));
+  if (cfg.badge) {
+    const nb = visibles.filter(t => !t.done).length;
+    const badge = $(cfg.badge);
+    if (badge) { badge.textContent = nb ? `${nb} à traiter` : ''; badge.classList.toggle('has-pending', nb > 0); }
   }
+
+  const histHost = $(cfg.history);
+  if (histHost) {
+    histHost.innerHTML = faites.length
+      ? faites.map(t => `<li class="todo-history-row"><span class="todo-history-text">${escapeHtml(t.text)}</span><span class="todo-history-date">${escapeHtml(formatDateFr(t.doneAt))}</span></li>`).join('')
+      : '<li class="meta tight">Aucune tâche faite ces 30 derniers jours.</li>';
+  }
+  const histCount = $(cfg.historyCount);
+  if (histCount) histCount.textContent = faites.length ? `Tâches faites (${faites.length})` : 'Tâches faites';
+}
+function wireChecklist(key) {
+  const cfg = CHECKLISTS[key];
+  // Retours #4 (18/08/2026) — champ passé en <textarea> pour laisser plus de
+  // place à la rédaction ; Entrée valide toujours, Maj+Entrée insère un saut
+  // de ligne (sinon impossible d'écrire une note sur plusieurs lignes).
+  $(cfg.input)?.addEventListener('keydown', async (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    const input = event.target;
+    const text = input.value.trim();
+    if (!text) return;
+    checklistItems(key).push({ id: uid(cfg.idPrefix), text, done: false, doneAt: '' });
+    input.value = '';
+    renderChecklist(key);
+    await saveData('Tâche ajoutée', { rerender: false });
+  });
+  $(cfg.list)?.addEventListener('change', async (event) => {
+    const box = event.target.closest('[data-checklist-check]');
+    if (!box) return;
+    const item = checklistItems(key).find(t => t.id === box.dataset.checklistCheck);
+    if (!item) return;
+    item.done = box.checked;
+    item.doneAt = box.checked ? todayIso() : '';
+    renderChecklist(key);
+    await saveData(item.done ? 'Tâche cochée' : 'Tâche décochée', { rerender: false });
+  });
+  $(cfg.list)?.addEventListener('click', async (event) => {
+    const del = event.target.closest('[data-checklist-remove]');
+    if (!del) return;
+    const arr = checklistItems(key);
+    const idx = arr.findIndex(t => t.id === del.dataset.checklistRemove);
+    if (idx < 0) return;
+    arr.splice(idx, 1);
+    renderChecklist(key);
+    await saveData('Tâche supprimée', { rerender: false });
+  });
 }
 
 function setWeekNotesStatus(text) {
@@ -1955,85 +2590,139 @@ function setWeekNotesStatus(text) {
   if (status) status.textContent = text || '';
 }
 
+/* Refonte écran 2 « Conception pédagogique » (16/08/2026) — sidebar UE (seul
+   filtrage, REGLES.md #21) + panneau de détail à sous-onglets Séquences /
+   Séances / Capacités pour l'UE sélectionnée. Remplace l'ancien arbre plat de
+   toutes les UE d'un coup (une seule à la fois désormais). */
 function renderDesign() {
-  const search = ($('#designSearch')?.value || '').trim().toLowerCase();
-  const eligibleUes = state.ues.filter(ue => {
-    const sequences = state.sequences.filter(seq => seq.ueId === ue.id);
-    const sessions = state.sessions.filter(session => session.ueId === ue.id || sequences.some(seq => seq.id === session.sequenceId));
-    const matchesPromotion = designPromotionFilter === 'Tous' || ue.promotion === designPromotionFilter;
-    const matchesSemester = designSemesterFilter === 'Tous' || ueInSemester(ue, designSemesterFilter);
-    const capacityHaystack = ueCapacities(ue).map(cap => `${cap.code} ${cap.title}`).join(' ').toLowerCase();
-    const haystack = [ue.code, ue.title, ue.description, ue.promotion, ue.semester, ue.teacher, capacityHaystack, ...sequences.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' ')), ...sessions.map(s => [s.title, s.objectives, s.keywords, s.teacher].join(' '))].join(' ').toLowerCase();
-    const matchesSearch = !search || haystack.includes(search);
-    const matchesTeacher = matchesTeacherFilter(ue, [...sequences, ...sessions]);
-    return matchesPromotion && matchesSemester && matchesSearch && matchesTeacher;
-  });
-
-  renderDesignUeChoices(eligibleUes);
-  const choisies = new Set(designSelectedUeIds);
-  const ues = choisies.size ? eligibleUes.filter(ue => choisies.has(ue.id)) : eligibleUes;
-  updateDesignUeCount();
-
-  const byPromotion = state.promotions.map(promo => ({ promo, ues: ues.filter(ue => ue.promotion === promo) })).filter(group => group.ues.length);
-  const tree = $('#ueTree');
-  const openKeys = captureOpenKeys(tree);
-  tree.innerHTML = byPromotion.length
-    ? byPromotion.map(group => `<details class="promo-group tree-row-group" open data-open-key="promo:${escapeAttr(group.promo)}"><summary><span>Promotion</span><strong>${escapeHtml(group.promo)}</strong><em>${group.ues.length} UE</em></summary>${group.ues.map(renderUeCard).join('')}</details>`).join('')
-    : '<section class="panel"><p class="meta">Aucune UE ne correspond aux filtres.</p></section>';
-  restoreOpenKeys(tree, openKeys);
-}
-
-/* Lot C [11] — l'encart de filtres dépliable a disparu au profit de la barre
-   collante : il n'y a plus de résumé à écrire, seulement un compteur discret
-   sur le menu « UE » pour signaler qu'un tri y est posé, sans quoi une
-   sélection oubliée resterait invisible une fois le menu refermé. */
-function updateDesignUeCount() {
-  const badge = $('#designUeCount');
-  if (badge) {
-    const n = designSelectedUeIds.length;
-    badge.hidden = !n;
-    badge.textContent = n ? String(n) : '';
-    $('#designUePop')?.classList.toggle('has-selection', !!n);
+  if (!$('#designSidebarList')) return;
+  if (!state.promotions.includes(designPromotionFilter)) designPromotionFilter = state.promotions[0] || 'GPN1';
+  const promoUes = state.ues.filter(ue => ue.promotion === designPromotionFilter);
+  if (!promoUes.some(ue => ue.id === designSelectedUeId)) {
+    // Même règle de repli que la frise (mesUesParDefaut) : mes UE d'abord, dans
+    // l'ordre où la sidebar les affiche réellement (semestre puis code) — sinon
+    // « la première UE sur la liste » (retours #3, 18-19/08/2026) pouvait
+    // différer de l'ordre d'itération brut de state.ues.
+    const ordonnees = [...promoUes].sort((a, b) => {
+      const parSemestre = SEMESTERS.indexOf(a.semester) - SEMESTERS.indexOf(b.semester);
+      return parSemestre !== 0 ? parSemestre : compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true });
+    });
+    const miennes = moiInitiales ? ordonnees.filter(ue => enseignantsDeLUe(ue).includes(moiInitiales)) : [];
+    designSelectedUeId = (miennes[0] || ordonnees[0] || {}).id || '';
   }
-  // Un menu resté sur autre chose que « tout » se signale (bordure d'accent) :
-  // sans étiquette à côté de lui, c'est le seul indice qu'un tri est en place.
-  [['#designPromotionFilter', designPromotionFilter],
-   ['#designSemesterFilter', designSemesterFilter],
-   ['#designTeacherFilter', designTeacherFilter]].forEach(([sel, valeur]) => {
-    const el = $(sel);
-    if (el) el.toggleAttribute('data-actif', valeur !== 'Tous');
-  });
+  renderDesignSidebar(promoUes);
+  renderDesignDetail(findUe(designSelectedUeId));
 }
 
-/* Case à cocher par UE, limitée aux UE déjà éligibles selon Promotion /
-   Semestre / Enseignant / Recherche : on affine encore l'affichage sans
-   perdre la sélection faite via les autres filtres. Lot C [10] — cocher
-   RESTREINT à ces UE ; ne rien cocher les affiche toutes. */
-function renderDesignUeChoices(eligibleUes = []) {
-  const container = $('#designUeChoices');
-  if (!container) return;
-  designSelectedUeIds = designSelectedUeIds.filter(id => eligibleUes.some(ue => ue.id === id));
-  const choisies = new Set(designSelectedUeIds);
-  if (!eligibleUes.length) {
-    container.innerHTML = '<p class="meta tight">Aucune UE disponible avec ces filtres.</p>';
+function renderDesignSidebar(promoUes) {
+  $$('.promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.designPromo === designPromotionFilter));
+  const countEl = $('#designSidebarCount');
+  if (countEl) countEl.textContent = `${state.ues.length} UE`;
+  const semesters = [...new Set(promoUes.map(ue => ue.semester))].sort((a, b) => SEMESTERS.indexOf(a) - SEMESTERS.indexOf(b));
+  const list = $('#designSidebarList');
+  list.innerHTML = semesters.length
+    ? semesters.map(sem => {
+        const group = [...promoUes]
+          .filter(ue => ue.semester === sem)
+          .sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+        return `<div class="design-sidebar-group">
+          <p class="design-sidebar-group-label">${escapeHtml(sem)}</p>
+          ${group.map(ue => renderDesignSidebarRow(ue)).join('')}
+        </div>`;
+      }).join('')
+    : '<p class="meta tight">Aucune UE pour cette promotion.</p>';
+}
+
+function renderDesignSidebarRow(ue) {
+  const sequenceCount = state.sequences.filter(seq => seq.ueId === ue.id).length;
+  const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
+  // Pastille pleine = j'y interviens, pastille creuse = un·e collègue (JETONS.md).
+  const enseignants = enseignantsDeLUe(ue);
+  const pills = enseignants.map(initiale => `<span class="design-ue-pill${initiale === moiInitiales ? ' is-mine' : ''}">${escapeHtml(initiale)}</span>`).join('');
+  const estMienne = moiInitiales && enseignants.includes(moiInitiales);
+  // Estompage (REGLES.md #21) : atténue, ne retire jamais. Appliqué en
+  // permanence depuis le retrait de la case « j'y interviens » (18/08/2026,
+  // Ajustements #2) — 3 niveaux fixes : sélectionnée / mes UE / collègues.
+  const dimmed = (enseignants.length && moiInitiales) ? !estMienne : false;
+  const selected = ue.id === designSelectedUeId;
+  const compteLabel = (sequenceCount || sessionCount)
+    ? `${sequenceCount} séq · ${sessionCount} séance${sessionCount > 1 ? 's' : ''}`
+    : 'aucune séance';
+  return `<button type="button" class="design-ue-row${selected ? ' is-selected' : ''}${dimmed ? ' is-dimmed' : ''}${!sessionCount ? ' is-empty' : ''}" style="--ue-color:${ueColor(ue.id)}" data-select-ue="${escapeAttr(ue.id)}" aria-pressed="${selected}">
+    <span class="design-ue-title">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</span>
+    <span class="design-ue-sub">
+      <span class="design-ue-count">${escapeHtml(compteLabel)}</span>
+      ${pills ? `<span class="design-ue-pills">${pills}</span>` : ''}
+    </span>
+  </button>`;
+}
+
+function renderDesignDetail(ue) {
+  const head = $('#designDetailHead');
+  if (!ue) {
+    head.innerHTML = '<p class="meta">Aucune UE à afficher pour cette promotion.</p>';
+    $('#ueTree').innerHTML = '';
+    $('#designSessionsPanel').innerHTML = '';
+    $('#designCapacitiesPanel').innerHTML = '';
     return;
   }
-  container.innerHTML = eligibleUes.map(ue => {
-    const color = ueColor(ue.id);
-    return `<label class="checkbox-chip ue-choice" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .14)}" title="${escapeAttr(ue.title)}">
-      <input type="checkbox" value="${escapeAttr(ue.id)}" ${choisies.has(ue.id) ? 'checked' : ''}>
-      <span>${escapeHtml(compactUeCode(ue.code))}</span>
-    </label>`;
-  }).join('');
+  // Volume horaire : le champ saisi (ue.hoursTarget) prime, mais tant qu'il vaut
+  // « à préciser » on affiche à la place le total des séances déjà enregistrées
+  // (mêmes fonctions que le Dossier, app.js:5559) plutôt qu'un texte creux.
+  const hoursDeclared = (ue.hoursTarget || '').trim();
+  const hoursComputed = hoursDeclared.toLowerCase() === 'à préciser' || !hoursDeclared
+    ? dossierHoursLabel(dossierUeSessions(ue).reduce((sum, s) => sum + dossierSessionMinutes(s), 0))
+    : '';
+  const hoursLabel = hoursComputed ? `${hoursComputed} · d’après les séances enregistrées` : (hoursDeclared || 'à préciser');
+  const metaLine = renderMetaLine([ueDatePeriod(ue), hoursLabel]);
+  const color = ueColor(ue.id);
+  head.style.setProperty('--ue-color', color);
+  head.style.setProperty('--ue-soft', hexToRgba(color, .1));
+  head.style.setProperty('--ue-ink', inkColor(color));
+  head.innerHTML = `
+    <div class="design-detail-headline">
+      <h2>${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</h2>
+      ${metaLine}
+    </div>
+    <div class="entity-actions">
+      <button class="icon-button small" data-export-ue="${escapeAttr(ue.id)}" title="Exporter la progression de cette UE" aria-label="Exporter la progression de l’UE ${escapeAttr(ue.code)}">⎙</button>
+      <button type="button" class="small secondary" data-edit-ue="${escapeAttr(ue.id)}">Modifier l’UE</button>
+    </div>`;
+
+  const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => sequenceSortKey(a).localeCompare(sequenceSortKey(b)));
+  const allSessions = state.sessions.filter(s => s.ueId === ue.id).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
+  const capacities = ueCapacities(ue);
+
+  const countSeq = $('#designCountSequences'); if (countSeq) countSeq.textContent = String(sequences.length);
+  const countSess = $('#designCountSessions'); if (countSess) countSess.textContent = String(allSessions.length);
+  const countCap = $('#designCountCapacities'); if (countCap) countCap.textContent = String(capacities.length);
+
+  const tree = $('#ueTree');
+  const openKeys = captureOpenKeys(tree);
+  tree.innerHTML = renderDesignSequencesPanel(ue, sequences);
+  restoreOpenKeys(tree, openKeys);
+
+  $('#designSessionsPanel').innerHTML = !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son contenu pédagogique (séquences, séances) n’est pas affiché.</p>'
+    : allSessions.length
+      ? allSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
+      : '<p class="meta">Aucune séance dans cette UE.</p>';
+
+  $('#designCapacitiesPanel').innerHTML = renderCapacityList(capacities);
+
+  setDesignTab(designActiveTab);
 }
 
-function renderUeCard(ue) {
-  // Lot C [12] — les séquences se lisent dans l'ordre du calendrier, la
-  // première en haut, et non plus dans leur ordre de création.
-  const sequences = state.sequences
-    .filter(seq => seq.ueId === ue.id)
-    .sort((a, b) => sequenceSortKey(a).localeCompare(sequenceSortKey(b)));
-  const sessionCount = state.sessions.filter(s => s.ueId === ue.id).length;
+/* Contenu de l'onglet « Séquences » : ex-corps de renderUeCard, sans le
+   bandeau UE (devenu l'en-tête du panneau de détail) — la sélection d'UE se
+   fait maintenant dans le sidebar, une seule à la fois. */
+function renderDesignSequencesPanel(ue, sequences) {
+  // Retours #3 (18-19/08/2026) — Cas 1 : pas enseignant·e de cette UE, aucun
+  // contenu de séquence/séance (les affichages génériques — en-tête d'UE,
+  // capacités du référentiel — restent, eux, dans renderDesignDetail).
+  if (!jeSuisEnseignantDeLUe(ue)) {
+    return '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son contenu pédagogique (séquences, séances) n’est pas affiché.</p>';
+  }
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
   // UE : regroupées par contrainte thématique, sous les séquences.
   const eilGroups = {};
@@ -2050,48 +2739,25 @@ function renderUeCard(ue) {
   const looseSessions = state.sessions
     .filter(s => s.ueId === ue.id && !s.sequenceId && !s.constraintId)
     .sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-  // Bloc toujours présent (même vide) pour servir de zone de dépôt : glisser une
-  // séance ici la détache de sa séquence. Quand il n'y a aucune séance libre, le
-  // bloc reste masqué et n'apparaît que pendant un glissement (classe .loose-empty).
-  // Exception : une UE sans AUCUNE séquence n'offrirait alors nulle part où créer
-  // une séance — le bloc reste donc visible, avec sa tuile d'ajout, le temps que
-  // les séquences existent.
   const sansSequence = !sequences.length;
   const looseInner = looseSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
     + renderAddTile(`data-new-session-ue="${escapeAttr(ue.id)}"`, 'Séance');
   const looseMasque = !looseSessions.length && !sansSequence;
   const looseBlock = `<div class="loose-detail-group${looseMasque ? ' loose-empty' : ''}" data-loose-drop="${escapeAttr(ue.id)}"><div class="loose-detail-head"><span class="entity-level-label">Sans séquence</span><strong>Séances rattachées directement à l’UE</strong></div><div class="session-card-grid">${looseInner}</div></div>`;
-  const color = ueColor(ue.id);
-  const capCodes = ueCapacities(ue).map(c => c.code).join(', ');
-  const metaLine = renderMetaLine([
-    ueDatePeriod(ue),
-    ue.hoursTarget,
-    compactTeacherInitials(ue.teacher),
-    capCodes
-  ]);
-  return `<details class="entity-card entity-ue" data-open-key="ue:${escapeAttr(ue.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .14)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}">
-    <summary>
-      <span class="entity-chevron">▸</span>
-      <span class="entity-level-label">UE</span>
-      <span class="code-badge entity-code">${escapeHtml(compactUeCode(ue.code))}</span>
-      <span class="entity-title">${escapeHtml(ue.title)}</span>
-      <span class="entity-tag">${escapeHtml(ue.promotion)} · ${escapeHtml(shortSemester(ue.semester))}</span>
-      <span class="entity-count">${sequences.length} séq. · ${sessionCount} séance(s)</span>
-    </summary>
-    <div class="entity-body">
-      <div class="entity-headline">
-        ${metaLine}
-        <div class="entity-actions">
-          <button class="icon-button small" data-export-ue="${escapeAttr(ue.id)}" title="Exporter la progression de cette UE" aria-label="Exporter la progression de l’UE ${escapeAttr(ue.code)}">⎙</button>
-          <button class="small secondary" data-edit-ue="${escapeAttr(ue.id)}">Modifier</button>
-        </div>
-      </div>
-      ${ue.description ? `<p class="entity-description">${escapeHtml(ue.description)}</p>` : ''}
-      <div class="nested-list">${sequences.map(renderSequenceCard).join('')}${renderAddBand(`data-new-sequence-ue="${escapeAttr(ue.id)}"`, 'Séquence')}</div>
-      ${eilBlock}
-      ${looseBlock}
-    </div>
-  </details>`;
+  return `<div class="nested-list">${sequences.map(renderSequenceCard).join('')}${renderAddBand(`data-new-sequence-ue="${escapeAttr(ue.id)}"`, 'Séquence')}</div>
+    ${eilBlock}
+    ${looseBlock}`;
+}
+
+function setDesignTab(tab) {
+  designActiveTab = tab;
+  $$('.design-subtab').forEach(btn => {
+    const active = btn.dataset.designTab === tab;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  const panels = { sequences: '#ueTree', sessions: '#designSessionsPanel', capacities: '#designCapacitiesPanel' };
+  Object.entries(panels).forEach(([key, sel]) => { const el = $(sel); if (el) el.hidden = key !== tab; });
 }
 
 /* Construit une grille label/valeur en ignorant les champs vides : on ne
@@ -2157,10 +2823,20 @@ function sequencePeriodParts(seq = {}) {
   const first = ranges[0] || {};
   const start = first.start ? weekLabelFromNumber(first.start) : '';
   const end = first.end ? weekLabelFromNumber(first.end) : (first.start ? start : '');
+  // 17/08 — Martin veut garder l'indicatif de semaines mais y ajouter les vraies
+  // dates + le nombre de semaines couvertes (les deux se déduisent de state.weeks).
+  const startWeek = first.start ? state.weeks.find(w => weekNumberOf(w) === first.start) : null;
+  const endWeek = first.end ? state.weeks.find(w => weekNumberOf(w) === first.end) : startWeek;
+  const dateStart = startWeek ? weekDateStart(startWeek.id) : '';
+  const dateEnd = endWeek ? weekDateEnd(endWeek.id) : '';
+  const dates = dateStart && dateEnd ? (dateStart === dateEnd ? dateStart : `${dateStart} – ${dateEnd}`) : '';
+  const weeksCount = (first.start && first.end) ? (first.end - first.start + 1) : (first.start ? 1 : 0);
   return {
     start,
     end,
-    label: start && end ? (start === end ? start : `${start} → ${end}`) : (seq.targetWeeks || '')
+    label: start && end ? (start === end ? start : `${start} → ${end}`) : (seq.targetWeeks || ''),
+    dates,
+    weeksLabel: weeksCount ? `${weeksCount} semaine${weeksCount > 1 ? 's' : ''}` : ''
   };
 }
 
@@ -2196,15 +2872,24 @@ function teacherInitialsOf(token = '') {
   return parts.map(part => part[0] || '').join('').slice(0, 4).toUpperCase();
 }
 
-function compactTeacherInitials(value = '') {
-  return teacherTokens(value).map(teacherInitialsOf).filter(Boolean).join(', ');
-}
-
 /* Liste { name, initials } pour afficher une pastille par enseignant. */
 function teacherPips(value = '') {
   return teacherTokens(value)
     .map(name => ({ name, initials: teacherInitialsOf(name) }))
     .filter(t => t.initials);
+}
+
+// Retours #3 (18-19/08/2026) — « pastilles initiales d'enseignant » :
+// harmonisation demandée sur tous les écrans. `onTint` bascule le pourtour/
+// texte sur --ue-deep (teinte du fond coloré : bandeau de séquence, tuile
+// séance) au lieu du bleu générique --acc, utilisé partout ailleurs (contexte
+// lié à une UE plutôt qu'à un fond coloré — Martin a confirmé garder le bleu
+// actuel dans ce cas). Plein pour moi (.is-mine), vide pour les collègues.
+function teacherPillsMarkup(value = '', onTint = false) {
+  const cls = 'design-ue-pill' + (onTint ? ' on-tint' : '');
+  return teacherPips(value)
+    .map(p => `<span class="${cls}${p.initials.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`)
+    .join('');
 }
 
 function compactKeywords(value = '', max = 4) {
@@ -2233,22 +2918,37 @@ function compactUeCode(code = '') {
 function renderSequenceCard(seq) {
   const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
   const fictiveCount = sessions.filter(isFictiveSession).length;
-  const definitiveCount = sessions.filter(isDefinitiveSession).length;
   const color = sequenceColor(seq.id); // Lot L — couleur cohérente avec la frise
   const period = sequencePeriodParts(seq);
-  const periodLabel = period.start && period.end ? (period.start === period.end ? period.start : `${period.start} → ${period.end}`) : (period.label || '');
-  const teachers = compactTeacherInitials(seq.teacher || findUe(seq.ueId)?.teacher || '');
+  const periodLabel = [period.label, period.dates, period.weeksLabel].filter(Boolean).join(' · ');
+  const teacherValue = seq.teacher || findUe(seq.ueId)?.teacher || '';
+  const teacherPillsHtml = teacherPillsMarkup(teacherValue, true);
   const keywords = compactKeywords(seq.keywords, 8);
   const capCodes = (seq.capacityCodes || []).join(', ');
-  const metaLine = renderMetaLine([periodLabel, seq.hoursEstimate, teachers, capCodes]);
+  const metaLine = renderMetaLine([periodLabel, seq.hoursEstimate, capCodes]);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séquence d'un ou plusieurs collègues
+  // seuls (je suis enseignant·e de l'UE, mais pas rattaché·e à CETTE séquence).
+  // Visible, en style atténué, mais pas ouvrable — un <div> statique plutôt
+  // qu'un <details> : pas de bascule d'ouverture possible.
+  if (!contenuInteractifPourMoi(seq)) {
+    return `<div class="entity-card entity-sequence is-collegue" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}" title="Séquence d'un ou plusieurs collègues — pas la vôtre">
+      <div class="entity-card-locked-head">
+        <span class="entity-level-label">Séquence</span>
+        <span class="entity-title">${escapeHtml(seq.title)}</span>
+        ${teacherPillsHtml ? `<span class="design-ue-pills entity-teachers">${teacherPillsHtml}</span>` : ''}
+        <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''}</span>
+      </div>
+    </div>`;
+  }
   // Séances numérotées à partir de 1 dans l'ordre de la séquence.
   const orderedSessions = [...sessions].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-  return `<details class="entity-card entity-sequence" data-open-key="seq:${escapeAttr(seq.id)}" data-seq-drop="${escapeAttr(seq.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}">
+  return `<details class="entity-card entity-sequence" data-open-key="seq:${escapeAttr(seq.id)}" data-seq-drop="${escapeAttr(seq.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}">
     <summary>
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">Séquence</span>
       <span class="entity-title">${escapeHtml(seq.title)}</span>
-      <span class="entity-count">${fictiveCount} à placer · ${definitiveCount} EDT</span>
+      ${teacherPillsHtml ? `<span class="design-ue-pills entity-teachers">${teacherPillsHtml}</span>` : ''}
+      <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''} · ${fictiveCount} à placer</span>
     </summary>
     <div class="entity-body sequence-body">
       <div class="entity-headline">
@@ -2312,13 +3012,22 @@ function renderSessionCard(s, number) {
   // pastel réellement obtenu, pas sur la surface nue.
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
-  return `<article class="session-card ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
+  const teachers = teacherPillsMarkup(s.teacher, true);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séance d'un ou plusieurs collègues
+  // seuls, visible mais pas ouvrable (ni glissable) ; Cas 3 (mienne, ou sans
+  // enseignant assigné) : comportement inchangé.
+  const mien = contenuInteractifPourMoi(s);
+  const interactiveAttrs = mien
+    ? `draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}"`
+    : `aria-label="Séance « ${escapeAttr(s.title)} » — collègue(s) seul(s), pas la vôtre" title="Collègue(s) seul(s) — pas la vôtre"`;
+  return `<article class="session-card ${typeClass(s.type)}${mien ? '' : ' is-collegue'}" ${interactiveAttrs} style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
       ${s.type ? `<span class="session-card-headtype" title="${escapeAttr(s.type)}">${escapeHtml(s.type)}</span>` : '<span class="session-card-headtype"></span>'}
       ${placementFlag(s)}
     </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
+    ${teachers ? `<span class="design-ue-pills tile-teachers">${teachers}</span>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
     ${s.room ? `<p class="session-card-meta">${escapeHtml(s.room)}</p>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
@@ -2337,16 +3046,26 @@ function renderSessionCard(s, number) {
 // placement (ici, aucune n'est placée — le signe serait le même partout).
 function renderBacklogSessionTile(s) {
   const color = sessionTint(s);
-  const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : '', sessionHoursLabel(s)].filter(Boolean).join(' · ');
+  // Retours 17/08/2026 — UE + promo remplacent le nombre d'heures : ce qui
+  // manque pour placer la séance (dans quelle UE, pour quelle promo), pas sa
+  // durée (déjà lisible dans la fiche). Le bandeau de type de séance (tête)
+  // ne change pas.
+  const temporal = [weekLabel(s.targetWeekId), s.fictiveDay !== '' ? DAY_NAMES[Number(s.fictiveDay)] : ''].filter(Boolean).join(' · ');
+  const ueLabel = ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : '';
+  const infoLigne = [ueLabel, s.promotion].filter(Boolean).join(' · ');
   const keywords = compactKeywords(s.keywords, 3);
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
+  const teachers = teacherPillsMarkup(s.teacher, true);
   return `<article class="session-card backlog-session-tile ${typeClass(s.type)}" draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}">
     <header class="session-card-head">
+      <span class="drag-handle" aria-hidden="true">⠿</span>
       <span class="session-card-headtype" title="${escapeAttr(s.type || '')}">${escapeHtml(s.type || 'Séance')}</span>
     </header>
     <h5 class="session-card-title">${escapeHtml(s.title)}</h5>
+    ${infoLigne ? `<p class="session-card-meta">${escapeHtml(infoLigne)}</p>` : ''}
     ${temporal ? `<p class="session-card-meta">${escapeHtml(temporal)}</p>` : ''}
+    ${teachers ? `<span class="design-ue-pills tile-teachers">${teachers}</span>` : ''}
     ${keywords.length ? `<p class="session-card-keywords">${escapeHtml(keywords.join(', '))}</p>` : ''}
   </article>`;
 }
@@ -2367,19 +3086,30 @@ function examConstraintTooltip(c) {
 
 function renderGantt() {
   if (!$('#ganttTimeline')) return;
-  if (!ganttSemesterFilters) ganttSemesterFilters = semestresDeLaSaison();
-  // Tout décocher n'a pas de sens ici (une frise sans semaines) : on retombe sur
-  // S1, et les cases doivent le DIRE — sinon elles affichent un état faux.
-  if (!ganttSemesterFilters.length) {
-    ganttSemesterFilters = ['Semestre 1'];
-    renderGanttSemesterChoices();
+  if (!ganttPromo || !state.promotions.includes(ganttPromo)) ganttPromo = state.promotions[0] || 'GPN1';
+  const pair = SEMESTER_PAIRS.find(p => p.promotion === ganttPromo) || SEMESTER_PAIRS[0];
+  if (!ganttSemester || !pair.semesters.includes(ganttSemester)) {
+    ganttSemester = semestresDeLaSaison().find(s => pair.semesters.includes(s)) || pair.semesters[0];
   }
-  const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  // Lot D [17] — plus de filtre « Promotion » : les semestres cochés le disent déjà.
-  const ues = state.ues.filter(ue => ueSemesters(ue).some(s => ganttSemesterFilters.includes(s)));
-  renderGanttUeChoices(ues);
-  const selectedUes = selectedTimelineUes(ues);
-  renderGanttTimeline(selectedUes, weeks);
+  const weeks = weeksForSemester(ganttSemester);
+  const ues = state.ues.filter(ue => ueInSemester(ue, ganttSemester))
+    .sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+  // Sidebar Conception mise à part (REGLES.md #21), c'est le seul vrai
+  // sélecteur (une UE à la fois) de l'app : la case « Empiler » ci-dessous en
+  // est l'exception assumée (voir README « Progression »).
+  if (!ues.some(ue => ue.id === ganttSelectedUeId)) {
+    ganttSelectedUeId = (mesUesParDefaut(ues)[0] || ues[0] || {}).id || '';
+  } else {
+    ganttDefautMessage = '';
+  }
+  renderGanttTopBar();
+  renderGanttUeCards(ues);
+  const visibleUes = ganttStacked ? ues : ues.filter(ue => ue.id === ganttSelectedUeId);
+  ganttLastUes = visibleUes;
+  ganttLastWeeks = weeks;
+  renderGanttSequencesPanel(visibleUes, weeks);
+  renderGanttSessionsPanel(visibleUes, weeks);
+  computeGanttHorsFenetre(visibleUes, weeks);
 }
 
 /* Codes d'UE : le Ruban les écrit sans espace (« UE1.1 »), les UE du planning
@@ -2407,10 +3137,9 @@ function enseignantsDeLUe(ue) {
   return [...initiales];
 }
 
-/* Cochage d'office : les UE que j'enseigne. Repli sur les deux premières quand
-   rien ne me revient — accompagné d'un message, sinon on croit à une erreur
-   (c'est exactement ce qui s'est produit : 1.1 et 1.2 cochées sans raison
-   visible). Le message est consommé par renderGanttUeChoices. */
+/* Cochage d'office : l'UE que j'enseigne. Repli sur la première quand rien ne
+   me revient — accompagné d'un message, sinon on croit à une erreur. Le
+   message est consommé par renderGanttUeCards. */
 let ganttDefautMessage = '';
 function mesUesParDefaut(ues = []) {
   const miennes = moiInitiales ? ues.filter(ue => enseignantsDeLUe(ue).includes(moiInitiales)) : [];
@@ -2419,70 +3148,212 @@ function mesUesParDefaut(ues = []) {
     return miennes;
   }
   ganttDefautMessage = moiInitiales
-    ? `Aucune UE de ces semestres ne porte vos initiales (${moiInitiales}) dans le Ruban : sélection par défaut. Renseigner la colonne « Enseignants » du Tableau détaillé (onglet Référentiel & Ruban) pour que la frise s'ouvre sur vos UE.`
+    ? `Aucune UE de ce semestre ne porte vos initiales (${moiInitiales}) dans le Ruban : sélection par défaut. Renseigner la colonne « Enseignants » du Tableau détaillé (onglet Référentiel) pour que la frise s'ouvre sur votre UE.`
     : '';
-  return ues.slice(0, 2);
+  return ues.slice(0, 1);
 }
 
-function renderGanttUeChoices(ues = []) {
-  const container = $('#ganttUeChoices');
+function renderGanttUeCards(ues = []) {
+  const container = $('#ganttUeCards');
   if (!container) return;
-  const sorted = [...ues].sort((a, b) => `${a.semester}-${a.promotion}-${a.code}`.localeCompare(`${b.semester}-${b.promotion}-${b.code}`));
-  // Le message de repli ne vaut que pour un cochage d'office : dès que
-  // l'utilisateur compose sa propre sélection, il n'a plus rien à expliquer.
-  if (!ganttFocusedUeIds || !sorted.some(ue => ganttFocusedUeIds.includes(ue.id))) {
-    ganttFocusedUeIds = mesUesParDefaut(sorted).map(ue => ue.id);
-  } else {
-    ganttDefautMessage = '';
-  }
-  const selected = new Set(ganttFocusedUeIds);
-  const cases = sorted.map(ue => {
-    const color = ueColor(ue.id);
-    return `<label class="checkbox-chip ue-choice" style="--ue-color:${color};--ue-soft:${hexToRgba(color,.12)}"><input type="checkbox" value="${escapeAttr(ue.id)}" ${selected.has(ue.id) ? 'checked' : ''}><span title="${escapeAttr(ue.title)}">${escapeHtml(ue.code.replace('UE ', ''))}</span></label>`;
-  }).join('');
-  container.innerHTML = sorted.length
-    ? cases + (ganttDefautMessage ? `<p class="choice-row-note meta">${escapeHtml(ganttDefautMessage)}</p>` : '')
-    : '<p class="meta">Aucune UE disponible avec ces filtres.</p>';
+  container.innerHTML = ues.length ? ues.map(ue => {
+    const seqCount = state.sequences.filter(seq => seq.ueId === ue.id).length;
+    const sessCount = state.sessions.filter(s => s.ueId === ue.id).length;
+    const teachers = enseignantsDeLUe(ue);
+    const pills = teachers.map(i => `<span class="design-ue-pill${i === moiInitiales ? ' is-mine' : ''}">${escapeHtml(i)}</span>`).join('');
+    const selected = ue.id === ganttSelectedUeId;
+    const countLabel = (seqCount || sessCount) ? `${seqCount} séq · ${sessCount} séance${sessCount > 1 ? 's' : ''}` : 'aucune séquence';
+    return `<button type="button" class="progression-ue-card${selected ? ' is-selected' : ''}${!seqCount ? ' is-empty' : ''}" data-select-gantt-ue="${escapeAttr(ue.id)}" aria-pressed="${selected}">
+      <span class="progression-ue-card-title">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</span>
+      <span class="progression-ue-card-sub"><span class="progression-ue-card-count">${escapeHtml(countLabel)}</span>${pills ? `<span class="design-ue-pills">${pills}</span>` : ''}</span>
+    </button>`;
+  }).join('') : '<p class="meta">Aucune UE pour ce semestre.</p>';
+  const countEl = $('#ganttUeCount');
+  if (countEl) countEl.textContent = String(ues.length);
+  const note = $('#ganttUeNote');
+  if (note) note.textContent = ganttDefautMessage || '';
 }
 
-function selectedTimelineUes(ues = []) {
-  const ids = new Set(ganttFocusedUeIds || []);
-  const selected = ues.filter(ue => ids.has(ue.id));
-  return selected.length ? selected : ues.slice(0, 1);
-}
-
-/* Lot 4 — cadrer chaque frise UE sur la semaine en cours à l'ouverture de
-   l'onglet « Progressions semestres ». Sans effet si la semaine du jour n'est
-   pas dans le semestre affiché (pas de colonne .is-current-week à trouver). */
+/* Lot 4 — cadrer la frise sur la semaine en cours à l'ouverture de l'onglet
+   « Progression ». Recalcule aussi « hors fenêtre » (voir plus bas) : au
+   moment du rendu déclenché par renderAll(), le panneau était peut-être
+   caché (display:none → clientWidth invalide), donc sans effet avant cette
+   activation d'onglet. */
 function scrollGanttToCurrentWeek() {
-  $('#ganttTimeline')?.querySelectorAll('.timeline-ue-card').forEach(card => {
-    card.querySelector('.timeline-week-head.is-current-week')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  ['#ganttSequencesScroll', '#ganttSessionsScroll'].forEach(sel => {
+    $(sel)?.querySelector('.is-current-week')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   });
+  computeGanttHorsFenetre(ganttLastUes, ganttLastWeeks);
 }
 
-function renderGanttTimeline(ues = [], weeks = []) {
-  const container = $('#ganttTimeline');
-  if (!container) return;
-  // Mémoriser le défilement horizontal de chaque frise UE avant de la recréer,
-  // pour le restaurer ensuite (sinon la frise « saute » après un déplacement).
-  const scrollMemory = {};
-  container.querySelectorAll('.timeline-ue-card').forEach(card => {
-    const id = card.dataset.ueId;
-    const scroller = card.querySelector('.timeline-scroll');
-    if (id && scroller) scrollMemory[id] = scroller.scrollLeft;
+/* En-tête des semaines, partagé par les deux bandes (Séquences et Séances) :
+   mêmes colonnes, mêmes repères (contrainte, semaine en cours, samedi…). Les
+   deux bandes ne sont PAS imbriquées dans une grille commune (README : elles
+   se relient par la couleur de séquence, pas par un alignement mécanique). */
+function renderGanttWeekHeaderRow(weeks, promotion, cornerLabel) {
+  const todayWeekId = currentWeekId();
+  const corner = `<div class="timeline-corner" style="grid-column: 1; grid-row: 1;">${escapeHtml(cornerLabel)}</div>`;
+  const cells = weeks.map((week, i) => {
+    const constraints = constraintsForWeek(week, promotion);
+    const blocked = isBlockedWeek(week, promotion);
+    const headerConstraints = constraints.filter(c => !isThematicConstraint(c));
+    const otherPromoThematic = thematicItemsForWeek(week).filter(item => !item.promos.includes(promotion));
+    const satSessions = state.sessions.filter(s => isDefinitiveSession(s) && Number(s.day) === 5 && s.weekId === week.id && findUe(s.ueId)?.promotion === promotion);
+    const isCurrent = week.id === todayWeekId;
+    return `<div class="timeline-week-head ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${otherPromoThematic.length ? 'has-eil-info' : ''}${satSessions.length ? ' has-sat' : ''}${isCurrent ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: 1;" data-week-drop="${escapeAttr(week.id)}">
+      <strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong><span>${escapeHtml(compactDateRange(week.dateRange))}</span>${isCurrent ? '<em class="timeline-week-current">Cette semaine</em>' : ''}${headerConstraints.length ? `<em>${headerConstraints.map(c => escapeHtml(c.label)).join(' · ')}</em>` : ''}${otherPromoThematic.length ? `<em class="timeline-week-eil" title="${escapeAttr('Autre(s) promo(s) en semaine thématique : ' + otherPromoThematic.map(i => `${i.title} (${i.promos.join('/')})`).join(' · '))}">◇ ${escapeHtml(otherPromoThematic.map(i => `${i.promos.join('/')} : ${i.title}`).join(' · '))}</em>` : ''}${satSessions.length ? `<em class="timeline-week-sat" title="${escapeAttr('Samedi : ' + satSessions.map(s => s.title).join(' · '))}">📅 Sam : ${escapeHtml(satSessions.map(s => s.title).join(' · '))}</em>` : ''}
+    </div>`;
+  }).join('');
+  return corner + cells;
+}
+
+/* Bande SÉQUENCES : une grille CSS partagée par toutes les UE affichées — une
+   ligne « Semaines particulières » (contraintes/périodes, UE-agnostique) en
+   haut, puis un groupe de lignes par UE (un couloir par ligne, plusieurs si
+   des séquences se chevauchent dans le temps), et « Hors fenêtre » en pied
+   (résumé texte calculé après coup par computeGanttHorsFenetre, une fois la
+   largeur réellement rendue connue). */
+function renderGanttSequencesPanel(ues, weeks) {
+  const grid = $('#ganttSequencesGrid');
+  if (!grid) return;
+  const promotion = ganttPromo;
+  grid.style.cssText = `grid-template-columns: var(--timeline-label-col) repeat(${weeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${weeks.length};`;
+
+  const weekRow = renderGanttWeekHeaderRow(weeks, promotion, 'UE');
+
+  const constraintBands = timelineConstraintBands(promotion, weeks);
+  const constraintItems = constraintBands.map(segment => ({ startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
+  const constraintLanes = Math.max(1, assignBandLanes(constraintItems));
+  let rowCursor = 2;
+  const constraintBg = weeks.map((week, i) => `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${weekIsThematic(week, promotion) ? 'is-thematic' : ''}${week.id === currentWeekId() ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: ${rowCursor} / span ${constraintLanes};" aria-hidden="true"></div>`).join('');
+  const constraintInner = constraintItems.map(item => renderConstraintBandHtml(item.segment, rowCursor + item.lane)).join('');
+  const constraintLabel = `<div class="timeline-row-label header-label" style="grid-row: ${rowCursor} / span ${constraintLanes};">Semaines particulières</div>`;
+  rowCursor += constraintLanes;
+
+  const ueBlocks = ues.map(ue => {
+    // Retours #3 (18-19/08/2026) — Cas 1 : pas enseignant·e de cette UE, aucune
+    // séquence n'est positionnée dans sa ligne (message dédié, distinct de
+    // « aucune séquence positionnée » qui donnerait à tort l'impression qu'il
+    // suffit d'en créer une).
+    const mienne = jeSuisEnseignantDeLUe(ue);
+    const ueSessions = mienne ? state.sessions.filter(s => s.ueId === ue.id) : [];
+    const sequences = mienne ? state.sequences.filter(seq => seq.ueId === ue.id) : [];
+    const bands = sequences.flatMap(seq => sequenceWeekSegments(seq, weeks).map(segment => ({ ...segment, seq })));
+    const items = bands.map(segment => ({ startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
+    const lanes = Math.max(1, assignBandLanes(items));
+    const bg = weeks.map((week, i) => `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${isThematicBlocked(week, promotion, ue.id, ueSessions) ? 'is-thematic' : ''}${week.id === currentWeekId() ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: ${rowCursor} / span ${lanes};" aria-hidden="true"></div>`).join('');
+    const inner = !mienne
+      ? `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE.</div>`
+      : items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
+    const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor} / span ${lanes};">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</div>`;
+    rowCursor += lanes;
+    return bg + inner + label;
+  }).join('');
+
+  const horsFenetreRow = `<div class="timeline-row-label header-label" style="grid-row: ${rowCursor};">Hors fenêtre</div><div class="progression-hors-fenetre" id="ganttHorsFenetre" style="grid-column: 2 / -1; grid-row: ${rowCursor};"></div>`;
+
+  grid.innerHTML = ues.length
+    ? weekRow + constraintLabel + constraintBg + constraintInner + ueBlocks + horsFenetreRow
+    : weekRow + constraintLabel + constraintBg + constraintInner + `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Sélectionner une UE à afficher.</div>`;
+}
+
+/* 18/08 — bande réduite à sa couleur (catégorie du type, via .period-*) + son
+   nom, sur consigne directe (« créneaux de période particulière réduits à
+   leur bande + nom »). Le type et la période restent lisibles en infobulle. */
+function renderConstraintBandHtml(segment, gridRow) {
+  const c = segment.constraint;
+  const tooltip = [c.type || 'Contrainte', segment.label, examConstraintTooltip(c) || c.notes].filter(Boolean).join(' — ');
+  return `<button class="timeline-sequence-band timeline-constraint-band period-${typeSlug(c.type)}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow};" data-edit-constraint="${escapeAttr(c.id)}" title="${escapeAttr(tooltip)}"><strong>${escapeHtml(c.label)}${c.exam ? '<span class="exam-flag">jaquette</span>' : ''}</strong></button>`;
+}
+
+/* 18/08 — bande allégée à nom + mots-clés + pastilles seulement (consigne
+   directe : « beaucoup plus fines »), plus de libellé « Séquence » ni de ligne
+   heures/période (visibles dans le détail de la séquence, pas ici). */
+function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
+  const seq = segment.seq;
+  const blockedCols = weeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
+  const sc = sequenceColor(seq.id);
+  const bandKeywords = compactKeywords(seq.keywords, 5);
+  const bandTeachers = teacherPillsMarkup(seq.teacher || findUe(seq.ueId)?.teacher || '', true);
+  // Retours #3 (18-19/08/2026) — Cas 2 : séquence de collègue(s) seul(s) au
+  // sein d'une UE que j'enseigne par ailleurs. Visible, non colorée, non
+  // glissable/ouvrable (pas de data-drag-sequence/data-edit-sequence).
+  const mienne = contenuInteractifPourMoi(seq);
+  const interactiveAttrs = mienne
+    ? `draggable="true" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}"`
+    : '';
+  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
+}
+
+/* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
+   en colonnes. En mode « Empiler », les séances des UE affichées se mélangent
+   dans les mêmes cases (teintées chacune par sa propre séquence). */
+function renderGanttSessionsPanel(ues, weeks) {
+  const grid = $('#ganttSessionsGrid');
+  if (!grid) return;
+  const promotion = ganttPromo;
+  grid.style.cssText = `grid-template-columns: var(--timeline-label-col) repeat(${weeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${weeks.length};`;
+
+  // Retours #3 (18-19/08/2026) — Cas 1 : les séances d'une UE que je n'enseigne
+  // pas ne remontent pas dans cette grille jour par jour (même règle que le
+  // panneau Séquences ci-dessus, via jeSuisEnseignantDeLUe).
+  const ueIds = new Set(ues.filter(jeSuisEnseignantDeLUe).map(ue => ue.id));
+  const allSessions = state.sessions.filter(s => ueIds.has(s.ueId));
+
+  const weekRow = renderGanttWeekHeaderRow(weeks, promotion, 'Jour');
+
+  let rowCursor = 2;
+  const dayRows = DAY_LANES.map(lane => {
+    const laneSessions = allSessions.filter(s => sessionLaneKey(s) === lane.key);
+    const label = `<div class="timeline-row-label timeline-row-label-day" style="grid-row: ${rowCursor};"><span>${escapeHtml(shortLaneLabel(lane))}</span><span class="meta progression-day-count">${laneSessions.length} séance${laneSessions.length > 1 ? 's' : ''}</span></div>`;
+    const cells = weeks.map((week, i) => timelineDayCell(ues, week, lane, allSessions, promotion, i, rowCursor)).join('');
+    rowCursor += 1;
+    return label + cells;
+  }).join('');
+
+  grid.innerHTML = weekRow + dayRows;
+
+  const unattached = allSessions.filter(s => !s.sequenceId).length;
+  const foot = $('#ganttSessionsFoot');
+  if (foot) foot.innerHTML = `<span class="legend-dot legend-dot-filled" aria-hidden="true"></span> pastille pleine = votre compte <span class="meta">· ${unattached} séance${unattached > 1 ? 's' : ''} non rattachée${unattached > 1 ? 's' : ''} à une séquence (jamais masquée)</span>`;
+}
+
+/* « Hors fenêtre » (bande Séquences) : les séquences qui commencent au-delà de
+   ce qui tient dans la largeur visible du panneau, pour ne pas les laisser
+   invisibles sans indice qu'il faut défiler. Mesure le DOM après rendu — sans
+   effet si le panneau est caché (display:none), rattrapé par
+   scrollGanttToCurrentWeek() à l'activation de l'onglet. */
+function computeGanttHorsFenetre(ues, weeks) {
+  const foot = $('#ganttHorsFenetre');
+  if (!foot) return;
+  const scrollEl = $('#ganttSequencesScroll');
+  const weekHeads = scrollEl ? [...scrollEl.querySelectorAll('.timeline-week-head')] : [];
+  if (!scrollEl || !scrollEl.clientWidth || !weekHeads.length) { foot.textContent = ''; return; }
+  // Retours #4 (18/08/2026) — bug : la frise se recentre sur la semaine en
+  // cours à l'ouverture de l'onglet (scrollGanttToCurrentWeek), donc la
+  // fenêtre visible ne commence plus forcément à l'indice 0 ; l'ancien calcul
+  // (nombre de semaines visibles déduit de la seule largeur du conteneur)
+  // supposait un scroll à 0 et annonçait « hors fenêtre » des séquences en
+  // réalité déjà visibles après recentrage. On mesure ici le chevauchement
+  // RÉEL de chaque en-tête de semaine avec le viewport du scroll.
+  const viewport = scrollEl.getBoundingClientRect();
+  const lastVisibleIndex = weekHeads.reduce((last, el, i) => {
+    const r = el.getBoundingClientRect();
+    return (r.left < viewport.right - 1 && r.right > viewport.left + 1) ? i : last;
+  }, -1);
+  if (lastVisibleIndex >= weeks.length - 1) { foot.textContent = ''; return; }
+  const items = [];
+  ues.forEach(ue => {
+    state.sequences.filter(seq => seq.ueId === ue.id).forEach(seq => {
+      const segments = sequenceWeekSegments(seq, weeks);
+      if (segments.length && segments[0].startIndex > lastVisibleIndex) items.push({ title: seq.title, start: segments[0].startIndex });
+    });
   });
-  const visibleWeeks = weeks.length ? weeks : uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  if (!ues.length) {
-    container.innerHTML = '<section class="panel"><p class="meta">Sélectionner au moins une UE à afficher.</p></section>';
-    return;
-  }
-  container.innerHTML = ues.map((ue, index) => renderOneUeTimeline(ue, visibleWeeks, index)).join('');
-  // Restaurer le défilement horizontal mémorisé.
-  container.querySelectorAll('.timeline-ue-card').forEach(card => {
-    const id = card.dataset.ueId;
-    const scroller = card.querySelector('.timeline-scroll');
-    if (id && scroller && scrollMemory[id] != null) scroller.scrollLeft = scrollMemory[id];
-  });
+  if (!items.length) { foot.textContent = ''; return; }
+  items.sort((a, b) => a.start - b.start);
+  const from = weeks[items[0].start]?.label.replace('S0', 'S') || '';
+  const to = weeks[weeks.length - 1]?.label.replace('S0', 'S') || '';
+  foot.textContent = `${items.map(i => i.title).join(' · ')} — ${from} → ${to}, faire défiler →`;
 }
 
 /* Range des bandes {startIndex,endIndex} en couloirs horizontaux : deux bandes
@@ -2503,118 +3374,19 @@ function assignBandLanes(bands, laneOffset = 0) {
   return laneEnds.length;
 }
 
-function renderOneUeTimeline(ue, visibleWeeks, index = 0) {
-  const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => firstSequenceWeekIndex(a, visibleWeeks) - firstSequenceWeekIndex(b, visibleWeeks));
-  const sessions = state.sessions.filter(s => s.ueId === ue.id);
-  const promotion = ue.promotion;
-  const densityClass = ganttDensity === 'comfort' ? 'timeline-comfort' : 'timeline-compact';
-  const todayWeekId = currentWeekId(); // Lot 4 — repère « cette semaine » dans la frise
-  // UNE seule grille pour toute la frise : colonne d'étiquettes + une colonne
-  // par semaine. Tous les bandeaux (mois, semaines, séquences, jours) sont des
-  // lignes de CETTE grille, donc les colonnes de semaines sont rigoureusement
-  // alignées entre la ligne des séquences et celles des jours, quelle que soit
-  // la largeur de la fenêtre (c'était la cause du décalage en demi-écran).
-  const columnsStyle = `grid-template-columns: var(--timeline-label-col) repeat(${visibleWeeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${visibleWeeks.length};`;
-  const ueStyle = `--ue-color:${ueColor(ue.id)};--ue-soft:${hexToRgba(ueColor(ue.id), .12)};--ue-pale:${hexToRgba(ueColor(ue.id), .06)}`;
-
-  const monthBands = monthBandsForWeeks(visibleWeeks);
-  const monthRow = `<div class="timeline-corner timeline-corner-month" style="grid-column: 1;"></div>${monthBands.map(band => `<div class="timeline-month" style="grid-column: ${band.start + 2} / ${band.end + 3};">${escapeHtml(band.label)}</div>`).join('')}`;
-
-  const weekRow = `<div class="timeline-row-label header-label">Sem.</div>${visibleWeeks.map(week => {
-    const constraints = constraintsForWeek(week, promotion);
-    const blocked = isBlockedWeek(week, promotion);
-    // Lot K — le libellé d'une contrainte THÉMATIQUE est porté par sa bande (piste
-    // séquences), pas dupliqué dans l'entête. L'entête ne liste donc que les autres
-    // contraintes (vacances, examens…). Pastille = semaine thématique d'une AUTRE
-    // promo (repère non bloquant : marge pour caler des cours avec cette promo).
-    const headerConstraints = constraints.filter(c => !isThematicConstraint(c));
-    const otherPromoThematic = thematicItemsForWeek(week).filter(i => !i.promos.includes(promotion));
-    // Lot L — samedi : séance posée le samedi (jour 5) de CETTE UE → alerte en tête de
-    // colonne (comme fériés/thématiques), sans couloir Samedi dans la frise.
-    const satSessions = sessions.filter(s => isDefinitiveSession(s) && Number(s.day) === 5 && s.weekId === week.id);
-    const isCurrent = week.id === todayWeekId; // Lot 4
-    return `<div class="timeline-week-head ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${otherPromoThematic.length ? 'has-eil-info' : ''}${satSessions.length ? ' has-sat' : ''}${isCurrent ? ' is-current-week' : ''}" data-week-drop="${escapeAttr(week.id)}">
-      <strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong><span>${escapeHtml(compactDateRange(week.dateRange))}</span>${isCurrent ? '<em class="timeline-week-current">Cette semaine</em>' : ''}${headerConstraints.length ? `<em>${headerConstraints.map(c => escapeHtml(c.label)).join(' · ')}</em>` : ''}${otherPromoThematic.length ? `<em class="timeline-week-eil" title="${escapeAttr('Autre(s) promo(s) en semaine thématique : ' + otherPromoThematic.map(i => `${i.title} (${i.promos.join('/')})`).join(' · '))}">◇ ${escapeHtml(otherPromoThematic.map(i => `${i.promos.join('/')} : ${i.title}`).join(' · '))}</em>` : ''}${satSessions.length ? `<em class="timeline-week-sat" title="${escapeAttr('Samedi : ' + satSessions.map(s => s.title).join(' · '))}">📅 Sam : ${escapeHtml(satSessions.map(s => s.title).join(' · '))}</em>` : ''}
-    </div>`;
-  }).join('')}`;
-
-  const sequenceBands = sequences.flatMap(seq => sequenceWeekSegments(seq, visibleWeeks).map(segment => ({...segment, seq})));
-  const constraintBands = timelineConstraintBands(promotion, visibleWeeks);
-  // À l'intérieur de .timeline-sequence-track (sous-grille calée sur les
-  // colonnes de semaines), la colonne 1 = première semaine. On utilise donc
-  // startIndex+1 .. endIndex+2, et non +2/+3 comme dans la grille parente.
-  // Les périodes/contraintes occupent leur(s) couloir(s) réservé(s) EN HAUT ;
-  // les séquences se rangent dessous. Dans chaque groupe, deux bandes qui ne se
-  // chevauchent pas partagent la même hauteur (ex. Maths appliquées #1/#2, ou
-  // Toussaint / armistice / examens). Gain de place vertical.
-  const constraintItems = constraintBands.map(segment => ({ kind: 'constraint', startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
-  const sequenceItems = sequenceBands.map(segment => ({ kind: 'sequence', startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
-  const constraintLanes = assignBandLanes(constraintItems);              // couloirs du haut (réservés)
-  const sequenceLanes = assignBandLanes(sequenceItems, constraintLanes); // couloirs des séquences, dessous
-  const bandItems = [...constraintItems, ...sequenceItems];
-  const laneCount = constraintLanes + sequenceLanes;
-
-  // Fonds de colonnes (une par semaine) placés DERRIÈRE les bandes : maillage
-  // vertical discret + hachures « sans cours » sur les semaines bloquées, pour
-  // rester cohérent avec les lignes de journées. Ils s'étendent sur tous les
-  // couloirs (grid-row 1 / span laneCount) et ne captent pas les clics.
-  const seqBgCells = laneCount ? visibleWeeks.map((week, i) =>
-    `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${isThematicBlocked(week, promotion, ue.id, sessions) ? 'is-thematic' : ''}${week.id === todayWeekId ? ' is-current-week' : ''}" style="grid-column: ${i + 1}; grid-row: 1 / span ${laneCount};" aria-hidden="true"></div>`
-  ).join('') : '';
-
-  // Filet délimitant la zone réservée aux périodes (en haut) des séquences.
-  const zoneStrip = (constraintLanes && sequenceLanes) ? `<div class="timeline-seq-zone" style="grid-column: 1 / -1; grid-row: 1 / span ${constraintLanes};" aria-hidden="true"></div>` : '';
-
-  const sequenceInner = bandItems.map(item => {
-    const segment = item.segment;
-    const cols = `grid-column: ${segment.startIndex + 1} / ${segment.endIndex + 2}; grid-row: ${item.lane + 1};`;
-    if (item.kind === 'constraint') {
-      return `<button class="timeline-sequence-band timeline-constraint-band period-${typeSlug(segment.constraint.type)}" style="${cols}" data-edit-constraint="${escapeAttr(segment.constraint.id)}" title="${escapeAttr(examConstraintTooltip(segment.constraint) || segment.constraint.notes || '')}"><span>${escapeHtml(segment.constraint.type || 'Contrainte')}</span><strong>${escapeHtml(segment.constraint.label)}${segment.constraint.exam ? '<span class="exam-flag">jaquette</span>' : ''}</strong><em>${escapeHtml(segment.label)}</em></button>`;
-    }
-    const seq = segment.seq;
-    const blockedCols = visibleWeeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
-    const sc = sequenceColor(seq.id);
-    const bandMeta = seq.hoursEstimate || segment.label || '';
-    const bandKeywords = compactKeywords(seq.keywords, 5);
-    const bandTeachers = teacherPips(seq.teacher || findUe(seq.ueId)?.teacher || '');
-    return `<button draggable="true" class="timeline-sequence-band seq-colored ${typeClass(seq.sequenceType || seq.title)} ${blockedCols ? 'has-blocked-week' : ''}" style="${cols} --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)};" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}"><span>Séquence</span><strong>${escapeHtml(seq.title)}</strong>${bandMeta ? `<em>${escapeHtml(bandMeta)}</em>` : ''}${bandKeywords.length ? `<small class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</small>` : ''}${bandTeachers.length ? `<span class="timeline-band-teachers">${bandTeachers.map(p => `<span class="teacher-pip" title="${escapeAttr(p.name)}">${escapeHtml(p.initials)}</span>`).join('')}</span>` : ''}</button>`;
-  }).join('');
-  const sequenceRow = `<div class="timeline-row-label sequence-label">Séq.</div><div class="timeline-sequence-track" style="grid-column: 2 / -1;">${seqBgCells}${zoneStrip}${sequenceInner || '<div class="timeline-no-sequence">Aucune séquence positionnée.</div>'}</div>`;
-
-  // Toutes les cellules sont enfants DIRECTS de .timeline-grid (pas de div de
-  // ligne intermédiaire) : c'est la condition pour qu'une seule grille gère
-  // l'alignement des colonnes sur toutes les lignes.
-  const dayCells = DAY_LANES.map(lane => `<div class="timeline-row-label">${escapeHtml(shortLaneLabel(lane))}</div>${visibleWeeks.map(week => timelineDayCell(ue, week, lane, sessions)).join('')}`).join('');
-
-  return `<div class="timeline-card ${densityClass} timeline-ue-card" data-ue-id="${escapeAttr(ue.id)}" style="${ueStyle}">
-    <div class="timeline-title compact-timeline-title">
-      <div><h4>${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</h4><p>${escapeHtml(ue.promotion)} · ${escapeHtml(shortSemester(ue.semester))}${ueCapacities(ue).length ? ' · ' + ueCapacities(ue).map(c => c.code).join(', ') : ''}</p></div>
-      <button class="small secondary no-print" data-print-timeline-ue="${escapeAttr(ue.id)}">Imprimer UE A3</button>
-    </div>
-    <div class="timeline-scroll">
-      <div class="timeline-grid" style="${columnsStyle}">
-        ${monthRow}
-        ${weekRow}
-        ${sequenceRow}
-        ${dayCells}
-      </div>
-    </div>
-  </div>`;
-}
 
 function shortLaneLabel(lane) {
   if (lane.key === 'unspecified') return 'À préciser';
   return DAYS[lane.day].slice(0, 3);
 }
 
-function timelineDayCell(ue, week, lane, allSessions) {
-  const promotion = ue.promotion;
+function timelineDayCell(ues, week, lane, allSessions, promotion, weekIndex, gridRow) {
   const constraints = constraintsForWeek(week, promotion);
   const blocked = isBlockedWeek(week, promotion);
   // Lot K — semaine thématique / EIL (contrainte) couvrant cette promo : les cours
-  // habituels sont impossibles ici (grisé + repère EIL), SAUF si cette UE porte du
-  // contenu cette semaine-là (UE porteuse de l'EIL → elle affiche ses séances).
-  const eilBlocked = isThematicBlocked(week, promotion, ue.id, allSessions);
+  // habituels sont impossibles ici (grisé + repère EIL), SAUF si l'une des UE
+  // affichées porte du contenu cette semaine-là (elle garde ses séances visibles).
+  const eilBlocked = ues.length > 0 && ues.every(ue => isThematicBlocked(week, promotion, ue.id, allSessions));
   const off = blocked || eilBlocked;
   const eilTitle = thematicItemsForWeek(week).filter(i => i.promos.includes(promotion)).map(i => i.title).filter(Boolean).join(' · ');
   // D2 + Lot U — jour férié OU contrainte/examen/période sur UNE seule journée
@@ -2628,9 +3400,16 @@ function timelineDayCell(ue, week, lane, allSessions) {
   const cellSessions = allSessions
     .filter(s => sessionCanonicalWeekId(s) === week.id && sessionLaneKey(s) === lane.key)
     .sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-  const drop = JSON.stringify({ ueId: ue.id, weekId: week.id, laneKey: lane.key, day: lane.day, part: lane.part });
+  // En mode « Empiler », une séance neuve déposée ici sans UE encore choisie
+  // rejoint la première UE affichée — cas ambigu et rare en pratique.
+  const drop = JSON.stringify({ ueId: ues[0]?.id || '', weekId: week.id, laneKey: lane.key, day: lane.day, part: lane.part });
   const isCurrent = week.id === currentWeekId(); // Lot 4
-  return `<div class="timeline-day-cell ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${eilBlocked ? 'thematic-week' : ''} ${dayItems.length ? 'is-holiday' : ''} ${cellSessions.length ? 'has-session' : 'is-empty-day'}${isCurrent ? ' is-current-week' : ''}" data-timeline-drop='${escapeAttr(drop)}'${eilBlocked ? ` title="${escapeAttr('Semaine thématique : ' + eilTitle)}"` : ''}>
+  // Retours #3 (18-19/08/2026) : une séquence se dépose maintenant n'importe où
+  // dans sa frise (comme une tuile séance), pas seulement sur l'en-tête de
+  // semaine tout en haut — data-week-drop rejoint data-timeline-drop ici, sans
+  // rien retirer (moveSessionToTimeline/moveSequenceToWeek se distinguent déjà
+  // par le type de drag, pas par la cible).
+  return `<div class="timeline-day-cell ${constraints.length ? 'has-constraint' : ''} ${blocked ? 'blocked-week' : ''} ${eilBlocked ? 'thematic-week' : ''} ${dayItems.length ? 'is-holiday' : ''} ${cellSessions.length ? 'has-session' : 'is-empty-day'}${isCurrent ? ' is-current-week' : ''}" style="grid-column: ${weekIndex + 2}; grid-row: ${gridRow};" data-timeline-drop='${escapeAttr(drop)}' data-week-drop="${escapeAttr(week.id)}"${eilBlocked ? ` title="${escapeAttr('Semaine thématique : ' + eilTitle)}"` : ''}>
     ${off
       ? (blocked ? '<span class="timeline-blocked-label">sans cours</span>' : '')
       : `${dayItemChips}${cellSessions.map(timelineSessionCard).join('')}`}
@@ -2688,9 +3467,16 @@ function timelineSessionCard(session) {
   const meta = [hours, dayLabel, session.room].filter(Boolean).join(' · ');
   const keywords = compactKeywords(session.keywords, 4);
   const color = sessionTint(session);
+  const teachers = teacherPillsMarkup(session.teacher || findUe(session.ueId)?.teacher || '', true);
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
-  return `<button draggable="true" class="timeline-session seq-tinted ${typeClass(session.type)}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)}" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(tooltip)}">
-    <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
+  // Retours #3 (18-19/08/2026) — Cas 2 : séance de collègue(s) seul(s).
+  const mienne = contenuInteractifPourMoi(session);
+  const interactiveAttrs = mienne ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"` : '';
+  return `<button ${interactiveAttrs} class="timeline-session seq-tinted ${typeClass(session.type)}${mienne ? '' : ' is-collegue'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)};--ue-deep:${deepColor(color)}" title="${escapeAttr(tooltip)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">
+    <span class="timeline-session-head">
+      <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
+      ${teachers ? `<span class="timeline-band-teachers design-ue-pills">${teachers}</span>` : ''}
+    </span>
     <strong class="timeline-session-title">${escapeHtml(session.title)}</strong>
     ${meta ? `<em class="timeline-session-meta">${escapeHtml(meta)}</em>` : ''}
     ${keywords.length ? `<small class="timeline-session-keywords">${escapeHtml(keywords.join(', '))}</small>` : ''}
@@ -2763,7 +3549,7 @@ async function moveSessionToTimeline(session, context) {
 
 async function moveSequenceToWeek(sequence, weekId) {
   if (!sequence) return;
-  const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
+  const weeks = weeksForSemester(ganttSemester);
   const targetIndex = weeks.findIndex(w => w.id === weekId);
   if (targetIndex < 0) return;
   const oldSegments = sequenceWeekSegments(sequence, weeks);
@@ -2796,19 +3582,6 @@ async function detachSessionFromSequence(session, ueId) {
   if (ueId) session.ueId = ueId;
   await saveData('Séance détachée de sa séquence');
 }
-
-function monthBandsForWeeks(weeks = []) {
-  const bands = [];
-  weeks.forEach((week, index) => {
-    const [start] = weekDateRange(week);
-    const label = start ? start.toLocaleDateString('fr-FR', { month: 'long' }) : '';
-    const previous = bands[bands.length - 1];
-    if (previous && previous.label === label) previous.end = index;
-    else bands.push({ label, start: index, end: index });
-  });
-  return bands;
-}
-
 
 function timelineConstraintBands(promotion, weeks = []) {
   const bands = [];
@@ -2853,20 +3626,6 @@ function sessionSortKey(session) {
   const date = session.exactDate || '';
   const order = String(session.order || '').padStart(8, '0');
   return `${weekIndex}-${day}-${slot}-${date}-${order}-${session.title}`;
-}
-
-function ganttBar(segment) {
-  const seq = segment.seq;
-  const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
-  const fictive = sessions.filter(isFictiveSession).length;
-  const definitive = sessions.filter(isDefinitiveSession).length;
-  const cls = typeClass(seq.sequenceType || seq.title);
-  const weekText = segment.label || seq.targetWeeks || '';
-  const title = [seq.title, ueLabel(seq.ueId), weekText, seq.hoursEstimate, seq.objectives].filter(Boolean).join(' · ');
-  return `<button class="gantt-bar ${cls}" style="grid-column: ${segment.startIndex + 1} / ${segment.endIndex + 2}; grid-row: ${segment.lane + 1};" data-edit-sequence="${escapeAttr(seq.id)}" title="${escapeAttr(title)}">
-    <span class="gantt-bar-title">${escapeHtml(seq.title)}</span>
-    <span class="gantt-bar-meta">${escapeHtml(weekText)} · ${escapeHtml(seq.hoursEstimate || 'Volume ?')} · ${fictive} à placer / ${definitive} EDT</span>
-  </button>`;
 }
 
 function sequenceWeekSegments(seq, weeks) {
@@ -2933,11 +3692,29 @@ function compactDateRange(dateRange = '') {
   return String(dateRange).replace(/\/2025|\/2026|\/2027/g, '').replace(/\s+/g, ' ');
 }
 
+// Retours #4 (18/08/2026) — couleur du bandeau promo (code couleur semestre
+// du Ruban), appliquée à part de renderPromotionTable : appelée à la fois
+// après un rendu complet et depuis le clic sur l'onglet de période seul (qui
+// ne redessine pas la grille), pour que la couleur suive weekStripPeriod
+// dans les deux cas.
+function applyScheduleTitleColors() {
+  $$('.schedule-title').forEach(el => {
+    const promotion = el.dataset.promotion;
+    const summer = weekStripPeriod === 'summer';
+    const semester = semesterForPromoPeriod(promotion, weekStripPeriod);
+    el.style.background = summer ? '#e4e1d6' : hexToRgba(semesterColorOf(semester), .22);
+    el.style.color = summer ? '#5b584c' : deepColor(semesterColorOf(semester));
+  });
+}
+
 function renderPlanning() {
   $('#weekSelect').value = selectedWeek;
-  renderWeekCalendar();
+  const currentWeek = state.weeks.find(w => w.id === selectedWeek);
+  if (currentWeek) weekStripPeriod = weekStripPeriodOf(currentWeek);
+  renderWeekStrip();
   renderWeekBacklog();
   $('#planningContainer').innerHTML = state.promotions.map(renderPromotionTable).join('');
+  applyScheduleTitleColors();
   const weekNotesEl = $('#weekNotes');
   if (weekNotesEl && document.activeElement !== weekNotesEl) {
     weekNotesEl.value = state.weekNotes[selectedWeek] || '';
@@ -2945,80 +3722,52 @@ function renderPlanning() {
   }
 }
 
-function renderWeekCalendar() {
-  const container = $('#weekCalendar');
-  const week = state.weeks.find(w => w.id === selectedWeek);
-  // Lot E [19] — le rappel de la semaine vit dans la barre collante : c'est le
-  // seul endroit qui reste lisible une fois qu'on a défilé dans la grille.
-  const rappel = $('#weekBarLabel');
-  if (rappel) {
-    rappel.innerHTML = week
-      ? `<strong>${escapeHtml(week.label.replace('S0', 'S'))}</strong> <span>${escapeHtml(compactDateRange(week.dateRange))}</span>`
-      : '<span>Aucune semaine</span>';
+/* Refonte écran 4 (16/08/2026) — REGLES.md #22 : la bande de semaines est le
+   seul sélecteur de date de l'app (remplace l'ancien calendrier mensuel, qui
+   en était un). Une période à la fois (l'année scolaire compte ~40 semaines,
+   trop pour une bande lisible d'un coup) ; la bascule ne fait que parcourir,
+   `weekStripPeriod` est resynchronisée sur la semaine réellement affichée à
+   chaque renderPlanning() (cf. plus haut). */
+function renderWeekStrip() {
+  $$('#weekStripPeriodSwitch .promo-switch-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.weekPeriod === weekStripPeriod));
+
+  // 17/08 — le texte "Septembre-décembre S36→S53 · cliquer une semaine" (ex-#weekStripLabel)
+  // doublonnait les boutons Sept./Janv. ci-dessus : retiré, les boutons suffisent seuls.
+  const weeks = state.weeks.filter(w => weekStripPeriodOf(w) === weekStripPeriod);
+
+  const strip = $('#weekStrip');
+  if (!strip) return;
+  if (!weeks.length) { strip.innerHTML = '<p class="meta">Aucune semaine disponible.</p>'; return; }
+  strip.innerHTML = weeks.map(w => {
+    const blocked = constraintsForWeek(w).some(isBlockingConstraint);
+    const thematic = weekIsThematic(w);
+    const selected = w.id === selectedWeek;
+    const cls = ['week-strip-tile'];
+    if (blocked) cls.push('is-blocked');
+    if (thematic) cls.push('is-thematic');
+    if (selected) cls.push('is-selected');
+    const [monday] = weekDateRange(w);
+    const wkLabel = w.label.replace('S0', 'S');
+    return `<button type="button" class="${cls.join(' ')}" data-set-week="${escapeAttr(w.id)}" title="${escapeAttr(`${wkLabel} · ${w.dateRange || ''}`)}">
+      <span class="week-strip-num">${escapeHtml(wkLabel)}</span>
+      <span class="week-strip-date">${escapeHtml(monday ? fmtDayDate(monday) : '')}</span>
+      <span class="week-strip-tile-bar" aria-hidden="true"></span>
+    </button>`;
+  }).join('');
+
+  // Ajustements #2 [E2.3] (18/08/2026) — au premier affichage (pas après un
+  // simple clic sur une case déjà visible), la semaine affichée doit être la
+  // 2e case VISIBLE du défilement : on cale le défilement une case avant elle,
+  // plutôt que sur la première semaine de toute la période.
+  const idx = weeks.findIndex(w => w.id === selectedWeek);
+  if (idx >= 0) {
+    // `.week-strip` n'étant pas positionné (pas de `position:relative`),
+    // `offsetLeft` remontait au mauvais ancêtre — scrollIntoView calcule la
+    // bonne distance lui-même, quel que soit l'ancêtre positionné.
+    const tiles = strip.querySelectorAll('.week-strip-tile');
+    const cible = tiles[Math.max(0, idx - 1)];
+    cible?.scrollIntoView({ inline: 'start', block: 'nearest' });
   }
-  if (!container) return;
-
-  // Index : pour chaque jour (lundi de semaine), l'id de la semaine d'enseignement.
-  const mondayToWeek = new Map();
-  let minDate = null, maxDate = null;
-  state.weeks.forEach(w => {
-    const [start, end] = weekDateRange(w);
-    if (!start) return;
-    mondayToWeek.set(isoKey(start), w.id);
-    if (!minDate || start < minDate) minDate = start;
-    if (!maxDate || (end || start) > maxDate) maxDate = end || start;
-  });
-  if (!minDate) { container.innerHTML = '<p class="meta">Aucune semaine disponible.</p>'; return; }
-
-  const selectedMonday = week ? weekDateRange(week)[0] : null;
-  const selectedMondayKey = selectedMonday ? isoKey(selectedMonday) : '';
-
-  // Bornes mensuelles (1er du mois) de l'année scolaire.
-  const firstMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-  const lastMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-  const clampMonth = (d) => new Date(Math.min(Math.max(d.getTime(), firstMonth.getTime()), lastMonth.getTime()));
-
-  // Mois affiché : mémorisé, sinon mois de la semaine sélectionnée, sinon premier mois.
-  let shown;
-  if (weekPickerMonthKey) {
-    const [y, m] = weekPickerMonthKey.split('-').map(Number);
-    shown = new Date(y, m - 1, 1);
-  } else {
-    const base = selectedMonday || minDate;
-    shown = new Date(base.getFullYear(), base.getMonth(), 1);
-  }
-  shown = clampMonth(shown);
-  const atFirst = shown.getTime() <= firstMonth.getTime();
-  const atLast = shown.getTime() >= lastMonth.getTime();
-  const monthLabel = shown.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-  const header = `<div class="week-cal-header">
-    <button type="button" class="week-cal-nav" data-cal-nav="prev"${atFirst ? ' disabled' : ''} aria-label="Mois précédent">‹</button>
-    <div class="week-cal-monthlabel">${escapeHtml(monthLabel)}</div>
-    <button type="button" class="week-cal-nav" data-cal-nav="next"${atLast ? ' disabled' : ''} aria-label="Mois suivant">›</button>
-  </div>`;
-  // La ligne « ‹ S39 21/09 – 25/09 › » qui vivait ici a rejoint la barre
-  // collante : elle y disait la même chose, à 40 px de distance, et elle y
-  // reste lisible en défilant. Le calendrier garde ses mois et ses jours.
-  const grid = renderCalendarMonth(shown, mondayToWeek, selectedMondayKey, false);
-
-  container.innerHTML = `<div class="week-cal-compact">${header}${grid}</div>`;
-}
-
-/* Décale le mois affiché dans le sélecteur compact (sans changer la semaine). */
-function moveCalendarMonth(offset) {
-  const week = state.weeks.find(w => w.id === selectedWeek);
-  let base;
-  if (weekPickerMonthKey) {
-    const [y, m] = weekPickerMonthKey.split('-').map(Number);
-    base = new Date(y, m - 1, 1);
-  } else {
-    const d = week ? weekDateRange(week)[0] : null;
-    base = d ? new Date(d.getFullYear(), d.getMonth(), 1) : new Date();
-  }
-  base.setMonth(base.getMonth() + offset);
-  weekPickerMonthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
-  renderWeekCalendar();
 }
 
 /* Clé jour (AAAA-MM-JJ) en heure locale, sans décalage de fuseau. */
@@ -3032,84 +3781,6 @@ function mondayOf(date) {
   const offset = (d.getDay() + 6) % 7; // 0 = lundi
   d.setDate(d.getDate() - offset);
   return d;
-}
-
-/* `selection` : soit une clé lundi (chaîne) → sélection d'UNE semaine (Planning
-   semaine, attribut `data-set-week` porteur de l'id de semaine), soit un objet
-   { start, end } de clés lundi → sélection de PLAGE (modale séquence, attribut
-   `data-<opts.pickAttr>` porteur de la clé lundi). Rétrocompatible : appelé sans
-   objet ni opts, le comportement d'origine (mono-sélection) est conservé. */
-function renderCalendarMonth(monthDate, mondayToWeek, selection, showLabel = true, opts = {}) {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const monthLabel = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstOffset = (new Date(year, month, 1).getDay() + 6) % 7; // colonne du 1er (lun=0)
-  const dows = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  const pickAttr = opts.pickAttr || 'set-week';
-  const rangeMode = selection && typeof selection === 'object';
-  const singleKey = rangeMode ? '' : (selection || '');
-  const rStart = rangeMode ? (selection.start || '') : '';
-  const rEnd = rangeMode ? (selection.end || '') : '';
-  const lo = rStart && rEnd ? (rStart <= rEnd ? rStart : rEnd) : (rStart || rEnd);
-  const hi = rStart && rEnd ? (rStart <= rEnd ? rEnd : rStart) : (rStart || rEnd);
-  // Cellules-jours à plat (vides de début + jours + complément) puis lignes de 7.
-  const days = [];
-  for (let i = 0; i < firstOffset; i += 1) days.push(null);
-  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
-  while (days.length % 7 !== 0) days.push(null);
-  const wkNumberOf = (weekId) => {
-    const w = state.weeks.find(x => x.id === weekId);
-    return w ? `S${String(weekNumberOf(w)).padStart(2, '0')}` : '';
-  };
-  // UNE seule grille (n° de semaine + 7 jours) : alignement garanti, pas de
-  // sous-grille imbriquée qui débordait. En-tête : cellule « Sem. » + L M M J V S D.
-  let body = `<span class="cal-wk cal-wk-head">Sem.</span>${dows.map(d => `<span class="cal-dow">${d}</span>`).join('')}`;
-  for (let i = 0; i < days.length; i += 7) {
-    const row = days.slice(i, i + 7);
-    let wk = '';
-    for (const day of row) {
-      if (!day) continue;
-      const id = mondayToWeek.get(isoKey(mondayOf(new Date(year, month, day))));
-      if (id) { wk = wkNumberOf(id); break; }
-    }
-    body += `<span class="cal-wk">${escapeHtml(wk)}</span>`;
-    for (const day of row) {
-      if (!day) { body += '<span class="cal-day cal-empty"></span>'; continue; }
-      const date = new Date(year, month, day);
-      const mKey = isoKey(mondayOf(date));
-      const weekId = mondayToWeek.get(mKey);
-      if (!weekId) { body += `<span class="cal-day cal-off">${day}</span>`; continue; }
-      const wObj = state.weeks.find(x => x.id === weekId);
-      const tip = wObj ? `${wObj.label.replace('S0', 'S')} · ${wObj.dateRange || ''}` : '';
-      let cls = 'cal-day cal-active';
-      let dataAttr;
-      if (rangeMode) {
-        const isStart = rStart && mKey === rStart;
-        const isEnd = rEnd && mKey === rEnd;
-        if (isStart || isEnd) cls += ' cal-selected';
-        if (isStart) cls += ' cal-range-start';
-        if (isEnd) cls += ' cal-range-end';
-        if (lo && hi && mKey >= lo && mKey <= hi && !isStart && !isEnd) cls += ' cal-in-range';
-        dataAttr = `data-${pickAttr}="${escapeAttr(mKey)}"`;
-      } else {
-        if (mKey === singleKey) cls += ' cal-selected';
-        dataAttr = `data-${pickAttr}="${escapeAttr(weekId)}"`;
-      }
-      body += `<button type="button" class="${cls}" ${dataAttr} title="${escapeAttr(tip)}">${day}</button>`;
-    }
-  }
-  const labelHtml = showLabel ? `<div class="cal-month-label">${escapeHtml(monthLabel)}</div>` : '';
-  return `<div class="cal-month${showLabel ? '' : ' single'}">${labelHtml}<div class="cal-grid cal-grid-wk">${body}</div></div>`;
-}
-
-function moveWeek(offset) {
-  const idx = state.weeks.findIndex(w => w.id === selectedWeek);
-  if (idx < 0) return;
-  const next = state.weeks[Math.max(0, Math.min(state.weeks.length - 1, idx + offset))];
-  selectedWeek = next.id;
-  weekPickerMonthKey = null;
-  renderPlanning();
 }
 
 function renderWeekBacklog() {
@@ -3131,12 +3802,40 @@ function renderWeekBacklog() {
     backlog.innerHTML = '<p class="meta">Aucune séance à placer ne correspond aux filtres.</p>';
     return;
   }
+  // Ajustements #2 [E2.7] (18/08/2026) — retour de Martin : deux niveaux de
+  // tiroirs repliés (UE puis séquence) pour atteindre une tuile, c'est trop.
+  // Le niveau séquence perd son `<details>` (simple étiquette non repliable,
+  // les tuiles restent toujours visibles en dessous) ; le niveau UE reste
+  // repliable (utile s'il y a beaucoup d'UE) mais s'ouvre par défaut (`open`)
+  // au lieu de partir fermé — restoreOpenKeys respecte ensuite un repli
+  // explicite de Martin d'un rendu à l'autre, comme avant.
   const byUe = groupBy(sessions, s => s.ueId || 'none');
   backlog.innerHTML = `<div class="backlog-count">${escapeHtml(title)}</div>` + Object.entries(byUe).map(([ueId, ueSessions]) => {
     const bySeq = groupBy(ueSessions, s => s.sequenceId || 'none');
-    return `<details class="backlog-ue-group" data-open-key="wbUe:${escapeAttr(ueId)}"><summary><strong>${escapeHtml(ueLabel(ueId))}</strong><span>${ueSessions.length} séance(s)</span></summary>${Object.entries(bySeq).map(([seqId, seqSessions]) => `<details class="backlog-seq-group" data-open-key="wbSeq:${escapeAttr(ueId)}:${escapeAttr(seqId)}"><summary>${escapeHtml(sequenceLabel(seqId))}<span>${seqSessions.length}</span></summary>${seqSessions.map(s => renderBacklogSessionTile(s)).join('')}</details>`).join('')}</details>`;
+    return `<details class="backlog-ue-group" data-open-key="wbUe:${escapeAttr(ueId)}" open><summary><strong>${escapeHtml(ueLabel(ueId))}</strong><span>${ueSessions.length} séance(s)</span></summary>${Object.entries(bySeq).map(([seqId, seqSessions]) => `<div class="backlog-seq-group"><p class="backlog-seq-label">${escapeHtml(sequenceLabel(seqId))}<span>${seqSessions.length}</span></p>${seqSessions.map(s => renderBacklogSessionTile(s)).join('')}</div>`).join('')}</details>`;
   }).join('');
   restoreOpenKeys(backlog, openKeys);
+}
+
+/* Retours #3 (18-19/08/2026) — Cas 2/3 de visibilité entre comptes enseignants
+   pour une case du Planning hebdo. data-session-id est le vrai déclencheur du
+   clic (#planningContainer, cf. plus bas) : Cas 2 = tous les attributs
+   d'interaction (draggable/data-drag-session/data-session-id/data-edit-session)
+   omis d'un coup, plus de bouton « ↩ Ressortir » (action réservée au Cas 3).
+   data-drop-target n'est PAS concerné : déposer une de mes séances reste
+   possible même sur le créneau d'un·e collègue, géré séparément par l'appelant. */
+function planningSessionAttrs(session) {
+  const mienne = contenuInteractifPourMoi(session);
+  return {
+    mienne,
+    classSuffix: mienne ? '' : ' is-collegue',
+    idAttrs: mienne
+      ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"`
+      : '',
+    unplaceBtn: mienne
+      ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>`
+      : ''
+  };
 }
 
 function renderSessionEventContent(session, duration, compact = false) {
@@ -3145,7 +3844,12 @@ function renderSessionEventContent(session, duration, compact = false) {
   // Lot V — demi-groupe : pastille courte (« A »/« B ») sur la MÊME ligne que l'UE.
   // La demi-largeur d'affichage suffit à signaler le demi-groupe → pas de « ½ ».
   const badge = session.demiGroupe ? `<span class="demi-badge demi-inline demi-${session.demiGroupe.toLowerCase()}" title="Demi-groupe ${session.demiGroupe}">${session.demiGroupe}</span>` : '';
-  const detail = [session.teacher || '', session.room || ''].filter(Boolean).join(' · ');
+  // Ajustements #2 [E2.6] (18/08/2026) — les initiales de l'enseignant en
+  // pastilles (.design-ue-pill, même composant que Conception/Répartition/
+  // Créneaux types), plutôt qu'en texte brut, pour homogénéiser avec le reste
+  // de l'appli. Le lieu reste en texte simple juste en dessous.
+  const eventTeachers = teacherPillsMarkup(session.teacher || '', true);
+  const detail = session.room || '';
   // Mots-clés affichés dans les cases PLEINES (police réduite) ; pas en demi-groupe (place).
   const keywords = compact ? [] : compactKeywords(session.keywords, 4);
   // Type de séance en texte simple (repère rapide Cours/TP/Pluri…), après les
@@ -3155,12 +3859,25 @@ function renderSessionEventContent(session, duration, compact = false) {
   // standard de la grille : on l'affiche donc explicitement quand les deux bornes
   // sont renseignées, pour qu'il ne soit plus un champ « saisi et ignoré ».
   const customHours = session.customStart && session.customEnd ? `${session.customStart}–${session.customEnd}` : '';
-  return `<div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
+  // 18/08 — retour Martin : « les espaces de séances ne doivent pas changer de
+  // taille d'une semaine à l'autre ». Une case de tableau n'impose sa hauteur
+  // qu'en minimum : une séance chargée (titre long + type + enseignant/lieu +
+  // mots-clés) poussait sa ligne bien au-delà — vérifié : jusqu'à 115px sur un
+  // créneau d'1h censé faire 58px, et `height:100%` seul ne suffit pas à borner
+  // une cellule de tableau (elle reste elle-même « auto » tant que son contenu
+  // n'est pas plafonné ailleurs — vérifié aussi). Hauteur figée en dur, calquée
+  // sur la géométrie réelle de la grille (58px/créneau, `duration` = nombre de
+  // créneaux occupés) : l'excédent est coupé net plutôt que d'étirer la ligne.
+  const maxBodyHeight = Math.max(1, Number(duration) || 1) * 58 - 10;
+  return `<div class="event-body" style="max-height:${maxBodyHeight}px">
+    <div class="event-ue">${escapeHtml(ueCode)}${badge}</div>
     <div class="event-session-title">${escapeHtml(truncate(session.title, compact ? 26 : 40))}</div>
     ${customHours ? `<div class="event-hours" title="Horaire libre saisi pour cette séance">${escapeHtml(customHours)}</div>` : ''}
+    ${eventTeachers ? `<div class="event-teachers design-ue-pills">${eventTeachers}</div>` : ''}
     ${detail ? `<div class="event-details">${escapeHtml(detail)}</div>` : ''}
     ${typeText}
-    ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}`;
+    ${keywords.length ? `<div class="event-keywords">${escapeHtml(keywords.join(', '))}</div>` : ''}
+  </div>`;
 }
 
 /* Libellé court du type de séance pour la pastille du Planning hebdo (les types
@@ -3236,24 +3953,22 @@ function renderPromotionTable(promotion) {
               if (!isHead) return '<div class="demi-col demi-empty is-continuation" aria-hidden="true"></div>';
               return `<div class="demi-col demi-empty drop-slot" data-create='${cj}' data-drop-target='${cj}' title="Créer / déposer le demi-groupe ${side}"><span class="drop-hint">+ ½${side}</span></div>`;
             }
-            const inner = isHead
-              ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(sess.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(sess, rowspan, true)}`
-              : '';
-            return `<div class="demi-col drop-slot ${typeClass(sess.type)}" style="--seq-color:${sessionTint(sess)}" draggable="true" data-drag-session="${escapeAttr(sess.id)}" data-session-id="${escapeAttr(sess.id)}" data-edit-session="${escapeAttr(sess.id)}" data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}">${inner}</div>`;
+            const p = planningSessionAttrs(sess);
+            const inner = isHead ? `${p.unplaceBtn}${renderSessionEventContent(sess, rowspan, true)}` : '';
+            return `<div class="demi-col drop-slot ${typeClass(sess.type)}${p.classSuffix}" style="--seq-color:${sessionTint(sess)}; --ue-deep:${deepColor(sessionTint(sess))}" ${p.idAttrs} data-drop-target='${cj}' title="${escapeAttr(sessionTooltip(sess))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</div>`;
           };
           return `<td class="event-cell demi-cell${contClass}" rowspan="${rowspan}"><div class="demi-split">${halfCol(halfA[0], 'A')}${halfCol(halfB[0], 'B')}</div></td>`;
         }
         if (starting.length === 1) {
           const session = starting[0];
           const cls = typeClass(session.type);
-          const inner = isHead
-            ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan)}`
-            : '';
-          return `<td class="event-cell drop-slot ${cls}${contClass}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}">${inner}</td>`;
+          const p = planningSessionAttrs(session);
+          const inner = isHead ? `${p.unplaceBtn}${renderSessionEventContent(session, rowspan)}` : '';
+          return `<td class="event-cell drop-slot ${cls}${contClass}${p.classSuffix}" rowspan="${rowspan}" style="--seq-color:${sessionTint(session)}; --ue-deep:${deepColor(sessionTint(session))}" ${p.idAttrs} data-drop-target='${escapeAttr(contextJson)}' title="${escapeAttr(sessionTooltip(session))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</td>`;
         }
         return `<td class="event-cell overlap-cell drop-slot${contClass}" rowspan="${rowspan}" data-drop-target='${escapeAttr(contextJson)}' title="${starting.length} séances en chevauchement">
           <div class="overlap-warning">${starting.length} séances superposées</div>
-          ${starting.map(session => `<div class="overlap-event ${typeClass(session.type)}" draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}" title="${escapeAttr(sessionTooltip(session))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${renderSessionEventContent(session, rowspan, true)}</div>`).join('')}
+          ${starting.map(session => { const p = planningSessionAttrs(session); return `<div class="overlap-event ${typeClass(session.type)}${p.classSuffix}" style="--ue-deep:${deepColor(sessionTint(session))}" ${p.idAttrs} title="${escapeAttr(sessionTooltip(session))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${p.unplaceBtn}${renderSessionEventContent(session, rowspan, true)}</div>`; }).join('')}
         </td>`;
       }
       const contextJson = JSON.stringify({ promotion, day: dayIndex, slot: slotIndex });
@@ -3296,15 +4011,20 @@ function renderPromotionTable(promotion) {
   const satSessions = sessions.filter(s => Number(s.day) === 5);
   const satConstraints = saturdayDate ? constraintsForDate(saturdayDate, promotion).filter(c => !isThematicConstraint(c)) : [];
   const saturdayRow = (satSessions.length || satConstraints.length)
-    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => `<span class="saturday-session ${typeClass(s.type)}" style="--seq-color:${sessionTint(s)}" data-session-id="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}" title="${escapeAttr(sessionTooltip(s))}"><button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(s.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>${escapeHtml(s.title)} · journée</span>`).join('')}</td></tr>`
+    ? `<tr class="saturday-row"><td class="time-cell saturday-legend">Samedi${saturdayDate ? `<br><small class="th-date">${escapeHtml(fmtDayDate(saturdayDate))}</small>` : ''}</td><td class="saturday-cell" colspan="${DAYS.length}">${satConstraints.map(dayConstraintChip).join('')}${satSessions.map(s => { const p = planningSessionAttrs(s); return `<span class="saturday-session ${typeClass(s.type)}${p.classSuffix}" style="--seq-color:${sessionTint(s)}" ${p.idAttrs} title="${escapeAttr(sessionTooltip(s))}${p.mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">${p.unplaceBtn}${escapeHtml(s.title)} · journée</span>`; }).join('')}</td></tr>`
     : '';
   const eilRow = eilBannerRow(eilSelf, eilOther, DAYS.length);
 
-  // Lot R — teinte le bandeau de promo selon la période : automne (sept→déc)
-  // GPN1 bleu / GPN2 rouge ; printemps (jan→mai) GPN1 jaune / GPN2 vert.
-  const periodClass = weekPeriodClass(week);
+  // Retours #4 (18/08/2026) — décision inversée : le bandeau promo reprend
+  // désormais le code couleur semestre du Ruban (S1/S3 en septembre-décembre,
+  // S2/S4 en janvier-mai, gris en juin-août). La couleur elle-même est posée
+  // à part par applyScheduleTitleColors() plutôt qu'ici : elle doit changer
+  // dès qu'on coche un onglet de période (weekStripPeriod), même quand ce
+  // clic seul ne redessine pas la grille (cf. le commentaire sur
+  // #weekStripPeriodSwitch dans bindEvents — la bascule ne fait que parcourir
+  // la bande, elle ne déclenche pas renderPlanning()).
   return `<section class="schedule-section">
-    <div class="schedule-title ${promotion.toLowerCase()}${periodClass ? ' ' + periodClass : ''}">${escapeHtml(promotion)}</div>
+    <div class="schedule-title" data-promotion="${escapeAttr(promotion)}">${escapeHtml(promotion)}</div>
     <div class="table-scroll"><table class="schedule-table">
       <thead><tr><th>Créneau</th>${DAYS.map((d, i) => `<th>${d}${dayDates[i] ? `<br><small class="th-date">${escapeHtml(fmtDayDate(dayDates[i]))}</small>` : ''}</th>`).join('')}</tr></thead>
       <tbody>${eilRow}${constraintRow}${rows}${saturdayRow}</tbody>
@@ -3423,6 +4143,33 @@ function autoSlotStart(promotion, weekId, day, durationSlots, excludeId) {
   return 0;
 }
 
+/* 18/08 — grille complète des créneaux de la semaine (5 jours × 8 créneaux, hors Repas)
+   pour le sélecteur de créneau de la modale séance : remplace l'ancienne
+   `freeSlotsForWeek` qui ne retournait QUE les créneaux libres (retour de Martin — « je
+   veux avoir toutes les possibilités de créneaux »). Un créneau occupé reste dans le
+   résultat (flag `occupied`+`title`) : il reste cliquable, le garde-fou de chevauchement
+   existe déjà au submit (`findPlanningConflict`). Indexé `[day][slotIndex]` pour un accès
+   direct au rendu de la grille. */
+function weekSlotGrid(promotion, weekId, excludeId) {
+  const grid = {};
+  DAYS.forEach((_, day) => {
+    const occ = {};
+    if (weekId) {
+      state.sessions.forEach(s => {
+        if (s.id === excludeId || !isDefinitiveSession(s)) return;
+        if (s.weekId !== weekId || s.promotion !== promotion || Number(s.day) !== day) return;
+        for (let i = Number(s.startSlot); i <= Number(s.endSlot); i += 1) occ[i] = s.title || 'Occupé';
+      });
+    }
+    grid[day] = {};
+    SLOTS.forEach((label, slotIndex) => {
+      if (slotIndex === 4) return; // Repas — jamais un créneau
+      grid[day][slotIndex] = { occupied: slotIndex in occ, title: occ[slotIndex] || '' };
+    });
+  });
+  return grid;
+}
+
 /* #6 — les récréations sont des lignes <tr> pleine largeur intercalées dans la
    table planning (pause du matin avant le créneau 2, pause de l'après-midi avant
    le créneau 7). Pour qu'une séance longue N'ENJAMBE PAS ces lignes (ce qui les
@@ -3438,6 +4185,14 @@ function blockEndSlot(slot) {
   if (slot <= 3) return 3;
   if (slot <= 6) return 6;
   return SLOTS.length - 1;
+}
+/* 18/08 — borne DURE du sélecteur de créneau de la modale séance : une séance ne doit
+   jamais enjamber le Repas (index 4), contrairement à `blockEndSlot` ci-dessus qui borne
+   à la petite pause suivante (pour le rendu en segments visuels, une séance PEUT
+   enjamber une récréation). Matin = 0-3, après-midi = 5-8 — mêmes demi-journées que le
+   tableau local `blocks` d'`autoSlotStart` ci-dessous. */
+function halfDayEndSlot(slot) {
+  return Number(slot) < 4 ? 3 : SLOTS.length - 1;
 }
 /* Un segment de la séance `s` commence-t-il au créneau `slot` ? (vrai début, ou
    reprise juste après une récréation enjambée). */
@@ -3463,7 +4218,7 @@ function renderInspection() {
   $('#inspectionSummary').innerHTML = `
     <div class="list-item"><strong>Année scolaire</strong><div class="meta">${escapeHtml(state.schoolYear || '')}</div></div>
     <div class="list-item"><strong>Structuration</strong><div class="meta">${state.ues.length} UE, ${state.sequences.length} séquence(s), ${state.sessions.length} séance(s), ${state.constraints.length} contrainte(s)</div></div>
-    <div class="list-item"><strong>Avancement de la planification</strong><div class="meta">${fictive.length} séance(s) à placer · ${definitive.length} plage(s) définitive(s) EDT</div></div>
+    <div class="list-item"><strong>Avancement de la planification</strong><div class="meta">${fictive.length} séance(s) à placer · ${definitive.length} placée(s)</div></div>
     <div class="list-item"><strong>Répartition semestrielle</strong><div class="meta">${escapeHtml(bySemester)}</div></div>
     <div class="list-item"><strong>Traçabilité pédagogique</strong><div class="meta">${linkedPercent}% des séances sont rattachées à une UE et une séquence.</div></div>
   `;
@@ -3475,11 +4230,9 @@ function openUeModal(ue = null, defaults = {}) {
   $('#ueId').value = ue?.id || '';
   $('#ueCode').value = ue?.code || '';
   $('#ueTitle').value = ue?.title || '';
-  // La bande « + UE » vit dans un groupe de promotion : c'est celle-là qu'on
-  // pré-remplit, avant de retomber sur le filtre en cours.
-  const defaultPromotion = defaults.promotion
-    || (designPromotionFilter !== 'Tous' ? designPromotionFilter : (state.promotions[0] || 'GPN1'));
-  const defaultSemester = designSemesterFilter !== 'Tous' ? designSemesterFilter : 'Semestre 1';
+  // Pré-remplissage sur la promotion active du sidebar de la Conception.
+  const defaultPromotion = defaults.promotion || designPromotionFilter || state.promotions[0] || 'GPN1';
+  const defaultSemester = defaults.semester || 'Semestre 1';
   $('#uePromotion').value = ue?.promotion || defaultPromotion;
   if (!state.promotions.includes($('#uePromotion').value)) $('#uePromotion').value = state.promotions[0] || 'GPN1';
   $('#ueSemester').value = ue?.semester || defaultSemester;
@@ -3507,18 +4260,20 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceSemester').value = sequence?.semester || ue?.semester || 'Semestre 1';
   $('#sequenceWeeks').value = sequence?.targetWeeks || '';
   $('#sequencePeriodNote').value = sequence?.periodNote || '';
-  refreshSequencePeriodDates(sequence?.targetWeeks || '', ue);
-  // Nouvelle séquence : centrer le calendrier de période sur la semaine de début
-  // de l'UE (sans pré-sélectionner de plage), pour que le choix se fasse d'emblée
-  // dans les semaines de l'UE plutôt qu'au tout début du semestre.
-  if (isNew && ue?.startWeekId) {
-    const [monday] = weekDateRange(state.weeks.find(w => w.id === ue.startWeekId) || {});
-    if (monday) {
-      seqCalMonthKey = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}`;
-      renderSequenceCalendar();
-    }
-  }
-  $('#sequenceHours').value = sequence?.hoursEstimate || '';
+  // Écran 12 — semaines saisies dans #sequenceWeekStart/#sequenceWeekEnd (S45 → S46), à
+  // la main ou via le calendrier (18/08). `parseWeekRanges` est la même fonction que la
+  // Progression.
+  const [firstRange] = parseWeekRanges(sequence?.targetWeeks || '');
+  $('#sequenceWeekStart').value = firstRange ? `S${String(firstRange.start).padStart(2, '0')}` : '';
+  $('#sequenceWeekEnd').value = firstRange ? `S${String(firstRange.end).padStart(2, '0')}` : '';
+  syncSequenceWeeksField();
+  seqCalMonthKey = null; // recentre le calendrier sur la période de cette séquence
+  renderSequenceCalendar();
+  // Toujours une chaîne (« 5 h », « 12 h »…) : on n'affiche que le nombre dans
+  // le stepper, le reste du texte éventuel (arbitrage ancien) est ignoré ici
+  // mais reste conservé tel quel s'il n'est jamais réenregistré.
+  const hoursMatch = /\d+/.exec(sequence?.hoursEstimate || '');
+  $('#sequenceHours').value = hoursMatch ? hoursMatch[0] : '';
   // Lot C-bis — champs retirés du formulaire (voir la note à l'enregistrement) ;
   // le `?.` garde ces lignes inoffensives s'ils venaient à revenir.
   if ($('#sequenceType')) $('#sequenceType').value = sequence?.sequenceType || '';
@@ -3529,7 +4284,11 @@ function openSequenceModal(sequence = null, context = {}) {
     const auto = sequence ? computedSequenceColor(sequence) : computedSequenceColor({ ueId: ue?.id, id: '__new' });
     seqColorInput.value = custom ? sequence.color : auto;
     seqColorInput.dataset.custom = custom ? '1' : '0';
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
   }
+  const assessmentType = sequence?.assessmentType || '';
+  $('#sequenceAssessmentType').value = assessmentType;
+  $$('#sequenceAssessmentTypeButtons button').forEach(b => b.classList.toggle('active', (b.dataset.assessmentType || '') === assessmentType));
   $('#sequenceTeacher').value = sequence?.teacher || '';
   $('#sequenceObjectives').value = sequence?.objectives || '';
   renderSequenceCapacityChoices(sequence?.capacityCodes || [], ue);
@@ -3546,8 +4305,20 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceNotes').value = sequence?.notes || '';
   $('#deleteSequenceButton').hidden = isNew;
   $('#exportSequenceButton').hidden = isNew;
+  $('#submitSequenceButton').textContent = isNew ? 'Créer la séquence' : 'Enregistrer';
   $('#sequenceDialog').showModal();
   $('#sequenceDialog')._dirty = false;
+}
+
+/* Séance : simple coche depuis Ajustements #2 (18/08/2026) — le mode réel
+   ('etablissement'/'personnel') est gardé sur dataset.mode plutôt que redemandé
+   à la saisie, pour ne pas écraser une bascule « personnel » déjà faite depuis
+   le tableau de bord (data-bascule-vehicule) quand on rouvre la fiche. Cochée
+   sans mode connu (nouvelle séance) → établissement, la priorité voulue. */
+function deplacementModeOf(prefixe) {
+  if (prefixe === 'reunion') return $('#reunionDeplacement')?.value || '';
+  const cb = $('#sessionDeplacement');
+  return cb?.checked ? (cb.dataset.mode || 'etablissement') : '';
 }
 
 /* N'affiche que la suite qui correspond au mode choisi : une réservation de
@@ -3556,7 +4327,7 @@ function openSequenceModal(sequence = null, context = {}) {
    préfixe. */
 function syncDeplacementFields(prefixe) {
   const p = prefixe === 'reunion' ? 'reunion' : 'session';
-  const mode = $(`#${p}Deplacement`)?.value || '';
+  const mode = deplacementModeOf(prefixe);
   const suite = $('#sessionDeplacementSuite');
   const vehicule = $(`#${p}VehicleBookedField`);
   const mission = $(`#${p}OrdreMissionField`);
@@ -3580,9 +4351,8 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionSequence').value = rattValue;
   $('#sessionTitle').value = session?.title || '';
   $('#sessionPromotion').value = session?.promotion || context.promotion || ue?.promotion || state.promotions[0] || 'GPN1';
-  const placement = context.forceDefinitive ? 'definitif' : (session?.placementStatus || context.placementStatus || 'fictif');
-  $('#sessionPlacementStatus').value = placement;
-  applySessionPlacementVisibility();
+  const noSeqBox = $('#sessionNoSequence');
+  if (noSeqBox) { noSeqBox.checked = !rattValue; $('#sessionSequence').disabled = !rattValue; }
   // Semaine par défaut d'une NOUVELLE séance calée sur les semaines de l'UE en
   // conception : 1re semaine de la séquence de rattachement, sinon semaine de la
   // semaine thématique (EIL), sinon semaine de début de l'UE. À l'édition, la
@@ -3594,15 +4364,24 @@ function openSessionModal(session = null, context = {}) {
         || ue?.startWeekId
         || '')
     : '';
-  $('#sessionWeek').value = session?.targetWeekId || session?.weekId || context.weekId || designDefaultWeek || selectedWeek;
+  // Écran 12 — créneau choisi via la grille hebdomadaire (plus de jour/début/fin/statut
+  // de placement saisis à la main ; exception assumée à REGLES.md #22 pour cet écran, cf.
+  // renderSessionSlotPicker).
+  sessionSlotPickerWeekId = session?.targetWeekId || session?.weekId || context.weekId || designDefaultWeek || selectedWeek;
+  if (session && isDefinitiveSession(session) && !session.customStart && !session.customEnd) {
+    sessionSlotChoice = { type: 'range', day: Number(session.day), startSlot: Number(session.startSlot), endSlot: Number(session.endSlot) };
+  } else if (session && isDefinitiveSession(session)) {
+    sessionSlotChoice = { type: 'other' };
+  } else if (session) {
+    sessionSlotChoice = { type: 'none' };
+  } else if (context.day != null && context.slot != null) {
+    sessionSlotChoice = { type: 'range', day: Number(context.day), startSlot: Number(context.slot), endSlot: Number(context.slot) };
+  } else {
+    sessionSlotChoice = null;
+  }
   $('#sessionDay').value = String(session?.day ?? context.day ?? 0);
   $('#sessionStart').value = String(session?.startSlot ?? context.slot ?? 0);
   $('#sessionEnd').value = String(session?.endSlot ?? context.slot ?? 0);
-  $('#sessionExpectedDuration').value = session?.expectedDuration || '';
-  $('#sessionOrder').value = session?.order || '';
-  $('#sessionFictiveSlot').value = session?.fictiveSlot || '';
-  $('#sessionFictiveDay').value = session?.fictiveDay ?? '';
-  $('#sessionExactDate').value = session?.exactDate || '';
   $('#sessionCustomStart').value = session?.customStart || '';
   $('#sessionCustomEnd').value = session?.customEnd || '';
   $('#sessionType').value = session?.type || 'Cours en salle';
@@ -3619,9 +4398,12 @@ function openSessionModal(session = null, context = {}) {
     const inherited = session ? sessionInheritedColor(session) : (seq ? sequenceColor(seq.id) : ueColor(ue?.id));
     sessColorInput.value = custom ? session.color : inherited;
     sessColorInput.dataset.custom = custom ? '1' : '0';
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
   }
+  renderSessionSlotPicker();
   if ($('#sessionDeplacement')) {
-    $('#sessionDeplacement').value = session?.deplacement || '';
+    $('#sessionDeplacement').checked = !!session?.deplacement;
+    $('#sessionDeplacement').dataset.mode = session?.deplacement || '';
     if ($('#sessionVehicleBooked')) $('#sessionVehicleBooked').checked = !!session?.vehicleBooked;
     if ($('#sessionOrdreMission')) $('#sessionOrdreMission').checked = !!session?.ordreMission;
     syncDeplacementFields('session');
@@ -3635,13 +4417,16 @@ function openSessionModal(session = null, context = {}) {
   $('#sessionActivities').value = session?.activities || '';
   $('#sessionNotions').value = session?.notions || '';
   $('#sessionMaterials').value = session?.materials || '';
-  $('#sessionAssessment').value = session?.assessment || '';
-  $('#sessionHomework').value = session?.homework || '';
+  if ($('#sessionMaterielReserver')) $('#sessionMaterielReserver').checked = !!session?.materielAReserver;
   $('#sessionDifferentiation').value = session?.differentiation || '';
   $('#sessionNotes').value = session?.notes || '';
   $('#deleteSessionButton').hidden = isNew;
   const dupBtn = $('#duplicateSessionButton');
   if (dupBtn) dupBtn.hidden = isNew;
+  $('#submitSessionButton').textContent = isNew ? 'Créer la séance' : 'Enregistrer';
+  const chainBtn = $('#chainSessionButton');
+  if (chainBtn) chainBtn.hidden = !isNew;
+  sessionChainRequested = false;
   $('#sessionDialog').showModal();
   $('#sessionDialog')._dirty = false;
 }
@@ -3717,13 +4502,14 @@ function renderConstraintExamCapacities(ueId = '', selectedCodes = []) {
 
 
 
+// Retours #4 (18/08/2026) — la couleur d'une UE suit désormais son semestre
+// (S1 bleu, S2 ambre, S3 rouge, S4 vert, cf. SEMESTER_COLORS), pas un index
+// arbitraire dans state.ues : Martin veut retrouver le code couleur du Ruban
+// partout où une UE est teintée (sidebar/titre Conception, bandeaux séquences/
+// séances de Progression, via sequenceColor/sessionTint qui en dérivent).
 function ueColor(ueId = '') {
-  // Lot 5 (Q1) — les 3 teintes les plus claires de la palette (violet, terre
-  // cuite, prune) assombries : elles restaient limites à l'écriture même une
-  // fois « encrées » (voir inkColor) et distinguaient mal leurs séquences.
-  const palette = ['#2f6f73', '#684da3', '#985541', '#4f7cac', '#7a8f3a', '#864a63', '#5b6f92', '#b08a2e', '#558b6e', '#7b6d8d', '#8a6f3d'];
-  const index = Math.max(0, state?.ues?.findIndex(ue => ue.id === ueId) ?? 0);
-  return palette[index % palette.length];
+  const ue = state?.ues?.find(u => u.id === ueId);
+  return semesterColorOf(ue?.semester);
 }
 
 /* Couleur d'une séquence : dérivée de la couleur de son UE, mais nettement
@@ -3787,6 +4573,147 @@ function getSessionColorFieldValue() {
   const el = $('#sessionColorInput');
   if (!el) return '';
   return el.dataset.custom === '1' && isValidHexColor(el.value) ? el.value : '';
+}
+
+/* Écran 12 — grille figée de 12 teintes (JETONS.md « Palette libre de séquence
+   / séance »), partagée par les deux modales. Le champ `hiddenInputId` (le même
+   `<input type="color">` qu'avant, resté la source de vérité pour
+   get*ColorFieldValue ci-dessus) reste aussi le picker « autre… » : la grille
+   ne fait qu'écrire dedans par-dessus. */
+const SEQUENCE_COLOR_PALETTE = ['#1a5fb4', '#1c71d8', '#3584e4', '#99c1f1', '#23ccd7', '#33d17a', '#26a269', '#f5c211', '#ff7800', '#e01b24', '#e66100', '#6e4f82'];
+
+function renderColorSwatchGrid(gridSelector, hiddenInputId) {
+  const grid = $(gridSelector);
+  if (!grid) return;
+  grid.innerHTML = SEQUENCE_COLOR_PALETTE.map(hex =>
+    `<button type="button" class="color-swatch" data-color="${hex}" style="background:${hex}" aria-label="${hex}"></button>`
+  ).join('');
+  grid.addEventListener('click', (event) => {
+    const btn = event.target.closest('.color-swatch');
+    if (!btn) return;
+    const input = $(hiddenInputId);
+    if (!input) return;
+    input.value = btn.dataset.color;
+    input.dataset.custom = '1';
+    syncColorSwatchActive(gridSelector, hiddenInputId);
+  });
+}
+
+function syncColorSwatchActive(gridSelector, hiddenInputId) {
+  const grid = $(gridSelector);
+  const input = $(hiddenInputId);
+  if (!grid || !input) return;
+  const value = (input.value || '').toLowerCase();
+  $$(`${gridSelector} .color-swatch`).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color.toLowerCase() === value);
+  });
+}
+
+/* 18/08 — sélecteur de créneau de la modale séance, en mini-grille hebdomadaire complète
+   (exception assumée à REGLES.md #22 pour cet écran précis, décision de Martin — « je
+   veux avoir toutes les possibilités de créneaux »). `sessionSlotPickerWeekId`/
+   `sessionSlotChoice` sont l'état UI (déclarés en haut du fichier) ; le submit du
+   formulaire séance les traduit en day/startSlot/endSlot/weekId/placementStatus. Un clic
+   simple pose 1 créneau (cas courant, inchangé en nombre de clics) ; un 2e clic sur le
+   même jour étend la plage (`applySlotClick`), plafonnée à la demi-journée
+   (`blockEndSlot`, jamais au-delà du Repas). */
+function renderSessionSlotPicker() {
+  const weekId = sessionSlotPickerWeekId || selectedWeek;
+  sessionSlotPickerWeekId = weekId;
+  const week = state.weeks.find(w => w.id === weekId);
+  const label = $('#sessionSlotWeekLabel');
+  if (label) label.textContent = week ? `${week.label.replace('S0', 'S')} · ${compactDateRange(week.dateRange)}` : 'Semaine à choisir';
+  const promotion = $('#sessionPromotion')?.value || state.promotions[0] || 'GPN1';
+  const excludeId = $('#sessionId')?.value || '';
+  const grid = $('#sessionSlotGrid');
+  if (grid) {
+    const occ = weekSlotGrid(promotion, weekId, excludeId);
+    const header = `<span class="slot-grid-corner" aria-hidden="true"></span>${DAYS.map(d => `<span class="slot-grid-day">${escapeHtml(d.slice(0, 3))}</span>`).join('')}`;
+    const rows = SLOTS.map((slotLabel, slotIndex) => {
+      if (slotIndex === 4) {
+        return `<span class="slot-grid-time slot-grid-lunch">Repas</span>${DAYS.map(() => '<span class="slot-cell-lunch" aria-hidden="true"></span>').join('')}`;
+      }
+      const time = `<span class="slot-grid-time">${escapeHtml(slotLabel.split(' – ')[0])}</span>`;
+      const cells = DAYS.map((_, day) => {
+        const cell = occ[day]?.[slotIndex];
+        const occupied = !!cell?.occupied;
+        const title = occupied ? ` title="${escapeAttr(cell.title)}"` : '';
+        return `<button type="button" class="slot-cell${occupied ? ' is-occupied' : ''}" data-slot-day="${day}" data-slot-index="${slotIndex}"${title}>${occupied ? escapeHtml(truncate(cell.title, 12)) : ''}</button>`;
+      }).join('');
+      return time + cells;
+    }).join('');
+    grid.innerHTML = header + rows;
+  }
+  syncSessionSlotPickerActive();
+  renderSessionSlotSummary();
+}
+
+/* Bandeau au-dessus/en dessous de la grille : lecture de la plage/durée choisie, plus des
+   boutons de durée rapide (voie alternative au 2e clic — répond au retour de Martin
+   « il manque la possibilité de renseigner la durée »). Boutons en nombre de créneaux
+   (pas un texte libre : évite un 2e parseur de durée à côté de celui du backlog). */
+function formatSlotDuration(minutes) {
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
+
+function renderSessionSlotSummary() {
+  const el = $('#sessionSlotSummary');
+  if (!el) return;
+  if (sessionSlotChoice?.type !== 'range') { el.innerHTML = ''; return; }
+  const { day, startSlot, endSlot } = sessionSlotChoice;
+  const count = endSlot - startSlot + 1;
+  const startLabel = SLOTS[startSlot].split(' – ')[0];
+  const endLabel = SLOTS[endSlot].split(' – ')[1];
+  const duree = formatSlotDuration(count * 55);
+  const maxSlots = halfDayEndSlot(startSlot) - startSlot + 1;
+  const quickButtons = [];
+  for (let n = 1; n <= maxSlots; n += 1) {
+    const durLabel = formatSlotDuration(n * 55);
+    quickButtons.push(`<button type="button" class="quick-duration-btn${n === count ? ' active' : ''}" data-quick-duration="${n}">${n} créneau${n > 1 ? 'x' : ''} · ${durLabel}</button>`);
+  }
+  el.innerHTML = `<p class="slot-picker-summary-text"><strong>${escapeHtml(DAY_NAMES[day])}</strong> · ${escapeHtml(startLabel)}–${escapeHtml(endLabel)} · ${count} créneau${count > 1 ? 'x' : ''} (${duree})</p><div class="quick-duration-buttons">${quickButtons.join('')}</div>`;
+}
+
+/* Logique d'interaction de la grille : pas de sélection sur ce jour (ou sélection sur un
+   autre jour), ou plage déjà complète (2e clic déjà fait), ou clic avant le départ actuel
+   → redémarre une plage à 1 créneau sur le slot cliqué. Sélection à 1 créneau sur ce même
+   jour et clic postérieur → étend la fin (plafonnée à la demi-journée). Jamais plus de
+   2 clics pour une plage complète. */
+function applySlotClick(day, slotIndex) {
+  const cur = sessionSlotChoice?.type === 'range' ? sessionSlotChoice : null;
+  const canExtend = cur && cur.day === day && cur.startSlot === cur.endSlot && slotIndex > cur.startSlot;
+  if (canExtend) {
+    const maxEnd = halfDayEndSlot(cur.startSlot);
+    sessionSlotChoice = { type: 'range', day, startSlot: cur.startSlot, endSlot: Math.min(slotIndex, maxEnd) };
+  } else {
+    sessionSlotChoice = { type: 'range', day, startSlot: slotIndex, endSlot: slotIndex };
+  }
+}
+
+/* Bouton de durée rapide : pose la fin depuis le début déjà choisi, sans second clic sur
+   la grille — plafonnée à la demi-journée comme applySlotClick. */
+function applyQuickDuration(slots) {
+  if (sessionSlotChoice?.type !== 'range') return;
+  const maxEnd = halfDayEndSlot(sessionSlotChoice.startSlot);
+  sessionSlotChoice = { ...sessionSlotChoice, endSlot: Math.min(sessionSlotChoice.startSlot + slots - 1, maxEnd) };
+}
+
+function syncSessionSlotPickerActive() {
+  const cur = sessionSlotChoice?.type === 'range' ? sessionSlotChoice : null;
+  $$('#sessionSlotGrid .slot-cell').forEach(btn => {
+    const day = Number(btn.dataset.slotDay), idx = Number(btn.dataset.slotIndex);
+    const inRange = !!cur && day === cur.day && idx >= cur.startSlot && idx <= cur.endSlot;
+    btn.classList.toggle('is-selected', inRange);
+    btn.classList.toggle('is-range-start', inRange && idx === cur.startSlot);
+    btn.classList.toggle('is-range-end', inRange && idx === cur.endSlot);
+    btn.classList.toggle('is-in-range', inRange && idx !== cur.startSlot && idx !== cur.endSlot);
+  });
+  $('.slot-option-other')?.classList.toggle('active', sessionSlotChoice?.type === 'other');
+  $('.slot-option-none')?.classList.toggle('active', sessionSlotChoice?.type === 'none');
+  const customFields = $('#sessionCustomSlotFields');
+  if (customFields) customFields.hidden = sessionSlotChoice?.type !== 'other';
 }
 
 /* Id de la semaine suivante dans l'ordre chronologique de state.weeks ('' si aucune). */
@@ -4038,14 +4965,16 @@ function exportSequencePrint(seq) {
 
 
 
-function printTimelineUe(ueId) {
-  const ue = findUe(ueId);
-  if (!ue) return;
-  const weeks = uniqueWeeks(ganttSemesterFilters.flatMap(weeksForSemester));
-  const html = renderOneUeTimeline(ue, weeks, 0);
+/* « Exporter la frise » : ouvre les deux bandes telles qu'affichées à l'écran
+   (une UE, ou tout le semestre en mode « Empiler ») dans une fenêtre A3
+   paysage — plus simple et plus fidèle que reconstruire un rendu séparé. */
+function exportGanttPrint() {
+  const seqEl = $('#ganttSequencesPanel');
+  const sessEl = $('#ganttSessionsPanel');
+  if (!seqEl || !sessEl) return;
   const css = [...document.styleSheets].map(sheet => { try { return [...sheet.cssRules].map(rule => rule.cssText).join('\n'); } catch (e) { return ''; } }).join('\n');
   const win = window.open('', '_blank');
-  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Frise ${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.timeline-heading{display:none!important}.timeline-card{box-shadow:none!important;border:1px solid #111!important;overflow:visible!important}.timeline-title,.timeline-month-header,.timeline-week-header,.timeline-sequence-band-row{position:static!important}.timeline-day-cell{min-height:12px!important}.timeline-session{font-size:7px!important;padding:1px 2px!important}.timeline-session p{display:none!important}</style></head><body>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Frise — ${escapeHtml(ganttPromo)} ${escapeHtml(ganttSemester)}</title><style>${css} @page{size:A3 landscape;margin:8mm;} body{background:#fff;padding:16px;} .timeline-scroll{overflow:visible!important;}</style></head><body><h1>${escapeHtml(ganttPromo)} · ${escapeHtml(ganttSemester)}</h1>${seqEl.outerHTML}${sessEl.outerHTML}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
   win.document.close();
   win.focus();
 }
@@ -4055,7 +4984,7 @@ function printWeekPlanning() {
   const html = $('#planningContainer')?.innerHTML || '';
   const css = [...document.styleSheets].map(sheet => { try { return [...sheet.cssRules].map(rule => rule.cssText).join('\n'); } catch (e) { return ''; } }).join('\n');
   const win = window.open('', '_blank');
-  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.week-bar,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning ${escapeHtml(week?.label || '')}</title><style>${css} @page{size:A3 landscape;margin:8mm;}body{background:#fff;padding:0}.topbar,.tabs,.no-print,.page-title,.filters-panel,.backlog-panel,.notes-panel,.week-calendar-panel{display:none!important}.schedule-section{break-inside:avoid;box-shadow:none!important;border:1px solid #111!important}.table-scroll{overflow:visible!important}.schedule-table th,.schedule-table td{height:auto!important;min-width:0!important;font-size:8px!important}.event-cell{padding:3px!important}.event-keywords{font-size:7px!important}.break-cell{height:7px!important;padding:0!important}</style></head><body><h1>Planning hebdomadaire — ${escapeHtml(week?.label || '')} ${escapeHtml(week?.dateRange || '')}</h1>${html}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
   win.document.close();
   win.focus();
 }
@@ -4115,24 +5044,38 @@ function refDeclinaison(c) {
     </div>`;
 }
 
+/* 18/08 — retour Martin : « la navigation dans les sous blocs encadrés et
+   sous-parties avec des encarts repliés dépliables n'est pas du tout pratique
+   […] un sommaire plus exhaustif dans la barre latérale […] sans sous-partie
+   repliée ». Les ids ci-dessous sont la clé commune entre le sommaire
+   (renderRefToc, qui pointe dessus en <a href="#…">) et le contenu (ici, qui
+   les porte) : plus de <details> imbriqués, tout est affiché, on saute d'une
+   sous-partie à l'autre par ancre plutôt que par un clic-pour-déplier. */
+function refBlocAnchorId(moduleId, capId, blocIdx) { return `refblock-${moduleId}-${capId}-${blocIdx}`; }
+function refLeafAnchorId(moduleId, capId, blocIdx, leafIdx) { return `refleaf-${moduleId}-${capId}-${blocIdx}-${leafIdx}`; }
+
 function refBlocs(module, c) {
   const blocks = (module.blocks && module.blocks[c.id]) || [];
   if (!blocks.length) return ''; // Modules 1-3 : pas de blocs encadrés → pas de section vide
-  const body = blocks.map(b => {
-    const leaves = (b.items || []).map(i => {
+  const body = blocks.map((b, bIdx) => {
+    const leaves = (b.items || []).map((i, lIdx) => {
       const sub = c.subsections[i];
       if (!sub) return '';
-      return refDetails('rm-leaf', escapeHtml(sub.title), `<div class="rm-leafpanel">${sub.html}</div>`);
+      return `<div class="rm-leaf" id="${refLeafAnchorId(module.id, c.id, bIdx, lIdx)}">
+        <div class="rm-leaf-title">${escapeHtml(sub.title)}</div>
+        <div class="rm-leafpanel">${sub.html}</div>
+      </div>`;
     }).join('');
     const intro = b.intro ? `<div class="rm-card rm-compact">${b.intro}</div>` : '';
-    return refDetails('rm-sub', escapeHtml(b.title), `<div class="rm-subpanel">${intro}${leaves}</div>`);
+    return `<div class="rm-sub" id="${refBlocAnchorId(module.id, c.id, bIdx)}">
+      <div class="rm-sub-title">${escapeHtml(b.title)}</div>
+      <div class="rm-subpanel">${intro}${leaves}</div>
+    </div>`;
   }).join('');
-  return refDetails('rm-part', 'Blocs encadrés et sous-parties', `<div class="rm-panel">${body}</div>`);
-}
-
-function refCapacite(module, c) {
-  return refDetails('rm-cap', `<span class="rm-capcode">${escapeHtml(c.code)}</span> · ${escapeHtml(c.title)}`,
-    `<div class="rm-cappanel">${refDeclinaison(c)}${refBlocs(module, c)}</div>`);
+  return `<div class="rm-part">
+    <div class="rm-part-title">Blocs encadrés et sous-parties</div>
+    <div class="rm-panel">${body}</div>
+  </div>`;
 }
 
 /* Annexe officielle : item de même niveau que les capacités (html = contenu riche, non échappé). */
@@ -4157,36 +5100,133 @@ function refReferences(module) {
   return refDetails('rm-part', 'Références documentaires ou bibliographiques', `<div class="rm-panel">${inner}</div>`);
 }
 
-function renderReferenceModule() {
-  const container = $('#referenceModuleContent');
-  if (!container) return;
+/* Version hybride (16/08/2026, retour de Martin sur le 1er essai « lecteur à 3
+   colonnes ») : la barre latérale gauche garde son rôle de navigation rapide,
+   mais reste PLATE (Général + une ligne par capacité du module actif, pas de
+   blocs imbriqués les uns dans les autres) ; le contenu central redevient
+   exactement celui d'avant — mêmes fonctions (refDeclinaison/refBlocs/
+   refGeneralSection/refReferences), juste affiché un élément à la fois au lieu
+   d'un accordéon à tout déplier soi-même. */
+let refReadSection = ''; // '' = pas encore choisi ; 'general' ; id de capacité ; id/titre d'annexe
+
+function refModuleSections(module) {
+  const items = [{ kind: 'general', id: 'general', label: 'Général' }];
+  (module.capacites || []).forEach(c => items.push({ kind: 'cap', id: c.id, code: c.code, label: c.title, cap: c }));
+  (module.annexes || []).forEach(a => items.push({ kind: 'annexe', id: a.id || a.title, label: a.title.replace(/^Annexe\s*\d*\s*[·:]?\s*/i, ''), annexe: a }));
+  return items;
+}
+
+function renderRefToc() {
+  const toc = $('#refreadToc');
+  if (!toc) return;
   const module = refModuleById(selectedReferenceModule);
-  if (!module) { container.innerHTML = '<p class="meta">Aucun module chargé. Vérifier reference-modules.js.</p>'; return; }
-  $$('[data-ref-module]').forEach(b => {
-    const isActive = b.dataset.refModule === module.id;
-    b.classList.toggle('active', isActive);
-    b.setAttribute('aria-pressed', String(isActive));
-  });
-  const general = (module.general || []).map(s => refGeneralSection(s, module)).join('') + refReferences(module);
-  const caps = (module.capacites || []).map(c => refCapacite(module, c)).join('')
-    + (module.annexes || []).map(refAnnexe).join('');
-  const pdfLine = module.pdf ? ` <a class="rm-pdf" href="docs/${escapeAttr(module.pdf)}" target="_blank" rel="noopener">PDF source du module</a>` : '';
-  container.innerHTML = `
-    <div class="rm-head">
-      <div class="rm-kicker">${escapeHtml(module.code)} · ${escapeHtml(module.bloc)}</div>
-      <h3 class="rm-title">${escapeHtml(module.title)}</h3>
-      <p class="rm-source">Source officielle : ${escapeHtml(module.source)}.${pdfLine}</p>
-    </div>
-    ${refDetails('rm-root', '1. Général', `<div class="rm-rootpanel">${general}</div>`, true)}
-    ${refDetails('rm-root', '2. Précisions par capacités', `<div class="rm-rootpanel">${caps}</div>`, true)}
-  `;
-  const q = ($('#referenceModuleSearch')?.value || '').trim();
+  if (!module) { toc.innerHTML = ''; return; }
+  const items = refModuleSections(module);
+  if (!items.some(i => i.id === refReadSection)) refReadSection = (items[1] || items[0]).id;
+  // 18/08 — « sommaire plus exhaustif […] sauter d'une sous-partie à l'autre » :
+  // sous la capacité affichée, on liste aussi ses blocs/sous-parties (mêmes ids
+  // que refBlocs) comme entrées de sommaire indentées — pas un second niveau
+  // replié, juste des ancres dans le même sommaire plat.
+  const rows = items.map(i => {
+    const row = `<li><button type="button" class="refread-toc-item refread-toc-${i.kind}${i.id === refReadSection ? ' active' : ''}" data-refread-section="${escapeAttr(i.id)}">${i.kind === 'cap' ? `<span class="refread-toc-code">${escapeHtml(i.code)}</span>` : ''}<span>${escapeHtml(i.kind === 'cap' ? truncate(i.label, 40) : i.label)}</span></button></li>`;
+    if (i.kind !== 'cap' || i.id !== refReadSection) return row;
+    const blocks = (module.blocks && module.blocks[i.id]) || [];
+    if (!blocks.length) return row;
+    const subRows = blocks.map((b, bIdx) => {
+      const blocRow = `<li><button type="button" class="refread-toc-item refread-toc-subpart" data-refread-jump="${refBlocAnchorId(module.id, i.id, bIdx)}"><span>${escapeHtml(truncate(b.title, 42))}</span></button></li>`;
+      const leafRows = (b.items || []).map((leafKey, lIdx) => {
+        const sub = i.cap.subsections[leafKey];
+        if (!sub) return '';
+        return `<li><button type="button" class="refread-toc-item refread-toc-leaf" data-refread-jump="${refLeafAnchorId(module.id, i.id, bIdx, lIdx)}"><span>${escapeHtml(truncate(sub.title, 42))}</span></button></li>`;
+      }).join('');
+      return blocRow + leafRows;
+    }).join('');
+    return row + subRows;
+  }).join('');
+  toc.innerHTML = `<div class="refread-toc-head">${escapeHtml(module.code)} · ${escapeHtml(truncate(module.title, 30))}</div>
+    <ul class="refread-toc-list">${rows}</ul>`;
+}
+
+function renderRefBody() {
+  const body = $('#refreadBody');
+  if (!body) return;
+  const module = refModuleById(selectedReferenceModule);
+  if (!module) { body.innerHTML = '<p class="meta">Aucun module chargé. Vérifier reference-modules.js.</p>'; return; }
+  const items = refModuleSections(module);
+  const current = items.find(i => i.id === refReadSection) || items[0];
+  if (current.kind === 'general') {
+    const pdfLine = module.pdf ? ` <a class="rm-pdf" href="docs/${escapeAttr(module.pdf)}" target="_blank" rel="noopener">PDF source du module</a>` : '';
+    body.innerHTML = `<div class="rm-head">
+        <div class="rm-kicker">${escapeHtml(module.code)} · ${escapeHtml(module.bloc)}</div>
+        <h3 class="rm-title">${escapeHtml(module.title)}</h3>
+        <p class="rm-source">Source officielle : ${escapeHtml(module.source)}.${pdfLine}</p>
+      </div>` + (module.general || []).map(s => refGeneralSection(s, module)).join('') + refReferences(module);
+  } else if (current.kind === 'cap') {
+    body.innerHTML = `<div class="refread-cap-head"><span class="refread-cap-code">${escapeHtml(current.cap.code)}</span><h3>${escapeHtml(current.cap.title)}</h3></div>`
+      + refDeclinaison(current.cap) + refBlocs(module, current.cap);
+  } else {
+    body.innerHTML = `<div class="rm-panel rm-card">${current.annexe.html}</div>`;
+  }
+  renderRefChezVous(current.kind === 'cap' ? current.cap : null);
+  const q = ($('#rubanUnifiedSearch')?.value || '').trim();
   if (q) refmodSearch(q);
 }
 
-/* -- Recherche / surlignage dans le module affiché -- */
+/* « Chez vous » (repris tel quel de la 1re tentative — Martin ne l'a pas
+   critiqué) : qui porte/évalue la capacité affichée (Répartition réelle) +
+   les séquences réelles qui la travaillent. Vide hors capacité (Général/annexe). */
+function refChezVous(code) {
+  const porte = new Set(), evalue = new Set(), disciplines = new Set();
+  (rubanData()?.semestres || []).forEach(s => s.ues.forEach(u => {
+    rubanUeCapacities(u).forEach(c => {
+      if (c.code !== code) return;
+      (c.enseignants || []).forEach(t => porte.add(t));
+      (c.evaluateurs || []).forEach(t => evalue.add(t));
+      (c.disciplines || []).forEach(d => disciplines.add(d));
+    });
+  }));
+  const sequences = (state.sequences || [])
+    .filter(seq => (seq.capacityCodes || []).includes(code))
+    .map(seq => ({ seq, ue: findUe(seq.ueId) }));
+  return { porte: [...porte], evalue: [...evalue], disciplines: [...disciplines], sequences };
+}
+
+function renderRefChezVous(cap) {
+  const el = $('#refreadChezVous');
+  if (!el) return;
+  if (!cap) { el.innerHTML = '<p class="meta">Sélectionnez une capacité pour voir qui la porte, qui l’évalue et où elle est travaillée.</p>'; return; }
+  const data = refChezVous(cap.code);
+  const pills = vals => vals.length
+    ? `<div class="repartition-pills">${vals.map(t => `<span class="design-ue-pill${t.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '<span class="ruban-vide" title="Non renseigné — à saisir avec ✎ dans l’onglet Ruban">—</span>';
+  const seqList = data.sequences.length
+    ? data.sequences.map(({ seq, ue }) => `<button type="button" class="refread-seq-item" style="--seq-color:${escapeAttr(sequenceColor(seq.id))}" data-edit-sequence="${escapeAttr(seq.id)}" title="Ouvrir cette séquence dans la Conception pédagogique">
+        <strong>${escapeHtml(seq.title)}</strong>
+        <span class="meta">${escapeHtml(ue?.code || 'UE ?')} · ${escapeHtml(sequencePeriodParts(seq).label)} · ${escapeHtml(seq.teacher || '—')}</span>
+      </button>`).join('')
+    : '<p class="meta">Aucune séquence réelle rattachée pour l’instant.</p>';
+  el.innerHTML = `
+    <h4>Chez vous <span class="meta">pour ${escapeHtml(cap.code)}</span></h4>
+    <div class="refread-cv-block"><span class="refread-cv-label">Qui la porte</span>${pills(data.porte)}</div>
+    <div class="refread-cv-block"><span class="refread-cv-label">Qui l’évalue</span>${pills(data.evalue)}</div>
+    <div class="refread-cv-block"><span class="refread-cv-label">Disciplines</span><p class="refread-cv-disc">${data.disciplines.length ? data.disciplines.map(escapeHtml).join(' · ') : '—'}</p></div>
+    <div class="refread-cv-block"><span class="refread-cv-label">Où elle est travaillée <span class="refread-cv-count">${data.sequences.length} séquence${data.sequences.length > 1 ? 's' : ''}</span></span>${seqList}</div>
+  `;
+}
+
+function renderReferenceModule() {
+  $$('[data-ref-module]').forEach(b => {
+    const isActive = b.dataset.refModule === selectedReferenceModule;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-pressed', String(isActive));
+  });
+  renderRefToc();
+  renderRefBody();
+}
+
+/* -- Recherche / surlignage dans le contenu affiché -- */
 function refmodClearMarks() {
-  const content = $('#referenceModuleContent');
+  const content = $('#refreadBody');
   if (!content) return;
   content.querySelectorAll('mark.rm-mark').forEach(mark => {
     const text = document.createTextNode(mark.textContent);
@@ -4196,7 +5236,7 @@ function refmodClearMarks() {
 }
 
 function refmodHighlight(query) {
-  const content = $('#referenceModuleContent');
+  const content = $('#refreadBody');
   if (!content) return 0;
   const q = query.toLowerCase();
   let count = 0;
@@ -4230,7 +5270,7 @@ function refmodHighlight(query) {
 }
 
 function refmodSearch(query) {
-  const content = $('#referenceModuleContent');
+  const content = $('#refreadBody');
   if (!content) return;
   refmodClearMarks();
   const q = String(query || '').trim();
@@ -4245,33 +5285,25 @@ function refmodSearch(query) {
   if (countEl) countEl.textContent = marks ? `${marks} occurrence${marks > 1 ? 's' : ''}` : 'Aucun résultat';
 }
 
-function refmodExpandAll() { $('#referenceModuleContent')?.querySelectorAll('details').forEach(d => { d.open = true; }); }
-function refmodCollapseAll() { $('#referenceModuleContent')?.querySelectorAll('details').forEach(d => { d.open = false; }); }
+function refmodExpandAll() { $('#refreadBody')?.querySelectorAll('details').forEach(d => { d.open = true; }); }
+function refmodCollapseAll() { $('#refreadBody')?.querySelectorAll('details').forEach(d => { d.open = false; }); }
 
-/* Depuis une pastille de capacité (conception pédagogique), ouvrir le module du
-   référentiel qui contient cette capacité et déplier la capacité correspondante.
-   Aucun renvoi inverse (référentiel -> séances) : navigation à sens unique. */
+/* Depuis une pastille de capacité (conception pédagogique, Ruban…), ouvrir le
+   référentiel sur cette capacité précise. Aucun renvoi inverse
+   (référentiel -> séances) : navigation à sens unique. */
 function openReferenceModuleForCapacity(code) {
   const clean = String(code || '').replace(/\s/g, '');
   const module = referenceModules().find(m => (m.capacites || []).some(c => clean.startsWith(c.code)));
   if (!module) return;
+  const cap = (module.capacites || []).find(c => clean.startsWith(c.code));
+  if (!cap) return;
   // Bascule sur l'onglet fusionné « Référentiel & Ruban », mode Référentiel.
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'ruban'));
   $$('.view').forEach(v => v.classList.toggle('active-view', v.id === 'ruban'));
   selectedReferenceModule = module.id;
-  setRubanMode('reference');
-  // Déplie la capacité ciblée et la fait défiler dans la vue.
-  const cap = (module.capacites || []).find(c => clean.startsWith(c.code));
-  if (!cap) return;
-  requestAnimationFrame(() => {
-    const container = $('#referenceModuleContent');
-    const target = Array.from(container?.querySelectorAll('details.rm-cap') || [])
-      .find(d => d.querySelector('summary .rm-capcode')?.textContent === cap.code);
-    if (!target) return;
-    let node = target;
-    while (node && node !== container) { if (node.tagName === 'DETAILS') node.open = true; node = node.parentElement; }
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  refReadSection = cap.id;
+  setRubanTab('reference');
+  requestAnimationFrame(() => $('#refreadBody')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
 /* ================= Ruban pédagogique ================= */
@@ -4349,7 +5381,7 @@ function renderRuban() {
     rubanTeacher = sel.value;
   }
 
-  const q = ($('#rubanSearch')?.value || '').trim().toLowerCase();
+  const q = ($('#rubanUnifiedSearch')?.value || '').trim().toLowerCase();
   const teacher = rubanTeacher;
   const matchCap = (c, u, s) => {
     const inTeacher = teacher === 'Tous' || c.enseignants.includes(teacher) || c.evaluateurs.includes(teacher);
@@ -4373,14 +5405,15 @@ function renderRuban() {
           : `<span class="ruban-cap is-static${on ? '' : ' is-dim'}" title="${escapeAttr(c.title)}">${inner}</span>`;
       }).join('') || '<p class="ruban-cap-empty meta">Aucune capacité — cliquer ✎ pour en ajouter.</p>';
       const editBtn = `<button type="button" class="ruban-ue-edit" data-edit-ue="${escapeAttr(u.code)}" title="Modifier les capacités de ${escapeAttr(u.code)}">✎</button>`;
-      // Liseré gauche harmonisé avec le code période/promo du planning (Lot R) :
-      // S1 bleu (GPN1 automne) · S2 jaune (GPN1 printemps) · S3 rouge (GPN2 automne) · S4 vert (GPN2 printemps).
+      // Couleur de semestre (REGLES.md #14, JETONS.md) : S1 bleu, S2 ambre, S3 rouge, S4 vert —
+      // fixe, n'a rien à voir avec la promo/période (voir le CSS .ruban-ue.sem-s1..s4).
       return `<article class="ruban-ue sem-${escapeAttr(s.id)}${anyMatch || !caps.length ? '' : ' is-dim'}${isUeModified(u) ? ' is-modified' : ''}">`
         + `<header class="ruban-ue-head"><span class="ruban-ue-code">${escapeHtml(u.code)}</span><strong>${escapeHtml(u.title)}</strong>${editBtn}</header>`
         + (u.resume ? `<p class="ruban-ue-resume">${escapeHtml(u.resume)}</p>` : '')
         + `<div class="ruban-cap-list">${capHtml}</div></article>`;
     }).join('');
-    return `<section class="ruban-col sem-${escapeAttr(s.id)}"><header class="ruban-col-head">${escapeHtml(s.label)}</header>${uesHtml}</section>`;
+    // 07-ruban.png — le bandeau de semestre porte aussi la promo associée (mono, en retrait).
+    return `<section class="ruban-col sem-${escapeAttr(s.id)}"><header class="ruban-col-head"><span>${escapeHtml(s.label)}</span><span class="ruban-col-promo">${escapeHtml(promoOfSemester(s.label))}</span></header>${uesHtml}</section>`;
   }).join('');
 
   renderRubanTable(matchCap);
@@ -4393,38 +5426,76 @@ function renderRuban() {
     : '';
 }
 
+/* Retrouve la vraie UE (state.ues, séquences réelles) derrière un code du ruban
+   (« UE1.1 », sans espace) — les deux jeux de données ne partagent pas le même
+   format de code. Sert au compte de séquences et à l'estompage « mes UE ». */
+function rubanRealUe(u) {
+  const flat = String(u.code || '').replace(/\s/g, '');
+  return (state?.ues || []).find(real => String(real.code || '').replace(/\s/g, '') === flat);
+}
+function rubanUeIsMine(u) {
+  return rubanUeCapacities(u).some(c => (c.enseignants || []).concat(c.evaluateurs || []).some(t => t.toLowerCase() === moiInitiales.toLowerCase()));
+}
+
+/* 06-referentiel-repartition.png — une ligne par capacité, groupée par semestre
+   puis par UE (code+titre en rowspan, comme la maquette) : « Le Tableau détaillé
+   AFFICHE, il ne modifie plus » (raison inchangée, voir plus bas). */
 function renderRubanTable(matchCap) {
   const data = rubanData();
   const target = $('#rubanTable');
   if (!data || !target) return;
-  const rows = [];
-  data.semestres.forEach(s => s.ues.forEach(u => {
-    const modified = isUeModified(u);
-    rubanUeCapacities(u).forEach(c => {
-      if (!matchCap(c, u, s)) return;
-      const hasRef = rubanCapHasReferentiel(c.code);
-      const capCell = hasRef
-        ? `<button type="button" class="ruban-cap-link has-ref" data-ruban-cap="${escapeAttr(c.code)}" title="Ouvrir dans le référentiel"><strong>${escapeHtml(c.code)}</strong> ${escapeHtml(c.title)}</button>`
-        : `<span class="ruban-cap-plain"><strong>${escapeHtml(c.code)}</strong> ${escapeHtml(c.title)}</span>`;
+  const mineOnly = $('#repartitionMineToggle')?.checked;
+
+  const pillsCell = vals => vals.length
+    ? `<div class="repartition-pills">${vals.map(t => `<span class="design-ue-pill${t.toLowerCase() === moiInitiales.toLowerCase() ? ' is-mine' : ''}">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '<span class="ruban-vide" title="Non renseigné — à saisir avec ✎ dans l’onglet Ruban">—</span>';
+
+  const semBlocks = data.semestres.map(s => {
+    const period = TEMPLATE_PERIODS.find(p => p.key === periodOfSemester(s.label))?.label || '';
+    const ueBlocks = s.ues.map(u => {
+      const caps = rubanUeCapacities(u).filter(c => matchCap(c, u, s));
+      if (!caps.length) return '';
+      const dimmed = mineOnly && !rubanUeIsMine(u);
+      const realUe = rubanRealUe(u);
+      const seqCount = realUe ? (state.sequences || []).filter(seq => seq.ueId === realUe.id).length : 0;
+      const ueCellBase = `<span class="ruban-ue-code">${escapeHtml(u.code)}</span> <strong>${escapeHtml(u.title)}</strong>`
+        + `<span class="repartition-seq-count">${seqCount} séq.</span>`;
+      return caps.map((c, i) => {
+        const hasRef = rubanCapHasReferentiel(c.code);
+        const capTitleCell = hasRef
+          ? `<button type="button" class="ruban-cap-link has-ref" data-ruban-cap="${escapeAttr(c.code)}" title="Ouvrir dans le référentiel">${escapeHtml(c.title)}</button>`
+          : `<span class="ruban-cap-plain">${escapeHtml(c.title)}</span>`;
+        const ueCell = i === 0 ? `<td class="repartition-td-ue${dimmed ? ' is-dim' : ''}" rowspan="${caps.length}">${ueCellBase}</td>` : '';
+        return `<tr class="${dimmed ? 'is-dim' : ''}${isUeModified(u) ? ' is-modified' : ''}">`
+          + ueCell
+          + `<td class="ruban-td-cap">${escapeHtml(c.code)}</td>`
+          + `<td>${capTitleCell}</td>`
+          + `<td>${(c.disciplines || []).map(escapeHtml).join(' · ')}</td>`
+          + `<td>${pillsCell(c.enseignants)}</td>`
+          + `<td>${pillsCell(c.evaluateurs)}</td>`
+          + `</tr>`;
+      }).join('');
+    }).filter(Boolean).join('');
+    if (!ueBlocks) return '';
+    return `<tr class="repartition-sem-row"><td colspan="6"><span class="repartition-sem-label">${escapeHtml(s.label)} · ${escapeHtml(promoOfSemester(s.label))}</span><span class="repartition-sem-period">${escapeHtml(period)}</span></td></tr>${ueBlocks}`;
+  }).join('');
+
+  // Résumé fixe (README : « 11 UE · 25 capacités déclarées · 12 enseignants ») —
+  // décrit tout le référentiel, pas le résultat filtré par la recherche.
+  const summary = $('#repartitionSummary');
+  if (summary) {
+    const allUes = new Set(), allTeachers = new Set();
+    let allCaps = 0;
+    data.semestres.forEach(s => s.ues.forEach(u => { allUes.add(u.code); rubanUeCapacities(u).forEach(c => { allCaps += 1; (c.enseignants || []).concat(c.evaluateurs || []).forEach(t => allTeachers.add(t)); }); }));
+    summary.textContent = `${allUes.size} UE · ${allCaps} capacités déclarées · ${allTeachers.size} enseignants`;
+  }
+
+  target.innerHTML = semBlocks
+    ? `<table class="ruban-table repartition-table"><thead><tr><th>Unité d'enseignement</th><th>Cap.</th><th>Capacité du référentiel</th><th>Disciplines déclarées</th><th>Qui enseigne</th><th>Qui évalue</th></tr></thead><tbody>${semBlocks}</tbody></table>`
       // Le Tableau détaillé AFFICHE, il ne modifie plus : la composition d'une UE
       // (capacités, enseignants, évaluateurs) se saisit au seul endroit ✎ de
       // l'onglet Ruban. Deux voies d'édition pour la même donnée entretenaient la
       // confusion sur l'endroit où l'information vit vraiment.
-      const initialesCell = vals => vals.length
-        ? `<span class="ruban-initiales">${vals.map(escapeHtml).join(', ')}</span>`
-        : '<span class="ruban-vide" title="Non renseigné — à saisir avec ✎ dans l’onglet Ruban">—</span>';
-      rows.push(`<tr class="${modified ? 'is-modified' : ''}">`
-        + `<td class="ruban-td-sem">${escapeHtml(s.label.replace('Semestre ', 'S'))}</td>`
-        + `<td>${escapeHtml(u.code)}</td>`
-        + `<td>${capCell}</td>`
-        + `<td>${(c.disciplines || []).map(escapeHtml).join(', ')}</td>`
-        + `<td>${initialesCell(c.enseignants)}</td>`
-        + `<td>${initialesCell(c.evaluateurs)}</td>`
-        + `</tr>`);
-    });
-  }));
-  target.innerHTML = rows.length
-    ? `<table class="ruban-table"><thead><tr><th>Sem.</th><th>UE</th><th>Capacité</th><th>Disciplines</th><th>Enseignants</th><th>Évaluateurs</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
       + `<p class="ruban-edit-hint meta">Vue d'ensemble. Pour modifier une UE — capacités, <strong>enseignants</strong>, <strong>évaluateurs</strong> — utiliser <strong>✎</strong> sur sa carte dans l'onglet <strong>Ruban</strong>. Les affectations renseignées ici décident des UE ouvertes par défaut dans <strong>Progressions semestres</strong>.</p>`
     : '<p class="meta">Aucune capacité ne correspond aux filtres.</p>';
 }
@@ -4470,16 +5541,6 @@ function openUeCapsModal(ueCode) {
   $('#ueCapsDialog').showModal();
 }
 
-function renderRubanPdf() {
-  const sel = $('#rubanPdfSelect');
-  const frame = $('#rubanPdfFrame');
-  const open = $('#rubanPdfOpen');
-  if (!sel) return;
-  const src = 'docs/' + (sel.value || 'ruban-semestres.pdf');
-  if (frame && frame.getAttribute('src') !== src) frame.setAttribute('src', src);
-  if (open) open.setAttribute('href', src);
-}
-
 /* ---------------------------------------------------------------------------
    Créneaux de cours type (onglet Référentiel & Ruban → mode « Créneaux type »).
    2 périodes (sept-déc / janv-mai) × 2 promos = 4 grilles hebdo type (1 par
@@ -4496,6 +5557,13 @@ function renderCreneaux() {
   });
   const period = TEMPLATE_PERIODS.find(p => p.key === creneauxPeriod) || TEMPLATE_PERIODS[0];
   container.innerHTML = renderTemplateGrid(period);
+
+  // Retour de Martin (16/08/2026) : plus de compte de créneaux ni de calcul
+  // horaire — seule la portée affichée (personnel / tous / un collègue) reste.
+  const summaryEl = $('#creneauxSummary');
+  if (summaryEl) {
+    summaryEl.textContent = creneauxTeacherFilter === 'Tous' ? 'tous les enseignants' : (creneauxTeacherFilter.toLowerCase() === moiInitiales.toLowerCase() ? 'personnel' : creneauxTeacherFilter);
+  }
 }
 
 /* Une seule grille par période : les créneaux des DEUX promos y cohabitent
@@ -4641,24 +5709,879 @@ async function deleteTemplateSlot() {
   await saveData('Créneau type supprimé');
 }
 
-function setRubanMode(mode) {
-  rubanMode = mode;
-  $$('[data-ruban-mode]').forEach(b => {
-    const isActive = b.dataset.rubanMode === mode;
+/* ---------------------------------------------------------------------------
+   Écran 8 — Planning étudiant (sous-onglet « Planning étudiant » de Référentiel
+   & Ruban). Semaine type PAR PROMOTION, saisie à la main — sans date, sans
+   glisser-déposer ni étirement (voir la mémoire du chantier : cette interaction
+   n'existe nulle part ailleurs dans l'appli). Même mécanique clic-vide=créer /
+   clic-tuile=modifier que « Mes créneaux types » juste au-dessus, dupliquée
+   plutôt que partagée pour ne rien risquer sur cet écran déjà approuvé.
+--------------------------------------------------------------------------- */
+function renderStudentPlanning() {
+  if (!studentPlanningPromo) studentPlanningPromo = state.promotions[0] || 'GPN1';
+  $$('#rubanTabEtudiant [data-student-promo]').forEach(b => {
+    const isActive = b.dataset.studentPromo === studentPlanningPromo;
     b.classList.toggle('active', isActive);
     b.setAttribute('aria-pressed', String(isActive));
   });
-  $('#rubanModeRuban')?.classList.toggle('active-mode', mode === 'ruban');
-  $('#rubanModeTable')?.classList.toggle('active-mode', mode === 'table');
-  $('#rubanModeReference')?.classList.toggle('active-mode', mode === 'reference');
-  $('#rubanModePdf')?.classList.toggle('active-mode', mode === 'pdf');
-  $('#rubanModeCreneaux')?.classList.toggle('active-mode', mode === 'creneaux');
-  // Les filtres enseignant/recherche ne concernent que le Ruban et le Tableau.
-  const filters = $('#rubanFilters');
-  if (filters) filters.hidden = (mode === 'reference' || mode === 'pdf' || mode === 'creneaux');
-  if (mode === 'pdf') renderRubanPdf();
-  if (mode === 'reference') renderReferenceModule();
-  if (mode === 'creneaux') renderCreneaux();
+  $$('#rubanTabEtudiant [data-student-period]').forEach(b => {
+    const isActive = b.dataset.studentPeriod === studentPlanningPeriod;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-pressed', String(isActive));
+  });
+  const mineToggle = $('#studentMineToggle');
+  if (mineToggle) studentPlanningMineOnly = mineToggle.checked;
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === studentPlanningPromo && t.period === studentPlanningPeriod);
+  const countEl = $('#studentSummaryCount');
+  if (countEl) countEl.textContent = `· ${slots.length} créneaux sur 40`;
+  renderStudentGrid(studentPlanningPromo);
+}
+
+function renderStudentGrid(promotion) {
+  const container = $('#studentPlanningGrid');
+  if (!container) return;
+  const slots = (state.studentWeekTemplate || []).filter(t => t.promotion === promotion && t.period === studentPlanningPeriod);
+  const skip = new Set();
+  const rows = SLOTS.map((slotLbl, slotIndex) => {
+    if (slotIndex === 4) {
+      return `<tr class="tpl-lunch"><td class="time-cell">Repas</td><td class="lunch-cell" colspan="5">Repas</td></tr>`;
+    }
+    const afterBreak = (slotIndex === 2 || slotIndex === 7) ? ' tpl-after-break' : '';
+    const cells = DAYS.map((day, dayIndex) => {
+      const key = `${dayIndex}-${slotIndex}`;
+      if (skip.has(key)) return '';
+      const t = slots.find(s => Number(s.day) === dayIndex && Number(s.startSlot) === slotIndex);
+      if (t) {
+        const cap = slotIndex < 4 ? 3 : 8;
+        const segEnd = Math.min(Number(t.endSlot), cap);
+        const rowspan = Math.max(1, segEnd - slotIndex + 1);
+        for (let i = slotIndex + 1; i <= segEnd; i += 1) skip.add(`${dayIndex}-${i}`);
+        const dimmed = studentPlanningMineOnly && !isMyStudentSlot(t);
+        return `<td class="tpl-cell${dimmed ? ' student-dimmed' : ''}" rowspan="${rowspan}" style="--seq-color:${studentSlotTint(t)}" data-edit-student-slot="${escapeAttr(t.id)}" title="Modifier ce cours">${studentSlotCellInner(t)}</td>`;
+      }
+      const ctx = JSON.stringify({ promotion, period: studentPlanningPeriod, day: dayIndex, slot: slotIndex });
+      return `<td class="tpl-empty" data-create-student-slot='${escapeAttr(ctx)}' title="Ajouter un cours"><span class="drop-hint">+</span></td>`;
+    }).join('');
+    return `<tr class="${afterBreak}"><td class="time-cell">${slotLbl}</td>${cells}</tr>`;
+  }).join('');
+  const header = `<tr><th class="tpl-corner">Créneau</th>${DAYS.map(d => `<th>${escapeHtml(d)}</th>`).join('')}</tr>`;
+  container.innerHTML = `<table class="tpl-grid"><thead>${header}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function studentUeOptionsHtml(promotion, selectedId) {
+  const ues = (state.ues || []).filter(ue => ue.promotion === promotion);
+  const opts = ues.map(ue => `<option value="${escapeAttr(ue.id)}" ${ue.id === selectedId ? 'selected' : ''}>${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</option>`).join('');
+  return `<option value="">— UE liée —</option>${opts}<option value="__free__" ${selectedId === '__free__' ? 'selected' : ''}>Autre (texte libre)…</option>`;
+}
+
+function openStudentSlotModal(slot, context = {}) {
+  const dialog = $('#studentSlotDialog');
+  if (!dialog) return;
+  const promotion = slot?.promotion || context.promotion || studentPlanningPromo || state.promotions[0] || 'GPN1';
+  const period = slot?.period || context.period || studentPlanningPeriod;
+  $('#studentSlotId').value = slot?.id || '';
+  $('#studentSlotPromotion').value = promotion;
+  $('#studentSlotPeriod').value = period;
+  $('#studentSlotModalTitle').textContent = slot ? 'Modifier un cours' : 'Ajouter un cours';
+  setOptions('#studentSlotDay', DAYS.map((d, i) => `<option value="${i}">${d}</option>`).join(''), String(slot?.day ?? context.day ?? 0));
+  const slotOpts = SLOTS.map((s, i) => i === 4 ? '' : `<option value="${i}">${s}</option>`).join('');
+  setOptions('#studentSlotStart', slotOpts, String(slot?.startSlot ?? context.slot ?? 0));
+  setOptions('#studentSlotEnd', slotOpts, String(slot?.endSlot ?? context.slot ?? 0));
+  const ueSelectValue = slot ? (slot.ueId || (slot.ueCode ? '__free__' : '')) : '';
+  $('#studentSlotUe').innerHTML = studentUeOptionsHtml(promotion, ueSelectValue);
+  $('#studentSlotUe').value = ueSelectValue;
+  $('#studentSlotUeCode').value = slot?.ueCode || '';
+  $('#studentSlotTitle').value = slot?.title || '';
+  $('#studentSlotRoom').value = slot?.room || '';
+  $('#studentSlotTeacher').value = slot?.teacher || '';
+  const colorEl = $('#studentSlotColorInput');
+  if (colorEl) {
+    const hasColor = isValidHexColor(slot?.color);
+    colorEl.value = hasColor ? slot.color : (slot?.ueId ? ueColor(slot.ueId) : '#9aa0ad');
+    colorEl.dataset.custom = hasColor ? '1' : '0';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  }
+  toggleStudentSlotFreeCode();
+  $('#deleteStudentSlotButton').style.display = slot ? '' : 'none';
+  if (!dialog.open) dialog.showModal();
+}
+
+function toggleStudentSlotFreeCode() {
+  const isFree = $('#studentSlotUe')?.value === '__free__';
+  const wrap = $('#studentSlotUeCodeField');
+  if (wrap) wrap.hidden = !isFree;
+}
+
+async function saveStudentSlot(event) {
+  event?.preventDefault();
+  const id = $('#studentSlotId').value;
+  const ueSel = $('#studentSlotUe').value;
+  const ueId = ueSel && ueSel !== '__free__' ? ueSel : '';
+  const clamp = clampTemplateSlots(Number($('#studentSlotStart').value), Number($('#studentSlotEnd').value));
+  const colorEl = $('#studentSlotColorInput');
+  const color = (colorEl?.dataset.custom === '1' && isValidHexColor(colorEl.value)) ? colorEl.value : '';
+  const slot = normalizeStudentSlot({
+    id: id || undefined,
+    promotion: $('#studentSlotPromotion').value,
+    period: $('#studentSlotPeriod').value,
+    day: Number($('#studentSlotDay').value),
+    startSlot: clamp.start,
+    endSlot: clamp.end,
+    ueId,
+    ueCode: ueSel === '__free__' ? $('#studentSlotUeCode').value.trim() : '',
+    title: $('#studentSlotTitle').value.trim(),
+    room: $('#studentSlotRoom').value.trim(),
+    teacher: $('#studentSlotTeacher').value.trim(),
+    color
+  });
+  const idx = state.studentWeekTemplate.findIndex(t => t.id === slot.id);
+  if (idx >= 0) state.studentWeekTemplate[idx] = slot; else state.studentWeekTemplate.push(slot);
+  $('#studentSlotDialog')?.close();
+  await saveData('Cours (planning étudiant) enregistré');
+}
+
+async function deleteStudentSlot() {
+  const id = $('#studentSlotId').value;
+  $('#studentSlotDialog')?.close();
+  if (!id) return;
+  state.studentWeekTemplate = state.studentWeekTemplate.filter(t => t.id !== id);
+  await saveData('Cours (planning étudiant) supprimé');
+}
+
+/* Écran 8 — 3 binômes de sous-onglets (reference/pdf, ruban/repartition,
+   etudiant/creneaux), tous au même niveau (retours #3, 18-19/08/2026 : Ruban
+   et Répartition étaient un seul sous-onglet avec bascule interne, promus en
+   deux sous-onglets à part entière). Chaque panneau garde son id et son
+   contenu d'origine ; seule la visibilité change (attribut `hidden`). Le
+   filtre enseignant (#rubanFilters) est commun à ruban/repartition, qui
+   partagent la même donnée. La recherche unifiée n'a de sens que sur
+   reference/ruban/repartition : vidée et neutralisée ailleurs, comme « Réglages
+   d'année » (Créneaux types) n'a pas de comportement défini par la maquette
+   non plus. */
+let rubanTab = 'reference';
+function setRubanTab(tab) {
+  rubanTab = tab;
+  $$('[data-ruban-tab]').forEach(b => {
+    const isActive = b.dataset.rubanTab === tab;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+  $('#rubanModeReference').hidden = tab !== 'reference';
+  $('#rubanTabRuban').hidden = tab !== 'ruban';
+  $('#rubanTabRepartition').hidden = tab !== 'repartition';
+  $('#rubanTabEtudiant').hidden = tab !== 'etudiant';
+  $('#rubanModeCreneaux').hidden = tab !== 'creneaux';
+  $('#rubanTabPdf').hidden = tab !== 'pdf';
+  const filtres = $('#rubanFilters');
+  if (filtres) filtres.hidden = !(tab === 'ruban' || tab === 'repartition');
+  const search = $('#rubanUnifiedSearch');
+  if (search) {
+    search.value = '';
+    search.disabled = (tab === 'etudiant' || tab === 'creneaux' || tab === 'pdf');
+  }
+  if (tab === 'reference') renderReferenceModule();
+  else if (tab === 'ruban' || tab === 'repartition') renderRuban();
+  else if (tab === 'etudiant') renderStudentPlanning();
+  else if (tab === 'creneaux') renderCreneaux();
+  else if (tab === 'pdf') renderPdfLibrary();
+}
+
+/* 18/08 — Lot F : sous-onglet « PDF d'origine ». Sidebar = liste organisée des
+   documents (REFERENCE_DOCS) groupée par type, cliquer un document le charge
+   dans le lecteur central (iframe, rendu PDF natif du navigateur). */
+let pdfLibSelected = REFERENCE_DOCS[0]?.id || '';
+function renderPdfLibrary() {
+  const toc = $('#pdfLibToc');
+  if (!toc) return;
+  if (!pdfLibSelected) pdfLibSelected = REFERENCE_DOCS[0]?.id || '';
+  const groups = [];
+  REFERENCE_DOCS.forEach(doc => {
+    let group = groups.find(g => g.type === doc.type);
+    if (!group) { group = { type: doc.type, docs: [] }; groups.push(group); }
+    group.docs.push(doc);
+  });
+  toc.innerHTML = `<div class="refread-toc-head">Documents</div>` + groups.map(g => `
+    <p class="pdf-lib-group-label">${escapeHtml(g.type)}</p>
+    <ul class="refread-toc-list">
+      ${g.docs.map(doc => `<li><button type="button" class="refread-toc-item pdf-lib-item ${doc.id === pdfLibSelected ? 'active' : ''}" data-pdf-doc="${escapeAttr(doc.id)}">${escapeHtml(doc.title)}</button></li>`).join('')}
+    </ul>`).join('');
+  const selected = REFERENCE_DOCS.find(d => d.id === pdfLibSelected) || REFERENCE_DOCS[0];
+  const frame = $('#pdfLibFrame');
+  if (frame && selected) {
+    const src = `docs/${selected.file}`;
+    if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+  }
+}
+
+/* ============================================================
+   Écran 11 — Dossier (compositeur 3 colonnes + document imprimé)
+   ============================================================
+   Toutes les pages viennent des données réelles déjà saisies
+   ailleurs (UE/séquences/séances, référentiel, ruban) — rien de
+   nouveau à ressaisir. Seul ajout de donnée : ue.bilan (texte
+   libre « Bilan de l'unité »), édité ici, persisté comme tout
+   autre champ d'UE (mergeReferenceUes le porte via ...existing).
+   Pagination : 1 page A4 par section cochée, 1 page par séquence
+   cochée (pas de tassement à plusieurs séquences par page comme
+   le document de référence — trop fragile à garantir en CSS
+   d'impression réelle sans risquer un contenu tronqué ; le nombre
+   de pages n'est donc jamais figé à 7, il dépend de l'UE choisie
+   et des sections cochées, conformément au Known Gap #3). */
+
+const DOSSIER_PRINT_CSS = `
+/* Retours #3 (18-19/08/2026) : Chrome n'imprime pas les background-color par
+   défaut (case « Graphiques d'arrière-plan » décochée), ce qui faisait
+   disparaître les barres colorées de la frise de progression (.dossier-frise-bar
+   et consorts, qui portent leur information PAR la couleur de fond, pas par
+   une bordure) — comportement indépendant du réglage réel de la case, cette
+   propriété l'impose. */
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dossier-page{box-sizing:border-box;width:210mm;min-height:297mm;margin:0 auto 8mm;padding:16mm 15mm 20mm;background:#fffefb;border:1px solid #d8d4c6;font-family:'IBM Plex Sans',sans-serif;color:#191b16;break-before:page;position:relative}
+.dossier-page:first-child{break-before:auto}
+.dossier-page .mono{font-family:'JetBrains Mono',monospace}
+.dossier-page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #d8d4c6;padding-bottom:8px;margin-bottom:20px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8a958c}
+.dossier-h2{margin:0 0 4px;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.dossier-h3{margin:20px 0 8px;font-size:13px;font-weight:700}
+.dossier-h2-rule{width:40px;height:3px;background:#1a5fb4;margin-bottom:18px}
+.dossier-body-text{font-size:13px;line-height:1.6;color:#3b3e36;max-width:70ch;margin:0 0 12px}
+.dossier-body-text.meta{color:#6b6a5e}
+.dossier-note-warn{font-size:12px;color:#7a5b16;background:#f4ead0;border:1px solid #e7dcb6;padding:8px 10px;margin:10px 0}
+.dossier-label{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#8a958c;margin-bottom:4px}
+.dossier-page-footer{position:absolute;left:15mm;right:15mm;bottom:9mm;display:flex;justify-content:space-between;border-top:1px solid #ece8db;padding-top:7px;font-size:10px;color:#8a958c;font-family:'JetBrains Mono',monospace}
+.dossier-chip-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dossier-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid #d8d4c6;background:#f4f2ec;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#3b3e36}
+.dossier-chip.mine{background:#23458c;border-color:#23458c;color:#fffefb;font-weight:600}
+.dossier-chip.dossier-chip-accent{background:#dde4f2;border-color:#b7c5e0;color:#17305f;font-weight:600}
+.dossier-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 4px}
+.dossier-table thead{display:table-header-group}
+.dossier-table th{text-align:left;padding:6px 8px;background:#f0ede2;border:1px solid #d8d4c6;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#6b6a5e}
+.dossier-table td{padding:7px 8px;border:1px solid #ece8db;vertical-align:top}
+.dossier-table-sub{display:block;font-size:11px;color:#6b6a5e;margin-top:2px;font-weight:400}
+.dossier-flag-warn{color:#C0562B}
+.dossier-flag-ok{color:#1F7A5C}
+.dossier-recap-total{margin-top:10px;font-size:12px}
+/* Garde */
+.dossier-page-garde{padding:0;display:flex;flex-direction:column}
+.dossier-garde-band{height:8px;background:#1a5fb4;flex:0 0 auto}
+.dossier-garde-inner{flex:1;padding:16mm 15mm 12mm;display:flex;flex-direction:column}
+.dossier-garde-topbar{display:flex;justify-content:space-between;border-bottom:1px solid #d8d4c6;padding-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6a5e}
+.dossier-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b6a5e;margin-bottom:16px}
+.dossier-garde-title{margin-top:14mm}
+.dossier-ue-code-big{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;color:#17305f}
+.dossier-garde-title h1{margin:6px 0 0;font-size:38px;line-height:1.08;font-weight:600;letter-spacing:-.02em;max-width:16ch}
+.dossier-garde-desc{margin:20px 0 0;font-size:14px;line-height:1.55;color:#3b3e36;max-width:56ch}
+.dossier-garde-meta{margin-top:auto;border-top:1px solid #d8d4c6;padding-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px 18px;font-size:14px}
+.dossier-garde-meta .span-2{grid-column:span 2}
+.dossier-garde-meta strong{display:block;font-size:14px;font-weight:600}
+.dossier-garde-meta small{display:block;font-size:11px;color:#565a4e;margin-top:2px}
+.dossier-teacher-pills{display:flex;flex-wrap:wrap;gap:12px}
+.dossier-teacher-pill{display:flex;align-items:center;gap:7px}
+.dossier-teacher-pill .pip{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#f0ede2;border:1px solid #d8d4c6;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;color:#3b3e36}
+.dossier-teacher-pill.mine .pip{background:#1a5fb4;border-color:#1a5fb4;color:#fffefb}
+.dossier-teacher-pill span.mono{font-size:11px;color:#565a4e}
+.dossier-garde-footer{margin-top:20px;border-top:1px solid #d8d4c6;padding-top:16px;display:flex;align-items:center;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6a5e}
+.dossier-garde-footer .dossier-garde-footer-right{margin-left:auto;font-family:'IBM Plex Sans',sans-serif;font-size:11px;color:#565a4e}
+/* Capacités */
+.dossier-capacity-block{border:1px solid #d8d4c6;border-left:3px solid #1a5fb4;margin-bottom:16px}
+.dossier-capacity-head{display:flex;align-items:baseline;gap:12px;padding:12px 14px 10px;border-bottom:1px solid #ece8db}
+.dossier-capacity-code{font-size:15px;font-weight:600;color:#17305f}
+.dossier-capacity-title{font-size:14px;font-weight:600}
+.dossier-capacity-grid{padding:10px 14px 12px;display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:12px}
+.dossier-criteria-list{margin:0;padding-left:16px;color:#3b3e36}
+.dossier-volumes-row{display:flex;border:1px solid #d8d4c6;margin:6px 0 4px}
+.dossier-volume-cell{flex:1;padding:10px 10px;text-align:center;border-right:1px solid #ece8db}
+.dossier-volume-cell:last-child{border-right:none}
+.dossier-volume-cell strong{display:block;font-size:17px}
+.dossier-volume-cell span{font-size:10.5px;color:#565a4e}
+/* Progression */
+.dossier-frise-grid{display:grid;row-gap:2px;column-gap:2px;margin-bottom:14px}
+.dossier-frise-week{font-size:9px;text-align:center;color:#8a958c;padding-bottom:4px}
+.dossier-frise-label{font-size:11px;padding:4px 6px 4px 0;align-self:center}
+.dossier-frise-cell{background:#f4f2ec;height:20px}
+.dossier-frise-bar{background:var(--seq-color,#1a5fb4);height:20px}
+.dossier-frise-week.is-thematic,.dossier-frise-cell.is-thematic{background:#f3e6c2}
+.dossier-frise-week.is-blocked,.dossier-frise-cell.is-blocked{background:#e8e6dd}
+.dossier-frise-legend{margin:-6px 0 12px;font-size:10px;color:#6b6a5e}
+.dossier-frise-swatch{display:inline-block;width:9px;height:9px;margin:0 4px 0 14px;vertical-align:middle}
+.dossier-frise-swatch:first-child{margin-left:0}
+.dossier-frise-swatch.is-thematic{background:#f3e6c2;border:1px solid #d9b75a}
+.dossier-frise-swatch.is-blocked{background:#e8e6dd;border:1px solid #b3ac93}
+.dossier-table-compact th,.dossier-table-compact td{padding:5px 8px;font-size:11px}
+/* Fiche de séquence */
+.dossier-sequence-head{border-left:4px solid var(--seq-color,#1a5fb4);padding-left:14px;margin-bottom:14px}
+.dossier-sequence-head h2{margin:0 0 8px;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.dossier-sequence-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-top:14px;font-size:12px}
+.dossier-sequence-meta p{margin:0;color:#3b3e36;line-height:1.5}
+`;
+
+let dossierUeId = '';
+let dossierViewMode = 'grille';
+let dossierSections = null;
+
+function resetDossierSections(ue) {
+  dossierSections = {
+    ueId: ue?.id || '',
+    garde: true,
+    intention: true,
+    referentiel: true,
+    referentielIntitules: true,
+    referentielCriteres: false,
+    progression: true,
+    sequences: true,
+    sequenceIds: new Set((state.sequences || []).filter(s => s.ueId === ue?.id).map(s => s.id)),
+    recapitulatif: true,
+    bilan: false,
+    vigilance: false
+  };
+}
+
+function dossierEditedDateLabel() {
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+}
+
+function ensureDossierPrintStyle() {
+  if (document.getElementById('dossierPrintStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'dossierPrintStyle';
+  style.textContent = DOSSIER_PRINT_CSS;
+  document.head.appendChild(style);
+}
+
+function renderDossier() {
+  const select = $('#dossierUeSelect');
+  if (!select) return;
+  ensureDossierPrintStyle();
+  // 17/08 — retour Martin : « réduire le filtre des UE à celles pour lesquelles je suis
+  // concerné ». Décoché par défaut (liste complète inchangée) : un filtre qu'on choisit
+  // d'activer, pas un repli silencieux qui viderait la liste tant que le Ruban n'est pas
+  // renseigné en prod (piège déjà rencontré ailleurs — voir organisation-cours-charte).
+  const mineOnly = !!$('#dossierMineFilter')?.checked;
+  const allUes = state.ues.slice().sort((a, b) => compactUeCode(a.code).localeCompare(compactUeCode(b.code), 'fr', { numeric: true }));
+  const sortedUes = mineOnly ? allUes.filter(ue => moiInitiales && enseignantsDeLUe(ue).includes(moiInitiales)) : allUes;
+  select.innerHTML = sortedUes.length
+    ? sortedUes.map(ue => `<option value="${escapeAttr(ue.id)}">${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</option>`).join('')
+    : '<option value="">Aucune UE</option>';
+  if (!dossierUeId || !sortedUes.some(u => u.id === dossierUeId)) dossierUeId = sortedUes[0]?.id || '';
+  select.value = dossierUeId;
+
+  const ue = findUe(dossierUeId);
+  if (!dossierSections || dossierSections.ueId !== dossierUeId) resetDossierSections(ue);
+
+  renderDossierUeSummary(ue);
+  renderDossierSectionsList(ue);
+
+  const units = ue ? dossierBuildUnits(ue, dossierSections) : [];
+  renderDossierPreviewGrille(ue, units);
+  renderDossierPreviewLecture(ue, units);
+  renderDossierAvantImprimer(ue, units);
+}
+
+function dossierUeSessions(ue) {
+  if (!ue) return [];
+  return state.sessions.filter(s => s.ueId === ue.id);
+}
+
+function dossierSessionMinutes(session) {
+  const fromText = String(session.expectedDuration || '').match(/(\d+)\s*h(?:\s*(\d+))?/i);
+  if (fromText) return Number(fromText[1]) * 60 + Number(fromText[2] || 0);
+  if (isDefinitiveSession(session)) return sessionDurationSlots(session) * 55;
+  return 0;
+}
+function dossierHoursLabel(minutes) {
+  if (!minutes) return '';
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
+
+function dossierPeriodLabel(ue) {
+  if (!ue.startWeekId || !ue.endWeekId) return 'à préciser';
+  return `${weekLabel(ue.startWeekId)} → ${weekLabel(ue.endWeekId)}`;
+}
+
+function dossierTeacherStats(ue) {
+  const counts = new Map();
+  dossierUeSessions(ue).forEach(s => teacherTokens(s.teacher).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)));
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([initials, count]) => ({ initials, count }));
+}
+
+function dossierTeacherPillsHtml(teachers) {
+  if (!teachers.length) return '<p class="meta tight">Aucun enseignant déclaré sur les séances.</p>';
+  return `<div class="dossier-teacher-pills">${teachers.map(t => `<span class="dossier-teacher-pill ${t.initials === moiInitiales ? 'mine' : ''}"><span class="pip">${escapeHtml(t.initials)}</span><span class="mono">${escapeHtml(t.initials)} · ${t.count} séance(s)</span></span>`).join('')}</div>`;
+}
+
+function dossierUnitShortLabel(u) {
+  if (u.kind === 'sequence') return truncate(u.title, 18);
+  return { garde: 'Garde', intention: 'Intention', referentiel: 'Capacités', progression: 'Progression', recapitulatif: 'Séances', bilan: 'Bilan' }[u.kind] || u.title;
+}
+
+/* Liste ordonnée des unités (= pages) à sortir, selon les cases cochées. Une
+   unité = une page A4 exactement (voir note d'en-tête du bloc). */
+function dossierBuildUnits(ue, sections) {
+  // Retours #3 (18-19/08/2026) — Cas 1 (visibilité entre comptes enseignants,
+  // renforcé sur demande explicite) : aucun contenu de dossier pour une UE que
+  // je n'enseigne pas, PAS MÊME la page de garde — ni affiché, ni imprimable.
+  // Point de passage unique : aperçus (grille/lecture), complétude et
+  // dossierOpenPrintWindow en dépendent tous, via units.length === 0.
+  if (!jeSuisEnseignantDeLUe(ue)) return [];
+  const seqs = state.sequences.filter(s => s.ueId === ue.id).slice()
+    .sort((a, b) => dossierSequenceOrder(a) - dossierSequenceOrder(b));
+  const units = [{ key: 'garde', kind: 'garde', title: 'Page de garde' }];
+  if (sections.intention) units.push({ key: 'intention', kind: 'intention', title: 'Intention pédagogique' });
+  if (sections.referentiel) units.push({ key: 'referentiel', kind: 'referentiel', title: 'Le référentiel interactif' });
+  if (sections.progression) units.push({ key: 'progression', kind: 'progression', title: 'Progression de l’unité' });
+  if (sections.sequences) {
+    seqs.forEach((seq, i) => {
+      if (sections.sequenceIds.has(seq.id)) units.push({ key: `seq:${seq.id}`, kind: 'sequence', title: seq.title || `Séquence ${i + 1}`, seq });
+    });
+  }
+  if (sections.recapitulatif) units.push({ key: 'recapitulatif', kind: 'recapitulatif', title: 'Récapitulatif des séances' });
+  if (sections.bilan) units.push({ key: 'bilan', kind: 'bilan', title: 'Bilan de l’unité' });
+  return units;
+}
+function dossierSequenceOrder(seq) {
+  // Trier par vraie position chronologique (index dans state.weeks, qui couvre
+  // l'année scolaire dans l'ordre) plutôt que par simple numéro de semaine —
+  // sinon une séquence de janvier (S3) passait avant une séquence de décembre
+  // (S50) puisque 3 < 50 numériquement, alors qu'elle est plus tardive.
+  const weekId = firstWeekIdOfSequence(seq);
+  const idx = weekId ? state.weeks.findIndex(w => w.id === weekId) : -1;
+  if (idx !== -1) return idx;
+  const m = String(seq.targetWeeks || '').match(/\d{1,2}/);
+  return m ? 100000 + Number(m[0]) : 999999;
+}
+
+function dossierSessionSort(a, b) {
+  const wa = a.weekId || a.targetWeekId || '', wb = b.weekId || b.targetWeekId || '';
+  if (wa !== wb) return wa.localeCompare(wb);
+  return (a.day ?? 9) - (b.day ?? 9);
+}
+
+/* ---- Contenu des pages (réutilisé tel quel par l'aperçu « Lecture » et par
+   la fenêtre d'impression : une seule fonction produit le HTML des deux). ---- */
+
+function dossierPageHeaderInner(ue) {
+  return `<span>${escapeHtml(ue.code)} · ${escapeHtml(ue.title)}</span><span>${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)}</span>`;
+}
+function dossierPageFooter(ue, footerOpts) {
+  if (!footerOpts?.show) return '';
+  const num = footerOpts.pageOf ? `page ${footerOpts.index} sur ${footerOpts.total}` : String(footerOpts.index);
+  return `<div class="dossier-page-footer"><span>${escapeHtml(ue.code)} · dossier édité le ${dossierEditedDateLabel()}</span><span class="mono">${num}</span></div>`;
+}
+
+function dossierPageGarde(ue, footerOpts, total) {
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const sessions = dossierUeSessions(ue);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  const teachers = dossierTeacherStats(ue);
+  const footer = footerOpts?.show ? `<div class="dossier-garde-footer">
+      <span>Édité le ${dossierEditedDateLabel()}</span>
+      <span>${total} page${total > 1 ? 's' : ''} · année ${escapeHtml(state.schoolYear || '')}</span>
+      <span class="dossier-garde-footer-right">Organisation des cours — BTS GPN Kerplouz</span>
+    </div>` : '';
+  return `<article class="dossier-page dossier-page-garde">
+    <div class="dossier-garde-band"></div>
+    <div class="dossier-garde-inner">
+      <div class="dossier-garde-topbar mono"><span>Kerplouz LaSalle — Auray</span><span>BTSA Gestion et Protection de la Nature</span></div>
+      <div class="dossier-garde-title">
+        <div class="dossier-eyebrow">Dossier d'unité d'enseignement</div>
+        <div class="dossier-ue-code-big mono">${escapeHtml(ue.code)}</div>
+        <h1>${escapeHtml(ue.title)}</h1>
+        ${ue.description ? `<p class="dossier-garde-desc">${escapeHtml(ue.description)}</p>` : ''}
+      </div>
+      <div class="dossier-garde-meta">
+        <div><span class="dossier-label">Promotion</span><strong>${escapeHtml(ue.promotion)}</strong></div>
+        <div><span class="dossier-label">Semestre</span><strong>${escapeHtml(ue.semester)}</strong></div>
+        <div><span class="dossier-label">Période</span><strong class="mono">${escapeHtml(dossierPeriodLabel(ue))}</strong></div>
+        <div><span class="dossier-label">Volume</span><strong class="mono">${escapeHtml(dossierHoursLabel(minutes) || 'à préciser')}</strong><small>${seqs.length} séquence(s) · ${sessions.length} séance(s)</small></div>
+        <div class="span-2"><span class="dossier-label">Enseignants intervenant sur les séances</span>${dossierTeacherPillsHtml(teachers)}</div>
+      </div>
+      ${footer}
+    </div>
+  </article>`;
+}
+
+function dossierPageIntention(ue, footerOpts) {
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Intention pédagogique</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text">${ue.description ? escapeHtml(ue.description) : '<span class="meta">Aucune intention pédagogique renseignée pour cette UE.</span>'}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierUeCapacitiesFull(ue) {
+  const rubanUe = findRubanUe(ueCodeCompact(ue.code));
+  const caps = rubanUe ? rubanUeCapacities(rubanUe) : ueCapacities(ue).map(c => ({ code: c.code, title: c.title, disciplines: [], enseignants: [], evaluateurs: [] }));
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  return caps.map(cap => ({
+    ...cap,
+    ref: (window.REFERENCE_CAPACITIES || {})[cap.code] || null,
+    sequences: seqs.filter(s => (s.capacityCodes || []).includes(cap.code))
+  }));
+}
+
+function dossierCapacityBlockHtml(cap, sections) {
+  const seqNames = cap.sequences.map(s => s.title || 'sans titre');
+  const title = (sections.referentielIntitules && cap.ref?.title) ? cap.ref.title : cap.title;
+  return `<div class="dossier-capacity-block">
+    <div class="dossier-capacity-head"><span class="mono dossier-capacity-code">${escapeHtml(cap.code)}</span><span class="dossier-capacity-title">${escapeHtml(title)}</span></div>
+    <div class="dossier-capacity-grid">
+      <span class="dossier-label">Disciplines</span><span class="dossier-chip-row">${cap.disciplines.length ? cap.disciplines.map(d => `<span class="dossier-chip">${escapeHtml(d)}</span>`).join('') : '<span class="meta">Non renseignées</span>'}</span>
+      <span class="dossier-label">Enseignants</span><span class="dossier-chip-row">${cap.enseignants.length ? cap.enseignants.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '<span class="meta">Non renseignés</span>'}</span>
+      <span class="dossier-label">Évaluateurs</span><span class="dossier-chip-row">${cap.evaluateurs.length ? cap.evaluateurs.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '<span class="meta">Non renseignés</span>'}</span>
+      <span class="dossier-label">Travaillée en</span><span>${seqNames.length ? escapeHtml(seqNames.join(' · ')) : '<span class="meta">Aucune séquence ne déclare cette capacité.</span>'}</span>
+      ${sections.referentielCriteres && cap.ref?.criteria?.length ? `<span class="dossier-label">Critères d'évaluation</span><span><ul class="dossier-criteria-list">${cap.ref.criteria.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></span>` : ''}
+    </div>
+  </div>`;
+}
+
+function dossierVolumesByType(ue) {
+  const map = new Map();
+  dossierUeSessions(ue).forEach(s => {
+    const type = s.type || 'Non précisé';
+    map.set(type, (map.get(type) || 0) + dossierSessionMinutes(s));
+  });
+  return [...map.entries()].filter(([, minutes]) => minutes > 0).sort((a, b) => b[1] - a[1]);
+}
+function dossierVolumesTableHtml(rows) {
+  if (!rows.length) return '<p class="dossier-body-text meta">Aucune séance saisie pour cette UE.</p>';
+  return `<div class="dossier-volumes-row">${rows.map(([type, minutes]) => `<div class="dossier-volume-cell"><strong class="mono">${escapeHtml(dossierHoursLabel(minutes))}</strong><span>${escapeHtml(type)}</span></div>`).join('')}</div>`;
+}
+
+function dossierEvaluationTableHtml(ue) {
+  const rows = dossierUeSessions(ue).filter(s => s.type === 'Évaluation');
+  if (!rows.length) return '<p class="dossier-body-text meta">Aucune évaluation d’unité saisie sur les séances (type « Évaluation »).</p>';
+  return `<table class="dossier-table"><thead><tr><th>Épreuve</th><th>Objet</th><th>Semaine</th></tr></thead><tbody>
+    ${rows.map(s => `<tr><td><strong>${escapeHtml(s.title || 'Sans titre')}</strong></td><td>${escapeHtml(s.objectives || s.notes || '')}</td><td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}${isFictiveSession(s) ? ' <span class="dossier-flag-warn">à placer</span>' : ''}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+function dossierPageReferentiel(ue, sections, footerOpts) {
+  const caps = dossierUeCapacitiesFull(ue);
+  const capsHtml = caps.length ? caps.map(cap => dossierCapacityBlockHtml(cap, sections)).join('')
+    : '<p class="dossier-body-text meta">Aucune capacité déclarée pour cette UE dans Référentiel.</p>';
+  const seqsWithoutCap = state.sequences.filter(s => s.ueId === ue.id && !(s.capacityCodes || []).length);
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Le référentiel interactif</h2><div class="dossier-h2-rule"></div>
+    ${capsHtml}
+    ${seqsWithoutCap.length ? `<p class="dossier-note-warn">${seqsWithoutCap.length} séquence(s) sans capacité déclarée : ${escapeHtml(seqsWithoutCap.map(s => s.title || 'sans titre').join(', '))}.</p>` : ''}
+    <h3 class="dossier-h3">Volumes par type de séance</h3>
+    ${dossierVolumesTableHtml(dossierVolumesByType(ue))}
+    <h3 class="dossier-h3">Évaluation de l'unité</h3>
+    ${dossierEvaluationTableHtml(ue)}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierProgressionTableHtml(seqs, ue) {
+  if (!seqs.length) return '';
+  // Retours #3 (18-19/08/2026) : distinguer mon ressort de celui des
+  // collègues quand plusieurs enseignent l'UE sans co-concevoir les mêmes
+  // séquences (même chip .mine qu'ailleurs dans le dossier).
+  return `<table class="dossier-table dossier-table-compact"><thead><tr><th>Séquence</th><th>Semaines</th><th>Durée</th><th>Séances</th><th>Ens.</th></tr></thead><tbody>
+    ${seqs.map(seq => { const teachers = teacherTokens(seq.teacher || ue?.teacher); return `<tr><td><strong>${escapeHtml(seq.title || 'Sans titre')}</strong></td><td class="mono">${escapeHtml(seq.targetWeeks || '—')}</td><td class="mono">${escapeHtml(seq.hoursEstimate || '—')}</td><td class="mono">${state.sessions.filter(s => s.sequenceId === seq.id).length}</td><td class="mono">${teachers.length ? teachers.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td></tr>`; }).join('')}
+  </tbody></table>`;
+}
+
+function dossierPageProgression(ue, footerOpts) {
+  const weeks = weeksForSemester(ue.semester);
+  // Même tri chronologique que dossierBuildUnits (app.js) — sans lui, l'ordre
+  // suivait la création des séquences, pas leur position dans l'année
+  // (Ajustements #2, 18/08/2026, retour Martin : régression du même bug que
+  // le Lot G avait corrigé ailleurs).
+  const seqs = state.sequences.filter(s => s.ueId === ue.id).slice()
+    .sort((a, b) => dossierSequenceOrder(a) - dossierSequenceOrder(b));
+  let grid = '';
+  // Ajustements #2 (18/08/2026, retour Martin) : marquer les semaines hors
+  // routine (vacances/stage, thématique·EIL non portée par cette UE) pour que
+  // les vides de la frise se comprennent au lieu de sembler des oublis.
+  // isThematicBlocked exclut la (les) UE porteuse(s) de l'EIL : chez elles la
+  // semaine a de vraies séances, ce n'est pas un vide.
+  let hasThematic = false, hasBlocked = false;
+  const weekMark = weeks.map(w => {
+    if (isThematicBlocked(w, ue.promotion, ue.id)) { hasThematic = true; return 'is-thematic'; }
+    if (isBlockedWeek(w, ue.promotion)) { hasBlocked = true; return 'is-blocked'; }
+    return '';
+  });
+  if (seqs.length && weeks.length) {
+    weeks.forEach((w, i) => { grid += `<div class="dossier-frise-week mono ${weekMark[i]}" style="grid-column:${i + 2};grid-row:1">${escapeHtml(w.label)}</div>`; });
+    seqs.forEach((seq, idx) => {
+      const row = idx + 2;
+      grid += `<div class="dossier-frise-label" style="grid-row:${row}">${escapeHtml(seq.title || 'Séquence sans titre')}</div>`;
+      weeks.forEach((w, i) => { grid += `<div class="dossier-frise-cell ${weekMark[i]}" style="grid-column:${i + 2};grid-row:${row}"></div>`; });
+      sequenceWeekSegments(seq, weeks).forEach(seg => {
+        grid += `<div class="dossier-frise-bar" style="grid-column:${seg.startIndex + 2} / ${seg.endIndex + 3};grid-row:${row};--seq-color:${sequenceColor(seq.id)}"></div>`;
+      });
+    });
+  }
+  const cols = `130px repeat(${weeks.length || 1}, 1fr)`;
+  const legend = (hasThematic || hasBlocked) ? `<p class="dossier-frise-legend meta tight">${hasThematic ? '<span class="dossier-frise-swatch is-thematic"></span>semaine thématique / EIL' : ''}${hasBlocked ? '<span class="dossier-frise-swatch is-blocked"></span>vacances / sans cours' : ''}</p>` : '';
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Progression de l'unité</h2><div class="dossier-h2-rule"></div>
+    ${seqs.length ? `<div class="dossier-frise-grid" style="grid-template-columns:${cols}">${grid}</div>` : '<p class="dossier-body-text meta">Aucune séquence pour cette UE.</p>'}
+    ${legend}
+    ${dossierProgressionTableHtml(seqs, ue)}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierSequenceBlock(seq, ue, footerOpts) {
+  const sessions = state.sessions.filter(s => s.sequenceId === seq.id).slice().sort(dossierSessionSort);
+  const rows = sessions.map((s, i) => { const teachers = teacherTokens(s.teacher || seq.teacher || ue.teacher); return `<tr>
+    <td class="mono">${i + 1}</td>
+    <td><strong>${escapeHtml(s.title || 'Sans titre')}</strong>${s.objectives ? `<span class="dossier-table-sub">${escapeHtml(truncate(s.objectives, 160))}</span>` : ''}</td>
+    <td class="mono">${escapeHtml(s.type || '—')}</td>
+    <td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}</td>
+    <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
+    <td>${escapeHtml(s.room || '—')}</td>
+    <td class="mono">${teachers.length ? teachers.map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td>
+  </tr>`; }).join('') || `<tr><td colspan="7" class="meta">Aucune séance rattachée à cette séquence.</td></tr>`;
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono"><span>${escapeHtml(ue.code)} · Séquences</span><span>${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)}</span></header>
+    <div class="dossier-sequence-head" style="--seq-color:${sequenceColor(seq.id)}">
+      <div class="dossier-eyebrow">Séquence</div>
+      <h2>${escapeHtml(seq.title || 'Sans titre')}</h2>
+      <div class="dossier-chip-row">
+        <span class="dossier-chip">${escapeHtml(seq.targetWeeks || '—')}</span>
+        <span class="dossier-chip">${escapeHtml(seq.hoursEstimate || '—')}</span>
+        <span class="dossier-chip">${sessions.length} séance(s)</span>
+        ${(seq.capacityCodes || []).map(c => `<span class="dossier-chip dossier-chip-accent">${escapeHtml(c)}</span>`).join('')}
+        ${teacherTokens(seq.teacher || ue.teacher).map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('')}
+      </div>
+    </div>
+    <table class="dossier-table"><thead><tr><th>Nº</th><th>Séance</th><th>Type</th><th>Sem.</th><th>Durée</th><th>Lieu</th><th>Ens.</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="dossier-sequence-meta">
+      ${seq.objectives ? `<div><span class="dossier-label">Objectifs</span><p>${escapeHtml(seq.objectives)}</p></div>` : ''}
+      ${seq.learningOutcomes ? `<div><span class="dossier-label">Acquis visés</span><p>${escapeHtml(seq.learningOutcomes)}</p></div>` : ''}
+      ${seq.keywords ? `<div><span class="dossier-label">Mots-clés</span><p>${escapeHtml(seq.keywords)}</p></div>` : ''}
+      ${seq.deliverables ? `<div><span class="dossier-label">Production attendue</span><p>${escapeHtml(seq.deliverables)}</p></div>` : ''}
+    </div>
+    ${!seq.deliverables ? '<p class="dossier-note-warn">Aucune production attendue renseignée pour cette séquence.</p>' : ''}
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageRecapitulatif(ue, footerOpts) {
+  const sessions = dossierUeSessions(ue).slice().sort(dossierSessionSort);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  const placed = sessions.filter(s => !isFictiveSession(s)).length;
+  const toPlace = sessions.length - placed;
+  const rows = sessions.map(s => `<tr>
+    <td class="mono">${escapeHtml(weekLabel(s.weekId || s.targetWeekId))}</td>
+    <td class="mono">${!isFictiveSession(s) && Number.isInteger(s.day) ? escapeHtml((DAY_NAMES[s.day] || '').slice(0, 3).toLowerCase()) : '—'}</td>
+    <td><strong>${escapeHtml(s.title || 'Sans titre')}</strong></td>
+    <td class="mono">${escapeHtml(s.type || '—')}</td>
+    <td class="mono">${escapeHtml(dossierHoursLabel(dossierSessionMinutes(s)) || '—')}</td>
+    <td>${escapeHtml(s.room || '—')}</td>
+    <!-- Retours #3 (18-19/08/2026) : distinguer mon ressort de celui des
+         collègues, même chip .mine que la fiche de séquence et le référentiel
+         (dossier-chip-row), plutôt qu'une liste d'initiales indifférenciée. -->
+    <td class="mono">${teacherTokens(s.teacher).length ? teacherTokens(s.teacher).map(t => `<span class="dossier-chip ${t === moiInitiales ? 'mine' : ''}">${escapeHtml(t)}</span>`).join('') : '—'}</td>
+    <td class="mono ${isFictiveSession(s) ? 'dossier-flag-warn' : 'dossier-flag-ok'}">${escapeHtml(displayPlacementStatus(s.placementStatus) || 'placée')}</td>
+  </tr>`).join('') || `<tr><td colspan="8" class="meta">Aucune séance pour cette UE.</td></tr>`;
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Récapitulatif des séances</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text meta">Les ${sessions.length} séance(s) de l'unité, une ligne chacune.</p>
+    <table class="dossier-table"><thead><tr><th>Sem.</th><th>Jour</th><th>Séance</th><th>Type</th><th>Durée</th><th>Lieu</th><th>Ens.</th><th>État</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="dossier-recap-total mono">Total : ${escapeHtml(dossierHoursLabel(minutes) || '—')} · ${placed} placée(s)${toPlace ? ` · <span class="dossier-flag-warn">${toPlace} à placer</span>` : ''}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageBilan(ue, footerOpts) {
+  return `<article class="dossier-page">
+    <header class="dossier-page-header mono">${dossierPageHeaderInner(ue)}</header>
+    <h2 class="dossier-h2">Bilan de l'unité</h2><div class="dossier-h2-rule"></div>
+    <p class="dossier-body-text">${ue.bilan ? escapeHtml(ue.bilan).replace(/\n/g, '<br>') : '<span class="meta">Aucun bilan renseigné.</span>'}</p>
+    ${dossierPageFooter(ue, footerOpts)}
+  </article>`;
+}
+
+function dossierPageContentHtml(unit, ue, sections, footerOpts, total) {
+  switch (unit.kind) {
+    case 'garde': return dossierPageGarde(ue, footerOpts, total);
+    case 'intention': return dossierPageIntention(ue, footerOpts);
+    case 'referentiel': return dossierPageReferentiel(ue, sections, footerOpts);
+    case 'progression': return dossierPageProgression(ue, footerOpts);
+    case 'sequence': return dossierSequenceBlock(unit.seq, ue, footerOpts);
+    case 'recapitulatif': return dossierPageRecapitulatif(ue, footerOpts);
+    case 'bilan': return dossierPageBilan(ue, footerOpts);
+    default: return '';
+  }
+}
+
+function dossierPagesHtml(ue, units, opts = {}) {
+  const footerDate = opts.footerDate !== undefined ? opts.footerDate : !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = opts.pageOf !== undefined ? opts.pageOf : !!$('#dossierOptPageOf')?.checked;
+  const total = units.length;
+  return units.map((u, i) => dossierPageContentHtml(u, ue, dossierSections, { show: footerDate, pageOf, index: i + 1, total }, total)).join('');
+}
+
+/* ---- Colonne 2 : la checklist des sections ---- */
+
+function dossierSectionRow(key, label, opts = {}) {
+  const checked = opts.locked ? (key === 'garde') : !!dossierSections[key];
+  const disabled = opts.disabled ? 'disabled' : '';
+  const hint = opts.hint ? `<p class="dossier-section-hint">${escapeHtml(opts.hint)}</p>` : '';
+  const subRows = opts.sub ? `<div class="dossier-subsections">${opts.sub.join('')}</div>` : '';
+  const editor = (key === 'bilan' && dossierSections.bilan) ? dossierBilanEditorHtml() : '';
+  return `<div class="dossier-section-row ${opts.locked ? 'locked' : ''}">
+    <label class="checkbox-inline">
+      <input type="checkbox" data-dossier-section="${key}" ${checked ? 'checked' : ''} ${disabled} />
+      <span>${escapeHtml(label)}</span>
+    </label>
+    ${hint}
+    ${subRows}
+    ${editor}
+  </div>`;
+}
+function dossierSubRow(key, label) {
+  const checked = key.startsWith('seq:') ? dossierSections.sequenceIds.has(key.slice(4)) : !!dossierSections[key];
+  return `<label class="checkbox-inline dossier-subrow"><input type="checkbox" data-dossier-subsection="${escapeAttr(key)}" ${checked ? 'checked' : ''} /><span>${escapeHtml(label)}</span></label>`;
+}
+function dossierBilanEditorHtml() {
+  const ue = findUe(dossierUeId);
+  return `<textarea class="dossier-bilan-editor" id="dossierBilanText" rows="3" placeholder="Ce qui a marché, ce qui a coincé, à ajuster l'an prochain…">${escapeHtml(ue?.bilan || '')}</textarea>`;
+}
+
+function renderDossierUeSummary(ue) {
+  const el = $('#dossierUeSummary');
+  if (!el) return;
+  if (!ue) { el.innerHTML = '<p class="meta">Aucune UE.</p>'; return; }
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const sessions = dossierUeSessions(ue);
+  const minutes = sessions.reduce((sum, s) => sum + dossierSessionMinutes(s), 0);
+  el.innerHTML = `<div class="dossier-ue-card">
+    <div class="dossier-ue-code mono">${escapeHtml(ue.code)}</div>
+    <div class="dossier-ue-title">${escapeHtml(ue.title)}</div>
+    <div class="dossier-ue-meta">${escapeHtml(ue.promotion)} · ${escapeHtml(ue.semester)} · ${seqs.length} séq. · ${sessions.length} séances</div>
+    <div class="dossier-ue-meta">${escapeHtml(dossierHoursLabel(minutes) || 'Volume à préciser')}</div>
+  </div>`;
+}
+
+function renderDossierSectionsList(ue) {
+  const el = $('#dossierSectionsList');
+  const countEl = $('#dossierSectionsCount');
+  if (!el) return;
+  if (!ue) { el.innerHTML = ''; if (countEl) countEl.textContent = ''; return; }
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const rows = [
+    dossierSectionRow('garde', 'Page de garde', { locked: true, hint: 'obligatoire' }),
+    dossierSectionRow('intention', 'Intention pédagogique'),
+    dossierSectionRow('referentiel', 'Le référentiel interactif', { sub: [
+      dossierSubRow('referentielIntitules', 'Intitulés complets'),
+      dossierSubRow('referentielCriteres', 'Critères d’évaluation détaillés')
+    ] }),
+    dossierSectionRow('progression', 'Progression de l’unité'),
+    dossierSectionRow('sequences', 'Fiches de séquence', { sub: seqs.length
+      ? seqs.map(seq => dossierSubRow(`seq:${seq.id}`, seq.title || 'Séquence sans titre'))
+      : ['<p class="meta tight dossier-subrow">Aucune séquence pour cette UE.</p>'] }),
+    dossierSectionRow('recapitulatif', 'Récapitulatif des séances'),
+    dossierSectionRow('bilan', 'Bilan de l’unité', { hint: 'Jamais inclus par défaut. Vous le sortez pour ce dossier-ci.' }),
+    dossierSectionRow('vigilance', 'Points de vigilance', { locked: true, disabled: true, hint: 'Ne sort jamais du logiciel — non désactivable.' })
+  ];
+  el.innerHTML = rows.join('');
+  if (countEl) {
+    const checked = ['garde', 'intention', 'referentiel', 'progression', 'sequences', 'recapitulatif', 'bilan'].filter(k => dossierSections[k]).length;
+    countEl.textContent = `${checked} / 7`;
+  }
+}
+
+/* ---- Colonne centrale : Aperçu (Grille / Lecture) ---- */
+
+function renderDossierPreviewGrille(ue, units) {
+  const el = $('#dossierPreviewGrille');
+  if (!el) return;
+  const footerDate = !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = !!$('#dossierOptPageOf')?.checked;
+  const total = units.length;
+  el.innerHTML = ue && !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son dossier n’est ni affiché ni imprimable.</p>'
+    : ue && units.length
+      ? units.map((u, i) => `<div class="dossier-thumb">
+        <div class="dossier-thumb-page">${dossierPageContentHtml(u, ue, dossierSections, { show: footerDate, pageOf, index: i + 1, total }, total)}</div>
+        <div class="dossier-thumb-label">${i + 1} · ${escapeHtml(dossierUnitShortLabel(u))}</div>
+      </div>`).join('')
+      : '<p class="meta">Choisir une UE et au moins une section.</p>';
+}
+function renderDossierPreviewLecture(ue, units) {
+  const el = $('#dossierPreviewLecture');
+  if (!el) return;
+  el.innerHTML = ue && !jeSuisEnseignantDeLUe(ue)
+    ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE : son dossier n’est ni affiché ni imprimable.</p>'
+    : ue && units.length ? dossierPagesHtml(ue, units) : '<p class="meta">Choisir une UE et au moins une section.</p>';
+}
+
+/* ---- Colonne 3 : complétude + manques + impression ---- */
+
+function dossierCompleteness(ue) {
+  // Retours #3 (18-19/08/2026) — Cas 1 : les manques révèlent du contenu
+  // (titres de séances/séquences) même sans afficher le dossier lui-même.
+  if (!ue || !jeSuisEnseignantDeLUe(ue)) return { percent: 0, gaps: [] };
+  const sessions = dossierUeSessions(ue);
+  const seqs = state.sequences.filter(s => s.ueId === ue.id);
+  const gaps = [];
+  const noObjectives = sessions.filter(s => !String(s.objectives || '').trim());
+  if (noObjectives.length) gaps.push({ label: `${noObjectives.length} séance(s) sans objectifs`, detail: noObjectives.slice(0, 4).map(s => s.title || 'sans titre').join(', '), action: 'Les remplir →', goto: ue.id });
+  const toPlace = sessions.filter(isFictiveSession);
+  if (toPlace.length) gaps.push({ label: `${toPlace.length} séance(s) à placer`, detail: 'Apparaîtront « à placer » dans le récapitulatif.', action: 'Voir le planning →', goto: ue.id });
+  const noCapacity = seqs.filter(s => !(s.capacityCodes || []).length);
+  if (noCapacity.length) gaps.push({ label: `${noCapacity.length} séquence(s) sans capacité déclarée`, detail: noCapacity.map(s => s.title || 'sans titre').join(', '), action: 'Les compléter →', goto: ue.id });
+  const noDeliverable = seqs.filter(s => !String(s.deliverables || '').trim());
+  if (noDeliverable.length) gaps.push({ label: `${noDeliverable.length} séquence(s) sans production attendue`, detail: noDeliverable.map(s => s.title || 'sans titre').join(', '), action: 'Les compléter →', goto: ue.id });
+  const bilanMissing = dossierSections.bilan && !String(ue.bilan || '').trim();
+  if (bilanMissing) gaps.push({ label: `Bilan de l'unité vide`, detail: 'La page sortira sans texte.', action: 'Le rédiger →', goto: ue.id });
+  const checks = [noObjectives, toPlace, noCapacity, noDeliverable, bilanMissing ? [1] : []];
+  const failed = checks.filter(a => a.length).length;
+  const percent = Math.round(((checks.length - failed) / checks.length) * 100);
+  return { percent, gaps };
+}
+
+function renderDossierAvantImprimer(ue, units) {
+  const total = units.length;
+  const nonMienne = ue && !jeSuisEnseignantDeLUe(ue);
+  const countEl = $('#dossierPageCount');
+  if (countEl) countEl.textContent = nonMienne ? '' : ue ? `${total} page${total > 1 ? 's' : ''} · A4 portrait` : '';
+  const { percent, gaps } = dossierCompleteness(ue);
+  const barEl = $('#dossierCompleteness');
+  if (barEl) {
+    barEl.innerHTML = nonMienne
+      ? '<p class="meta design-not-mine-hint">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE.</p>'
+      : ue ? `
+      <p class="dossier-completeness-label">Le dossier est complet à ${percent} %</p>
+      <p class="meta tight">${gaps.length ? `${gaps.length} manque(s) repéré(s). Le dossier s'imprime quand même : les champs vides ne sortent pas.` : 'Aucun manque repéré.'}</p>
+      <div class="dossier-completeness-bar"><span style="width:${percent}%"></span></div>` : '';
+  }
+  const gapsEl = $('#dossierGaps');
+  if (gapsEl) {
+    gapsEl.innerHTML = gaps.map(g => `<div class="dossier-gap">
+      <p>${escapeHtml(g.label)}</p>
+      ${g.detail ? `<p class="meta tight">${escapeHtml(g.detail)}</p>` : ''}
+      <button type="button" class="link-button" data-dossier-gap-goto="${escapeAttr(g.goto || '')}">${escapeHtml(g.action || 'Voir →')}</button>
+    </div>`).join('');
+  }
+  const printBtn = $('#dossierPrintButton');
+  if (printBtn) printBtn.textContent = ue && total ? `Imprimer le dossier — ${total} page${total > 1 ? 's' : ''}` : 'Imprimer le dossier';
+  if (printBtn) printBtn.disabled = !ue || !total;
+  const pdfBtn = $('#dossierPdfButton');
+  if (pdfBtn) pdfBtn.disabled = !ue || !total;
+}
+
+function dossierOpenPrintWindow() {
+  const ue = findUe(dossierUeId);
+  if (!ue) return;
+  const units = dossierBuildUnits(ue, dossierSections);
+  if (!units.length) return;
+  const footerDate = !!$('#dossierOptFooterDate')?.checked;
+  const pageOf = !!$('#dossierOptPageOf')?.checked;
+  const pagesHtml = dossierPagesHtml(ue, units, { footerDate, pageOf });
+  const win = window.open('', '_blank');
+  if (!win) { alert('Le navigateur a bloqué l’ouverture de la fenêtre d’impression. Autorisez les pop-ups pour ce site.'); return; }
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier — ${escapeHtml(ue.code)} ${escapeHtml(ue.title)}</title><style>body{margin:0;background:#e9e6dc}${DOSSIER_PRINT_CSS}@media print{body{background:#fff}.dossier-page{border:none;margin:0}}</style></head><body>${pagesHtml}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+  win.document.close();
 }
 
 function bindEvents() {
@@ -4675,6 +6598,15 @@ function bindEvents() {
     $(`#${tab.dataset.view}`).classList.add('active-view');
     // Lot 4 — s'ouvrir sur la semaine en cours à chaque entrée dans l'onglet.
     if (tab.dataset.view === 'gantt') scrollGanttToCurrentWeek();
+    // Ajustements #2 [E2.3] (18/08/2026) — même piège : positionner le
+    // défilement d'une bande cachée (`display:none`, vue pas encore active)
+    // n'a aucun effet tant qu'elle n'est pas mise en page. Refaire le calcul
+    // une fois la vue affichée, comme scrollGanttToCurrentWeek juste au-dessus.
+    if (tab.dataset.view === 'week') renderWeekStrip();
+    // Retours #3 (18-19/08/2026) : l'onglet principal « Référentiel » doit
+    // toujours rouvrir sur son sous-onglet Référentiel, pas sur le dernier
+    // sous-onglet consulté (Répartition, Ruban…).
+    if (tab.dataset.view === 'ruban') setRubanTab('reference');
   }));
 
   // Chip de capacité (conception pédagogique) -> ouvrir le module correspondant dans le Référentiel.
@@ -4688,31 +6620,219 @@ function bindEvents() {
   // Onglets de module (M4 / M5).
   $$('[data-ref-module]').forEach(btn => btn.addEventListener('click', () => {
     selectedReferenceModule = btn.dataset.refModule;
+    refReadSection = ''; // redémarre sur la 1re capacité du nouveau module
     const countEl = $('#refmodCount'); if (countEl) countEl.textContent = '';
-    const input = $('#referenceModuleSearch'); if (input) input.value = '';
+    const input = $('#rubanUnifiedSearch'); if (input) input.value = '';
     renderReferenceModule();
   }));
-  // Recherche dans le module (débounce).
-  let refmodTimer;
-  $('#referenceModuleSearch')?.addEventListener('input', (event) => {
-    clearTimeout(refmodTimer);
+  // Barre latérale du référentiel : Général / une capacité / une annexe, ou —
+  // sous la capacité affichée — une de ses sous-parties (ancre, pas de re-rendu).
+  $('#refreadToc')?.addEventListener('click', (event) => {
+    const jump = event.target.closest('[data-refread-jump]');
+    if (jump) {
+      $('#' + CSS.escape(jump.dataset.refreadJump))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const item = event.target.closest('[data-refread-section]');
+    if (!item) return;
+    refReadSection = item.dataset.refreadSection;
+    renderReferenceModule();
+  });
+  // « Chez vous » : ouvrir la séquence réelle rattachée à la capacité affichée.
+  $('#refreadChezVous')?.addEventListener('click', (event) => {
+    const seqBtn = event.target.closest('[data-edit-sequence]');
+    if (seqBtn) openSequenceModal(findSequence(seqBtn.dataset.editSequence));
+  });
+  // Recherche unifiée (écran 8) : débounce, routée selon le sous-onglet actif —
+  // « reference » cherche dans le module (refmodSearch), « repartition » filtre
+  // le Ruban/la Répartition (renderRuban) ; inerte ailleurs (champ désactivé par
+  // setRubanTab).
+  let rubanSearchTimer;
+  $('#rubanUnifiedSearch')?.addEventListener('input', (event) => {
+    clearTimeout(rubanSearchTimer);
     const value = event.target.value;
-    refmodTimer = setTimeout(() => refmodSearch(value), 180);
+    rubanSearchTimer = setTimeout(() => {
+      if (rubanTab === 'reference') refmodSearch(value);
+      else if (rubanTab === 'repartition') renderRuban();
+    }, 180);
   });
   $('#refmodExpand')?.addEventListener('click', refmodExpandAll);
   $('#refmodCollapse')?.addEventListener('click', refmodCollapseAll);
   mesurerBandeauCollant();
-  // Lot 6 — même geste que dans le Référentiel, pour la Conception pédagogique.
-  $('#designExpandAll')?.addEventListener('click', () => { $('#ueTree')?.querySelectorAll('details').forEach(d => { d.open = true; }); });
-  $('#designCollapseAll')?.addEventListener('click', () => { $('#ueTree')?.querySelectorAll('details').forEach(d => { d.open = false; }); });
   $('#refmodClear')?.addEventListener('click', () => {
-    const input = $('#referenceModuleSearch'); if (input) input.value = '';
+    const input = $('#rubanUnifiedSearch'); if (input) input.value = '';
     refmodClearMarks();
     const countEl = $('#refmodCount'); if (countEl) countEl.textContent = '';
   });
 
+  // Écran 11 — Dossier
+  $('#dossierMineFilter')?.addEventListener('change', renderDossier);
+  $('#dossierUeSelect')?.addEventListener('change', (event) => {
+    dossierUeId = event.target.value;
+    resetDossierSections(findUe(dossierUeId));
+    renderDossier();
+  });
+  $('#dossierSectionsList')?.addEventListener('change', (event) => {
+    const mainKey = event.target.dataset.dossierSection;
+    if (mainKey) {
+      if (mainKey === 'garde' || mainKey === 'vigilance') { event.target.checked = mainKey === 'garde'; return; }
+      dossierSections[mainKey] = event.target.checked;
+      renderDossier();
+      return;
+    }
+    const subKey = event.target.dataset.dossierSubsection;
+    if (!subKey) return;
+    if (subKey.startsWith('seq:')) {
+      const id = subKey.slice(4);
+      if (event.target.checked) dossierSections.sequenceIds.add(id); else dossierSections.sequenceIds.delete(id);
+    } else {
+      dossierSections[subKey] = event.target.checked;
+    }
+    renderDossier();
+  });
+  // Capture:true — un <textarea> ne fait pas remonter « blur » en bulle.
+  $('#dossierSectionsList')?.addEventListener('blur', (event) => {
+    if (event.target?.id !== 'dossierBilanText') return;
+    const ue = findUe(dossierUeId);
+    if (!ue) return;
+    const value = event.target.value;
+    if ((ue.bilan || '') === value) return;
+    ue.bilan = value;
+    saveData('Bilan de l’unité enregistré');
+  }, true);
+  $$('[data-dossier-view]').forEach(btn => btn.addEventListener('click', () => {
+    dossierViewMode = btn.dataset.dossierView;
+    $$('[data-dossier-view]').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
+    const grille = $('#dossierPreviewGrille'), lecture = $('#dossierPreviewLecture');
+    if (grille) grille.hidden = dossierViewMode !== 'grille';
+    if (lecture) lecture.hidden = dossierViewMode !== 'lecture';
+  }));
+  $('#dossierOptFooterDate')?.addEventListener('change', renderDossier);
+  $('#dossierOptPageOf')?.addEventListener('change', renderDossier);
+  $('#dossierGaps')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-dossier-gap-goto]');
+    if (!btn?.dataset.dossierGapGoto) return;
+    designSelectedUeId = btn.dataset.dossierGapGoto;
+    $('.tab[data-view="design"]')?.click();
+    renderDesign();
+  });
+  $('#dossierPrintButton')?.addEventListener('click', dossierOpenPrintWindow);
+  $('#dossierPdfButton')?.addEventListener('click', dossierOpenPrintWindow);
+
+  // Écran 13 — Ordre de mission (atteint depuis une ligne Urgences, pas un onglet).
+  document.body.addEventListener('click', (event) => {
+    const open = event.target.closest('[data-open-mission]');
+    if (!open) return;
+    const [kind, id] = open.dataset.openMission.split(':');
+    openMissionView(kind, id);
+  });
+  // Bouton × d'une ligne Urgences « fait » : retire la ligne de l'affichage
+  // sans toucher à la donnée sous-jacente (roomBooked/vehicleBooked/ordreMission
+  // restent tels quels) — un clic accidentel sur « Réserver »/« Envoyer » reste
+  // récupérable en éditant la séance/réunion, et le retrait de la liste est un
+  // choix distinct, explicite, de l'utilisateur.
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-dismiss-urgence]');
+    if (!btn) return;
+    const [kind, source, id] = btn.dataset.dismissUrgence.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    if (kind === 'vehicule') entity.vehicleBookedDismissed = true;
+    else if (kind === 'salle') entity.roomBookedDismissed = true;
+    else if (kind === 'materiel') entity.materielReserveDismissed = true;
+    else if (kind === 'mission') entity.missionDismissed = true;
+    saveData('Ligne retirée des urgences');
+  });
+  // Bascule rapide « véhicule établissement indisponible → personnel »
+  // (retours 17/08/2026) : évite de rouvrir toute la fiche pour changer le
+  // menu Déplacement quand la réservation échoue.
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-bascule-vehicule]');
+    if (!btn) return;
+    const [source, id] = btn.dataset.basculeVehicule.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    entity.deplacement = 'personnel';
+    entity.vehicleBooked = false;
+    saveData('Basculé en véhicule personnel');
+  });
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-bascule-vehicule-retour]');
+    if (!btn) return;
+    const [source, id] = btn.dataset.basculeVehiculeRetour.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) return;
+    entity.deplacement = 'etablissement';
+    saveData('Repassé en véhicule de l’établissement');
+  });
+  $('#missionBackButton')?.addEventListener('click', closeMissionView);
+  // Un seul écouteur « change » (pas blur) pour tous les champs du document :
+  // évite le double déclenchement blur+change sur les <input type="date">.
+  $('#missionDocument')?.addEventListener('change', (event) => {
+    const el = event.target.closest('[data-mission-field]');
+    if (!el) return;
+    const estCase = el.tagName === 'INPUT' && el.type === 'checkbox';
+    missionSetField(el.dataset.missionField, estCase ? el.checked : el.value);
+    saveData('Ordre de mission enregistré');
+  });
+  $('#missionDocument')?.addEventListener('click', (event) => {
+    if (event.target.closest('#missionAddAccompagnant')) {
+      const entity = missionEntity(); if (!entity) return;
+      ensureMissionDetail(entity).accompagnants.push({ nom: '', fonction: '' });
+      renderMissionView();
+      return;
+    }
+    const remove = event.target.closest('[data-mission-remove-accompagnant]');
+    if (remove) {
+      const entity = missionEntity(); if (!entity) return;
+      const detail = ensureMissionDetail(entity);
+      detail.accompagnants.splice(Number(remove.dataset.missionRemoveAccompagnant), 1);
+      renderMissionView();
+      saveData('Ordre de mission enregistré');
+      return;
+    }
+    if (event.target.closest('#missionSignatureUpload')) {
+      $('#missionSignatureFile')?.click();
+      return;
+    }
+  });
+  $('#missionDocument')?.addEventListener('change', (event) => {
+    if (event.target.id !== 'missionSignatureFile') return;
+    const file = event.target.files?.[0];
+    if (file) missionUploaderSignature(file);
+  });
+  $('#missionAddDestinataire')?.addEventListener('click', () => {
+    const entity = missionEntity(); if (!entity) return;
+    const email = window.prompt('Adresse e-mail à ajouter :', '');
+    if (!email || !email.trim()) return;
+    const detail = ensureMissionDetail(entity);
+    detail.destinataires.push(email.trim());
+    memoriserMissionDestinataires(detail.destinataires);
+    renderMissionView();
+  });
+  $('#missionDestinatairesList')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-mission-remove-destinataire]');
+    if (!btn) return;
+    const entity = missionEntity(); if (!entity) return;
+    const detail = ensureMissionDetail(entity);
+    detail.destinataires.splice(Number(btn.dataset.missionRemoveDestinataire), 1);
+    memoriserMissionDestinataires(detail.destinataires);
+    renderMissionView();
+  });
+  $('#missionPdfButton')?.addEventListener('click', missionOpenPrintWindow);
+  $('#missionSendButton')?.addEventListener('click', missionSendMail);
+  missionChargerSignature();
+
   // Ruban pédagogique
-  $$('[data-ruban-mode]').forEach(btn => btn.addEventListener('click', () => setRubanMode(btn.dataset.rubanMode)));
+  // Écran 8 — sous-onglets Référentiel & Ruban.
+  $$('[data-ruban-tab]').forEach(btn => btn.addEventListener('click', () => setRubanTab(btn.dataset.rubanTab)));
+  // Lot F — sous-onglet « PDF d'origine » : clic sur un document de la sidebar.
+  $('#pdfLibToc')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-pdf-doc]');
+    if (!btn) return;
+    pdfLibSelected = btn.dataset.pdfDoc;
+    renderPdfLibrary();
+  });
 
   // Créneaux de cours type
   $$('[data-creneaux-period]').forEach(btn => btn.addEventListener('click', () => {
@@ -4765,9 +6885,60 @@ function bindEvents() {
   });
   $('#templateColor')?.addEventListener('input', (e) => { e.target.dataset.custom = '1'; });
   $('#rubanTeacherFilter')?.addEventListener('change', e => { rubanTeacher = e.target.value; renderRuban(); });
-  let rubanTimer;
-  $('#rubanSearch')?.addEventListener('input', () => { clearTimeout(rubanTimer); rubanTimer = setTimeout(renderRuban, 160); });
-  $('#rubanPdfSelect')?.addEventListener('change', () => renderRubanPdf());
+  $('#repartitionMineToggle')?.addEventListener('change', () => renderRuban());
+
+  // Écran 8 — Planning étudiant.
+  $$('#rubanTabEtudiant [data-student-promo]').forEach(btn => btn.addEventListener('click', () => {
+    studentPlanningPromo = btn.dataset.studentPromo;
+    renderStudentPlanning();
+  }));
+  $$('#rubanTabEtudiant [data-student-period]').forEach(btn => btn.addEventListener('click', () => {
+    studentPlanningPeriod = btn.dataset.studentPeriod;
+    renderStudentPlanning();
+  }));
+  $('#studentMineToggle')?.addEventListener('change', () => renderStudentPlanning());
+  $('#studentPlanningGrid')?.addEventListener('click', (event) => {
+    const del = event.target.closest('[data-del-student-slot]');
+    if (del) {
+      event.stopPropagation();
+      if (!confirm('Supprimer ce cours ?')) return;
+      state.studentWeekTemplate = state.studentWeekTemplate.filter(t => t.id !== del.dataset.delStudentSlot);
+      saveData('Cours (planning étudiant) supprimé');
+      return;
+    }
+    const edit = event.target.closest('[data-edit-student-slot]');
+    if (edit) return openStudentSlotModal(findStudentSlot(edit.dataset.editStudentSlot));
+    const create = event.target.closest('[data-create-student-slot]');
+    if (create) return openStudentSlotModal(null, JSON.parse(create.dataset.createStudentSlot));
+  });
+  $('#studentSlotForm')?.addEventListener('submit', saveStudentSlot);
+  $('#studentSlotUe')?.addEventListener('change', () => {
+    toggleStudentSlotFreeCode();
+    const ueId = $('#studentSlotUe').value;
+    if (ueId && ueId !== '__free__') {
+      const colorEl = $('#studentSlotColorInput');
+      if (colorEl && colorEl.dataset.custom !== '1') {
+        colorEl.value = ueColor(ueId);
+        syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+      }
+    }
+  });
+  $('#cancelStudentSlotButton')?.addEventListener('click', () => $('#studentSlotDialog')?.close());
+  $('#closeStudentSlotModal')?.addEventListener('click', () => $('#studentSlotDialog')?.close());
+  $('#deleteStudentSlotButton')?.addEventListener('click', deleteStudentSlot);
+  $('#studentSlotColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  });
+  $('#studentSlotColorAuto')?.addEventListener('click', () => {
+    const el = $('#studentSlotColorInput');
+    if (!el) return;
+    el.dataset.custom = '0';
+    const ueId = $('#studentSlotUe').value;
+    el.value = (ueId && ueId !== '__free__') ? ueColor(ueId) : '#9aa0ad';
+    syncColorSwatchActive('#studentSlotColorSwatches', '#studentSlotColorInput');
+  });
+
   /* Clics Ruban : ✎ (composition d'UE), ↺ (rétablir une UE), capacité (→ référentiel).
      Écouteur limité à la vue Ruban, et non posé sur <body> : `data-edit-ue` sert
      AUSSI dans la Conception pédagogique depuis le lot C, où le corps de carte le
@@ -4809,32 +6980,61 @@ function bindEvents() {
     importDataFromFile(file);
     event.target.value = '';
   });
+  // Bandeau (mockup) — statut de synchro + « Sauvegarder ». Le bouton
+  // « Recharger » vivait auparavant dans js/auth.js (recréé à chaque
+  // connexion) : élément statique désormais, un seul branchement ici.
+  $('#btn-recharger')?.addEventListener('click', (event) => {
+    const bouton = event.currentTarget;
+    if (bouton.disabled) return;
+    bouton.disabled = true;
+    Promise.resolve(window.OC_APP?.recharger()).finally(() => { bouton.disabled = false; });
+  });
+  // « Réessayer » (visible seulement après une erreur, voir setSaveStatus)
+  // force un réenregistrement complet (forcer:true, comme un import).
+  $('#btn-sauvegarder')?.addEventListener('click', (event) => {
+    const bouton = event.currentTarget;
+    bouton.disabled = true;
+    saveData('Enregistré', { forcer: true }).finally(() => { bouton.disabled = false; });
+  });
   $('#printWeekButton')?.addEventListener('click', () => printWeekPlanning());
   $('#addConstraintDashboardButton').addEventListener('click', (e) => { e.stopPropagation(); openConstraintModal(); });
   $('#addConstraintSemesterButton')?.addEventListener('click', () => openConstraintModal());
-  $('#addConstraintGanttButton')?.addEventListener('click', () => openConstraintModal());
-  $('#addSequenceGanttButton')?.addEventListener('click', () => openSequenceModal());
-  $('#addSessionGanttButton')?.addEventListener('click', () => openSessionModal(null, { placementStatus: 'fictif' }));
+  // Refonte écran 3 (16/08/2026) — plus de boutons de création dans Progression :
+  // « + Vacances » reste accessible depuis Tableau de bord/Planning hebdo,
+  // « + Séquence »/« + Séance » depuis Conception (édition en place).
   $('#weekSelect').addEventListener('change', (event) => { selectedWeek = event.target.value; renderPlanning(); });
-  $('#weekCalendar')?.addEventListener('click', (event) => {
-    const nav = event.target.closest('[data-cal-nav]');
-    if (nav) { if (!nav.disabled) moveCalendarMonth(nav.dataset.calNav === 'prev' ? -1 : 1); return; }
-    const wnav = event.target.closest('[data-week-nav]');
-    if (wnav) { moveWeek(wnav.dataset.weekNav === 'prev' ? -1 : 1); return; }
+  $('#weekStrip')?.addEventListener('click', (event) => {
     const btn = event.target.closest('[data-set-week]');
     if (!btn) return;
     selectedWeek = btn.dataset.setWeek;
-    weekPickerMonthKey = null; // resynchronise le mois affiché sur la semaine choisie
-    $('#weekCalendar')?.classList.remove('is-open');
     renderPlanning();
   });
-  // Lot E [19] — les flèches de semaine ont quitté le calendrier pour la barre
-  // collante. Écouteur limité à `.week-bar` (et non posé sur <body>) : la leçon
-  // du lot C, où un écouteur délégué trop large happait les clics d'une autre
-  // vue.
-  document.querySelector('.week-bar')?.addEventListener('click', (event) => {
-    const nav = event.target.closest('[data-week-nav]');
-    if (nav) moveWeek(nav.dataset.weekNav === 'prev' ? -1 : 1);
+  // Ajustements #2 [E2.2] (18/08/2026) — « un défilement par touches droite et
+  // gauche du clavier est-il possible ? » : déplace le focus d'une case à
+  // l'autre (comme un groupe de boutons classique) et la ramène dans la zone
+  // visible ; le clic/Entrée sélectionne déjà la semaine, inchangé.
+  $('#weekStrip')?.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    const tiles = [...$('#weekStrip').querySelectorAll('.week-strip-tile')];
+    const i = tiles.indexOf(document.activeElement);
+    if (i < 0) return;
+    const suivante = tiles[i + (event.key === 'ArrowRight' ? 1 : -1)];
+    if (!suivante) return;
+    event.preventDefault();
+    suivante.focus();
+    suivante.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  });
+  // La bascule de période ne fait que parcourir la bande : elle ne touche pas
+  // à la semaine affichée dans les grilles (renderWeekStrip seul, pas renderPlanning).
+  $('#weekStripPeriodSwitch')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-week-period]');
+    if (!btn) return;
+    weekStripPeriod = btn.dataset.weekPeriod;
+    renderWeekStrip();
+    // Retours #4 (18/08/2026) : le bandeau promo (code couleur semestre) doit
+    // suivre l'onglet de période coché, même si la grille affichée ne change
+    // pas tant qu'aucune semaine précise n'est cliquée.
+    applyScheduleTitleColors();
   });
   $('#weekMaskToggle')?.addEventListener('change', (event) => {
     weekMaskActive = event.target.checked;
@@ -4858,72 +7058,72 @@ function bindEvents() {
   });
   $('#weekNotes')?.addEventListener('blur', () => { clearTimeout(weekNotesTimer); persistWeekNotes(); });
 
-  // Notes libres « À faire » — saisie rapide, enregistrement automatique
-  let todoTimer;
-  const persistTodo = async () => {
-    if (!state) return;
-    const value = $('#todoNotes')?.value ?? '';
-    if (value === state.todoNotes) return;
-    state.todoNotes = value;
-    // Autosave silencieux : ne PAS re-render tout le portail à chaque frappe
-    // (sinon la vue « saute »). On rafraîchit seulement l'indicateur de statut.
-    try { await saveData('Notes « À faire » enregistrées', { rerender: false }); updateTodoStatus(); } catch (e) { setSaveStatus('Erreur d’enregistrement des notes'); }
-  };
-  $('#todoNotes')?.addEventListener('input', () => {
-    updateTodoStatus();
-    clearTimeout(todoTimer);
-    todoTimer = setTimeout(persistTodo, 800);
-  });
-  $('#todoNotes')?.addEventListener('blur', () => { clearTimeout(todoTimer); persistTodo(); });
-
-  // Notes libres « Bugs & améliorations » — même mécanique que « À faire »
-  let devTimer;
-  const persistDev = async () => {
-    if (!state) return;
-    const value = $('#devNotes')?.value ?? '';
-    if (value === state.devNotes) return;
-    state.devNotes = value;
-    try { await saveData('Notes « Bugs & améliorations » enregistrées', { rerender: false }); updateDevStatus(); } catch (e) { setSaveStatus('Erreur d’enregistrement des notes'); }
-  };
-  $('#devNotes')?.addEventListener('input', () => {
-    updateDevStatus();
-    clearTimeout(devTimer);
-    devTimer = setTimeout(persistDev, 800);
-  });
-  $('#devNotes')?.addEventListener('blur', () => { clearTimeout(devTimer); persistDev(); });
+  // « À faire » et « Amélioration de l'appli » (voir renderChecklist) : ajout
+  // par Entrée, coche/décoche et suppression par délégation sur chaque liste.
+  wireChecklist('todo');
+  wireChecklist('devnotes');
 
   $('#weekBacklogScope')?.addEventListener('change', e => { weekBacklogScope = e.target.value; renderWeekBacklog(); });
   $('#weekBacklogUeFilter')?.addEventListener('change', e => { weekBacklogUeFilter = e.target.value; renderWeekBacklog(); });
 
-  $('#designPromotionFilter').addEventListener('change', e => { designPromotionFilter = e.target.value; renderDesign(); });
-  $('#designSemesterFilter').addEventListener('change', e => { designSemesterFilter = e.target.value; renderDesign(); });
-  $('#designTeacherFilter')?.addEventListener('change', e => { designTeacherFilter = e.target.value; renderDesign(); });
-  $('#designSearch').addEventListener('input', () => renderDesign());
-  $('#designUeChoices')?.addEventListener('change', (event) => {
-    const checkbox = event.target.closest('input[type="checkbox"]');
-    if (!checkbox) return;
-    const id = checkbox.value;
-    designSelectedUeIds = checkbox.checked ? [...designSelectedUeIds, id] : designSelectedUeIds.filter(x => x !== id);
+  // Sidebar de la Conception (écran 2) : promotion (vrai sélecteur, REGLES.md #21),
+  // estompage permanent des UE des collègues, sélection d'UE, sous-onglets du
+  // panneau de détail.
+  $$('.promo-switch-btn').forEach(btn => btn.addEventListener('click', () => {
+    designPromotionFilter = btn.dataset.designPromo;
+    designSelectedUeId = '';
+    renderDesign();
+  }));
+  $('#designSidebarList')?.addEventListener('click', (event) => {
+    const row = event.target.closest('[data-select-ue]');
+    if (!row) return;
+    designSelectedUeId = row.dataset.selectUe;
     renderDesign();
   });
-  /* Le menu « UE » est un <details> : sans cela il resterait ouvert après le
-     choix, en recouvrant l'arbre qu'on vient justement de filtrer. */
-  document.addEventListener('click', (event) => {
-    const pop = $('#designUePop');
-    if (pop?.open && !pop.contains(event.target)) pop.open = false;
-  });
-  $('#ganttDensity')?.addEventListener('change', e => { ganttDensity = e.target.value; renderGantt(); });
-  $('#ganttUeChoices')?.addEventListener('change', () => { ganttFocusedUeIds = $$('#ganttUeChoices input[type="checkbox"]:checked').map(input => input.value); renderGantt(); });
-  $('#ganttSemesterChoices')?.addEventListener('change', () => {
-    ganttSemesterFilters = $$('#ganttSemesterChoices input[type="checkbox"]:checked').map(input => input.value);
+  $$('.design-subtab').forEach(btn => btn.addEventListener('click', () => setDesignTab(btn.dataset.designTab)));
+  $('#ganttPromoSwitch')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-gantt-promo]');
+    if (!btn) return;
+    ganttPromo = btn.dataset.ganttPromo;
+    ganttSemester = null; // recalculé par renderGantt() depuis la saison courante
+    ganttSelectedUeId = '';
     renderGantt();
   });
+  $('#ganttSemesterSwitch')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-gantt-semester]');
+    if (!btn) return;
+    ganttSemester = btn.dataset.ganttSemester;
+    ganttSelectedUeId = '';
+    renderGantt();
+  });
+  $('#ganttStackedToggle')?.addEventListener('change', (event) => { ganttStacked = event.target.checked; renderGantt(); });
+  // Retours #4 (18/08/2026) — le texte « hors fenêtre » ne se recalculait
+  // qu'au clic sur l'onglet Progression (scrollGanttToCurrentWeek) : un
+  // défilement manuel de la frise (barre de défilement, molette, flèches)
+  // le laissait ensuite périmé. Recalcul à chaque scroll (rAF pour ne pas
+  // spammer le calcul de mise en page pendant le défilement).
+  let ganttHorsFenetreRaf = null;
+  $('#ganttSequencesScroll')?.addEventListener('scroll', () => {
+    if (ganttHorsFenetreRaf) return;
+    ganttHorsFenetreRaf = requestAnimationFrame(() => {
+      ganttHorsFenetreRaf = null;
+      computeGanttHorsFenetre(ganttLastUes, ganttLastWeeks);
+    });
+  });
+  $('#ganttUeCards')?.addEventListener('click', (event) => {
+    const card = event.target.closest('[data-select-gantt-ue]');
+    if (!card) return;
+    ganttSelectedUeId = card.dataset.selectGanttUe;
+    renderGantt();
+  });
+  $('#exportGanttButton')?.addEventListener('click', () => exportGanttPrint());
 
   /* Les boutons « + » de la barre de la Conception ont été retirés : ils
      doublonnaient les créations déjà offertes là où elles ont du sens. Seule
      « Créer une UE » n'existait nulle part ailleurs — elle est reprise par la
-     bande d'ajout en fin de promotion (data-new-ue). */
-  $('#addSessionButton').addEventListener('click', () => openSessionModal(null, { placementStatus: 'definitif', forceDefinitive: true, weekId: selectedWeek, promotion: 'GPN1', day: 0, slot: 0 }));
+     bande d'ajout en fin de promotion (data-new-ue). Même logique pour le
+     Planning hebdo (17/08, retour Martin) : « + Séance » y doublonnait les
+     cases de séance, déjà toutes cliquables pour créer/modifier — retiré. */
 
   $('#constraintsList').addEventListener('click', (event) => {
     const el = event.target.closest('[data-edit-constraint]');
@@ -4935,22 +7135,49 @@ function bindEvents() {
     if (row) openSessionModal(findSession(row.dataset.editSession));
   });
 
+  // Retours #3 (18-19/08/2026) : « Les placer dans le planning → » ne
+  // réagissait à aucun clic — c'est un frère de #dashboardBacklog (pas un
+  // enfant), donc hors de portée du data-goto-view géré plus bas, qui n'écoute
+  // que #dashSemaine/#dashProchainement/#urgencesList. Écouteur dédié ici.
+  $('.backlog-panel-link[data-goto-view]')?.addEventListener('click', function () {
+    $(`.tab[data-view="${this.dataset.gotoView}"]`)?.click();
+    $('.week-sidebar')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+
   /* « Ma semaine » et « Prochainement » : chaque ligne ouvre sa fiche, et une
      ligne de retard déplie l'encart concerné. Deux écouteurs ciblés plutôt
      qu'un seul sur #dashboard, pour ne pas doubler ceux qui existent déjà sur
      #constraintsList et #dashboardBacklog. */
-  // #deplacementsList (lot B) rejoint la liste : ses lignes ouvrent la séance ou
-  // la réunion d'origine, c'est là que la case « ordre de mission » se coche.
-  ['#dashSemaine', '#dashProchainement', '#deplacementsList'].forEach(sel => {
+  // #urgencesList (pile fusionnée) rejoint la liste : ses lignes ouvrent la
+  // séance ou la réunion d'origine, c'est là que la case « ordre de mission »
+  // se coche pour un ordre de mission ; salle/véhicule passent par la case
+  // "reservation" gérée par l'écouteur dédié plus bas.
+  ['#dashSemaine', '#dashProchainement', '#urgencesList'].forEach(sel => {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
+      // Une ligne Urgences porte maintenant data-edit-session/-reunion sur
+      // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
+      // réservation, le lien « Éditer » (ordre de mission) et le × gardent
+      // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      const nav = event.target.closest('[data-dash-week-nav]');
+      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
       if (ouvrir) {
-        const cible = document.querySelector(`details[data-open-key="${ouvrir.dataset.ouvrir}"]`);
-        if (cible) { cible.open = true; cible.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        // « Séances pas encore placées » n'est plus un <details> repliable
+        // (toujours visible, colonne de droite) : on y défile simplement.
+        const cible = ouvrir.dataset.ouvrir === 'dash:backlog'
+          ? $('#backlogPanel')
+          : document.querySelector(`details[data-open-key="${ouvrir.dataset.ouvrir}"]`);
+        if (cible) {
+          if (cible.tagName === 'DETAILS') cible.open = true;
+          cible.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
         return;
       }
+      const goto = event.target.closest('[data-goto-view]');
+      if (goto) { $(`.tab[data-view="${goto.dataset.gotoView}"]`)?.click(); return; }
       const seance = event.target.closest('[data-edit-session]');
       if (seance) return openSessionModal(findSession(seance.dataset.editSession));
       const reunion = event.target.closest('[data-edit-reunion]');
@@ -4961,7 +7188,8 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const carte = event.target.closest('.carte, .retard-liste li, .om-row');
+      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
       carte.click();
@@ -4974,8 +7202,12 @@ function bindEvents() {
      les attributs dans un ordre figé : on cherche l'ancêtre le PLUS PROCHE, si
      bien qu'une tuile « + Séance » d'une séquence ne se confonde jamais avec la
      bande « + Séquence » de l'UE qui la contient. */
+  // Écouteur posé sur `.design-detail` (pas seulement `#ueTree`) : les boutons
+  // « Modifier l'UE »/export ⎙ vivent maintenant dans l'en-tête du panneau, au
+  // dessus des sous-onglets, et les cartes de séance de l'onglet « Séances »
+  // (data-edit-session) doivent rester cliquables elles aussi.
   const CIBLES_ARBRE = '[data-edit-session],[data-edit-sequence],[data-edit-ue],[data-new-sequence-ue],[data-new-session-ue],[data-new-session-sequence],[data-new-eil-session],[data-export-ue],[data-export-sequence]';
-  $('#ueTree').addEventListener('click', (event) => {
+  $('.design-detail').addEventListener('click', (event) => {
     const cible = event.target.closest(CIBLES_ARBRE);
     if (!cible) return;
     const d = cible.dataset;
@@ -5043,8 +7275,6 @@ function bindEvents() {
 
 
   $('#ganttTimeline')?.addEventListener('click', (event) => {
-    const printUe = event.target.closest('[data-print-timeline-ue]');
-    if (printUe) return printTimelineUe(printUe.dataset.printTimelineUe);
     const constraintEl = event.target.closest('[data-edit-constraint]');
     if (constraintEl) return openConstraintModal(findConstraint(constraintEl.dataset.editConstraint));
     const sessionEl = event.target.closest('[data-edit-session]');
@@ -5165,44 +7395,104 @@ function bindEvents() {
     $('#sequencePromotion').value = ue.promotion;
     $('#sequenceSemester').value = ue.semester;
     renderSequenceCapacityChoices([], ue);
-    refreshSequencePeriodDates('', ue);
+    // 18/08 — l'UE change le semestre donc la plage de semaines cliquables du calendrier.
+    seqCalMonthKey = null;
+    renderSequenceCalendar();
   });
   $('#ueCode').addEventListener('input', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || { code: $('#ueCode').value, capacities: [] }));
   $('#uePromotion').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
   $('#ueSemester').addEventListener('change', () => updateUeCapacityPreview(findUeByCode($('#ueCode').value) || {}));
-  $('#sequencePromotion')?.addEventListener('change', () => refreshSequencePeriodDates($('#sequenceWeeks')?.value || '', findUe($('#sequenceUe')?.value)));
+  ['#sequenceWeekStart', '#sequenceWeekEnd'].forEach(sel => $(sel)?.addEventListener('input', () => { syncSequenceWeeksField(); renderSequenceCalendar(); }));
+  // 18/08 — calendrier de semaines (exception assumée à REGLES.md #22 pour cet écran).
   $('#sequenceCalendar')?.addEventListener('click', (event) => {
     const nav = event.target.closest('[data-seqcal-nav]');
     if (nav) { if (!nav.disabled) moveSequenceCalendarMonth(nav.dataset.seqcalNav === 'next' ? 1 : -1); return; }
     const btn = event.target.closest('[data-seqpick-week]');
     if (!btn) return;
-    const key = btn.dataset.seqpickWeek; // clé lundi (AAAA-MM-JJ)
-    const startEl = $('#sequenceStartDate');
-    const endEl = $('#sequenceEndDate');
-    if (!startEl || !endEl) return;
-    const toKey = iso => { const d = parseIsoDate(iso); return d ? isoKey(mondayOf(d)) : ''; };
-    const s = toKey(startEl.value);
-    const e = toKey(endEl.value);
-    if (!s || (s && e)) { startEl.value = key; endEl.value = ''; }          // (re)commence une plage
-    else if (key < s) { endEl.value = startEl.value; startEl.value = key; } // clic avant le début → on inverse
-    else { endEl.value = key; }
+    const key = btn.dataset.seqpickWeek; // clé lundi (AAAA-MM-JJ) de la semaine cliquée
+    const semester = $('#sequenceSemester')?.value || 'Semestre 1';
+    const weeks = weeksForSemesterSpan(semester);
+    const weekOfKey = (k) => weeks.find(x => { const [mon] = weekDateRange(x); return mon && isoKey(mon) === k; });
+    const keyOfField = (fieldValue) => {
+      const m = /\d{1,2}/.exec(fieldValue || '');
+      const w = m ? weeks.find(x => weekNumberOf(x) === Number(m[0])) : null;
+      return w ? isoKey(weekDateRange(w)[0]) : '';
+    };
+    const clickedWeek = weekOfKey(key);
+    if (!clickedWeek) return;
+    const s = keyOfField($('#sequenceWeekStart')?.value);
+    const e = keyOfField($('#sequenceWeekEnd')?.value);
+    if (!s || (s && e)) {
+      // (re)commence une plage.
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'start');
+      $('#sequenceWeekEnd').value = '';
+    } else if (key < s) {
+      // Clic avant le début déjà posé → on inverse (le clic devient le début).
+      const startField = $('#sequenceWeekStart').value;
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'start');
+      $('#sequenceWeekEnd').value = startField;
+    } else {
+      setSequenceWeekFieldsFromWeek(clickedWeek.id, 'end');
+    }
     syncSequenceWeeksField();
     renderSequenceCalendar();
   });
+  $('#sequenceHoursMinus')?.addEventListener('click', () => {
+    const input = $('#sequenceHours');
+    input.value = String(Math.max(0, (parseInt(input.value, 10) || 0) - 1));
+  });
+  $('#sequenceHoursPlus')?.addEventListener('click', () => {
+    const input = $('#sequenceHours');
+    input.value = String((parseInt(input.value, 10) || 0) + 1);
+  });
+  $('#sequenceAssessmentTypeButtons')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-assessment-type]');
+    if (!btn) return;
+    $$('#sequenceAssessmentTypeButtons button').forEach(b => b.classList.toggle('active', b === btn));
+    $('#sequenceAssessmentType').value = btn.dataset.assessmentType;
+  });
   $('#sequenceCapacityChoices')?.addEventListener('change', () => updateSequenceCapacityDetails());
-  $('#sessionPlacementStatus').addEventListener('change', applySessionPlacementVisibility);
-  // Lot S(a) — la « Durée prévue » pilote la fin standard (donc la hauteur du bloc
-  // dans le Planning hebdo) : changer le nombre d'heures d'une séance déjà placée
-  // recalcule la fin → le rowspan s'actualise à l'enregistrement. La fin reste
-  // ajustable ensuite à la main. Ne s'active que sur interaction (pas à l'ouverture
-  // de la modale, qui pose les valeurs sans déclencher d'événement).
-  const syncSessionEndFromDuration = () => {
-    const duration = $('#sessionExpectedDuration').value.trim();
-    if (!duration) return; // aucune durée saisie : ne pas toucher à la fin choisie
-    $('#sessionEnd').value = String(inferEndSlot(Number($('#sessionStart').value), duration));
-  };
-  $('#sessionExpectedDuration').addEventListener('input', syncSessionEndFromDuration);
-  $('#sessionStart').addEventListener('change', syncSessionEndFromDuration);
+  // Écran 12 — sélecteur de créneaux libres de la modale séance.
+  $('#sessionSlotWeekPrev')?.addEventListener('click', () => {
+    const idx = state.weeks.findIndex(w => w.id === sessionSlotPickerWeekId);
+    if (idx > 0) { sessionSlotPickerWeekId = state.weeks[idx - 1].id; renderSessionSlotPicker(); }
+  });
+  $('#sessionSlotWeekNext')?.addEventListener('click', () => {
+    const idx = state.weeks.findIndex(w => w.id === sessionSlotPickerWeekId);
+    if (idx >= 0 && idx < state.weeks.length - 1) { sessionSlotPickerWeekId = state.weeks[idx + 1].id; renderSessionSlotPicker(); }
+  });
+  $('#sessionSlotGrid')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('.slot-cell');
+    if (!btn) return;
+    applySlotClick(Number(btn.dataset.slotDay), Number(btn.dataset.slotIndex));
+    syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
+  });
+  $('#sessionSlotSummary')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-quick-duration]');
+    if (!btn) return;
+    applyQuickDuration(Number(btn.dataset.quickDuration));
+    syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
+  });
+  $$('.slot-picker-options-fixed .slot-option').forEach(btn => btn.addEventListener('click', () => {
+    sessionSlotChoice = { type: btn.dataset.slotChoice };
+    syncSessionSlotPickerActive();
+    renderSessionSlotSummary();
+  }));
+  $('#sessionPromotion')?.addEventListener('change', renderSessionSlotPicker);
+  $('#sessionNoSequence')?.addEventListener('change', (event) => {
+    const seqSelect = $('#sessionSequence');
+    if (!seqSelect) return;
+    if (event.target.checked) {
+      seqSelect.dataset.prev = seqSelect.value;
+      seqSelect.value = '';
+      seqSelect.disabled = true;
+    } else {
+      seqSelect.disabled = false;
+      if (seqSelect.dataset.prev) seqSelect.value = seqSelect.dataset.prev;
+    }
+  });
   /* Lot G — changer d'UE vidait les capacités cochées EN SILENCE. Remettre à
      zéro est juste (les codes de l'ancienne UE n'existent pas dans la nouvelle),
      mais le faire sans un mot se lit comme une perte de saisie — même leçon
@@ -5282,6 +7572,10 @@ function confirmCloseModal(dialog) {
 }
 
 function bindModalActions() {
+  // Écran 12 — grille de 12 teintes, une fois pour chaque modale (statique).
+  renderColorSwatchGrid('#sequenceColorSwatches', '#sequenceColorInput');
+  renderColorSwatchGrid('#sessionColorSwatches', '#sessionColorInput');
+  renderColorSwatchGrid('#studentSlotColorSwatches', '#studentSlotColorInput');
   $('#ueForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = $('#ueId').value || uid('ue');
@@ -5340,7 +7634,7 @@ function bindModalActions() {
       semester: $('#sequenceSemester').value || findUe($('#sequenceUe').value)?.semester || '',
       targetWeeks: getSequencePeriodValue(),
       periodNote: $('#sequencePeriodNote').value.trim(),
-      hoursEstimate: $('#sequenceHours').value.trim(),
+      hoursEstimate: $('#sequenceHours').value.trim() ? `${$('#sequenceHours').value.trim()} h` : '',
       sequenceType: existingSeqType,
       status: existingSeqStatus,
       color: getSequenceColorFieldValue(),
@@ -5353,6 +7647,7 @@ function bindModalActions() {
       keywords: $('#sequenceKeywords').value.trim(),
       teachingMethods: $('#sequenceTeachingMethods').value.trim(),
       differentiation: $('#sequenceDifferentiation').value.trim(),
+      assessmentType: $('#sequenceAssessmentType').value,
       assessment: $('#sequenceAssessment').value.trim(),
       resources: $('#sequenceResources').value.trim(),
       deliverables: $('#sequenceDeliverables').value.trim(),
@@ -5382,22 +7677,42 @@ function bindModalActions() {
   $('#closeSequenceModal').addEventListener('click', () => confirmCloseModal($('#sequenceDialog')));
   // Lot L — sélecteur de couleur de séquence : toute modification manuelle = couleur
   // « choisie » ; le bouton Auto revient à la couleur automatique (dérivée de l'UE).
-  $('#sequenceColorInput')?.addEventListener('input', (event) => { event.target.dataset.custom = '1'; });
+  $('#sequenceColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
+  });
   $('#sequenceColorAuto')?.addEventListener('click', () => {
     const el = $('#sequenceColorInput');
     if (!el) return;
     el.dataset.custom = '0';
     const seq = state.sequences.find(s => s.id === $('#sequenceId').value);
     el.value = computedSequenceColor(seq ? { ...seq, color: '' } : { ueId: $('#sequenceUe').value, id: '__new' });
+    syncColorSwatchActive('#sequenceColorSwatches', '#sequenceColorInput');
   });
 
   $('#sessionForm').addEventListener('submit', async (event) => {
     event.preventDefault();
+    const isNewSession = !$('#sessionId').value;
     const id = $('#sessionId').value || uid('session');
-    const startSlot = Number($('#sessionStart').value);
-    const endSlot = Number($('#sessionEnd').value);
-    const placementStatus = $('#sessionPlacementStatus').value;
-    const selectedSessionWeek = $('#sessionWeek').value;
+    const existingSession = findSession(id);
+    // Écran 12 — le créneau vient du sélecteur (sessionSlotChoice), plus des
+    // anciens champs jour/début/fin/semaine/statut saisis à la main.
+    let day = 0, startSlot = 0, endSlot = 0, placementStatus = 'fictif', selectedSessionWeek = '', customStart = '', customEnd = '';
+    if (sessionSlotChoice?.type === 'range') {
+      day = sessionSlotChoice.day;
+      startSlot = sessionSlotChoice.startSlot;
+      endSlot = sessionSlotChoice.endSlot;
+      placementStatus = 'definitif';
+      selectedSessionWeek = sessionSlotPickerWeekId;
+    } else if (sessionSlotChoice?.type === 'other') {
+      day = Number($('#sessionDay').value || 0);
+      startSlot = Number($('#sessionStart').value || 0);
+      endSlot = Number($('#sessionEnd').value || 0);
+      placementStatus = 'definitif';
+      selectedSessionWeek = sessionSlotPickerWeekId;
+      customStart = $('#sessionCustomStart').value.trim();
+      customEnd = $('#sessionCustomEnd').value.trim();
+    } // sessionSlotChoice null ou {type:'none'} → séance non placée (backlog)
     // Lot K — le rattachement est SOIT une séquence, SOIT une semaine thématique
     // (valeur « eil:<id> » → constraintId). Jamais les deux.
     const rattVal = $('#sessionSequence').value;
@@ -5405,13 +7720,20 @@ function bindModalActions() {
     const sessionDemiGroupe = $('#sessionDemiGroupe')?.value || ''; // Lot V — champ « Groupe » unifié
     // roomBooked se coche depuis l'encart « Salles à réserver » du tableau de
     // bord, jamais dans ce formulaire : on le préserve tel quel à l'édition.
-    const existingRoomBooked = findSession(id)?.roomBooked || false;
+    const existingRoomBooked = existingSession?.roomBooked || false;
+    const existingMaterielReserve = existingSession?.materielReserve || false;
     // Lot C-bis — le champ « Statut pédagogique » a quitté la modale : il était
     // saisi mais affiché NULLE PART (seul un export le sortait), pendant que la
     // pastille de la tuile montre le PLACEMENT, qui est autre chose. La donnée
     // déjà saisie est conservée telle quelle — on ne l'écrase pas au premier
     // enregistrement qui suit. Même motif que roomBooked ci-dessus.
-    const existingStatus = findSession(id)?.status || 'Prévue';
+    const existingStatus = existingSession?.status || 'Prévue';
+    // Écran 12 — expectedDuration/order/fictiveSlot/fictiveDay pilotent le
+    // classement et l'auto-placement du backlog (voir dashboard, drag&drop)
+    // mais n'ont plus de champ dans ce formulaire : préservés tels quels à
+    // l'édition (même motif que roomBooked/status ci-dessus) ; une NOUVELLE
+    // séance sans date reçoit juste un `order` (tri par date de création),
+    // le reste retombe sur les replis déjà gérés en aval (« à préciser »).
     const session = {
       id,
       title: $('#sessionTitle').value.trim(),
@@ -5422,17 +7744,17 @@ function bindModalActions() {
       placementStatus,
       targetWeekId: selectedSessionWeek,
       weekId: placementStatus === 'definitif' ? selectedSessionWeek : '',
-      day: Number($('#sessionDay').value),
+      day,
       startSlot: Math.min(startSlot, endSlot),
       endSlot: Math.max(startSlot, endSlot),
-      expectedDuration: $('#sessionExpectedDuration').value.trim(),
-      order: $('#sessionOrder').value.trim(),
-      fictiveSlot: $('#sessionFictiveSlot').value.trim(),
-      fictiveDay: $('#sessionFictiveDay').value,
-      exactDate: $('#sessionExactDate').value.trim(),
-      customStart: $('#sessionCustomStart').value.trim(),
-      customEnd: $('#sessionCustomEnd').value.trim(),
-      capacityCodes: selectedCheckboxValues('#sessionCapacityChoices'),
+      expectedDuration: existingSession?.expectedDuration || '',
+      order: existingSession?.order || (isNewSession ? Date.now() : ''),
+      fictiveSlot: existingSession?.fictiveSlot || '',
+      fictiveDay: existingSession?.fictiveDay ?? '',
+      exactDate: existingSession?.exactDate || '',
+      customStart,
+      customEnd,
+      capacityCodes: existingSession?.capacityCodes || [],
       type: $('#sessionType').value,
       color: getSessionColorFieldValue(),
       demiGroupe: sessionDemiGroupe, // Lot V — '' | 'A' | 'B'
@@ -5447,14 +7769,17 @@ function bindModalActions() {
       activities: $('#sessionActivities').value.trim(),
       notions: $('#sessionNotions').value.trim(),
       materials: $('#sessionMaterials').value.trim(),
-      assessment: $('#sessionAssessment').value.trim(),
-      homework: $('#sessionHomework').value.trim(),
+      materielAReserver: $('#sessionMaterielReserver')?.checked || false,
+      materielReserve: existingMaterielReserve,
+      materielReserveDismissed: existingSession?.materielReserveDismissed || false,
+      assessment: existingSession?.assessment || '',
+      homework: existingSession?.homework || '',
       differentiation: $('#sessionDifferentiation').value.trim(),
       notes: $('#sessionNotes').value.trim(),
       // Lot B — normalizeDeplacementFields borne les deux cases à leur branche et
       // tient `personalVehicle` à jour pour la compatibilité.
       ...normalizeDeplacementFields({
-        deplacement: $('#sessionDeplacement')?.value || '',
+        deplacement: deplacementModeOf('session'),
         vehicleBooked: $('#sessionVehicleBooked')?.checked || false,
         ordreMission: $('#sessionOrdreMission')?.checked || false
       })
@@ -5478,7 +7803,22 @@ function bindModalActions() {
     // Seul le véhicule PERSONNEL ouvre des frais. Le véhicule de l'établissement
     // se réserve et s'arrête là : ni ordre de mission, ni remboursement.
     if (session.deplacement === 'personnel') ensureDeplacementForSession(session);
-    $('#sessionDialog').close();
+    // Écran 12 — « Créer et enchaîner » : rouvre un formulaire de création
+    // vierge (nom + créneau) en gardant séquence/type/enseignants/promotion.
+    if (sessionChainRequested) {
+      sessionChainRequested = false;
+      $('#sessionId').value = '';
+      $('#sessionTitle').value = '';
+      $('#sessionModalTitle').textContent = 'Créer une séance';
+      $('#deleteSessionButton').hidden = true;
+      const dupBtn = $('#duplicateSessionButton'); if (dupBtn) dupBtn.hidden = true;
+      sessionSlotChoice = null;
+      renderSessionSlotPicker();
+      $('#sessionDialog')._dirty = false;
+      $('#sessionTitle').focus();
+    } else {
+      $('#sessionDialog').close();
+    }
     await saveData('Séance enregistrée');
   });
   $('#deleteSessionButton').addEventListener('click', async () => {
@@ -5498,19 +7838,27 @@ function bindModalActions() {
     $('#sessionDialog').close();
     await duplicateSession(source);
   });
-  // Lot B — changer de mode de déplacement change la suite à afficher.
+  $('#chainSessionButton')?.addEventListener('click', () => {
+    sessionChainRequested = true;
+    $('#sessionForm').requestSubmit();
+  });
+  // Cocher/décocher Déplacement change la suite à afficher (établissement/personnel).
   $('#sessionDeplacement')?.addEventListener('change', () => syncDeplacementFields('session'));
   $('#reunionDeplacement')?.addEventListener('change', () => syncDeplacementFields('reunion'));
 
   // Lot L — couleur propre d'une séance : modification manuelle = couleur choisie ;
   // Auto = couleur héritée (séquence si rattachée, sinon UE).
-  $('#sessionColorInput')?.addEventListener('input', (event) => { event.target.dataset.custom = '1'; });
+  $('#sessionColorInput')?.addEventListener('input', (event) => {
+    event.target.dataset.custom = '1';
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
+  });
   $('#sessionColorAuto')?.addEventListener('click', () => {
     const el = $('#sessionColorInput');
     if (!el) return;
     el.dataset.custom = '0';
     const seqId = $('#sessionSequence').value;
     el.value = seqId ? sequenceColor(seqId) : ueColor($('#sessionUe').value);
+    syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
   });
   // Pré-remplissage discret : passer le type en « Cours en salle informatique »
   // suggère la salle à réserver, sans jamais écraser un choix déjà fait.
@@ -5522,9 +7870,11 @@ function bindModalActions() {
   });
 
   // ---- Frais de déplacement (Lot E — encart du Tableau de bord) ----
-  $('#addDeplacementButton')?.addEventListener('click', () => openDeplacementModal());
+  // Retours #3 (18-19/08/2026) : bouton remonté dans le <summary> (visible
+  // encart replié, comme « + Période ») — stopPropagation indispensable, sinon
+  // le clic bascule aussi l'ouverture/fermeture du <details>.
+  $('#addDeplacementButton')?.addEventListener('click', (e) => { e.stopPropagation(); openDeplacementModal(); });
   $('#fraisStatusFilter')?.addEventListener('change', renderFrais);
-  $('#fraisClasseFilter')?.addEventListener('change', renderFrais);
   $$('[data-export-frais]').forEach(btn => btn.addEventListener('click', () => {
     const fmt = btn.dataset.exportFrais;
     if (fmt === 'csv') exportFraisCsv();
@@ -5532,32 +7882,35 @@ function bindModalActions() {
     else exportFraisOds();
   }));
 
-  // ---- Salles à réserver (encart du Tableau de bord) ----
-  $$('[data-export-rooms]').forEach(btn => btn.addEventListener('click', () => {
-    const fmt = btn.dataset.exportRooms;
-    if (fmt === 'csv') exportRoomsCsv();
-    else if (fmt === 'xls') exportRoomsXls();
-    else exportRoomsOds();
-  }));
-  /* Lot B — la case « Réservée » porte désormais sur deux natures (salle,
-     véhicule) et deux origines (séance, réunion) : c'est la ligne qui dit dans
-     quel champ écrire, plus le seul identifiant de séance. */
-  $('#roomsList')?.addEventListener('change', (event) => {
+  /* Pile « Urgences » (Tableau de bord) — la case « réservée » porte sur deux
+     natures (salle, véhicule) et deux origines (séance, réunion) : c'est la
+     ligne qui dit dans quel champ écrire, plus le seul identifiant de séance. */
+  $('#urgencesList')?.addEventListener('change', (event) => {
     const cb = event.target.closest('[data-reservation-id]');
-    if (!cb) return;
-    const { reservationKind, reservationSource, reservationId } = cb.dataset;
-    const entity = reservationSource === 'reunion'
-      ? (state.reunions || []).find(r => r.id === reservationId)
-      : findSession(reservationId);
+    if (cb) {
+      const { reservationKind, reservationSource, reservationId } = cb.dataset;
+      const entity = reservationSource === 'reunion'
+        ? (state.reunions || []).find(r => r.id === reservationId)
+        : findSession(reservationId);
+      if (!entity) return;
+      if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
+      else if (reservationKind === 'materiel') entity.materielReserve = cb.checked;
+      else entity.roomBooked = cb.checked;
+      const quoi = reservationKind === 'vehicule' ? 'Véhicule' : reservationKind === 'materiel' ? 'Matériel' : 'Salle';
+      saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
+      return;
+    }
+    // Case « Fait » d'un ordre de mission : décocher revient directement à
+    // « à faire » (retour arrière facile, symétrique du toggle salle/véhicule
+    // ci-dessus), sans passer par la case du formulaire de la séance/réunion.
+    const mb = event.target.closest('[data-mission-toggle]');
+    if (!mb) return;
+    const [source, id] = mb.dataset.missionToggle.split(':');
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
     if (!entity) return;
-    if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
-    else entity.roomBooked = cb.checked;
-    const quoi = reservationKind === 'vehicule' ? 'Véhicule' : 'Salle';
-    saveData(cb.checked ? `${quoi} marqué réservé` : `${quoi} marqué non réservé`);
-  });
-  $('#showBookedRoomsToggle')?.addEventListener('change', (event) => {
-    showBookedRooms = event.target.checked;
-    renderRooms();
+    entity.ordreMission = mb.checked;
+    if (!mb.checked && entity.missionDetail) entity.missionDetail.envoyeAt = null;
+    saveData(mb.checked ? 'Ordre de mission marqué fait' : 'Ordre de mission remis à faire');
   });
   const openDeplacementFromEvent = (event) => {
     const el = event.target.closest('[data-edit-deplacement]');
@@ -5610,7 +7963,7 @@ function bindModalActions() {
   });
 
   // ---- Réunions (Lot M — journal du Tableau de bord) ----
-  $('#addReunionButton')?.addEventListener('click', () => openReunionModal());
+  $('#addReunionButton')?.addEventListener('click', (e) => { e.stopPropagation(); openReunionModal(); });
   $('#reunionsList')?.addEventListener('click', (event) => {
     const el = event.target.closest('[data-edit-reunion]');
     if (!el) return;
@@ -5732,7 +8085,7 @@ function renderCapacityCheckboxes(containerSelector, capacities = [], selectedCo
   if (!container) return;
   const selected = new Set(selectedCodes || []);
   const emptyMessage = ue
-    ? `<p class="meta">Aucune capacité enregistrée pour l’UE ${escapeHtml(ue.code || '')}. Ajoutez-les dans l’onglet Référentiel &amp; Ruban.</p>`
+    ? `<p class="meta">Aucune capacité enregistrée pour l’UE ${escapeHtml(ue.code || '')}. Ajoutez-les dans l’onglet Référentiel.</p>`
     : '<p class="meta">Choisissez une UE pour afficher ses capacités.</p>';
   container.innerHTML = capacities.length
     ? capacities.map(cap => `<label class="checkbox-item"><input type="checkbox" value="${escapeAttr(cap.code)}" ${selected.has(cap.code) ? 'checked' : ''}><span><strong>${escapeHtml(cap.code)}</strong> — ${escapeHtml(cap.title)}</span></label>`).join('')
@@ -5801,33 +8154,101 @@ function weekForIsoDate(iso) {
   return prior || weeks[0] || null;
 }
 
-/* D3 / D3-bis — la période de séquence se saisit dans le calendrier maison (à n°
-   de semaine). On pré-remplit les bornes (lundi ISO début/fin, champs cachés)
-   depuis targetWeeks — sur toute l'année de la promo, pour couvrir les UE à cheval
-   S3/S4 — puis on (re)dessine le calendrier en sélection de plage. */
-function refreshSequencePeriodDates(targetWeeks = '', ue = null) {
-  const startInput = $('#sequenceStartDate');
-  const endInput = $('#sequenceEndDate');
-  if (!startInput || !endInput) return;
-  const resolvedUe = ue || findUe($('#sequenceUe')?.value);
-  const semester = resolvedUe?.semester || $('#sequenceSemester')?.value || 'Semestre 1';
-  if ($('#sequenceSemester')) $('#sequenceSemester').value = semester;
-  const weeks = weeksForSemesterSpan(semester);
-  const ranges = parseWeekRanges(targetWeeks);
-  const firstRange = ranges[0] || {};
-  const startWeek = firstRange.start ? weeks.find(w => weekNumberOf(w) === Number(firstRange.start)) : null;
-  const endWeek = firstRange.end ? weeks.find(w => weekNumberOf(w) === Number(firstRange.end)) : startWeek;
-  startInput.value = startWeek ? isoOf(weekDateRange(startWeek)[0]) : '';
-  endInput.value = endWeek ? isoOf(weekDateRange(endWeek)[0]) : (startInput.value || '');
-  seqCalMonthKey = null; // recentre le calendrier sur la période sélectionnée
-  syncSequenceWeeksField();
-  renderSequenceCalendar();
+/* Écran 12 — semaines de séquence saisies dans #sequenceWeekStart/#sequenceWeekEnd
+   (« S45 » → « S46 »), à la main OU via le calendrier ci-dessous (18/08 — exception
+   assumée à REGLES.md #22 pour cet écran précis, décision de Martin). Même format
+   `targetWeeks` (« S45-S46 ») qu'avant : aucun autre écran à toucher (Progression, Ruban,
+   exports le consomment tel quel). */
+function getSequencePeriodValue() {
+  const numFrom = (v) => { const m = /\d{1,2}/.exec(v || ''); return m ? Number(m[0]) : null; };
+  const s = numFrom($('#sequenceWeekStart')?.value);
+  const e = numFrom($('#sequenceWeekEnd')?.value);
+  const fmt = n => `S${String(n).padStart(2, '0')}`;
+  if (s != null && e != null) return s === e ? fmt(s) : `${fmt(s)}-${fmt(e)}`;
+  if (s != null) return fmt(s);
+  if (e != null) return fmt(e);
+  return ($('#sequenceWeeks')?.value || '').trim();
 }
 
-/* D3-bis Étape 2 — calendrier maison (à n° de semaine) intégré à la modale
-   séquence, en sélection de PLAGE : 1er clic = semaine de début, 2e = semaine de
-   fin (surlignage). Semaines cliquables = toute l'année de la promo (paire de
-   semestres), pour couvrir les UE à cheval et les EIL hors semestre nominal. */
+function syncSequenceWeeksField() {
+  const value = getSequencePeriodValue();
+  const target = $('#sequenceWeeks');
+  if (target) target.value = value;
+  const hint = $('#sequencePeriodWeeks');
+  if (hint) hint.textContent = value ? `Semaines couvertes : ${value.replace('-', ' → ')}` : '';
+}
+
+/* Rendu générique d'un mois calendaire en grille (colonne n° de semaine + 7 jours) —
+   18/08, réintroduit pour le calendrier de la modale séquence (seul appelant à ce jour).
+   Mode « selection » : objet {start,end} (clés lundi ISO) = plage surlignée, sinon chaîne
+   = sélection simple. `opts.pickAttr` = attribut data- posé sur chaque jour cliquable. */
+function renderCalendarMonth(monthDate, mondayToWeek, selection, showLabel = true, opts = {}) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const monthLabel = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstOffset = (new Date(year, month, 1).getDay() + 6) % 7; // colonne du 1er (lun=0)
+  const dows = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  const pickAttr = opts.pickAttr || 'set-week';
+  const rangeMode = selection && typeof selection === 'object';
+  const singleKey = rangeMode ? '' : (selection || '');
+  const rStart = rangeMode ? (selection.start || '') : '';
+  const rEnd = rangeMode ? (selection.end || '') : '';
+  const lo = rStart && rEnd ? (rStart <= rEnd ? rStart : rEnd) : (rStart || rEnd);
+  const hi = rStart && rEnd ? (rStart <= rEnd ? rEnd : rStart) : (rStart || rEnd);
+  const days = [];
+  for (let i = 0; i < firstOffset; i += 1) days.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
+  while (days.length % 7 !== 0) days.push(null);
+  const wkNumberOf = (weekId) => {
+    const w = state.weeks.find(x => x.id === weekId);
+    return w ? `S${String(weekNumberOf(w)).padStart(2, '0')}` : '';
+  };
+  let body = `<span class="cal-wk cal-wk-head">Sem.</span>${dows.map(d => `<span class="cal-dow">${d}</span>`).join('')}`;
+  for (let i = 0; i < days.length; i += 7) {
+    const row = days.slice(i, i + 7);
+    let wk = '';
+    for (const day of row) {
+      if (!day) continue;
+      const id = mondayToWeek.get(isoKey(mondayOf(new Date(year, month, day))));
+      if (id) { wk = wkNumberOf(id); break; }
+    }
+    body += `<span class="cal-wk">${escapeHtml(wk)}</span>`;
+    for (const day of row) {
+      if (!day) { body += '<span class="cal-day cal-empty"></span>'; continue; }
+      const date = new Date(year, month, day);
+      const mKey = isoKey(mondayOf(date));
+      const weekId = mondayToWeek.get(mKey);
+      if (!weekId) { body += `<span class="cal-day cal-off">${day}</span>`; continue; }
+      const wObj = state.weeks.find(x => x.id === weekId);
+      const tip = wObj ? `${wObj.label.replace('S0', 'S')} · ${wObj.dateRange || ''}` : '';
+      let cls = 'cal-day cal-active';
+      let dataAttr;
+      if (rangeMode) {
+        const isStart = rStart && mKey === rStart;
+        const isEnd = rEnd && mKey === rEnd;
+        if (isStart || isEnd) cls += ' cal-selected';
+        if (isStart) cls += ' cal-range-start';
+        if (isEnd) cls += ' cal-range-end';
+        if (lo && hi && mKey >= lo && mKey <= hi && !isStart && !isEnd) cls += ' cal-in-range';
+        dataAttr = `data-${pickAttr}="${escapeAttr(mKey)}"`;
+      } else {
+        if (mKey === singleKey) cls += ' cal-selected';
+        dataAttr = `data-${pickAttr}="${escapeAttr(weekId)}"`;
+      }
+      body += `<button type="button" class="${cls}" ${dataAttr} title="${escapeAttr(tip)}">${day}</button>`;
+    }
+  }
+  const labelHtml = showLabel ? `<div class="cal-month-label">${escapeHtml(monthLabel)}</div>` : '';
+  return `<div class="cal-month${showLabel ? '' : ' single'}">${labelHtml}<div class="cal-grid cal-grid-wk">${body}</div></div>`;
+}
+
+/* 18/08 — calendrier de la modale séquence, sélection de PLAGE (1er clic = semaine de
+   début, 2e = semaine de fin, surlignage). Semaines cliquables = toute l'année de la
+   promo (paire de semestres, weeksForSemesterSpan), pour couvrir les UE à cheval et les
+   EIL hors semestre nominal. Lit/écrit directement #sequenceWeekStart/#sequenceWeekEnd
+   (format "S37") : pas de champ caché séparé, contrairement à l'ancienne version
+   (retirée le 17/08) qui passait par des dates ISO dédiées. */
 function renderSequenceCalendar() {
   const container = $('#sequenceCalendar');
   if (!container) return;
@@ -5844,11 +8265,14 @@ function renderSequenceCalendar() {
   });
   if (!minDate) { container.innerHTML = '<p class="meta">Aucune semaine disponible.</p>'; return; }
 
-  const startIso = $('#sequenceStartDate')?.value || '';
-  const endIso = $('#sequenceEndDate')?.value || '';
-  const toKey = iso => { const d = parseIsoDate(iso); return d ? isoKey(mondayOf(d)) : ''; };
-  const startKey = toKey(startIso);
-  const endKey = toKey(endIso);
+  const numFrom = (v) => { const m = /\d{1,2}/.exec(v || ''); return m ? Number(m[0]) : null; };
+  const keyOfField = (fieldValue) => {
+    const n = numFrom(fieldValue);
+    const w = n != null ? weeks.find(x => weekNumberOf(x) === n) : null;
+    return w ? isoKey(weekDateRange(w)[0]) : '';
+  };
+  const startKey = keyOfField($('#sequenceWeekStart')?.value);
+  const endKey = keyOfField($('#sequenceWeekEnd')?.value);
 
   const firstMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
   const lastMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
@@ -5858,7 +8282,7 @@ function renderSequenceCalendar() {
     const [y, m] = seqCalMonthKey.split('-').map(Number);
     shown = new Date(y, m - 1, 1);
   } else {
-    const base = parseIsoDate(startIso) || minDate;
+    const base = (startKey && parseIsoDate(startKey)) || minDate;
     shown = new Date(base.getFullYear(), base.getMonth(), 1);
   }
   shown = clampMonth(shown);
@@ -5888,7 +8312,10 @@ function moveSequenceCalendarMonth(offset) {
     const [y, m] = seqCalMonthKey.split('-').map(Number);
     base = new Date(y, m - 1, 1);
   } else {
-    const d = parseIsoDate($('#sequenceStartDate')?.value || '') || (weeks[0] ? weekDateRange(weeks[0])[0] : new Date());
+    const numFrom = (v) => { const m2 = /\d{1,2}/.exec(v || ''); return m2 ? Number(m2[0]) : null; };
+    const n = numFrom($('#sequenceWeekStart')?.value);
+    const w = n != null ? weeks.find(x => weekNumberOf(x) === n) : null;
+    const d = (w && weekDateRange(w)[0]) || (weeks[0] ? weekDateRange(weeks[0])[0] : new Date());
     base = new Date(d.getFullYear(), d.getMonth(), 1);
   }
   base.setMonth(base.getMonth() + offset);
@@ -5896,69 +8323,15 @@ function moveSequenceCalendarMonth(offset) {
   renderSequenceCalendar();
 }
 
-function getSequencePeriodValue() {
-  const startIso = $('#sequenceStartDate')?.value || '';
-  const endIso = $('#sequenceEndDate')?.value || '';
-  if (!startIso && !endIso) return ($('#sequenceWeeks')?.value || '').trim();
-  const sN = startIso ? weekNumberOf(weekForIsoDate(startIso) || {}) : 0;
-  const eN = endIso ? weekNumberOf(weekForIsoDate(endIso) || {}) : 0;
-  const fmt = n => `S${String(n).padStart(2, '0')}`;
-  if (sN && !eN) return fmt(sN);
-  if (!sN && eN) return fmt(eN);
-  if (sN && eN) return sN === eN ? fmt(sN) : `${fmt(sN)}-${fmt(eN)}`;
-  return ($('#sequenceWeeks')?.value || '').trim();
-}
-
-function syncSequenceWeeksField() {
-  const value = getSequencePeriodValue();
-  const target = $('#sequenceWeeks');
-  if (target) target.value = value;
-  const hint = $('#sequencePeriodWeeks');
-  if (hint) hint.textContent = value ? `Semaines couvertes : ${value.replace('-', ' → ')}` : '';
-}
-
-function renderSequenceWeekPicker(selectedWeeksText = '') {
-  const container = $('#sequenceWeekPicker');
-  if (!container || !state) return;
-  const semester = $('#sequenceSemester')?.value || 'Semestre 1';
-  const promotion = $('#sequencePromotion')?.value || '';
-  const weeks = weeksForSemester(semester);
-  const selectedNumbers = new Set(parseWeekRanges(selectedWeeksText).flatMap(range => {
-    const nums = [];
-    weeks.forEach(w => { const n = weekNumberOf(w); if (rangeIncludesWeek(range, n)) nums.push(n); });
-    return nums;
-  }));
-  container.innerHTML = weeks.map(w => {
-    const n = weekNumberOf(w);
-    const checked = selectedNumbers.has(n);
-    const constraints = constraintsForWeek(w, promotion);
-    return `<label class="week-chip ${checked ? 'selected' : ''} ${constraints.length ? 'has-constraint' : ''}" title="${escapeAttr(w.dateRange)}${constraints.length ? ' · ' + escapeAttr(constraints.map(c => c.label).join(', ')) : ''}"><input type="checkbox" value="${n}" ${checked ? 'checked' : ''}><span>${escapeHtml(w.label)}</span><small>${escapeHtml(compactDateRange(w.dateRange))}</small></label>`;
-  }).join('');
-  updateSequenceWeeksFromPicker(false);
-}
-
-function updateSequenceWeeksFromPicker(updateClasses = true) {
-  const inputs = $$('#sequenceWeekPicker input[type="checkbox"]');
-  const selected = inputs.filter(input => input.checked).map(input => Number(input.value)).sort((a, b) => a - b);
-  const target = $('#sequenceWeeks');
-  if (target) target.value = compressWeekNumbers(selected);
-  if (updateClasses) inputs.forEach(input => input.closest('.week-chip')?.classList.toggle('selected', input.checked));
-}
-
-function compressWeekNumbers(numbers = []) {
-  if (!numbers.length) return '';
-  const unique = [...new Set(numbers)].sort((a, b) => a - b);
-  const ranges = [];
-  let start = unique[0];
-  let prev = unique[0];
-  for (let i = 1; i <= unique.length; i += 1) {
-    const current = unique[i];
-    if (current === prev + 1) { prev = current; continue; }
-    ranges.push(start === prev ? `S${String(start).padStart(2, '0')}` : `S${String(start).padStart(2, '0')}-S${String(prev).padStart(2, '0')}`);
-    start = current;
-    prev = current;
-  }
-  return ranges.join(', ');
+/* Pont clic calendrier → champ texte : `weekId` cliqué -> "S37" écrit dans le champ de
+   début ou de fin. N'appelle PAS syncSequenceWeeksField/renderSequenceCalendar (à la
+   charge de l'appelant, qui sait s'il doit aussi toucher l'autre champ dans le même geste
+   — cf. logique de plage du handler de clic). */
+function setSequenceWeekFieldsFromWeek(weekId, which) {
+  const week = state.weeks.find(w => w.id === weekId);
+  if (!week) return;
+  const field = which === 'end' ? $('#sequenceWeekEnd') : $('#sequenceWeekStart');
+  if (field) field.value = `S${String(weekNumberOf(week)).padStart(2, '0')}`;
 }
 
 function uniqueWeeks(weeks = []) {
@@ -5982,12 +8355,6 @@ function typeSlug(type = '') {
   return String(type).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'autre';
 }
 
-function applySessionPlacementVisibility() {
-  const placement = $('#sessionPlacementStatus')?.value || 'fictif';
-  const section = $('#sessionPlacementSection');
-  if (!section) return;
-  section.dataset.mode = placement === 'definitif' ? 'definitive' : 'fictive';
-}
 
 function selectedCheckboxValues(containerSelector) {
   return $$(`${containerSelector} input[type="checkbox"]:checked`).map(input => input.value);
@@ -6080,12 +8447,16 @@ function typeClass(type = '') {
   return '';
 }
 
+// Ajustements #2 [E2.5], correctif jumeau (18/08/2026) — même bug que
+// periodOfWeek ci-dessus (année civile en dur, cassé par buildRollingWeeks) :
+// trouvé en cherchant d'autres `isoYear === 2026/2027` pendant l'investigation
+// du ticket « 7 cases en janvier-mai ». Même correctif, au numéro de semaine.
 function weeksForSemester(semester) {
   return state.weeks.filter(w => {
-    const n = Number(w.weekNumber ?? String(w.label).replace(/\D/g, ''));
-    if (semester === 'Semestre 1' || semester === 'Semestre 3') return (Number(w.isoYear) === 2026 && n >= 36 && n <= 53);
-    if (semester === 'Semestre 2') return (Number(w.isoYear) === 2027 && n >= 1 && n <= 17);
-    if (semester === 'Semestre 4') return (Number(w.isoYear) === 2027 && n >= 1 && n <= 22);
+    const n = weekNumberOf(w);
+    if (semester === 'Semestre 1' || semester === 'Semestre 3') return n >= 36 && n <= 53;
+    if (semester === 'Semestre 2') return n >= 1 && n <= 17;
+    if (semester === 'Semestre 4') return n >= 1 && n <= 22;
     return true;
   });
 }
@@ -6308,17 +8679,6 @@ function dayConstraintChip(c) {
   return `<button type="button" class="day-constraint-chip constraint-${typeSlug(c.type)} ${variant}" data-edit-constraint="${escapeAttr(c.id)}" title="${escapeAttr(tip)}"><span class="dcc-ico" aria-hidden="true">${ico}</span><span class="dcc-label">${escapeHtml(c.label)}</span></button>`;
 }
 
-// Lot R — période calendaire d'une semaine : automne = année ISO 2026 (sem. 36→53,
-// sept→déc), printemps = année ISO 2027 (sem. 1→22, jan→mai). Sert à colorer les
-// bandeaux de promo dans le planning hebdo.
-function weekPeriodClass(week) {
-  if (!week) return '';
-  const n = Number(week.weekNumber ?? String(week.label).replace(/\D/g, ''));
-  const y = Number(week.isoYear);
-  if (y === 2026 && n >= 36 && n <= 53) return 'period-autumn';
-  if (y === 2027 && n >= 1 && n <= 22) return 'period-spring';
-  return '';
-}
 function weekDateRange(week) {
   const parts = String(week.dateRange || '').split('–').map(x => x.trim());
   return [parseFrDate(parts[0]), parseFrDate(parts[1] || parts[0])];
@@ -6365,8 +8725,10 @@ function mesurerBandeauCollant() {
 // écouteurs d'événements une deuxième fois.
 let ocAppDemarre = false;
 window.OC_APP = {
-  demarrer(initiales = '') {
+  demarrer(initiales = '', nom = '', prenom = '') {
     moiInitiales = String(initiales || '').toUpperCase();
+    moiNom = String(nom || '');
+    moiPrenom = String(prenom || '');
     if (!ocAppDemarre) {
       ocAppDemarre = true;
       bindEvents();
