@@ -4,10 +4,10 @@ Outil de terrain pour l'identification des habitats des marais salés de la
 **Petite Mer de Gâvres** (BTS GPN — Kerplouz), à partir du référentiel
 phytosociologique COLASSE V., 2019 (CBN de Brest).
 
-Un·e élève réalise un relevé floristique à chaque point d'un transect
-(abondance-dominance Braun-Blanquet), et l'application propose l'habitat le
-plus probable en comparant le relevé au référentiel des 16 groupements
-végétaux trouvables sur le site.
+Un·e élève renseigne l'en-tête du bordereau (transect, date, observateur·ice,
+site, commune), saisit les espèces observées avec leur abondance-dominance
+(Braun-Blanquet), et l'application propose l'habitat le plus probable en
+comparant le relevé au référentiel des 16 groupements du site.
 
 ## État actuel
 
