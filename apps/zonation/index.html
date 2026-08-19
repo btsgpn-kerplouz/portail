@@ -597,7 +597,7 @@ const HABITATS_ACTIFS = HABITATS;
    est un coefficient plus mesuré utilisé uniquement pour l'indice global secondaire,
    afin qu'une espèce simplement "présente" garde un poids raisonnable dans le score). */
 const COEF_ABONDANCE = {
-'i': {label:'i', desc:'Individu isolé.', intervalle:'n.d.', pct:0.01, mult:0.5},
+  'i': {label:'i', desc:'Individu isolé.', intervalle:'', pct:0.01, mult:0.5},   /* pas de fourchette : un seul individu, le recouvrement n'est pas la question */
   'r': {label:'r', desc:'Très rare.', intervalle:'0 → 0,10 %', pct:0.1, mult:0.6},
   '+': {label:'+', desc:'Peu abondant, recouvrement négligeable.', intervalle:'0,10 → 1 %', pct:0.5, mult:0.7},
   '1': {label:'1', desc:'Abondant mais faible recouvrement.', intervalle:'1 → 5 %', pct:2.5, mult:0.9},
