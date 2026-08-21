@@ -340,6 +340,11 @@ function normalizeData(data) {
     fictiveDay: s.fictiveDay ?? '',
     teacher: s.teacher || '',
     status: s.status || 'Prévue',
+    // Écran 17 (mobile, 21/08/2026) — « ✓ Faite », coché à la main : une
+    // séance passée (est-passe, calculée sur la date) n'est PAS forcément
+    // « réalisée » (elle peut avoir sauté), et inversement on veut pouvoir
+    // la traiter avant la fin du créneau. Champ neuf, indépendant de la date.
+    realisee: !!s.realisee,
     constraintId: s.constraintId || '', // Lot K — rattachement à une semaine thématique (EIL)
     ...normalizeDeplacementFields(s),                      // Lot B — '' | 'etablissement' | 'personnel'
     demiGroupe: normalizeDemiGroupe(s.demiGroupe, s.group) // Lot V — '' | 'A' | 'B'
@@ -897,9 +902,9 @@ function roomBookingDaysUntil(date) {
    véhicule) : ce sont deux démarches distinctes auprès de deux personnes. */
 function reservationRows() {
   const rows = [];
-  const pousser = (kind, source, entity, label, booked, dismissed, date, titre, detail) => {
+  const pousser = (kind, source, entity, label, booked, date, titre, detail) => {
     rows.push({
-      kind, source, entity, label, booked, dismissed,
+      kind, source, entity, label, booked,
       id: entity.id, titre, detail,
       date, daysUntil: roomBookingDaysUntil(date)
     });
@@ -909,25 +914,25 @@ function reservationRows() {
     const salle = sessionRoomToBook(s);
     const date = roomBookingDate(s);
     if (salle) {
-      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked, !!s.roomBookedDismissed,
+      pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
     if (s.deplacement === 'etablissement') {
-      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked, !!s.vehicleBookedDismissed,
+      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
     // Retours #3 (18-19/08/2026) — case « matériel à réserver » à côté du champ
     // Matériel : même mécanique que salle/véhicule (reprend la même date de
     // référence que la séance).
     if (s.materielAReserver) {
-      pousser('materiel', 'session', s, MATERIEL_LABEL, !!s.materielReserve, !!s.materielReserveDismissed,
+      pousser('materiel', 'session', s, MATERIEL_LABEL, !!s.materielReserve,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
   });
 
   (state.reunions || []).forEach(r => {
     if (r.deplacement !== 'etablissement') return;
-    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked, !!r.vehicleBookedDismissed,
+    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked,
       parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
   });
 
@@ -939,27 +944,38 @@ function reservationRows() {
   });
 }
 
-/* Lignes de l'encart : celles pas encore réservées (délestées d'elles-mêmes
-   une fois la date passée, sans action possible) + celles réservées mais pas
-   encore retirées à la main (persistent, affichées « fait », jusqu'au clic
-   sur ×) — une case cochée par erreur ne fait donc plus disparaître la ligne
-   sans recours. */
+/* Lignes de l'encart « à faire » : celles pas encore réservées, délestées
+   d'elles-mêmes une fois la date passée (rien à réserver pour une séance déjà
+   eue). Retour de Martin (22/08/2026) : cocher « réservée »/« fait » retire
+   directement la ligne d'ici — plus besoin d'un second clic sur un × à part
+   (peu lisible, mal compris) — elle rejoint doneRoomBookingRows() (menu
+   « Faites »), d'où on peut la décocher pour revenir ici si besoin. */
 function activeRoomBookingRows() {
-  return reservationRows().filter(r => {
-    if (r.dismissed) return false;
-    if (r.booked) return true;
-    return r.daysUntil === null || r.daysUntil >= 0;
-  });
+  return reservationRows().filter(r => !r.booked && (r.daysUntil === null || r.daysUntil >= 0));
 }
 
-const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission' };
+/* Symétrique : les réservations déjà faites, consultables et réversibles
+   depuis le menu « Faites » (renderUrgencesFaites/renderMobileFaites) plutôt
+   que mêlées à la liste active. */
+function doneRoomBookingRows() {
+  return reservationRows().filter(r => r.booked);
+}
+
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission', reunion: 'Réunion' };
 const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
+// Retour de Martin (21/08/2026) : une règle commune à tout type d'urgence
+// (pas seulement les réunions) — n'apparaît dans le tableau que si elle a
+// moins de URGENCE_FENETRE_JOURS jours (au-delà, ça encombre sans être
+// actionnable). Une ligne sans date du tout (« date à préciser ») n'a rien à
+// comparer : elle reste visible, même logique que dashBacklogSessions.
+const URGENCE_FENETRE_JOURS = 45;
 
 /* Pile unique « Urgences » (REGLES.md #25) : salles et véhicules à réserver
-   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire),
+   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire) +
+   réunions enregistrées à venir (kind:'reunion', ajouté le 21/08/2026 sur
+   demande de Martin — purement informatif, aucun verbe de réservation),
    fusionnés et triés par échéance seule — jamais groupés par UE, promotion ou
-   type. La nature (salle/véhicule/ordre de mission) n'est qu'une étiquette de
-   colonne, pas un panneau séparé comme avant cette refonte. */
+   type. La nature n'est qu'une étiquette de colonne, pas un panneau séparé. */
 function urgenceRows() {
   const out = [];
   activeRoomBookingRows().forEach(r => {
@@ -985,11 +1001,25 @@ function urgenceRows() {
       kind: 'mission', titre: o.titre,
       detail: o.detail || '',
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
-      source: o.source, id: o.id, fait: o.fait,
+      source: o.source, id: o.id, fait: false,
       teacher: entity?.teacher || ''
     });
   });
-  return out.sort((a, b) => {
+  (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
+    const date = r.date ? parseIsoDate(r.date) : null;
+    const daysUntil = date ? dashJoursEntre(date) : null;
+    if (daysUntil !== null && daysUntil < 0) return; // réunion passée
+    out.push({
+      kind: 'reunion', titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
+      detail: r.lieu || '',
+      date, daysUntil,
+      source: 'reunion', id: r.id, fait: false,
+      teacher: r.teacher || ''
+    });
+  });
+  return out
+    .filter(r => r.daysUntil === null || r.daysUntil <= URGENCE_FENETRE_JOURS)
+    .sort((a, b) => {
     if (a.daysUntil === null && b.daysUntil === null) return 0;
     if (a.daysUntil === null) return 1;
     if (b.daysUntil === null) return -1;
@@ -997,58 +1027,182 @@ function urgenceRows() {
   });
 }
 
+/* Symétrique de urgenceRows() : les réservations/ordres de mission déjà faits
+   (menu « Faites », retour de Martin 22/08/2026 — cocher « fait » retire la
+   ligne de la pile active, mais elle doit rester consultable et réversible
+   à part). Les réunions n'ont pas d'état « fait » (purement informatif,
+   cf. urgenceRows) : rien à archiver ici pour elles. Triées de la plus
+   récente à la plus ancienne. */
+function urgenceRowsFaites() {
+  const out = [];
+  doneRoomBookingRows().forEach(r => {
+    const horaire = r.source === 'session' ? dashHoraire(r.entity) : '';
+    out.push({
+      kind: r.kind, titre: r.titre,
+      detail: [r.label, r.detail, horaire].filter(Boolean).join(' · '),
+      date: r.date, daysUntil: r.daysUntil,
+      source: r.source, id: r.id, fait: true,
+      teacher: r.entity?.teacher || ''
+    });
+  });
+  ordresDeMissionFaits().forEach(o => {
+    const entity = o.source === 'reunion' ? (state.reunions || []).find(r => r.id === o.id) : findSession(o.id);
+    out.push({
+      kind: 'mission', titre: o.titre,
+      detail: o.detail || '',
+      date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
+      source: o.source, id: o.id, fait: true,
+      teacher: entity?.teacher || ''
+    });
+  });
+  return out.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date - a.date;
+  });
+}
+
+// Extrait de renderUrgences (refonte mobile, 21/08/2026) pour être réutilisé
+// tel quel par renderMobileAValider() : même markup, mêmes attributs
+// data-* (data-reservation-kind, data-open-mission, data-bascule-vehicule…),
+// tous branchés sur des délégués globaux (document.body.addEventListener) —
+// aucun nouveau JS de comportement à écrire côté mobile, seule la mise en
+// page qui les entoure change. N'affiche que des lignes actives (jamais
+// « fait » — voir urgenceFaiteRowMarkup pour le menu « Faites »).
+function urgenceRowMarkup(r) {
+  const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
+  const delaiLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'J' : `J–${r.daysUntil}`);
+  const urgent = r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
+  // Retours 17/08/2026 — bascule rapide depuis la ligne, quand le véhicule
+  // de l'établissement s'avère indisponible : plus besoin de rouvrir la
+  // fiche pour changer le menu Déplacement, ça bascule direct en
+  // personnel (l'ordre de mission remplace la réservation à la ligne suivante).
+  const basculeBtn = r.kind === 'vehicule'
+    ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
+    : '';
+  // Retours #3 (18-19/08/2026) : bascule inverse, pour revenir en arrière
+  // facilement après un clic "Non dispo → perso" fait par erreur.
+  const basculeRetourBtn = r.kind === 'mission'
+    ? `<button type="button" class="urgence-bascule" data-bascule-vehicule-retour="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Revenir à un déplacement en véhicule de l’établissement">Perso → établissement</button>`
+    : '';
+  const verbe = r.kind === 'mission'
+    ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
+    // Une réunion enregistrée (21/08/2026) n'est pas une réservation à
+    // traiter : purement informatif, pas de case à cocher — juste un
+    // rappel qu'elle existe, la ligne entière ouvre déjà sa fiche.
+    : r.kind === 'reunion'
+      ? `<span class="urgence-verbe" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">Ouvrir</span>`
+      : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
+  // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
+  // « Ma semaine »/« Prochainement ») — la case et le lien Éditer gardent
+  // leur propre action (guard dans le gestionnaire de clic).
+  const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
+  const teachers = teacherPillsMarkup(r.teacher);
+  return `<div class="urgence-row${urgent ? ' est-urgent' : ''}" ${editAttr} tabindex="0" role="button">
+    <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
+    <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
+    <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
+    ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
+    <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
+    ${verbe}
+  </div>`;
+}
+
+/* Menu « Faites » : mêmes lignes, un seul verbe (case cochée « Fait », à
+   décocher pour revenir dans la pile active) — pas de bascule véhicule ni
+   d'« Éditer », qui n'ont de sens que pour une ligne encore à traiter. */
+function urgenceFaiteRowMarkup(r) {
+  const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
+  const faitCheckbox = r.kind === 'mission'
+    ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
+    : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
+  const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
+  const teachers = teacherPillsMarkup(r.teacher);
+  return `<div class="urgence-row est-fait" ${editAttr} tabindex="0" role="button">
+    <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
+    <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
+    ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
+    <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
+    <label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>
+  </div>`;
+}
+
 function renderUrgences() {
   const rows = urgenceRows();
+  const faites = urgenceRowsFaites();
   const badge = $('#urgencesBadge');
   if (badge) { badge.textContent = rows.length ? String(rows.length) : ''; badge.hidden = !rows.length; }
   const panel = $('#urgencesPanel');
-  if (panel) panel.hidden = !rows.length;
+  if (panel) panel.hidden = !rows.length && !faites.length;
   const wrap = $('#urgencesList');
-  if (!wrap) return;
-  wrap.innerHTML = rows.length
-    ? rows.map(r => {
-      const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
-      const delaiLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'J' : `J–${r.daysUntil}`);
-      const urgent = !r.fait && r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
-      const dismissBtn = `<button type="button" class="urgence-dismiss" data-dismiss-urgence="${escapeAttr(r.kind)}:${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Retirer de la liste" aria-label="Retirer de la liste">×</button>`;
-      // « Fait » reste une case à cocher (décochée = retour arrière immédiat)
-      // plutôt qu'une simple étiquette — même geste que la réservation
-      // salle/véhicule, y compris pour un ordre de mission (data-mission-toggle).
-      const faitCheckbox = r.kind === 'mission'
-        ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
-        : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
-      // Retours 17/08/2026 — bascule rapide depuis la ligne, quand le véhicule
-      // de l'établissement s'avère indisponible : plus besoin de rouvrir la
-      // fiche pour changer le menu Déplacement, ça bascule direct en
-      // personnel (l'ordre de mission remplace la réservation à la ligne suivante).
-      const basculeBtn = (r.kind === 'vehicule' && !r.fait)
-        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
-        : '';
-      // Retours #3 (18-19/08/2026) : bascule inverse, pour revenir en arrière
-      // facilement après un clic "Non dispo → perso" fait par erreur.
-      const basculeRetourBtn = (r.kind === 'mission' && !r.fait)
-        ? `<button type="button" class="urgence-bascule" data-bascule-vehicule-retour="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Revenir à un déplacement en véhicule de l’établissement">Perso → établissement</button>`
-        : '';
-      const verbe = r.fait
-        ? `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>${dismissBtn}`
-        : r.kind === 'mission'
-          ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
-          : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
-      // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
-      // « Ma semaine »/« Prochainement ») — la case, le lien Éditer et le ×
-      // gardent leur propre action (guard dans le gestionnaire de clic).
-      const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
-      const teachers = teacherPillsMarkup(r.teacher);
-      return `<div class="urgence-row${urgent ? ' est-urgent' : ''}${r.fait ? ' est-fait' : ''}" ${editAttr} tabindex="0" role="button">
-        <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
-        <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
-        <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
-        ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
-        <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
-        ${verbe}
-      </div>`;
-    }).join('') + `<div class="urgence-pied">Cliquer une ligne ouvre la séance ou la réunion. Une fois faite, elle reste affichée en vert : décocher « Fait » revient en arrière, cliquer × la retire simplement de la liste. Une ligne pas encore faite disparaît d&rsquo;elle-même passé la date.</div>`
-    : '<p class="empty-hint">Rien d’urgent pour le moment.</p>';
+  if (wrap) {
+    wrap.innerHTML = rows.length
+      ? rows.map(urgenceRowMarkup).join('') + `<div class="urgence-pied">Cliquer une ligne ouvre la séance ou la réunion. Cocher « fait »/« réservée » la retire de cette liste et la range dans « Faites », ci-dessous.</div>`
+      : '<p class="empty-hint">Rien d’urgent pour le moment.</p>';
+  }
+  const faitesDetail = $('#urgencesFaitesDetail');
+  if (faitesDetail) faitesDetail.hidden = !faites.length;
+  const faitesCompte = $('#urgencesFaitesCompte');
+  if (faitesCompte) faitesCompte.textContent = String(faites.length);
+  const faitesWrap = $('#urgencesFaitesList');
+  if (faitesWrap) faitesWrap.innerHTML = faites.map(urgenceFaiteRowMarkup).join('');
+}
+
+/* Écran 15 — À valider (mobile). Puces de filtre + groupage Cette semaine/
+   Plus tard, mais les lignes elles-mêmes réutilisent urgenceRowMarkup() —
+   mêmes verbes, mêmes cases à cocher, aucune divergence de comportement avec
+   le Tableau de bord desktop. « Déplacements » (puce du handoff) regroupe
+   véhicule + ordre de mission (les deux relèvent d'un trajet), Salles et
+   Matériel restent chacun leur propre kind. */
+const MOBILE_URGENCE_FILTRES = {
+  tout: () => true,
+  salle: r => r.kind === 'salle',
+  materiel: r => r.kind === 'materiel',
+  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission'
+};
+let mobileUrgenceFiltre = 'tout';
+
+function renderMobileAValider() {
+  const host = $('#mobileAValider');
+  if (!host) return;
+  const rows = urgenceRows().filter(MOBILE_URGENCE_FILTRES[mobileUrgenceFiltre] || MOBILE_URGENCE_FILTRES.tout);
+  const cetteSemaine = rows.filter(r => r.daysUntil !== null && r.daysUntil <= 7);
+  const plusTard = rows.filter(r => r.daysUntil === null || r.daysUntil > 7);
+  const groupe = (titre, liste) => liste.length
+    ? `<h3 class="mobile-group-title">${titre}</h3>${liste.map(urgenceRowMarkup).join('')}`
+    : '';
+  const chip = (cle, label) => `<button type="button" class="mobile-filtre-chip${mobileUrgenceFiltre === cle ? ' active' : ''}" data-mobile-filtre-urgence="${cle}">${label}</button>`;
+  const nbFaites = urgenceRowsFaites().length;
+  host.innerHTML = `
+    <div class="mobile-topbar">
+      <button type="button" class="lien mobile-back" data-mobile-goto="mobileAccueil">‹ Accueil</button>
+      <h2 class="mobile-topbar-title">À valider</h2>
+    </div>
+    <div class="mobile-filtres">
+      ${chip('tout', 'Tout')}
+      ${chip('salle', 'Salles')}
+      ${chip('materiel', 'Matériel')}
+      ${chip('deplacement', 'Déplacements')}
+    </div>
+    ${rows.length ? (groupe('Cette semaine', cetteSemaine) + groupe('Plus tard', plusTard)) : '<p class="empty-hint">Rien à valider pour le moment.</p>'}
+    <button type="button" class="lien mobile-voir-faites" data-mobile-goto="mobileFaites">Voir les faites${nbFaites ? ` (${nbFaites})` : ''} →</button>`;
+}
+
+/* Écran « Faites » (mobile) : menu à part demandé par Martin (22/08/2026) —
+   cocher « fait »/« réservée » retire une ligne de À valider sans détour par
+   un × ; elle reste consultable et réversible ici (décocher = retour dans
+   À valider). Mêmes lignes que urgenceRowsFaites() côté desktop. */
+function renderMobileFaites() {
+  const host = $('#mobileFaites');
+  if (!host) return;
+  const rows = urgenceRowsFaites();
+  host.innerHTML = `
+    <div class="mobile-topbar">
+      <button type="button" class="lien mobile-back" data-mobile-goto="mobileAValider">‹ À valider</button>
+      <h2 class="mobile-topbar-title">Faites</h2>
+    </div>
+    ${rows.length ? rows.map(urgenceFaiteRowMarkup).join('') : '<p class="empty-hint">Rien de fait pour le moment.</p>'}`;
 }
 
 /* ============================================================
@@ -1124,12 +1278,22 @@ function ensureMissionDetail(entity) {
   return entity.missionDetail;
 }
 
+// Écran 18 (mobile, 21/08/2026) — #missionView est partagé desktop/mobile
+// (voir styles.css « Coquille mobile »), atteint depuis Urgences aussi bien
+// sur #dashSemaine/#urgencesList (desktop) que #mobileAValider/#mobileSemaine
+// (mobile). missionViewReturnTo mémorise la vue d'où l'on vient pour que
+// closeMissionView() y revienne — sinon un retour depuis mobile activait
+// toujours l'onglet desktop « Tableau de bord », invisible en CSS sous
+// 780px, laissant l'écran mobile vide (aucune .view mobile active-view).
+let missionViewReturnTo = 'dashboard';
 function openMissionView(kind, id) {
   if (!kind || !id) return;
   missionViewTarget = { kind, id };
   const entity = missionEntity();
   if (!entity) { missionViewTarget = null; return; }
   ensureMissionDetail(entity);
+  const vueActuelle = $('.view.active-view');
+  if (vueActuelle) missionViewReturnTo = vueActuelle.id;
   $$('.tab').forEach(t => t.classList.remove('active'));
   $$('.view').forEach(v => v.classList.remove('active-view'));
   $('#missionView')?.classList.add('active-view');
@@ -1139,7 +1303,9 @@ function openMissionView(kind, id) {
 
 function closeMissionView() {
   missionViewTarget = null;
-  $('.tab[data-view="dashboard"]')?.click();
+  const cible = missionViewReturnTo || 'dashboard';
+  const realTab = $(`.tab[data-view="${cible}"]`);
+  if (realTab) realTab.click(); else showMobileScreen(cible);
 }
 
 function missionStatutLabel(entity, detail) {
@@ -2030,6 +2196,11 @@ function renderAll(resetSelectors = true) {
   if (missionViewTarget) renderMissionView();
   if ($('#fraisTableWrap')) renderFrais();
   if ($('#reunionsList')) renderReunions();
+  if ($('#mobileAccueil')) renderMobileAccueil();
+  if ($('#mobileAValider')) renderMobileAValider();
+  if ($('#mobileFaites')) renderMobileFaites();
+  if ($('#mobileSemaine')) renderMobileSemaine();
+  if (mobileSeanceTarget) renderMobileSeance();
   // Restaurer après le re-rendu (le DOM a la même hauteur, la position est conservée).
   window.scrollTo({ top: scrollY });
 }
@@ -2431,23 +2602,24 @@ function renderDashBacklogBadges(nb) {
 
 /* Les ordres de mission : séances et réunions en véhicule PERSONNEL. Une
    mission pas encore demandée se déleste d'elle-même passé la date (rien à
-   demander pour un déplacement déjà eu lieu) ; une mission déjà envoyée reste
-   affichée (marquée « fait ») jusqu'à ce qu'elle soit retirée à la main —
-   voir missionDismissed, posé par le clic sur × dans renderUrgences. Triées
-   par date, les plus proches en tête. */
+   demander pour un déplacement déjà eu lieu). Retour de Martin (22/08/2026) :
+   une fois faite, elle rejoint ordresDeMissionFaits() (menu « Faites »)
+   plutôt que de rester ici marquée verte jusqu'à un × à part. Triées par
+   date, les plus proches en tête. */
 function ordresDeMissionAFaire() {
   const out = [];
   const pousser = (source, id, titre, date, detail, fait) => {
-    if (!fait && date && dashJoursEntre(date) < 0) return;
-    out.push({ source, id, titre, date, detail, fait });
+    if (fait) return;
+    if (date && dashJoursEntre(date) < 0) return;
+    out.push({ source, id, titre, date, detail, fait: false });
   };
   (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
-    if (s.deplacement !== 'personnel' || s.missionDismissed) return;
+    if (s.deplacement !== 'personnel') return;
     const iso = sessionIsoDate(s);
     pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
   });
   (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    if (r.deplacement !== 'personnel' || r.missionDismissed) return;
+    if (r.deplacement !== 'personnel') return;
     pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
   });
   return out.sort((a, b) => {
@@ -2455,6 +2627,30 @@ function ordresDeMissionAFaire() {
     if (!a.date) return 1;
     if (!b.date) return -1;
     return a.date - b.date;
+  });
+}
+
+/* Symétrique : les ordres de mission déjà faits, pour le menu « Faites ». */
+function ordresDeMissionFaits() {
+  const out = [];
+  const pousser = (source, id, titre, date, detail, fait) => {
+    if (!fait) return;
+    out.push({ source, id, titre, date, detail, fait: true });
+  };
+  (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
+    if (s.deplacement !== 'personnel') return;
+    const iso = sessionIsoDate(s);
+    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
+  });
+  (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
+    if (r.deplacement !== 'personnel') return;
+    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
+  });
+  return out.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date - a.date;
   });
 }
 
@@ -2498,6 +2694,149 @@ function renderDashboard() {
 
   renderChecklist('todo');
   renderChecklist('devnotes');
+}
+
+/* Écrans mobile (14-21 du handoff), fondation. Accueil (écran 14) : sur
+   demande explicite de Martin, ce n'est PAS le « Bord » dense de la maquette
+   d'origine (Aujourd'hui + aperçu Urgences + À faire empilés) mais un vrai
+   menu à gros boutons de lancement — aucun contenu détaillé ici, juste un
+   badge/compteur quand il y a quelque chose à traiter. « À faire » n'a pas de
+   bouton pour l'instant : pas de destination mobile définie (pas dans le
+   handoff, jamais tranché avec Martin) — à ajouter une fois décidé plutôt que
+   d'inventer un écran.
+   showMobileScreen()/[data-mobile-goto] (bindEvents) généralisent le geste
+   déjà utilisé par openMissionView pour une vue qui n'est pas un onglet
+   permanent (À valider, Une séance, Frais…). */
+function showMobileScreen(id) {
+  $$('.tab').forEach(t => t.classList.remove('active'));
+  $$('.view').forEach(v => v.classList.remove('active-view'));
+  $(`#${id}`)?.classList.add('active-view');
+  window.scrollTo(0, 0);
+}
+
+function renderMobileAccueil() {
+  const host = $('#mobileAccueil');
+  if (!host) return;
+  const nbUrgences = urgenceRows().length;
+  const nbFrais = (state.deplacements || []).filter(d => d.statut !== 'Terminée').length;
+  const bouton = (icon, label, target, count, alerte) => `
+    <button type="button" class="mobile-home-btn" data-mobile-goto="${target}">
+      <span class="mobile-home-icon" aria-hidden="true">${icon}</span>
+      <span class="mobile-home-label">${label}</span>
+      ${count ? `<span class="mobile-home-badge${alerte ? ' is-alert' : ''}">${count}</span>` : ''}
+    </button>`;
+  host.innerHTML = `
+    <div class="mobile-home">
+      ${bouton('📅', 'Ma semaine', 'mobileSemaine', 0, false)}
+      ${bouton('⚑', 'Urgences', 'mobileAValider', nbUrgences, true)}
+      ${bouton('💶', 'Frais', 'mobileFrais', nbFrais, false)}
+    </div>`;
+}
+
+/* Écran 16 — Ma semaine (mobile). Réutilise dashContenuSemaine (jours/séances/
+   réunions/périodes) et dashCarteSeance/dashCarteReunion (cartes) telles
+   quelles — seul le patron de mise en page change : retour de Martin
+   (21/08/2026, « encore trop de cadres dans des cadres ») abandonnant
+   dashColonneJour (boîte de jour + boîte englobante desktop) au profit d'un
+   simple titre de jour à plat (même patron que .mobile-group-title de À
+   valider), .carte restant le seul niveau de cadre. Partage dashSemaineOffset
+   avec le Tableau de bord desktop : navigation cohérente entre les deux, un
+   seul utilisateur à la fois. */
+function renderMobileSemaine() {
+  const host = $('#mobileSemaine');
+  if (!host) return;
+  const semaineId = dashSemaineIdCourante();
+  const iAffichee = state.weeks.findIndex(w => w.id === semaineId);
+  const nav = `<div class="dash-semaine-nav">
+    <button type="button" class="dash-week-nav-btn" data-dash-week-nav="-1" ${iAffichee <= 0 ? 'disabled' : ''} aria-label="Semaine précédente">‹</button>
+    <button type="button" class="dash-week-nav-btn" data-dash-week-nav="1" ${iAffichee < 0 || iAffichee >= state.weeks.length - 1 ? 'disabled' : ''} aria-label="Semaine suivante">›</button>
+  </div>`;
+  const back = `<button type="button" class="lien mobile-back" data-mobile-goto="mobileAccueil">‹ Accueil</button>`;
+  const c = dashContenuSemaine(semaineId);
+  if (!c) {
+    host.innerHTML = `<div class="mobile-topbar">${back}<h2 class="mobile-topbar-title">Ma semaine</h2>${nav}</div><p class="empty-hint">Nous sommes hors année scolaire.</p>`;
+    return;
+  }
+  const jourBlock = j => {
+    const titre = j.estAujourdhui ? "Aujourd'hui" : `${j.nomLong} ${j.jjmm}`;
+    const periodes = j.periodes.length ? `<p class="col-periode">${escapeHtml(j.periodes.map(p => p.label).join(' · '))}</p>` : '';
+    const cartes = [...j.seances.map(s => dashCarteSeance(s, j.date, false)), ...j.reunions.map(dashCarteReunion)];
+    return `<h3 class="mobile-jour-titre${j.estAujourdhui ? ' est-aujourdhui' : ''}">${escapeHtml(titre)}</h3>
+      ${periodes}
+      ${cartes.length ? `<ul class="col-liste">${cartes.join('')}</ul>` : '<p class="empty-hint">pas de cours</p>'}`;
+  };
+  host.innerHTML = `
+    <div class="mobile-topbar">
+      ${back}
+      <h2 class="mobile-topbar-title">${escapeHtml(c.semaine.label)} <span class="carte-meta">${escapeHtml(dashDatesSemaine(c.semaine.id))}</span></h2>
+      ${nav}
+    </div>
+    <div class="mobile-semaine-jours">${c.jours.map(jourBlock).join('')}</div>`;
+}
+
+/* Écran 17 — Une séance ouverte (mobile). Atteint en tapant une carte séance
+   depuis Ma semaine ou À valider (pas un onglet). 3 verbes de la maquette :
+   ✓ Faite (nouveau champ s.realisee, décidé avec Martin le 21/08/2026 — la
+   date passée seule ne suffisait pas) / ✎ Annoter (fait défiler jusqu'au
+   champ note déjà présent plus bas et le met au focus) / ⚠ Modifier (réutilise
+   le vrai formulaire desktop #sessionDialog via openSessionModal — l'écran 19
+   dédié de la maquette a été jugé pas assez utile par Martin pour être
+   construit maintenant, les ajustements se font avant la séance, pas dans
+   l'urgence mobile). « Bilan de séance » et « Mes notes · privé » de la
+   maquette sont UN SEUL champ réel (`s.notes`, déjà labellisé côté desktop
+   « Notes internes / bilan — s'écrit après la séance ») : pas deux sections,
+   une seule, fidèle au modèle de données réel. */
+let mobileSeanceTarget = null; // id de séance (state.sessions)
+let mobileSeanceNotesTimer;
+async function persistMobileSeanceNotes() {
+  const s = mobileSeanceTarget && findSession(mobileSeanceTarget);
+  const champ = $('#mobileSeanceNotes');
+  if (!s || !champ) return;
+  if (champ.value === (s.notes || '')) return;
+  s.notes = champ.value;
+  const statusEl = $('#mobileSeanceNotesStatus');
+  try { await saveData('Notes de séance enregistrées', { rerender: false }); if (statusEl) statusEl.textContent = 'Enregistré'; }
+  catch (e) { if (statusEl) statusEl.textContent = 'Erreur d’enregistrement'; }
+}
+function openMobileSeance(id) {
+  mobileSeanceTarget = id;
+  renderMobileSeance();
+  showMobileScreen('mobileSeance');
+}
+function renderMobileSeance() {
+  const host = $('#mobileSeance');
+  if (!host || !mobileSeanceTarget) return;
+  const s = findSession(mobileSeanceTarget);
+  if (!s) { host.innerHTML = '<p class="empty-hint">Séance introuvable.</p>'; return; }
+  const w = s.weekId ? dashSemaineObjet(s.weekId) : null;
+  const date = w ? dayDatesForWeek(w)[Number(s.day)] : null;
+  const actions = dashActionsDeSeance(s, date);
+  const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, dashHoraire(s), date ? date.toLocaleDateString('fr-FR') : 'Date à préciser']
+    .filter(Boolean).join(' · ');
+  host.innerHTML = `
+    <div class="mobile-topbar">
+      <button type="button" class="lien mobile-back" data-mobile-goto="mobileSemaine">‹ Retour</button>
+    </div>
+    <h2 class="mobile-seance-titre">${escapeHtml(s.title || 'Séance sans titre')}</h2>
+    <p class="carte-meta">${escapeHtml(meta)}</p>
+    <div class="mobile-seance-verbes">
+      <button type="button" class="mobile-verbe-btn${s.realisee ? ' is-actif' : ''}" data-mobile-toggle-realisee="${escapeAttr(s.id)}">${s.realisee ? '✓ Faite' : 'Marquer faite'}</button>
+      <button type="button" class="mobile-verbe-btn" data-mobile-annoter="1">✎ Annoter</button>
+      <button type="button" class="mobile-verbe-btn" data-edit-session="${escapeAttr(s.id)}">⚠ Modifier</button>
+    </div>
+    ${actions.length ? `<div class="carte-actions mobile-seance-actions">${dashEtiquettes(actions)}</div>` : ''}
+    ${s.activities ? `<section class="mobile-seance-bloc"><h3>Déroulé</h3><p>${escapeHtml(s.activities)}</p></section>` : ''}
+    ${s.objectives ? `<section class="mobile-seance-bloc"><h3>Objectifs</h3><p>${escapeHtml(s.objectives)}</p></section>` : ''}
+    ${s.keywords ? `<section class="mobile-seance-bloc"><h3>Mots-clés</h3><p>${escapeHtml(s.keywords)}</p></section>` : ''}
+    <section class="mobile-seance-bloc">
+      <h3>Notes internes / bilan <small>— s’écrit après la séance</small></h3>
+      <textarea id="mobileSeanceNotes" rows="5">${escapeHtml(s.notes || '')}</textarea>
+      <span id="mobileSeanceNotesStatus" class="meta"></span>
+    </section>`;
+  // « Modifier » ouvre le vrai formulaire desktop : data-edit-session est déjà
+  // géré par le handler global existant (voir CIBLES_ARBRE / listeners dédiés)
+  // uniquement dans certains conteneurs desktop — ici on appelle directement.
+  $('#mobileSeance [data-edit-session]')?.addEventListener('click', () => openSessionModal(s));
 }
 
 /* « À faire » et « Amélioration de l'appli » — refonte écran 1 (16/08/2026)
@@ -6617,6 +6956,76 @@ function bindEvents() {
     openReferenceModuleForCapacity(cap.dataset.capacityCode);
   });
 
+  // Écrans mobile : gros boutons de l'Accueil + tout lien « ‹ Retour ».
+  // data-mobile-goto vise soit un vrai onglet permanent (Accueil/Ma semaine,
+  // on déclenche son vrai clic pour que la nav basse reste synchronisée),
+  // soit une vue programmatique sans onglet (À valider, Frais…), auquel cas
+  // showMobileScreen() fait la bascule à la main (même geste qu'openMissionView).
+  document.body.addEventListener('click', (event) => {
+    const goto = event.target.closest('[data-mobile-goto]');
+    if (!goto) return;
+    const target = goto.dataset.mobileGoto;
+    const realTab = $(`.tab[data-view="${target}"]`);
+    if (realTab) realTab.click(); else showMobileScreen(target);
+  });
+  // Écran 15 — puces de filtre de « À valider » mobile.
+  document.body.addEventListener('click', (event) => {
+    const chip = event.target.closest('[data-mobile-filtre-urgence]');
+    if (!chip) return;
+    mobileUrgenceFiltre = chip.dataset.mobileFiltreUrgence;
+    renderMobileAValider();
+  });
+  // Écran 17 — tap sur une carte séance/réunion depuis Ma semaine ou À valider
+  // mobile : ouvre l'écran mobile dédié (pas d'onglet), pas le gros formulaire
+  // desktop directement (celui-ci reste réservé au verbe « Modifier »). Gère
+  // aussi ‹/› de Ma semaine (data-dash-week-nav) : PAS ajouté au tableau
+  // desktop équivalent (#dashSemaine/#dashProchainement/#urgencesList) pour
+  // éviter un double-branchement — dashSemaineOffset reste partagé, on
+  // rappelle juste les 3 fonctions de rendu concernées.
+  ['#mobileSemaine', '#mobileAValider', '#mobileFaites'].forEach(sel => {
+    const zone = $(sel);
+    if (!zone) return;
+    zone.addEventListener('click', (event) => {
+      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour], [data-mobile-filtre-urgence], [data-mobile-goto]')) return;
+      const nav = event.target.closest('[data-dash-week-nav]');
+      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); renderMobileSemaine(); return; }
+      const seance = event.target.closest('[data-edit-session]');
+      if (seance) return openMobileSeance(seance.dataset.editSession);
+      const reunion = event.target.closest('[data-edit-reunion]');
+      if (reunion) return openReunionModal((state.reunions || []).find(r => r.id === reunion.dataset.editReunion));
+    });
+  });
+  // Écran 17 — verbe « ✓ Faite »/« Marquer faite ».
+  document.body.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-mobile-toggle-realisee]');
+    if (!btn) return;
+    const s = findSession(btn.dataset.mobileToggleRealisee);
+    if (!s) return;
+    s.realisee = !s.realisee;
+    saveData(s.realisee ? 'Séance marquée faite' : 'Séance remise à traiter');
+  });
+  // Écran 17 — verbe « ✎ Annoter » : amène au champ notes déjà affiché plus bas.
+  document.body.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-mobile-annoter]')) return;
+    const champ = $('#mobileSeanceNotes');
+    if (!champ) return;
+    champ.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    champ.focus();
+  });
+  // Écran 17 — notes internes/bilan : autosave (même mécanique que #weekNotes).
+  document.body.addEventListener('input', (event) => {
+    if (event.target.id !== 'mobileSeanceNotes') return;
+    const statusEl = $('#mobileSeanceNotesStatus');
+    if (statusEl) statusEl.textContent = 'Modifié…';
+    clearTimeout(mobileSeanceNotesTimer);
+    mobileSeanceNotesTimer = setTimeout(persistMobileSeanceNotes, 800);
+  });
+  document.body.addEventListener('blur', (event) => {
+    if (event.target.id !== 'mobileSeanceNotes') return;
+    clearTimeout(mobileSeanceNotesTimer);
+    persistMobileSeanceNotes();
+  }, true);
+
   // Onglets de module (M4 / M5).
   $$('[data-ref-module]').forEach(btn => btn.addEventListener('click', () => {
     selectedReferenceModule = btn.dataset.refModule;
@@ -6725,23 +7134,6 @@ function bindEvents() {
     if (!open) return;
     const [kind, id] = open.dataset.openMission.split(':');
     openMissionView(kind, id);
-  });
-  // Bouton × d'une ligne Urgences « fait » : retire la ligne de l'affichage
-  // sans toucher à la donnée sous-jacente (roomBooked/vehicleBooked/ordreMission
-  // restent tels quels) — un clic accidentel sur « Réserver »/« Envoyer » reste
-  // récupérable en éditant la séance/réunion, et le retrait de la liste est un
-  // choix distinct, explicite, de l'utilisateur.
-  document.body.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-dismiss-urgence]');
-    if (!btn) return;
-    const [kind, source, id] = btn.dataset.dismissUrgence.split(':');
-    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
-    if (!entity) return;
-    if (kind === 'vehicule') entity.vehicleBookedDismissed = true;
-    else if (kind === 'salle') entity.roomBookedDismissed = true;
-    else if (kind === 'materiel') entity.materielReserveDismissed = true;
-    else if (kind === 'mission') entity.missionDismissed = true;
-    saveData('Ligne retirée des urgences');
   });
   // Bascule rapide « véhicule établissement indisponible → personnel »
   // (retours 17/08/2026) : évite de rouvrir toute la fiche pour changer le
@@ -7152,7 +7544,7 @@ function bindEvents() {
   // séance ou la réunion d'origine, c'est là que la case « ordre de mission »
   // se coche pour un ordre de mission ; salle/véhicule passent par la case
   // "reservation" gérée par l'écouteur dédié plus bas.
-  ['#dashSemaine', '#dashProchainement', '#urgencesList'].forEach(sel => {
+  ['#dashSemaine', '#dashProchainement', '#urgencesList', '#urgencesFaitesList'].forEach(sel => {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
@@ -7160,9 +7552,9 @@ function bindEvents() {
       // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
       // réservation, le lien « Éditer » (ordre de mission) et le × gardent
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
-      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); return; }
+      if (nav) { dashSemaineOffset += Number(nav.dataset.dashWeekNav); renderDashSemaine(); renderDashProchainement(); renderMobileSemaine(); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
       if (ouvrir) {
         // « Séances pas encore placées » n'est plus un <details> repliable
@@ -7188,7 +7580,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('.room-booked-check, [data-open-mission], .urgence-dismiss, [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
@@ -7882,10 +8274,13 @@ function bindModalActions() {
     else exportFraisOds();
   }));
 
-  /* Pile « Urgences » (Tableau de bord) — la case « réservée » porte sur deux
-     natures (salle, véhicule) et deux origines (séance, réunion) : c'est la
-     ligne qui dit dans quel champ écrire, plus le seul identifiant de séance. */
-  $('#urgencesList')?.addEventListener('change', (event) => {
+  /* Pile « Urgences » (Tableau de bord + À valider/Faites mobile) — la case
+     « réservée » porte sur deux natures (salle, véhicule) et deux origines
+     (séance, réunion) : c'est la ligne qui dit dans quel champ écrire, plus
+     le seul identifiant de séance. Délégué sur document.body (pas juste
+     #urgencesList) : ces mêmes cases apparaissent aussi dans
+     #urgencesFaitesList, #mobileAValider et #mobileFaites. */
+  document.body.addEventListener('change', (event) => {
     const cb = event.target.closest('[data-reservation-id]');
     if (cb) {
       const { reservationKind, reservationSource, reservationId } = cb.dataset;

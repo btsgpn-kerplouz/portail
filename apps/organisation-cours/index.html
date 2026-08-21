@@ -18,7 +18,7 @@
     <header class="banner">
       <div class="banner-inner">
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
-        <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
+        <h1><span class="banner-pictogram" aria-hidden="true">OC</span><span class="banner-title-text">Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></span></h1>
         <!-- Refonte « papier technique froid » (écran 1, 16/08/2026) : bandeau
              commun au 21 écrans (README) — statut de synchro + année + avatar,
              au lieu d'un simple bloc de connexion. L'export/import JSON (lot A
@@ -46,7 +46,7 @@
         </div>
       </div>
     </header>
-    <nav class="tabs header-tabs" aria-label="Navigation principale">
+    <nav class="tabs header-tabs desktop-only" aria-label="Navigation principale">
       <button class="tab active" data-view="dashboard">Tableau de bord</button>
       <button class="tab" data-view="design">Conception pédagogique</button>
       <button class="tab" data-view="gantt">Progression</button>
@@ -57,7 +57,7 @@
   </div>
 
   <main>
-    <section id="dashboard" class="view active-view">
+    <section id="dashboard" class="view active-view desktop-only">
       <!-- Zone hebdomadaire : ce qu'on vient regarder tous les jours.
            « Ma semaine », « Prochainement » et « Urgences » (pile fusionnée
            salle/véhicule/ordre de mission, REGLES.md #25) sont rendus par
@@ -74,6 +74,10 @@
                 <span class="urgences-sous">salles, matériel, véhicules, ordres de mission — par échéance</span>
               </div>
               <div id="urgencesList" class="urgence-liste"></div>
+              <details class="urgences-faites-detail" id="urgencesFaitesDetail" hidden>
+                <summary>Faites (<span id="urgencesFaitesCompte">0</span>)</summary>
+                <div id="urgencesFaitesList" class="urgence-liste"></div>
+              </details>
             </section>
           </div>
           <div class="dash-col-droite">
@@ -181,7 +185,7 @@
       </div>
     </section>
 
-    <section id="design" class="view">
+    <section id="design" class="view desktop-only">
       <!-- Refonte « papier technique froid » (écran 2, 16/08/2026) : le sidebar
            UE est le SEUL mécanisme de filtrage de cette vue (REGLES.md #21, sa
            seule exception à l'estompage — cliquer une UE en sélectionne UNE
@@ -215,7 +219,7 @@
       </div>
     </section>
 
-    <section id="gantt" class="view">
+    <section id="gantt" class="view desktop-only">
       <!-- Refonte « papier technique froid » (écran 3, 16/08/2026) : bascule
            GPN1/GPN2 + Semestre1/Semestre2 remplace les cases à cocher multi-
            semestres ; le choix d'UE devient une rangée de cartes cliquables
@@ -264,7 +268,7 @@
       </div>
     </section>
 
-    <section id="week" class="view">
+    <section id="week" class="view desktop-only">
       <!-- REGLES.md #22 : « jamais de calendrier » — le seul sélecteur de date de
            toute l'app est cette bande de semaines (remplace l'ancien calendrier
            mensuel qui vivait dans la colonne latérale). Bascule de période pour
@@ -334,7 +338,7 @@
     </section>
 
 
-    <section id="ruban" class="view">
+    <section id="ruban" class="view desktop-only">
       <!-- Écrans 5/6/7/9/10 — 3 binômes de sous-onglets sur une même ligne + une
            recherche unifiée. Retours #3 (18-19/08/2026) : Ruban et Répartition
            étaient un binôme imbriqué dans un seul sous-onglet (bascule interne,
@@ -515,7 +519,7 @@
          de donnée de ce chantier) vivent dans cet écran. Pagination réelle : le
          nombre de pages dépend du contenu de l'UE choisie (pas figé à 7 — c'est
          le cas de l'UE 1.1 du dossier de référence, pas une constante). -->
-    <section id="dossier" class="view">
+    <section id="dossier" class="view desktop-only">
       <div class="dossier-layout">
         <aside class="dossier-sidebar">
           <section class="dossier-block">
@@ -591,6 +595,21 @@
         </div>
       </div>
     </section>
+
+    <!-- Écrans mobile (14-21 du handoff) : chrome séparé du desktop (voir
+         .desktop-only/.mobile-only, styles.css « Coquille mobile »), montré
+         sous 780px de large. Retour de Martin (21/08/2026, après test réel) :
+         pas de barre basse permanente — Accueil est le seul hub (menu à gros
+         boutons), toutes les autres vues (Ma semaine, À valider, Une séance,
+         Ordre de mission, Frais, Déclarer un trajet) sont des écrans
+         secondaires atteints par navigation programmatique (showMobileScreen,
+         même geste qu'#missionView), avec un simple « ‹ Accueil » discret en
+         haut plutôt qu'un onglet permanent. -->
+    <section id="mobileAccueil" class="view active-view mobile-only"></section>
+    <section id="mobileAValider" class="view mobile-only"></section>
+    <section id="mobileFaites" class="view mobile-only"></section>
+    <section id="mobileSemaine" class="view mobile-only"></section>
+    <section id="mobileSeance" class="view mobile-only"></section>
   </main>
 
   <dialog id="ueDialog" class="modal">
