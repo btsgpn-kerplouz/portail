@@ -69,6 +69,18 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     bucket → nom exact `oc-signatures` → Public bucket : décoché), puis ce
     fichier pose les policies RLS dessus — voir le commentaire en tête du
     fichier pour le détail.
+17. `014-fix-inlining-security-definer.sql` — **indispensable** : sans lui,
+    toute écriture via l'API REST (ajouter une UE, une séquence, une séance,
+    une réunion...) échoue avec "new row violates row-level security policy",
+    même avec un compte actif et un jeton valide — voir le commentaire en
+    tête du fichier pour le détail (fonctions SQL "simples" inlinées par
+    l'optimiseur, mauvaise interaction avec les inserts via `json_to_recordset`).
+18. `015-fix-reunions-select-self-reference.sql` — **indispensable juste
+    après `014`**, spécifique aux réunions : sans lui, `014` suffit pour
+    UE/séquences/séances/contraintes mais pas pour `oc_reunions` (même erreur
+    RLS, cette fois seulement au moment du `returning` qui suit l'insert) —
+    voir le commentaire en tête du fichier (auto-référence inutile de
+    `oc_reunion_est_participant()` dans les policies de `oc_reunions` lui-même).
 
 ## Réglage obligatoire côté Auth
 
