@@ -863,7 +863,13 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
 .psCortegeGroupEmpty{padding:10px;font-style:italic;color:var(--muted);font-size:.86rem}
 
 @media(max-width:1040px){
-  .psEntryBody{flex-direction:column}
+  /* align-items:stretch : même correctif que .psAnalyseLayout (voir plus bas dans
+     le fichier) — la base desktop (align-items:flex-start, ligne ~802) vise l'axe
+     croisé du mode row ; une fois en colonne, l'axe croisé devient la largeur et
+     flex-start empêchait .psEntryMain de s'étirer sur toute la largeur disponible
+     (notamment ≤760px, où .psEntrySide passe en display:none et .psEntryMain reste
+     seul enfant du conteneur). */
+  .psEntryBody{flex-direction:column;align-items:stretch}
   .psEntrySide{width:100%}
 }
 @media(max-width:760px){
@@ -1786,7 +1792,20 @@ function normalizeAppStateForSync(s){
   if(!s._compareReset28){s.compareGradientKeys=[]; s._compareReset28=true;}
   if(!s.releveColors || typeof s.releveColors!=="object")s.releveColors={};
   if(!s.releveFilters || typeof s.releveFilters!=="object")s.releveFilters={};
+  if(!Array.isArray(s.lots))s.lots=[];
+  s.lots.forEach(l=>{if(!l.updated_at)l.updated_at=new Date().toISOString();});
   return s;
+}
+function mergeLots(local,remote){
+  const merged=new Map();
+  (remote||[]).forEach(l=>merged.set(l.id,l));
+  (local||[]).forEach(l=>{
+    const r=merged.get(l.id);
+    if(!r){merged.set(l.id,l); return;}
+    const lt=new Date(l.updated_at||0).getTime(), rt=new Date(r.updated_at||0).getTime();
+    merged.set(l.id, lt>=rt?l:r);
+  });
+  return [...merged.values()];
 }
 function touchReleve(r){if(!r)return; normalizeReleveForSync(r); r.updated_at=new Date().toISOString(); r.device_id=getDeviceId();}
 function stateClone(s=state){return JSON.parse(JSON.stringify(s));}
@@ -2191,6 +2210,7 @@ function renderHomeSelection(){
     b.querySelectorAll("[data-delete-lot]").forEach(btn=>{
       btn.addEventListener("click",e=>{
         e.stopPropagation();
+        if(typeof window.__supaOnLotDelete==="function")window.__supaOnLotDelete(btn.dataset.deleteLot);
         state.lots=(state.lots||[]).filter(l=>l.id!==btn.dataset.deleteLot);
         save(); renderAll();
       });
@@ -2838,7 +2858,7 @@ function bind(){
    if(!(state.selectedIds||[]).length){toast("Sélectionnez au moins un relevé avant d’enregistrer un lot."); return;}
    const name=prompt("Nom du lot :"); if(!name)return;
    const color=colorFor((state.lots||[]).length);
-   state.lots=state.lots||[]; state.lots.push({id:uid(),name:name.trim(),ids:[...state.selectedIds],color});
+   state.lots=state.lots||[]; state.lots.push({id:uid(),name:name.trim(),ids:[...state.selectedIds],color,updated_at:new Date().toISOString()});
    state.releveColors=state.releveColors||{};
    state.selectedIds.forEach(id=>{state.releveColors[id]=color;});
    save(); renderAll();
@@ -2854,6 +2874,7 @@ function bind(){
    if(!e.target.matches?.("[data-lot-color]"))return;
    const lot=(state.lots||[]).find(l=>l.id===e.target.dataset.lotColor); if(!lot)return;
    lot.color=e.target.value;
+   lot.updated_at=new Date().toISOString();
    state.releveColors=state.releveColors||{};
    lot.ids.forEach(id=>{state.releveColors[id]=lot.color;});
    save(); renderAll();
@@ -3610,6 +3631,33 @@ function renderScatterLayerChecks(){
     try{ await sb.from("releves").delete().eq("id", id); markSynced(); }
     catch(e){ /* suppression distante silencieuse */ }
   }
+  /* ----- Synchronisation des lots (même schéma que les relevés : table
+     dédiée, blob JSON dans `donnees`, fusion par updated_at) ----- */
+  async function supaPullLots(){
+    const { data, error } = await sb.from("lots").select("id,donnees,updated_at");
+    if(error) throw error;
+    return (data||[]).map(row=>{
+      const l=(row.donnees && typeof row.donnees==="object") ? row.donnees : {};
+      if(!l.id) l.id=row.id;
+      if(!l.updated_at && row.updated_at) l.updated_at=row.updated_at;
+      return l;
+    });
+  }
+  async function supaPushLots(lots){
+    const uid=currentUser && currentUser.id; if(!uid) return;
+    const rows=(lots||[]).map(l=>({
+      id:l.id, proprietaire_id:uid, nom:l.name||"", donnees:l,
+      updated_at:l.updated_at||new Date().toISOString()
+    }));
+    if(!rows.length) return;
+    const { error } = await sb.from("lots").upsert(rows, { onConflict:"proprietaire_id,id" });
+    if(error) throw error;
+  }
+  async function supaDeleteRemoteLot(id){
+    if(!sb || !currentUser || !id) return;
+    try{ await sb.from("lots").delete().eq("id", id); }
+    catch(e){ /* suppression distante silencieuse */ }
+  }
   async function supaSyncNow(silent){
     if(!sb || !currentUser){ if(!silent) toast("Connectez-vous d'abord."); return; }
     if(supaBusy) return;
@@ -3617,9 +3665,18 @@ function renderScatterLayerChecks(){
     try{
       const remote=await supaPull();
       const merged=mergeAppStates(stateClone(), remote);
+      /* La synchro des lots (table à part, ajoutée après coup) ne doit jamais
+         faire échouer celle des relevés si la migration Supabase n'a pas
+         encore été appliquée — voir apps/phytoscope/supabase/001-create-lots-table.sql */
+      try{
+        const remoteLots=await supaPullLots();
+        merged.lots=mergeLots(merged.lots, remoteLots);
+      }catch(e){ console.warn("Synchro des lots indisponible (table absente ?) :", e && e.message || e); }
       setStateWithoutDirty(merged);
       renderAll();
       await supaPushAll(merged);
+      try{ await supaPushLots(merged.lots); }
+      catch(e){ console.warn("Envoi des lots indisponible (table absente ?) :", e && e.message || e); }
       markSynced();
       const cf=merged._last_merge_conflicts||[];
       if(cf.length) toast(cf.length+" conflit(s) détecté(s) : copie(s) « conflit local » créée(s).","err");
@@ -3633,13 +3690,20 @@ function renderScatterLayerChecks(){
     if(!sb || !currentUser) return;
     clearTimeout(pushTimer);
     pushTimer=setTimeout(async ()=>{
-      try{ await supaPushAll(stateClone()); markSynced(); }
+      try{
+        const st=stateClone();
+        await supaPushAll(st);
+        try{ await supaPushLots(st.lots); }
+        catch(e){ console.warn("Envoi des lots indisponible (table absente ?) :", e && e.message || e); }
+        markSynced();
+      }
       catch(e){ toast("Enregistrement Supabase : "+(e && e.message || e),"err"); }
     }, 5000);
   }
   /* Hooks appelés depuis l'application (save() / suppression de relevé) */
   window.__supaOnLocalSave   = function(){ if(sb && currentUser) schedulePush(); };
   window.__supaOnLocalDelete = function(id){ if(sb && currentUser) supaDeleteRemote(id); };
+  window.__supaOnLotDelete   = function(id){ if(sb && currentUser) supaDeleteRemoteLot(id); };
 
   async function init(){
     renderAuthBar(); // état initial, même si la bibliothèque tarde à charger
