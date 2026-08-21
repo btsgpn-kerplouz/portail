@@ -102,7 +102,7 @@
       .bar{margin-top:12px;gap:7px}
       .tabs{position:sticky;top:0;z-index:50;display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding:8px 10px;background:rgba(242,246,239,.97);border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
       .tabs::-webkit-scrollbar{height:4px}
-      .tab{white-space:nowrap;padding:8px 9px;min-height:38px;font-size:.86rem;border-radius:10px}
+      .tab{white-space:nowrap;padding:8px 9px;min-height:38px;font-size:.86rem}
       main{padding:10px 8px 28px;max-width:100vw}
       .card{padding:11px;border-radius:0;box-shadow:none;margin-bottom:10px}
       .card h2{font-size:1.02rem;margin-bottom:9px}.card h3{font-size:.96rem;margin-bottom:8px}
@@ -113,7 +113,10 @@
       .toolbar>h2,.toolbar>.grow,.toolbar>.field.grow{grid-column:1/-1;width:100%!important}
       .toolbar .field{margin-bottom:0}.toolbar .field[style]{width:100%!important}
       .toolbar button,.toolbar select,.toolbar input{width:100%;min-height:40px;font-size:16px}
-      button,.button,select,input,textarea{min-height:40px;border-radius:10px}
+      /* Charte « papier technique froid » : angle droit partout, y compris sur mobile
+         (ce bloc datait de l'ancienne charte à coins arrondis — retour Martin
+         21/08/2026 : « les boutons sont à angles droits », lu littéralement). */
+      button,.button,select,input,textarea{min-height:40px}
       button,.button{padding:8px 10px}
       .miniBtn{padding:5px 7px;font-size:.75rem;min-height:32px}.compactSwitch{padding:4px 7px;font-size:.74rem;justify-content:center;min-height:32px}
       .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.row button{width:100%}
@@ -122,6 +125,10 @@
       .checkList{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}.checkItem{flex:0 0 auto;border-radius:0;padding:7px 9px;font-size:.79rem;white-space:nowrap}
       .indexSelector .checkList{display:flex;flex-wrap:wrap;overflow:visible}.indexSelector .checkItem{padding:5px 7px}
       .legend,.chartLegend{gap:6px;font-size:.75rem}.legendHelp{padding:7px}.key{align-items:center}
+      /* Légende des gradients encore réduite (retour Martin 21/08/2026) */
+      .psGradientsToolbar .legendHelp{font-size:.64rem;gap:4px 8px;padding:5px 0}
+      .psGradientsToolbar .lineLegend{width:16px}
+      .psGradientsToolbar .bandLegend{width:18px;height:9px}
       .gradientGrid{grid-template-columns:1fr;gap:9px}.gradientCard{padding:9px}.gradientHead{display:grid;grid-template-columns:1fr;gap:2px}
       .svgBox{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}.svgBox svg{display:block;width:100%;height:auto}
       .gradientCard .svgBox svg{min-width:680px}#scatterSvg svg{min-width:860px}
@@ -139,7 +146,7 @@
     /* v14 — ergonomie mobile, graphiques à colonne unique et panneaux compacts */
     .graphWorkspace{padding:14px 15px 18px}.compactToolbar{row-gap:7px}.compactSwitch{padding:5px 8px;font-size:.78rem;line-height:1}.compactSwitch input{width:13px;height:13px}.slimPanel{padding:8px 9px;margin:6px 0}.slimLegend{padding:6px 8px;margin:6px 0}.panelSearch{width:100%;margin:2px 0 8px;padding:8px 10px;border-radius:0;background:#fff}.selectableReleves{max-height:180px;overflow:auto;align-content:flex-start}.selectableReleves .checkItem{padding:4px 7px;border-radius:0}.relColorPicker{width:28px;height:22px;min-width:28px;padding:0;border:0;background:transparent;box-shadow:none;cursor:pointer}.gradientColumn{grid-template-columns:minmax(0,1fr)!important;gap:12px}.gradientCard{padding:0;overflow:hidden}.gradientCard>summary{list-style:none;cursor:pointer;padding:11px 13px;border-bottom:1px solid var(--linesoft);display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--warmpanel)}.gradientCard>summary::-webkit-details-marker{display:none}.gradientCard>summary::before{content:"▾";font-weight:900;color:var(--brand);transition:transform .15s ease}.gradientCard:not([open])>summary::before{transform:rotate(-90deg)}.gradientCardBody{padding:10px 12px 12px}.gradientActions{display:flex;gap:8px;align-items:center}.gradExportBtn{padding:8px;line-height:0}.settingsGrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:10px;align-items:start}.axisControlRow{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.axisControlRow label{display:flex;flex-direction:column;gap:4px;min-width:130px}.axisPicker{cursor:pointer}.axisPicker:hover{text-decoration:underline}.groupSep{border-left:1px solid #d9e4d7}.siteBadge{font-size:.78rem;color:#526358}.compareActions{display:flex;gap:8px;flex-wrap:wrap}.modernHint{border-radius:0;background:#eef7e9;border:1px solid #d7e8d2;padding:8px 10px}.tab{border-radius:999px}
     @media (max-width: 760px){
-      header{padding:16px 14px 12px}h1{font-size:1.28rem}.tabs{padding:8px 8px 0;gap:5px;flex-wrap:nowrap;overflow-x:auto}.tab{padding:8px 10px;white-space:nowrap;font-size:.86rem}main{padding:12px 8px 72px}.grid,.grid2,.grid3,.split,.settingsGrid{grid-template-columns:1fr!important;gap:10px}.card{border-radius:0;padding:11px}.toolbar{gap:6px;margin-bottom:8px}.toolbar .grow{flex-basis:100%}.toolbar label.small.muted{width:100%;margin-top:2px}.toolbar select,.toolbar input{width:100%}.selectorPanelHeader{align-items:flex-start}.selectorActions{gap:4px}.miniBtn{padding:5px 7px;font-size:.75rem}.checkList{gap:5px}.checkItem{font-size:.78rem;max-width:100%}.tableWrap{max-height:62vh}.summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.metric{padding:8px}.metric .value{font-size:1.06rem}.svgBox{overflow-x:auto}.svgBox svg{min-width:720px}.gradientCardBody{padding:8px}.gradientCard>summary{padding:10px}.axisControlRow label{min-width:0;width:100%}.selectableReleves{max-height:145px}.legend{font-size:.76rem}.compactSwitch{font-size:.72rem;padding:4px 7px}.split aside.card{order:2}.relColorPicker{width:24px;height:20px;min-width:24px}.appTitle{gap:10px}input,select,textarea{font-size:16px;max-width:100%}button,.button{padding:8px 10px}.graphWorkspace{padding:10px}.graphActions{flex-wrap:wrap}.scatterLayerBtns{width:100%;order:-1}.toggleBtn{flex:1;padding:7px 4px;font-size:.76rem;text-align:center}}
+      header{padding:16px 14px 12px}h1{font-size:1.28rem}.tabs{padding:8px 8px 0;gap:5px;flex-wrap:nowrap;overflow-x:auto}.tab{padding:8px 10px;white-space:nowrap;font-size:.86rem}main{padding:12px 8px 72px}.grid,.grid2,.grid3,.split,.settingsGrid{grid-template-columns:1fr!important;gap:10px}.card{border-radius:0;padding:11px}.toolbar{gap:6px;margin-bottom:8px}.toolbar .grow{flex-basis:100%}.toolbar label.small.muted{width:100%;margin-top:2px}.toolbar select,.toolbar input{width:100%}.selectorPanelHeader{align-items:flex-start}.selectorActions{gap:4px}.miniBtn{padding:5px 7px;font-size:.75rem}.checkList{gap:5px}.checkItem{font-size:.78rem;max-width:100%}.tableWrap{max-height:62vh}.summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.metric{padding:8px}.metric .value{font-size:1.06rem}.svgBox{overflow-x:auto}.svgBox svg{min-width:720px}.gradientCardBody{padding:8px}.gradientCard>summary{padding:10px}.axisControlRow label{min-width:0;width:100%}.selectableReleves{max-height:145px}.legend{font-size:.76rem}.compactSwitch{font-size:.72rem;padding:4px 7px}.split aside.card{order:2}.relColorPicker{width:24px;height:20px;min-width:24px}.appTitle{gap:10px}input,select,textarea{font-size:16px;max-width:100%}button,.button{padding:8px 10px}.graphWorkspace{padding:10px}.graphActions{flex-wrap:wrap}}
 
   </style>
 <style>
@@ -153,13 +160,18 @@
 .button.secondary{background:#fff;color:var(--brandDark);border-color:#b9cfb7}
 .filePicker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bbSeg{display:inline-flex;gap:4px;flex-wrap:wrap;margin-top:2px}
-.bbSegBtn{min-width:32px;padding:7px 9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:0;font-family:var(--mono);font-size:.85rem;font-weight:600;line-height:1;cursor:pointer;transition:background .12s ease,border-color .12s ease}
+.bbSegBtn{min-width:32px;padding:7px 9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:0;font-family:var(--mono);cursor:pointer;transition:background .12s ease,border-color .12s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1}
+.bbSegCode{font-size:1rem;font-weight:700}
+.bbSegPct{font-size:.68rem;font-weight:500;color:var(--label)}
 .bbSegBtn:hover{border-color:var(--brand)}
 .bbSegBtn.active{background:var(--headerbg);color:#fffefb;border-color:var(--headerbg)}
+.bbSegBtn.active .bbSegPct{color:#c8cbc2}
 @media(max-width:760px){
   #bbField{width:100%!important}
-  .bbSeg{width:100%;display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
-  .bbSegBtn{min-width:0;padding:12px 0;font-size:1.02rem}
+  .bbSeg{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .bbSegBtn{min-width:0;min-height:40px;padding:5px 0}
+  .bbSegCode{font-size:1.05rem}
+  .bbSegPct{font-size:.6rem}
 }
 /* Toasts — notifications non bloquantes */
 .toastHost{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
@@ -250,11 +262,23 @@ body.adminUnlockedView .psAdminBadge{display:inline-block}
   /* Bandeau minimal sur mobile (conforme à la maquette) : plus de tabs/Admin/
      identité/lien portail affichés en permanence — tout passe dans le tiroir
      de menu (#navSheet) ouvert par le bouton ☰. */
-  header{height:var(--topbar-h);min-height:var(--topbar-h);padding:0 12px;gap:10px;flex-wrap:nowrap}
+  /* Bandeau encore réduit en hauteur (retour Martin 21/08/2026, ajustements#3 :
+     « on peut réduire la hauteur de la barre de titre », répété pour chaque écran
+     d'analyse) — gain de place vertical répercuté partout puisque tous les écrans
+     calculent leurs propres hauteurs fixes à partir de --topbar-h. */
+  :root{--topbar-h:46px}
+  header{height:var(--topbar-h);min-height:var(--topbar-h);padding:0 12px;gap:8px;flex-wrap:nowrap}
   .psNavToggle{display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 auto;background:none;border:0;color:#fffefb;font-size:19px;line-height:1;cursor:pointer;box-shadow:none;padding:0}
   .psBacklink,.tabs,.tabAdmin,.headerIdentity,.psAdminBadge{display:none}
   body.adminUnlockedView .psAdminBadge{display:none}
-  .psName{font-size:16px}
+  .psLogo{width:28px;height:28px;padding:2px}
+  .psName{font-size:15px}
+  /* Réorganisation du bandeau mobile (retour Martin 21/08/2026) : menu à gauche
+     (inchangé), puis titre, puis logo — via l'ordre flex plutôt que le DOM pour ne
+     pas toucher l'agencement desktop. */
+  .psNavToggle{order:1}
+  .psName{order:2}
+  .psLogo{order:3}
 }
 </style>
 <style id="nav-sheet-css">
@@ -344,6 +368,12 @@ details.wetlandSection>.wetlandSectionSummary h3{margin:0;flex:1}
 details.wetlandSection>.wetlandSectionSummary::after{content:'▲';font-size:.78rem;color:#6b8a70;flex-shrink:0}
 details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .wetlandSectionNote{margin-left:8px}
+/* « déplier »/« replier » reflète l'état réel du <details> (retour Martin 21/08/2026,
+   ajustements#4 : le texte disait « voir la méthode » alors que le clic ne fait que
+   plier/déplier l'encart — l'accès au texte de méthode est le bouton séparé). */
+.wetlandSectionNote .foldOpen{display:none}
+details.wetlandSection[open]>.wetlandSectionSummary .foldOpen{display:inline}
+details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 /* Tableau strate × relevé (méthode réglementaire) */
 .wetlandRegTable{border-collapse:collapse;width:100%}
 .wetlandRegTable th,.wetlandRegTable td{padding:8px 10px;border-bottom:1px solid var(--linesoft);vertical-align:top;text-align:left}
@@ -362,19 +392,21 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .wetlandSynthesis.insuffisant .wetlandSynthesisIcon{background:#fff0c0;color:#7a4a00}
 .wetlandSynthesis strong{display:block;color:#203522;font-size:1rem;margin-bottom:3px}
 .wetlandSynthesis p{margin:0;color:#405143;font-size:.9rem}
-/* Boîtes de résultat compactes par relevé (méthode Ellenberg) */
-.wetlandEllList{display:flex;flex-direction:column;gap:18px}
-.wetlandEllItem{display:flex;flex-direction:column;gap:9px}
+/* Boîte de synthèse compacte par relevé (méthode Ellenberg) — un seul encadré :
+   nom du relevé, pastille de diagnostic, résultats précisés (retour Martin
+   21/08/2026, ajustements#3 : l'ancienne version répétait nom + phrase + encadré
+   de synthèse, trois fois la même information). */
+.wetlandEllList{display:flex;flex-direction:column;gap:10px}
+.wetlandEllItem{display:flex;flex-direction:column;gap:6px;border:1px solid #dfe9da;border-radius:0;padding:10px 14px}
+.wetlandEllItem.valide{border-color:#9fd4b5;background:#f2fbf5}
+.wetlandEllItem.non_valide{border-color:#f9a8b8;background:#fff4f5}
+.wetlandEllItem.insuffisant{border-color:#f1cc7a;background:#fffae8}
 .wetlandEllItemHead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .wetlandEllItemHead .colorDot{flex:0 0 auto;margin-right:2px}
-.wetlandEllStats{margin-left:auto}
-.wetlandEllBox{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;border:1px solid #dfe9da;border-radius:0;padding:12px 16px}
-.wetlandEllBox.valide{border-color:#9fd4b5;background:#f2fbf5}
-.wetlandEllBox.non_valide{border-color:#f9a8b8;background:#fff4f5}
-.wetlandEllBox.insuffisant{border-color:#f1cc7a;background:#fffae8}
+.wetlandEllItemHead .wetlandBadge{margin-left:auto}
 #wetlands{width:100%}
 #wetlands .card{padding-left:20px;padding-right:20px}
-@media(max-width:760px){.wetlandSummaryReadable{grid-template-columns:1fr 1fr}.wetlandGaugeLarge{padding:8px}.wetlandBlockHead{display:block}.wetlandSingleCrossCard{grid-template-columns:1fr}.wetlandSingleCrossCard .statusIcon{width:36px;height:36px}.wetlandSynthesis{grid-template-columns:1fr;gap:8px}.wetlandSynthesisIcon{display:none}.wetlandStrata{grid-template-columns:1fr}.wetlandRegTable{min-width:640px}.wetlandEllBox{flex-direction:column;align-items:flex-start}}
+@media(max-width:760px){.wetlandSummaryReadable{grid-template-columns:1fr 1fr}.wetlandGaugeLarge{padding:8px}.wetlandBlockHead{display:block}.wetlandSingleCrossCard{grid-template-columns:1fr}.wetlandSingleCrossCard .statusIcon{width:36px;height:36px}.wetlandSynthesis{grid-template-columns:1fr;gap:8px}.wetlandSynthesisIcon{display:none}.wetlandStrata{grid-template-columns:1fr}.wetlandRegTable{min-width:640px}}
 </style>
 <style id="mobile-compact-v43">
 /* ============================================================
@@ -474,6 +506,8 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .psRailActions{margin-left:auto;display:flex;gap:8px}
 .psRailActions button{padding:9px 14px;font-size:.84rem;box-shadow:none}
 .psRailActions button:hover{transform:none;box-shadow:none}
+.psSelectAllSwitch{display:none;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);padding:5px 8px;font-size:.74rem;color:var(--label)}
+.psSelectAllSwitch input{width:14px;height:14px;min-height:0;margin:0}
 .psLinkBtn{background:none;border:0;padding:0;color:var(--brand);font-weight:600;font-size:.82rem;cursor:pointer;box-shadow:none;font-family:"IBM Plex Sans",system-ui,sans-serif}
 .psLinkBtn:hover{color:var(--brandDark);transform:none;box-shadow:none;background:none}
 
@@ -510,6 +544,8 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .psLibRow input[type=checkbox]{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:13px;height:13px;border:1.5px solid var(--line);background:var(--panel);border-radius:0;flex:0 0 auto;min-width:0;min-height:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .psLibRow input[type=checkbox]:checked{border-color:var(--brand)}
 .psLibRow input[type=checkbox]:checked::after{content:"";width:3px;height:6px;border:solid var(--brand);border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-0.5px,-1px)}
+.psRowSelectWrap{position:relative;display:inline-flex;width:13px;height:13px;flex:0 0 auto}
+.psRowSelectSquare{display:none}
 .psLibRow .psRowMain{min-width:0;display:flex;align-items:center;gap:11px}
 .psLibRow .colorDot{flex:0 0 auto}
 .psLibRow input.colorDot[type=color]{-webkit-appearance:none;appearance:none;width:13px;height:13px;padding:0;border:0;min-width:0;min-height:0;border-radius:2px;cursor:pointer;box-shadow:0 0 0 2px var(--panel)}
@@ -526,19 +562,78 @@ details.wetlandSection:not([open])>.wetlandSectionSummary::after{content:'▼'}
 .psLibRowDel{all:unset;display:flex;align-items:center;justify-content:center;width:100%;cursor:pointer;color:var(--muted);font-size:.8rem;line-height:1}
 .psLibRowDel:hover{color:var(--danger)}
 .psLibEmpty{padding:28px 14px;text-align:center;color:var(--muted);font-size:.86rem}
+.psRailTitle .shortLabel{display:none}
+#homeNewReleveBtn .shortLabel{display:none}
 @media(max-width:760px){
   .psLibToolbar{flex-wrap:wrap}
-  .psFacetBar{overflow-x:auto;flex-wrap:nowrap}
+  /* Filtres condensés pour tenir sur la largeur de l'écran sans défilement horizontal
+     (retour Martin 21/08/2026) : passage en lignes qui s'enroulent plutôt qu'en piste
+     scrollable, libellé "Filtrer" retiré (redondant), selects resserrés. */
+  .psFacetBar{flex-wrap:wrap;row-gap:6px}
+  .psFacetScroll{flex-wrap:wrap;overflow-x:visible;row-gap:6px}
+  .psFacetLabel{display:none}
+  .psFacetSelectWrap select{font-size:.72rem;padding:4px 18px 4px 7px;min-height:0}
   .psFacetTail{margin-left:0}
   .psLibHead{display:none}
-  .psLibRow{position:relative;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;border:1px solid var(--line);background:var(--panel);padding:10px 30px 10px 12px;margin:0 0 7px}
+  /* Titre épuré, "+" compact, Importer retiré (conforme à 02-releves-mobile.png : la
+     saisie de terrain sur mobile n'a pas d'usage pour l'import de tableur). */
+  .psHomeMain .psRailHead .psRailBadge{display:none}
+  .psRailTitle .fullLabel{display:none}
+  .psRailTitle .shortLabel{display:inline}
+  #homeImportBtn{display:none}
+  #homeNewReleveBtn{width:34px;height:34px;padding:0;font-size:1.2rem;line-height:1;border-radius:0}
+  #homeNewReleveBtn .fullLabel{display:none}
+  #homeNewReleveBtn .shortLabel{display:inline}
+  /* Tuiles encore condensées en hauteur (retour Martin 21/08/2026, puis encore
+     21/08/2026 ajustements#3 : ligne méta rapprochée du nom — row-gap réduit
+     séparément du column-gap pour ne pas resserrer aussi l'espace nom/date).
+     ajustements#4 (21/08/2026) : la coche de sélection sort du flux flex (elle
+     n'est plus un item de ligne 1 mais un bloc absolu centré verticalement sur
+     TOUTE la hauteur de la tuile, y compris la ligne méta) — avant elle
+     paraissait "collée en haut" du bouton dès que la ligne méta ajoutait de la
+     hauteur sous elle. Le padding-left de la tuile réserve sa place ; la ligne
+     méta démarre alors au même x que le carré de couleur (premier enfant de
+     .psRowMain), donc alignée dessous sans marge à calculer à la main. */
+  .psLibRow{position:relative;display:flex;flex-wrap:wrap;align-items:flex-start;row-gap:1px;column-gap:7px;border:1px solid var(--line);background:var(--panel);padding:3px 26px 3px 36px;margin:0 0 3px}
   .psLibGroup .psLibRow:last-child{border:1px solid var(--line)}
   .psLibRow .psRowMono,.psLibRow .psRowTrunc{display:none}
   .psLibRow .psRowMain{flex:1;min-width:0}
-  .psLibRow .psRowDate{display:inline;margin-left:auto;flex:0 0 auto;font-family:var(--mono);font-size:.68rem;color:var(--faint)}
-  .psLibRow .psRowMeta{display:block;flex:0 0 100%;margin-top:4px;margin-left:26px;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
-  .psLibRowDel{position:absolute;top:8px;right:8px;width:auto}
-  .psLibRow input[type=checkbox]:checked::after{width:4px;height:8px}
+  .psLibRow .psRowDate{display:inline;margin-left:auto;flex:0 0 auto;font-family:var(--mono);font-size:.66rem;color:var(--faint)}
+  .psLibRow .psRowMeta{display:block;flex:0 0 100%;margin-top:0;margin-left:0;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+  .psLibRowDel{position:absolute;top:4px;right:4px;width:auto}
+  /* Sélection : coche sobre (pas de remplissage couleur — trop massif et pas assez
+     lisible en usage réel, retour Martin 19/08/2026), sortie du flux et centrée
+     verticalement sur la tuile entière (retour Martin 21/08/2026, ajustements#4). */
+  .psRowSelectWrap{position:absolute;left:2px;top:50%;transform:translateY(-50%);width:32px;height:38px;display:block}
+  .psRowSelectSquare{display:block;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border:1.5px solid var(--line);background:#fff;pointer-events:none}
+  .psRowSelectSquare::after{content:"";position:absolute;left:4px;top:1px;width:5px;height:10px;border:solid var(--brand);border-width:0 2px 2px 0;transform:rotate(40deg);opacity:0}
+  .psLibRow input[type=checkbox]{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:1}
+  .psLibRow input[type=checkbox]:checked::after{content:none}
+  .psLibRow input[type=checkbox]:checked ~ .psRowSelectSquare{border-color:var(--brand)}
+  .psLibRow input[type=checkbox]:checked ~ .psRowSelectSquare::after{opacity:1}
+  /* La règle mobile générique P8 (plus bas dans le fichier) force width/height:18px
+     !important sur TOUTE case à cocher, y compris celle-ci qui doit au contraire
+     remplir tout le carré tactile 44px pour rester centrée sur le carré visible
+     (retour Martin 21/08/2026 : « la zone activable n'est pas la même que le carré
+     visible » — la case réelle se retrouvait en 18px calée en haut-gauche du bloc
+     44px pendant que le carré dessiné restait centré). Même sélecteur/spécificité
+     que la règle P8, gagne par ordre de cascade. */
+  .psLibRow input[type=checkbox]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important}
+  /* Filtres : la ligne d'actions (compteur, tout cocher/décocher) encombrait le
+     bandeau scrollable et masquait les filtres eux-mêmes (retour Martin 19/08/2026) */
+  .psFacetTail{display:none}
+  /* « Sélectionner le projet » retiré du groupe : redondant avec le filtre Projet */
+  .homeGroupSelectBtn{display:none}
+  /* Cadre dans cadre (retour Martin 21/08/2026, ajustements#3) : le panneau
+     .psLibrary encadrait déjà tout, en plus des bords d'écran — retiré sur
+     mobile, les séparateurs internes (barre de recherche/filtres) suffisent à
+     structurer visuellement le bloc. */
+  .psLibrary{border:0;background:transparent}
+  /* Interrupteur tout cocher/décocher sur la ligne titre (retour Martin
+     21/08/2026, ajustements#3) — remplace l'accès qui était retiré du bandeau
+     de filtres le 19/08/2026 (il encombrait la piste scrollable), replacé ici
+     à la place. */
+  .psSelectAllSwitch{display:inline-flex;margin-left:auto;flex:0 0 auto}
 }
 
 /* Ma sélection */
@@ -597,11 +692,11 @@ body.refsView main{padding-bottom:16px}
 .refsWrap{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 #refs .card{padding-top:14px;padding-bottom:14px}
 .homeRefsBody{font-size:.86rem;line-height:1.5}
-.homeRefsBody > p{margin:0 0 6px}
+.homeRefsBody > p{margin:0 0 6px;text-align:justify}
 .refWithLogo{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
 .telabot-logo{flex:0 0 auto;display:block}
 .telabot-logo img{width:clamp(56px,8vw,80px);height:auto;display:block}
-.refWithLogoText{flex:1 1 260px;min-width:0;margin:0;font-size:.86rem;line-height:1.5}
+.refWithLogoText{flex:1 1 260px;min-width:0;margin:0;font-size:.86rem;line-height:1.5;text-align:justify}
 .refTableWrap{border:1px solid var(--linesoft);margin-top:8px}
 .refHead{display:grid;grid-template-columns:90px 120px 210px 1fr;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label)}
 .refHead span{padding:6px 14px}
@@ -617,13 +712,16 @@ body.refsView main{padding-bottom:16px}
 .refSwatches:hover,.refSwatches:focus-visible{background:var(--headrow);border-color:var(--line)}
 .refSwatch{display:flex;flex-direction:column;align-items:center;gap:2px}
 .refSwatchImg img{width:46px;height:46px;border:1px solid var(--line);display:block;background:var(--panel)}
-.refInterp{padding:6px 14px;font-size:.8rem;color:var(--ink)}
+.refInterp{padding:6px 14px;font-size:.8rem;color:var(--ink);text-align:justify}
 .refLightboxOverlay,.refLightbox{display:none}
 body.refLightboxOpen .refLightboxOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:90}
 body.refLightboxOpen .refLightbox{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,760px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:91}
 body.bbHelpOpen #bbHelpOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
 body.bbHelpOpen #bbHelpModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,900px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
+body.wetlandSourceOpen #wetlandSourceOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
+body.wetlandSourceOpen #wetlandSourceModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,560px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
 .bbHelpModalGrid{padding:18px;overflow:auto}
+.wetlandSourceToggle{display:none}
 .bbHelpModalGrid .refTableWrap{margin-top:0}
 body.importOpen #importModalOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
 body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,560px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
@@ -647,9 +745,12 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
   .refCode{padding:0;order:1;font-size:1.05rem}
   .refPctVal{order:2}
   .refRange{order:3;margin-left:auto}
-  .refSwatches{padding:6px 0;order:4;flex-basis:100%}
+  /* Carreaux et texte d'interprétation centrés (retour Martin 21/08/2026,
+     ajustements#3) — l'emporte sur le text-align:justify unconditionnel du
+     .refInterp car déclaré plus tard dans le fichier, à spécificité égale. */
+  .refSwatches{padding:6px 0;order:4;flex-basis:100%;justify-content:center}
   .refSwatchImg img{width:42px;height:42px}
-  .refInterp{padding:0;order:5;flex-basis:100%}
+  .refInterp{padding:0;order:5;flex-basis:100%;text-align:center}
   .refLightboxRow{grid-template-columns:1fr 1fr 1fr;gap:8px}
   .refLightboxRowLabel{grid-column:1/-1}
 }
@@ -658,20 +759,31 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
 #entry > * + *{margin-top:18px}
 #entry .tableWrap{max-height:none}
 
-/* Barre persistante mobile (Ma sélection + Analyser) + feuille "Analyser" */
+/* Barre persistante mobile (Ma sélection + Analyser) */
 .psMobileBar{display:none}
-.psSheetOverlay,.psSheet{display:none}
 @media(max-width:760px){
   .psHomeSide{display:none}
-  .psMobileBar{display:flex;flex-direction:column;gap:10px;position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 14px;margin:16px -8px -28px;z-index:40}
+  /* Fixe (pas sticky) : reste ancrée en bas de l'écran quel que soit le défilement
+     de la liste, comme sur 02-releves-mobile.png (retour Martin 19/08/2026 : la
+     barre "Analyser" ne restait pas fixée) — d'où le padding-bottom réservé sur
+     #home pour ne pas masquer la dernière tuile de relevé.
+     Double défilement (retour Martin 21/08/2026, ajustements#2) : la liste avait
+     son propre scroll interne (max-height:520px) ET la page défilait aussi en
+     dessous dès que le contenu dépassait l'écran. #home devient une colonne flex
+     à hauteur fixe (viewport − bandeau haut), seule .psLibList défile ; le padding
+     de <main> est neutralisé pour cette vue (body.homeListView, posé par showView())
+     afin que le calcul de hauteur soit exact. */
+  body.homeListView main{padding-top:0;padding-bottom:0}
+  #home.view.active{display:flex;flex-direction:column;overflow:hidden;padding-bottom:78px;height:calc(100vh - var(--topbar-h));height:calc(100dvh - var(--topbar-h))}
+  .psHomeBody{flex:1;min-height:0}
+  .psHomeMain{flex:1;min-height:0;display:flex;flex-direction:column}
+  .psRailHead{flex:0 0 auto}
+  .psLibrary{flex:1;min-height:0}
+  .psLibList{flex:1;min-height:0;max-height:none}
+  .psMobileBar{display:flex;flex-direction:column;gap:8px;position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:40}
   .psMobileBarRow{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:600}
   .psMobileBarRow .psLinkBtn{margin-left:auto}
   .psMobileAnalyseBtn{text-align:center;background:var(--brand);color:#fff;border:0;padding:13px 0;font-weight:700;font-size:.92rem;box-shadow:none;border-radius:0}
-  body.sheetOpen .psSheetOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.45);z-index:70}
-  body.sheetOpen .psSheet{display:block;position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);max-height:76%;overflow:auto;z-index:71;padding:14px 16px}
-  .psSheetHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .psSheetHead span{font-weight:600;font-size:.94rem}
-  .psSheetHead button{background:none;border:0;font-size:1.1rem;cursor:pointer;box-shadow:none;color:var(--muted)}
 }
 </style>
 <style id="entry-view-v45">
@@ -681,9 +793,11 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
 .psEntryHead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .psEntryBack{background:none;border:0;padding:0;color:var(--muted);font-family:var(--mono);font-size:.76rem;letter-spacing:.03em;cursor:pointer;box-shadow:none}
 .psEntryBack:hover{color:var(--brandDark);transform:none;box-shadow:none}
+.psEntryBack .shortLabel{display:none}
 .psEntryTitle{font-family:var(--display);font-weight:700;font-size:1.3rem;letter-spacing:-.01em;margin:0;color:var(--ink)}
 .psEntrySaved{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--faint);white-space:nowrap}
 .psEntryMobileMeta{display:none}
+#entrySheetToggle .shortLabel{display:none}
 
 .psEntryBody{display:flex;align-items:flex-start;gap:20px}
 .psEntrySide{width:340px;flex:0 0 auto;background:var(--panel);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:12px}
@@ -696,6 +810,7 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
 .psGpsBtn:disabled{opacity:.5;cursor:wait}
 .psEntryMetaLabel{font-family:var(--mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase;color:var(--label)}
 .psEntrySheetHead{display:none}
+#entryValidateBtn{display:none}
 .psEntrySideActions{display:flex;gap:8px;margin-top:6px}
 .psEntrySideActions button{flex:1;background:var(--panel);box-shadow:none}
 .psEntrySideActions button:hover{transform:none;box-shadow:none}
@@ -715,6 +830,7 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
 .psAddSearch{flex:1 1 260px}
 .bbSegBtn{padding:18px 14px}
 .psAddBarModeGroup{display:flex;align-items:center;gap:8px}
+#modeSeg .shortLabel{display:none}
 .psHelpBtn{width:34px;height:34px;flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--label);font-family:var(--mono);font-weight:700;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:none}
 .psHelpBtn:hover{border-color:var(--brand);color:var(--brand);transform:none;box-shadow:none}
 
@@ -751,10 +867,26 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
   .psEntrySide{width:100%}
 }
 @media(max-width:760px){
-  .psEntryHead{align-items:center}
-  .psEntrySaved{order:3;width:100%;margin-left:0}
-  .psEntryMobileMeta{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin-top:2px}
-  .psEntryMobileMeta button{margin-left:auto;background:none;border:0;padding:0;color:var(--brandDark);font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:none}
+  .psEntryHead{align-items:center;line-height:1.1}
+  .psEntryBack{font-size:1.15rem;line-height:1}
+  .psEntryBack .fullLabel{display:none}
+  .psEntryBack .shortLabel{display:inline}
+  /* « enregistré il y a Xs » retiré sur mobile : la maquette tient l'en-tête sur
+     2 lignes (nom + méta/identité), pas 3 (retour Martin 19/08/2026) */
+  .psEntrySaved{display:none}
+  /* En-tête encore condensée (retour Martin 21/08/2026, ajustements#3 puis #4) :
+     le line-height global de 1.6 (hérité du body) gonflait chaque ligne de texte
+     bien au-delà de sa hauteur réelle — fixé à 1.1 ici. Le texte méta est aussi
+     tronqué sur une seule ligne (ellipsis) : avant, une métadonnée longue
+     (commune+date+surface+observateur) pouvait forcer un retour à la ligne et
+     doubler la hauteur du bandeau. */
+  .psEntryTitle{font-size:.94rem;line-height:1.1}
+  .psCortegeHead h2{display:none}
+  .psEntryMobileMeta{display:flex;align-items:center;gap:8px;font-size:.78rem;line-height:1.1;color:var(--muted);margin-top:0}
+  #entryMobileMetaText{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .psEntryMobileMeta button{margin-left:auto;flex:0 0 auto;background:none;border:0;padding:0;color:var(--brandDark);font-weight:700;font-size:.78rem;line-height:1.1;cursor:pointer;box-shadow:none}
+  #entrySheetToggle .fullLabel{display:none}
+  #entrySheetToggle .shortLabel{display:inline}
   .psEntrySide{display:none}
   body.entrySheetOpen .psEntrySheetOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.45);z-index:70}
   body.entrySheetOpen .psEntrySide{display:flex;position:fixed;left:0;right:0;bottom:0;max-height:78%;overflow:auto;z-index:71;border-bottom:0}
@@ -762,18 +894,62 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
   .psEntrySheetHead span{font-weight:600;font-size:.94rem}
   .psEntrySheetHead button{background:none;border:0;font-size:1.1rem;cursor:pointer;box-shadow:none;color:var(--muted)}
   .psEntryMetaLabel{display:none}
-  /* Cortège d'abord (plein écran, scrollable), barre d'ajout retirée du flux et
-     épinglée en bas de l'écran (conforme à 05-saisie-mobile.png) : en sortant
-     l'addbar du flux normal, la carte du cortège — qui la suit dans le markup —
-     remonte naturellement en tête sans avoir à réordonner le DOM ni le JS. */
-  .addbar{position:fixed;left:0;right:0;bottom:0;top:auto;margin:0;z-index:40;max-height:72vh;overflow:auto;border-left:0;border-right:0;border-bottom:0;box-shadow:none}
-  .psEntryMain{padding-bottom:340px}
-  .psCortegeRow{grid-template-columns:1fr auto 20px;grid-template-areas:"name val del" "bar bar bar";row-gap:7px}
+  /* Dupliquer n'a pas de sens en pleine édition d'identité sur mobile : remplacé
+     par Valider, qui referme simplement la feuille (la saisie s'enregistre déjà
+     en continu — retour Martin 19/08/2026) */
+  #duplicateReleve{display:none}
+  #entryValidateBtn{display:block;width:100%;margin-top:8px}
+
+  /* Barre d'ajout d'espèce : persistante et compacte (≤ 1/3 d'écran), pas une
+     feuille à ouvrir/fermer — conforme à 05-saisie-mobile.png (retour Martin
+     19/08/2026 : la version en tiroir prenait 2/3 de l'écran une fois ouverte
+     et cachait le cortège pendant la saisie). */
+  .addbar{position:fixed;left:0;right:0;bottom:0;top:auto;margin:0;max-height:33vh;overflow:auto;border-left:0;border-right:0;border-bottom:0;box-shadow:none;z-index:41;padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  /* Bandeau titre + identité fixes, seul le cortège défile (retour Martin
+     21/08/2026, ajustements#3) — même stratégie que l'accueil (body.homeListView) :
+     #entry devient une colonne flex à hauteur fixe (viewport − bandeau haut),
+     .psEntryMain (qui contient la barre d'ajout fixe + le cortège) devient l'unique
+     zone de défilement ; le padding-bottom réservé pour la barre d'ajout fixe migre
+     donc de #entry.view vers .psEntryMain. */
+  body.entryScreenView main{padding-top:0;padding-bottom:0}
+  #entry.view.active{display:flex;flex-direction:column;overflow:hidden;height:calc(100vh - var(--topbar-h));height:calc(100dvh - var(--topbar-h))}
+  #entry.view{padding-bottom:0}
+  #entry > * + *{margin-top:4px}
+  .psEntryHead,.psEntryMobileMeta{flex:0 0 auto}
+  .psEntryBody{flex:1;min-height:0;display:flex;flex-direction:column}
+  .psEntryMain{flex:1;min-height:0;overflow-y:auto;padding-bottom:calc(33vh + 14px)}
+  /* Réordonnancement de la barre d'ajout (retour Martin 21/08/2026, ajustements#2) :
+     strates, puis recherche, puis valeur (BB/%), puis en dernière ligne le switch
+     BB/% + le bouton « ? » à gauche et « Ajouter » (largeur réduite) aligné à droite.
+     .psAddBarTop et .add-controls passent en display:contents pour que leurs
+     enfants deviennent des items flex directs de .addbar, ordonnés indépendamment
+     de leur parent DOM d'origine. */
+  .psAddBarTop,.add-controls{display:contents}
+  .psAddBarGroup{order:1;flex:1 1 100%;gap:6px;min-width:0}
+  .psAddBarLabel{display:none}
+  #stratumSeg{flex-wrap:nowrap;gap:2px;flex:1 1 auto}
+  #stratumSeg .psSegBtn{flex:1 1 0;min-width:0;padding:7px 2px;font-size:.72rem;text-align:center}
+  .psAddSearch{order:2;flex:1 1 100%}
+  #bbField,#pctField{order:3;flex:1 1 100%}
+  .psAddBarModeGroup{order:4;flex:0 0 auto;gap:4px}
+  .psHelpBtn{width:30px;height:30px}
+  #modeSeg .psSegBtn{padding:6px 8px;font-size:.72rem}
+  #modeSeg .fullLabel{display:none}
+  #modeSeg .shortLabel{display:inline}
+  #addSpecies{order:5;flex:0 1 auto;width:auto!important;min-width:112px;margin-left:auto;padding:9px 16px}
+  /* Grille BB compacte : une règle générale plus bas dans le fichier (.bbSegBtn{padding:18px
+     14px}) prime sinon sur celle, plus haute, du bloc mobile générique — l'ordre source
+     l'emporte à spécificité égale, indépendamment de la portée média (piège déjà rencontré
+     avec .toggleBtn ce même jour). D'où sa reprise ici, après cette règle. */
+  .bbSegBtn{padding:5px 4px}
+  #selectedTaxon{display:none}
+  .psPrevRow{margin-top:0}
+  .psCortegeRow{grid-template-columns:1fr 54px 50px 18px;grid-template-areas:"name bar val del";column-gap:8px;row-gap:0;padding:7px 8px}
   .psCortegeIdx{display:none}
-  .psCortegeName{grid-area:name}
-  .psCortegeVal{grid-area:val}
+  .psCortegeName{grid-area:name;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.82rem}
+  .psCortegeVal{grid-area:val;font-size:.74rem}
   .psCortegeDel{grid-area:del}
-  .psCortegeBar{grid-area:bar}
+  .psCortegeBar{grid-area:bar;height:6px;align-self:center}
   .psCortegeBBMini{display:none}
 }
 .psEntrySheetOverlay{display:none}
@@ -785,9 +961,11 @@ body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;t
    sélection globale (Accueil) ; décocher un relevé ici l'exclut localement de la vue
    sans toucher à cette sélection globale (voir state.analysisExcluded en JS). */
 .psSubTabs{display:flex;gap:2px;background:var(--panel);border-bottom:1px solid var(--line);margin:0 0 20px;flex-wrap:wrap;position:sticky;top:var(--topbar-h);z-index:45;padding:0 20px}
+.psSubTabBack{display:none}
 .psSubTab{background:none;border:0;box-shadow:none;padding:12px 18px;font-size:.92rem;font-weight:500;color:var(--muted);cursor:pointer;border-radius:0;font-family:"IBM Plex Sans",system-ui,sans-serif}
 .psSubTab:hover{transform:none;box-shadow:none;color:var(--ink)}
 .psSubTab.active{font-weight:600;color:var(--ink);background:var(--headrow)}
+.psSubTab .shortLabel{display:none}
 body.analyseFullView main{padding-left:0;padding-right:0;padding-top:0;max-width:none;margin:0}
 body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
@@ -826,6 +1004,15 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 .toggleBtn:last-child{border-right:0}
 .toggleBtn input[type=checkbox]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .toggleBtn:has(input:checked){background:var(--brand);color:#fff}
+.toggleBtn .shortLabel{display:none}
+@media(max-width:760px){
+  /* Calques Écogrammes en pictogrammes discrets, permanents, plutôt qu'en tiroir
+     (décision Martin, 19/08/2026) : priorité à la place laissée à la figure. */
+  .scatterLayerBtns{flex:0 0 auto}
+  .toggleBtn{flex:0 0 auto;min-width:44px;min-height:44px;padding:0;display:flex;align-items:center;justify-content:center}
+  .toggleBtn .fullLabel{display:none}
+  .toggleBtn .shortLabel{display:block}
+}
 .scatterReadMe{margin-top:10px}
 
 .psDrawerWrap{position:relative;display:inline-flex}
@@ -835,7 +1022,16 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 .psDrawer .axisControlRow{flex-direction:column;align-items:stretch;gap:10px}
 .psDrawer .axisControlRow label{min-width:0}
 .psDrawer .axisControlRow select{width:100%}
-@media(max-width:760px){.psDrawer{right:auto;left:0;min-width:220px}}
+@media(max-width:760px){
+  /* Le tiroir « Affichage » débordait du cadre de l'écran et certaines options
+     restaient inatteignables (retour Martin 21/08/2026, ajustements#3) : il était
+     positionné en absolute relatif à son bouton déclencheur, souvent proche du
+     bord droit. Repositionné en fixed, ancré sous le bandeau d'onglets/relevés
+     avec des marges latérales fixes — ne peut donc plus déborder quel que soit
+     l'endroit où se trouve le bouton, et défile en interne si son contenu est
+     plus haut que l'écran. */
+  .psDrawer{position:fixed;left:10px;right:10px;top:calc(var(--topbar-h) + var(--subtabs-h) + 8px);min-width:0;max-width:none;max-height:calc(100vh - var(--topbar-h) - var(--subtabs-h) - 20px);overflow-y:auto}
+}
 
 .compareCompositionGrid{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
 .compareIndexCol{flex:1 1 220px;min-width:200px}
@@ -855,13 +1051,138 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 }
 
 @media(max-width:760px){
-  .psAnalyseLayout{flex-direction:column;gap:12px;min-width:0}
-  .psAnalyseSide{width:100%;min-width:0}
+  /* Sous-onglets Analyse en pictogrammes sur une seule ligne (décision Martin,
+     19/08/2026) : les 4 intitulés texte ne tiennent pas sur une ligne à largeur
+     mobile, un pictogramme par vue le permet tout en gardant l'accès direct. */
+  .psSubTabs{flex-wrap:nowrap;padding:0 6px;margin-bottom:0}
+  /* Retour direct aux relevés depuis la barre d'onglets (retour Martin 21/08/2026) */
+  .psSubTabBack{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:34px;min-height:40px;background:none;border:0;color:var(--muted);font-size:1.3rem;line-height:1;cursor:pointer;box-shadow:none;padding:0}
+  .psSubTabBack:hover{color:var(--brandDark);transform:none;box-shadow:none;background:none}
+  .psSubTab{flex:1;padding:9px 4px;min-height:40px;display:flex;align-items:center;justify-content:center}
+  .psSubTab .fullLabel{display:none}
+  .psSubTab .shortLabel{display:block}
+  /* align-items:stretch : la base desktop (.psAnalyseLayout{align-items:flex-start}, ligne
+     ~966) vise l'axe croisé du mode row (ne pas étirer la hauteur de la sidebar) — une fois
+     passé en colonne sur mobile, l'axe croisé devient la largeur, et flex-start empêchait
+     alors .psAnalyseMain de s'étirer sur toute la largeur disponible (retour Martin
+     21/08/2026, ajustements#4, même symptôme que le padding ci-dessous). */
+  .psAnalyseLayout{flex-direction:column;gap:6px;min-width:0;align-items:stretch}
+  /* body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0} (règle desktop, réservant
+     20px à droite pour le chevauchement de la sidebar collante ≥1041px) n'est pas
+     conditionnée à la largeur d'écran et l'emporte sur mobile par spécificité (2 classes
+     > 1 classe) malgré son ordre antérieur dans le fichier — elle grignotait 20px à droite
+     sur tous les écrans d'analyse (retour Martin 21/08/2026, ajustements#4 : « il y a de
+     la place à droite pour élargir l'affichage », repéré sur l'écogramme). */
+  body.analyseFullView .psAnalyseLayout{padding:0}
+  /* Bandeau des relevés en puces colorées défilables, à même la page — pas un
+     panneau encadré avec titre « Sélection · Modifier » et lots enregistrés
+     (retour Martin 19/08/2026 : « à revoir entièrement », loin de
+     11-gradients-mobile.png). Taper une puce l'exclut/l'inclut directement. */
+  /* Bandeau des relevés fixe, collé sous la barre d'onglets pictogrammes, sur toutes
+     les vues d'Analyse (retour Martin 21/08/2026) — auparavant réservé au desktop
+     (analyseFullView ≥1041px). */
+  .psAnalyseSide{width:100%;min-width:0;background:var(--bg);border:0;padding:6px 0;position:sticky;top:calc(var(--topbar-h) + var(--subtabs-h));z-index:20}
   .psAnalyseMain{min-width:0;max-width:100%}
-  .psAnalyseSideHead{margin-bottom:6px}
-  .psAnalyseSelList{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:6px;-webkit-overflow-scrolling:touch;padding-bottom:2px}
-  .psAnalyseSelItem{flex:0 0 auto;border:1px solid var(--line);padding:6px 10px;white-space:nowrap}
+  .psAnalyseSideHead{display:none}
+  .psAnalyseSelList{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:5px;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  /* Puces de relevés encore réduites (retour Martin 21/08/2026, ajustements#3) */
+  .psAnalyseSelItem{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);padding:5px 8px;font-size:.76rem;white-space:nowrap;gap:5px}
+  .psAnalyseSwatchBig{width:11px;height:11px;border-radius:0}
+  .psAnalyseSwatchSm{display:none}
+  .psAnalyseSelCode{display:none}
   .psAnalyseSideNote{display:none}
+  .psAnalyseSideLots{display:none}
+  /* Le viewBox du gradient est désormais généré à une largeur mobile (voir
+     gradientCard() en JS, W=360) : la contrainte min-width plus générale plus
+     haut dans le fichier (680px) forçait sinon un défilement horizontal alors
+     que le graphique tient déjà dans l'écran (retour Martin 19/08/2026 :
+     « censé être condensé sur la largeur »). */
+  .gradientCard .svgBox svg{min-width:0}
+  /* Chrome des cadres graphiques resserré pour exploiter la largeur (retour Martin
+     21/08/2026, Gradients/Écogrammes : « exploiter encore plus la largeur de
+     l'écran ») */
+  .graphWorkspace{padding:6px 3px}
+  .gradientCardBody{padding:6px 2px 8px}
+  /* Légende remontée au plus près du bandeau de relevés décochables, et les encarts
+     d'indices remontés d'autant derrière elle (retour Martin 21/08/2026, ajustements#4). */
+  #gradients .legendHelp{padding:0 0 4px}
+  #gradientCharts{margin-top:4px!important}
+  /* Bandeau titre de chaque indice encore réduit en hauteur (retour Martin
+     21/08/2026, ajustements#3) */
+  .gradientCard>summary{padding:6px 8px}
+
+  /* --- Gradients : retirer l'export et le menu Affichage (retour Martin 21/08/2026,
+     puis les boutons d'export par carte aussi, ajustements#3) --- */
+  #gradients .psDrawerWrap,#gradients #exportGradientsPng,#gradients .gradExportBtn{display:none}
+  /* Zoom tactile natif sur chaque figure (retour Martin 21/08/2026, ajustements#3 :
+     « à tester, pas sûr qu'on garde cette fonctionnalité ») */
+  #gradients .svgBox{touch-action:pinch-zoom}
+
+  /* --- Écogrammes (retour Martin 21/08/2026) : le graphique doit occuper la quasi
+     totalité de l'écran → retrait export + « vue d'ensemble » (le graphique est
+     désormais toujours en mode ajusté, cf. règle #scatterSvg ci-dessous), retrait
+     des consignes de lecture, et les calques (Espèces/Moyenne+enveloppe/Écart-type)
+     rejoignent le menu Affichage au lieu de rester en pictogrammes permanents dans
+     la barre d'actions (revient sur la décision du 19/08/2026, à la demande explicite
+     de Martin). */
+  #scatter .graphFitBtn,#scatter #exportScatterPng,#scatter .scatterLayerBtns{display:none}
+  #scatter .graphActions{justify-content:flex-end!important}
+  .scatterReadMe{display:none}
+  #scatterSvg:not(.fitWidth) svg{width:100%!important;min-width:0!important;max-width:none!important}
+  .scatterLayerDrawerToggles{display:flex;flex-direction:column;gap:8px;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--linesoft)}
+
+  /* --- Tableaux (retour Martin 21/08/2026) : pas d'export, pas de tableau dans un
+     cadre, réglages en tiroir plutôt qu'un bloc toujours ouvert, cellules centrées. */
+  #compare .psAnalyseMain > .card{background:transparent;border:0;padding:0;box-shadow:none}
+  #exportCompareCsv,#exportCompareXls,#exportCompareFods{display:none}
+  #compare .psAnalyseMain .toolbar.compactToolbar > strong.small{display:none}
+  .compareCompositionDetails > summary.selectorSummary{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;font-weight:650}
+  .comparisonTable th,.comparisonTable td{text-align:center}
+  .comparisonTable .relCell{text-align:center}
+  /* Le bouton réglages était lui-même inséré dans le cadre du panneau .selectorPanel
+     (retour Martin 21/08/2026, ajustements#3 : « cadre dans cadre ») — panneau
+     déshabillé sur mobile, seul le bouton-résumé garde son cadre. */
+  #compare .selectorPanel.indexSelector{border:0;background:transparent;padding:0;margin:0 0 12px}
+
+  /* --- Écogramme : la figure occupe la quasi-totalité de l'écran, quitte à être
+     étirée en hauteur, tant que les axes restent corrects (retour Martin
+     21/08/2026, ajustements#3) — même stratégie de hauteur fixe que l'accueil/la
+     saisie : #scatter devient une colonne flex à hauteur fixe, seul le SVG
+     s'étire pour remplir l'espace restant (preserveAspectRatio="none" posé en JS,
+     cf. renderScatter()). */
+  body.scatterScreenView main{padding-top:0;padding-bottom:0}
+  #scatter.view.active{display:flex;flex-direction:column;overflow:hidden;height:calc(100vh - var(--topbar-h));height:calc(100dvh - var(--topbar-h))}
+  #scatter .psSubTabs{position:static;flex:0 0 auto}
+  #scatter .psAnalyseLayout{flex:1;min-height:0;display:flex;flex-direction:column}
+  #scatter .psAnalyseSide{position:static;flex:0 0 auto}
+  #scatter .psAnalyseMain{min-height:0;display:flex;flex-direction:column}
+  #scatter .graphWorkspace{flex:1;min-height:0;display:flex;flex-direction:column}
+  #scatter .graphActions{flex:0 0 auto}
+  #scatter #scatterSvg{flex:1;min-height:0;display:flex}
+  #scatter #scatterSvg:not(.fitWidth) svg{height:100%!important}
+
+  /* --- Zone humide (retour Martin 21/08/2026, puis encore ajustements#3) : éviter
+     le cadre dans le cadre — le bloc "Diagnostic détaillé par relevé" perd son
+     cartouche (fond/bordure/titre), les cartes par relevé restent seules, comme
+     sur zone-humide-mobile-encarts-deplies.png. Le sélecteur de strate et le
+     bouton d'export de jauge sont retirés (redondants sur mobile — "Toutes
+     strates" reste la valeur par défaut). Le texte d'intro + sources de chaque
+     méthode passe en bouton ouvrant une fenêtre (cf. #wetlandSourceModal), pour
+     laisser toute la place aux jauges. */
+  #wetlands .wetlandDiagCard{background:transparent!important;border:0;padding:0}
+  .wetlandDiagCard .wetlandSectionSummary{display:none}
+  #wetlands .wetlandToolbarRow .toolbar{display:none}
+  .wetlandSourceBox{display:none}
+  .wetlandSourceToggle{display:inline-flex}
+  /* Encarts méthodologiques et jauges élargis (retour Martin 21/08/2026, ajustements#4) :
+     une règle plus ancienne, non conditionnée au mobile (#wetlands .card{padding-left:20px;
+     padding-right:20px}), rétablissait 20px de marge de chaque côté même sur petit écran —
+     resserré ici, et le padding ajouté autour de la jauge (.wetlandGaugeLarge) retiré pour
+     que le SVG exploite toute la largeur disponible dans l'encart. */
+  #wetlands .card{padding-left:8px;padding-right:8px}
+  .wetlandGaugeLarge{padding:0}
+  details.wetlandSection>.wetlandSectionSummary{flex-wrap:wrap;row-gap:4px}
+  details.wetlandSection>.wetlandSectionSummary h3{flex:1 1 100%}
 }
 </style>
 </head>
@@ -918,10 +1239,10 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
       <div class="psHomeMain">
         <div class="psRailHead">
           <span class="psRailBadge">1</span>
-          <h2 class="psRailTitle">Choisir mes relevés</h2>
+          <h2 class="psRailTitle"><span class="fullLabel">Choisir mes relevés</span><span class="shortLabel">Relevés</span></h2>
           <span class="psRailCount" id="homeLibCount"></span>
           <div class="psRailActions">
-            <button type="button" data-view="entry" id="homeNewReleveBtn">+ Nouveau relevé</button>
+            <button type="button" data-view="entry" id="homeNewReleveBtn" aria-label="Nouveau relevé"><span class="fullLabel">+ Nouveau relevé</span><span class="shortLabel" aria-hidden="true">+</span></button>
             <button type="button" class="secondary" id="homeImportBtn">Importer</button>
           </div>
         </div>
@@ -969,7 +1290,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <button class="psAnalyseBtn" type="button" data-view="gradients"><b>Gradients</b><span>Indices écologiques d’Ellenberg</span></button>
             <button class="psAnalyseBtn" type="button" data-view="scatter"><b>Écogrammes</b><span>Croiser deux indices</span></button>
             <button class="psAnalyseBtn" type="button" data-view="compare"><b>Tableaux</b><span>Données brutes</span></button>
-            <button class="psAnalyseBtn" type="button" data-view="wetlands"><b>Zone humide ?</b><span>Diagnostic floristique</span></button>
+            <button class="psAnalyseBtn" type="button" data-view="wetlands"><b>Zone humide</b><span>Diagnostic floristique</span></button>
           </div>
         </div>
       </div>
@@ -980,21 +1301,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
         <span id="homeMobileBarCount">0 sélectionné</span>
         <button class="psLinkBtn" type="button" data-select-action="none" data-kind="home">Vider</button>
       </div>
-      <button class="psMobileAnalyseBtn" type="button" id="homeSheetToggle">Analyser ▾</button>
-    </div>
-    <div class="psSheetOverlay" id="homeSheetOverlay"></div>
-    <div class="psSheet" id="homeSheet">
-      <div class="psSheetHead"><span>Analyser <span id="homeSheetCount"></span></span><button type="button" id="homeSheetClose" aria-label="Fermer">✕</button></div>
-      <div class="psAnalyseBtns">
-        <button class="psAnalyseBtn" type="button" data-view="gradients"><b>Gradients</b><span>Indices écologiques d’Ellenberg</span></button>
-        <button class="psAnalyseBtn" type="button" data-view="scatter"><b>Écogrammes</b><span>Croiser deux indices</span></button>
-        <button class="psAnalyseBtn" type="button" data-view="compare"><b>Tableaux</b><span>Données brutes</span></button>
-        <button class="psAnalyseBtn" type="button" data-view="wetlands"><b>Zone humide ?</b><span>Diagnostic floristique</span></button>
-      </div>
-      <div class="psLots">
-        <p class="psLotsLabel">Lots enregistrés</p>
-        <div class="psLotsList" id="homeSheetLotsList"></div>
-      </div>
+      <button class="psMobileAnalyseBtn" type="button" data-view="gradients">Analyser</button>
     </div>
   </section>
   <section id="refs" class="view">
@@ -1034,13 +1341,13 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
   </div>
   <section id="entry" class="view">
     <div class="psEntryHead">
-      <button type="button" class="psEntryBack" data-view="home">‹ Relevés</button>
+      <button type="button" class="psEntryBack" data-view="home" aria-label="Retour aux relevés"><span class="fullLabel">‹ Relevés</span><span class="shortLabel" aria-hidden="true">‹</span></button>
       <h1 class="psEntryTitle" id="entryTitle">Saisie du relevé</h1>
       <span class="psEntrySaved" id="entrySavedAt"></span>
     </div>
     <div class="psEntryMobileMeta" id="entryMobileMeta">
       <span id="entryMobileMetaText"></span>
-      <button type="button" id="entrySheetToggle">Modifier ▾</button>
+      <button type="button" id="entrySheetToggle"><span class="fullLabel">Identité du relevé ▾</span><span class="shortLabel" aria-hidden="true">Identité ▾</span></button>
     </div>
 
     <div class="releveBar noPrint">
@@ -1050,8 +1357,8 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
     <div class="psEntryBody">
       <aside class="psEntrySide noPrint">
-        <div class="psEntrySheetHead"><span>Modifier les métadonnées</span><button type="button" id="entrySheetClose" aria-label="Fermer">✕</button></div>
-        <div class="psEntryMetaLabel">Métadonnées</div>
+        <div class="psEntrySheetHead"><span>Identité du relevé</span><button type="button" id="entrySheetClose" aria-label="Fermer">✕</button></div>
+        <div class="psEntryMetaLabel">Identité du relevé</div>
         <div class="field"><label>Nom du relevé</label><input id="relName" placeholder="Ex. Prairie humide 01"></div>
         <div class="field"><label>Code projet</label><input id="relProjet" list="relProjetList" autocomplete="off" placeholder="Ex. TP terrain mars 2026"><datalist id="relProjetList"></datalist></div>
         <div class="field"><label>Site</label><input id="relSite" placeholder="Ex. Vallon de Kerloc'h, parcelle A3"></div>
@@ -1065,6 +1372,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
           <button type="button" class="secondary" id="duplicateReleve">Dupliquer</button>
           <button type="button" class="danger" id="deleteReleve">Supprimer</button>
         </div>
+        <button type="button" id="entryValidateBtn">Valider</button>
       </aside>
       <div class="psEntrySheetOverlay" id="entrySheetOverlay"></div>
 
@@ -1083,7 +1391,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <div class="psAddBarModeGroup">
               <button type="button" class="psHelpBtn" id="bbHelpBtn" aria-label="Afficher le tableau des coefficients Braun-Blanquet" title="Tableau des coefficients Braun-Blanquet">?</button>
               <div class="psSeg" id="modeSeg" role="group" aria-label="Mode de recouvrement">
-                <button type="button" class="psSegBtn" data-v="bb">Braun-Blanquet</button>
+                <button type="button" class="psSegBtn" data-v="bb"><span class="fullLabel">Braun-Blanquet</span><span class="shortLabel">BB</span></button>
                 <button type="button" class="psSegBtn" data-v="pct">%</button>
               </div>
             </div>
@@ -1099,24 +1407,25 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <div class="field" id="bbField" style="margin-bottom:0">
               <select id="bbValue" class="bbSelectHidden"><option value="i">i</option><option value="r">r</option><option value="+">+</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
               <div class="bbSeg" id="bbSeg" role="group" aria-label="Coefficient Braun-Blanquet">
-                <button type="button" class="bbSegBtn" data-v="i">i</button>
-                <button type="button" class="bbSegBtn" data-v="r">r</button>
-                <button type="button" class="bbSegBtn" data-v="+">+</button>
-                <button type="button" class="bbSegBtn" data-v="1">1</button>
-                <button type="button" class="bbSegBtn" data-v="2">2</button>
-                <button type="button" class="bbSegBtn" data-v="3">3</button>
-                <button type="button" class="bbSegBtn" data-v="4">4</button>
-                <button type="button" class="bbSegBtn" data-v="5">5</button>
+                <button type="button" class="bbSegBtn" data-v="i"><span class="bbSegCode">i</span><span class="bbSegPct">0,01 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="r"><span class="bbSegCode">r</span><span class="bbSegPct">0,1 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="+"><span class="bbSegCode">+</span><span class="bbSegPct">0,5 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="1"><span class="bbSegCode">1</span><span class="bbSegPct">2,5 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="2"><span class="bbSegCode">2</span><span class="bbSegPct">15 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="3"><span class="bbSegCode">3</span><span class="bbSegPct">37,5 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="4"><span class="bbSegCode">4</span><span class="bbSegPct">62,5 %</span></button>
+                <button type="button" class="bbSegBtn" data-v="5"><span class="bbSegCode">5</span><span class="bbSegPct">87,5 %</span></button>
               </div>
             </div>
             <div class="field" id="pctField" style="margin-bottom:0;display:none"><label class="lab">%</label><input id="pctValue" type="number" min="0" max="100" step="0.01" value="1"></div>
             <button id="addSpecies" class="btn-add">Ajouter</button>
           </div>
           <div id="selectedTaxon" class="selected-hint">Aucune espèce sélectionnée — tapez puis choisissez dans la liste.</div>
-          <div class="psPrevRow" id="prevChipsRow" hidden>
-            <span class="psAddBarLabel">Sur le relevé précédent</span>
-            <div class="psPrevChips" id="prevChips"></div>
-          </div>
+        </div>
+
+        <div class="psPrevRow" id="prevChipsRow" hidden>
+          <span class="psAddBarLabel">Sur le relevé précédent</span>
+          <div class="psPrevChips" id="prevChips"></div>
         </div>
 
         <div class="card">
@@ -1149,10 +1458,11 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
   <section id="gradients" class="view">
     <nav class="psSubTabs noPrint">
-      <button class="psSubTab" type="button" data-view="gradients">Gradients</button>
-      <button class="psSubTab" type="button" data-view="scatter">Écogrammes</button>
-      <button class="psSubTab" type="button" data-view="compare">Tableaux</button>
-      <button class="psSubTab" type="button" data-view="wetlands">Zone humide ?</button>
+      <button class="psSubTabBack" type="button" data-view="home" aria-label="Retour aux relevés">‹</button>
+      <button class="psSubTab" type="button" data-view="gradients" aria-label="Gradients"><span class="fullLabel">Gradients</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7" stroke-linecap="round"/></svg></button>
+      <button class="psSubTab" type="button" data-view="scatter" aria-label="Écogrammes"><span class="fullLabel">Écogrammes</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4v16h16" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+      <button class="psSubTab" type="button" data-view="compare" aria-label="Tableaux"><span class="fullLabel">Tableaux</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M4 15h16M10 4v16"/></svg></button>
+      <button class="psSubTab" type="button" data-view="wetlands" aria-label="Zone humide"><span class="fullLabel">Zone humide</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3c4 5 6.5 8.3 6.5 11.2A6.5 6.5 0 1 1 5.5 14.2C5.5 11.3 8 8 12 3Z" stroke-linejoin="round"/></svg></button>
     </nav>
     <div class="psAnalyseLayout">
       <aside class="psAnalyseSide noPrint">
@@ -1188,10 +1498,11 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
   <section id="scatter" class="view">
     <nav class="psSubTabs noPrint">
-      <button class="psSubTab" type="button" data-view="gradients">Gradients</button>
-      <button class="psSubTab" type="button" data-view="scatter">Écogrammes</button>
-      <button class="psSubTab" type="button" data-view="compare">Tableaux</button>
-      <button class="psSubTab" type="button" data-view="wetlands">Zone humide ?</button>
+      <button class="psSubTabBack" type="button" data-view="home" aria-label="Retour aux relevés">‹</button>
+      <button class="psSubTab" type="button" data-view="gradients" aria-label="Gradients"><span class="fullLabel">Gradients</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7" stroke-linecap="round"/></svg></button>
+      <button class="psSubTab" type="button" data-view="scatter" aria-label="Écogrammes"><span class="fullLabel">Écogrammes</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4v16h16" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+      <button class="psSubTab" type="button" data-view="compare" aria-label="Tableaux"><span class="fullLabel">Tableaux</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M4 15h16M10 4v16"/></svg></button>
+      <button class="psSubTab" type="button" data-view="wetlands" aria-label="Zone humide"><span class="fullLabel">Zone humide</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3c4 5 6.5 8.3 6.5 11.2A6.5 6.5 0 1 1 5.5 14.2C5.5 11.3 8 8 12 3Z" stroke-linejoin="round"/></svg></button>
     </nav>
     <div class="psAnalyseLayout">
       <aside class="psAnalyseSide noPrint">
@@ -1207,14 +1518,19 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
       <div class="card graphWorkspace">
         <div class="graphActions noPrint" style="justify-content:space-between">
           <div class="checkList scatterLayerBtns" id="scatterLayerChecks" role="group" aria-label="Calques affichés">
-            <label class="checkItem toggleBtn"><input type="checkbox" class="scatterLayerCheck" data-layer="species"><span>Espèces</span></label>
-            <label class="checkItem toggleBtn"><input type="checkbox" class="scatterLayerCheck" data-layer="releves"><span>Moyenne + enveloppe</span></label>
-            <label class="checkItem toggleBtn"><input type="checkbox" class="scatterLayerCheck" data-layer="sd"><span>Écart-type</span></label>
+            <label class="checkItem toggleBtn" title="Espèces" aria-label="Espèces"><input type="checkbox" class="scatterLayerCheck" data-layer="species"><span class="fullLabel">Espèces</span><svg class="shortLabel" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg></label>
+            <label class="checkItem toggleBtn" title="Moyenne + enveloppe" aria-label="Moyenne + enveloppe"><input type="checkbox" class="scatterLayerCheck" data-layer="releves"><span class="fullLabel">Moyenne + enveloppe</span><svg class="shortLabel" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></label>
+            <label class="checkItem toggleBtn" title="Écart-type" aria-label="Écart-type"><input type="checkbox" class="scatterLayerCheck" data-layer="sd"><span class="fullLabel">Écart-type</span><svg class="shortLabel" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.5 2.5" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></label>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
           <div class="psDrawerWrap">
             <button type="button" class="secondary psDrawerBtn" data-drawer-toggle="scatterDisplayDrawer" aria-expanded="false">Affichage ▾</button>
             <div class="psDrawer" id="scatterDisplayDrawer">
+              <div class="scatterLayerDrawerToggles noPrint" role="group" aria-label="Calques affichés">
+                <label class="switch compactSwitch small"><input type="checkbox" class="scatterLayerCheck" data-layer="species">Espèces</label>
+                <label class="switch compactSwitch small"><input type="checkbox" class="scatterLayerCheck" data-layer="releves">Moyenne + enveloppe</label>
+                <label class="switch compactSwitch small"><input type="checkbox" class="scatterLayerCheck" data-layer="sd">Écart-type</label>
+              </div>
               <div class="axisControlRow"><label class="small muted">Axe X<select id="xGrad"></select></label><label class="small muted">Axe Y<select id="yGrad"></select></label><label class="small muted">Strate<select id="scatterStratum"></select></label></div>
               <label class="switch compactSwitch small" style="margin-top:10px"><input type="checkbox" id="scatterShortLabelsReleves">Noms abrégés — relevés</label>
               <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="scatterShortLabelsSpecies">Noms abrégés — espèces</label>
@@ -1233,10 +1549,11 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
   <section id="compare" class="view">
     <nav class="psSubTabs noPrint">
-      <button class="psSubTab" type="button" data-view="gradients">Gradients</button>
-      <button class="psSubTab" type="button" data-view="scatter">Écogrammes</button>
-      <button class="psSubTab" type="button" data-view="compare">Tableaux</button>
-      <button class="psSubTab" type="button" data-view="wetlands">Zone humide ?</button>
+      <button class="psSubTabBack" type="button" data-view="home" aria-label="Retour aux relevés">‹</button>
+      <button class="psSubTab" type="button" data-view="gradients" aria-label="Gradients"><span class="fullLabel">Gradients</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7" stroke-linecap="round"/></svg></button>
+      <button class="psSubTab" type="button" data-view="scatter" aria-label="Écogrammes"><span class="fullLabel">Écogrammes</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4v16h16" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+      <button class="psSubTab" type="button" data-view="compare" aria-label="Tableaux"><span class="fullLabel">Tableaux</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M4 15h16M10 4v16"/></svg></button>
+      <button class="psSubTab" type="button" data-view="wetlands" aria-label="Zone humide"><span class="fullLabel">Zone humide</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3c4 5 6.5 8.3 6.5 11.2A6.5 6.5 0 1 1 5.5 14.2C5.5 11.3 8 8 12 3Z" stroke-linejoin="round"/></svg></button>
     </nav>
     <div class="psAnalyseLayout">
       <aside class="psAnalyseSide noPrint">
@@ -1278,10 +1595,11 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 
   <section id="wetlands" class="view">
     <nav class="psSubTabs noPrint">
-      <button class="psSubTab" type="button" data-view="gradients">Gradients</button>
-      <button class="psSubTab" type="button" data-view="scatter">Écogrammes</button>
-      <button class="psSubTab" type="button" data-view="compare">Tableaux</button>
-      <button class="psSubTab" type="button" data-view="wetlands">Zone humide ?</button>
+      <button class="psSubTabBack" type="button" data-view="home" aria-label="Retour aux relevés">‹</button>
+      <button class="psSubTab" type="button" data-view="gradients" aria-label="Gradients"><span class="fullLabel">Gradients</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7" stroke-linecap="round"/></svg></button>
+      <button class="psSubTab" type="button" data-view="scatter" aria-label="Écogrammes"><span class="fullLabel">Écogrammes</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4v16h16" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="14" r="1.3" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+      <button class="psSubTab" type="button" data-view="compare" aria-label="Tableaux"><span class="fullLabel">Tableaux</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M4 15h16M10 4v16"/></svg></button>
+      <button class="psSubTab" type="button" data-view="wetlands" aria-label="Zone humide"><span class="fullLabel">Zone humide</span><svg class="shortLabel" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3c4 5 6.5 8.3 6.5 11.2A6.5 6.5 0 1 1 5.5 14.2C5.5 11.3 8 8 12 3Z" stroke-linejoin="round"/></svg></button>
     </nav>
     <div class="psAnalyseLayout">
       <aside class="psAnalyseSide noPrint">
@@ -1310,22 +1628,30 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
           <div id="wetlandCardsList" class="wetlandDiagCards"></div>
         </div>
         <details class="card wetlandBlock wetlandSection" style="box-shadow:none">
-          <summary class="wetlandSectionSummary"><h3>Méthode réglementaire — critère floristique</h3><span class="wetlandSectionNote small muted linklike">voir la méthode</span></summary>
-          <div class="wetlandSourceBox small" style="margin:0 0 14px"><p>Ce critère utilise les recouvrements par strate. L'application ne retient pas toute la flore du relevé : elle sélectionne d'abord, dans chaque strate réglementaire, les espèces qui structurent le recouvrement, puis vérifie si au moins la moitié de cette liste retenue correspond à des espèces indicatrices de zones humides.</p><p><strong>Sources :</strong> arrêté du 24 juin 2008, annexe II, table A des espèces indicatrices de zones humides, et fiche OFB illustrant le protocole de placettes et de sélection des espèces dominantes. <a href="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000019151510" target="_blank" rel="noopener">Arrêté sur Légifrance</a></p></div>
-          <h4 class="wetlandGaugeTitle">Ratio d'espèces indicatrices — tous les relevés sélectionnés</h4>
+          <summary class="wetlandSectionSummary"><h3>Méthode réglementaire</h3><button type="button" class="secondary miniBtn wetlandSourceToggle noPrint" data-source-target="wetlandRegSource">Méthode et sources</button><span class="wetlandSectionNote small muted linklike"><span class="foldClosed">déplier</span><span class="foldOpen">replier</span></span></summary>
+          <div class="wetlandSourceBox small" id="wetlandRegSource" style="margin:0 0 14px"><p>Ce critère utilise les recouvrements par strate. L'application ne retient pas toute la flore du relevé : elle sélectionne d'abord, dans chaque strate réglementaire, les espèces qui structurent le recouvrement, puis vérifie si au moins la moitié de cette liste retenue correspond à des espèces indicatrices de zones humides.</p><p><strong>Sources :</strong> arrêté du 24 juin 2008, annexe II, table A des espèces indicatrices de zones humides, et fiche OFB illustrant le protocole de placettes et de sélection des espèces dominantes. <a href="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000019151510" target="_blank" rel="noopener">Arrêté sur Légifrance</a></p></div>
+          <h4 class="wetlandGaugeTitle">Critère floristique — ratio d'espèces indicatrices</h4>
           <div id="wetlandRegGaugeSvg" class="wetlandGaugeWrap wetlandGaugeLarge" style="margin:0 0 18px"></div>
           <p class="small muted" style="margin:0 0 8px">Les pastilles vertes indiquent les taxons reconnus comme indicateurs ZH dans la liste réglementaire, <strong>en gras</strong> les taxons retenus dans le calcul du ratio.</p>
           <div class="tableWrap compactTable"><table id="wetlandRegTable" class="wetlandRegTable"></table></div>
         </details>
         <details class="card wetlandBlock wetlandBlockEllenberg wetlandSection" style="box-shadow:none">
-          <summary class="wetlandSectionSummary"><h3>Méthode Ellenberg — indice d’humidité édaphique</h3><span class="wetlandSectionNote small muted linklike">voir la méthode</span></summary>
-          <div class="wetlandSourceBox small" style="margin:0 0 14px"><p>Diagnostic écologique fondé sur l'humidité édaphique Baseflor/Ellenberg. Le statut est déterminé avec la moyenne simple non pondérée : &lt; 5,5 = non humide ; 5,5–5,9 = zone d'incertitude ; &gt; 5,9 = humide. La moyenne pondérée par recouvrement est affichée comme information complémentaire.</p><p><strong>Source méthodologique :</strong> Perrin G., Rapinel S., Choisnet G., Clément B., Bouzillé J.-B. &amp; Hubert-Moy L. (2023), <em>La démarche Ellenberg : une alternative simple et robuste à la démarche réglementaire pour la délimitation des zones humides en France métropolitaine</em>, Sciences Eaux &amp; Territoires, n°43. <a href="https://doi.org/10.20870/Revue-SET.2023.43.7506" target="_blank" rel="noopener">Lien</a></p></div>
-          <h4 class="wetlandGaugeTitle">Humidité édaphique moyenne du relevé</h4>
+          <summary class="wetlandSectionSummary"><h3>Méthode Ellenberg</h3><button type="button" class="secondary miniBtn wetlandSourceToggle noPrint" data-source-target="wetlandEllSource">Méthode et sources</button><span class="wetlandSectionNote small muted linklike"><span class="foldClosed">déplier</span><span class="foldOpen">replier</span></span></summary>
+          <div class="wetlandSourceBox small" id="wetlandEllSource" style="margin:0 0 14px"><p>Diagnostic écologique fondé sur l'humidité édaphique Baseflor/Ellenberg. Le statut est déterminé avec la moyenne simple non pondérée : &lt; 5,5 = non humide ; 5,5–5,9 = zone d'incertitude ; &gt; 5,9 = humide. La moyenne pondérée par recouvrement est affichée comme information complémentaire.</p><p><strong>Source méthodologique :</strong> Perrin G., Rapinel S., Choisnet G., Clément B., Bouzillé J.-B. &amp; Hubert-Moy L. (2023), <em>La démarche Ellenberg : une alternative simple et robuste à la démarche réglementaire pour la délimitation des zones humides en France métropolitaine</em>, Sciences Eaux &amp; Territoires, n°43. <a href="https://doi.org/10.20870/Revue-SET.2023.43.7506" target="_blank" rel="noopener">Lien</a></p></div>
+          <h4 class="wetlandGaugeTitle">Indice d’humidité édaphique des relevés</h4>
           <div id="wetlandGauge" class="wetlandGaugeWrap wetlandGaugeLarge"></div>
           <div id="wetlandEllSynthesis" class="wetlandEllList" style="margin-top:12px"></div>
         </details>
       </div>
       </div>
+    </div>
+    <div class="refLightboxOverlay noPrint" id="wetlandSourceOverlay"></div>
+    <div class="refLightbox noPrint bbHelpModal" id="wetlandSourceModal" role="dialog" aria-modal="true" aria-labelledby="wetlandSourceModalTitle">
+      <div class="refLightboxHead">
+        <h2 id="wetlandSourceModalTitle">Méthode et sources</h2>
+        <button type="button" class="refLightboxClose" id="wetlandSourceModalClose" aria-label="Fermer">✕</button>
+      </div>
+      <div class="bbHelpModalGrid" id="wetlandSourceModalBody"></div>
     </div>
   </section>
 
@@ -1421,6 +1747,11 @@ function norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replac
 function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)}
 function today(){return new Date().toISOString().slice(0,10)}
 function blankReleve(name="Nouveau relevé"){const now=new Date().toISOString();return {id:uid(),name,date:today(),observer:"",site:"",location:"",coords:"",area:"",notes:"",codeProjet:"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()}}
+function blankReleveFromPrevious(name){
+  const prev=(state.releves&&state.releves.length)?current():null;
+  const now=new Date().toISOString();
+  return {id:uid(),name,date:today(),observer:prev?prev.observer||"":"",site:prev?prev.site||"":"",location:prev?prev.location||"":"",coords:prev?prev.coords||"":"",area:prev?prev.area||"":"",notes:"",codeProjet:prev?prev.codeProjet||"":"",rows:[],created_at:now,updated_at:now,device_id:getDeviceId()};
+}
 let state = loadState();
 let selectedTaxon = null;
 let syncState = loadSyncState();
@@ -1521,6 +1852,7 @@ function save(){state=normalizeAppStateForSync(state); localStorage.setItem(STOR
 function updateSavedIndicator(){const el=document.getElementById("entrySavedAt"); if(!el)return; const s=Math.max(0,Math.round((Date.now()-lastSavedAt)/1000)); el.textContent = s<2?"enregistré à l’instant":s<60?`enregistré il y a ${s} s`:`enregistré il y a ${Math.round(s/60)} min`;}
 setInterval(updateSavedIndicator,1000);
 let draftReleve=null;
+let entryAutoOpenIdentity=false;
 function current(){if(draftReleve && draftReleve.id===state.selectedId)return draftReleve; let r=state.releves.find(x=>x.id===state.selectedId); if(!r){r=state.releves[0]||blankReleve("Relevé 1"); if(!state.releves.length)state.releves.push(r); state.selectedId=r.id;} return r;}
 function promoteDraftIfCurrent(){if(draftReleve && draftReleve.id===state.selectedId){state.releves.push(draftReleve); draftReleve=null; return true;} return false;}
 function esc(s){return (s??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
@@ -1687,7 +2019,10 @@ function homeLibRowHtml(r,ids){
   const rec=releveCoverPct(r).toFixed(0)+" %";
   const mobileMeta=[r.codeProjet,r.area?r.area+" m\u00b2":null,`${nEsp} esp.`,rec].filter(Boolean).join(" \u00b7 ");
   return `<div class="psLibRow">`+
-    `<input class="releveCheck" type="checkbox" data-kind="home" value="${r.id}" ${ids.has(r.id)?"checked":""}>`+
+    `<span class="psRowSelectWrap" style="--row-color:${esc(color)}">`+
+      `<input class="releveCheck" type="checkbox" data-kind="home" value="${r.id}" ${ids.has(r.id)?"checked":""} aria-label="Sélectionner ${esc(releveLabel(r))}">`+
+      `<span class="psRowSelectSquare" aria-hidden="true"></span>`+
+    `</span>`+
     `<span class="psRowMain"><input type="color" class="colorDot" data-releve-color="${r.id}" value="${color}" aria-label="Couleur de ${esc(releveLabel(r))}"><button type="button" class="psRowName" data-open-releve="${r.id}">${esc(releveLabel(r))}</button><span class="psRowDate">${esc(fmtDateShort(r.date))}</span></span>`+
     `<span class="psRowMono">${esc(r.codeProjet||"\u2014")}</span>`+
     `<span class="psRowTrunc">${esc(r.site||"\u2014")}</span>`+
@@ -1712,15 +2047,13 @@ function renderHomeLibrary(){
     const n=state.releves.length, p=new Set(state.releves.map(r=>r.codeProjet).filter(Boolean)).size;
     countEl.textContent=n?`${n} relevé${n>1?"s":""} · ${p} projet${p>1?"s":""}`:"";
   }
-
   const facetBar=document.getElementById("homeFacetBar");
   if(facetBar){
     const facetDefs=[
       ["projet","Projet",homeFacetValues(r=>r.codeProjet)],
       ["site","Site",homeFacetValues(r=>r.site)],
       ["annee","Année",homeFacetValues(r=>(r.date||"").slice(0,4))],
-      ["observateur","Observateur",homeFacetValues(r=>r.observer)],
-      ["strate","Strate saisie",homeFacetValues(r=>(r.rows||[]).map(row=>row.stratum))]
+      ["observateur","Observateur",homeFacetValues(r=>r.observer)]
     ];
     const items=facetDefs.map(([key,label,values])=>{
       const active=!!f[key];
@@ -1768,7 +2101,7 @@ function renderHomeLibrary(){
       const head=`<div class="psLibHead"><span></span>${headCells}<span></span></div>`;
       listBox.innerHTML=head+groups.map(g=>{
         const label=g.site?`${esc(g.label)} · ${esc(g.site)}`:esc(g.label);
-        return `<div class="psLibGroup"><div class="psLibGroupHead"><span>${label}</span><span class="psRowMeta">${g.rows.length} relevé${g.rows.length>1?"s":""}</span><button type="button" class="psLinkBtn homeGroupSelectBtn" data-projet="${esc(g.key)}">Sélectionner le projet</button></div>`+
+        return `<div class="psLibGroup"><div class="psLibGroupHead"><span>${label}</span><span class="psRowMeta">${g.rows.length} relevé${g.rows.length>1?"s":""}</span><label class="psSelectAllSwitch" data-select-all-projet="${esc(g.key)}"><input type="checkbox">Tout</label><button type="button" class="psLinkBtn homeGroupSelectBtn" data-projet="${esc(g.key)}">Sélectionner le projet</button></div>`+
         g.rows.map(r=>homeLibRowHtml(r,ids)).join("")+
         `</div>`;
       }).join("");
@@ -1776,6 +2109,16 @@ function renderHomeLibrary(){
         btn.addEventListener("click",()=>{
           const key=btn.dataset.projet, group=list.filter(r=>(r.codeProjet||"__none__")===key);
           const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set]; save(); renderAll();
+        });
+      });
+      listBox.querySelectorAll("[data-select-all-projet]").forEach(label=>{
+        const key=label.dataset.selectAllProjet, group=groups.find(g=>g.key===key)?.rows||[];
+        const cb=label.querySelector("input");
+        cb.checked=group.length>0 && group.every(r=>ids.has(r.id));
+        cb.addEventListener("change",()=>{
+          if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
+          else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
+          save(); renderAll();
         });
       });
       listBox.querySelectorAll("[data-sort-key]").forEach(btn=>{
@@ -1809,7 +2152,6 @@ function renderHomeSelection(){
   const sel=(state.selectedIds||[]).map(id=>byId.get(id)).filter(Boolean);
 
   const cnt=document.getElementById("homeSelCount"); if(cnt)cnt.textContent=String(sel.length);
-  const sheetCnt=document.getElementById("homeSheetCount"); if(sheetCnt)sheetCnt.textContent=sel.length?`(${sel.length})`:"";
   const mobCount=document.getElementById("homeMobileBarCount");
   if(mobCount)mobCount.textContent=`${sel.length} sélectionné${sel.length>1?"s":""}`;
 
@@ -1832,7 +2174,7 @@ function renderHomeSelection(){
         return `<div class="psLotItem"><input type="color" class="psLotColor" data-lot-color="${l.id}" value="${esc(l.color||colorFor(idx))}" aria-label="Couleur du lot ${esc(l.name)}"><button type="button" class="psLotApply" data-apply-lot="${l.id}"><b>${esc(l.name)}</b><span>${validCount}</span></button><button type="button" class="psLotDel" data-delete-lot="${l.id}" aria-label="Supprimer le lot ${esc(l.name)}">✕</button></div>`;
       }).join("")
     : `<p class="psSelEmpty">Aucun lot enregistré.</p>`;
-  ["homeLotsList","homeSheetLotsList","gradientsLotsList","scatterLotsList","compareLotsList","wetlandsLotsList"].forEach(id=>{
+  ["homeLotsList","gradientsLotsList","scatterLotsList","compareLotsList","wetlandsLotsList"].forEach(id=>{
     const b=document.getElementById(id); if(!b)return;
     b.innerHTML=lotsHtml;
     b.querySelectorAll("[data-apply-lot]").forEach(btn=>{
@@ -1894,7 +2236,7 @@ function renderCompareIndexControl(){
 function legendFor(groups){return groups.map(grp=>`<span class="key"><span class="colorDot" style="background:${releveColor(grp.rel)}"></span>${esc(releveCode(grp.rel))}</span>`).join("");}
 function tipAttr(txt){return `class="tipPoint" tabindex="0" data-tip="${esc(String(txt||"").replace(/\s+/g," "))}"`;}
 
-function setEntryTitle(r){const el=document.getElementById("entryTitle"); if(!el)return; const nm=(r&&r.name&&r.name.trim())?r.name.trim():"Relevé sans nom"; el.textContent=r?`${releveCode(r)} · ${nm}`:nm;}
+function setEntryTitle(r){const el=document.getElementById("entryTitle"); if(!el)return; const nm=(r&&r.name&&r.name.trim())?r.name.trim():"Relevé sans nom"; const code=(r&&r.codeProjet)?releveCode(r):""; el.textContent=code?`${code} · ${nm}`:nm;}
 function projectCodes(){return [...new Set(state.releves.map(r=>r.codeProjet).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));}
 function renderProjectCodesList(){const dl=document.getElementById("relProjetList"); if(!dl)return; dl.innerHTML=projectCodes().map(c=>`<option value="${esc(c)}">`).join("");}
 function renderMeta(){const r=current(); relName.value=r.name||""; relDate.value=r.date||""; relObserver.value=r.observer||""; if(window.relSite)relSite.value=r.site||""; relLocation.value=r.location||""; if(window.relCoords)relCoords.value=r.coords||""; relArea.value=r.area||""; relNotes.value=r.notes||""; if(window.relProjet)relProjet.value=r.codeProjet||""; renderProjectCodesList(); setEntryTitle(r); renderEntryMobileMeta(r);}
@@ -1919,7 +2261,7 @@ function renderRows(){
   r.rows.forEach((row,idx)=>{const key=row.stratum||""; if(!groups.has(key))groups.set(key,[]); groups.get(key).push({row,idx});});
   const extraKeys=[...groups.keys()].filter(k=>!CORTEGE_ALWAYS_GROUPS.includes(k)).sort((a,b)=>stratumRank(a)-stratumRank(b) || a.localeCompare(b));
   const orderedKeys=[...CORTEGE_ALWAYS_GROUPS, ...extraKeys];
-  box.innerHTML=orderedKeys.map(key=>{
+  box.innerHTML=orderedKeys.filter(key=>(groups.get(key)||[]).length).map(key=>{
     const label=STRATA_DISPLAY_LABEL[key]||key||"Strate non renseignée";
     const items=groups.get(key)||[];
     const rowsHtml=items.length?items.map(({row,idx})=>{
@@ -1933,7 +2275,7 @@ function renderRows(){
     }).join(""):`<div class="psCortegeGroupEmpty">aucune espèce saisie dans cette strate</div>`;
     return `<div class="psCortegeGroup"><div class="psCortegeGroupHead">${esc(label)}</div>${rowsHtml}</div>`;
   }).join("");
-  if(meta){const cov=r.rows.reduce((a,row)=>a+pct(row),0); meta.textContent=r.rows.length?`toutes strates · ${r.rows.length} espèce${r.rows.length>1?"s":""} · recouvrement cumulé ${fmt(cov,1)} %`:"toutes strates · aucune espèce saisie";}
+  if(meta){const cov=r.rows.reduce((a,row)=>a+pct(row),0); meta.textContent=r.rows.length?`${r.rows.length} espèce${r.rows.length>1?"s":""} · recouvrement cumulé ${fmt(cov,1)} %`:"";}
 }
 function renderSummary(){const summaryEl=document.getElementById("summary"); if(!summaryEl)return; const r=current(); const rows=rowsWithTaxa(r); const cov=rows.reduce((a,x)=>a+pct(x.row),0); const withVals=rows.filter(({t})=>t.v.some(v=>v!=null)).length; const st=[...new Set(rows.map(x=>x.row.stratum||""))].filter(Boolean);
   const s=stats(r); const complete=s.filter(x=>x.n>0).length;
@@ -1979,7 +2321,7 @@ function releveCode(rel){
 function rowCoverPct(row){return row.mode==="pct"?(parseFloat(row.cover)||0):(BB[row.cover]||0);}
 function releveCoverPct(rel){return (rel.rows||[]).reduce((s,row)=>s+rowCoverPct(row),0);}
 function fmtDateShort(d){if(!d)return "—"; const parts=String(d).slice(0,10).split("-"); return parts.length===3?`${parts[2]}/${parts[1]}`:d;}
-function axisValueLabels(g,scaleFn,yNum,yLab){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; for(let t=g.min;t<=g.max;t++){if(!(allowed.has(String(t))||(t-g.min)%2===0))continue; const x=scaleFn(t); out+=`<text x="${x}" y="${yNum}" text-anchor="middle" font-size="9.5" fill="#8b988c">${t}</text>`;} out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="10" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
+function axisValueLabels(g,scaleFn,yNum,yLab,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; for(let t=g.min;t<=g.max;t++){if(!mobile && !(allowed.has(String(t))||(t-g.min)%2===0))continue; const x=scaleFn(t); out+=`<text x="${x}" y="${yNum}" text-anchor="middle" font-size="9.5" fill="#8b988c">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="10" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
 function gradientSpreadPositions(items, sx, baseY){
   const groups=new Map();
   items.forEach((it,idx)=>{const key=String(it.v); if(!groups.has(key))groups.set(key,[]); groups.get(key).push({...it,idx});});
@@ -1997,14 +2339,19 @@ function gradientSpreadPositions(items, sx, baseY){
   });
   return out.sort((a,b)=>a.idx-b.idx);
 }
-function gradientCard(i, groups, labelMode){const g=GRADIENTS[i], W=1400, p=112, rowGap=42, rowTop=40, H=Math.max(150,rowTop+groups.length*rowGap+30); const sx=v=>scale(v,g,W,p); let sdBands=[], meanLines=[], species=[], labels=[], groupNames=[];
- groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, codeLabel=releveCode(grp.rel), avail=p-20, lenAttr=(codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="13" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`); meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-p+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});});
- const ticks=axisValueLabels(g,sx,H-30,H-14); const title=groups.length>1?`${groups.length} relevés sélectionnés`:`n=${groups[0].stats[i].n} · m=${fmt(groups[0].stats[i].mean)} · mp=${fmt(groups[0].stats[i].wmean)} · σp=${fmt(groups[0].stats[i].wsd)}`;
+function gradientCard(i, groups, labelMode){const g=GRADIENTS[i], mobile=window.matchMedia("(max-width:760px)").matches, W=mobile?360:1400,
+ /* Marge de l'échelle réduite sur mobile (retour Martin 21/08/2026, ajustements#3 puis #4 :
+    « l'axe de 1 à 9 peut être élargi jusqu'au bord droit de l'encart ») : marges désormais
+    asymétriques — pl garde la place nécessaire au code de relevé (colonne de gauche), pr est
+    réduit au minimum pour que la dernière graduation vienne presque toucher le bord droit. */
+ pl=mobile?54:112, pr=mobile?14:112, rowGap=42, rowTop=40, H=Math.max(150,rowTop+groups.length*rowGap+30); const sx=v=>pl+(v-g.min)/(g.max-g.min)*(W-pl-pr); let sdBands=[], meanLines=[], species=[], labels=[], groupNames=[];
+ groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, rawCode=releveCode(grp.rel), codeLabel=mobile?(rawCode.length>6?rawCode.slice(0,6)+"…":rawCode):rawCode, avail=pl-20, lenAttr=(!mobile && codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`); meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-pr+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});});
+ const ticks=axisValueLabels(g,sx,H-30,H-14,mobile); const title=groups.length>1?`${groups.length} relevés sélectionnés`:`n=${groups[0].stats[i].n} · m=${fmt(groups[0].stats[i].mean)} · mp=${fmt(groups[0].stats[i].wmean)} · σp=${fmt(groups[0].stats[i].wsd)}`;
  return `<details class="gradientCard" open data-gradient-key="${esc(g.key)}"><summary><strong>${esc(g.short)} · ${esc(g.label)}</strong><span class="gradientActions"><span class="small muted">${esc(title)}</span><button class="secondary iconBtn gradExportBtn noPrint" type="button" data-export-gradient="${esc(g.key)}" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></span></summary><div class="gradientCardBody"><div class="svgBox"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gradient ${esc(g.label)}" font-family="'IBM Plex Sans',system-ui,sans-serif"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/>${ticks}${groupNames.join("")}${sdBands.join("")}${meanLines.join("")}${species.join("")}${labels.join("")}</svg></div></div></details>`;
 }
 
-function scatterAxisTicks(g,scaleFn,orientation,W,H,m){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; if(orientation==="x"){for(let t=g.min;t<=g.max;t++){const x=scaleFn(t); out+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${H-m.b}" stroke="#edf2ea"/>`; if(allowed.has(String(t))||(t-g.min)%2===0){const anchor=t===g.min?"start":(t===g.max?"end":"middle"); out+=`<text x="${x}" y="${H-m.b+18}" text-anchor="${anchor}" font-size="14" fill="#647166">${t}</text>`;}} out+=terms.map(o=>{const x=scaleFn(o.v), anchor=o.v===g.min?"start":(o.v===g.max?"end":"middle"); return `<text ${tipAttr(o.t)} transform="rotate(-16 ${x} ${H-m.b+38})" x="${x}" y="${H-m.b+38}" text-anchor="${anchor}" font-size="13" fill="#3f4a40">${esc(shortTerm(o.t,26))}</text>`;}).join("");}
- else{for(let t=g.min;t<=g.max;t++){const y=scaleFn(t); out+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="#edf2ea"/>`; if(allowed.has(String(t))||(t-g.min)%2===0)out+=`<text x="${m.l-12}" y="${y+3}" text-anchor="end" font-size="14" fill="#647166">${t}</text>`;} out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${m.l-44}" y="${scaleFn(o.v)+3}" text-anchor="end" font-size="12" fill="#3f4a40" opacity=".86">${esc(shortTerm(o.t,30))}</text>`).join("");} return out;}
+function scatterAxisTicks(g,scaleFn,orientation,W,H,m,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; if(orientation==="x"){for(let t=g.min;t<=g.max;t++){const x=scaleFn(t); out+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${H-m.b}" stroke="#edf2ea"/>`; if(mobile || allowed.has(String(t))||(t-g.min)%2===0){const anchor=t===g.min?"start":(t===g.max?"end":"middle"); out+=`<text x="${x}" y="${H-m.b+18}" text-anchor="${anchor}" font-size="14" fill="#647166">${t}</text>`;}} if(!mobile)out+=terms.map(o=>{const x=scaleFn(o.v), anchor=o.v===g.min?"start":(o.v===g.max?"end":"middle"); return `<text ${tipAttr(o.t)} transform="rotate(-16 ${x} ${H-m.b+38})" x="${x}" y="${H-m.b+38}" text-anchor="${anchor}" font-size="13" fill="#3f4a40">${esc(shortTerm(o.t,26))}</text>`;}).join("");}
+ else{for(let t=g.min;t<=g.max;t++){const y=scaleFn(t); out+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="#edf2ea"/>`; if(mobile || allowed.has(String(t))||(t-g.min)%2===0)out+=`<text x="${m.l-12}" y="${y+3}" text-anchor="end" font-size="14" fill="#647166">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${m.l-44}" y="${scaleFn(o.v)+3}" text-anchor="end" font-size="12" fill="#3f4a40" opacity=".86">${esc(shortTerm(o.t,30))}</text>`).join("");} return out;}
 
 function convexHull(points){if(points.length<=1)return points.slice(); const seen=new Set(), clean=[]; points.forEach(p=>{const key=`${p.x.toFixed(6)}:${p.y.toFixed(6)}`; if(!seen.has(key)){seen.add(key); clean.push(p);}}); if(clean.length<=1)return clean.slice(); const pts=clean.slice().sort((a,b)=>a.x-b.x||a.y-b.y); const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x); const lower=[]; for(const p of pts){while(lower.length>=2 && cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop(); lower.push(p);} const upper=[]; for(let i=pts.length-1;i>=0;i--){const p=pts[i]; while(upper.length>=2 && cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop(); upper.push(p);} return lower.slice(0,-1).concat(upper.slice(0,-1));}
 function smoothClosedPath(points){if(points.length<3)return ""; let d=`M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`; const n=points.length; for(let i=0;i<n;i++){const p0=points[(i-1+n)%n], p1=points[i], p2=points[(i+1)%n], p3=points[(i+2)%n]; const c1={x:p1.x+(p2.x-p0.x)/6,y:p1.y+(p2.y-p0.y)/6}; const c2={x:p2.x-(p3.x-p1.x)/6,y:p2.y-(p3.y-p1.y)/6}; d+=` C ${c1.x.toFixed(1)} ${c1.y.toFixed(1)}, ${c2.x.toFixed(1)} ${c2.y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;} return d+" Z";}
@@ -2056,7 +2403,30 @@ function renderScatter(){
  const xi=parseInt(xGrad.value), yi=parseInt(yGrad.value), filter=scatterStratum.value||"Toutes strates";
  const shortLabelsReleves=document.getElementById("scatterShortLabelsReleves")?.checked;
  const shortLabelsSpecies=document.getElementById("scatterShortLabelsSpecies")?.checked;
- const gx=GRADIENTS[xi], gy=GRADIENTS[yi], W=1000,H=460,m={l:234,r:92,t:34,b:90};
+ /* Marges réduites sur mobile : les intitulés d'axes en toutes lettres disparaissent
+    (retour Martin 21/08/2026, ajustements#3 : « les étiquettes d'axes peuvent
+    disparaître, sauf les chiffres »), la marge gauche (234, prévue pour ce texte)
+    n'a donc plus besoin d'être aussi large. */
+ const mobile=window.matchMedia("(max-width:760px)").matches;
+ const gx=GRADIENTS[xi], gy=GRADIENTS[yi];
+ /* ajustements#4 (21/08/2026) : le viewBox fixe 1000×460 étiré en preserveAspectRatio="none"
+    jusqu'à remplir une boîte mobile bien plus proche du carré donnait une image « totalement
+    déformée » (texte et cercles écrasés horizontalement) — le facteur d'étirement horizontal
+    et vertical n'étaient jamais égaux. Le viewBox mobile prend maintenant EXACTEMENT les
+    dimensions réelles (en pixels) de la boîte #scatterSvg déjà calculée par le flex layout :
+    1 unité de viewBox = 1 pixel écran, donc plus aucun étirement anisotrope n'est nécessaire
+    (preserveAspectRatio par défaut suffit). Repli sur 360×420 si la boîte n'est pas encore
+    mesurable (vue pas encore active). */
+ let W=1000,H=460;
+ if(mobile){
+   const box=document.getElementById("scatterSvg");
+   const bw=Math.round(box?.clientWidth||0), bh=Math.round(box?.clientHeight||0);
+   W=bw>40?bw:360; H=bh>40?bh:420;
+ }
+ /* b remonté à 54 (retour Martin 21/08/2026) : à 44, le nom de l'axe des abscisses
+    (à H-16) chevauchait légèrement les chiffres de l'axe (à H-m.b+18) — l'écart entre
+    les deux ne laissait pas assez de place pour les hauteurs de glyphe des deux textes. */
+ const m=mobile?{l:56,r:14,t:22,b:54}:{l:234,r:92,t:34,b:90};
  const sx=v=>m.l+(v-gx.min)/(gx.max-gx.min)*(W-m.l-m.r);
  const sy=v=>H-m.b-(v-gy.min)/(gy.max-gy.min)*(H-m.t-m.b);
  const selected=selectedReleves("scatter");
@@ -2088,7 +2458,7 @@ function renderScatter(){
  }
  if(ghostRaw.length){ghostLeaderPts=prepareScatterDisplay(ghostRaw,sx,sy,W,H,m); ghostPts=ghostLeaderPts.map(pt=>`<circle ${tipAttr(`${pt.t.n} — ${pt.relName} — ${gx.short} ${fmt(pt.x,2)} / ${gy.short} ${fmt(pt.y,2)} — ${fmt(pt.w,2)} %`)} cx="${pt.px.toFixed(1)}" cy="${pt.py.toFixed(1)}" r="2.4" fill="${pt.fill}" opacity=".24"></circle>`);}
  prepareScatterDisplay(pts,sx,sy,W,H,m);
- const ticks=scatterAxisTicks(gx,sx,"x",W,H,m)+scatterAxisTicks(gy,sy,"y",W,H,m);
+ const ticks=scatterAxisTicks(gx,sx,"x",W,H,m,mobile)+scatterAxisTicks(gy,sy,"y",W,H,m,mobile);
  const pointLabels=placeScatterLabels(pts,sx,sy,W,H,m);
  const guides=leaderLines(pts);
  const ghostGuides=leaderLines(ghostLeaderPts).replace(/stroke-width="1"/g,'stroke-width=".75"').replace(/stroke-opacity=".48"/g,'stroke-opacity=".20"');
@@ -2098,7 +2468,8 @@ function renderScatter(){
    const side=pt.r*1.8;
    return `<rect ${tip} x="${(cx-side/2).toFixed(1)}" y="${(cy-side/2).toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="${pt.fill}" stroke="#fff" stroke-width="2.4"></rect>`;
  }).join("");
- const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="22" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(64 ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="22" fill="#172015">${esc(gy.label)} ↻</text>${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}${pointLabels}</svg>`;
+ const titleSize=mobile?15:22, yTitleX=mobile?18:64;
+ const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(${yTitleX} ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gy.label)} ↻</text>${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}${pointLabels}</svg>`;
  document.getElementById("scatterSvg").innerHTML = pts.length?svg:`<div class="empty">Aucun point calculable pour ces axes, cette strate et les relevés sélectionnés — coche au moins un calque.</div>`;
 }
 
@@ -2166,7 +2537,7 @@ function showSuggestions(result,rawQuery){
   box.classList.add("open");
 }
 function selectTaxon(id){selectedTaxon=byId.get(Number(id)); if(!selectedTaxon)return; speciesSearch.value=selectedTaxon.n; if(selectedTaxon.id===-1 && rowStratum)rowStratum.value="Sans végétation"; document.getElementById("selectedTaxon").innerHTML=`Taxon sélectionné : <strong>${sciHtml(selectedTaxon.n)}</strong> <span class="muted">${selectedTaxon.s?sciHtml(selectedTaxon.s):""}</span>`; suggestions.classList.remove("open");}
-function addSelected(){if(!selectedTaxon && norm(speciesSearch.value)==="sol nu")selectedTaxon=byId.get(-1); if(!selectedTaxon){toast("Sélectionner une espèce ou « sol nu » dans la liste de recherche.");return;} promoteDraftIfCurrent(); const r=current(); const mode=coverMode.value; const cover=mode==="pct"?parseFloat(pctValue.value||0):bbValue.value; const stratum=selectedTaxon.id===-1?"Sans végétation":rowStratum.value; r.rows.push({line_id:uid(),tid:selectedTaxon.id,name:selectedTaxon.n,stratum,mode,cover}); touchReleve(r); selectedTaxon=null; speciesSearch.value=""; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; save(); renderAll();}
+function addSelected(){if(!selectedTaxon && norm(speciesSearch.value)==="sol nu")selectedTaxon=byId.get(-1); if(!selectedTaxon){toast("Sélectionner une espèce ou « sol nu » dans la liste de recherche.");return;} if(selectedTaxon.id!==-1 && !rowStratum.value){toast("Choisir une strate avant d'ajouter.");return;} promoteDraftIfCurrent(); const r=current(); const mode=coverMode.value; const cover=mode==="pct"?parseFloat(pctValue.value||0):bbValue.value; const stratum=selectedTaxon.id===-1?"Sans végétation":rowStratum.value; r.rows.push({line_id:uid(),tid:selectedTaxon.id,name:selectedTaxon.n,stratum,mode,cover}); touchReleve(r); selectedTaxon=null; speciesSearch.value=""; document.getElementById("selectedTaxon").textContent="Aucune espèce sélectionnée."; save(); renderAll();}
 window.removeRow=function(idx){const r=current(); r.rows.splice(idx,1); touchReleve(r); save(); renderAll();}
 window.setRowCover=function(idx,val){const r=current(); const row=r.rows[idx]; if(!row||row.mode!=="bb")return; row.cover=val; touchReleve(r); save(); renderAll();}
 function updateMeta(){promoteDraftIfCurrent(); const r=current(); r.name=relName.value; r.date=relDate.value; r.observer=relObserver.value; r.site=(window.relSite?relSite.value:""); r.location=relLocation.value; r.coords=(window.relCoords?relCoords.value:""); r.area=relArea.value; r.notes=relNotes.value; r.codeProjet=(window.relProjet?relProjet.value:""); touchReleve(r); save(); renderReleveSelect(); renderSummary(); renderCompare(); renderScatter(); renderSelectionControls(); setEntryTitle(r);}
@@ -2429,9 +2800,9 @@ function showView(id){
   }
   const section=document.getElementById(id); if(!section)return;
   if(ANALYSIS_VIEWS.includes(id))lastAnalysisView=id;
-  document.body.classList.remove("sheetOpen");
   document.body.classList.remove("entrySheetOpen");
   document.body.classList.remove("navSheetOpen");
+  if(id==="entry" && entryAutoOpenIdentity){document.body.classList.add("entrySheetOpen"); entryAutoOpenIdentity=false;}
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
   const group=TAB_GROUPS[id]||id;
@@ -2442,6 +2813,9 @@ function showView(id){
   section.classList.add("active");
   document.body.classList.toggle("adminUnlockedView", id==="data");
   document.body.classList.toggle("refsView", id==="refs");
+  document.body.classList.toggle("homeListView", id==="home");
+  document.body.classList.toggle("entryScreenView", id==="entry");
+  document.body.classList.toggle("scatterScreenView", id==="scatter");
   document.body.classList.toggle("analyseFullView", ANALYSIS_VIEWS.includes(id));
   const backlink=document.getElementById("psBacklink");
   if(backlink){
@@ -2487,7 +2861,7 @@ function bind(){
  const homeImportBtn=document.getElementById("homeImportBtn");
  if(homeImportBtn)homeImportBtn.addEventListener("click",openImportModal);
  const homeNewReleveBtn=document.getElementById("homeNewReleveBtn");
- if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
+ if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleveFromPrevious(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; entryAutoOpenIdentity=true; renderAll();});
  const navToggle=document.getElementById("navToggle");
  if(navToggle)navToggle.addEventListener("click",()=>document.body.classList.toggle("navSheetOpen"));
  const navSheetClose=document.getElementById("navSheetClose");
@@ -2507,14 +2881,10 @@ function bind(){
  if(entrySheetClose)entrySheetClose.addEventListener("click",()=>document.body.classList.remove("entrySheetOpen"));
  const entrySheetOverlay=document.getElementById("entrySheetOverlay");
  if(entrySheetOverlay)entrySheetOverlay.addEventListener("click",()=>document.body.classList.remove("entrySheetOpen"));
+ const entryValidateBtn=document.getElementById("entryValidateBtn");
+ if(entryValidateBtn)entryValidateBtn.addEventListener("click",()=>document.body.classList.remove("entrySheetOpen"));
  const prevChips=document.getElementById("prevChips");
  if(prevChips)prevChips.addEventListener("click",e=>{const b=e.target.closest(".psPrevChip"); if(b)selectTaxon(b.dataset.id);});
- const homeSheetToggle=document.getElementById("homeSheetToggle");
- if(homeSheetToggle)homeSheetToggle.addEventListener("click",()=>document.body.classList.toggle("sheetOpen"));
- const homeSheetClose=document.getElementById("homeSheetClose");
- if(homeSheetClose)homeSheetClose.addEventListener("click",()=>document.body.classList.remove("sheetOpen"));
- const homeSheetOverlay=document.getElementById("homeSheetOverlay");
- if(homeSheetOverlay)homeSheetOverlay.addEventListener("click",()=>document.body.classList.remove("sheetOpen"));
  document.addEventListener("click",e=>{const openBtn=e.target.closest?.("[data-ref-open]"); if(!openBtn)return; openRefLightbox(openBtn.dataset.refOpen);});
  const refLightboxOverlay=document.getElementById("refLightboxOverlay");
  if(refLightboxOverlay)refLightboxOverlay.addEventListener("click",closeRefLightbox);
@@ -2528,13 +2898,25 @@ function bind(){
  const bbHelpModalClose=document.getElementById("bbHelpModalClose");
  if(bbHelpModalClose)bbHelpModalClose.addEventListener("click",closeBbHelp);
  document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("bbHelpOpen"))closeBbHelp();});
+ document.addEventListener("click",e=>{
+   const t=e.target.closest?.(".wetlandSourceToggle"); if(!t)return;
+   e.preventDefault();
+   const src=document.getElementById(t.dataset.sourceTarget); const body=document.getElementById("wetlandSourceModalBody");
+   if(src && body)body.innerHTML=src.innerHTML;
+   document.body.classList.add("wetlandSourceOpen");
+ });
+ const wetlandSourceOverlay=document.getElementById("wetlandSourceOverlay");
+ if(wetlandSourceOverlay)wetlandSourceOverlay.addEventListener("click",()=>document.body.classList.remove("wetlandSourceOpen"));
+ const wetlandSourceModalClose=document.getElementById("wetlandSourceModalClose");
+ if(wetlandSourceModalClose)wetlandSourceModalClose.addEventListener("click",()=>document.body.classList.remove("wetlandSourceOpen"));
+ document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("wetlandSourceOpen"))document.body.classList.remove("wetlandSourceOpen");});
  const importModalOverlay=document.getElementById("importModalOverlay");
  if(importModalOverlay)importModalOverlay.addEventListener("click",closeImportModal);
  const importModalClose=document.getElementById("importModalClose");
  if(importModalClose)importModalClose.addEventListener("click",closeImportModal);
  document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("importOpen"))closeImportModal();});
  releveSelect.addEventListener("change",e=>{state.selectedId=e.target.value; save(); renderAll();});
- newReleve.addEventListener("click",()=>{const r=blankReleve(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; renderAll();});
+ newReleve.addEventListener("click",()=>{const r=blankReleveFromPrevious(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; entryAutoOpenIdentity=true; renderAll();});
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
  deleteReleve.addEventListener("click",()=>{
    if(draftReleve && draftReleve.id===state.selectedId){draftReleve=null; showView("home"); return;}
@@ -2771,7 +3153,12 @@ function renderWetlandGauge(diags){
   const box=document.getElementById("wetlandGauge"); if(!box)return;
   const usable=diags.filter(d=>d.ell.mean!=null);
   if(!usable.length){box.innerHTML='<div class="empty">Sélectionner au moins un relevé avec indice d\'humidité exploitable.</div>';return;}
-  const W=1560,m={l:60,r:60},scaleW=W-m.l-m.r,barH=44;
+  /* Jauge encore trop peu lisible sur mobile (retour Martin 21/08/2026, ajustements#3) :
+     un viewBox à 1560 unités, rendu sur ~350px d'écran, réduisait le texte (11-22 unités)
+     à quelques pixels réels. Un viewBox plus étroit sur mobile rapproche le facteur
+     d'échelle de 1:1 sans toucher aux tailles de police en unités SVG. */
+  const mobile=window.matchMedia("(max-width:760px)").matches;
+  const W=mobile?420:1560,m=mobile?{l:34,r:34}:{l:60,r:60},scaleW=W-m.l-m.r,barH=mobile?34:44;
   const sx=v=>m.l+(v-1)/11*scaleW;
   const items=usable.map(d=>({d,x:sx(Math.min(12,Math.max(1,d.ell.mean)))}));
   const packed=packLevels(items,84);
@@ -2780,7 +3167,10 @@ function renderWetlandGauge(diags){
   const qualAnchors=[[1,"hyperxérophile"],[4,"xérophile"],[6.3,"mésophile"],[9,"hydrophile"],[12,"aquatique profonde"]];
   const nearestQual=v=>qualAnchors.reduce((best,a)=>Math.abs(a[0]-v)<Math.abs(best[0]-v)?a:best)[1];
   const majorTicks=[1,2,3,4,5,6,7,8,9,10,11,12].map(v=>`<text ${tipAttr(`${v} — ${nearestQual(v)}`)} x="${sx(v).toFixed(1)}" y="${barY+barH+22}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="#8a958c">${v}</text>`).join("");
-  const qualLabels=qualAnchors.map(([v,txt],i)=>[v,txt,i===0?"start":(i===qualAnchors.length-1?"end":"middle")])
+  /* Intitulés qualitatifs (hyperxérophile…) retirés sur mobile : sur un viewBox à 420
+     unités les 5 libellés se chevauchaient entre eux (retour Chrome, ajustements#3) —
+     seuls les chiffres restent, comme demandé pour les gradients. */
+  const qualLabels=mobile?"":qualAnchors.map(([v,txt],i)=>[v,txt,i===0?"start":(i===qualAnchors.length-1?"end":"middle")])
     .map(([v,txt,anchor])=>`<text x="${sx(v).toFixed(1)}" y="${barY+barH+40}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="#8a958c">${esc(txt)}</text>`).join("");
   const uncX1=sx(5.5), uncX2=sx(5.9);
   const uncertainty=`<line x1="${uncX1.toFixed(1)}" y1="${barY-4}" x2="${uncX1.toFixed(1)}" y2="${barY+barH+4}" stroke="#7a5b16" stroke-width="1.3" stroke-dasharray="4 4"/>`+
@@ -2818,13 +3208,9 @@ function renderWetlandEllSynthesis(diags){
     const meanStr=ell.mean!=null?fmt(ell.mean,2):"—";
     const wmeanStr=ell.wmean!=null?fmt(ell.wmean,2):"—";
     const label=wetlandStatusLabel(ell.status);
-    const desc=ell.status==="insuffisant"
-      ?`Indicateur Ellenberg : données insuffisantes (${ell.n||0}/${ell.total||0} taxons avec indice d'humidité).`
-      :`Indicateur Ellenberg : milieu ${label} (moyenne simple ${meanStr} sur l'échelle 1-12).`;
-    return `<div class="wetlandEllItem">`+
-      `<div class="wetlandEllItemHead"><span class="colorDot" style="background:${releveColor(d.rel)}"></span><strong>${esc(releveCode(d.rel))}</strong>`+
-      `<span class="wetlandEllStats small muted">moy. simple ${meanStr} · moy. pondérée ${wmeanStr} · ${ell.n||0}/${ell.total||0} taxons avec indice d'humidité</span></div>`+
-      `<div class="wetlandEllBox ${cls}"><span class="wetlandBadge ${ell.status}">${esc(label)}</span><span>${desc}</span></div>`+
+    return `<div class="wetlandEllItem ${cls}">`+
+      `<div class="wetlandEllItemHead"><span class="colorDot" style="background:${releveColor(d.rel)}"></span><strong>${esc(releveCode(d.rel))}</strong><span class="wetlandBadge ${ell.status}">${esc(label)}</span></div>`+
+      `<div class="wetlandEllStats small muted">moy. simple ${meanStr} · moy. pondérée ${wmeanStr} · ${ell.n||0}/${ell.total||0} taxons avec indice d'humidité</div>`+
       `</div>`;
   }).join('');
 }
@@ -2832,12 +3218,13 @@ function renderWetlandRegGaugeSvg(diags){
   const box=document.getElementById("wetlandRegGaugeSvg"); if(!box)return;
   const valid=diags.filter(d=>d.reg.ratio!=null);
   if(!valid.length){box.innerHTML='<div class="empty">Aucun relevé avec des espèces réglementaires retenues.</div>';return;}
-  const W=1560,m={l:60,r:60},scaleW=W-m.l-m.r,barH=44;
+  const mobile=window.matchMedia("(max-width:760px)").matches;
+  const W=mobile?420:1560,m=mobile?{l:34,r:34}:{l:60,r:60},scaleW=W-m.l-m.r,barH=mobile?34:44;
   const sx=v=>m.l+(v/100)*scaleW;
   const items=valid.map(d=>({d,x:sx(Math.min(100,Math.max(0,d.reg.ratio*100)))}));
   const packed=packLevels(items,84);
   const maxLevel=Math.max(0,...packed.map(it=>it.level));
-  const rowStep=24, barY=48+maxLevel*rowStep, H=barY+barH+40;
+  const rowStep=24, barY=48+maxLevel*rowStep, H=barY+barH+(mobile?54:40);
   const threshX=sx(50);
   const threshLine=`<line x1="${threshX.toFixed(1)}" y1="${barY-4}" x2="${threshX.toFixed(1)}" y2="${barY+barH+4}" stroke="#191b16" stroke-width="2" stroke-dasharray="5 5"/>`;
   const lines=[], labels=[], markers=[];
@@ -2850,9 +3237,13 @@ function renderWetlandRegGaugeSvg(diags){
       `<text x="${x.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="${color}" pointer-events="none">${esc(label)}</text>`);
     markers.push(`<circle ${tipAttr(tip)} cx="${x.toFixed(1)}" cy="${(barY+barH/2).toFixed(1)}" r="8" fill="${color}" stroke="#fffefb" stroke-width="2.5"/>`);
   });
-  const axis=`<text x="${sx(0).toFixed(1)}" y="${barY+barH+22}" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#C0562B">0 % · critère non validé</text>`+
-    `<text x="${threshX.toFixed(1)}" y="${barY+barH+22}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#1F7A5C">seuil 50 %</text>`+
-    `<text x="${sx(100).toFixed(1)}" y="${barY+barH+22}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#1F7A5C">100 % · critère validé</text>`;
+  /* Étiquette « seuil 50 % » repoussée sur sa propre ligne en mobile : sur un viewBox
+     étroit (420 au lieu de 1560), elle chevauchait « critère non validé »/« critère
+     validé » de part et d'autre (retour Chrome, ajustements#3). */
+  const endY=barY+barH+(mobile?20:22), threshY=mobile?barY+barH+38:endY;
+  const axis=`<text x="${sx(0).toFixed(1)}" y="${endY}" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#C0562B">${mobile?'0 %':'0 % · critère non validé'}</text>`+
+    `<text x="${threshX.toFixed(1)}" y="${threshY}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#1F7A5C">seuil 50 %</text>`+
+    `<text x="${sx(100).toFixed(1)}" y="${endY}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#1F7A5C">${mobile?'100 %':'100 % · critère validé'}</text>`;
   box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Critère flore réglementaire — ratio ZH"><defs><linearGradient id="regGrad" x1="0" x2="1"><stop offset="0" stop-color="#E0932F"/><stop offset=".5" stop-color="#E0932F"/><stop offset=".5" stop-color="#6FB08A"/><stop offset="1" stop-color="#1F5C8A"/></linearGradient></defs><rect x="${sx(0).toFixed(1)}" y="${barY}" width="${(sx(100)-sx(0)).toFixed(1)}" height="${barH}" fill="url(#regGrad)"/>${threshLine}${lines.join("")}${labels.join("")}${markers.join("")}${axis}</svg>`;
 }
 /* Tableau strate × relevé (méthode réglementaire), conforme à
