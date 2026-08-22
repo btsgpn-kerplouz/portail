@@ -2703,8 +2703,12 @@ function renderDesignDetail(ue) {
       <button type="button" class="small secondary" data-edit-ue="${escapeAttr(ue.id)}">Modifier l’UE</button>
     </div>`;
 
-  const sequences = state.sequences.filter(seq => seq.ueId === ue.id).sort((a, b) => sequenceSortKey(a).localeCompare(sequenceSortKey(b)));
-  const allSessions = state.sessions.filter(s => s.ueId === ue.id).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
+  // Lot A (22/08/2026) — filtré à estConsultablePourMoi ici (source commune du
+  // compteur ET des tuiles) : une séquence/séance de collègue seul, sans le
+  // choix « Voir mes collègues » activé, ne doit apparaître nulle part, pas
+  // même dans le décompte.
+  const sequences = state.sequences.filter(seq => seq.ueId === ue.id && estConsultablePourMoi(seq)).sort((a, b) => sequenceSortKey(a).localeCompare(sequenceSortKey(b)));
+  const allSessions = state.sessions.filter(s => s.ueId === ue.id && estConsultablePourMoi(s)).sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
   const capacities = ueCapacities(ue);
 
   const countSeq = $('#designCountSequences'); if (countSeq) countSeq.textContent = String(sequences.length);
@@ -2740,7 +2744,7 @@ function renderDesignSequencesPanel(ue, sequences) {
   // Lot K — séances d'EIL (rattachées à une semaine thématique) portées par cette
   // UE : regroupées par contrainte thématique, sous les séquences.
   const eilGroups = {};
-  state.sessions.filter(s => s.ueId === ue.id && s.constraintId).forEach(s => {
+  state.sessions.filter(s => s.ueId === ue.id && s.constraintId && estConsultablePourMoi(s)).forEach(s => {
     (eilGroups[s.constraintId] = eilGroups[s.constraintId] || []).push(s);
   });
   const eilBlock = Object.entries(eilGroups).map(([cid, list]) => {
@@ -2751,7 +2755,7 @@ function renderDesignSequencesPanel(ue, sequences) {
   // Séances rattachées à l'UE mais à AUCUNE séquence (et hors semaine thématique
   // EIL) : sinon elles n'apparaissaient nulle part dans l'arbre de conception.
   const looseSessions = state.sessions
-    .filter(s => s.ueId === ue.id && !s.sequenceId && !s.constraintId)
+    .filter(s => s.ueId === ue.id && !s.sequenceId && !s.constraintId && estConsultablePourMoi(s))
     .sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
   const sansSequence = !sequences.length;
   const looseInner = looseSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')
@@ -2930,7 +2934,10 @@ function compactUeCode(code = '') {
 }
 
 function renderSequenceCard(seq) {
-  const sessions = state.sessions.filter(s => s.sequenceId === seq.id);
+  // Lot A (22/08/2026) — filtré à estConsultablePourMoi : une séance de
+  // collègue seul (Cas 2, choix désactivé) au sein d'une séquence par
+  // ailleurs mienne ne doit apparaître ni en tuile ni dans le décompte.
+  const sessions = state.sessions.filter(s => s.sequenceId === seq.id && estConsultablePourMoi(s));
   const fictiveCount = sessions.filter(isFictiveSession).length;
   const color = sequenceColor(seq.id); // Lot L — couleur cohérente avec la frise
   const period = sequencePeriodParts(seq);
@@ -2943,22 +2950,14 @@ function renderSequenceCard(seq) {
   // Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2 : séquence d'un
   // ou plusieurs collègues seuls (je suis enseignant·e de l'UE, mais pas
   // rattaché·e à CETTE séquence). Sans le choix « Voir mes collègues »
-  // (moiVoitCollegues), reste un <div> statique non ouvrable ; avec le choix
-  // activé, devient un <details> ouvrable comme les miennes, mais sans les
-  // actions de modification (bouton « Modifier », tuile « + Séance », dépôt
-  // par glisser-déposer) — la modale s'ouvre alors en lecture seule (voir
-  // openSequenceModal).
+  // (moiVoitCollegues), n'est PAS affichée du tout (retour de Martin,
+  // 22/08/2026 : une tuile verrouillée mais visible ne correspondait pas au
+  // « je ne vois pas » attendu) ; avec le choix activé, devient un <details>
+  // ouvrable comme les miennes, mais sans les actions de modification
+  // (bouton « Modifier », tuile « + Séance », dépôt par glisser-déposer) — la
+  // modale s'ouvre alors en lecture seule (voir openSequenceModal).
   const mienne = contenuInteractifPourMoi(seq);
-  if (!estConsultablePourMoi(seq)) {
-    return `<div class="entity-card entity-sequence is-collegue" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}" title="Séquence d'un ou plusieurs collègues — pas la vôtre">
-      <div class="entity-card-locked-head">
-        <span class="entity-level-label">Séquence</span>
-        <span class="entity-title">${escapeHtml(seq.title)}</span>
-        ${teacherPillsHtml ? `<span class="design-ue-pills entity-teachers">${teacherPillsHtml}</span>` : ''}
-        <span class="entity-count">${sessions.length} séance${sessions.length > 1 ? 's' : ''}</span>
-      </div>
-    </div>`;
-  }
+  if (!estConsultablePourMoi(seq)) return '';
   // Séances numérotées à partir de 1 dans l'ordre de la séquence.
   const orderedSessions = [...sessions].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
   return `<details class="entity-card entity-sequence${mienne ? '' : ' is-collegue'}" data-open-key="seq:${escapeAttr(seq.id)}" ${mienne ? `data-seq-drop="${escapeAttr(seq.id)}"` : ''} style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}"${mienne ? '' : ` title="Séquence d'un ou plusieurs collègues — lecture seule"`}>
@@ -3261,7 +3260,10 @@ function renderGanttSequencesPanel(ues, weeks) {
     // suffit d'en créer une).
     const mienne = jeSuisEnseignantDeLUe(ue);
     const ueSessions = mienne ? state.sessions.filter(s => s.ueId === ue.id) : [];
-    const sequences = mienne ? state.sequences.filter(seq => seq.ueId === ue.id) : [];
+    // Lot A (22/08/2026) — filtré à estConsultablePourMoi : une séquence de
+    // collègue seul (Cas 2, choix désactivé) ne doit pas apparaître dans la
+    // frise, même au sein d'une UE que j'enseigne par ailleurs.
+    const sequences = mienne ? state.sequences.filter(seq => seq.ueId === ue.id && estConsultablePourMoi(seq)) : [];
     const bands = sequences.flatMap(seq => sequenceWeekSegments(seq, weeks).map(segment => ({ ...segment, seq })));
     const items = bands.map(segment => ({ startIndex: segment.startIndex, endIndex: segment.endIndex, segment }));
     const lanes = Math.max(1, assignBandLanes(items));
@@ -3326,7 +3328,9 @@ function renderGanttSessionsPanel(ues, weeks) {
   // pas ne remontent pas dans cette grille jour par jour (même règle que le
   // panneau Séquences ci-dessus, via jeSuisEnseignantDeLUe).
   const ueIds = new Set(ues.filter(jeSuisEnseignantDeLUe).map(ue => ue.id));
-  const allSessions = state.sessions.filter(s => ueIds.has(s.ueId));
+  // Lot A (22/08/2026) — + estConsultablePourMoi : une séance de collègue
+  // seul (Cas 2, choix désactivé) ne doit pas apparaître dans cette grille.
+  const allSessions = state.sessions.filter(s => ueIds.has(s.ueId) && estConsultablePourMoi(s));
 
   const weekRow = renderGanttWeekHeaderRow(weeks, promotion, 'Jour');
 
@@ -3372,7 +3376,7 @@ function computeGanttHorsFenetre(ues, weeks) {
   if (lastVisibleIndex >= weeks.length - 1) { foot.textContent = ''; return; }
   const items = [];
   ues.forEach(ue => {
-    state.sequences.filter(seq => seq.ueId === ue.id).forEach(seq => {
+    state.sequences.filter(seq => seq.ueId === ue.id && estConsultablePourMoi(seq)).forEach(seq => {
       const segments = sequenceWeekSegments(seq, weeks);
       if (segments.length && segments[0].startIndex > lastVisibleIndex) items.push({ title: seq.title, start: segments[0].startIndex });
     });
@@ -3943,7 +3947,10 @@ function sessionTooltip(session) {
 }
 
 function renderPromotionTable(promotion) {
-  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s));
+  // Lot A (22/08/2026) — filtré à estConsultablePourMoi : une séance de
+  // collègue seul (Cas 2, choix désactivé) n'apparaît plus du tout dans le
+  // Planning hebdo (le créneau redevient un emplacement libre à mes yeux).
+  const sessions = state.sessions.filter(s => s.weekId === selectedWeek && s.promotion === promotion && isDefinitiveSession(s) && estConsultablePourMoi(s));
   const week = state.weeks.find(w => w.id === selectedWeek);
   const dayDates = dayDatesForWeek(week);
   const dayConstraints = dayDates.map(d => constraintsForDate(d, promotion));
