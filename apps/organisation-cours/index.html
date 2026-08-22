@@ -18,7 +18,14 @@
     <header class="banner">
       <div class="banner-inner">
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
-        <h1><span class="banner-pictogram" aria-hidden="true">OC</span><span class="banner-title-text">Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></span></h1>
+        <!-- Ajustements #5 (22/08/2026) : sur mobile, ce même emplacement ne
+             garde son rôle « retour au portail » que sur l'écran d'accueil —
+             ailleurs il redevient fonctionnel comme retour à l'écran
+             précédent (auparavant, il restait un lien externe trompeur même
+             au fond d'un écran secondaire). Bascule en JS (updateMobileBannerBack,
+             appelée à chaque navigation mobile), CSS masque l'un ou l'autre. -->
+        <button type="button" id="bannerMobileBack" class="atlas-backlink" hidden>‹ Accueil</button>
+        <h1><span class="banner-pictogram" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18"></rect><rect x="3" y="3" width="18" height="4" fill="currentColor" stroke="none"></rect><rect x="6" y="10" width="3" height="8" fill="currentColor" stroke="none"></rect><rect x="11" y="13" width="3" height="5" fill="currentColor" stroke="none"></rect><rect x="16" y="11" width="3" height="7" fill="currentColor" stroke="none"></rect></svg></span><span class="banner-title-text">Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></span></h1>
         <!-- Refonte « papier technique froid » (écran 1, 16/08/2026) : bandeau
              commun au 21 écrans (README) — statut de synchro + année + avatar,
              au lieu d'un simple bloc de connexion. L'export/import JSON (lot A
@@ -165,6 +172,34 @@
           <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
         </div>
         <div id="reunionsList" class="frais-table-wrap"></div>
+      </details>
+      <details class="panel panel-collapsible" id="materielEmpruntsPanel" data-open-key="dash:materielEmprunts">
+        <summary>
+          <div class="panel-heading-inline">
+            <h3>Matériel emprunté</h3>
+            <button type="button" id="addMaterielEmpruntButton" class="small">+ Emprunt</button>
+            <span id="materielEmpruntsBadge" class="frais-badge"></span>
+          </div>
+        </summary>
+        <div class="reunions-toolbar">
+          <span class="meta">Suivre qui a emprunté quoi (élèves) — cocher « Rendu » une fois restitué.</span>
+        </div>
+        <div id="materielEmpruntsList" class="frais-table-wrap"></div>
+      </details>
+      <details class="panel panel-collapsible" id="materielCataloguePanel" data-open-key="dash:materielCatalogue">
+        <summary>
+          <div class="panel-heading-inline">
+            <h3>Matériel — catalogue</h3>
+          </div>
+        </summary>
+        <div class="reunions-toolbar">
+          <span class="meta">Types et identifiants individuels proposés dans le formulaire d’emprunt.</span>
+        </div>
+        <form id="materielTypeForm" class="materiel-type-add-form">
+          <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+          <button type="submit" class="secondary small">+ Type</button>
+        </form>
+        <div id="materielCatalogueList"></div>
       </details>
       <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
         <summary>
@@ -610,6 +645,17 @@
     <section id="mobileFaites" class="view mobile-only"></section>
     <section id="mobileSemaine" class="view mobile-only"></section>
     <section id="mobileSeance" class="view mobile-only"></section>
+    <section id="mobileFrais" class="view mobile-only"></section>
+    <section id="mobileAFaire" class="view mobile-only">
+      <div id="mobileAFaireList" class="todo-list"></div>
+      <textarea id="mobileAFaireInput" class="todo-add-input" placeholder="+ ajouter une note (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+      <details class="todo-history">
+        <summary id="mobileAFaireHistoryCount">Tâches faites</summary>
+        <ul id="mobileAFaireHistoryList" class="todo-history-list"></ul>
+      </details>
+    </section>
+    <section id="mobileMission" class="view mobile-only"></section>
+    <section id="mobileMateriel" class="view mobile-only"></section>
   </main>
 
   <dialog id="ueDialog" class="modal">
@@ -1235,6 +1281,9 @@
         <label>Conducteur
           <input id="deplacementConducteur" placeholder="Nom du conducteur" />
         </label>
+        <label>Compte concerné
+          <input id="deplacementTeacher" placeholder="Initiales — vide = vous" />
+        </label>
         <label>Lieu
           <input id="deplacementLieu" placeholder="Ex. Réserve naturelle, lycée partenaire…" />
         </label>
@@ -1260,10 +1309,53 @@
       </div>
       <p class="frais-line-total">Total remboursement : <strong id="deplacementTotalPreview">0,00 €</strong></p>
       <p class="form-help tight" id="deplacementSessionHint" hidden>Déplacement lié à une séance : la date est reprise de la séance.</p>
+      <p class="form-help tight">« Compte concerné » : c'est le véhicule/la personne qui portera cette ligne — si c'était celui d'un collègue plutôt que le vôtre, indiquez ses initiales : la ligne quitte votre Frais et rejoint le sien.</p>
       <footer class="modal-footer">
         <button type="button" id="deleteDeplacementButton" class="danger">Supprimer</button>
         <span class="spacer"></span>
         <button type="button" class="secondary" id="cancelDeplacementButton">Annuler</button>
+        <button type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="materielEmpruntDialog" class="modal">
+    <form method="dialog" id="materielEmpruntForm">
+      <header class="modal-header">
+        <h3 id="materielEmpruntModalTitle">Emprunt de matériel</h3>
+        <button type="button" class="icon-button" id="closeMaterielEmpruntModal">×</button>
+      </header>
+      <input type="hidden" id="materielEmpruntId" />
+      <div class="form-grid">
+        <label>Type de matériel
+          <select id="materielEmpruntType"></select>
+        </label>
+        <label>Identifiant
+          <select id="materielEmpruntIdentifiant"></select>
+        </label>
+        <label>Étudiant
+          <input id="materielEmpruntEtudiant" placeholder="Nom Prénom" />
+        </label>
+        <label>Classe
+          <select id="materielEmpruntClasse">
+            <option value="GPN1">GPN1</option>
+            <option value="GPN2">GPN2</option>
+          </select>
+        </label>
+        <label>Compte concerné
+          <input id="materielEmpruntTeacher" placeholder="Initiales — vide = vous" />
+        </label>
+        <label>Emprunté le
+          <input type="date" id="materielEmpruntDate" />
+        </label>
+        <label>Rendu le
+          <input type="date" id="materielEmpruntDateRetour" placeholder="vide = pas encore rendu" />
+        </label>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" id="deleteMaterielEmpruntButton" class="danger">Supprimer</button>
+        <span class="spacer"></span>
+        <button type="button" class="secondary" id="cancelMaterielEmpruntButton">Annuler</button>
         <button type="submit">Enregistrer</button>
       </footer>
     </form>
