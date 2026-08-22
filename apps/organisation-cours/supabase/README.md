@@ -81,6 +81,9 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     RLS, cette fois seulement au moment du `returning` qui suit l'insert) —
     voir le commentaire en tête du fichier (auto-référence inutile de
     `oc_reunion_est_participant()` dans les policies de `oc_reunions` lui-même).
+19. `016-visibilite-collegues.sql` — colonne `oc_enseignants.voir_collegues`
+    (défaut `false`) : préférence de compte « voir le contenu de mes
+    collègues » (Cas 2 du partage entre comptes). Aucune policy à changer.
 
 ## Réglage obligatoire côté Auth
 

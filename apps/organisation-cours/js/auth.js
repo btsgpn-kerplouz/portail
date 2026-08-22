@@ -68,10 +68,12 @@ function urlPage() {
   return window.location.origin + window.location.pathname;
 }
 
+const COLONNES_PROFIL = "user_id, actif, nom, prenom, initiales, voir_collegues";
+
 async function chargerProfil(userId) {
   const { data, error } = await sb
     .from("oc_enseignants")
-    .select("user_id, actif, nom, prenom, initiales")
+    .select(COLONNES_PROFIL)
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -85,7 +87,7 @@ async function creerProfil(userId, email) {
   const { data, error } = await sb
     .from("oc_enseignants")
     .insert({ user_id: userId, identifiant, nom, prenom, initiales })
-    .select("user_id, actif, nom, prenom, initiales")
+    .select(COLONNES_PROFIL)
     .single();
   if (error) throw error;
   return data;
@@ -231,7 +233,22 @@ async function modifierInitiales(nouvellesInitiales) {
     .from("oc_enseignants")
     .update({ initiales })
     .eq("user_id", utilisateurCourant.user.id)
-    .select("user_id, actif, nom, prenom, initiales")
+    .select(COLONNES_PROFIL)
+    .single();
+  if (error) throw error;
+  utilisateurCourant.profil = data;
+  return data;
+}
+
+// Cas 2 du partage entre comptes (voir app.js, contenuInteractifPourMoi /
+// estConsultablePourMoi) : préférence « voir le contenu de mes collègues »,
+// même mécanique que modifierInitiales ci-dessus.
+async function modifierVoirCollegues(voirCollegues) {
+  const { data, error } = await sb
+    .from("oc_enseignants")
+    .update({ voir_collegues: voirCollegues })
+    .eq("user_id", utilisateurCourant.user.id)
+    .select(COLONNES_PROFIL)
     .single();
   if (error) throw error;
   utilisateurCourant.profil = data;
@@ -251,6 +268,10 @@ function afficherEtatActif(profil) {
   elAuthCompact.innerHTML = `
     <span id="initiales-affichees" title="${escapeAttrLocal(profil.prenom)} ${escapeAttrLocal(profil.nom)}">${escapeAttrLocal(profil.initiales)}</span>
     <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>
+    <label class="lien" id="lbl-voir-collegues" title="Consulter (lecture seule) les séquences/séances de mes collègues, dans les UE où je suis référencé·e">
+      <input type="checkbox" id="chk-voir-collegues" ${profil.voir_collegues ? "checked" : ""}>
+      Voir mes collègues
+    </label>
     <button type="button" id="btn-deconnexion" class="lien" title="Se déconnecter">Déconnexion</button>
   `;
   document.getElementById("btn-modifier-initiales").addEventListener("click", () => {
@@ -261,9 +282,18 @@ function afficherEtatActif(profil) {
       .then((p) => afficherEtatActif(p))
       .catch((e) => window.alert(e.message || "Échec de la modification des initiales."));
   });
+  document.getElementById("chk-voir-collegues").addEventListener("change", (ev) => {
+    const voulu = ev.target.checked;
+    modifierVoirCollegues(voulu)
+      .then((p) => window.OC_APP.definirVoitCollegues(p.voir_collegues))
+      .catch((e) => {
+        ev.target.checked = !voulu; // annule visuellement l'échec de l'écriture
+        window.alert(e.message || "Échec de la modification de cette préférence.");
+      });
+  });
   brancherDeconnexion();
   elAppShell.hidden = false;
-  window.OC_APP.demarrer(profil.initiales, profil.nom, profil.prenom);
+  window.OC_APP.demarrer(profil.initiales, profil.nom, profil.prenom, profil.voir_collegues);
 }
 
 // Compte créé mais pas encore activé : l'app reste inaccessible (RLS), donc
