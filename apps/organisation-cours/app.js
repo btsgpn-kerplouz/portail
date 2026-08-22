@@ -181,6 +181,10 @@ let moiInitiales = '';
 // de « Commandé par »). Absents si non fournis (ex. anciens appels non mis à jour).
 let moiNom = '';
 let moiPrenom = '';
+// Cas 2 du partage entre comptes (voir contenuInteractifPourMoi / estConsultablePourMoi
+// ci-dessous) : choix personnel de consulter en lecture seule les séquences/séances
+// d'un ou plusieurs collègues, dans les UE où je suis moi-même référencé·e.
+let moiVoitCollegues = false;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -1975,7 +1979,10 @@ function visibleSessions() { return state.sessions.filter(estVisiblePourMoi); }
    Cas 1 — je ne suis PAS enseignant de l'UE : aucun contenu de séquence/séance
      ne m'est montré, seuls les affichages génériques (l'UE elle-même) restent.
    Cas 2 — je SUIS enseignant de l'UE, mais pas sur CETTE séquence/séance
-     précise (collègues seuls) : tuile visible, en style atténué, non ouvrable.
+     précise (collègues seuls) : tuile visible en style atténué ; ouvrable en
+     lecture seule si j'ai choisi « Voir mes collègues » (moiVoitCollegues,
+     js/auth.js), sinon absente — un choix, réciproque (voir
+     estConsultablePourMoi ci-dessous).
    Cas 3 — je SUIS enseignant de l'UE ET sur cette séquence/séance : normal,
      entièrement interactif (comportement déjà existant, inchangé). */
 function jeSuisEnseignantDeLUe(ue) {
@@ -1989,8 +1996,15 @@ function jeSuisEnseignantDeLUe(ue) {
   return enseignants.includes(moiInitiales);
 }
 // Cas 2 vs Cas 3, une fois établi que le contenu est au moins visible (Cas ≥ 2).
+// Droit de MODIFIER (glisser, éditer, supprimer) — pas seulement de consulter.
 function contenuInteractifPourMoi(entity) {
   return estVisiblePourMoi(entity);
+}
+// Droit de CONSULTER (ouvrir en lecture seule) : mien (Cas 3), ou Cas 2 avec
+// le choix « Voir mes collègues » activé. Une entité non consultable reste
+// une tuile statique non ouvrable (comportement Cas 2 historique).
+function estConsultablePourMoi(entity) {
+  return contenuInteractifPourMoi(entity) || moiVoitCollegues;
 }
 
 function refreshSessionSequenceSelect(preferredValue = '') {
@@ -2926,11 +2940,16 @@ function renderSequenceCard(seq) {
   const keywords = compactKeywords(seq.keywords, 8);
   const capCodes = (seq.capacityCodes || []).join(', ');
   const metaLine = renderMetaLine([periodLabel, seq.hoursEstimate, capCodes]);
-  // Retours #3 (18-19/08/2026) — Cas 2 : séquence d'un ou plusieurs collègues
-  // seuls (je suis enseignant·e de l'UE, mais pas rattaché·e à CETTE séquence).
-  // Visible, en style atténué, mais pas ouvrable — un <div> statique plutôt
-  // qu'un <details> : pas de bascule d'ouverture possible.
-  if (!contenuInteractifPourMoi(seq)) {
+  // Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2 : séquence d'un
+  // ou plusieurs collègues seuls (je suis enseignant·e de l'UE, mais pas
+  // rattaché·e à CETTE séquence). Sans le choix « Voir mes collègues »
+  // (moiVoitCollegues), reste un <div> statique non ouvrable ; avec le choix
+  // activé, devient un <details> ouvrable comme les miennes, mais sans les
+  // actions de modification (bouton « Modifier », tuile « + Séance », dépôt
+  // par glisser-déposer) — la modale s'ouvre alors en lecture seule (voir
+  // openSequenceModal).
+  const mienne = contenuInteractifPourMoi(seq);
+  if (!estConsultablePourMoi(seq)) {
     return `<div class="entity-card entity-sequence is-collegue" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}" title="Séquence d'un ou plusieurs collègues — pas la vôtre">
       <div class="entity-card-locked-head">
         <span class="entity-level-label">Séquence</span>
@@ -2942,7 +2961,7 @@ function renderSequenceCard(seq) {
   }
   // Séances numérotées à partir de 1 dans l'ordre de la séquence.
   const orderedSessions = [...sessions].sort((a, b) => sessionSortKey(a).localeCompare(sessionSortKey(b)));
-  return `<details class="entity-card entity-sequence" data-open-key="seq:${escapeAttr(seq.id)}" data-seq-drop="${escapeAttr(seq.id)}" style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}">
+  return `<details class="entity-card entity-sequence${mienne ? '' : ' is-collegue'}" data-open-key="seq:${escapeAttr(seq.id)}" ${mienne ? `data-seq-drop="${escapeAttr(seq.id)}"` : ''} style="--ue-color:${color}; --ue-soft:${hexToRgba(color, .12)}; --ue-ink:${inkColor(color)}; --ue-deep:${deepColor(color)}"${mienne ? '' : ` title="Séquence d'un ou plusieurs collègues — lecture seule"`}>
     <summary>
       <span class="entity-chevron">▸</span>
       <span class="entity-level-label">Séquence</span>
@@ -2955,7 +2974,7 @@ function renderSequenceCard(seq) {
         ${metaLine}
         <div class="entity-actions">
           <button class="icon-button small" data-export-sequence="${escapeAttr(seq.id)}" title="Exporter cette séquence" aria-label="Exporter la séquence « ${escapeAttr(seq.title)} »">⎙</button>
-          <button class="small secondary" data-edit-sequence="${escapeAttr(seq.id)}">Modifier</button>
+          <button class="small secondary" data-edit-sequence="${escapeAttr(seq.id)}">${mienne ? 'Modifier' : 'Consulter'}</button>
         </div>
       </div>
       ${seq.periodNote ? `<p class="entity-description">${escapeHtml(seq.periodNote)}</p>` : ''}
@@ -2963,7 +2982,7 @@ function renderSequenceCard(seq) {
       ${keywords.length ? `<p class="entity-description entity-keywords"><strong>Mots-clés —</strong> ${escapeHtml(keywords.join(', '))}</p>` : ''}
       <div class="session-card-grid">
         ${orderedSessions.map((s, i) => renderSessionCard(s, i + 1)).join('')}
-        ${renderAddTile(`data-new-session-sequence="${escapeAttr(seq.id)}"`, 'Séance')}
+        ${mienne ? renderAddTile(`data-new-session-sequence="${escapeAttr(seq.id)}"`, 'Séance') : ''}
       </div>
     </div>
   </details>`;
@@ -3013,13 +3032,18 @@ function renderSessionCard(s, number) {
   const pastel = hexToRgba(color, .13);
   const ink = inkColor(color, mixHex(color, '#fbfcf9', .13));
   const teachers = teacherPillsMarkup(s.teacher, true);
-  // Retours #3 (18-19/08/2026) — Cas 2 : séance d'un ou plusieurs collègues
-  // seuls, visible mais pas ouvrable (ni glissable) ; Cas 3 (mienne, ou sans
-  // enseignant assigné) : comportement inchangé.
+  // Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2 : séance d'un ou
+  // plusieurs collègues seuls, jamais glissable ; ouvrable en lecture seule
+  // (data-edit-session, sans data-drag-session) si « Voir mes collègues » est
+  // activé, sinon pas ouvrable du tout. Cas 3 (mienne, ou sans enseignant
+  // assigné) : comportement inchangé.
   const mien = contenuInteractifPourMoi(s);
+  const consultable = estConsultablePourMoi(s);
   const interactiveAttrs = mien
     ? `draggable="true" tabindex="0" role="button" aria-label="Modifier la séance « ${escapeAttr(s.title)} »" data-drag-session="${escapeAttr(s.id)}" data-edit-session="${escapeAttr(s.id)}"`
-    : `aria-label="Séance « ${escapeAttr(s.title)} » — collègue(s) seul(s), pas la vôtre" title="Collègue(s) seul(s) — pas la vôtre"`;
+    : consultable
+      ? `tabindex="0" role="button" aria-label="Consulter la séance « ${escapeAttr(s.title)} » (lecture seule)" data-edit-session="${escapeAttr(s.id)}" title="Collègue(s) seul(s) — lecture seule"`
+      : `aria-label="Séance « ${escapeAttr(s.title)} » — collègue(s) seul(s), pas la vôtre" title="Collègue(s) seul(s) — pas la vôtre"`;
   return `<article class="session-card ${typeClass(s.type)}${mien ? '' : ' is-collegue'}" ${interactiveAttrs} style="--ue-color:${color}; --ue-soft:${pastel}; --ue-ink:${ink}; --ue-deep:${deepColor(color)}">
     <header class="session-card-head">
       <span class="session-card-number">${number}</span>
@@ -3275,14 +3299,18 @@ function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
   const sc = sequenceColor(seq.id);
   const bandKeywords = compactKeywords(seq.keywords, 5);
   const bandTeachers = teacherPillsMarkup(seq.teacher || findUe(seq.ueId)?.teacher || '', true);
-  // Retours #3 (18-19/08/2026) — Cas 2 : séquence de collègue(s) seul(s) au
-  // sein d'une UE que j'enseigne par ailleurs. Visible, non colorée, non
-  // glissable/ouvrable (pas de data-drag-sequence/data-edit-sequence).
+  // Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2 : séquence de
+  // collègue(s) seul(s) au sein d'une UE que j'enseigne par ailleurs. Jamais
+  // glissable (pas de data-drag-sequence) ; ouvrable en lecture seule
+  // (data-edit-sequence) si « Voir mes collègues » est activé.
   const mienne = contenuInteractifPourMoi(seq);
+  const consultable = estConsultablePourMoi(seq);
   const interactiveAttrs = mienne
     ? `draggable="true" data-drag-sequence="${escapeAttr(seq.id)}" data-edit-sequence="${escapeAttr(seq.id)}"`
-    : '';
-  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
+    : consultable
+      ? `data-edit-sequence="${escapeAttr(seq.id)}"`
+      : '';
+  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
 }
 
 /* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
@@ -3469,10 +3497,17 @@ function timelineSessionCard(session) {
   const color = sessionTint(session);
   const teachers = teacherPillsMarkup(session.teacher || findUe(session.ueId)?.teacher || '', true);
   const tooltip = [session.title, sessionTooltip(session), session.objectives].filter(Boolean).join(' — ');
-  // Retours #3 (18-19/08/2026) — Cas 2 : séance de collègue(s) seul(s).
+  // Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2 : séance de
+  // collègue(s) seul(s), ouvrable en lecture seule si « Voir mes collègues »
+  // est activé (jamais glissable pour autant).
   const mienne = contenuInteractifPourMoi(session);
-  const interactiveAttrs = mienne ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"` : '';
-  return `<button ${interactiveAttrs} class="timeline-session seq-tinted ${typeClass(session.type)}${mienne ? '' : ' is-collegue'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)};--ue-deep:${deepColor(color)}" title="${escapeAttr(tooltip)}${mienne ? '' : ' — collègue(s) seul(s), pas la vôtre'}">
+  const consultable = estConsultablePourMoi(session);
+  const interactiveAttrs = mienne
+    ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"`
+    : consultable
+      ? `data-edit-session="${escapeAttr(session.id)}"`
+      : '';
+  return `<button ${interactiveAttrs} class="timeline-session seq-tinted ${typeClass(session.type)}${mienne ? '' : ' is-collegue'}" style="--ue-color:${color};--ue-soft:${hexToRgba(color, .32)};--ue-deep:${deepColor(color)}" title="${escapeAttr(tooltip)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}">
     <span class="timeline-session-head">
       <span class="timeline-session-type">${demiGroupeBadge(session)}${escapeHtml(session.type || 'Séance')}</span>
       ${teachers ? `<span class="timeline-band-teachers design-ue-pills">${teachers}</span>` : ''}
@@ -3817,21 +3852,25 @@ function renderWeekBacklog() {
   restoreOpenKeys(backlog, openKeys);
 }
 
-/* Retours #3 (18-19/08/2026) — Cas 2/3 de visibilité entre comptes enseignants
-   pour une case du Planning hebdo. data-session-id est le vrai déclencheur du
-   clic (#planningContainer, cf. plus bas) : Cas 2 = tous les attributs
-   d'interaction (draggable/data-drag-session/data-session-id/data-edit-session)
-   omis d'un coup, plus de bouton « ↩ Ressortir » (action réservée au Cas 3).
-   data-drop-target n'est PAS concerné : déposer une de mes séances reste
-   possible même sur le créneau d'un·e collègue, géré séparément par l'appelant. */
+/* Retours #3 (18-19/08/2026) + Lot A (22/08/2026) — Cas 2/3 de visibilité
+   entre comptes enseignants pour une case du Planning hebdo. data-session-id
+   est le vrai déclencheur du clic (#planningContainer, cf. plus bas) : Cas 2
+   garde data-session-id (ouvrable en lecture seule) si « Voir mes collègues »
+   est activé, mais jamais draggable/data-drag-session, et jamais le bouton
+   « ↩ Ressortir » (action réservée au Cas 3). data-drop-target n'est PAS
+   concerné : déposer une de mes séances reste possible même sur le créneau
+   d'un·e collègue, géré séparément par l'appelant. */
 function planningSessionAttrs(session) {
   const mienne = contenuInteractifPourMoi(session);
+  const consultable = estConsultablePourMoi(session);
   return {
     mienne,
     classSuffix: mienne ? '' : ' is-collegue',
     idAttrs: mienne
       ? `draggable="true" data-drag-session="${escapeAttr(session.id)}" data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"`
-      : '',
+      : consultable
+        ? `data-session-id="${escapeAttr(session.id)}" data-edit-session="${escapeAttr(session.id)}"`
+        : '',
     unplaceBtn: mienne
       ? `<button type="button" class="unplace-btn" data-unplace-session="${escapeAttr(session.id)}" title="Ressortir vers « Séances à placer »" aria-label="Ressortir cette séance">↩</button>`
       : ''
@@ -4248,6 +4287,39 @@ function openUeModal(ue = null, defaults = {}) {
   $('#ueDialog').showModal();
 }
 
+// Lot A (22/08/2026) — mode lecture seule des dialogues Séquence/Séance :
+// Cas 2 du partage entre comptes, consulté avec « Voir mes collègues »
+// activé (voir estConsultablePourMoi). Désactive tous les champs/boutons du
+// formulaire sauf ceux listés dans idsExemptes (fermer, exporter), masque en
+// plus les boutons mutateurs listés dans idsAMasquer (Enregistrer, Supprimer,
+// Dupliquer...) ; sequenceDialogLectureSeule/sessionDialogLectureSeule
+// (ci-dessous) gardent aussi les listeners de soumission en défense en
+// profondeur, au cas où un champ désactivé ne suffirait pas (Entrée clavier).
+let sequenceDialogLectureSeule = false;
+let sessionDialogLectureSeule = false;
+
+function appliquerLectureSeuleDialogue(dialogSelector, lectureSeule, { idsExemptes = [], idsAMasquer = [] } = {}) {
+  const dialog = $(dialogSelector);
+  if (!dialog) return;
+  dialog.querySelectorAll('input, select, textarea, button').forEach(el => {
+    if (idsExemptes.includes(el.id)) return;
+    el.disabled = lectureSeule;
+  });
+  if (lectureSeule) idsAMasquer.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  let bandeau = dialog.querySelector('.readonly-dialog-banner');
+  if (lectureSeule) {
+    if (!bandeau) {
+      bandeau = document.createElement('p');
+      bandeau.className = 'readonly-dialog-banner form-section readonly-section';
+      dialog.querySelector('form')?.prepend(bandeau);
+    }
+    bandeau.textContent = 'Lecture seule — contenu d’un ou plusieurs collègues, vous ne pouvez pas le modifier.';
+    bandeau.hidden = false;
+  } else if (bandeau) {
+    bandeau.hidden = true;
+  }
+}
+
 function openSequenceModal(sequence = null, context = {}) {
   const isNew = !sequence;
   const ue = sequence ? findUe(sequence.ueId) : findUe(context.ueId) || state.ues[0];
@@ -4306,6 +4378,11 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#deleteSequenceButton').hidden = isNew;
   $('#exportSequenceButton').hidden = isNew;
   $('#submitSequenceButton').textContent = isNew ? 'Créer la séquence' : 'Enregistrer';
+  sequenceDialogLectureSeule = Boolean(sequence) && !contenuInteractifPourMoi(sequence);
+  appliquerLectureSeuleDialogue('#sequenceDialog', sequenceDialogLectureSeule, {
+    idsExemptes: ['closeSequenceModal', 'exportSequenceButton'],
+    idsAMasquer: ['deleteSequenceButton', 'submitSequenceButton'],
+  });
   $('#sequenceDialog').showModal();
   $('#sequenceDialog')._dirty = false;
 }
@@ -4427,6 +4504,11 @@ function openSessionModal(session = null, context = {}) {
   const chainBtn = $('#chainSessionButton');
   if (chainBtn) chainBtn.hidden = !isNew;
   sessionChainRequested = false;
+  sessionDialogLectureSeule = Boolean(session) && !contenuInteractifPourMoi(session);
+  appliquerLectureSeuleDialogue('#sessionDialog', sessionDialogLectureSeule, {
+    idsExemptes: ['closeSessionModal'],
+    idsAMasquer: ['deleteSessionButton', 'submitSessionButton', 'duplicateSessionButton', 'chainSessionButton'],
+  });
   $('#sessionDialog').showModal();
   $('#sessionDialog')._dirty = false;
 }
@@ -7618,6 +7700,7 @@ function bindModalActions() {
 
   $('#sequenceForm').addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (sequenceDialogLectureSeule) return; // défense en profondeur, cf. appliquerLectureSeuleDialogue
     const id = $('#sequenceId').value || uid('sequence');
     // Lot C-bis — « Type de séquence » et « Statut » ont quitté le formulaire.
     // On recopie les valeurs déjà enregistrées au lieu de les écraser : sans ça,
@@ -7692,6 +7775,7 @@ function bindModalActions() {
 
   $('#sessionForm').addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (sessionDialogLectureSeule) return; // défense en profondeur, cf. appliquerLectureSeuleDialogue
     const isNewSession = !$('#sessionId').value;
     const id = $('#sessionId').value || uid('session');
     const existingSession = findSession(id);
@@ -8725,10 +8809,11 @@ function mesurerBandeauCollant() {
 // écouteurs d'événements une deuxième fois.
 let ocAppDemarre = false;
 window.OC_APP = {
-  demarrer(initiales = '', nom = '', prenom = '') {
+  demarrer(initiales = '', nom = '', prenom = '', voirCollegues = false) {
     moiInitiales = String(initiales || '').toUpperCase();
     moiNom = String(nom || '');
     moiPrenom = String(prenom || '');
+    moiVoitCollegues = Boolean(voirCollegues);
     if (!ocAppDemarre) {
       ocAppDemarre = true;
       bindEvents();
@@ -8741,6 +8826,12 @@ window.OC_APP = {
   },
   arreter() {
     state = null;
+  },
+  // Bascule de la préférence « voir mes collègues » (case à cocher du bandeau,
+  // js/auth.js) : pas de rechargement Supabase nécessaire, seul le rendu change.
+  definirVoitCollegues(voirCollegues) {
+    moiVoitCollegues = Boolean(voirCollegues);
+    if (state) renderAll(false);
   },
   // Étape 8 — pas de synchronisation temps réel : sans ce bouton, les
   // modifications d'un collègue ne remontent qu'au prochain F5 (rechargement
