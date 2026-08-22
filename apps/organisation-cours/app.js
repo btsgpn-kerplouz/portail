@@ -1161,13 +1161,28 @@ function urgenceRowMarkup(r) {
   // leur propre action (guard dans le gestionnaire de clic).
   const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
   const teachers = teacherPillsMarkup(r.teacher);
+  // Ajustements #9 (22/08/2026) — Martin, très remonté sur la taille des
+  // tuiles #8 (« tu veux pas les faire encore plus grandes ») : « suis la
+  // maquette » (retours/…/15-mobile-a-valider@2x.png). Reprise fidèle :
+  // la maquette n'a que 2 lignes par ligne (titre gras / détail en mono
+  // discret), aucune date isolée à gauche (seul le délai relatif — J-1,
+  // hier…), et le fond pêche teinte tout le groupe « CETTE SEMAINE »
+  // (pas une classe .est-urgent par ligne) — voir renderMobileAValider().
+  // Le "type" (Salle/Véhicule/…) que #8 avait mis sur sa PROPRE ligne
+  // repasse en préfixe compact devant le titre : l'info reste (les
+  // libellés de la maquette, eux, la portent déjà dans un titre écrit à la
+  // main — pas possible ici, les titres viennent des vraies séances) mais
+  // sans coûter une ligne entière de hauteur.
   return `<div class="urgence-row${urgent ? ' est-urgent' : ''}" ${editAttr} tabindex="0" role="button">
-    <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
-    <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
-    <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
-    ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
-    <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
-    ${verbe}
+    <div class="urgence-bloc-delai">
+      <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
+    </div>
+    <div class="urgence-bloc-corps">
+      <span class="urgence-ligne1"><span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span> <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
+      <span class="urgence-ligne2">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
+      ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
+    </div>
+    <div class="urgence-bloc-action">${verbe}</div>
   </div>`;
 }
 
@@ -1182,11 +1197,15 @@ function urgenceFaiteRowMarkup(r) {
   const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
   const teachers = teacherPillsMarkup(r.teacher);
   return `<div class="urgence-row est-fait" ${editAttr} tabindex="0" role="button">
-    <span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span>
-    <strong class="urgence-titre">${escapeHtml(r.titre)}</strong>
-    ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
-    <span class="urgence-detail">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
-    <label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>
+    <div class="urgence-bloc-delai"></div>
+    <div class="urgence-bloc-corps">
+      <span class="urgence-ligne1"><span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span> <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
+      <span class="urgence-ligne2">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
+      ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
+    </div>
+    <div class="urgence-bloc-action">
+      <label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>
+    </div>
   </div>`;
 }
 
@@ -1227,11 +1246,29 @@ const MOBILE_URGENCE_FILTRES = {
 let mobileUrgenceFiltre = 'tout';
 
 // Ajustements #5 (22/08/2026) : les sous-onglets passent du texte au
-// pictogramme (Martin — tout = carré, salles = manoir (Kerplouz), matériel =
-// longue-vue, déplacement = voiture, réunion = silhouettes). Le libellé texte
-// reste porté par title/aria-label, pour la lecture au survol et les lecteurs
-// d'écran plutôt que perdu avec le texte.
-const MOBILE_URGENCE_PICTOS = { tout: '◻', salle: '🏰', materiel: '🔭', deplacement: '🚗', reunion: '👥' };
+// pictogramme. Ajustements #8 (22/08/2026) — Martin : les émojis choisis en
+// #5 (🏰🔭🚗👥) restent des « émoticones » colorées (rendu Noto Color Emoji
+// sous Chrome/Linux), pas les pictogrammes symboliques sobres demandés —
+// même retour pour les boutons de l'accueil (renderMobileAccueil). Un seul
+// jeu d'icônes SVG monochromes (trait, currentColor, cohérent avec le
+// « papier technique froid » : pas de remplissage, pas de couleur propre)
+// remplace les deux : ICON_SVG_PATHS/mobileIconSvg() ci-dessous, partagés.
+const ICON_SVG_PATHS = {
+  tout: '<rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/>',
+  salle: '<path d="M4 21V9l8-6 8 6v12"/><path d="M4 21h16"/><rect x="10" y="14" width="4" height="7"/>',
+  caisse: '<path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/>',
+  voiture: '<path d="M4 16v-3.5l2-4.5h12l2 4.5V16"/><path d="M4 16h16"/><circle cx="7.5" cy="16.5" r="1.6"/><circle cx="16.5" cy="16.5" r="1.6"/>',
+  reunion: '<circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/>',
+  calendrier: '<rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/>',
+  alerte: '<path d="M4 4h15l-5 6 5 6H4V4z"/><line x1="4" y1="4" x2="4" y2="21"/>',
+  checklist: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/>',
+  itineraire: '<circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v3.3a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/>',
+  monnaie: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/>'
+};
+function mobileIconSvg(name) {
+  return `<svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_SVG_PATHS[name] || ''}</svg>`;
+}
+const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'caisse', deplacement: 'voiture', reunion: 'reunion' };
 
 function renderMobileAValider() {
   const host = $('#mobileAValider');
@@ -1239,10 +1276,13 @@ function renderMobileAValider() {
   const rows = urgenceRows().filter(MOBILE_URGENCE_FILTRES[mobileUrgenceFiltre] || MOBILE_URGENCE_FILTRES.tout);
   const cetteSemaine = rows.filter(r => r.daysUntil !== null && r.daysUntil <= 7);
   const plusTard = rows.filter(r => r.daysUntil === null || r.daysUntil > 7);
-  const groupe = (titre, liste) => liste.length
-    ? `<h3 class="mobile-group-title">${titre}</h3>${liste.map(urgenceRowMarkup).join('')}`
+  // Ajustements #9 (22/08/2026) — maquette 15 : le fond pêche teinte tout le
+  // groupe « CETTE SEMAINE » (titre + lignes), pas une ligne selon son
+  // propre délai — .mobile-urgence-groupe.est-imminent porte ce fond en CSS.
+  const groupe = (titre, liste, imminent) => liste.length
+    ? `<div class="mobile-urgence-groupe${imminent ? ' est-imminent' : ''}"><h3 class="mobile-group-title">${titre}</h3>${liste.map(urgenceRowMarkup).join('')}</div>`
     : '';
-  const chip = (cle, label) => `<button type="button" class="mobile-filtre-chip${mobileUrgenceFiltre === cle ? ' active' : ''}" data-mobile-filtre-urgence="${cle}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${MOBILE_URGENCE_PICTOS[cle]}</button>`;
+  const chip = (cle, label) => `<button type="button" class="mobile-filtre-chip${mobileUrgenceFiltre === cle ? ' active' : ''}" data-mobile-filtre-urgence="${cle}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${mobileIconSvg(MOBILE_URGENCE_PICTOS[cle])}</button>`;
   const nbFaites = urgenceRowsFaites().length;
   host.innerHTML = `
     <div class="mobile-filtres">
@@ -1252,7 +1292,7 @@ function renderMobileAValider() {
       ${chip('deplacement', 'Déplacements')}
       ${chip('reunion', 'Réunions')}
     </div>
-    ${rows.length ? (groupe('Cette semaine', cetteSemaine) + groupe('Plus tard', plusTard)) : '<p class="empty-hint">Rien à valider pour le moment.</p>'}
+    ${rows.length ? (groupe('Cette semaine', cetteSemaine, true) + groupe('Plus tard', plusTard, false)) : '<p class="empty-hint">Rien à valider pour le moment.</p>'}
     <button type="button" class="lien mobile-voir-faites" data-mobile-goto="mobileFaites">Voir les faites${nbFaites ? ` (${nbFaites})` : ''} →</button>`;
 }
 
@@ -1545,23 +1585,40 @@ function createStandaloneMission() {
   saveData('Ordre de mission créé', { rerender: false });
 }
 
+// Ajustements #8 (22/08/2026) — Martin : « lister les ordres de mission en
+// mode tuile avec fond blanc et organisation mieux pensée » — les lignes
+// réutilisaient .urgence-row (juste retravaillé ci-dessus pour Urgences,
+// pas adapté ici) sans statut ni date mis en avant : deux ordres de mission
+// vides (titre encore par défaut) rendaient EXACTEMENT le même texte,
+// « on dirait qu'on clique toujours sur la même chose que + Nouvel ordre de
+// mission ». Nouvelles tuiles dédiées (.mobile-om-tile, pas .urgence-row) :
+// titre + statut (pastille) toujours visibles en tête, pour qu'un brouillon
+// sans titre encore reste au moins identifiable par sa date/son statut.
 function renderMobileMission() {
   const host = $('#mobileMission');
   if (!host) return;
   const aFaire = ordresDeMissionAFaire();
   const mesMissions = (state.missions || []).slice()
     .sort((a, b) => (b.missionDetail?.dateMission || '').localeCompare(a.missionDetail?.dateMission || ''));
-  const ligneAFaire = o => `<div class="urgence-row" data-open-mission="${escapeAttr(o.source)}:${escapeAttr(o.id)}" tabindex="0" role="button">
-    <strong class="urgence-titre">${escapeHtml(o.titre)}</strong>
-    <span class="urgence-detail">${escapeHtml([o.date ? o.date.toLocaleDateString('fr-FR') : 'Date à préciser', o.detail].filter(Boolean).join(' · '))}</span>
-    <span class="urgence-verbe" data-open-mission="${escapeAttr(o.source)}:${escapeAttr(o.id)}" tabindex="0" role="button">Éditer</span>
+  const statutPill = (label, ok) => `<span class="mobile-om-statut${ok ? ' est-fait' : ''}">${escapeHtml(label)}</span>`;
+  const ligneAFaire = o => `<div class="mobile-om-tile" data-open-mission="${escapeAttr(o.source)}:${escapeAttr(o.id)}" tabindex="0" role="button">
+    <div class="mobile-om-tile-tete">
+      <strong class="mobile-om-titre">${escapeHtml(o.titre)}</strong>
+      ${statutPill('Sans ordre', false)}
+    </div>
+    <span class="mobile-om-detail">${escapeHtml([o.date ? o.date.toLocaleDateString('fr-FR') : 'Date à préciser', o.detail].filter(Boolean).join(' · '))}</span>
   </div>`;
   const ligneStandalone = m => {
     const detail = m.missionDetail || {};
-    const statut = detail.envoyeAt ? `envoyé le ${new Date(detail.envoyeAt).toLocaleDateString('fr-FR')}` : 'non envoyé';
-    return `<div class="urgence-row" data-open-mission="standalone:${escapeAttr(m.id)}" tabindex="0" role="button">
-      <strong class="urgence-titre">${escapeHtml(m.titre || 'Ordre de mission')}</strong>
-      <span class="urgence-detail">${escapeHtml([detail.dateMission ? formatDateFr(detail.dateMission) : 'Date à préciser', statut].filter(Boolean).join(' · '))}</span>
+    const envoye = !!detail.envoyeAt;
+    const titre = (m.titre || '').trim() || 'Brouillon sans titre';
+    const statut = envoye ? `envoyé le ${new Date(detail.envoyeAt).toLocaleDateString('fr-FR')}` : 'non envoyé';
+    return `<div class="mobile-om-tile" data-open-mission="standalone:${escapeAttr(m.id)}" tabindex="0" role="button">
+      <div class="mobile-om-tile-tete">
+        <strong class="mobile-om-titre">${escapeHtml(titre)}</strong>
+        ${statutPill(envoye ? 'Envoyé' : 'Brouillon', envoye)}
+      </div>
+      <span class="mobile-om-detail">${escapeHtml([detail.dateMission ? formatDateFr(detail.dateMission) : 'Date à préciser', statut].filter(Boolean).join(' · '))}</span>
     </div>`;
   };
   host.innerHTML = `
@@ -1576,29 +1633,30 @@ const MISSION_PRINT_CSS = `
 @page { size: A4 portrait; margin: 12mm; }
 body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
 .mission-print-page{background:#fffefb;max-width:190mm;margin:0 auto;padding:14mm;}
-.mission-doc-header{display:flex;align-items:center;gap:16px;border-bottom:1px solid #191b16;padding-bottom:10px;margin-bottom:18px;}
+.mission-doc-header{display:flex;align-items:center;gap:16px;margin-bottom:22px;}
 .mission-doc-header img{height:48px;}
-.mission-doc-header h1{font-size:22px;margin:0;}
-.mission-print-line{margin:0 0 10px;font-size:13px;}
+.mission-doc-header h1{font-size:22px;margin:0;font-weight:700;}
+.mission-print-line{margin:0 0 16px;font-size:13px;}
 .mission-print-line strong{border-bottom:1px solid #191b16;padding:0 4px;}
-.mission-print-block{margin:14px 0;}
-.mission-print-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px;}
+.mission-print-block{margin:22px 0;}
+.mission-print-block h3{font-size:13px;font-weight:700;margin:0 0 8px;}
 .mission-print-desc{border:1px solid #191b16;padding:10px;min-height:50px;white-space:pre-wrap;font-size:13px;}
-.mission-print-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
-.mission-print-table td{padding:3px 6px;border-bottom:1px solid #d8d4c6;}
-/* Ajustements #6 (22/08/2026) : « ne ressemble pas tout à fait au format
-   administratif » — comparé au vrai gabarit fourni par Martin
-   (retours/ODM_Gabarit.pdf, jamais commité), le PDF exporté avait pris du
-   retard sur les affinages déjà faits côté document en ligne (colonnes
-   Moyens de transports, rappel des 3 rôles Direction) : remis en phase ici,
-   plus le titre en couleur repère (même --danger que le document en ligne,
-   codé en dur — cette fenêtre d'impression n'a pas accès aux variables CSS
-   de l'appli). */
-.mission-print-block h3.mission-print-transport-title{color:#C0562B;}
+/* Ajustements #7 (22/08/2026) — comparé au vrai gabarit (retours/ODM_Gabarit.pdf,
+   jamais commité), les accompagnants s'y présentent en paires de champs
+   « Nom Prénom : ___ / Fonction : ___ », pas dans un tableau bordé : repris
+   ici à l'identique (même patron que missionAccompagnantRow, l'écran
+   d'édition, qui avait déjà ce format — seul le PDF avait divergé). */
+.mission-print-acc-row{display:flex;gap:24px;margin:0 0 10px;font-size:13px;}
+.mission-print-acc-row span{flex:1;}
+.mission-print-acc-row strong{border-bottom:1px solid #191b16;padding:0 4px;margin-left:4px;}
+/* Ajustements #6 (22/08/2026) : titre en couleur repère (même --danger que le
+   document en ligne, codé en dur — cette fenêtre d'impression n'a pas accès
+   aux variables CSS de l'appli). */
+.mission-print-block h3.mission-print-transport-title{color:#C0562B;text-transform:uppercase;letter-spacing:.04em;}
 .mission-print-transport-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
-.mission-print-check{margin:2px 0;font-size:12px;}
+.mission-print-check{margin:4px 0;font-size:12px;}
 .mission-print-sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;border-top:2px solid #C0562B;padding-top:10px;}
-.mission-print-sigs div{border:1px solid #191b16;min-height:70px;padding:8px;font-size:11px;}
+.mission-print-sigs div{border:1px solid #C0562B;min-height:70px;padding:8px;font-size:11px;}
 .mission-print-sigs strong{display:block;margin-bottom:4px;}
 .mission-print-sigs img{max-height:50px;}
 .mission-print-sig-hint{margin:2px 0 0;font-size:9.5px;color:#4b5563;}
@@ -1607,6 +1665,9 @@ body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
 
 function missionPagePrintHtml(entity, detail) {
   const acc = detail.accompagnants.filter(a => a.nom || a.fonction);
+  const accHtml = acc.length
+    ? acc.map(a => `<div class="mission-print-acc-row"><span>Nom Prénom : <strong>${escapeHtml(a.nom || '—')}</strong></span><span>Fonction : <strong>${escapeHtml(a.fonction || '—')}</strong></span></div>`).join('')
+    : '<p class="mission-print-line meta">Aucun</p>';
   return `<div class="mission-print-page">
     <div class="mission-doc-header"><img src="img/logo-kerplouz.png" alt="" /><h1>Ordre de mission</h1></div>
     <p class="mission-print-line">Commandé par (Nom/Prénom) : <strong>${escapeHtml(detail.commandePar.nom || '—')}</strong></p>
@@ -1614,7 +1675,7 @@ function missionPagePrintHtml(entity, detail) {
     <p class="mission-print-line">Est autorisé(e) à se rendre le <strong>${escapeHtml(detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : '—')}</strong> à : <strong>${escapeHtml(detail.destination || '—')}</strong></p>
     <p class="mission-print-line">Heure début : <strong>${escapeHtml(detail.heureDebut || '—')}</strong> Heure fin : <strong>${escapeHtml(detail.heureFin || '—')}</strong></p>
     <div class="mission-print-block"><h3>Description de la mission :</h3><div class="mission-print-desc">${escapeHtml(detail.description || '')}</div></div>
-    <div class="mission-print-block"><h3>Accompagnants :</h3><table class="mission-print-table">${acc.length ? acc.map(a => `<tr><td>${escapeHtml(a.nom || '—')}</td><td>${escapeHtml(a.fonction || '—')}</td></tr>`).join('') : '<tr><td class="meta">Aucun</td></tr>'}</table></div>
+    <div class="mission-print-block"><h3>Accompagnants :</h3>${accHtml}</div>
     <div class="mission-print-block"><h3 class="mission-print-transport-title">Moyens de transports</h3>
       <div class="mission-print-transport-grid">
         <div>
@@ -1833,20 +1894,31 @@ function renderMobileMateriel() {
     : '';
   host.innerHTML = `
     <button type="button" class="mobile-add-deplacement" id="mobileAddMaterielEmpruntButton">+ Emprunt</button>
-    ${all.length ? (groupe('En cours', enCours) + groupe('Rendus', rendus)) : '<p class="empty-hint">Aucun emprunt enregistré.</p>'}`;
+    ${all.length ? (groupe('En cours', enCours) + groupe('Rendus', rendus)) : '<p class="empty-hint">Aucun emprunt enregistré.</p>'}
+    <button type="button" class="lien mobile-gerer-catalogue" data-mobile-goto="mobileMaterielCatalogue">Catalogue de matériel →</button>`;
 }
 
 /* Catalogue de matériel (ajustements #6, 22/08/2026) — encart desktop du
    Tableau de bord, du même patron que Réunions/Déplacements : liste à plat de
    `state.materielTypes` (chaînes) et `state.materielItems` ({id,type,
    identifiant}), édités ici, qui alimentent ensuite les 2 menus en cascade du
-   formulaire d'emprunt (voir remplirMaterielTypeSelect/remplirMaterielIdentifiantSelect). */
+   formulaire d'emprunt (voir remplirMaterielTypeSelect/remplirMaterielIdentifiantSelect).
+   Ajustements #7 (22/08/2026) — Martin : « je veux pouvoir éditer mes listes
+   et numérotations de matériel, ce n'est pas à toi de le faire » : cet écran
+   n'existait que sur desktop, invisible depuis le téléphone où il regarde/
+   modifie l'essentiel désormais (#mobileMaterielCatalogue, cf. index.html).
+   Même rendu pour les deux conteneurs (#materielCatalogueList desktop et
+   #mobileMaterielCatalogueList mobile) — un seul état, deux vues. */
 function renderMaterielCatalogue() {
-  const wrap = $('#materielCatalogueList');
-  if (!wrap) return;
+  const wraps = ['#materielCatalogueList', '#mobileMaterielCatalogueList'].map(sel => $(sel)).filter(Boolean);
+  if (!wraps.length) return;
   const types = state.materielTypes || [];
-  if (!types.length) { wrap.innerHTML = '<p class="empty-hint">Aucun type de matériel. Ajoutez-en un ci-dessus.</p>'; return; }
-  wrap.innerHTML = types.map(type => {
+  // Ajustements #8 (22/08/2026) — Martin : cet écran, la première fois qu'on
+  // l'ouvre (aucun type saisi), n'affichait qu'une ligne grise anodine —
+  // perçu comme « une page vide », comme si rien ne s'était affiché du tout.
+  // Message d'accueil explicite, avec un exemple concret.
+  if (!types.length) { wraps.forEach(w => w.innerHTML = '<p class="empty-hint">Catalogue vide pour l’instant. Ajoutez un premier type de matériel ci-dessus (ex. Boussole, GPS, Tente) : ses identifiants (ex. Boussole n°3) se rajoutent ensuite dessous.</p>'); return; }
+  const html = types.map(type => {
     const items = (state.materielItems || []).filter(it => it.type === type);
     const itemsHtml = items.length
       ? `<ul class="materiel-item-liste">${items.map(it => `<li>${escapeHtml(it.identifiant)}<button type="button" class="icon-button small" data-delete-materiel-item="${escapeAttr(it.id)}" title="Supprimer cet identifiant">×</button></li>`).join('')}</ul>`
@@ -1864,6 +1936,7 @@ function renderMaterielCatalogue() {
       </form>
     </div>`;
   }).join('');
+  wraps.forEach(w => w.innerHTML = html);
 }
 
 // Menus en cascade du formulaire d'emprunt : le type choisi filtre les
@@ -2485,7 +2558,7 @@ function renderAll(resetSelectors = true) {
   if (missionViewTarget) renderMissionView();
   if ($('#fraisTableWrap')) renderFrais();
   if ($('#materielEmpruntsList')) renderMaterielEmprunts();
-  if ($('#materielCatalogueList')) renderMaterielCatalogue();
+  renderMaterielCatalogue();
   if ($('#reunionsList')) renderReunions();
   if ($('#mobileAccueil')) renderMobileAccueil();
   if ($('#mobileAValider')) renderMobileAValider();
@@ -2629,11 +2702,20 @@ function dashSemainesApres(n) {
   if (i < 0) return [];
   return state.weeks.slice(i + 1, i + 1 + n).map(w => w.id);
 }
+// Ajustements #7 (22/08/2026) — une séance à cheval sur le Repas (SLOTS[4],
+// libellé texte « Repas » sans horaire) affichait « Repas–14h20 » au lieu
+// d'une heure : Martin ne veut que des heures. SLOT_BOUNDS_MIN porte les
+// vraies bornes en minutes de TOUS les créneaux, y compris le Repas — plus
+// fiable qu'un découpage du libellé texte, qui échoue justement sur celui-là.
+function minutesToHoraire(min) {
+  if (min == null) return '';
+  return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
+}
 function dashHoraire(s) {
   if (s.customStart && s.customEnd) return `${s.customStart}–${s.customEnd}`;
-  const debut = (SLOTS[Number(s.startSlot)] || '').split('–')[0].trim();
-  const fin = (SLOTS[Number(s.endSlot)] || '').split('–')[1] || '';
-  return debut && fin ? `${debut}–${fin.trim()}` : debut;
+  const debut = minutesToHoraire(SLOT_BOUNDS_MIN[Number(s.startSlot)]?.[0]);
+  const fin = minutesToHoraire(SLOT_BOUNDS_MIN[Number(s.endSlot)]?.[1]);
+  return debut && fin ? `${debut}–${fin}` : debut;
 }
 /* Date réelle d'une séance posée dans l'emploi du temps. */
 function dashDateDeSeance(s) {
@@ -2778,13 +2860,21 @@ function dashCarteSeance(s, date, compact) {
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.demiGroupe ? '½' + s.demiGroupe : '']
     .filter(Boolean).join(' · ');
   const teachers = teacherPillsMarkup(s.teacher);
+  const promo = promoPillMarkup(s);
+  // Ajustements #7 (22/08/2026) — Martin : « réserver la partie droite des
+  // tuiles pour les pastilles (promo en haut à droite, initiales en bas à
+  // droite) ». .carte-corps regroupe le texte, .carte-pastilles la colonne de
+  // droite (CSS : #dashboard aplatit ce wrapper en display:contents et rejoue
+  // l'ordre d'origine par `order`, #mobileSemaine en fait une vraie colonne).
+  const pastilles = (promo || teachers) ? `<div class="carte-pastilles">${promo}${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}</div>` : '';
   return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
-    <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
-    <span class="carte-titre">${escapeHtml(s.title)}</span>
-    ${promoPillMarkup(s)}
-    <span class="carte-meta">${escapeHtml(meta)}</span>
-    ${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}
-    ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions)}</span>` : ''}
+    <div class="carte-corps">
+      <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
+      <span class="carte-titre">${escapeHtml(s.title)}</span>
+      <span class="carte-meta">${escapeHtml(meta)}</span>
+      ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions)}</span>` : ''}
+    </div>
+    ${pastilles}
   </li>`;
 }
 
@@ -2794,11 +2884,13 @@ function dashCarteReunion(r) {
   // ici pour savoir d'un coup d'œil quelle réunion concerne quel compte.
   const teachers = teacherPillsMarkup(r.teacher);
   return `<li class="carte est-reunion" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">
-    <span class="carte-heure">—</span>
-    <span class="carte-titre">${escapeHtml(r.lieu ? 'Réunion — ' + r.lieu : 'Réunion')}</span>
-    <span class="carte-meta">${escapeHtml(r.participants || 'participants à préciser')}</span>
-    ${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}
-    <span class="carte-actions"><span class="act act-reunion">Réunion</span></span>
+    <div class="carte-corps">
+      <span class="carte-heure">—</span>
+      <span class="carte-titre">${escapeHtml(r.lieu ? 'Réunion — ' + r.lieu : 'Réunion')}</span>
+      <span class="carte-meta">${escapeHtml(r.participants || 'participants à préciser')}</span>
+      <span class="carte-actions"><span class="act act-reunion">Réunion</span></span>
+    </div>
+    ${teachers ? `<div class="carte-pastilles"><span class="design-ue-pills carte-teachers">${teachers}</span></div>` : ''}
   </li>`;
 }
 
@@ -3054,6 +3146,11 @@ function updateMobileBannerBack() {
   const isAccueil = !active || active.id === 'mobileAccueil';
   portailLink.hidden = !isAccueil;
   backBtn.hidden = isAccueil;
+  // Ajustements #7 (22/08/2026) — Martin : sur #missionView le bouton
+  // annonçait « Accueil » mais ramenait en fait à l'écran d'origine
+  // (closeMissionView() → missionViewReturnTo, pas forcément mobileAccueil).
+  // Libellé neutre dans ce cas précis, honnête quelle que soit l'origine.
+  backBtn.textContent = (active && active.id === 'missionView') ? '‹ Retour' : '‹ Accueil';
 }
 // #dashboard (desktop) ET #mobileAccueil (mobile) portent tous les deux la
 // classe .active-view au chargement (chacun caché/montré par CSS selon
@@ -3079,20 +3176,34 @@ function renderMobileAccueil() {
   const nbAFaire = (state.todoItems || []).filter(t => !t.done).length;
   const nbMission = ordresDeMissionAFaire().length;
   const nbMateriel = (state.materielEmprunts || []).filter(estVisiblePourMoi).filter(m => !m.dateRetour).length;
-  const bouton = (icon, label, target, count, alerte) => `
-    <button type="button" class="mobile-home-btn" data-mobile-goto="${target}">
-      <span class="mobile-home-icon" aria-hidden="true">${icon}</span>
+  // Ajustements #7 (22/08/2026) — « une version un peu plus chaleureuse ou
+  // contrastée » (à tester), liseré haut de couleur sur les 6 boutons.
+  // Ajustements #8 (22/08/2026) — Martin : « à quoi correspondent les
+  // couleurs ? » — un simple liseré, même cohérent avec une couleur déjà
+  // utilisée ailleurs, ne l'expliquait nulle part à l'écran. Tentative de
+  // n'en garder que 3 (les seuls « justifiés ») encore insatisfaisante :
+  // « toujours des liserés dont on ne sait pas à quoi ils servent ».
+  // Ajustements #9 (22/08/2026) — proposition de Martin, reprise telle
+  // quelle : chaque bouton dans une couleur de FOND différente (texte/icône
+  // blancs), pas d'explication requise — un simple repère spatial, comme des
+  // icônes d'appli (cf. styles.css, .mobile-home-btn-*).
+  // Pictogrammes (retour #8, « toujours pas plus symbolique ») :
+  // ICON_SVG_PATHS/mobileIconSvg() (définis près de MOBILE_URGENCE_PICTOS)
+  // remplacent les émojis couleur par des tracés monochromes.
+  const bouton = (icone, label, target, count, alerte, teinte) => `
+    <button type="button" class="mobile-home-btn mobile-home-btn-${teinte}" data-mobile-goto="${target}">
+      <span class="mobile-home-icon" aria-hidden="true">${mobileIconSvg(icone)}</span>
       <span class="mobile-home-label">${label}</span>
       ${count ? `<span class="mobile-home-badge${alerte ? ' is-alert' : ''}">${count}</span>` : ''}
     </button>`;
   host.innerHTML = `
     <div class="mobile-home">
-      ${bouton('📅', 'Ma semaine', 'mobileSemaine', 0, false)}
-      ${bouton('⚑', 'Urgences', 'mobileAValider', nbUrgences, true)}
-      ${bouton('✎', 'À faire', 'mobileAFaire', nbAFaire, false)}
-      ${bouton('📋', 'Ordre de mission', 'mobileMission', nbMission, false)}
-      ${bouton('💶', 'Frais', 'mobileFrais', nbFrais, false)}
-      ${bouton('🎒', 'Matériel', 'mobileMateriel', nbMateriel, false)}
+      ${bouton('calendrier', 'Ma semaine', 'mobileSemaine', 0, false, 'semaine')}
+      ${bouton('alerte', 'Urgences', 'mobileAValider', nbUrgences, true, 'urgences')}
+      ${bouton('checklist', 'À faire', 'mobileAFaire', nbAFaire, false, 'afaire')}
+      ${bouton('itineraire', 'Ordre de mission', 'mobileMission', nbMission, false, 'mission')}
+      ${bouton('monnaie', 'Frais', 'mobileFrais', nbFrais, false, 'frais')}
+      ${bouton('caisse', 'Matériel', 'mobileMateriel', nbMateriel, false, 'materiel')}
     </div>`;
 }
 
@@ -3277,9 +3388,14 @@ function mobileFraisRowMarkup(d) {
   const lien = (linkedSession || linkedReunion)
     ? ` <span class="frais-link" title="${escapeAttr(linkedSession ? 'Créé depuis une séance' : 'Créé depuis une réunion')}">🔗</span>`
     : '';
-  return `<div class="urgence-row" data-edit-deplacement="${escapeAttr(d.id)}" tabindex="0" role="button">
+  // Ajustements #7 (22/08/2026) — Martin : « bien indiquer qui est concerné
+  // par des pastilles initiales », même traitement que Ma semaine/Urgences
+  // (teacherPillsMarkup), qui manquait ici jusque-là.
+  const teachers = teacherPillsMarkup(d.teacher);
+  return `<div class="urgence-row${d.statut === DEPLACEMENT_STATUSES[0] ? ' a-declarer' : ''}" data-edit-deplacement="${escapeAttr(d.id)}" tabindex="0" role="button">
     <span class="urgence-delai">${escapeHtml(quand)}</span>
     <strong class="urgence-titre">${escapeHtml(lieu)}${lien}</strong>
+    ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
     <span class="urgence-detail">${escapeHtml(detail)}</span>
     ${verbe}
   </div>`;
@@ -8922,44 +9038,49 @@ function bindModalActions() {
     await saveData('Emprunt de matériel supprimé');
   });
 
-  // ---- Catalogue de matériel (ajustements #6, 22/08/2026) ----
-  $('#materielTypeForm')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const input = $('#materielTypeInput');
-    const type = input.value.trim();
-    if (!type) return;
-    state.materielTypes = state.materielTypes || [];
-    if (!state.materielTypes.includes(type)) state.materielTypes.push(type);
-    input.value = '';
-    await saveData('Type de matériel ajouté');
-  });
-  $('#materielCatalogueList')?.addEventListener('submit', async (event) => {
-    const form = event.target.closest('[data-materiel-item-type]');
-    if (!form) return;
-    event.preventDefault();
-    const input = form.querySelector('input');
-    const identifiant = input.value.trim();
-    if (!identifiant) return;
-    state.materielItems = state.materielItems || [];
-    state.materielItems.push({ id: uid('materielitem'), type: form.dataset.materielItemType, identifiant });
-    await saveData('Identifiant de matériel ajouté');
-  });
-  $('#materielCatalogueList')?.addEventListener('click', async (event) => {
-    const delType = event.target.closest('[data-delete-materiel-type]');
-    if (delType) {
-      const type = delType.dataset.deleteMaterielType;
-      if (!confirm(`Supprimer le type « ${type} » et ses identifiants ?`)) return;
-      state.materielTypes = (state.materielTypes || []).filter(t => t !== type);
-      state.materielItems = (state.materielItems || []).filter(it => it.type !== type);
-      await saveData('Type de matériel supprimé');
-      return;
-    }
-    const delItem = event.target.closest('[data-delete-materiel-item]');
-    if (delItem) {
-      state.materielItems = (state.materielItems || []).filter(it => it.id !== delItem.dataset.deleteMaterielItem);
-      await saveData('Identifiant de matériel supprimé');
-    }
-  });
+  // ---- Catalogue de matériel (ajustements #6, 22/08/2026 ; ajustements #7,
+  // même conteneur dupliqué sur mobile — voir renderMaterielCatalogue) ----
+  function bindMaterielCatalogueContainer(formSel, inputSel, listSel) {
+    $(formSel)?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = $(inputSel);
+      const type = input.value.trim();
+      if (!type) return;
+      state.materielTypes = state.materielTypes || [];
+      if (!state.materielTypes.includes(type)) state.materielTypes.push(type);
+      input.value = '';
+      await saveData('Type de matériel ajouté');
+    });
+    $(listSel)?.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-materiel-item-type]');
+      if (!form) return;
+      event.preventDefault();
+      const input = form.querySelector('input');
+      const identifiant = input.value.trim();
+      if (!identifiant) return;
+      state.materielItems = state.materielItems || [];
+      state.materielItems.push({ id: uid('materielitem'), type: form.dataset.materielItemType, identifiant });
+      await saveData('Identifiant de matériel ajouté');
+    });
+    $(listSel)?.addEventListener('click', async (event) => {
+      const delType = event.target.closest('[data-delete-materiel-type]');
+      if (delType) {
+        const type = delType.dataset.deleteMaterielType;
+        if (!confirm(`Supprimer le type « ${type} » et ses identifiants ?`)) return;
+        state.materielTypes = (state.materielTypes || []).filter(t => t !== type);
+        state.materielItems = (state.materielItems || []).filter(it => it.type !== type);
+        await saveData('Type de matériel supprimé');
+        return;
+      }
+      const delItem = event.target.closest('[data-delete-materiel-item]');
+      if (delItem) {
+        state.materielItems = (state.materielItems || []).filter(it => it.id !== delItem.dataset.deleteMaterielItem);
+        await saveData('Identifiant de matériel supprimé');
+      }
+    });
+  }
+  bindMaterielCatalogueContainer('#materielTypeForm', '#materielTypeInput', '#materielCatalogueList');
+  bindMaterielCatalogueContainer('#mobileMaterielTypeForm', '#mobileMaterielTypeInput', '#mobileMaterielCatalogueList');
 
   // ---- Réunions (Lot M — journal du Tableau de bord) ----
   $('#addReunionButton')?.addEventListener('click', (e) => { e.stopPropagation(); openReunionModal(); });

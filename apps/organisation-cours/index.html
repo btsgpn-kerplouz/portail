@@ -656,6 +656,27 @@
     </section>
     <section id="mobileMission" class="view mobile-only"></section>
     <section id="mobileMateriel" class="view mobile-only"></section>
+    <!-- Écran « Catalogue de matériel » (ajustements #7, 22/08/2026) — Martin :
+         « je veux pouvoir éditer mes listes et numérotations de matériel »,
+         jusque-là possible seulement depuis le Tableau de bord desktop
+         (#materielCatalogueList). Même patron statique que #mobileAFaire :
+         formulaire + liste rendus par renderMaterielCatalogue() dans les
+         deux conteneurs à la fois (voir app.js). Ajustements #8 (22/08/2026)
+         — Martin : titre/bouton trop génériques (« Gérer les types et
+         identifiants »), renommés en « Catalogue de matériel » (sa propre
+         suggestion). -->
+    <section id="mobileMaterielCatalogue" class="view mobile-only">
+      <div class="mobile-topbar">
+        <button type="button" class="lien mobile-back" data-mobile-goto="mobileMateriel">‹ Matériel</button>
+        <h2 class="mobile-topbar-title">Catalogue de matériel</h2>
+      </div>
+      <p class="meta">Le catalogue alimente les menus du formulaire d’emprunt : un type de matériel (ex. Boussole), puis ses identifiants individuels (ex. Boussole n°3).</p>
+      <form id="mobileMaterielTypeForm" class="materiel-type-add-form">
+        <input type="text" id="mobileMaterielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+        <button type="submit" class="secondary small">+ Type</button>
+      </form>
+      <div id="mobileMaterielCatalogueList"></div>
+    </section>
   </main>
 
   <dialog id="ueDialog" class="modal">
