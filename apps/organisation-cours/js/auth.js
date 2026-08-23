@@ -268,9 +268,14 @@ function afficherEtatActif(profil) {
   elAuthCompact.innerHTML = `
     <span id="initiales-affichees" title="${escapeAttrLocal(profil.prenom)} ${escapeAttrLocal(profil.nom)}">${escapeAttrLocal(profil.initiales)}</span>
     <button type="button" id="btn-modifier-initiales" class="lien" title="Modifier mes initiales">✎</button>
-    <label class="lien" id="lbl-voir-collegues" title="Consulter (lecture seule) les séquences/séances de mes collègues, dans les UE où je suis référencé·e">
+    <!-- Harmonisation (retour Martin, 23/08/2026) : « partout » fait écho à
+         « ici » sur les deux sélecteurs multi-collègues du Référentiel et du
+         Planning hebdo (index.html, .teacher-picker) — un mot suffit à
+         distinguer ce réglage global des deux réglages propres à un seul
+         écran, sans ajouter d'élément visuel de plus dans le bandeau. -->
+    <label class="lien" id="lbl-voir-collegues" title="Consulter en lecture seule les séquences/séances de mes collègues (dans les UE où je suis référencé·e), partout dans l'appli : Conception pédagogique, Progression, Planning hebdo, Référentiel. Ne concerne pas les sélecteurs « … affichés ici », propres chacun à son écran.">
       <input type="checkbox" id="chk-voir-collegues" ${profil.voir_collegues ? "checked" : ""}>
-      Voir mes collègues
+      Voir mes collègues partout
     </label>
     <button type="button" id="btn-deconnexion" class="lien" title="Se déconnecter">Déconnexion</button>
   `;
