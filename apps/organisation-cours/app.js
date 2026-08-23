@@ -1862,24 +1862,75 @@ function materielEmpruntRowMarkup(m, mobile) {
   </tr>`;
 }
 
+/* Page « Matériel emprunté » (retours Martin, 23/08/2026, second retour) —
+   plus une table à rallonge : une grille de types façon « stock de magasin »
+   (compteur N/total emprunté), le clic sur un type ouvre la liste
+   cochable/décochable de ses identifiants. `materielTypeOuvert` retient le
+   type actuellement affiché en détail (null = grille) à travers les
+   re-rendus déclenchés par saveData(). */
+let materielTypeOuvert = null;
 function renderMaterielEmprunts() {
   updateMaterielEmpruntsBadge();
-  const wrap = $('#materielEmpruntsList');
-  if (!wrap) return;
-  const all = (state.materielEmprunts || []).filter(estVisiblePourMoi)
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  if (!all.length) {
-    wrap.innerHTML = `<p class="empty-hint">Aucun emprunt enregistré. Ajoutez-en un avec « + Emprunt ».</p>`;
+  if (!$('#materielTypesGrid')) return;
+  renderMaterielTypesGrid();
+  if (materielTypeOuvert) renderMaterielTypeDetail(materielTypeOuvert);
+}
+function materielEmpruntsEnCoursParType(type) {
+  return (state.materielEmprunts || []).filter(estVisiblePourMoi).filter(m => m.materielType === type && !m.dateRetour);
+}
+function renderMaterielTypesGrid() {
+  const grid = $('#materielTypesGrid');
+  if (!grid) return;
+  const types = state.materielTypes || [];
+  if (!types.length) {
+    grid.innerHTML = '<p class="empty-hint">Catalogue vide pour l’instant — ajoutez un type de matériel depuis « Catalogue matériel ».</p>';
     return;
   }
-  const body = all.map(m => materielEmpruntRowMarkup(m, false)).join('');
-  wrap.innerHTML = `
-    <div class="table-scroll">
-      <table class="frais-table">
-        <thead><tr><th>Matériel</th><th>Étudiant</th><th>Classe</th><th>Emprunté le</th><th>Rendu</th><th aria-label="Actions"></th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
+  grid.innerHTML = types.map(type => {
+    const total = (state.materielItems || []).filter(it => it.type === type).length;
+    const nb = materielEmpruntsEnCoursParType(type).length;
+    const compteur = total
+      ? `${nb}/${total} emprunté${nb > 1 ? 's' : ''}`
+      : (nb ? `${nb} emprunté${nb > 1 ? 's' : ''}` : 'Aucun identifiant');
+    return `<button type="button" class="materiel-type-btn${total && nb >= total ? ' est-complet' : ''}" data-materiel-type-ouvrir="${escapeAttr(type)}">
+      <span class="materiel-type-nom">${escapeHtml(type)}</span>
+      <span class="materiel-type-compteur">${escapeHtml(compteur)}</span>
+    </button>`;
+  }).join('');
+}
+function renderMaterielTypeDetail(type) {
+  $('#materielTypeDetailTitle').textContent = type;
+  const items = (state.materielItems || []).filter(it => it.type === type);
+  const empruntsParIdentifiant = new Map(materielEmpruntsEnCoursParType(type).map(m => [m.materielIdentifiant, m]));
+  const list = $('#materielTypeDetailList');
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = '<p class="empty-hint">Aucun identifiant enregistré pour ce type. Ajoutez-en depuis « Catalogue matériel ».</p>';
+    return;
+  }
+  list.innerHTML = items.map(it => {
+    const emprunt = empruntsParIdentifiant.get(it.identifiant);
+    const etat = emprunt ? [emprunt.etudiant || 'étudiant à préciser', emprunt.classe].filter(Boolean).join(' · ') : 'Disponible';
+    return `<div class="materiel-item-check-row${emprunt ? ' est-emprunte' : ''}">
+      <label>
+        <input type="checkbox" ${emprunt ? 'checked' : ''} data-materiel-item-toggle="${escapeAttr(it.identifiant)}" data-materiel-item-emprunt-id="${emprunt ? escapeAttr(emprunt.id) : ''}" />
+        <span class="materiel-item-check-nom">${escapeHtml(it.identifiant)}</span>
+      </label>
+      <span class="materiel-item-check-etat">${escapeHtml(etat)}</span>
+      ${emprunt ? `<button type="button" class="icon-button small" data-edit-materiel-emprunt="${escapeAttr(emprunt.id)}" title="Modifier cet emprunt">✎</button>` : ''}
     </div>`;
+  }).join('');
+}
+function afficherMaterielGrille() {
+  materielTypeOuvert = null;
+  if ($('#materielTypesGrid')) $('#materielTypesGrid').hidden = false;
+  if ($('#materielTypeDetail')) $('#materielTypeDetail').hidden = true;
+}
+function afficherMaterielType(type) {
+  materielTypeOuvert = type;
+  renderMaterielTypeDetail(type);
+  $('#materielTypesGrid').hidden = true;
+  $('#materielTypeDetail').hidden = false;
 }
 
 function renderMobileMateriel() {
@@ -2557,7 +2608,7 @@ function renderAll(resetSelectors = true) {
   if ($('#dossierUeSelect')) renderDossier();
   if (missionViewTarget) renderMissionView();
   if ($('#fraisTableWrap')) renderFrais();
-  if ($('#materielEmpruntsList')) renderMaterielEmprunts();
+  if ($('#materielTypesGrid')) renderMaterielEmprunts();
   renderMaterielCatalogue();
   if ($('#reunionsList')) renderReunions();
   if ($('#mobileAccueil')) renderMobileAccueil();
@@ -8581,24 +8632,29 @@ function confirmCloseModal(dialog) {
   dialog.close();
 }
 
-/* Lot B (23/08/2026) : les 5 tuiles de .dash-tuiles-grille (Frais, Périodes
-   particulières, Réunions, Améliorations de l'appli, Matériel — ce dernier
-   fusionnant emprunts + catalogue en un seul encart, retour du même jour)
-   ouvrent chacune la modale reprenant tel quel le contenu de l'ancien
-   encart repliable — mêmes ids, mêmes fonctions de rendu, seul le contenant
-   change (tuile plutôt que <details>). Un clic sur le fond (le <dialog>
-   lui-même, hors de sa boîte) referme la modale, comme la croix — retour
-   Martin du même jour : « quitter en cliquant en dehors ». */
-const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog' };
+/* Lot B (23/08/2026) : les 6 tuiles de .dash-tuiles-grille (Frais, Périodes
+   particulières, Réunions, Améliorations de l'appli, Matériel emprunté,
+   Catalogue matériel — de nouveau deux pages séparées après un aller-retour,
+   voir renderMaterielTypesGrid()/renderMaterielTypeDetail() plus bas) ouvrent
+   chacune la modale reprenant tel quel (ou presque, pour Matériel emprunté)
+   le contenu de l'ancien encart repliable — mêmes ids, mêmes fonctions de
+   rendu, seul le contenant change (tuile plutôt que <details>). Un clic sur
+   le fond (le <dialog> lui-même, hors de sa boîte) referme la modale, comme
+   la croix — retour Martin du même jour : « quitter en cliquant en dehors ». */
+const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog', materielCatalogue: '#materielCatalogueDialog' };
 function bindDashTuiles() {
   $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
-    btn.addEventListener('click', () => $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal());
+    btn.addEventListener('click', () => {
+      if (btn.dataset.dashTuile === 'materiel') afficherMaterielGrille();
+      $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal();
+    });
   });
   $('#closeFraisDialog')?.addEventListener('click', () => $('#fraisDialog')?.close());
   $('#closePeriodesDialog')?.addEventListener('click', () => $('#periodesDialog')?.close());
   $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
   $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
   $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
+  $('#closeMaterielCatalogueDialog')?.addEventListener('click', () => $('#materielCatalogueDialog')?.close());
   Object.values(DASH_TUILE_DIALOGS).forEach(sel => {
     const dialog = $(sel);
     dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
@@ -9028,7 +9084,30 @@ function bindModalActions() {
     if (m) openMaterielEmpruntModal(m);
   };
   $('#addMaterielEmpruntButton')?.addEventListener('click', (e) => { e.stopPropagation(); openMaterielEmpruntModal(); });
-  $('#materielEmpruntsList')?.addEventListener('click', openMaterielEmpruntFromEvent);
+  // Page « Matériel emprunté » (retours 23/08/2026) : grille de types →
+  // liste cochable/décochable d'un type. Cocher un identifiant disponible
+  // ouvre le formulaire d'emprunt pré-rempli (il faut encore préciser qui
+  // l'emprunte) ; décocher un identifiant emprunté le marque rendu direct.
+  $('#materielTypesGrid')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-materiel-type-ouvrir]');
+    if (btn) afficherMaterielType(btn.dataset.materielTypeOuvrir);
+  });
+  $('#materielTypeDetailBack')?.addEventListener('click', afficherMaterielGrille);
+  $('#materielTypeDetailList')?.addEventListener('click', openMaterielEmpruntFromEvent);
+  $('#materielTypeDetailList')?.addEventListener('change', async (event) => {
+    const cb = event.target.closest('[data-materiel-item-toggle]');
+    if (!cb) return;
+    if (cb.checked) {
+      const identifiant = cb.dataset.materielItemToggle;
+      cb.checked = false;
+      openMaterielEmpruntModal(null);
+      remplirMaterielTypeSelect(materielTypeOuvert);
+      remplirMaterielIdentifiantSelect(identifiant);
+      return;
+    }
+    const m = (state.materielEmprunts || []).find(x => x.id === cb.dataset.materielItemEmpruntId);
+    if (m) { m.dateRetour = todayIso(); await saveData('Matériel rendu'); }
+  });
   $('#mobileMateriel')?.addEventListener('click', (event) => {
     if (event.target.closest('#mobileAddMaterielEmpruntButton')) { openMaterielEmpruntModal(); return; }
     openMaterielEmpruntFromEvent(event);

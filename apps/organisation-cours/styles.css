@@ -3888,15 +3888,15 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 
 /* ---- Zone basse, tuiles (Lot B, 23/08/2026 + retours du même jour) :
    Déplacements & frais, Périodes particulières, Réunions, Améliorations de
-   l'appli et Matériel (emprunts + catalogue fusionnés en une seule tuile, un
-   seul encart) ne sont plus des <details> repliées (leur contenu — tableau,
-   filtres — n'aurait pas tenu dans une tuile carrée) mais des points
-   d'entrée façon accueil mobile (.mobile-home-btn, cf. plus haut) : icône +
-   libellé + pastille de compteur. `auto-fit` range les tuiles sur 1 ligne en
-   largeur confortable, 2 lignes en dessous. Le clic ouvre la modale
-   correspondante (#fraisDialog etc., voir bindDashTuiles() dans app.js) qui
-   reprend tel quel l'ancien contenu ; un clic hors de la modale (sur le
-   fond) la referme, comme la croix. */
+   l'appli, Matériel emprunté et Catalogue matériel ne sont plus des
+   <details> repliées (leur contenu — tableau, filtres — n'aurait pas tenu
+   dans une tuile carrée) mais des points d'entrée façon accueil mobile
+   (.mobile-home-btn, cf. plus haut) : icône + libellé + pastille de
+   compteur. `auto-fit` range les tuiles sur 1 ligne en largeur confortable,
+   2 lignes en dessous. Le clic ouvre la modale correspondante (#fraisDialog
+   etc., voir bindDashTuiles() dans app.js) qui reprend tel quel l'ancien
+   contenu ; un clic hors de la modale (sur le fond) la referme, comme la
+   croix. */
 #dashboard .dash-tuiles-grille {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3);
 }
@@ -3924,6 +3924,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-reunions { background: var(--clay); }
 #dashboard .dash-tuile-devnotes { background: var(--amber); }
 #dashboard .dash-tuile-materiel { background: var(--water); }
+#dashboard .dash-tuile-materiel-catalogue { background: var(--acc); }
 
 /* Bandeau de modale coloré (retour Martin, 23/08/2026) : le bandeau titre
    d'une modale ouverte depuis une tuile reprend la couleur de fond de cette
@@ -3936,11 +3937,39 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .modal-header.dash-tone-reunions { background: var(--clay); }
 .modal-header.dash-tone-devnotes { background: var(--amber); }
 .modal-header.dash-tone-materiel { background: var(--water); }
+.modal-header.dash-tone-materiel-catalogue { background: var(--acc); }
 
-/* Modale Matériel : catalogue secondaire, sous les emprunts, dans le même
-   encart (retour Martin 23/08/2026 : « un seul encart, pas deux »). */
-.materiel-modal-catalogue { border-top: 1px solid var(--line); margin-top: var(--sp-3); padding-top: var(--sp-3); }
-.materiel-modal-catalogue h4 { margin: 0 0 .3rem; font-size: .85rem; }
+/* Page « Matériel emprunté » (retours Martin, 23/08/2026, second retour) :
+   grille de types façon « stock de magasin » plutôt qu'une table à
+   rallonge — un gros bouton par type avec un compteur N/total emprunté. Le
+   clic affiche à la place la liste cochable/décochable de ses identifiants
+   (#materielTypeDetail), cocher = emprunter (ouvre le formulaire, il faut
+   préciser qui), décocher = marquer rendu directement. */
+.materiel-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
+.materiel-types-grid[hidden] { display: none; }
+.materiel-type-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
+  background: var(--surface); border: 1px solid var(--line);
+  padding: var(--sp-3) var(--sp-4); text-align: left;
+  color: var(--ink); font-weight: 600;
+}
+.materiel-type-btn:hover { background: var(--surface-alt); }
+.materiel-type-btn.est-complet { border-color: var(--danger); }
+.materiel-type-nom { font-size: .95rem; }
+.materiel-type-compteur { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+.materiel-type-btn.est-complet .materiel-type-compteur { color: var(--danger); }
+.materiel-type-back { background: none; border: none; color: var(--acc); padding: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: .8rem; }
+.materiel-type-back:hover { background: none; color: var(--ink); }
+#materielTypeDetail h4 { margin: 0 0 var(--sp-2); }
+.materiel-item-check-liste { display: flex; flex-direction: column; gap: 1px; }
+.materiel-item-check-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: .55rem .3rem; border-bottom: 1px solid var(--line);
+}
+.materiel-item-check-row label { display: flex; align-items: center; gap: var(--sp-2); flex: 1; cursor: pointer; }
+.materiel-item-check-nom { font-weight: 600; }
+.materiel-item-check-etat { font-size: .82rem; color: var(--muted); }
+.materiel-item-check-row.est-emprunte .materiel-item-check-etat { color: var(--danger); }
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }

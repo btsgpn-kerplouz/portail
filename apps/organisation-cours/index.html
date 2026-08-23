@@ -144,14 +144,20 @@
             <span class="dash-tuile-label">Améliorations de l'appli</span>
             <span id="devNotesBadge" class="dash-tuile-badge"></span>
           </button>
-          <!-- Retour Martin (23/08/2026) : Emprunt + Catalogue matériel,
-               auparavant deux cartes séparées, deviennent une seule tuile
-               (un seul encart) — le catalogue est secondaire, il vit dans la
-               même modale, sous les emprunts. -->
+          <!-- Retour Martin (23/08/2026, second retour) : de nouveau deux
+               pages séparées (Emprunts / Catalogue) — mais la page Emprunts
+               n'est plus une liste à rallonge : une grille de types de
+               matériel façon « stock de magasin » (compteur N/total), le
+               clic sur un type ouvre la liste cochable/décochable de ses
+               identifiants (cocher = emprunter, décocher = marquer rendu). -->
           <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
             <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/></svg></span>
-            <span class="dash-tuile-label">Matériel</span>
+            <span class="dash-tuile-label">Matériel emprunté</span>
             <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
+          </button>
+          <button type="button" class="dash-tuile dash-tuile-materiel-catalogue" id="materielCatalogueTuile" data-dash-tuile="materielCatalogue">
+            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
+            <span class="dash-tuile-label">Catalogue matériel</span>
           </button>
         </div>
       </div>
@@ -1479,30 +1485,48 @@
     </form>
   </dialog>
 
-  <!-- Pas de <form method="dialog"> ici : #materielTypeForm est un vrai
-       formulaire soumis (bindMaterielCatalogueContainer) — un <form> ne peut
-       pas en contenir un autre, d'où le <div class="modal-body"> à la place
-       (voir ".modal .modal-body" dans styles.css pour le padding/scroll). -->
+  <!-- Retour Martin (23/08/2026, second retour) : la page Emprunts devient
+       une grille de types de matériel façon « stock de magasin » (compteur
+       N/total emprunté), plutôt qu'une table à rallonge. Le clic sur un type
+       affiche la liste cochable/décochable de ses identifiants — cocher un
+       identifiant disponible ouvre #materielEmpruntDialog pré-rempli (il faut
+       encore préciser qui l'emprunte) ; décocher un identifiant emprunté le
+       marque directement rendu (voir bindDashTuiles()/renderMaterielTypesGrid()
+       /renderMaterielTypeDetail() dans app.js). -->
   <dialog id="materielDialog" class="modal large-modal">
-    <div class="modal-body">
+    <form method="dialog">
       <header class="modal-header dash-tone dash-tone-materiel">
         <div class="panel-heading-inline">
-          <h3>Matériel</h3>
+          <h3>Matériel emprunté</h3>
           <button type="button" id="addMaterielEmpruntButton" class="small">+ Emprunt</button>
         </div>
         <button type="button" class="icon-button" id="closeMaterielDialog">×</button>
       </header>
-      <p class="meta tight">Suivre qui a emprunté quoi (élèves) — cocher « Rendu » une fois restitué.</p>
-      <div id="materielEmpruntsList" class="frais-table-wrap"></div>
-      <div class="materiel-modal-catalogue">
-        <h4>Matériel — catalogue</h4>
-        <p class="meta tight">Types et identifiants individuels proposés dans le formulaire d’emprunt.</p>
-        <form id="materielTypeForm" class="materiel-type-add-form">
-          <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
-          <button type="submit" class="secondary small">+ Type</button>
-        </form>
-        <div id="materielCatalogueList"></div>
+      <div id="materielTypesGrid" class="materiel-types-grid"></div>
+      <div id="materielTypeDetail" class="materiel-type-detail" hidden>
+        <button type="button" id="materielTypeDetailBack" class="lien materiel-type-back">‹ Tous les types</button>
+        <h4 id="materielTypeDetailTitle"></h4>
+        <div id="materielTypeDetailList" class="materiel-item-check-liste"></div>
       </div>
+    </form>
+  </dialog>
+
+  <!-- Pas de <form method="dialog"> ici : #materielTypeForm est un vrai
+       formulaire soumis (bindMaterielCatalogueContainer) — un <form> ne peut
+       pas en contenir un autre, d'où le <div class="modal-body"> à la place
+       (voir ".modal .modal-body" dans styles.css pour le padding/scroll). -->
+  <dialog id="materielCatalogueDialog" class="modal large-modal">
+    <div class="modal-body">
+      <header class="modal-header dash-tone dash-tone-materiel-catalogue">
+        <h3>Catalogue matériel</h3>
+        <button type="button" class="icon-button" id="closeMaterielCatalogueDialog">×</button>
+      </header>
+      <p class="meta tight">Types et identifiants individuels proposés dans le formulaire d’emprunt.</p>
+      <form id="materielTypeForm" class="materiel-type-add-form">
+        <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+        <button type="submit" class="secondary small">+ Type</button>
+      </form>
+      <div id="materielCatalogueList"></div>
     </div>
   </dialog>
 
