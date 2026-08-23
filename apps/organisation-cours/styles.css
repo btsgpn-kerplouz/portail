@@ -807,7 +807,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 .modal.large-modal { width: min(1080px, calc(100vw - 2rem)); }
 .modal::backdrop { background: rgba(32, 43, 34, .45); }
-.modal form { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); max-height: calc(100vh - 3rem); overflow: auto; }
+.modal form, .modal .modal-body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); max-height: calc(100vh - 3rem); overflow: auto; }
 
 .modal-header, .modal-footer {
   display: flex; align-items: center; gap: var(--sp-3);
@@ -3886,16 +3886,19 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #urgencesFaitesDetail summary::before { content: '▸ '; }
 #urgencesFaitesDetail[open] summary::before { content: '▾ '; }
 
-/* ---- Zone basse, tuiles (Lot B, 23/08/2026) : Déplacements & frais,
-   Périodes particulières, Réunions et Améliorations de l'appli ne sont plus
-   des <details> repliées (leur contenu — tableau, filtres — n'aurait pas
-   tenu dans une tuile carrée) mais des points d'entrée façon accueil mobile
-   (.mobile-home-btn, cf. plus haut) : icône + libellé + pastille de
-   compteur, en rangée qui se replie sur 2 lignes en dessous de 900px. Le
-   clic ouvre la modale correspondante (#fraisDialog etc., voir
-   bindDashTuiles() dans app.js) qui reprend tel quel l'ancien contenu. */
+/* ---- Zone basse, tuiles (Lot B, 23/08/2026 + retours du même jour) :
+   Déplacements & frais, Périodes particulières, Réunions, Améliorations de
+   l'appli et Matériel (emprunts + catalogue fusionnés en une seule tuile, un
+   seul encart) ne sont plus des <details> repliées (leur contenu — tableau,
+   filtres — n'aurait pas tenu dans une tuile carrée) mais des points
+   d'entrée façon accueil mobile (.mobile-home-btn, cf. plus haut) : icône +
+   libellé + pastille de compteur. `auto-fit` range les tuiles sur 1 ligne en
+   largeur confortable, 2 lignes en dessous. Le clic ouvre la modale
+   correspondante (#fraisDialog etc., voir bindDashTuiles() dans app.js) qui
+   reprend tel quel l'ancien contenu ; un clic hors de la modale (sur le
+   fond) la referme, comme la croix. */
 #dashboard .dash-tuiles-grille {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3);
 }
 #dashboard .dash-tuile {
   position: relative;
@@ -3920,30 +3923,24 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-periodes { background: var(--plum); }
 #dashboard .dash-tuile-reunions { background: var(--clay); }
 #dashboard .dash-tuile-devnotes { background: var(--amber); }
-@media (max-width: 900px) {
-  #dashboard .dash-tuiles-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+#dashboard .dash-tuile-materiel { background: var(--water); }
 
-/* ---- Zone basse, cartes matériel : les deux dernières cartes discrètes
-   ouvertes à la demande (Emprunt/Catalogue), pas encore reprises dans une
-   tuile — portée du Lot E, pas du Lot B. ---- */
-#dashboard .zone-basse-grille {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
-}
-#dashboard .zone-basse-grille > .panel-collapsible {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0;
-}
-#dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
-#dashboard .zone-basse-grille > .panel-collapsible > summary { padding: .55rem .7rem; }
-#dashboard .zone-basse-grille > .panel-collapsible > *:not(summary) { padding: 0 .8rem .8rem; }
-#dashboard .zone-basse-grille h3 { font-size: .82rem; }
-#dashboard .panel-collapsible > summary { align-items: flex-start; }
-#dashboard .panel-collapsible > summary::before { margin-top: .3rem; }
-#dashboard .panel-collapsible > summary .panel-heading-inline { align-items: center; }
-#dashboard .badge-groupe { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
-@media (max-width: 640px) {
-  #dashboard .zone-basse-grille { grid-template-columns: 1fr; }
-}
+/* Bandeau de modale coloré (retour Martin, 23/08/2026) : le bandeau titre
+   d'une modale ouverte depuis une tuile reprend la couleur de fond de cette
+   tuile, texte/croix en blanc — identification immédiate de la modale ouverte. */
+.modal-header.dash-tone, .modal-header.dash-tone h3 { color: #fff; }
+.modal-header.dash-tone .icon-button { color: #fff; }
+.modal-header.dash-tone .icon-button:hover { background: rgba(255, 255, 255, .22); color: #fff; }
+.modal-header.dash-tone-frais { background: var(--success); }
+.modal-header.dash-tone-periodes { background: var(--plum); }
+.modal-header.dash-tone-reunions { background: var(--clay); }
+.modal-header.dash-tone-devnotes { background: var(--amber); }
+.modal-header.dash-tone-materiel { background: var(--water); }
+
+/* Modale Matériel : catalogue secondaire, sous les emprunts, dans le même
+   encart (retour Martin 23/08/2026 : « un seul encart, pas deux »). */
+.materiel-modal-catalogue { border-top: 1px solid var(--line); margin-top: var(--sp-3); padding-top: var(--sp-3); }
+.materiel-modal-catalogue h4 { margin: 0 0 .3rem; font-size: .85rem; }
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }

@@ -8581,12 +8581,15 @@ function confirmCloseModal(dialog) {
   dialog.close();
 }
 
-/* Lot B (23/08/2026) : les 4 tuiles de .dash-tuiles-grille (Frais, Périodes
-   particulières, Réunions, Améliorations de l'appli) ouvrent chacune la
-   modale reprenant tel quel le contenu de l'ancien encart repliable — mêmes
-   ids, mêmes fonctions de rendu, seul le contenant change (tuile plutôt que
-   <details>). */
-const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog' };
+/* Lot B (23/08/2026) : les 5 tuiles de .dash-tuiles-grille (Frais, Périodes
+   particulières, Réunions, Améliorations de l'appli, Matériel — ce dernier
+   fusionnant emprunts + catalogue en un seul encart, retour du même jour)
+   ouvrent chacune la modale reprenant tel quel le contenu de l'ancien
+   encart repliable — mêmes ids, mêmes fonctions de rendu, seul le contenant
+   change (tuile plutôt que <details>). Un clic sur le fond (le <dialog>
+   lui-même, hors de sa boîte) referme la modale, comme la croix — retour
+   Martin du même jour : « quitter en cliquant en dehors ». */
+const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog' };
 function bindDashTuiles() {
   $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
     btn.addEventListener('click', () => $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal());
@@ -8595,6 +8598,11 @@ function bindDashTuiles() {
   $('#closePeriodesDialog')?.addEventListener('click', () => $('#periodesDialog')?.close());
   $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
   $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
+  $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
+  Object.values(DASH_TUILE_DIALOGS).forEach(sel => {
+    const dialog = $(sel);
+    dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  });
 }
 
 function bindModalActions() {
