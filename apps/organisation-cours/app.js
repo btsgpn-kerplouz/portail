@@ -1034,21 +1034,24 @@ function doneRoomBookingRows() {
   return reservationRows().filter(r => r.booked);
 }
 
-const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission', reunion: 'Réunion' };
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission' };
 const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
 // Retour de Martin (21/08/2026) : une règle commune à tout type d'urgence
-// (pas seulement les réunions) — n'apparaît dans le tableau que si elle a
-// moins de URGENCE_FENETRE_JOURS jours (au-delà, ça encombre sans être
-// actionnable). Une ligne sans date du tout (« date à préciser ») n'a rien à
-// comparer : elle reste visible, même logique que dashBacklogSessions.
+// n'apparaît dans le tableau que si elle a moins de URGENCE_FENETRE_JOURS
+// jours (au-delà, ça encombre sans être actionnable). Une ligne sans date du
+// tout (« date à préciser ») n'a rien à comparer : elle reste visible, même
+// logique que dashBacklogSessions.
 const URGENCE_FENETRE_JOURS = 45;
 
 /* Pile unique « Urgences » (REGLES.md #25) : salles et véhicules à réserver
-   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire) +
-   réunions enregistrées à venir (kind:'reunion', ajouté le 21/08/2026 sur
-   demande de Martin — purement informatif, aucun verbe de réservation),
+   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire),
    fusionnés et triés par échéance seule — jamais groupés par UE, promotion ou
-   type. La nature n'est qu'une étiquette de colonne, pas un panneau séparé. */
+   type. La nature n'est qu'une étiquette de colonne, pas un panneau séparé.
+   Une réunion elle-même n'y figure PAS (retour de Martin 23/08/2026 : elle
+   apparaît déjà dans les créneaux de la semaine — la remettre ici double
+   l'info sans rien d'actionnable). Seules ses démarches associées restent
+   visibles ici, via les deux piles ci-dessus (véhicule à réserver, ordre de
+   mission à établir) puisqu'elles sont, elles, de vraies actions à faire. */
 function urgenceRows() {
   const out = [];
   activeRoomBookingRows().forEach(r => {
@@ -1076,18 +1079,6 @@ function urgenceRows() {
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
       source: o.source, id: o.id, fait: false,
       teacher: entity?.teacher || ''
-    });
-  });
-  (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    const date = r.date ? parseIsoDate(r.date) : null;
-    const daysUntil = date ? dashJoursEntre(date) : null;
-    if (daysUntil !== null && daysUntil < 0) return; // réunion passée
-    out.push({
-      kind: 'reunion', titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
-      detail: r.lieu || '',
-      date, daysUntil,
-      source: 'reunion', id: r.id, fait: false,
-      teacher: r.teacher || ''
     });
   });
   return out
@@ -1161,12 +1152,7 @@ function urgenceRowMarkup(r) {
     : '';
   const verbe = r.kind === 'mission'
     ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
-    // Une réunion enregistrée (21/08/2026) n'est pas une réservation à
-    // traiter : purement informatif, pas de case à cocher — juste un
-    // rappel qu'elle existe, la ligne entière ouvre déjà sa fiche.
-    : r.kind === 'reunion'
-      ? `<span class="urgence-verbe" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">Ouvrir</span>`
-      : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
+    : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
   // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
   // « Ma semaine »/« Prochainement ») — la case et le lien Éditer gardent
   // leur propre action (guard dans le gestionnaire de clic).
@@ -1251,8 +1237,7 @@ const MOBILE_URGENCE_FILTRES = {
   tout: () => true,
   salle: r => r.kind === 'salle',
   materiel: r => r.kind === 'materiel',
-  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission',
-  reunion: r => r.kind === 'reunion'
+  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission'
 };
 let mobileUrgenceFiltre = 'tout';
 
@@ -1277,7 +1262,7 @@ function mobileIconMarkup(name) {
   if (ICON_PNG_NOMS.has(name)) return `<span class="mobile-icon-png picto-${name}" aria-hidden="true"></span>`;
   return `<svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_SVG_PATHS[name] || ''}</svg>`;
 }
-const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'pelle', deplacement: 'voiture', reunion: 'reunion' };
+const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'pelle', deplacement: 'voiture' };
 
 function renderMobileAValider() {
   const host = $('#mobileAValider');
@@ -1299,7 +1284,6 @@ function renderMobileAValider() {
       ${chip('salle', 'Salles')}
       ${chip('materiel', 'Matériel')}
       ${chip('deplacement', 'Déplacements')}
-      ${chip('reunion', 'Réunions')}
     </div>
     ${rows.length ? (groupe('Cette semaine', cetteSemaine, true) + groupe('Plus tard', plusTard, false)) : '<p class="empty-hint">Rien à valider pour le moment.</p>'}
     <button type="button" class="lien mobile-voir-faites" data-mobile-goto="mobileFaites">Voir les faites${nbFaites ? ` (${nbFaites})` : ''} →</button>`;
@@ -3020,6 +3004,110 @@ document.addEventListener('toggle', (event) => {
   saveOpenState();
 }, true);
 
+/* Réordonnancement des tuiles à la poignée (retour de Martin, 23/08/2026) —
+   accueil mobile ET tuiles du Tableau de bord desktop (dash-tuiles-grille) :
+   un seul mécanisme pour les deux, purement visuel (CSS `order`, jamais de
+   déplacement réel dans le DOM — les ids des tuiles desktop restent au bon
+   endroit pour les compteurs qui les ciblent par id, ex. #fraisSummaryBadge).
+   Mémorisé en local par appareil (préférence d'affichage, pas une donnée à
+   partager entre comptes) ; une clé mémorisée devenue inconnue est ignorée,
+   une tuile nouvelle jamais mémorisée rejoint la fin dans l'ordre du gabarit. */
+function loadTileOrder(cle) {
+  try { return JSON.parse(localStorage.getItem(cle)) || []; } catch { return []; }
+}
+function saveTileOrder(cle, ordre) {
+  try { localStorage.setItem(cle, JSON.stringify(ordre)); } catch { /* tant pis */ }
+}
+function tileOrderAvecDefauts(defauts, stocke) {
+  const connues = new Set(defauts);
+  const ordre = stocke.filter(k => connues.has(k));
+  defauts.forEach(k => { if (!ordre.includes(k)) ordre.push(k); });
+  return ordre;
+}
+function appliquerOrdreTuiles(container, ordre) {
+  const parCle = new Map([...container.querySelectorAll('[data-tile-key]')].map(el => [el.dataset.tileKey, el]));
+  ordre.forEach((cle, i) => { const el = parCle.get(cle); if (el) el.style.order = i; });
+}
+function ordreTuilesActuel(container) {
+  return [...container.querySelectorAll('[data-tile-key]')]
+    .map(el => ({ cle: el.dataset.tileKey, ordre: Number(el.style.order) || 0 }))
+    .sort((a, b) => a.ordre - b.ordre)
+    .map(t => t.cle);
+}
+// Poignée dédiée (plutôt que la tuile entière) : évite tout conflit avec le
+// clic normal qui ouvre la tuile (même convention que les gardes existantes,
+// ex. data-open-mission dans les lignes Urgences). Pointer Events plutôt que
+// l'API HTML5 Drag-and-Drop (déjà utilisée ailleurs dans l'appli, ex. #ueTree)
+// car celle-ci ne fonctionne pas au doigt sur mobile — un seul mécanisme
+// couvre donc souris ET tactile.
+// Empêche le clic fantôme de fin de geste (relâcher sur la tuile ouvre
+// sinon sa modale/son écran) : nécessaire même pour un simple appui sans
+// déplacement sur la poignée. setPointerCapture() (ci-dessous) retargete
+// aussi ce clic vers la TUILE entière, pas la poignée — un simple
+// `event.target.closest('[data-tile-handle]')` ne suffit donc plus (closest
+// ne regarde que les ancêtres, jamais les descendants), d'où ce blocage
+// séparé posé/retiré à chaque geste plutôt qu'un filtre sur la cible.
+// Branché UNE SEULE FOIS sur document.body (délégation), jamais sur le
+// conteneur lui-même : .mobile-home est recréé à chaque rendu de l'accueil
+// mobile (host.innerHTML), un branchement par conteneur laisserait donc une
+// poignée d'écouteurs orphelins (fuite mémoire) à chaque rafraîchissement.
+// Le conteneur concerné (portant `data-tile-zone`, la clé localStorage) est
+// retrouvé dynamiquement à chaque geste via closest().
+function bloquerProchainClic(event) { event.preventDefault(); event.stopPropagation(); }
+function activerReordonnancementTuiles() {
+  if (document.body.dataset.tileDragBound) return;
+  document.body.dataset.tileDragBound = '1';
+  let cleGlissee = null;
+  let container = null;
+  let cleStockage = null;
+  document.body.addEventListener('pointerdown', (event) => {
+    const poignee = event.target.closest('[data-tile-handle]');
+    if (!poignee) return;
+    const tuile = poignee.closest('[data-tile-key]');
+    const zone = tuile?.closest('[data-tile-zone]');
+    if (!tuile || !zone) return;
+    event.preventDefault();
+    container = zone;
+    cleStockage = zone.dataset.tileZone;
+    cleGlissee = tuile.dataset.tileKey;
+    try { tuile.setPointerCapture(event.pointerId); } catch { /* déjà relâché */ }
+    tuile.classList.add('is-dragging-tile');
+    document.body.addEventListener('click', bloquerProchainClic, { capture: true, once: true });
+  });
+  document.body.addEventListener('pointermove', (event) => {
+    if (cleGlissee === null) return;
+    const surTuile = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-tile-key]');
+    if (!surTuile || surTuile.parentElement !== container) return;
+    const cleSurvolee = surTuile.dataset.tileKey;
+    if (cleSurvolee === cleGlissee) return;
+    const ordre = ordreTuilesActuel(container);
+    const depuis = ordre.indexOf(cleGlissee);
+    const vers = ordre.indexOf(cleSurvolee);
+    if (depuis === -1 || vers === -1) return;
+    ordre.splice(depuis, 1);
+    ordre.splice(vers, 0, cleGlissee);
+    appliquerOrdreTuiles(container, ordre);
+  });
+  const terminerGlisser = () => {
+    if (cleGlissee === null) return;
+    container.querySelectorAll('.is-dragging-tile').forEach(el => el.classList.remove('is-dragging-tile'));
+    saveTileOrder(cleStockage, ordreTuilesActuel(container));
+    cleGlissee = null;
+    container = null;
+    cleStockage = null;
+    // Filet de sécurité : si le clic de fin de geste ne se produit jamais
+    // (relâché hors de tout élément cliquable), on ne laisse pas le blocage
+    // traîner pour avaler le PROCHAIN clic, sans rapport, de l'utilisateur.
+    setTimeout(() => document.body.removeEventListener('click', bloquerProchainClic, true), 0);
+  };
+  // Capture sur `document`, pas seulement bulle sur body : couvre un
+  // relâchement qui ne bullerait pas jusqu'à body — sans ça la tuile reste
+  // visuellement « en cours de glissement » (opacité réduite) indéfiniment.
+  // Sans effet si aucun geste n'est en cours (garde cleGlissee === null).
+  document.addEventListener('pointerup', terminerGlisser, true);
+  document.addEventListener('pointercancel', terminerGlisser, true);
+}
+
 /* Lot 8 — la tuile de séance (.session-card) n'a plus de bouton « Modifier »
    en pied : Entrée/Espace au clavier déclenchent le même clic délégué que la
    souris (data-edit-session, géré par conteneur dans bindEvents). */
@@ -3617,6 +3705,8 @@ function mobileGoBack() {
   showMobileScreen('mobileAccueil');
 }
 
+const MOBILE_ACCUEIL_ORDRE_DEFAUT = ['semaine', 'urgences', 'afaire', 'mission', 'frais', 'materiel'];
+const MOBILE_ACCUEIL_ORDRE_CLE = 'oc_ordreTuiles_mobileAccueil_v1';
 function renderMobileAccueil() {
   const host = $('#mobileAccueil');
   if (!host) return;
@@ -3645,21 +3735,25 @@ function renderMobileAccueil() {
   // Pictogrammes (retour #8, « toujours pas plus symbolique ») :
   // ICON_SVG_PATHS/ICON_PNG_NOMS/mobileIconMarkup() (définis près de MOBILE_URGENCE_PICTOS)
   // remplacent les émojis couleur par des tracés monochromes.
-  const bouton = (icone, label, target, count, alerte, teinte) => `
-    <button type="button" class="mobile-home-btn mobile-home-btn-${teinte}" data-mobile-goto="${target}">
+  // Poignée .tile-drag-handle (retour Martin, 23/08/2026) : réordonnancement,
+  // voir activerReordonnancementTuiles() (mémoire inter-session, plus haut).
+  const bouton = (cle, icone, label, target, count, alerte, teinte) => `
+    <button type="button" class="mobile-home-btn mobile-home-btn-${teinte}" data-mobile-goto="${target}" data-tile-key="${cle}">
       <span class="mobile-home-icon" aria-hidden="true">${mobileIconMarkup(icone)}</span>
       <span class="mobile-home-label">${label}</span>
       ${count ? `<span class="mobile-home-badge${alerte ? ' is-alert' : ''}">${count}</span>` : ''}
+      <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
     </button>`;
   host.innerHTML = `
-    <div class="mobile-home">
-      ${bouton('calendrier', 'Ma semaine', 'mobileSemaine', 0, false, 'semaine')}
-      ${bouton('alerte', 'Urgences', 'mobileAValider', nbUrgences, true, 'urgences')}
-      ${bouton('checklist', 'À faire', 'mobileAFaire', nbAFaire, false, 'afaire')}
-      ${bouton('document', 'Ordre de mission', 'mobileMission', nbMission, false, 'mission')}
-      ${bouton('monnaie', 'Frais', 'mobileFrais', nbFrais, false, 'frais')}
-      ${bouton('loupe', 'Emprunts matériels', 'mobileMateriel', nbMateriel, false, 'materiel')}
+    <div class="mobile-home" data-tile-zone="${MOBILE_ACCUEIL_ORDRE_CLE}">
+      ${bouton('semaine', 'calendrier', 'Ma semaine', 'mobileSemaine', 0, false, 'semaine')}
+      ${bouton('urgences', 'alerte', 'Urgences', 'mobileAValider', nbUrgences, true, 'urgences')}
+      ${bouton('afaire', 'checklist', 'À faire', 'mobileAFaire', nbAFaire, false, 'afaire')}
+      ${bouton('mission', 'document', 'Ordre de mission', 'mobileMission', nbMission, false, 'mission')}
+      ${bouton('frais', 'monnaie', 'Frais', 'mobileFrais', nbFrais, false, 'frais')}
+      ${bouton('materiel', 'loupe', 'Emprunts matériels', 'mobileMateriel', nbMateriel, false, 'materiel')}
     </div>`;
+  appliquerOrdreTuiles(host.querySelector('.mobile-home'), tileOrderAvecDefauts(MOBILE_ACCUEIL_ORDRE_DEFAUT, loadTileOrder(MOBILE_ACCUEIL_ORDRE_CLE)));
 }
 
 /* Écran 16 — Ma semaine (mobile). Réutilise dashContenuSemaine (jours/séances/
@@ -8089,6 +8183,7 @@ function bindEvents() {
   // soit une vue programmatique sans onglet (À valider, Frais…), auquel cas
   // showMobileScreen() fait la bascule à la main (même geste qu'openMissionView).
   document.body.addEventListener('click', (event) => {
+    if (event.target.closest('[data-tile-handle]')) return;
     const goto = event.target.closest('[data-mobile-goto]');
     if (!goto) return;
     const target = goto.dataset.mobileGoto;
@@ -9143,9 +9238,18 @@ function confirmCloseModal(dialog) {
    hors de sa boîte) referme la modale, comme la croix — retour Martin du
    même jour : « quitter en cliquant en dehors ». */
 const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog', mission: '#missionListDialog' };
+const DASH_TUILES_ORDRE_DEFAUT = ['frais', 'periodes', 'reunions', 'devnotes', 'materiel', 'mission'];
+const DASH_TUILES_ORDRE_CLE = 'oc_ordreTuiles_dashboard_v1';
 function bindDashTuiles() {
+  const grille = $('.dash-tuiles-grille');
+  if (grille) {
+    grille.dataset.tileZone = DASH_TUILES_ORDRE_CLE;
+    appliquerOrdreTuiles(grille, tileOrderAvecDefauts(DASH_TUILES_ORDRE_DEFAUT, loadTileOrder(DASH_TUILES_ORDRE_CLE)));
+  }
+  activerReordonnancementTuiles();
   $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      if (event.target.closest('[data-tile-handle]')) return;
       if (btn.dataset.dashTuile === 'materiel') afficherMaterielGrille();
       if (btn.dataset.dashTuile === 'mission') renderMissionListDialog();
       $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal();
@@ -10366,14 +10470,19 @@ function sessionsForConstraint(constraintId) {
 /* Lot K — bannière EIL en tête de planning. Reçoit des repères normalisés
    { title, promos:[...] } (issus de thematicItemsForWeek). */
 function eilBannerRow(eilSelf, eilOther, colspan) {
+  // Retour de Martin (23/08/2026) : le texte disait « EIL » quel que soit le
+  // type réel de la semaine thématique (« Voyage Ariège » affichait « EIL
+  // GPN2 » — confusion). Le libellé générique reste « Semaine thématique »,
+  // ce sont les titres (déjà entre parenthèses/après le « : ») qui portent
+  // le vrai intitulé (« EIL Nouvelles technologies », « Voyage Ariège »…).
   if (eilSelf.length) {
     const titles = eilSelf.map(s => s.title).filter(Boolean).join(' · ');
-    return `<tr class="eil-banner-row is-self"><td class="time-cell">EIL</td><td colspan="${colspan}"><span class="eil-banner">🔶 Semaine thématique / EIL — cours habituels suspendus${titles ? ' : ' + escapeHtml(titles) : ''}</span></td></tr>`;
+    return `<tr class="eil-banner-row is-self"><td class="time-cell">Sem. thém.</td><td colspan="${colspan}"><span class="eil-banner">🔶 Semaine thématique — cours habituels suspendus${titles ? ' : ' + escapeHtml(titles) : ''}</span></td></tr>`;
   }
   if (eilOther.length) {
     const promos = [...new Set(eilOther.flatMap(s => s.promos || []).filter(Boolean))].join(', ');
     const titles = eilOther.map(s => s.title).filter(Boolean).join(' · ');
-    return `<tr class="eil-banner-row is-info"><td class="time-cell">EIL</td><td colspan="${colspan}"><span class="eil-banner">◇ EIL ${escapeHtml(promos)} — créneaux souvent libres pour caler des cours${titles ? ' (' + escapeHtml(titles) + ')' : ''}</span></td></tr>`;
+    return `<tr class="eil-banner-row is-info"><td class="time-cell">Sem. thém.</td><td colspan="${colspan}"><span class="eil-banner">◇ Semaine thématique ${escapeHtml(promos)} — créneaux souvent libres pour caler des cours${titles ? ' (' + escapeHtml(titles) + ')' : ''}</span></td></tr>`;
   }
   return '';
 }

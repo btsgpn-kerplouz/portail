@@ -432,6 +432,12 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   .banner-inner { flex-wrap: nowrap; gap: .5rem; }
   .banner-data, .banner-year { display: none; }
   .banner-sync span:not(.lien) { display: none; }
+  /* Retour de Martin (23/08/2026) : la case « Voir mes collègues » ne pilote
+     que des vues desktop-only (Conception pédagogique, Progression, Planning
+     hebdo, Référentiel — voir estConsultablePourMoi, app.js) ; sur mobile
+     elle n'a aucun effet visible et n'a donc rien à faire dans le bandeau
+     compact (avatar/déconnexion seulement, cf. retour du 21/08/2026 ci-dessus). */
+  #lbl-voir-collegues { display: none; }
   /* Le texte du titre reste dans le DOM pour les lecteurs d'écran (h1
      toujours porteur du nom de l'appli) mais cède visuellement la place au
      pictogramme — même recette que .visually-hidden. */
@@ -462,6 +468,13 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   color: var(--ink); background: #fff; padding: .1rem .45rem;
 }
 .mobile-home-badge.is-alert { color: var(--danger); }
+/* Poignée de réordonnancement (retour Martin, 23/08/2026) — voir
+   activerReordonnancementTuiles(), app.js. `touch-action: none` empêche le
+   navigateur de faire défiler la page pendant le geste au doigt. */
+.mobile-home-btn .tile-drag-handle {
+  position: absolute; top: .3rem; left: .3rem;
+  color: #fff; opacity: .6;
+}
 /* Ajustements #9 (22/08/2026) — Martin, remonté : un liseré de 3px sur 3
    boutons seulement restait « on ne sait pas à quoi ça sert », même avec une
    couleur cohérente ailleurs (rien à l'écran ne le dit). Sa proposition,
@@ -4080,6 +4093,17 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-icon { display: flex; flex-shrink: 0; }
 #dashboard .dash-tuile-icon .mobile-icon-svg, #dashboard .dash-tuile-icon .mobile-icon-png { width: 26px; height: 26px; stroke-width: 1.5; }
 #dashboard .dash-tuile-label { flex: 1; min-width: 0; }
+/* Poignée de réordonnancement (retour Martin, 23/08/2026) — voir
+   activerReordonnancementTuiles(), app.js. Réglage commun aux deux grilles
+   de tuiles (accueil mobile ci-dessus, ici pour le Tableau de bord desktop). */
+.tile-drag-handle {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 22px; height: 22px;
+  cursor: grab; touch-action: none; opacity: .6;
+}
+.tile-drag-handle:active { cursor: grabbing; }
+#dashboard .dash-tuile .tile-drag-handle { color: #fff; }
+.is-dragging-tile { opacity: .55; }
 /* Retour Martin (23/08/2026) : les compteurs (ex. « 2 à traiter · 84,70 € »)
    débordaient, surtout en écran partagé en deux — tronqués proprement au
    lieu de forcer la largeur de la tuile (min-width:0 sur le libellé
@@ -4092,7 +4116,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-badge:empty { display: none; }
 #dashboard .dash-tuile-badge.has-pending { background: var(--niv-proche); color: #fff; }
 #dashboard .dash-tuile-frais { background: var(--success); }
-#dashboard .dash-tuile-periodes { background: var(--plum); }
+/* --plum libéré (23/08/2026) pour le bandeau titre « À faire » ci-dessous —
+   même teinte que .mobile-home-btn-afaire, jamais à l'écran en même temps
+   que cette tuile ; --danger repris ici (jamais utilisé par les tuiles
+   desktop, seule .mobile-home-btn-urgences le porte côté mobile — pas de
+   conflit, écrans mutuellement exclusifs, même logique que ci-dessus). */
+#dashboard .dash-tuile-periodes { background: var(--danger); }
 #dashboard .dash-tuile-reunions { background: var(--clay); }
 #dashboard .dash-tuile-devnotes { background: var(--amber); }
 #dashboard .dash-tuile-materiel { background: var(--water); }
@@ -4187,16 +4216,27 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   text-transform: uppercase; color: var(--muted-2);
 }
 
-/* « À faire » : carte blanche ordinaire, liseré encre (pas de teinte bleue —
-   REGLES.md #11 : l'accent est réservé à l'action, pas à la mise en avant
-   décorative d'un panneau). Remplace le fond teinté générique .priority-panel. */
+/* « À faire » : carte blanche, liseré encre à gauche. Retour Martin
+   (23/08/2026) : bandeau titre plein violet (--plum), même couleur que la
+   tuile « À faire » de l'accueil mobile — écart assumé à la règle ci-dessus
+   sur l'accent décoratif (demande explicite), sans risque de confusion avec
+   la tuile mobile puisque mobile et desktop ne s'affichent jamais ensemble
+   (.desktop-only/.mobile-only). Bandeau pleine largeur : le panneau perd son
+   padding uniforme (`.panel`) au profit d'un padding horizontal/bas propre à
+   ce panneau, la marge négative du bandeau rattrape l'écart pour toucher les
+   bords. « Périodes particulières » (tuile desktop, seule autre tuile visible
+   EN MÊME TEMPS que ce bandeau) change de couleur pour éviter le doublon —
+   voir #dashboard .dash-tuile-periodes plus bas. */
 #dashboard .priority-panel, #dashboard .priority-panel.has-pending {
   border: 1px solid var(--line); border-left: 3px solid var(--ink); background: var(--surface);
+  padding: 0 var(--sp-4) var(--sp-4) var(--sp-4);
 }
 #dashboard .priority-panel > .panel-heading-inline {
-  padding: .5rem .8rem; background: var(--surface-alt); border-bottom: 1px solid var(--line);
+  margin: 0 calc(-1 * var(--sp-4)) var(--sp-4) calc(-1 * var(--sp-4));
+  padding: .5rem var(--sp-4); background: var(--plum);
 }
-#dashboard .priority-panel h3 { font-size: .85rem; }
+#dashboard .priority-panel h3 { font-size: .85rem; color: #fff; }
+#dashboard .priority-panel .meta-etiquette { color: rgba(255, 255, 255, .75); }
 
 /* Liste à cocher « À faire » (refonte écran 1, 16/08/2026 — mockup) : une
    tâche cochée reste barrée le temps de la décocher par erreur (voir

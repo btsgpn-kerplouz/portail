@@ -123,35 +123,43 @@
                  est un point d'entrée pur (icône + libellé + pastille de
                  compteur), le contenu complet s'ouvre dans une modale (voir
                  #fraisDialog etc. et bindDashTuiles() dans app.js). -->
+            <!-- data-tile-key + poignée .tile-drag-handle (retour Martin, 23/08/2026) :
+                 réordonnancement des tuiles, voir activerReordonnancementTuiles() (app.js). -->
             <div class="dash-tuiles-grille">
-              <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
+              <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais" data-tile-key="frais">
                 <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
                 <span class="dash-tuile-label">Frais de déplacements</span>
                 <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
-              <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
+              <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes" data-tile-key="periodes">
                 <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-calendrier"></span></span>
                 <span class="dash-tuile-label">Périodes particulières</span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
-              <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
+              <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions" data-tile-key="reunions">
                 <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-reunion"></span></span>
                 <span class="dash-tuile-label">Réunions</span>
                 <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
-              <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
+              <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes" data-tile-key="devnotes">
                 <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-checklist"></span></span>
                 <span class="dash-tuile-label">Améliorations de l'appli</span>
                 <span id="devNotesBadge" class="dash-tuile-badge"></span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
-              <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
+              <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel" data-tile-key="materiel">
                 <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-loupe"></span></span>
                 <span class="dash-tuile-label">Emprunts matériels</span>
                 <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
-              <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission">
+              <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission" data-tile-key="mission">
                 <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-document"></span></span>
                 <span class="dash-tuile-label">Ordre de mission</span>
                 <span id="missionListBadge" class="dash-tuile-badge"></span>
+                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
               </button>
             </div>
           </div>
@@ -265,8 +273,12 @@
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
-          <details class="teacher-picker" id="weekMaskTeacherPicker">
-            <summary>Collègues affichés <span id="weekMaskTeacherPickerSummary"></span></summary>
+          <!-- Harmonisation (retour Martin, 23/08/2026) : « ici » fait écho à
+               « partout » sur la case du bandeau (js/auth.js) — réglage
+               INDÉPENDANT de celui du Référentiel (ci-dessous), voir
+               weekMaskTeacherFilters, app.js. -->
+          <details class="teacher-picker" id="weekMaskTeacherPicker" title="Réglage propre à cet écran (Planning hebdo) — n'affecte ni le Référentiel, ni la case « Voir mes collègues partout » du bandeau.">
+            <summary>Collègues affichés ici <span id="weekMaskTeacherPickerSummary"></span></summary>
             <div id="weekMaskTeacherChoices" class="checkbox-row"></div>
           </details>
           <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
@@ -467,8 +479,12 @@
               <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre → décembre</button>
               <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier → mai</button>
             </div>
-            <details class="teacher-picker" id="creneauxTeacherPicker">
-              <summary>Créneaux affichés <span id="creneauxTeacherPickerSummary"></span></summary>
+            <!-- Harmonisation (retour Martin, 23/08/2026) : « ici » fait écho à
+                 « partout » sur la case du bandeau (js/auth.js) — réglage
+                 INDÉPENDANT de celui du Planning hebdo (voir week-strip-bar),
+                 voir creneauxTeacherFilters, app.js. -->
+            <details class="teacher-picker" id="creneauxTeacherPicker" title="Réglage propre à cet écran (Référentiel · Créneaux type) — n'affecte ni le Planning hebdo, ni la case « Voir mes collègues partout » du bandeau.">
+              <summary>Créneaux affichés ici <span id="creneauxTeacherPickerSummary"></span></summary>
               <div id="creneauxTeacherChoices" class="checkbox-row"></div>
             </details>
           </div>
