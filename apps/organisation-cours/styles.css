@@ -248,7 +248,12 @@ html { scroll-padding-top: 6.4rem; scrollbar-gutter: stable; }
   flex-shrink: 0;
 }
 .atlas-backlink:hover { color: #fff; }
+#bannerMobileBack { background: none; border: none; cursor: pointer; padding: 0; min-height: 0; }
+#bannerMobileBack[hidden] { display: none; }
 .banner-inner h1 {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
   font-family: var(--font-display);
   color: #fff;
   font-size: 1.1rem;
@@ -370,6 +375,239 @@ html { scroll-padding-top: 6.4rem; scrollbar-gutter: stable; }
 main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 0 auto; }
 .view { display: none; }
 .active-view { display: block; }
+
+/* ---------- 6bis. Coquille mobile (écrans 14-21 du handoff) ---------- */
+/* Scission purement CSS, pas de détection JS (aucune matchMedia/innerWidth
+   n'existait avant, cf. organisation-cours-refonte-papier-technique-froid) :
+   sous 780px, le chrome desktop (.header-tabs + les 6 vues) disparaît au
+   profit du chrome mobile (nouvelles vues), et inversement au-dessus.
+   #missionView (écran 13/18) n'a ni l'une ni l'autre classe : il reste
+   commun aux deux, seul son confort tactile est ajusté ci-dessous. Le
+   mécanisme .view/.active-view (bindEvents) est réutilisé tel quel.
+   Retour de Martin (21/08/2026) : pas de barre basse permanente — Accueil
+   est le seul hub, atteint depuis les autres écrans par un simple
+   « ‹ Accueil » (showMobileScreen), voir index.html. */
+.mobile-only { display: none; }
+/* Logo de l'appli (22/08/2026) : même pictogramme que la tuile du portail de
+   centralisation (portail/index.html, tool--staff), pas de simples initiales
+   — repris tel quel (mêmes tracés SVG, même bleu --acc = --pt-app-organisation
+   #23458c) pour que l'app se reconnaisse d'un coup d'œil depuis le portail.
+   Visible desktop ET mobile (avant, réservé au mobile où le titre texte cède
+   sa place — cf. règle plus bas). */
+.banner-pictogram {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: var(--acc); color: #fff;
+}
+.banner-pictogram svg { width: 17px; height: 17px; }
+@media (max-width: 780px) {
+  .desktop-only { display: none !important; }
+  /* Les sections .view mobile gardent la bascule .active-view normale (une
+     seule visible à la fois). Sélecteur plus spécifique que
+     .mobile-only{display:none} du dessus, pour ne pas dépendre de l'ordre
+     des règles dans la feuille. */
+  .view.mobile-only { display: none; }
+  .view.mobile-only.active-view { display: block; }
+  main { padding: var(--sp-4) var(--sp-4) var(--sp-8); max-width: none; }
+  .mission-document { padding: var(--sp-4); }
+  .mission-field, .mission-field-block { min-height: 44px; }
+  /* Le bandeau desktop (back + titre flex:1 + statut, sur une ligne) casse en
+     colonne étroite : titre qui rétrécit en escalier au lieu de passer en
+     dessous. Empilé, dans l'ordre du DOM (retour/titre/statut/aide). */
+  .mission-topbar { flex-direction: column; align-items: flex-start; }
+  .mission-title { width: 100%; flex: none; }
+  /* Ajustements #6 (22/08/2026) : « ordre de mission - nouvel ordre de
+     mission » faisait doublon avec le nouveau bouton unique « ‹ Accueil » du
+     bandeau général (lui-même délégué à closeMissionView() sur cet écran,
+     cf. mobileGoBack) — retirés sur mobile uniquement, #missionView restant
+     partagé avec le desktop (Urgences), qui garde les deux. */
+  #missionBackButton, #missionTitle { display: none; }
+  /* Retour de Martin (21/08/2026) : le bandeau titre desktop (export/import,
+     année, statut de synchro en texte) prend trop de place sur téléphone —
+     ne garder que l'essentiel (retour portail, pictogramme, avatar/déconnexion,
+     bouton recharger). Retour du 22/08/2026 : ça tenait encore sur 2 lignes —
+     le titre texte cède la place à un pictogramme (voir .banner-pictogram,
+     index.html) et le bandeau est forcé sur une seule ligne (nowrap). */
+  .banner { padding: .4rem var(--sp-4); }
+  .banner-inner { flex-wrap: nowrap; gap: .5rem; }
+  .banner-data, .banner-year { display: none; }
+  .banner-sync span:not(.lien) { display: none; }
+  /* Le texte du titre reste dans le DOM pour les lecteurs d'écran (h1
+     toujours porteur du nom de l'appli) mais cède visuellement la place au
+     pictogramme — même recette que .visually-hidden. */
+  .banner-title-text {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+}
+
+/* Retour de Martin (ajustements #5, 22/08/2026) : grille à 2 colonnes de
+   gros boutons carrés plutôt qu'une pile verticale — plus de boutons tenant
+   sur un écran (Ma semaine, Urgences, À faire, Ordre de mission, Frais). */
+.mobile-home { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); padding-top: var(--sp-2); }
+.mobile-home-btn {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: 110px;
+  background: var(--surface); border: 1px solid var(--line);
+  padding: var(--sp-4);
+  font-size: .92rem; font-weight: 700; color: var(--ink);
+  text-align: center;
+}
+.mobile-home-btn:hover { background: var(--surface-alt); }
+.mobile-home-icon { display: flex; }
+.mobile-home-badge {
+  position: absolute; top: .4rem; right: .4rem;
+  font-family: var(--font-mono); font-size: .74rem; font-weight: 700;
+  color: var(--ink); background: #fff; padding: .1rem .45rem;
+}
+.mobile-home-badge.is-alert { color: var(--danger); }
+/* Ajustements #9 (22/08/2026) — Martin, remonté : un liseré de 3px sur 3
+   boutons seulement restait « on ne sait pas à quoi ça sert », même avec une
+   couleur cohérente ailleurs (rien à l'écran ne le dit). Sa proposition,
+   reprise telle quelle : CHAQUE bouton dans une couleur de fond DIFFÉRENTE,
+   texte et icône en blanc — plus de question de « signification », c'est un
+   repère spatial pur (comme des icônes d'appli), aucune explication requise.
+   6 teintes déjà existantes dans la palette (utilisées ailleurs comme
+   couleurs catégorielles d'UE — --clay/--water/--plum, cf. --gpn1/--gpn2),
+   pas de nouvelle couleur inventée. */
+.mobile-home-btn-semaine, .mobile-home-btn-urgences, .mobile-home-btn-afaire,
+.mobile-home-btn-mission, .mobile-home-btn-frais, .mobile-home-btn-materiel {
+  color: #fff; border-color: transparent;
+}
+.mobile-home-btn-semaine:hover, .mobile-home-btn-urgences:hover, .mobile-home-btn-afaire:hover,
+.mobile-home-btn-mission:hover, .mobile-home-btn-frais:hover, .mobile-home-btn-materiel:hover {
+  filter: brightness(.92);
+}
+/* Retour Martin (23/08/2026) : harmonisation des couleurs avec les tuiles du
+   Tableau de bord desktop pour les 3 concepts présents des deux côtés — Frais
+   (déjà --success partout), Emprunts matériels (--water, comme
+   .dash-tuile-materiel) et Ordre de mission (--acc, comme .dash-tuile-mission).
+   Semaine cède donc --acc à Mission et reprend --clay (libre côté mobile,
+   déjà utilisé par .dash-tuile-reunions côté desktop — jamais à l'écran en
+   même temps, aucun conflit) : les 6 boutons de l'accueil restent 6 teintes
+   distinctes entre elles. */
+.mobile-home-btn-semaine { background: var(--clay); }
+.mobile-home-btn-urgences { background: var(--danger); }
+.mobile-home-btn-afaire { background: var(--plum); }
+.mobile-home-btn-mission { background: var(--acc); }
+.mobile-home-btn-frais { background: var(--success); }
+.mobile-home-btn-materiel { background: var(--water); }
+
+/* Écrans 15/16/17/19/20/21 — chrome commun d'un écran mobile secondaire
+   (pas d'onglet permanent) : barre de retour + titre, puces de filtre. */
+/* Retour de Martin (22/08/2026) : cette zone d'en-tête (retour+titre, puces
+   de filtre) prenait trop de place au-dessus des créneaux — condensée pour
+   remonter le contenu utile. */
+/* Retour Martin (23/08/2026) : fixé sous le bandeau titre, même recette que
+   .mobile-filtres ci-dessous (même variable --hauteur-collante), plutôt que
+   de défiler avec le contenu de l'écran (perd sinon son utilité — bouton
+   retour, nav de semaine — dès qu'on descend dans une longue liste). */
+.mobile-topbar {
+  display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-1) 0 var(--sp-2);
+  position: sticky; top: var(--hauteur-collante, 2.6rem); z-index: 10; background: var(--paper);
+}
+/* button/.button (règle générale) remplit en --moss par défaut — un retour
+   « ‹ Accueil » doit rester un lien discret, pas un gros bouton plein. */
+.mobile-back { background: none; border: none; color: var(--acc); padding: 0; font-family: var(--font-mono); font-size: .8rem; min-height: 44px; display: flex; align-items: center; }
+.mobile-back:hover { background: none; color: var(--ink); }
+/* Écran 15 mobile — lien vers le menu « Faites » (retour de Martin,
+   22/08/2026) : discret, en pied de liste, même famille que .mobile-back. */
+.mobile-voir-faites {
+  background: none; border: none; color: var(--muted); padding: var(--sp-3) 0;
+  font-family: var(--font-mono); font-size: .74rem; min-height: 44px;
+  display: flex; align-items: center; width: 100%; justify-content: center;
+}
+.mobile-voir-faites:hover { color: var(--acc); background: none; }
+/* Ajustements #7 (22/08/2026) — même famille discrète que .mobile-voir-faites
+   (sans quoi button{} de base remplit en plein, un CTA trop fort pour un lien
+   secondaire en pied de liste). */
+.mobile-gerer-catalogue {
+  background: none; border: none; color: var(--muted); padding: var(--sp-3) 0;
+  font-family: var(--font-mono); font-size: .74rem; min-height: 44px;
+  display: flex; align-items: center; width: 100%; justify-content: center;
+}
+.mobile-gerer-catalogue:hover { color: var(--acc); background: none; }
+.mobile-topbar-title { margin: 0; font-size: 1.1rem; flex: 1; }
+/* Ajustements #5 (22/08/2026) : fixées sous le bandeau titre (même variable
+   --hauteur-collante que la barre collante desktop de Conception, mesurée en
+   JS — voir mesurerBandeauCollant — donc déjà juste pour la hauteur réduite
+   du bandeau mobile) plutôt que de défiler avec la liste. */
+.mobile-filtres {
+  display: flex; gap: .35rem; flex-wrap: nowrap; margin-bottom: var(--sp-2);
+  position: sticky; top: var(--hauteur-collante, 2.6rem); z-index: 10;
+  background: var(--paper); padding: .3rem 0;
+}
+/* Ajustements #6 (22/08/2026) : « à valider » n'a plus de bandeau/titre
+   propre au-dessus (retiré, doublon du bouton « ‹ Accueil » du bandeau
+   général) — les puces de filtre sont maintenant le tout premier élément de
+   l'écran ; on annule le padding-top de <main> pour qu'elles collent
+   vraiment au bandeau titre plutôt que de flotter en dessous avec un blanc. */
+#mobileAValider .mobile-filtres { margin-top: calc(-1 * var(--sp-4)); }
+.mobile-filtre-chip {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+  /* Touch-target 44px conservé (REGLES.md), icône seule désormais (pictogramme
+     plutôt que texte) : puce carrée, centrée, qui se partage la largeur. */
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center;
+  padding: 0; font-size: 1.05rem; min-height: 44px;
+}
+.mobile-filtre-chip.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+/* Ajustements #8 (22/08/2026) — les pictogrammes (chips de filtre + boutons
+   d'accueil) passent d'émojis couleur à des tracés SVG monochromes
+   (currentColor) : cf. ICON_SVG_PATHS/mobileIconMarkup() dans app.js.
+   23/08/2026 — la plupart deviennent des PNG 512px noir/blanc fournis par
+   Martin (img/pictos/), affichés via masque CSS (.mobile-icon-png) plutôt
+   qu'en <img> : le masque garde le même contrôle de couleur par
+   currentColor que les SVG restants (tout, monnaie), donc le même
+   contraste blanc sur fonds colorés sans dupliquer un jeu d'icônes par
+   couleur de fond. */
+.mobile-icon-svg, .mobile-icon-png { display: block; width: 20px; height: 20px; }
+.mobile-icon-png {
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: contain; mask-size: contain;
+}
+.picto-salle { -webkit-mask-image: url('img/pictos/salle.png'); mask-image: url('img/pictos/salle.png'); }
+.picto-loupe { -webkit-mask-image: url('img/pictos/loupe.png'); mask-image: url('img/pictos/loupe.png'); }
+.picto-pelle { -webkit-mask-image: url('img/pictos/pelle.png'); mask-image: url('img/pictos/pelle.png'); }
+.picto-voiture { -webkit-mask-image: url('img/pictos/voiture.png'); mask-image: url('img/pictos/voiture.png'); }
+.picto-reunion { -webkit-mask-image: url('img/pictos/reunion.png'); mask-image: url('img/pictos/reunion.png'); }
+.picto-calendrier { -webkit-mask-image: url('img/pictos/calendrier.png'); mask-image: url('img/pictos/calendrier.png'); }
+.picto-alerte { -webkit-mask-image: url('img/pictos/alerte.png'); mask-image: url('img/pictos/alerte.png'); }
+.picto-checklist { -webkit-mask-image: url('img/pictos/checklist.png'); mask-image: url('img/pictos/checklist.png'); }
+.picto-document { -webkit-mask-image: url('img/pictos/document.png'); mask-image: url('img/pictos/document.png'); }
+.mobile-filtre-chip .mobile-icon-svg, .mobile-filtre-chip .mobile-icon-png { width: 19px; height: 19px; }
+.mobile-home-icon .mobile-icon-svg, .mobile-home-icon .mobile-icon-png { width: 30px; height: 30px; stroke-width: 1.4; }
+.mobile-group-title { font-family: var(--font-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: var(--sp-3) 0 .25rem; }
+.mobile-group-title:first-child { margin-top: 0; }
+
+/* Écran 16 — Ma semaine mobile : mêmes .col-jour (voir plus haut) mais
+   empilés verticalement (agenda jour par jour) plutôt qu'en grille 5
+   colonnes comme sur le Tableau de bord desktop. */
+/* Retour de Martin (21/08/2026) : « encore trop de cadres dans des cadres ».
+   Plus de boîte de jour (.col-jour/.col-tete, cadre desktop) ni de conteneur
+   englobant bordé : un simple titre de jour (même patron que
+   .mobile-group-title de À valider) suivi à plat de la liste de cartes —
+   .carte reste le SEUL niveau de cadre. */
+.mobile-semaine-jours { display: flex; flex-direction: column; gap: var(--sp-1); }
+.mobile-jour-titre { font-family: var(--font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: var(--sp-1) 0 .15rem; }
+.mobile-jour-titre:first-child { margin-top: 0; }
+.mobile-jour-titre.est-aujourdhui { color: var(--acc); font-weight: 700; }
+#mobileSemaine .col-liste { padding: 0; margin-bottom: var(--sp-2); }
+
+/* Écran 17 — Une séance ouverte (mobile). */
+.mobile-seance-titre { margin: 0 0 .2rem; font-size: 1.15rem; }
+.mobile-seance-verbes { display: flex; gap: .5rem; margin: var(--sp-4) 0; flex-wrap: wrap; }
+.mobile-verbe-btn { flex: 1 1 auto; min-height: 44px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); font-weight: 700; font-size: .85rem; }
+.mobile-verbe-btn:hover { background: var(--surface-alt); }
+.mobile-verbe-btn.is-actif { background: var(--success); color: #fff; border-color: var(--success); }
+.mobile-seance-actions { margin-bottom: var(--sp-4); }
+.mobile-seance-bloc { margin-bottom: var(--sp-4); }
+.mobile-seance-bloc h3 { font-size: .82rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin: 0 0 .3rem; }
+.mobile-seance-bloc h3 small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.mobile-seance-bloc p { margin: 0; font-size: .9rem; white-space: pre-wrap; }
+.mobile-seance-bloc textarea { width: 100%; font: inherit; }
 
 .page-title { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-4); flex-wrap: wrap; }
 .page-title h2 { margin-bottom: .2rem; }
@@ -605,7 +843,7 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 }
 .modal.large-modal { width: min(1080px, calc(100vw - 2rem)); }
 .modal::backdrop { background: rgba(32, 43, 34, .45); }
-.modal form { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); max-height: calc(100vh - 3rem); overflow: auto; }
+.modal form, .modal .modal-body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); max-height: calc(100vh - 3rem); overflow: auto; }
 
 .modal-header, .modal-footer {
   display: flex; align-items: center; gap: var(--sp-3);
@@ -634,6 +872,15 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   .modal-footer .spacer { display: none; }
   .modal-footer button { flex: 1 1 100%; }
   .modal-footer button[type="submit"] { order: -1; }
+  /* Retour Martin (23/08/2026, Frais mobile) : le pied « collant » (sticky,
+     cf. règle générale .modal-header/.modal-footer plus haut) se plaque au
+     bas de l'écran dès l'ouverture d'un long formulaire (Déplacement en
+     compte 10 champs) — sur un petit écran, ça donne l'illusion que le
+     formulaire s'arrête à « Mots-clés » alors que Km/Taux/Statut/Total
+     restent cachés sous les boutons tant qu'on n'a pas fait défiler. Un pied
+     de page normal (pas collant) force à voir tout le formulaire au moins
+     une fois en le parcourant jusqu'au bout. */
+  .modal-footer { position: static; }
 }
 
 .form-section {
@@ -973,6 +1220,17 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
    lisible sur le pastel de la carte) au lieu du bleu générique. */
 .design-ue-pill.on-tint { border-color: var(--ue-deep, var(--acc)); color: var(--ue-deep, var(--acc)); background: var(--surface); }
 .design-ue-pill.on-tint.is-mine { background: var(--ue-deep, var(--acc)); border-color: var(--ue-deep, var(--acc)); color: #fff; }
+
+/* Pastille de promo teintée par semestre (Tableau de bord + Ma semaine mobile
+   — dashCarteSeance, partagée) : ajustements #5 (22/08/2026), remplace le mot
+   « GPN1 »/« GPN2 » nu dans la ligne meta. Couleur posée en style inline
+   (semesterColorOf) plutôt qu'en classe : 4 semestres, pas 4 classes CSS à
+   maintenir en double. */
+.carte-promo-pill {
+  font-family: var(--font-mono); font-size: .64rem; font-weight: 700;
+  padding: .05rem .3rem; background: var(--surface-alt); color: var(--ink-soft);
+  flex-shrink: 0;
+}
 
 .design-detail { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
 /* 17/08 — Martin veut que l'espace d'infos basiques de l'UE sélectionnée soit
@@ -1559,19 +1817,31 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 /* =====================================================================
    PLANNING SEMAINE — grille horaire opérationnelle
    ===================================================================== */
+/* Bug trouvé le 23/08/2026 : .week-bar-group/.week-bar-actions n'avaient
+   aucune règle de mise en page — la case « Ma trame », le sélecteur
+   « Collègues affichés » et le bouton d'export s'empilaient donc chacun sur
+   sa propre ligne (display:block par défaut) au lieu de tenir sur une seule
+   ligne compacte. */
+.week-bar-group { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
 .week-strip-bar .mask-toggle { white-space: nowrap; }
 
 .week-toolbar { gap: .5rem; }
 
 /* Bande de semaines (REGLES.md #22 — seul sélecteur de date de l'app). */
-.week-strip-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: 0 0 .4rem; }
+/* Retour Martin (23/08/2026) : remonte la barre dans le padding-haut de
+   <main> (même recette que .ruban-subtabs) — le Planning hebdo n'a pas de
+   titre de page au-dessus, ce padding est donc de l'espace perdu ici. */
+.week-strip-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin: calc(-1 * var(--sp-3)) 0 .4rem; }
 .week-strip-switch .promo-switch-btn { padding: .35rem .7rem; font-size: .72rem; }
 /* Ajustements #2 [E2.2] (18/08/2026) — une seule ligne qui défile
    horizontalement (au lieu d'une grille qui repassait sur 2-3 lignes pour
    caser toutes les semaines de la période) ; [E2.3] la semaine affichée est
    positionnée en 2e case visible au premier rendu (voir renderWeekStrip). */
+/* Retour Martin (23/08/2026) : « faire remonter la frise et le planning » —
+   marge resserrée (var(--sp-3) → var(--sp-2)) entre la bande de semaines et
+   la grille qui suit. */
 .week-strip {
-  display: flex; overflow-x: auto; gap: 2px; margin: 0 0 var(--sp-3);
+  display: flex; overflow-x: auto; gap: 2px; margin: 0 0 var(--sp-2);
 }
 .week-strip-tile {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -1933,6 +2203,13 @@ table { border-collapse: collapse; width: 100%; }
   padding-right: var(--sp-4); border-right: 1px solid var(--line-strong);
 }
 .ruban-subtab-pair:last-of-type { border-right: 0; padding-right: 0; }
+/* Retour Martin (23/08/2026) : au sein d'un binôme, les 2 sous-onglets se
+   suivaient sans aucune marque entre eux (seuls les binômes ENTRE eux sont
+   séparés par le filet vertical ci-dessus) — un point discret les distingue
+   désormais l'un de l'autre à l'intérieur d'un même binôme. */
+/* Retour Martin (23/08/2026) : le point médian passait inaperçu — plus
+   grand, plus foncé (--muted au lieu de --line-strong) et en gras. */
+.ruban-subtab-sep { color: var(--muted); font-size: 1.1rem; font-weight: 700; line-height: 1; }
 
 /* ---- Écran 8 — 4 sous-onglets (05/06/07/09/10) + recherche unifiée ----
    Ajustements #2 (18/08/2026, retour Martin) : cette barre doit être collée à
@@ -1975,8 +2252,7 @@ tr.repartition-sem-row td {
 /* ---- Créneaux de cours type (planning hebdo type) ---- */
 .creneaux-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
 .creneaux-toolbar-label { font-weight: 700; font-size: .88rem; color: var(--ink); }
-.creneaux-summary { font-size: .82rem; color: var(--ink-soft); }
-.creneaux-teacher-filter { margin-left: auto; font-size: .8rem; color: var(--ink-soft); display: flex; align-items: center; gap: .35rem; }
+.creneaux-toolbar #creneauxTeacherPicker { margin-left: auto; }
 .creneaux-period-switch { display: inline-flex; gap: .25rem; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 0; padding: .2rem; }
 .creneaux-period-switch button {
   background: transparent; color: var(--ink-soft); border: 0; padding: .4rem .9rem;
@@ -2132,7 +2408,8 @@ tr.repartition-sem-row td {
 .mission-remove-accompagnant { color: var(--danger); }
 
 .mission-transport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
-.mission-check { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: .88rem; }
+.mission-check { display: flex; align-items: flex-start; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: .88rem; }
+.mission-check input { margin-top: .2rem; flex-shrink: 0; }
 .mission-vehicule-de { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
 .mission-vehicule-de .mission-field { flex: 1; }
 
@@ -2155,7 +2432,19 @@ tr.repartition-sem-row td {
 
 @media (max-width: 700px) {
   .mission-document { padding: var(--sp-4); }
-  .mission-transport-grid { grid-template-columns: 1fr; }
+  /* Ajustements #9 (22/08/2026) — Martin : l'écran d'édition « différent du
+     gabarit », captures à l'appui. Le gabarit (retours/ODM_Gabarit.pdf) a 2
+     colonnes pour MOYENS DE TRANSPORTS (véhicule à gauche, vérifications à
+     droite) — cette règle les empilait en 1 colonne sur mobile, alors que
+     .mission-transport-grid en impression (MISSION_PRINT_CSS) reste bien à 2
+     colonnes : l'écran d'édition divergeait du gabarit ET de son propre PDF.
+     2 colonnes gardées, texte resserré pour que les libellés longs
+     s'enroulent proprement (.mission-check ci-dessus, align-items:flex-start).
+     .mission-signatures reste à 1 colonne : 3 cases à signer/écrire de front
+     sur ~350px de large seraient inutilisables, contrainte différente d'une
+     case à cocher qui encaisse le retour à la ligne. */
+  .mission-transport-grid { gap: var(--sp-3); }
+  .mission-check { font-size: .78rem; gap: .4rem; }
   .mission-signatures { grid-template-columns: 1fr; }
 }
 /* Cellule scindée gauche/droite (2 créneaux sur la même plage). Le conteneur est
@@ -2193,6 +2482,28 @@ tr.repartition-sem-row td {
 
 /* ---- Masque « créneaux type » sur le Planning hebdo (sobre, gris, lignes marquées) ---- */
 .mask-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; color: var(--ink-soft); cursor: pointer; }
+/* Sélecteur multi-collègues (Mes créneaux types + Planning hebdo, 23/08/2026)
+   — un <details> plutôt qu'un <select> : montrer plusieurs cases cochées à
+   la fois n'a pas d'équivalent simple en <select>. */
+.teacher-picker { position: relative; font-size: .82rem; }
+.teacher-picker summary {
+  cursor: pointer; list-style: none; color: var(--ink-soft); font-weight: 600;
+  padding: .3rem .6rem; border: 1px solid var(--line-strong); user-select: none;
+}
+.teacher-picker summary::-webkit-details-marker { display: none; }
+.teacher-picker summary::after { content: '▾'; margin-left: .35rem; font-size: .7rem; }
+.teacher-picker[open] summary::after { content: '▴'; }
+.teacher-picker summary span { font-family: var(--font-mono); color: var(--muted); font-weight: 500; }
+/* Retour Martin (23/08/2026) : ouvert à gauche (right:0) plutôt qu'à droite
+   (left:0) — ce sélecteur est toujours suivi d'un autre bouton (export PDF
+   du Planning hebdo, ou en bout de barre ailleurs) que le popover ouvert à
+   droite recouvrait. */
+.teacher-picker > .checkbox-row {
+  position: absolute; z-index: 5; top: calc(100% + 2px); right: 0; min-width: 12rem;
+  background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-md);
+  padding: .5rem; flex-direction: column; align-items: stretch; gap: .3rem;
+}
+.teacher-picker .checkbox-chip { justify-content: flex-start; border: 0; padding: .15rem 0; background: none; font-weight: 500; }
 .mask-toggle input { cursor: pointer; }
 /* Contours nets par bloc : côtés marqués partout, haut sur mask-head, bas sur
    mask-foot ; les cases internes fusionnent (pas de bord haut/bas). */
@@ -2210,6 +2521,10 @@ td.empty-slot.mask-slot:hover { background: rgba(96, 104, 118, 0.18); }
   display: block; font-family: var(--font-mono); font-size: .7rem; font-weight: 700;
   letter-spacing: .02em; color: rgba(52, 58, 74, 0.9); text-transform: uppercase; line-height: 1.1;
 }
+/* Chevauchement de créneaux type sans L/R (2 enseignants différents à la même
+   case) : étiquettes empilées plutôt qu'une seule visible (23/08/2026). */
+.mask-label-stack { display: flex; flex-direction: column; gap: .1rem; }
+.mask-label-stack .mask-label-item { font-size: .62rem; }
 .mask-slot .drop-hint { display: none; }
 .mask-slot:hover .drop-hint { display: inline-flex; }
 /* Masque scindé (2 créneaux type côte à côte) */
@@ -3025,6 +3340,27 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    réutilise .frais-table, seule la ligne cliquable est spécifique ici. */
 .frais-table tbody tr[data-edit-reunion] { cursor: pointer; }
 
+/* ---- Catalogue de matériel (ajustements #6, 22/08/2026) — encart Tableau de
+   bord : liste à 2 niveaux (type de matériel / identifiants individuels),
+   éditée directement ici pour alimenter les 2 menus en cascade du formulaire
+   d'emprunt. Volontairement sobre (bordures plates, pas de nouveau
+   composant) — même esprit que les autres encarts du tableau de bord. */
+.materiel-type-add-form { display: flex; gap: .5rem; margin: var(--sp-2) 0 var(--sp-3); }
+.materiel-type-add-form input { flex: 1; }
+.materiel-type-bloc { border: 1px solid var(--line); padding: var(--sp-3); margin-bottom: var(--sp-3); }
+.materiel-type-bloc:last-child { margin-bottom: 0; }
+.materiel-type-tete { display: flex; align-items: center; gap: .5rem; }
+.materiel-type-tete strong { font-size: .92rem; }
+.materiel-type-tete .meta { flex: 1; }
+.materiel-item-liste { list-style: none; margin: var(--sp-2) 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.materiel-item-liste li {
+  display: flex; align-items: center; gap: .2rem;
+  border: 1px solid var(--line); background: var(--surface-alt);
+  padding: .15rem .3rem .15rem .6rem; font-size: .82rem;
+}
+.materiel-item-add-form { display: flex; gap: .5rem; }
+.materiel-item-add-form input { flex: 1; }
+
 /* ---- Écran de connexion (avant que l'app ne soit visible) ----
    Réutilise les tokens du système de design ci-dessus plutôt que des couleurs
    ad hoc, pour que l'écran de connexion ait le même aspect que le reste. */
@@ -3089,16 +3425,25 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    Tout est préfixé par #dashboard : les autres onglets ne bougent pas.
    ===================================================================== */
 
-#dashboard {
+/* Bug trouvé le 22/08/2026 en vérifiant la densité de Ma semaine mobile
+   contre la maquette : ces jetons n'étaient définis QUE sur #dashboard (cf.
+   commentaire ci-dessus, jamais mis à jour quand .carte/.act ont été étendus
+   à #mobileSemaine/#mobileSeance) — une variable CSS invalide (non définie
+   dans ce scope) rend TOUTE la déclaration invalide, donc `background:
+   var(--niv-proche)` retombait transparent : les pastilles d'action
+   (« Ordre de mission », « À rattacher »…) étaient du texte blanc sur fond
+   transparent, invisibles, sur les deux écrans mobile qui les utilisent. */
+#dashboard, #mobileSemaine, #mobileSeance {
   --niv-retard: var(--danger);  /* #C0562B — REGLES.md #12 : alerte/échéance */
   --niv-proche: var(--amber);   /* #7a5b16 — réserve/incertitude, à anticiper */
   --niv-loin: var(--muted);     /* #6b6a5e — plus tard, neutre */
   --bleu-titre: var(--acc);
 }
 
-/* ---- Charpente : zone hebdomadaire puis zone mensuelle ---- */
+/* ---- Charpente : zone hebdomadaire (seule zone du Tableau de bord depuis
+   que les tuiles ont rejoint .dash-col-droite, retour du 23/08/2026 — plus
+   de zone mensuelle séparée par un filet). ---- */
 #dashboard .zone-haute { margin-bottom: var(--sp-6); }
-#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-4); }
 #dashboard .zone-titre {
   margin: 0 0 var(--sp-3); font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
   letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2);
@@ -3131,19 +3476,14 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 /* Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine de « Ma
    semaine » : deux boutons discrets, pas de calendrier ni de champ de saisie. */
-#dashboard .dash-semaine-nav { display: flex; gap: .25rem; }
-#dashboard .dash-week-nav-btn {
+#dashboard .dash-semaine-nav, #mobileSemaine .dash-semaine-nav { display: flex; gap: .25rem; }
+#dashboard .dash-week-nav-btn, #mobileSemaine .dash-week-nav-btn {
   min-height: 0; width: 1.6rem; height: 1.6rem; padding: 0; line-height: 1;
   font-size: .9rem; background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line-strong);
 }
-#dashboard .dash-week-nav-btn:hover:not(:disabled) { background: var(--surface-alt); color: var(--moss-dark); }
-#dashboard .dash-week-nav-btn:disabled { opacity: .35; cursor: default; }
+#dashboard .dash-week-nav-btn:hover:not(:disabled), #mobileSemaine .dash-week-nav-btn:hover:not(:disabled) { background: var(--surface-alt); color: var(--moss-dark); }
+#dashboard .dash-week-nav-btn:disabled, #mobileSemaine .dash-week-nav-btn:disabled { opacity: .35; cursor: default; }
 #dashboard .bloc-lien:hover, #dashboard .bloc-lien:focus-visible { color: var(--moss-dark); }
-#dashboard .bloc-legende {
-  display: inline-flex; align-items: center; gap: .3rem; font-family: var(--font-mono);
-  font-size: .6875rem; color: var(--niv-retard); white-space: nowrap;
-}
-#dashboard .bloc-legende-puce { width: 9px; height: 9px; flex: 0 0 auto; background: var(--danger-soft); border: 1px solid #e0bfa4; border-left: 3px solid var(--danger); }
 #dashboard .bloc-vide { padding: var(--sp-3) .8rem; margin: 0; color: var(--muted); font-size: .75rem; }
 #dashboard .backlog-panel .badge-groupe { margin-left: auto; }
 
@@ -3201,75 +3541,181 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    #16 : la structure reste plus foncée que le fond général). ---- */
 #dashboard .bande { display: grid; gap: 1px; background: var(--filet-interne, #ece8db); }
 #dashboard .bande-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-#dashboard .col-jour { background: var(--surface); padding: 0; min-width: 0; display: flex; flex-direction: column; }
-#dashboard .col-tete {
+/* Sélecteurs étendus à #mobileSemaine (écran 16, refonte mobile 21/08/2026) :
+   même carte/colonne-jour que « Ma semaine » desktop (dashContenuSemaine/
+   dashColonneJour/dashCarteSeance sont réutilisées telles quelles côté JS),
+   simple ajout de sélecteur plutôt que dupliquer ces ~25 règles. */
+#dashboard .col-jour, #mobileSemaine .col-jour { background: var(--surface); padding: 0; min-width: 0; display: flex; flex-direction: column; }
+#dashboard .col-tete, #mobileSemaine .col-tete {
   display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap;
   padding: .3rem .5rem; background: var(--paper); border-bottom: 1px solid var(--filet-interne, #ece8db);
 }
-#dashboard .col-nom { font-family: var(--font-mono); font-weight: 600; font-size: .68rem; color: var(--ink-soft); }
-#dashboard .col-date { font-family: var(--font-mono); font-size: .625rem; color: var(--muted-2); }
-#dashboard .col-compte {
+#dashboard .col-nom, #mobileSemaine .col-nom { font-family: var(--font-mono); font-weight: 600; font-size: .68rem; color: var(--ink-soft); }
+#dashboard .col-date, #mobileSemaine .col-date { font-family: var(--font-mono); font-size: .625rem; color: var(--muted-2); }
+#dashboard .col-compte, #mobileSemaine .col-compte {
   margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
   color: var(--muted); background: var(--surface-alt); padding: 0 .4rem;
 }
-#dashboard .col-vide { margin: 0; padding: .5rem; font-size: .72rem; color: var(--muted-2); }
-#dashboard .col-vide-libre { display: flex; flex-direction: column; gap: .25rem; border: 1px dashed var(--moss-line); padding: .4rem .5rem; margin: .4rem; }
-#dashboard .col-vide-lien { font-size: .72rem; color: var(--acc); font-weight: 600; cursor: pointer; }
-#dashboard .col-periode {
+#dashboard .col-vide, #mobileSemaine .col-vide { margin: 0; padding: .5rem; font-size: .72rem; color: var(--muted-2); }
+#dashboard .col-vide-libre, #mobileSemaine .col-vide-libre { display: flex; flex-direction: column; gap: .25rem; border: 1px dashed var(--moss-line); padding: .4rem .5rem; margin: .4rem; }
+#dashboard .col-vide-lien, #mobileSemaine .col-vide-lien { font-size: .72rem; color: var(--acc); font-weight: 600; cursor: pointer; }
+#dashboard .col-periode, #mobileSemaine .col-periode {
   margin: .3rem .5rem 0; padding: .05rem .45rem;
   border-left: 2px solid var(--ink-soft); color: var(--ink-soft);
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 600;
 }
 
 /* « Aujourd'hui » : bandeau teinté dans l'accent, comme la maquette (#dde4f2). */
-#dashboard .col-jour.est-aujourdhui .col-tete { background: #dde4f2; border-bottom-color: #c7d5ec; }
-#dashboard .col-jour.est-aujourdhui .col-nom { color: var(--moss-dark); }
-#dashboard .col-jour.est-aujourdhui .col-date { color: #4a68a0; }
-#dashboard .col-jour.est-passe .col-nom, #dashboard .col-jour.est-passe .col-date { color: var(--muted-2); }
-#dashboard .col-jour.est-passe .carte-titre { color: var(--muted); }
+#dashboard .col-jour.est-aujourdhui .col-tete, #mobileSemaine .col-jour.est-aujourdhui .col-tete { background: #dde4f2; border-bottom-color: #c7d5ec; }
+#dashboard .col-jour.est-aujourdhui .col-nom, #mobileSemaine .col-jour.est-aujourdhui .col-nom { color: var(--moss-dark); }
+#dashboard .col-jour.est-aujourdhui .col-date, #mobileSemaine .col-jour.est-aujourdhui .col-date { color: #4a68a0; }
+#dashboard .col-jour.est-passe .col-nom, #mobileSemaine .col-jour.est-passe .col-nom, #dashboard .col-jour.est-passe .col-date, #mobileSemaine .col-jour.est-passe .col-date { color: var(--muted-2); }
+#dashboard .col-jour.est-passe .carte-titre, #mobileSemaine .col-jour.est-passe .carte-titre { color: var(--muted); }
 
 /* ---- La carte : une vraie tuile bordée, liseré gauche = échéance (REGLES.md
    #5, adapté : le liseré porte l'urgence plutôt qu'une couleur de séquence,
    le rendu actuel ne trace pas encore la couleur de séquence jusqu'ici). ---- */
-#dashboard .col-liste { list-style: none; margin: 0; padding: .35rem; display: flex; flex-direction: column; gap: .3rem; }
-#dashboard .carte {
+#dashboard .col-liste, #mobileSemaine .col-liste { list-style: none; margin: 0; padding: .35rem; display: flex; flex-direction: column; gap: .3rem; }
+/* Retour Martin (23/08/2026) : le fond teinté (ambre/rouge) disparaît — fond
+   blanc partout, l'urgence se lit désormais au CADRE entier (même épaisseur
+   3px que l'ancien liseré gauche), pas juste sur la tranche gauche. */
+#dashboard .carte, #mobileSemaine .carte {
   display: flex; flex-direction: column; gap: .1rem;
-  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-strong);
+  background: var(--surface); border: 3px solid var(--line-strong);
   padding: .3rem .45rem; min-height: 40px; cursor: pointer;
 }
-#dashboard .carte:hover { background: var(--surface-alt); }
-#dashboard .carte:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
-#dashboard .carte-heure { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
-#dashboard .carte-titre { font-size: .8125rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
-#dashboard .carte-meta { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
-#dashboard .carte-teachers.design-ue-pills { gap: .2rem; }
-#dashboard .carte-teachers .design-ue-pill { font-size: .58rem; padding: 0 .22rem; }
-#dashboard .carte-actions { display: flex; flex-wrap: wrap; gap: .22rem .3rem; margin-top: .3rem; }
-#dashboard .carte-tete { display: flex; align-items: center; justify-content: space-between; gap: .4rem; flex-wrap: wrap; }
-#dashboard .carte-tete .carte-actions { margin-top: 0; }
+#dashboard .carte:hover, #mobileSemaine .carte:hover { background: var(--surface-alt); }
+#dashboard .carte:focus-visible, #mobileSemaine .carte:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+#dashboard .carte-heure, #mobileSemaine .carte-heure { font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
+#dashboard .carte-titre, #mobileSemaine .carte-titre { font-size: .8125rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
+#dashboard .carte-meta, #mobileSemaine .carte-meta, #mobileSeance .carte-meta { font-family: var(--font-mono); font-size: .6875rem; color: var(--muted); }
+#dashboard .carte-teachers.design-ue-pills, #mobileSemaine .carte-teachers.design-ue-pills { gap: .2rem; }
+#dashboard .carte-teachers .design-ue-pill, #mobileSemaine .carte-teachers .design-ue-pill { font-size: .58rem; padding: 0 .22rem; }
+#dashboard .carte-actions, #mobileSemaine .carte-actions, #mobileSeance .carte-actions { display: flex; flex-wrap: wrap; gap: .22rem .3rem; margin-top: .3rem; }
+#dashboard .carte-tete, #mobileSemaine .carte-tete { display: flex; align-items: center; justify-content: space-between; gap: .4rem; flex-wrap: wrap; }
+#dashboard .carte-tete .carte-actions, #mobileSemaine .carte-tete .carte-actions { margin-top: 0; }
 
-/* Le liseré porte le délai — c'est lui qui se lit de loin. */
-#dashboard .carte.a-traiter { border-left-color: var(--niv-proche); background: var(--reserve-fond, var(--amber-soft)); }
-#dashboard .carte.a-traiter .carte-heure { color: var(--niv-proche); }
-#dashboard .carte.est-urgent { border-left-color: var(--niv-retard); background: var(--danger-soft); }
-#dashboard .carte.est-urgent .carte-heure { color: var(--niv-retard); }
+/* Ajustements #7 (22/08/2026) — dashCarteSeance/dashCarteReunion regroupent
+   désormais le texte dans .carte-corps et les pastilles (promo/initiales)
+   dans .carte-pastilles. Desktop : on aplatit les deux wrappers
+   (display:contents, invisibles pour la mise en page) et on rejoue l'ordre
+   d'origine par `order` — rendu strictement identique à avant, déjà validé
+   dans les tours précédents, pas à retoucher sans raison. */
+#dashboard .carte-corps, #dashboard .carte-pastilles { display: contents; }
+#dashboard .carte-heure { order: 0; }
+#dashboard .carte-titre { order: 1; }
+/* Retour Martin (23/08/2026) : promo/UE/enseignants regroupés sur une seule
+   ligne (.carte-ligne2, généré par dashCarteSeance) — l'ancien .carte-meta
+   texte seul et les pastilles .carte-pastilles (promo/.carte-teachers,
+   colonne dédiée) restent dans le HTML pour MOBILE (#mobileSemaine, chrome
+   inchangé, plusieurs tours d'ajustements #7/#9 déjà validés dessus) mais
+   masqués ici, leur contenu étant repris dans .carte-ligne2. */
+#dashboard .carte-meta, #dashboard .carte-promo-pill, #dashboard .carte-teachers { display: none; }
+#dashboard .carte-ligne2 {
+  order: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem;
+  font-family: var(--font-mono); font-size: .6875rem; color: var(--muted);
+}
+#dashboard .carte-ligne2 .carte-promo-pill { display: inline-flex; }
+/* Mobile garde sa colonne .carte-pastilles dédiée (inchangée) : .carte-ligne2
+   n'a pas de règle d'affichage propre à cette échelle, donc masqué
+   explicitement pour ne pas dupliquer promo/UE/enseignants en plus de la
+   colonne de droite. */
+#mobileSemaine .carte-ligne2, #mobileSeance .carte-ligne2 { display: none; }
+/* Actions repoussées en bas à droite de la tuile (retour Martin, 23/08/2026 —
+   « beaucoup d'espace côté droit ») : dernière ligne de la carte (déjà en
+   bas, .carte étant en column) désormais alignée à droite plutôt qu'à
+   gauche. */
+#dashboard .carte-actions { order: 3; justify-content: flex-end; }
+
+/* Le cadre porte le délai — c'est lui qui se lit de loin (fond toujours
+   blanc, cf. règle de base ci-dessus). Desktop : cadre ENTIER (tuiles
+   séparées). Mobile : seule la tranche gauche (liste continue, tuiles qui se
+   touchent — .carte y redéfinit border-right/-bottom en filet neutre fixe,
+   cf. plus bas ; les teinter aussi n'aurait pas de sens dans une liste).
+   Retour Martin (23/08/2026) : --niv-proche (--amber, #7a5b16) lisait trop
+   marron en cadre plein — --clay (#c08a12) directement, plus nettement
+   orange. Décalé volontairement de --niv-proche, qui reste --amber pour le
+   texte/les pastilles pleines ailleurs (contraste blanc dessus déjà
+   validé, --clay serait trop clair pour du texte blanc). */
+#dashboard .carte.a-traiter { border-color: var(--clay); }
+#mobileSemaine .carte.a-traiter { border-left-color: var(--clay); }
+#dashboard .carte.a-traiter .carte-heure, #mobileSemaine .carte.a-traiter .carte-heure { color: var(--clay); }
+/* Retour Martin (23/08/2026) : léger fond rouge pour accentuer la
+   distinction avec le cadre orange (.a-traiter, resté blanc) — desktop
+   seulement, mobile garde le fond blanc partout (liste continue, un aplat
+   par ligne romprait la continuité visuelle). */
+#dashboard .carte.est-urgent { border-color: var(--niv-retard); background: var(--danger-soft); }
+#mobileSemaine .carte.est-urgent { border-left-color: var(--niv-retard); }
+#dashboard .carte.est-urgent .carte-heure, #mobileSemaine .carte.est-urgent .carte-heure { color: var(--niv-retard); }
+/* Ajustements #7 (22/08/2026) — Martin : « au survol seule la première tuile
+   réagit ». En cause : .a-traiter/.est-urgent posent un fond (règles
+   ci-dessus, même spécificité que :hover mais après elle dans la feuille) qui
+   l'emportait sur le survol générique — ajouté explicitement ici. */
+#dashboard .carte.a-traiter:hover, #mobileSemaine .carte.a-traiter:hover,
+#dashboard .carte.est-urgent:hover, #mobileSemaine .carte.est-urgent:hover { filter: brightness(.97); }
 /* Une réunion n'est pas une action : liseré pointillé, choix validé en revue. */
-#dashboard .carte.est-reunion { border-left: 2px dotted var(--muted); background: var(--surface); }
+/* Corrigé (23/08/2026) : depuis le passage au cadre entier (.carte, plus
+   haut), ne teindre que border-left ici laissait les 3 autres côtés en gris
+   plein (hérité de la base) — mélange solide/pointillé involontaire. Cadre
+   pointillé entier sur desktop ; mobile garde sa tranche gauche seule (même
+   raison que a-traiter/est-urgent : liste continue, tuiles qui se touchent). */
+#dashboard .carte.est-reunion { border: 2px dotted var(--muted); background: var(--surface); }
+#mobileSemaine .carte.est-reunion { border-left: 2px dotted var(--muted); background: var(--surface); }
 
 /* ---- Les pastilles : pleines, texte clair ---- */
-#dashboard .act {
+/* Retour Martin (23/08/2026) : une pastille purement informative (réunion,
+   période, à placer, à rattacher) ne doit plus ressembler à un bouton — plat
+   par défaut. Seules celles qui déclenchent vraiment une action (.act-toggle,
+   ci-dessous : case à cocher salle/véhicule/matériel, ou bouton ordre de
+   mission) redeviennent une pastille pleine. */
+#dashboard .act, #mobileSemaine .act, #mobileSeance .act {
   display: inline-flex; align-items: center;
   font-family: var(--font-mono); font-size: .6875rem; font-weight: 700;
   padding: .14rem .5rem; white-space: nowrap;
+  background: none; border: 1px solid var(--line-strong); color: var(--ink-soft);
+}
+#dashboard .act-toggle, #mobileSemaine .act-toggle, #mobileSeance .act-toggle {
   background: var(--niv-proche); color: #fff; border: 0;
 }
-#dashboard .act-urgent { background: var(--niv-retard); }
-/* Ni une échéance, ni une action : gris dans tous les cas. */
-#dashboard .act-reunion, #dashboard .act-periode { background: var(--niv-loin); }
+/* Retour Martin (23/08/2026) : « À rattacher » reste informatif (pas de
+   fond plein, cf. règle .act de base), mais reprend la couleur amber
+   (--niv-proche) plutôt que le gris neutre, pour s'harmoniser avec le reste
+   du code couleur « à traiter » de la tuile. */
+#dashboard .act-rattacher, #mobileSemaine .act-rattacher, #mobileSeance .act-rattacher {
+  border-color: var(--niv-proche); color: var(--niv-proche);
+}
+#dashboard .act-urgent, #mobileSemaine .act-urgent, #mobileSeance .act-urgent { background: var(--niv-retard); }
 /* Retours 17/08/2026 — réservation faite / ordre de mission envoyé : vert,
    pour que « Ma semaine » et « Les deux semaines suivantes » le confirment
    au lieu de simplement faire disparaître l'étiquette. */
-#dashboard .act-fait { background: var(--success); }
+#dashboard .act-fait, #mobileSemaine .act-fait, #mobileSeance .act-fait { background: var(--success); }
+/* Retour de Martin (22/08/2026, vérif densité vs maquette 16) : sur mobile,
+   une échéance déjà résolue n'a plus besoin du même poids visuel qu'une
+   échéance encore à traiter — pastille pleine remplacée par un texte léger
+   « ✓ … », comme la maquette. Desktop non touché (pastille pleine gardée,
+   déjà validée dans les tours précédents). */
+#mobileSemaine .act.act-fait, #mobileSeance .act.act-fait {
+  background: none; color: var(--success); padding: 0; font-weight: 600;
+}
+#mobileSemaine .act.act-fait::before, #mobileSeance .act.act-fait::before { content: '✓'; margin-right: .3em; }
+/* Retour Martin (23/08/2026) : salle/véhicule/matériel se cochent aussi
+   directement depuis la carte (label + case cachée, voir dashEtiquettes()),
+   plus seulement depuis la pile Urgences — même étiquette, juste cliquable. */
+.act-toggle { cursor: pointer; }
+.act-toggle:hover { filter: brightness(1.1); }
+/* :has(:focus-visible) pour la case cachée (salle/véhicule/matériel) ;
+   :focus-visible directement pour le <button> (ordre de mission), qui n'a
+   pas d'enfant focusable. */
+.act-toggle:has(:focus-visible), button.act-toggle:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+/* Bascule véhicule établissement ↔ personnel depuis la carte (23/08/2026) —
+   discrète (pointillé, pas de fond) : action secondaire, pas l'action
+   principale de la pastille voisine. Même esprit que .urgence-bascule. */
+.act-bascule {
+  display: inline-flex; align-items: center; font-family: var(--font-mono);
+  font-size: .6875rem; font-weight: 500; padding: .13rem .4rem;
+  color: var(--muted); border: 1px dashed var(--line-strong); background: none; cursor: pointer;
+}
+.act-bascule:hover, .act-bascule:focus-visible { color: var(--ink); background: var(--moss-soft); border-color: var(--moss-line); outline: none; }
 
 /* ---- Ce qui n'a pas de créneau cette semaine : urgent, donc rouge ---- */
 #dashboard .bande-sans-creneau { padding: .6rem .8rem; border-top: 1px solid var(--line); }
@@ -3297,6 +3743,74 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .bande-compacte .col-vide-libre { margin: .25rem; padding: .25rem .35rem; }
 #dashboard .bande-compacte .col-vide-lien { font-size: .62rem; }
 
+/* Retour de Martin (22/08/2026) : les tuiles de #mobileSemaine (fond teinté,
+   padding large — cf. règles .carte ci-dessus, partagées avec les colonnes
+   desktop) prenaient trop de place à l'écran, pas assez de créneaux visibles
+   sans défiler. Condensées en lignes plates avec liseré de couleur au lieu
+   d'un fond plein, à la manière de la maquette 16 (screenshots-hd) — mêmes
+   règles .carte/.col-liste que le desktop, seule cette surcouche change (même
+   spécificité, gagne par ordre d'apparition : ne touche pas #dashboard). */
+/* Ajustements #5 (22/08/2026) : « de la place à gauche et à droite » — les
+   tuiles restaient pleine largeur même pour un contenu court.
+   Ajustements #6 (22/08/2026) — retour de Martin : regrouper TOUTES les
+   séances d'un jour en lignes de ~3 (comme #5 le faisait) cassait les cas où
+   les créneaux se suivent dans le temps (ex. vendredi 18/09) — deux séances
+   SUCCESSIVES doivent s'empiler verticalement en pleine largeur, seules deux
+   séances réellement au MÊME horaire peuvent se partager une ligne. Le
+   regroupement se fait donc côté JS (clusterSeancesChevauchantes, dans
+   renderMobileSemaine) : chaque `.col-liste-ligne` ne contient que des
+   séances simultanées ; `.col-liste` empile ces lignes verticalement, chaque
+   `.carte` se partage à parts égales SA ligne (1 = pleine largeur, 2 = moitié
+   chacune, en se touchant — accord explicite de Martin). Les tuiles gagnent
+   aussi toute la largeur de l'écran (marge négative = padding de <main>). */
+#mobileSemaine .col-liste { flex-direction: column; flex-wrap: nowrap; gap: .3rem; margin-left: calc(-1 * var(--sp-4)); margin-right: calc(-1 * var(--sp-4)); }
+#mobileSemaine .col-liste-ligne { display: flex; flex-direction: row; gap: 0; }
+#mobileSemaine .carte {
+  flex: 1 1 0; min-width: 0;
+  flex-direction: row; align-items: stretch; gap: .4rem;
+  padding: .3rem var(--sp-4); min-height: 0;
+  background: var(--surface); border: 0; border-left: 3px solid var(--line-strong);
+  border-right: 1px solid var(--filet-interne, #ece8db);
+  border-bottom: 1px solid var(--filet-interne, #ece8db);
+}
+/* Retour Martin (23/08/2026) : même code couleur cadre/fond qu'en desktop —
+   les 3 côtés visibles (gauche 3px + droite/bas 1px, cf. règle .carte
+   ci-dessus) reprennent la couleur d'urgence plutôt que le seul liseré
+   gauche ; fond blanc pour « à traiter », léger lavis rouge pour urgent
+   (--danger-soft, identique à desktop). */
+#mobileSemaine .carte.a-traiter { border-color: var(--clay); background: var(--surface); }
+#mobileSemaine .carte.est-urgent { border-color: var(--niv-retard); background: var(--danger-soft); }
+#mobileSemaine .carte-corps {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 .5rem;
+}
+#mobileSemaine .carte-heure { flex: 0 0 auto; }
+#mobileSemaine .carte-titre { flex: 1 1 auto; }
+#mobileSemaine .carte-meta { flex-basis: 100%; order: 2; }
+/* `order` (pas la position dans le DOM) fait tenir un « ✓ … » allégé sur la
+   MÊME ligne que l'heure/le titre quand la place le permet (cas courant :
+   plus rien à faire sur cette carte) — la carte gagne alors une ligne
+   entière. Une vraie pastille encore en attente, plus longue, ne trouvera
+   simplement pas la place et repassera seule à la ligne suivante (flex-wrap
+   naturel) : aucune dégradation dans le cas chargé. */
+#mobileSemaine .carte-actions { order: 1; margin-top: 0; }
+/* Ajustements #7 (22/08/2026) — Martin : « réserver la partie droite des
+   tuiles pour les pastilles promo (en haut à droite) et initiales (en bas à
+   droite) », qui se perdaient mêlées au texte. Colonne dédiée, hauteur de la
+   carte (align-items:stretch ci-dessus).
+   Ajustements #9 (22/08/2026) — Martin : « la pastille initiales passe sous
+   la pastille promo ». Cause : margin-top:auto poussait les initiales tout
+   en BAS de la colonne, hauteur de la carte entière (align-items:stretch) —
+   sur une carte haute (titre long sur 2 lignes, action qui passe à la ligne),
+   ça les envoyait loin sous la pastille promo, au ras du bas de la tuile,
+   au lieu de rester juste en dessous d'elle comme prévu. Simple empilement
+   sans poussée désormais : les initiales suivent directement la promo, quelle
+   que soit la hauteur de la carte. */
+#mobileSemaine .carte-pastilles {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end;
+  gap: .25rem; padding-top: .05rem;
+}
+
 /* ---- Urgences : pile fusionnée salle/véhicule/matériel/ordre de mission,
    REGLES.md #25 — liseré gauche 3px alerte, en-tête teinté, chaque ligne
    finit par un verbe. ---- */
@@ -3318,78 +3832,350 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 #dashboard .urgences-sous { font-size: .7rem; color: var(--alerte-fort, #8c3a15); flex-basis: 100%; }
 @media (min-width: 640px) { #dashboard .urgences-sous { flex-basis: auto; } }
-#dashboard .urgence-liste { display: flex; flex-direction: column; }
-#dashboard .urgence-row {
-  display: flex; align-items: center; gap: .6rem; padding: .5rem .8rem; border-bottom: 1px solid var(--filet-interne, #ece8db);
+/* Retour de Martin (22/08/2026) : ces règles ne visaient que #dashboard —
+   #mobileAValider/#mobileFaites (écrans 15 mobile) affichaient donc les
+   mêmes lignes complètement nues (pas de bordure, pas d'espacement, cases à
+   cocher superposées au texte), d'où « difficile à lire, on ne distingue pas
+   les tâches ». Étendu aux deux listes mobile avec :is(). */
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-liste { display: flex; flex-direction: column; }
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-row {
+  display: flex; align-items: center; gap: .5rem; padding: .6rem .8rem; min-height: 44px;
+  border-bottom: 1px solid var(--filet-interne, #ece8db);
   flex-wrap: wrap; cursor: pointer;
 }
-#dashboard .urgence-row:hover { background: var(--surface-alt); }
-#dashboard .urgence-row:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
-#dashboard .urgence-row.est-fait:hover { background: var(--success-soft); filter: brightness(.97); }
-#dashboard .urgence-type {
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-row:hover { background: var(--surface-alt); }
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-row:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-row.est-fait:hover { background: var(--success-soft); filter: brightness(.97); }
+/* Ajustements #7 (22/08/2026) — Martin : « on ne distingue pas assez bien les
+   tuiles entre elles ». Il manquait le fond teinté que .carte porte déjà pour
+   ses propres états a-traiter/est-urgent (maquette 15/20 : bandeau « cette
+   semaine »/« à déclarer » sur fond pêche) — ligne encore active.
+   Ajustements #8 (22/08/2026) — Martin, très remonté : « fond des tuiles en
+   blanc COMME DANS MA SEMAINE ». #mobileSemaine a TOUJOURS un fond blanc,
+   seul le liseré gauche porte la couleur — #7 avait teinté le fond partout à
+   tort : corrigé pour #mobileAValider/#mobileFaites.
+   Ajustements #9 (22/08/2026) — Martin : les tuiles restaient « encore plus
+   grandes », « suis la maquette » (15-mobile-a-valider). Relecture fidèle de
+   cette maquette : le fond pêche n'y est PAS une propriété de chaque ligne
+   selon son délai — c'est le groupe « CETTE SEMAINE » ENTIER (titre + toutes
+   ses lignes) qui est teinté, « PLUS TARD » reste blanc quel que soit le
+   délai de ses lignes. Bascule donc de `.urgence-row.est-urgent` vers
+   `.mobile-urgence-groupe.est-imminent` (cf. renderMobileAValider) : la
+   couleur individuelle par ligne (liseré + texte du délai) reste, seul le
+   fond change de porteur. #dashboard/#mobileFrais non concernés (scope
+   mobile uniquement), gardent le fond teinté par ligne existant. */
+:is(#dashboard, #mobileFrais) .urgence-row.est-urgent,
+:is(#dashboard, #mobileFrais) .urgence-row.a-declarer { background: var(--danger-soft); }
+:is(#dashboard, #mobileFrais) .urgence-row.est-urgent:hover,
+:is(#dashboard, #mobileFrais) .urgence-row.a-declarer:hover { filter: brightness(.97); }
+:is(#mobileAValider, #mobileFaites) .urgence-row { border-left: 3px solid var(--line-strong); background: var(--surface); }
+:is(#mobileAValider, #mobileFaites) .urgence-row.est-urgent { border-left-color: var(--niv-retard); }
+/* .mobile-group-title:first-child (règle générique plus haut) ne zéro son
+   margin-top que pour le tout premier titre de l'écran : chaque groupe ayant
+   maintenant son propre conteneur, son h3 est TOUJOURS :first-child de CE
+   conteneur — l'espacement entre « Cette semaine » et « Plus tard » doit
+   donc être repris sur le conteneur lui-même. */
+.mobile-urgence-groupe + .mobile-urgence-groupe { margin-top: var(--sp-3); }
+.mobile-urgence-groupe.est-imminent { background: var(--danger-soft); margin-left: calc(-1 * var(--sp-4)); margin-right: calc(-1 * var(--sp-4)); padding: 0 var(--sp-4); }
+.mobile-urgence-groupe.est-imminent .mobile-group-title { color: var(--alerte-fort, #8c3a15); }
+.mobile-urgence-groupe.est-imminent .urgence-row { background: none; border-bottom-color: rgba(192, 86, 43, .15); }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-type {
   flex: 0 0 96px; font-family: var(--font-mono); font-size: .58rem; font-weight: 600;
   letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
-#dashboard .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
-#dashboard .urgence-delai.est-urgent { color: var(--danger); }
-#dashboard .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-delai.est-urgent { color: var(--danger); }
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
 /* Retours #3 (18-19/08/2026) — pastilles initiales, ligne plate (pas de fond
    coloré ici : contexte lié à la séance/UE générique) → style bleu habituel. */
-#dashboard .urgence-teachers { flex: 0 0 auto; }
-#dashboard .urgence-detail {
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-teachers { flex: 0 0 auto; }
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-detail {
   flex: 1 1 200px; min-width: 0; font-size: .78rem; color: var(--ink-soft);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  white-space: normal;
 }
-#dashboard .urgence-verbe {
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-verbe {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: .3rem; height: 30px; padding: 0 .6rem;
   font-size: .75rem; font-weight: 500; color: var(--acc); border: 1px solid var(--moss-line);
   background: var(--surface); cursor: pointer; margin-left: auto;
 }
-#dashboard .urgence-verbe:hover, #dashboard .urgence-verbe:focus-visible { background: var(--moss-soft); }
-#dashboard .urgence-verbe input[type="checkbox"] { width: 0; height: 0; opacity: 0; position: absolute; }
-#dashboard .urgence-row.est-fait { background: var(--success-soft); }
-#dashboard .urgence-verbe.est-fait {
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-verbe:hover, :is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-verbe:focus-visible { background: var(--moss-soft); }
+/* Ajustements #7 — « Éditer »/« Ouvrir » (span, l'ODM ou une réunion) ouvrent
+   un vrai document/formulaire complet : plus consistant qu'une case à cocher
+   (Réserver/Fait, label), reçoit donc un traitement plein pour se distinguer
+   (maquette 15 : bouton « Éditer » plein vs boutons contour). */
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) span.urgence-verbe {
+  color: #fff; background: var(--acc); border-color: var(--acc); font-weight: 700;
+}
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) span.urgence-verbe:hover,
+:is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) span.urgence-verbe:focus-visible { background: var(--moss-dark); border-color: var(--moss-dark); }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-verbe input[type="checkbox"] { width: 0; height: 0; opacity: 0; position: absolute; }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-row.est-fait { background: var(--success-soft); }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-verbe.est-fait {
   color: var(--success); border-color: var(--moss-line); background: var(--surface); font-weight: 600;
 }
-#dashboard .urgence-verbe.est-fait:hover, #dashboard .urgence-verbe.est-fait:focus-visible { background: var(--success-soft); }
+:is(#dashboard, #mobileAValider, #mobileFaites) .urgence-verbe.est-fait:hover, :is(#dashboard, #mobileAValider, #mobileFaites) .urgence-verbe.est-fait:focus-visible { background: var(--success-soft); }
 /* Bascule rapide véhicule (retours 17/08/2026) — discrète, à côté de
    « Réserver » : ce n'est pas l'action principale de la ligne. */
-#dashboard .urgence-bascule {
+:is(#dashboard, #mobileAValider) .urgence-bascule {
   flex: 0 0 auto; height: 30px; padding: 0 .55rem; font-size: .72rem; font-weight: 500;
   color: var(--muted); border: 1px dashed var(--line-strong); background: var(--surface); cursor: pointer;
 }
-#dashboard .urgence-bascule:hover, #dashboard .urgence-bascule:focus-visible { color: var(--ink); background: var(--moss-soft); border-color: var(--moss-line); }
-#dashboard .urgence-dismiss {
-  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
-  font-size: 1rem; line-height: 1; color: var(--muted); border: 1px solid var(--moss-line);
-  background: var(--surface); cursor: pointer;
-}
-#dashboard .urgence-dismiss:hover, #dashboard .urgence-dismiss:focus-visible { color: var(--danger); background: var(--moss-soft); }
+:is(#dashboard, #mobileAValider) .urgence-bascule:hover, :is(#dashboard, #mobileAValider) .urgence-bascule:focus-visible { color: var(--ink); background: var(--moss-soft); border-color: var(--moss-line); }
 #dashboard .urgence-pied { padding: .5rem .8rem; background: var(--fond-total, #faf8f0); font-size: .68rem; line-height: 1.5; color: var(--muted); }
 #dashboard .empty-hint { padding: var(--sp-3) .8rem; text-align: left; }
 
-/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande, en grille
-   2×2 (retours 17/08/2026 : Déplacements/Réunions à gauche, Périodes/
-   Amélioration à droite — l'ordre du DOM porte cette disposition, voir
-   index.html). Fermées ce sont des barres compactes ; ouvertes, la carte
-   s'étend sur toute la largeur pour ne pas écraser tableaux/filtres. ---- */
-#dashboard .zone-basse-grille {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
+/* Ajustements #6 (22/08/2026) : Martin trouvait la condensation #5
+   insuffisante — le libellé de nature seul sur sa ligne (flex-basis:100%)
+   cassait la tuile en 3 lignes hautes au lieu des 3 BLOCS attendus (délai /
+   contenu avec le type en bleu / bouton d'action), sur le modèle des tuiles
+   « Ma semaine » et de la maquette 15. Ne touche pas #dashboard (desktop
+   inchangé, réglages plus haut).
+   Ajustements #7 (22/08/2026) — Frais rejoint ce même patron.
+   Ajustements #8 (22/08/2026) — Martin, sur Urgences seul (« À valider ») :
+   le réordonnancement par `order` ci-dessous restait une ligne plate étirée
+   sur 2 lignes, pas 3 vrais BLOCS séparés (« à gauche le compte à rebours +
+   la date au-dessus, 2e bloc le contenu sur 3 lignes, 3e bloc le bouton
+   d'action tout à droite »). urgenceRowMarkup()/urgenceFaiteRowMarkup()
+   émettent donc maintenant de vrais conteneurs .urgence-bloc-delai/-corps/
+   -action (voir app.js) : mobileAValider/mobileFaites reçoivent ici une vraie
+   mise en page 3 colonnes plutôt qu'un simple `order`. Frais n'a pas été
+   redemandé dans ce tour : mobileFraisRowMarkup() garde son patron plat
+   existant (order ci-après), inchangé. */
+:is(#mobileFrais) .urgence-row {
+  padding: .45rem .7rem; align-items: baseline; gap: 0 .5rem;
 }
-#dashboard .zone-basse-grille > .panel-collapsible {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 0;
+:is(#mobileFrais) .urgence-delai { order: 0; }
+:is(#mobileFrais) .urgence-titre { order: 2; flex: 1 1 auto; }
+:is(#mobileFrais) .urgence-teachers,
+:is(#mobileFrais) .urgence-detail { order: 4; flex-basis: 100%; }
+:is(#mobileFrais) .urgence-verbe { order: 3; }
+
+/* Ajustements #9 (22/08/2026) — mise en page compacte, 2 lignes par ligne
+   (titre / détail), fidèle à la maquette 15.
+   Correctif (22/08/2026, capture « Image collée 6 » de Martin à largeur de
+   téléphone réelle) : flex-wrap:nowrap forçait le bloc central à rétrécir
+   sous les 2 autres blocs quel que soit l'espace requis (min-width:0 +
+   flex-basis:auto), donc le TITRE se coupait n'importe où au lieu que ce
+   soit le bouton d'action qui cède la place — nos libellés de verbe (« Marquer
+   réservée », « Perso → établissement ») sont bien plus longs que ceux de la
+   maquette (« Éditer », « Fait ») et ne tenaient jamais sur la largeur
+   restante. Le contenu (délai + corps) garde maintenant toujours sa ligne
+   propre ; le bouton d'action passe à la ligne suivante, aligné à droite,
+   uniquement quand il ne tient pas à côté (flex-wrap:wrap sur la ligne,
+   .urgence-bloc-corps avec un flex-basis minimal réaliste). */
+:is(#mobileAValider, #mobileFaites) .urgence-row {
+  align-items: center; flex-wrap: wrap; gap: .3rem .55rem; padding: .5rem .7rem; min-height: 0;
 }
-#dashboard .zone-basse-grille > .panel-collapsible[open] { grid-column: 1 / -1; }
-#dashboard .zone-basse-grille > .panel-collapsible > summary { padding: .55rem .7rem; }
-#dashboard .zone-basse-grille > .panel-collapsible > *:not(summary) { padding: 0 .8rem .8rem; }
-#dashboard .zone-basse-grille h3 { font-size: .82rem; }
-#dashboard .panel-collapsible > summary { align-items: flex-start; }
-#dashboard .panel-collapsible > summary::before { margin-top: .3rem; }
-#dashboard .panel-collapsible > summary .panel-heading-inline { align-items: center; }
-#dashboard .badge-groupe { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
-@media (max-width: 640px) {
-  #dashboard .zone-basse-grille { grid-template-columns: 1fr; }
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-delai {
+  flex: 0 0 30px; font-family: var(--font-mono); font-size: .7rem; font-weight: 700; color: var(--muted);
 }
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-delai .urgence-delai { font-size: inherit; font-weight: inherit; }
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-corps {
+  flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: .05rem;
+}
+:is(#mobileAValider, #mobileFaites) .urgence-ligne1 { display: block; }
+:is(#mobileAValider, #mobileFaites) .urgence-type {
+  flex: 0 0 auto; font-family: inherit; font-size: .78rem; font-weight: 700;
+  letter-spacing: normal; text-transform: none; color: var(--acc);
+}
+:is(#mobileAValider, #mobileFaites) .urgence-titre { font-size: .84rem; }
+:is(#mobileAValider, #mobileFaites) .urgence-ligne2 {
+  display: block; font-family: var(--font-mono); font-size: .68rem; color: var(--muted);
+}
+:is(#mobileAValider, #mobileFaites) .urgence-teachers { margin-top: .15rem; }
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-action {
+  flex: 0 0 100%; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .3rem;
+}
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-action .urgence-verbe,
+:is(#mobileAValider, #mobileFaites) .urgence-bloc-action .urgence-bascule { margin-left: 0; }
+
+/* #dashboard n'est pas concerné par la demande #8/#9 (document scopé
+   « application mobile ») : mêmes wrappers .urgence-bloc-*/.urgence-ligne1/2
+   dans le DOM (urgenceRowMarkup est partagé), mais aplatis (display:contents,
+   technique déjà utilisée pour .carte-corps/.carte-pastilles) pour rejouer
+   la ligne plate desktop d'origine via `order`. */
+#dashboard .urgence-bloc-delai, #dashboard .urgence-bloc-corps,
+#dashboard .urgence-bloc-action, #dashboard .urgence-ligne1 { display: contents; }
+#dashboard .urgence-type { order: 0; }
+#dashboard .urgence-delai { order: 1; }
+#dashboard .urgence-titre { order: 2; }
+#dashboard .urgence-teachers { order: 3; }
+#dashboard .urgence-ligne2 { order: 4; font-size: .78rem; color: var(--ink-soft); }
+#dashboard .urgence-verbe, #dashboard .urgence-bascule { order: 5; }
+
+/* Écran 20 (mobile) — Frais : bandeau de totaux (mêmes 3 compteurs que la
+   maquette 20-mobile-frais, mais avec les vrais statuts du modèle de données
+   — Demande à faire / En cours / Terminée — plutôt que « à déclarer / envoyés
+   / remboursés » qui n'existent pas ailleurs dans l'appli). */
+#mobileFrais .mobile-frais-totaux { display: flex; border: 1px solid var(--filet-interne, #ece8db); margin-bottom: var(--sp-3); }
+#mobileFrais .mobile-frais-total { flex: 1; padding: .5rem .6rem; display: flex; flex-direction: column; gap: .2rem; }
+#mobileFrais .mobile-frais-total + .mobile-frais-total { border-left: 1px solid var(--filet-interne, #ece8db); }
+#mobileFrais .mobile-frais-total span { font-family: var(--font-mono); font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+#mobileFrais .mobile-frais-total strong { font-size: 1rem; }
+#mobileFrais .mobile-frais-total strong.est-rembourse { color: var(--success); }
+.mobile-add-deplacement {
+  background: none; border: 1px dashed var(--line-strong); color: var(--acc); padding: var(--sp-3) 0;
+  font-family: var(--font-mono); font-size: .78rem; min-height: 44px;
+  display: flex; align-items: center; justify-content: center; width: 100%; margin-top: var(--sp-3);
+}
+.mobile-add-deplacement:hover { background: var(--moss-soft); }
+
+/* Ajustements #8 (22/08/2026) — Écran « Ordre de mission » (mobile) : tuiles
+   dédiées (fond blanc, comme #mobileSemaine), titre + statut toujours en
+   tête pour distinguer deux brouillons même sans titre saisi. */
+.mobile-om-tile {
+  background: var(--surface); border: 1px solid var(--filet-interne, #ece8db);
+  border-left: 3px solid var(--line-strong); padding: .55rem .7rem; margin-bottom: .35rem; cursor: pointer;
+}
+.mobile-om-tile:hover { background: var(--surface-alt); }
+.mobile-om-tile:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+.mobile-om-tile-tete { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.mobile-om-titre { font-size: .84rem; font-weight: 600; color: var(--ink); }
+.mobile-om-statut {
+  flex: 0 0 auto; font-family: var(--font-mono); font-size: .6rem; text-transform: uppercase;
+  letter-spacing: .03em; color: var(--muted); border: 1px solid var(--line-strong); padding: .1rem .4rem; white-space: nowrap;
+}
+.mobile-om-statut.est-fait { color: var(--success); border-color: var(--moss-line); }
+.mobile-om-detail { display: block; margin-top: .25rem; font-size: .76rem; color: var(--ink-soft); }
+
+/* Menu « Faites » (desktop) : replié par défaut, discret — retour de Martin
+   (22/08/2026), les lignes faites/réservées ne doivent plus encombrer la
+   pile active mais rester consultables et réversibles à part. */
+#urgencesFaitesDetail { border-top: 1px solid var(--filet-interne, #ece8db); }
+#urgencesFaitesDetail summary {
+  padding: .45rem .8rem; font-size: .74rem; font-weight: 600; color: var(--muted);
+  cursor: pointer; list-style: none;
+}
+#urgencesFaitesDetail summary::-webkit-details-marker { display: none; }
+#urgencesFaitesDetail summary::before { content: '▸ '; }
+#urgencesFaitesDetail[open] summary::before { content: '▾ '; }
+
+/* ---- Tuiles Matériel/Frais/Périodes/Réunions/Améliorations (Lot B,
+   23/08/2026 + retours du même jour, dont le 4e : déplacées dans
+   .dash-col-droite, sous « À faire » — cf. index.html) : plus des <details>
+   repliées (leur contenu — tableau, filtres — n'aurait pas tenu dans une
+   tuile carrée) mais des points d'entrée façon accueil mobile
+   (.mobile-home-btn, cf. plus haut) : icône + libellé + pastille de
+   compteur. Le clic ouvre la modale correspondante (#fraisDialog etc., voir
+   bindDashTuiles() dans app.js) qui reprend tel quel l'ancien contenu ; un
+   clic hors de la modale (sur le fond) la referme, comme la croix.
+   Retour Martin (23/08/2026) : 1 seule colonne, une tuile prend toute la
+   largeur de sa colonne (même largeur que l'encart « À faire » juste
+   au-dessus) — y compris en plein écran large, plus de grille 2×N compacte
+   à >1000px. Icône à côté du libellé partout (même mise en page qu'à
+   l'accueil mobile), une seule variante quelle que soit la largeur. */
+#dashboard .dash-tuiles-grille {
+  display: grid; grid-template-columns: 1fr; gap: var(--sp-2); margin-bottom: var(--sp-3);
+}
+#dashboard .dash-tuile {
+  position: relative;
+  display: flex; flex-direction: row; align-items: center; gap: var(--sp-3);
+  min-height: 3.8rem;
+  border: 1px solid transparent; color: #fff;
+  padding: var(--sp-3) var(--sp-4);
+  font-family: inherit; font-size: .85rem; font-weight: 700; text-align: left;
+}
+#dashboard .dash-tuile:hover { filter: brightness(.92); }
+#dashboard .dash-tuile.has-pending { box-shadow: inset 0 0 0 2px var(--ink); }
+#dashboard .dash-tuile-icon { display: flex; flex-shrink: 0; }
+#dashboard .dash-tuile-icon .mobile-icon-svg, #dashboard .dash-tuile-icon .mobile-icon-png { width: 26px; height: 26px; stroke-width: 1.5; }
+#dashboard .dash-tuile-label { flex: 1; min-width: 0; }
+/* Retour Martin (23/08/2026) : les compteurs (ex. « 2 à traiter · 84,70 € »)
+   débordaient, surtout en écran partagé en deux — tronqués proprement au
+   lieu de forcer la largeur de la tuile (min-width:0 sur le libellé
+   au-dessus est indispensable pour que l'ellipsis marche dans une ligne flex). */
+#dashboard .dash-tuile-badge {
+  font-family: var(--font-mono); font-size: .72rem; font-weight: 700;
+  color: var(--ink); background: #fff; padding: .1rem .5rem;
+  flex-shrink: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#dashboard .dash-tuile-badge:empty { display: none; }
+#dashboard .dash-tuile-badge.has-pending { background: var(--niv-proche); color: #fff; }
+#dashboard .dash-tuile-frais { background: var(--success); }
+#dashboard .dash-tuile-periodes { background: var(--plum); }
+#dashboard .dash-tuile-reunions { background: var(--clay); }
+#dashboard .dash-tuile-devnotes { background: var(--amber); }
+#dashboard .dash-tuile-materiel { background: var(--water); }
+#dashboard .dash-tuile-mission { background: var(--acc); }
+
+/* Bandeau de modale coloré (retour Martin, 23/08/2026) : le bandeau titre
+   d'une modale ouverte depuis une tuile reprend la couleur de fond de cette
+   tuile, texte/croix en blanc — identification immédiate de la modale ouverte. */
+.modal-header.dash-tone, .modal-header.dash-tone h3 { color: #fff; }
+.modal-header.dash-tone .icon-button { color: #fff; }
+.modal-header.dash-tone .icon-button:hover { background: rgba(255, 255, 255, .22); color: #fff; }
+.modal-header.dash-tone-frais { background: var(--success); }
+.modal-header.dash-tone-periodes { background: var(--plum); }
+.modal-header.dash-tone-reunions { background: var(--clay); }
+.modal-header.dash-tone-devnotes { background: var(--amber); }
+.modal-header.dash-tone-materiel { background: var(--water); }
+.modal-header.dash-tone-mission { background: var(--acc); }
+
+/* Modale « Ordre de mission » (Lot C-bis, 23/08/2026) : hub d'accès rapide,
+   pas d'édition en place — les 2 actions ouvrent soit une impression directe
+   (modèle vierge), soit l'éditeur plein document (#missionView). */
+.mission-list-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin: var(--sp-3) 0; }
+.mission-list-drafts { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+/* Modale « Matériel » (retours Martin, 23/08/2026 — 2e puis 3e retour) :
+   3 vues internes basculées par materielAfficherVue() dans app.js (grille
+   de types façon « stock de magasin » / détail cochable d'un type /
+   catalogue). Grille : un gros bouton par type avec un compteur N/total
+   emprunté ; clic → liste cochable/décochable de ses identifiants
+   (#materielTypeDetail), cocher = emprunter (ouvre le formulaire, il faut
+   préciser qui), décocher = marquer rendu directement. */
+.materiel-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
+.materiel-types-grid[hidden] { display: none; }
+.materiel-type-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
+  background: var(--surface); border: 1px solid var(--line);
+  padding: var(--sp-3) var(--sp-4); text-align: left;
+  color: var(--ink); font-weight: 600;
+}
+.materiel-type-btn:hover { background: var(--surface-alt); }
+.materiel-type-btn.est-complet { border-color: var(--danger); }
+.materiel-type-nom { font-size: .95rem; }
+.materiel-type-compteur { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+.materiel-type-btn.est-complet .materiel-type-compteur { color: var(--danger); }
+.materiel-type-back { background: none; border: none; color: var(--acc); padding: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: .8rem; }
+.materiel-type-back:hover { background: none; color: var(--ink); }
+.materiel-catalogue-link { padding: var(--sp-2) 0 0; }
+.materiel-catalogue-section h4 { margin: 0 0 var(--sp-2); }
+/* Retour Martin (23/08/2026) : le catalogue (types + leurs identifiants) sur
+   au moins 2 colonnes plutôt qu'empilé — desktop seulement, le même rendu
+   HTML reste en une colonne sur #mobileMaterielCatalogueList (mobile). */
+#materielCatalogueList { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-3); align-items: start; }
+#materielCatalogueList .materiel-type-bloc { margin-bottom: 0; }
+#materielTypeDetail h4 { margin: 0 0 var(--sp-2); }
+.materiel-item-check-liste { display: flex; flex-direction: column; gap: 1px; }
+.materiel-item-check-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: .55rem .3rem; border-bottom: 1px solid var(--line);
+}
+.materiel-item-check-row label { display: flex; align-items: center; gap: var(--sp-2); flex: 1; cursor: pointer; }
+.materiel-item-check-nom { font-weight: 600; }
+.materiel-item-check-etat { font-size: .82rem; color: var(--muted); }
+.materiel-item-check-row.est-emprunte .materiel-item-check-etat { color: var(--danger); }
+
+/* Lot E (23/08/2026) : calendrier des emprunts d'un type — une ligne par
+   identifiant, une case par jour du mois affiché, teintée tant que
+   l'identifiant est emprunté (voir renderMaterielCalendrier). */
+.materiel-calendrier-tete { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); }
+.materiel-calendrier-tete h4 { margin: 0; flex: 1; text-align: center; text-transform: capitalize; }
+.materiel-calendrier-grid { overflow-x: auto; }
+.materiel-cal-row { display: grid; grid-template-columns: 9rem repeat(31, 1.4rem); gap: 2px; align-items: center; }
+.materiel-cal-row + .materiel-cal-row { margin-top: 2px; }
+.materiel-cal-label { display: flex; align-items: center; gap: .3rem; font-size: .8rem; font-weight: 600; padding-right: var(--sp-2); overflow: hidden; }
+.materiel-cal-label-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.materiel-cal-rendu-btn {
+  flex: 0 0 auto; font-size: .65rem; line-height: 1; padding: .15rem .4rem;
+  border: 1px solid var(--water); background: var(--water-soft); color: #154a5c; cursor: pointer;
+}
+.materiel-cal-rendu-btn:hover { background: var(--water); color: #fff; }
+.materiel-cal-jour { font-family: var(--font-mono); font-size: .68rem; color: var(--muted); text-align: center; }
+.materiel-cal-case { display: block; height: 1.4rem; background: var(--surface-alt); border: 1px solid var(--line); }
+.materiel-cal-case.est-emprunte { background: var(--water-soft); border-color: var(--water); cursor: pointer; }
+.materiel-cal-case.est-emprunte:hover { background: var(--water); }
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }

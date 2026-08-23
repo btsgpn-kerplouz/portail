@@ -18,7 +18,14 @@
     <header class="banner">
       <div class="banner-inner">
         <a class="atlas-backlink" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
-        <h1>Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></h1>
+        <!-- Ajustements #5 (22/08/2026) : sur mobile, ce même emplacement ne
+             garde son rôle « retour au portail » que sur l'écran d'accueil —
+             ailleurs il redevient fonctionnel comme retour à l'écran
+             précédent (auparavant, il restait un lien externe trompeur même
+             au fond d'un écran secondaire). Bascule en JS (updateMobileBannerBack,
+             appelée à chaque navigation mobile), CSS masque l'un ou l'autre. -->
+        <button type="button" id="bannerMobileBack" class="atlas-backlink" hidden>‹ Accueil</button>
+        <h1><span class="banner-pictogram" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18"></rect><rect x="3" y="3" width="18" height="4" fill="currentColor" stroke="none"></rect><rect x="6" y="10" width="3" height="8" fill="currentColor" stroke="none"></rect><rect x="11" y="13" width="3" height="5" fill="currentColor" stroke="none"></rect><rect x="16" y="11" width="3" height="7" fill="currentColor" stroke="none"></rect></svg></span><span class="banner-title-text">Organisation des cours <span class="app-subtitle">(BTS Gestion et Protection de la Nature)</span></span></h1>
         <!-- Refonte « papier technique froid » (écran 1, 16/08/2026) : bandeau
              commun au 21 écrans (README) — statut de synchro + année + avatar,
              au lieu d'un simple bloc de connexion. L'export/import JSON (lot A
@@ -46,7 +53,7 @@
         </div>
       </div>
     </header>
-    <nav class="tabs header-tabs" aria-label="Navigation principale">
+    <nav class="tabs header-tabs desktop-only" aria-label="Navigation principale">
       <button class="tab active" data-view="dashboard">Tableau de bord</button>
       <button class="tab" data-view="design">Conception pédagogique</button>
       <button class="tab" data-view="gantt">Progression</button>
@@ -57,7 +64,7 @@
   </div>
 
   <main>
-    <section id="dashboard" class="view active-view">
+    <section id="dashboard" class="view active-view desktop-only">
       <!-- Zone hebdomadaire : ce qu'on vient regarder tous les jours.
            « Ma semaine », « Prochainement » et « Urgences » (pile fusionnée
            salle/véhicule/ordre de mission, REGLES.md #25) sont rendus par
@@ -74,6 +81,10 @@
                 <span class="urgences-sous">salles, matériel, véhicules, ordres de mission — par échéance</span>
               </div>
               <div id="urgencesList" class="urgence-liste"></div>
+              <details class="urgences-faites-detail" id="urgencesFaitesDetail" hidden>
+                <summary>Faites (<span id="urgencesFaitesCompte">0</span>)</summary>
+                <div id="urgencesFaitesList" class="urgence-liste"></div>
+              </details>
             </section>
           </div>
           <div class="dash-col-droite">
@@ -98,90 +109,57 @@
                 <ul id="todoHistoryList" class="todo-history-list"></ul>
               </details>
             </section>
+            <!-- Retour Martin (23/08/2026, 4e retour) : les tuiles rejoignent
+                 la colonne de droite, sous « À faire » — donc à droite
+                 d'Urgences, là où il y a de la place. Placées ici (dernier
+                 enfant de .dash-col-droite, qui suit déjà .dash-col-gauche
+                 dans le DOM), elles s'affichent aussi EN DERNIER quand
+                 .dash-grille repasse à 1 colonne sous les 1000px (grand écran
+                 partagé en deux) : aucune règle d'ordre supplémentaire
+                 nécessaire, le flux naturel du DOM suffit. Frais/Périodes/
+                 Réunions/Améliorations/Matériel ne sont plus des <details>
+                 repliés en place — trop de contenu (table, filtres) pour
+                 tenir dans une tuile carrée façon accueil mobile. La tuile
+                 est un point d'entrée pur (icône + libellé + pastille de
+                 compteur), le contenu complet s'ouvre dans une modale (voir
+                 #fraisDialog etc. et bindDashTuiles() dans app.js). -->
+            <div class="dash-tuiles-grille">
+              <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
+                <span class="dash-tuile-label">Frais de déplacements</span>
+                <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-calendrier"></span></span>
+                <span class="dash-tuile-label">Périodes particulières</span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-reunion"></span></span>
+                <span class="dash-tuile-label">Réunions</span>
+                <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-checklist"></span></span>
+                <span class="dash-tuile-label">Améliorations de l'appli</span>
+                <span id="devNotesBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-loupe"></span></span>
+                <span class="dash-tuile-label">Emprunts matériels</span>
+                <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission">
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-document"></span></span>
+                <span class="dash-tuile-label">Ordre de mission</span>
+                <span id="missionListBadge" class="dash-tuile-badge"></span>
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Zone mensuelle : le rangement administratif, en cartes discrètes
-           ouvertes à la demande (REGLES.md — « les modules qu'on ouvre de
-           temps en temps »). Titre retiré (retours/ 17/08/2026, demande
-           Martin) : le filet du haut suffit à séparer les deux zones. -->
-      <div class="zone-basse">
-        <div class="zone-basse-grille">
-      <details class="panel panel-collapsible frais-panel" id="fraisPanel" data-open-key="dash:frais">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Déplacements &amp; frais</h3>
-            <!-- Retours #3 (18-19/08/2026) : comme « + Période », reste visible
-                 et actionnable encart replié — remonté depuis .frais-filters.
-                 Retours #4 (18/08/2026) : bouton avant le compteur (et non
-                 après), pour retomber juste à droite du titre comme sur les
-                 autres encarts (ex. « + Période », sans badge entre les deux). -->
-            <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
-            <span id="fraisSummaryBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <div class="frais-toolbar">
-          <div class="frais-filters">
-            <label>Statut
-              <select id="fraisStatusFilter">
-                <option value="actives">Actives (hors terminées)</option>
-                <option value="all">Toutes</option>
-                <option value="Demande à faire">Demande à faire</option>
-                <option value="En cours">En cours</option>
-                <option value="Terminée">Terminée</option>
-              </select>
-            </label>
-          </div>
-          <div class="frais-export">
-            <span class="meta">Exporter (toutes lignes) :</span>
-            <button type="button" class="small secondary" data-export-frais="csv">CSV</button>
-            <button type="button" class="small secondary" data-export-frais="xls">Excel (.xls)</button>
-            <button type="button" class="small secondary" data-export-frais="ods">LibreOffice (.fods)</button>
-          </div>
-        </div>
-        <div id="fraisTableWrap" class="frais-table-wrap"></div>
-      </details>
-      <!-- Mise en page 2×2 (retours 17/08/2026) : l'ordre du DOM compte — grille
-           à 2 colonnes en remplissage naturel, donc Déplacements/Réunions à
-           gauche et Périodes/Amélioration à droite (voir .zone-basse-grille). -->
-      <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
-        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small">+ Période</button></div></summary>
-        <div id="constraintsList" class="list"></div>
-      </details>
-      <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Réunions</h3>
-            <button type="button" id="addReunionButton" class="small">+ Réunion</button>
-            <span id="reunionsSummaryBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <div class="reunions-toolbar">
-          <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
-        </div>
-        <div id="reunionsList" class="frais-table-wrap"></div>
-      </details>
-      <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Améliorations de l'appli</h3>
-            <span id="devNotesBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <div id="devNotesList" class="todo-list"></div>
-        <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
-        <details class="todo-history">
-          <summary id="devNotesHistoryCount">Tâches faites</summary>
-          <ul id="devNotesHistoryList" class="todo-history-list"></ul>
-        </details>
-      </details>
         </div>
       </div>
     </section>
 
-    <section id="design" class="view">
+    <section id="design" class="view desktop-only">
       <!-- Refonte « papier technique froid » (écran 2, 16/08/2026) : le sidebar
            UE est le SEUL mécanisme de filtrage de cette vue (REGLES.md #21, sa
            seule exception à l'estompage — cliquer une UE en sélectionne UNE
@@ -215,7 +193,7 @@
       </div>
     </section>
 
-    <section id="gantt" class="view">
+    <section id="gantt" class="view desktop-only">
       <!-- Refonte « papier technique froid » (écran 3, 16/08/2026) : bascule
            GPN1/GPN2 + Semestre1/Semestre2 remplace les cases à cocher multi-
            semestres ; le choix d'UE devient une rangée de cartes cliquables
@@ -230,7 +208,7 @@
         </div>
         <div class="promo-switch semester-switch" role="group" aria-label="Semestre" id="ganttSemesterSwitch"></div>
         <span class="progression-week-range" id="ganttWeekRange"></span>
-        <button type="button" class="small secondary" id="exportGanttButton">⎙ Exporter la frise</button>
+        <button type="button" class="icon-button small" id="exportGanttButton" title="Exporter la frise en PDF" aria-label="Exporter la frise en PDF">⎙</button>
       </div>
 
       <div class="progression-ue-row">
@@ -264,7 +242,7 @@
       </div>
     </section>
 
-    <section id="week" class="view">
+    <section id="week" class="view desktop-only">
       <!-- REGLES.md #22 : « jamais de calendrier » — le seul sélecteur de date de
            toute l'app est cette bande de semaines (remplace l'ancien calendrier
            mensuel qui vivait dans la colonne latérale). Bascule de période pour
@@ -283,10 +261,14 @@
           <button type="button" class="promo-switch-btn" data-week-period="summer">Juin – août</button>
         </div>
         <div class="week-bar-group week-bar-actions">
-          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel) sur les cases libres">
+          <label class="mask-toggle" title="Afficher la trame des créneaux de cours type (onglet Référentiel) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
+          <details class="teacher-picker" id="weekMaskTeacherPicker">
+            <summary>Collègues affichés <span id="weekMaskTeacherPickerSummary"></span></summary>
+            <div id="weekMaskTeacherChoices" class="checkbox-row"></div>
+          </details>
           <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
         </div>
       </div>
@@ -334,7 +316,7 @@
     </section>
 
 
-    <section id="ruban" class="view">
+    <section id="ruban" class="view desktop-only">
       <!-- Écrans 5/6/7/9/10 — 3 binômes de sous-onglets sur une même ligne + une
            recherche unifiée. Retours #3 (18-19/08/2026) : Ruban et Répartition
            étaient un binôme imbriqué dans un seul sous-onglet (bascule interne,
@@ -347,14 +329,17 @@
       <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
         </span>
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab active" data-ruban-tab="ruban" role="tab" aria-selected="true">Ruban</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="repartition" role="tab" aria-selected="false">Répartition</button>
         </span>
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
         </span>
         <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
@@ -482,10 +467,10 @@
               <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre → décembre</button>
               <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier → mai</button>
             </div>
-            <span class="creneaux-summary" id="creneauxSummary"></span>
-            <label class="creneaux-teacher-filter">Créneaux affichés
-              <select id="creneauxTeacherFilter"></select>
-            </label>
+            <details class="teacher-picker" id="creneauxTeacherPicker">
+              <summary>Créneaux affichés <span id="creneauxTeacherPickerSummary"></span></summary>
+              <div id="creneauxTeacherChoices" class="checkbox-row"></div>
+            </details>
           </div>
           <p class="meta tight">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
         </section>
@@ -515,7 +500,7 @@
          de donnée de ce chantier) vivent dans cet écran. Pagination réelle : le
          nombre de pages dépend du contenu de l'UE choisie (pas figé à 7 — c'est
          le cas de l'UE 1.1 du dossier de référence, pas une constante). -->
-    <section id="dossier" class="view">
+    <section id="dossier" class="view desktop-only">
       <div class="dossier-layout">
         <aside class="dossier-sidebar">
           <section class="dossier-block">
@@ -586,10 +571,58 @@
           <button type="button" id="missionAddDestinataire" class="lien">+ adresse</button>
         </div>
         <div class="mission-footer-actions">
+          <button type="button" id="missionBlankPdfButton" class="secondary small">Imprimer un modèle vierge</button>
           <button type="button" id="missionPdfButton" class="secondary">Enregistrer le PDF</button>
           <button type="button" id="missionSendButton" class="primary">Envoyer</button>
         </div>
       </div>
+    </section>
+
+    <!-- Écrans mobile (14-21 du handoff) : chrome séparé du desktop (voir
+         .desktop-only/.mobile-only, styles.css « Coquille mobile »), montré
+         sous 780px de large. Retour de Martin (21/08/2026, après test réel) :
+         pas de barre basse permanente — Accueil est le seul hub (menu à gros
+         boutons), toutes les autres vues (Ma semaine, À valider, Une séance,
+         Ordre de mission, Frais, Déclarer un trajet) sont des écrans
+         secondaires atteints par navigation programmatique (showMobileScreen,
+         même geste qu'#missionView), avec un simple « ‹ Accueil » discret en
+         haut plutôt qu'un onglet permanent. -->
+    <section id="mobileAccueil" class="view active-view mobile-only"></section>
+    <section id="mobileAValider" class="view mobile-only"></section>
+    <section id="mobileFaites" class="view mobile-only"></section>
+    <section id="mobileSemaine" class="view mobile-only"></section>
+    <section id="mobileSeance" class="view mobile-only"></section>
+    <section id="mobileFrais" class="view mobile-only"></section>
+    <section id="mobileAFaire" class="view mobile-only">
+      <div id="mobileAFaireList" class="todo-list"></div>
+      <textarea id="mobileAFaireInput" class="todo-add-input" placeholder="+ ajouter une note (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+      <details class="todo-history">
+        <summary id="mobileAFaireHistoryCount">Tâches faites</summary>
+        <ul id="mobileAFaireHistoryList" class="todo-history-list"></ul>
+      </details>
+    </section>
+    <section id="mobileMission" class="view mobile-only"></section>
+    <section id="mobileMateriel" class="view mobile-only"></section>
+    <!-- Écran « Catalogue de matériel » (ajustements #7, 22/08/2026) — Martin :
+         « je veux pouvoir éditer mes listes et numérotations de matériel »,
+         jusque-là possible seulement depuis le Tableau de bord desktop
+         (#materielCatalogueList). Même patron statique que #mobileAFaire :
+         formulaire + liste rendus par renderMaterielCatalogue() dans les
+         deux conteneurs à la fois (voir app.js). Ajustements #8 (22/08/2026)
+         — Martin : titre/bouton trop génériques (« Gérer les types et
+         identifiants »), renommés en « Catalogue de matériel » (sa propre
+         suggestion). -->
+    <section id="mobileMaterielCatalogue" class="view mobile-only">
+      <div class="mobile-topbar">
+        <button type="button" class="lien mobile-back" data-mobile-goto="mobileMateriel">‹ Emprunts matériels</button>
+        <h2 class="mobile-topbar-title">Catalogue de matériel</h2>
+      </div>
+      <p class="meta">Le catalogue alimente les menus du formulaire d’emprunt : un type de matériel (ex. Boussole), puis ses identifiants individuels (ex. Boussole n°3).</p>
+      <form id="mobileMaterielTypeForm" class="materiel-type-add-form">
+        <input type="text" id="mobileMaterielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+        <button type="submit" class="secondary small">+ Type</button>
+      </form>
+      <div id="mobileMaterielCatalogueList"></div>
     </section>
   </main>
 
@@ -633,7 +666,7 @@
         </label>
       </div>
       <label>Description / intention pédagogique
-        <textarea id="ueDescription" rows="4"></textarea>
+        <textarea id="ueDescription" rows="4" placeholder="En une ou deux phrases : pourquoi cette UE existe, sa place dans la formation."></textarea>
       </label>
       <section class="form-section readonly-section">
         <h4>Rappel des capacités de l’UE</h4>
@@ -852,16 +885,16 @@
 
       <div class="two-column-form">
         <label>Objectifs de la séquence
-          <textarea id="sequenceObjectives" rows="4"></textarea>
+          <textarea id="sequenceObjectives" rows="4" placeholder="Un objectif commence par un verbe d'action (identifier, analyser, mettre en œuvre…)."></textarea>
         </label>
         <label>Mots-clés / notions structurantes
           <textarea id="sequenceKeywords" rows="4" placeholder="Séparer par virgules ou retours ligne"></textarea>
         </label>
         <label>Apprentissages à réaliser / savoir-faire visés
-          <textarea id="sequenceLearningOutcomes" rows="4"></textarea>
+          <textarea id="sequenceLearningOutcomes" rows="4" placeholder="Décrire une capacité observable chez l'étudiant, pas un contenu enseigné."></textarea>
         </label>
         <label>Prérequis
-          <textarea id="sequencePrerequisites" rows="3"></textarea>
+          <textarea id="sequencePrerequisites" rows="3" placeholder="Ce que l'étudiant doit déjà maîtriser avant d'aborder la séquence."></textarea>
         </label>
         <label>Point de vigilance <small>— lu avant la séance, ne sort jamais</small>
           <textarea id="sequenceDifferentiation" rows="4" placeholder="Besoins élèves, vigilance terrain, points bloquants, classe, contraintes particulières…"></textarea>
@@ -876,7 +909,7 @@
           <input type="hidden" id="sequenceAssessmentType" />
         </div>
         <label>Évaluation prévue — précisions
-          <textarea id="sequenceAssessment" rows="3"></textarea>
+          <textarea id="sequenceAssessment" rows="3" placeholder="Préciser la forme de l'évaluation et ce qui est effectivement noté."></textarea>
         </label>
         <label>Production attendue / traces élèves
           <textarea id="sequenceDeliverables" rows="3" placeholder="Compte rendu, carte, diagnostic, support de médiation, restitution orale…"></textarea>
@@ -1014,16 +1047,16 @@
 
       <div class="two-column-form">
         <label>Objectifs de séance
-          <textarea id="sessionObjectives" rows="3"></textarea>
+          <textarea id="sessionObjectives" rows="3" placeholder="Un objectif commence par un verbe d'action (identifier, décrire, mesurer…)."></textarea>
         </label>
         <label>Mots-clefs
           <textarea id="sessionKeywords" rows="3" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
         </label>
         <label>Déroulé
-          <textarea id="sessionActivities" rows="3"></textarea>
+          <textarea id="sessionActivities" rows="3" placeholder="Étapes chronologiques : ce que fait l'enseignant, ce que font les étudiants."></textarea>
         </label>
-        <label>Points de vigilance <small>— lus avant la séance, ne sortent jamais</small>
-          <textarea id="sessionDifferentiation" rows="3"></textarea>
+        <label>Points de vigilance
+          <textarea id="sessionDifferentiation" rows="3" placeholder="Ce qui peut mettre la séance en difficulté et qu'il faut anticiper."></textarea>
         </label>
         <label>Matériel
           <textarea id="sessionMaterials" rows="2" placeholder="Ex. 24 loupes, flore de Bretagne × 12"></textarea>
@@ -1216,6 +1249,9 @@
         <label>Conducteur
           <input id="deplacementConducteur" placeholder="Nom du conducteur" />
         </label>
+        <label>Compte concerné
+          <input id="deplacementTeacher" placeholder="Initiales — vide = vous" />
+        </label>
         <label>Lieu
           <input id="deplacementLieu" placeholder="Ex. Réserve naturelle, lycée partenaire…" />
         </label>
@@ -1241,10 +1277,53 @@
       </div>
       <p class="frais-line-total">Total remboursement : <strong id="deplacementTotalPreview">0,00 €</strong></p>
       <p class="form-help tight" id="deplacementSessionHint" hidden>Déplacement lié à une séance : la date est reprise de la séance.</p>
+      <p class="form-help tight">« Compte concerné » : c'est le véhicule/la personne qui portera cette ligne — si c'était celui d'un collègue plutôt que le vôtre, indiquez ses initiales : la ligne quitte votre Frais et rejoint le sien.</p>
       <footer class="modal-footer">
         <button type="button" id="deleteDeplacementButton" class="danger">Supprimer</button>
         <span class="spacer"></span>
         <button type="button" class="secondary" id="cancelDeplacementButton">Annuler</button>
+        <button type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="materielEmpruntDialog" class="modal">
+    <form method="dialog" id="materielEmpruntForm">
+      <header class="modal-header">
+        <h3 id="materielEmpruntModalTitle">Emprunt de matériel</h3>
+        <button type="button" class="icon-button" id="closeMaterielEmpruntModal">×</button>
+      </header>
+      <input type="hidden" id="materielEmpruntId" />
+      <div class="form-grid">
+        <label>Type de matériel
+          <select id="materielEmpruntType"></select>
+        </label>
+        <label>Identifiant
+          <select id="materielEmpruntIdentifiant"></select>
+        </label>
+        <label>Étudiant
+          <input id="materielEmpruntEtudiant" placeholder="Nom Prénom" />
+        </label>
+        <label>Classe
+          <select id="materielEmpruntClasse">
+            <option value="GPN1">GPN1</option>
+            <option value="GPN2">GPN2</option>
+          </select>
+        </label>
+        <label>Compte concerné
+          <input id="materielEmpruntTeacher" placeholder="Initiales — vide = vous" />
+        </label>
+        <label>Emprunté le
+          <input type="date" id="materielEmpruntDate" />
+        </label>
+        <label>Rendu le
+          <input type="date" id="materielEmpruntDateRetour" placeholder="vide = pas encore rendu" />
+        </label>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" id="deleteMaterielEmpruntButton" class="danger">Supprimer</button>
+        <span class="spacer"></span>
+        <button type="button" class="secondary" id="cancelMaterielEmpruntButton">Annuler</button>
         <button type="submit">Enregistrer</button>
       </footer>
     </form>
@@ -1328,8 +1407,165 @@
     </form>
   </dialog>
 
+  <!-- Lot B (23/08/2026) : contenu des 4 anciens encarts repliables du
+       Tableau de bord (Frais/Périodes/Réunions/Améliorations), inchangé,
+       déplacé dans des modales ouvertes depuis les tuiles de .dash-tuiles-grille.
+       Pas de <form method="dialog"> à soumettre : uniquement un bouton fermer,
+       tout le reste (ajout, édition, filtres) garde son comportement d'origine. -->
+  <dialog id="fraisDialog" class="modal large-modal">
+    <form method="dialog" class="frais-panel">
+      <header class="modal-header dash-tone dash-tone-frais">
+        <div class="panel-heading-inline">
+          <h3>Frais de déplacements</h3>
+          <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
+        </div>
+        <button type="button" class="icon-button" id="closeFraisDialog">×</button>
+      </header>
+      <div class="frais-toolbar">
+        <div class="frais-filters">
+          <label>Statut
+            <select id="fraisStatusFilter">
+              <option value="actives">Actives (hors terminées)</option>
+              <option value="all">Toutes</option>
+              <option value="Demande à faire">Demande à faire</option>
+              <option value="En cours">En cours</option>
+              <option value="Terminée">Terminée</option>
+            </select>
+          </label>
+        </div>
+        <div class="frais-export">
+          <span class="meta">Exporter (toutes lignes) :</span>
+          <button type="button" class="small secondary" data-export-frais="csv">CSV</button>
+          <button type="button" class="small secondary" data-export-frais="xls">Excel (.xls)</button>
+          <button type="button" class="small secondary" data-export-frais="ods">LibreOffice (.fods)</button>
+        </div>
+      </div>
+      <div id="fraisTableWrap" class="frais-table-wrap"></div>
+    </form>
+  </dialog>
+
+  <dialog id="periodesDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header dash-tone dash-tone-periodes">
+        <div class="panel-heading-inline">
+          <h3>Périodes particulières</h3>
+          <button type="button" id="addConstraintDashboardButton" class="small">+ Période</button>
+        </div>
+        <button type="button" class="icon-button" id="closePeriodesDialog">×</button>
+      </header>
+      <div id="constraintsList" class="list"></div>
+    </form>
+  </dialog>
+
+  <dialog id="reunionsDialog" class="modal large-modal">
+    <form method="dialog">
+      <header class="modal-header dash-tone dash-tone-reunions">
+        <div class="panel-heading-inline">
+          <h3>Réunions</h3>
+          <button type="button" id="addReunionButton" class="small">+ Réunion</button>
+        </div>
+        <button type="button" class="icon-button" id="closeReunionsDialog">×</button>
+      </header>
+      <div class="reunions-toolbar">
+        <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
+      </div>
+      <div id="reunionsList" class="frais-table-wrap"></div>
+    </form>
+  </dialog>
+
+  <dialog id="devNotesDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header dash-tone dash-tone-devnotes">
+        <h3>Améliorations de l'appli</h3>
+        <button type="button" class="icon-button" id="closeDevNotesDialog">×</button>
+      </header>
+      <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
+      <div id="devNotesList" class="todo-list"></div>
+      <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+      <details class="todo-history">
+        <summary id="devNotesHistoryCount">Tâches faites</summary>
+        <ul id="devNotesHistoryList" class="todo-history-list"></ul>
+      </details>
+    </form>
+  </dialog>
+
+  <!-- Retour Martin (23/08/2026, 2e puis 3e retour) : la page Emprunts est
+       une grille de types de matériel façon « stock de magasin » (compteur
+       N/total emprunté), plutôt qu'une table à rallonge. Le clic sur un type
+       affiche la liste cochable/décochable de ses identifiants — cocher un
+       identifiant disponible ouvre #materielEmpruntDialog pré-rempli (il faut
+       encore préciser qui l'emprunte) ; décocher un identifiant emprunté le
+       marque directement rendu. Le catalogue (gestion des types/identifiants)
+       est une 3e vue de la MÊME modale (retour du 3e temps : « une seule
+       tuile »), atteinte par le lien sous la grille — pas de <form
+       method="dialog"> ici car #materielTypeForm est un vrai formulaire
+       soumis (bindMaterielCatalogueContainer) et un <form> ne peut pas en
+       contenir un autre, d'où le <div class="modal-body"> à la place (voir
+       materielAfficherVue() dans app.js et ".modal .modal-body" dans
+       styles.css pour le padding/scroll). -->
+  <dialog id="materielDialog" class="modal large-modal">
+    <div class="modal-body">
+      <header class="modal-header dash-tone dash-tone-materiel">
+        <div class="panel-heading-inline">
+          <h3>Emprunts matériels</h3>
+          <button type="button" id="addMaterielEmpruntButton" class="small">+ Emprunt</button>
+        </div>
+        <button type="button" class="icon-button" id="closeMaterielDialog">×</button>
+      </header>
+      <div id="materielTypesGrid" class="materiel-types-grid"></div>
+      <button type="button" id="materielGotoCatalogue" class="materiel-type-back materiel-catalogue-link">Gérer le catalogue de matériel →</button>
+      <div id="materielTypeDetail" class="materiel-type-detail" hidden>
+        <button type="button" id="materielTypeDetailBack" class="materiel-type-back">‹ Tous les types</button>
+        <h4 id="materielTypeDetailTitle"></h4>
+        <div id="materielTypeDetailList" class="materiel-item-check-liste"></div>
+        <button type="button" id="materielGotoCalendrier" class="materiel-type-back materiel-catalogue-link">Voir le calendrier des emprunts →</button>
+      </div>
+      <div id="materielCalendrierSection" class="materiel-calendrier-section" hidden>
+        <button type="button" id="materielCalendrierBack" class="materiel-type-back">‹ Retour</button>
+        <div class="materiel-calendrier-tete">
+          <button type="button" id="materielCalendrierPrev" class="icon-button small" title="Mois précédent">‹</button>
+          <h4 id="materielCalendrierTitre"></h4>
+          <button type="button" id="materielCalendrierNext" class="icon-button small" title="Mois suivant">›</button>
+        </div>
+        <div id="materielCalendrierGrid" class="materiel-calendrier-grid"></div>
+      </div>
+      <div id="materielCatalogueSection" class="materiel-catalogue-section" hidden>
+        <button type="button" id="materielCatalogueBack" class="materiel-type-back">‹ Tous les types</button>
+        <h4>Catalogue matériel</h4>
+        <p class="meta tight">Types et identifiants individuels proposés dans le formulaire d’emprunt.</p>
+        <form id="materielTypeForm" class="materiel-type-add-form">
+          <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+          <button type="submit" class="secondary small">+ Type</button>
+        </form>
+        <div id="materielCatalogueList" class="materiel-catalogue-grid"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Tuile « Ordre de mission » (Lot C-bis, 23/08/2026) : point d'entrée
+       rapide desktop pour les ordres de mission NON rattachés à une
+       séance/réunion (state.missions, jusqu'ici accessibles seulement
+       depuis l'accueil mobile). Imprimer un modèle vierge ne nécessite
+       aucune saisie ; « + Nouvel ordre de mission » ou un brouillon de la
+       liste ouvrent l'éditeur plein document (#missionView, partagé avec
+       Urgences et le mobile). -->
+  <dialog id="missionListDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header dash-tone dash-tone-mission">
+        <h3>Ordre de mission</h3>
+        <button type="button" class="icon-button" id="closeMissionListDialog">×</button>
+      </header>
+      <div class="mission-list-actions">
+        <button type="button" id="missionListBlankButton" class="secondary">Imprimer un modèle vierge</button>
+        <button type="button" id="missionListNewButton" class="primary">+ Nouvel ordre de mission</button>
+      </div>
+      <div id="missionListDrafts" class="mission-list-drafts"></div>
+    </form>
+  </dialog>
+
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="reference-capacities.js"></script>
   <script src="reference-modules.js"></script>
   <script src="ruban-pedagogique.js"></script>
