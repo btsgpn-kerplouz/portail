@@ -109,56 +109,47 @@
                 <ul id="todoHistoryList" class="todo-history-list"></ul>
               </details>
             </section>
+            <!-- Retour Martin (23/08/2026, 4e retour) : les tuiles rejoignent
+                 la colonne de droite, sous « À faire » — donc à droite
+                 d'Urgences, là où il y a de la place. Placées ici (dernier
+                 enfant de .dash-col-droite, qui suit déjà .dash-col-gauche
+                 dans le DOM), elles s'affichent aussi EN DERNIER quand
+                 .dash-grille repasse à 1 colonne sous les 1000px (grand écran
+                 partagé en deux) : aucune règle d'ordre supplémentaire
+                 nécessaire, le flux naturel du DOM suffit. Frais/Périodes/
+                 Réunions/Améliorations/Matériel ne sont plus des <details>
+                 repliés en place — trop de contenu (table, filtres) pour
+                 tenir dans une tuile carrée façon accueil mobile. La tuile
+                 est un point d'entrée pur (icône + libellé + pastille de
+                 compteur), le contenu complet s'ouvre dans une modale (voir
+                 #fraisDialog etc. et bindDashTuiles() dans app.js). -->
+            <div class="dash-tuiles-grille">
+              <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
+                <span class="dash-tuile-label">Déplacements &amp; frais</span>
+                <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg></span>
+                <span class="dash-tuile-label">Périodes particulières</span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/></svg></span>
+                <span class="dash-tuile-label">Réunions</span>
+                <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
+                <span class="dash-tuile-label">Améliorations de l'appli</span>
+                <span id="devNotesBadge" class="dash-tuile-badge"></span>
+              </button>
+              <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/></svg></span>
+                <span class="dash-tuile-label">Matériel</span>
+                <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Zone mensuelle : le rangement administratif, en cartes discrètes
-           ouvertes à la demande (REGLES.md — « les modules qu'on ouvre de
-           temps en temps »). Titre retiré (retours/ 17/08/2026, demande
-           Martin) : le filet du haut suffit à séparer les deux zones. -->
-      <div class="zone-basse">
-        <!-- Lot B (23/08/2026) : Frais/Périodes/Réunions/Améliorations ne
-             sont plus des <details> repliés en place — trop de contenu (table,
-             filtres) pour tenir dans une tuile carrée façon accueil mobile.
-             La tuile est un point d'entrée pur (icône + libellé + pastille de
-             compteur), le contenu complet s'ouvre dans une modale
-             (voir #fraisDialog etc. et bindDashTuiles() dans app.js). -->
-        <div class="dash-tuiles-grille">
-          <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
-            <span class="dash-tuile-label">Déplacements &amp; frais</span>
-            <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
-          </button>
-          <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg></span>
-            <span class="dash-tuile-label">Périodes particulières</span>
-          </button>
-          <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/></svg></span>
-            <span class="dash-tuile-label">Réunions</span>
-            <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
-          </button>
-          <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
-            <span class="dash-tuile-label">Améliorations de l'appli</span>
-            <span id="devNotesBadge" class="dash-tuile-badge"></span>
-          </button>
-          <!-- Retour Martin (23/08/2026, second retour) : de nouveau deux
-               pages séparées (Emprunts / Catalogue) — mais la page Emprunts
-               n'est plus une liste à rallonge : une grille de types de
-               matériel façon « stock de magasin » (compteur N/total), le
-               clic sur un type ouvre la liste cochable/décochable de ses
-               identifiants (cocher = emprunter, décocher = marquer rendu). -->
-          <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/></svg></span>
-            <span class="dash-tuile-label">Matériel emprunté</span>
-            <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
-          </button>
-          <button type="button" class="dash-tuile dash-tuile-materiel-catalogue" id="materielCatalogueTuile" data-dash-tuile="materielCatalogue">
-            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
-            <span class="dash-tuile-label">Catalogue matériel</span>
-          </button>
         </div>
       </div>
     </section>
@@ -1485,48 +1476,46 @@
     </form>
   </dialog>
 
-  <!-- Retour Martin (23/08/2026, second retour) : la page Emprunts devient
+  <!-- Retour Martin (23/08/2026, 2e puis 3e retour) : la page Emprunts est
        une grille de types de matériel façon « stock de magasin » (compteur
        N/total emprunté), plutôt qu'une table à rallonge. Le clic sur un type
        affiche la liste cochable/décochable de ses identifiants — cocher un
        identifiant disponible ouvre #materielEmpruntDialog pré-rempli (il faut
        encore préciser qui l'emprunte) ; décocher un identifiant emprunté le
-       marque directement rendu (voir bindDashTuiles()/renderMaterielTypesGrid()
-       /renderMaterielTypeDetail() dans app.js). -->
+       marque directement rendu. Le catalogue (gestion des types/identifiants)
+       est une 3e vue de la MÊME modale (retour du 3e temps : « une seule
+       tuile »), atteinte par le lien sous la grille — pas de <form
+       method="dialog"> ici car #materielTypeForm est un vrai formulaire
+       soumis (bindMaterielCatalogueContainer) et un <form> ne peut pas en
+       contenir un autre, d'où le <div class="modal-body"> à la place (voir
+       materielAfficherVue() dans app.js et ".modal .modal-body" dans
+       styles.css pour le padding/scroll). -->
   <dialog id="materielDialog" class="modal large-modal">
-    <form method="dialog">
+    <div class="modal-body">
       <header class="modal-header dash-tone dash-tone-materiel">
         <div class="panel-heading-inline">
-          <h3>Matériel emprunté</h3>
+          <h3>Matériel</h3>
           <button type="button" id="addMaterielEmpruntButton" class="small">+ Emprunt</button>
         </div>
         <button type="button" class="icon-button" id="closeMaterielDialog">×</button>
       </header>
       <div id="materielTypesGrid" class="materiel-types-grid"></div>
+      <button type="button" id="materielGotoCatalogue" class="materiel-type-back materiel-catalogue-link">Gérer le catalogue de matériel →</button>
       <div id="materielTypeDetail" class="materiel-type-detail" hidden>
-        <button type="button" id="materielTypeDetailBack" class="lien materiel-type-back">‹ Tous les types</button>
+        <button type="button" id="materielTypeDetailBack" class="materiel-type-back">‹ Tous les types</button>
         <h4 id="materielTypeDetailTitle"></h4>
         <div id="materielTypeDetailList" class="materiel-item-check-liste"></div>
       </div>
-    </form>
-  </dialog>
-
-  <!-- Pas de <form method="dialog"> ici : #materielTypeForm est un vrai
-       formulaire soumis (bindMaterielCatalogueContainer) — un <form> ne peut
-       pas en contenir un autre, d'où le <div class="modal-body"> à la place
-       (voir ".modal .modal-body" dans styles.css pour le padding/scroll). -->
-  <dialog id="materielCatalogueDialog" class="modal large-modal">
-    <div class="modal-body">
-      <header class="modal-header dash-tone dash-tone-materiel-catalogue">
-        <h3>Catalogue matériel</h3>
-        <button type="button" class="icon-button" id="closeMaterielCatalogueDialog">×</button>
-      </header>
-      <p class="meta tight">Types et identifiants individuels proposés dans le formulaire d’emprunt.</p>
-      <form id="materielTypeForm" class="materiel-type-add-form">
-        <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
-        <button type="submit" class="secondary small">+ Type</button>
-      </form>
-      <div id="materielCatalogueList"></div>
+      <div id="materielCatalogueSection" class="materiel-catalogue-section" hidden>
+        <button type="button" id="materielCatalogueBack" class="materiel-type-back">‹ Tous les types</button>
+        <h4>Catalogue matériel</h4>
+        <p class="meta tight">Types et identifiants individuels proposés dans le formulaire d’emprunt.</p>
+        <form id="materielTypeForm" class="materiel-type-add-form">
+          <input type="text" id="materielTypeInput" placeholder="Nouveau type de matériel (ex. Boussole)" maxlength="60" />
+          <button type="submit" class="secondary small">+ Type</button>
+        </form>
+        <div id="materielCatalogueList" class="materiel-catalogue-grid"></div>
+      </div>
     </div>
   </dialog>
 

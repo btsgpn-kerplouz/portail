@@ -1921,16 +1921,26 @@ function renderMaterielTypeDetail(type) {
     </div>`;
   }).join('');
 }
+/* 3e retour (23/08/2026) : Matériel redevient une seule tuile/modale — le
+   catalogue (gestion des types/identifiants) en devient une 3e vue interne,
+   à côté de la grille et du détail cochable d'un type. */
+function materielAfficherVue(vue) {
+  if ($('#materielTypesGrid')) $('#materielTypesGrid').hidden = vue !== 'grille';
+  if ($('#materielGotoCatalogue')) $('#materielGotoCatalogue').hidden = vue !== 'grille';
+  if ($('#materielTypeDetail')) $('#materielTypeDetail').hidden = vue !== 'detail';
+  if ($('#materielCatalogueSection')) $('#materielCatalogueSection').hidden = vue !== 'catalogue';
+}
 function afficherMaterielGrille() {
   materielTypeOuvert = null;
-  if ($('#materielTypesGrid')) $('#materielTypesGrid').hidden = false;
-  if ($('#materielTypeDetail')) $('#materielTypeDetail').hidden = true;
+  materielAfficherVue('grille');
 }
 function afficherMaterielType(type) {
   materielTypeOuvert = type;
   renderMaterielTypeDetail(type);
-  $('#materielTypesGrid').hidden = true;
-  $('#materielTypeDetail').hidden = false;
+  materielAfficherVue('detail');
+}
+function afficherMaterielCatalogue() {
+  materielAfficherVue('catalogue');
 }
 
 function renderMobileMateriel() {
@@ -8632,16 +8642,18 @@ function confirmCloseModal(dialog) {
   dialog.close();
 }
 
-/* Lot B (23/08/2026) : les 6 tuiles de .dash-tuiles-grille (Frais, Périodes
-   particulières, Réunions, Améliorations de l'appli, Matériel emprunté,
-   Catalogue matériel — de nouveau deux pages séparées après un aller-retour,
-   voir renderMaterielTypesGrid()/renderMaterielTypeDetail() plus bas) ouvrent
-   chacune la modale reprenant tel quel (ou presque, pour Matériel emprunté)
-   le contenu de l'ancien encart repliable — mêmes ids, mêmes fonctions de
-   rendu, seul le contenant change (tuile plutôt que <details>). Un clic sur
-   le fond (le <dialog> lui-même, hors de sa boîte) referme la modale, comme
-   la croix — retour Martin du même jour : « quitter en cliquant en dehors ». */
-const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog', materielCatalogue: '#materielCatalogueDialog' };
+/* Lot B (23/08/2026) : les 5 tuiles de .dash-tuiles-grille (Frais, Périodes
+   particulières, Réunions, Améliorations de l'appli, Matériel — ce dernier
+   après un aller-retour sur 1 vs 2 tuiles/pages, revenu à UNE tuile/modale
+   avec 3 vues internes : grille de types, détail cochable d'un type,
+   catalogue — voir materielAfficherVue()/renderMaterielTypesGrid()/
+   renderMaterielTypeDetail() plus bas) ouvrent chacune la modale reprenant
+   tel quel (ou presque, pour Matériel) le contenu de l'ancien encart
+   repliable — mêmes ids, mêmes fonctions de rendu, seul le contenant change
+   (tuile plutôt que <details>). Un clic sur le fond (le <dialog> lui-même,
+   hors de sa boîte) referme la modale, comme la croix — retour Martin du
+   même jour : « quitter en cliquant en dehors ». */
+const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog' };
 function bindDashTuiles() {
   $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -8654,7 +8666,8 @@ function bindDashTuiles() {
   $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
   $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
   $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
-  $('#closeMaterielCatalogueDialog')?.addEventListener('click', () => $('#materielCatalogueDialog')?.close());
+  $('#materielGotoCatalogue')?.addEventListener('click', afficherMaterielCatalogue);
+  $('#materielCatalogueBack')?.addEventListener('click', afficherMaterielGrille);
   Object.values(DASH_TUILE_DIALOGS).forEach(sel => {
     const dialog = $(sel);
     dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });

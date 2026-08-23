@@ -3351,9 +3351,10 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   --bleu-titre: var(--acc);
 }
 
-/* ---- Charpente : zone hebdomadaire puis zone mensuelle ---- */
+/* ---- Charpente : zone hebdomadaire (seule zone du Tableau de bord depuis
+   que les tuiles ont rejoint .dash-col-droite, retour du 23/08/2026 — plus
+   de zone mensuelle séparée par un filet). ---- */
 #dashboard .zone-haute { margin-bottom: var(--sp-6); }
-#dashboard .zone-basse { border-top: 2px solid var(--ink); padding-top: var(--sp-4); }
 #dashboard .zone-titre {
   margin: 0 0 var(--sp-3); font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
   letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2);
@@ -3886,27 +3887,40 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #urgencesFaitesDetail summary::before { content: '▸ '; }
 #urgencesFaitesDetail[open] summary::before { content: '▾ '; }
 
-/* ---- Zone basse, tuiles (Lot B, 23/08/2026 + retours du même jour) :
-   Déplacements & frais, Périodes particulières, Réunions, Améliorations de
-   l'appli, Matériel emprunté et Catalogue matériel ne sont plus des
-   <details> repliées (leur contenu — tableau, filtres — n'aurait pas tenu
-   dans une tuile carrée) mais des points d'entrée façon accueil mobile
+/* ---- Tuiles Matériel/Frais/Périodes/Réunions/Améliorations (Lot B,
+   23/08/2026 + retours du même jour, dont le 4e : déplacées dans
+   .dash-col-droite, sous « À faire » — cf. index.html) : plus des <details>
+   repliées (leur contenu — tableau, filtres — n'aurait pas tenu dans une
+   tuile carrée) mais des points d'entrée façon accueil mobile
    (.mobile-home-btn, cf. plus haut) : icône + libellé + pastille de
-   compteur. `auto-fit` range les tuiles sur 1 ligne en largeur confortable,
-   2 lignes en dessous. Le clic ouvre la modale correspondante (#fraisDialog
-   etc., voir bindDashTuiles() dans app.js) qui reprend tel quel l'ancien
-   contenu ; un clic hors de la modale (sur le fond) la referme, comme la
-   croix. */
+   compteur. Le clic ouvre la modale correspondante (#fraisDialog etc., voir
+   bindDashTuiles() dans app.js) qui reprend tel quel l'ancien contenu ; un
+   clic hors de la modale (sur le fond) la referme, comme la croix.
+   .dash-col-droite fait 330px fixes (cf. .dash-grille plus haut) : la
+   grille de tuiles y est étroite, 2 colonnes compactes (icône au-dessus du
+   libellé) ; au-delà de la bascule à 1 colonne de .dash-grille (≤1000px,
+   grand écran partagé en deux) la colonne redevient pleine largeur, la
+   grille repasse en tuiles larges façon accueil mobile (icône à côté du
+   libellé) réparties par `auto-fit`. */
 #dashboard .dash-tuiles-grille {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-3);
 }
 #dashboard .dash-tuile {
   position: relative;
-  display: flex; align-items: center; gap: var(--sp-3);
-  min-height: 4rem;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
+  min-height: 3.6rem;
   border: 1px solid transparent; color: #fff;
-  padding: var(--sp-3) var(--sp-4);
-  font-family: inherit; font-size: .88rem; font-weight: 700; text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: inherit; font-size: .8rem; font-weight: 700; text-align: left;
+}
+#dashboard .dash-tuile-badge { align-self: flex-end; }
+@media (max-width: 1000px) {
+  #dashboard .dash-tuiles-grille { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); }
+  #dashboard .dash-tuile {
+    flex-direction: row; align-items: center; gap: var(--sp-3);
+    min-height: 4rem; padding: var(--sp-3) var(--sp-4); font-size: .88rem;
+  }
+  #dashboard .dash-tuile-badge { align-self: auto; }
 }
 #dashboard .dash-tuile:hover { filter: brightness(.92); }
 #dashboard .dash-tuile.has-pending { box-shadow: inset 0 0 0 2px var(--ink); }
@@ -3924,7 +3938,6 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-reunions { background: var(--clay); }
 #dashboard .dash-tuile-devnotes { background: var(--amber); }
 #dashboard .dash-tuile-materiel { background: var(--water); }
-#dashboard .dash-tuile-materiel-catalogue { background: var(--acc); }
 
 /* Bandeau de modale coloré (retour Martin, 23/08/2026) : le bandeau titre
    d'une modale ouverte depuis une tuile reprend la couleur de fond de cette
@@ -3937,12 +3950,12 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .modal-header.dash-tone-reunions { background: var(--clay); }
 .modal-header.dash-tone-devnotes { background: var(--amber); }
 .modal-header.dash-tone-materiel { background: var(--water); }
-.modal-header.dash-tone-materiel-catalogue { background: var(--acc); }
 
-/* Page « Matériel emprunté » (retours Martin, 23/08/2026, second retour) :
-   grille de types façon « stock de magasin » plutôt qu'une table à
-   rallonge — un gros bouton par type avec un compteur N/total emprunté. Le
-   clic affiche à la place la liste cochable/décochable de ses identifiants
+/* Modale « Matériel » (retours Martin, 23/08/2026 — 2e puis 3e retour) :
+   3 vues internes basculées par materielAfficherVue() dans app.js (grille
+   de types façon « stock de magasin » / détail cochable d'un type /
+   catalogue). Grille : un gros bouton par type avec un compteur N/total
+   emprunté ; clic → liste cochable/décochable de ses identifiants
    (#materielTypeDetail), cocher = emprunter (ouvre le formulaire, il faut
    préciser qui), décocher = marquer rendu directement. */
 .materiel-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); }
@@ -3960,6 +3973,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .materiel-type-btn.est-complet .materiel-type-compteur { color: var(--danger); }
 .materiel-type-back { background: none; border: none; color: var(--acc); padding: 0 0 var(--sp-2); font-family: var(--font-mono); font-size: .8rem; }
 .materiel-type-back:hover { background: none; color: var(--ink); }
+.materiel-catalogue-link { padding: var(--sp-2) 0 0; }
+.materiel-catalogue-section h4 { margin: 0 0 var(--sp-2); }
+/* Retour Martin (23/08/2026) : le catalogue (types + leurs identifiants) sur
+   au moins 2 colonnes plutôt qu'empilé — desktop seulement, le même rendu
+   HTML reste en une colonne sur #mobileMaterielCatalogueList (mobile). */
+#materielCatalogueList { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-3); align-items: start; }
+#materielCatalogueList .materiel-type-bloc { margin-bottom: 0; }
 #materielTypeDetail h4 { margin: 0 0 var(--sp-2); }
 .materiel-item-check-liste { display: flex; flex-direction: column; gap: 1px; }
 .materiel-item-check-row {
