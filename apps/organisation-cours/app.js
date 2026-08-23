@@ -1383,7 +1383,6 @@ function defaultMissionDetail(entity) {
     accompagnants: [],
     transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
     faitLe: new Date().toISOString().slice(0, 10),
-    faitA: 'Auray',
     destinataires: missionDestinatairesMemorises(),
     envoyeAt: null
   };
@@ -1527,9 +1526,7 @@ function renderMissionView() {
       </div>
     </div>
     <div class="mission-field-line mission-fait">
-      <span class="mission-field-label">Fait à</span>
-      <input type="text" class="mission-field mission-field-narrow" data-mission-field="faitA" value="${escapeAttr(detail.faitA)}" />
-      <span class="mission-field-label">le :</span>
+      <span class="mission-field-label">Fait à Auray le :</span>
       <input type="date" class="mission-field" data-mission-field="faitLe" value="${escapeAttr(detail.faitLe)}" />
     </div>
     <div class="mission-signatures">
@@ -1628,96 +1625,187 @@ function renderMobileMission() {
     ${(!aFaire.length && !mesMissions.length) ? '<p class="empty-hint">Rien à signaler.</p>' : ''}`;
 }
 
-const MISSION_PRINT_CSS = `
-* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-@page { size: A4 portrait; margin: 12mm; }
-body{background:#e9e6dc;font-family:'IBM Plex Sans',sans-serif;}
-.mission-print-page{background:#fffefb;max-width:190mm;margin:0 auto;padding:14mm;}
-.mission-doc-header{display:flex;align-items:center;gap:16px;margin-bottom:22px;}
-.mission-doc-header img{height:48px;}
-.mission-doc-header h1{font-size:22px;margin:0;font-weight:700;}
-.mission-print-line{margin:0 0 16px;font-size:13px;}
-.mission-print-line strong{border-bottom:1px solid #191b16;padding:0 4px;}
-.mission-print-block{margin:22px 0;}
-.mission-print-block h3{font-size:13px;font-weight:700;margin:0 0 8px;}
-.mission-print-desc{border:1px solid #191b16;padding:10px;min-height:50px;white-space:pre-wrap;font-size:13px;}
-/* Ajustements #7 (22/08/2026) — comparé au vrai gabarit (retours/ODM_Gabarit.pdf,
-   jamais commité), les accompagnants s'y présentent en paires de champs
-   « Nom Prénom : ___ / Fonction : ___ », pas dans un tableau bordé : repris
-   ici à l'identique (même patron que missionAccompagnantRow, l'écran
-   d'édition, qui avait déjà ce format — seul le PDF avait divergé). */
-.mission-print-acc-row{display:flex;gap:24px;margin:0 0 10px;font-size:13px;}
-.mission-print-acc-row span{flex:1;}
-.mission-print-acc-row strong{border-bottom:1px solid #191b16;padding:0 4px;margin-left:4px;}
-/* Ajustements #6 (22/08/2026) : titre en couleur repère (même --danger que le
-   document en ligne, codé en dur — cette fenêtre d'impression n'a pas accès
-   aux variables CSS de l'appli). */
-.mission-print-block h3.mission-print-transport-title{color:#C0562B;text-transform:uppercase;letter-spacing:.04em;}
-.mission-print-transport-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
-.mission-print-check{margin:4px 0;font-size:12px;}
-.mission-print-sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;border-top:2px solid #C0562B;padding-top:10px;}
-.mission-print-sigs div{border:1px solid #C0562B;min-height:70px;padding:8px;font-size:11px;}
-.mission-print-sigs strong{display:block;margin-bottom:4px;}
-.mission-print-sigs img{max-height:50px;}
-.mission-print-sig-hint{margin:2px 0 0;font-size:9.5px;color:#4b5563;}
-@media print{body{background:#fff;}.mission-print-page{box-shadow:none;padding:0;max-width:none;}}
-`;
-
-function missionPagePrintHtml(entity, detail) {
-  const acc = detail.accompagnants.filter(a => a.nom || a.fonction);
-  const accHtml = acc.length
-    ? acc.map(a => `<div class="mission-print-acc-row"><span>Nom Prénom : <strong>${escapeHtml(a.nom || '—')}</strong></span><span>Fonction : <strong>${escapeHtml(a.fonction || '—')}</strong></span></div>`).join('')
-    : '<p class="mission-print-line meta">Aucun</p>';
-  return `<div class="mission-print-page">
-    <div class="mission-doc-header"><img src="img/logo-kerplouz.png" alt="" /><h1>Ordre de mission</h1></div>
-    <p class="mission-print-line">Commandé par (Nom/Prénom) : <strong>${escapeHtml(detail.commandePar.nom || '—')}</strong></p>
-    <p class="mission-print-line">Fonction : <strong>${escapeHtml(detail.commandePar.fonction || '—')}</strong></p>
-    <p class="mission-print-line">Est autorisé(e) à se rendre le <strong>${escapeHtml(detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : '—')}</strong> à : <strong>${escapeHtml(detail.destination || '—')}</strong></p>
-    <p class="mission-print-line">Heure début : <strong>${escapeHtml(detail.heureDebut || '—')}</strong> Heure fin : <strong>${escapeHtml(detail.heureFin || '—')}</strong></p>
-    <div class="mission-print-block"><h3>Description de la mission :</h3><div class="mission-print-desc">${escapeHtml(detail.description || '')}</div></div>
-    <div class="mission-print-block"><h3>Accompagnants :</h3>${accHtml}</div>
-    <div class="mission-print-block"><h3 class="mission-print-transport-title">Moyens de transports</h3>
-      <div class="mission-print-transport-grid">
-        <div>
-          <p class="mission-print-check">${detail.transport.vehiculePersonnel ? '☒' : '☐'} Véhicule personnel</p>
-          <p class="mission-print-check">${detail.transport.vehiculeDe ? '☒' : '☐'} Véhicule de : ${escapeHtml(detail.transport.vehiculeDe || '')}</p>
-        </div>
-        <div>
-          <p class="mission-print-check">${detail.transport.verifAssurance ? '☒' : '☐'} Vérification assurance avant départ</p>
-          <p class="mission-print-check">${detail.transport.verifPermis ? '☒' : '☐'} Vérification permis avant départ</p>
-          <p class="mission-print-check">${detail.transport.controleFormateur ? '☒' : '☐'} Contrôle formateur avant départ</p>
-        </div>
-      </div>
-    </div>
-    <p class="mission-print-line">Fait à ${escapeHtml(detail.faitA || '—')} le : ${escapeHtml(detail.faitLe ? new Date(detail.faitLe).toLocaleDateString('fr-FR') : '—')}</p>
-    <div class="mission-print-sigs">
-      <div><strong>Le Demandeur :</strong>${missionSignatureUrlCache ? `<br><img src="${escapeAttr(missionSignatureUrlCache)}" alt="" />` : ''}</div>
-      <div><strong>Formateur / Enseignant :</strong></div>
-      <div><strong>Direction (1 des 3 pers.) :</strong><p class="mission-print-sig-hint">- Chef d’établissement<br>- Gestionnaire<br>- Responsable UFA / CFA</p></div>
-    </div>
-  </div>`;
+// Lot C (23/08/2026) — génération PDF au mm près, portée telle quelle depuis
+// le vrai document de l'établissement (retours/code_ordre-de-mission, jamais
+// commité) : mêmes coordonnées jsPDF que le PDF officiel, plutôt qu'une page
+// HTML imprimée dont la mise en page dépend des réglages du navigateur.
+const MISSION_LOGO_URL = 'img/logo-kerplouz.png';
+let missionLogoImageCache = null;
+function missionChargerLogoImage() {
+  if (missionLogoImageCache) return Promise.resolve(missionLogoImageCache);
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => { missionLogoImageCache = img; resolve(img); };
+    img.onerror = () => resolve(null);
+    img.src = MISSION_LOGO_URL;
+  });
 }
 
-function missionOpenPrintWindow() {
+function missionDrawLineField(doc, label, value, x, yPos, lineLength) {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(label, x, yPos);
+  const w = doc.getTextWidth(label);
+  doc.setLineDashPattern([], 0);
+  doc.setLineWidth(0.2);
+  doc.line(x + w + 2, yPos + 1, x + w + 2 + lineLength, yPos + 1);
+  if (value) {
+    doc.setFont('helvetica', 'bold');
+    doc.text(value, x + w + 5, yPos - 1);
+  }
+}
+
+function missionDrawCheckbox(doc, x, yPos, label, checked) {
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.4);
+  doc.rect(x, yPos - 3.5, 4, 4);
+  if (checked) {
+    doc.setDrawColor(209, 104, 63); // orange Kerplouz
+    doc.setLineWidth(1.2);
+    doc.line(x - 0.8, yPos - 4.3, x + 4.8, yPos + 1.3);
+    doc.line(x + 4.8, yPos - 4.3, x - 0.8, yPos + 1.3);
+    doc.setLineWidth(0.4);
+  }
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(label, x + 7, yPos);
+}
+
+async function missionGenererPdfDoc(detail, isVierge) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+  const d = isVierge ? { commandePar: {}, transport: {}, accompagnants: [] } : detail;
+  let y = 20;
+
+  const logo = await missionChargerLogoImage();
+  if (logo) doc.addImage(logo, 'PNG', 15, 10, 40, 15);
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Ordre de mission', 105, y, { align: 'center' });
+  y += 20;
+
+  missionDrawLineField(doc, 'Commandé par (Nom/Prénom) :', d.commandePar.nom || '', 15, y, 100);
+  y += 12;
+  missionDrawLineField(doc, 'Fonction :', d.commandePar.fonction || '', 15, y, 140);
+  y += 12;
+  missionDrawLineField(doc, 'Est autorisé(e) à se rendre le :', formatDateFr(d.dateMission), 15, y, 40);
+  missionDrawLineField(doc, 'à :', d.destination || '', 120, y, 60);
+  y += 12;
+  missionDrawLineField(doc, 'Heure début :', d.heureDebut || '', 15, y, 30);
+  missionDrawLineField(doc, 'Heure fin :', d.heureFin || '', 90, y, 30);
+
+  y += 15;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('Description de la mission :', 15, y);
+  y += 4;
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.4);
+  doc.rect(15, y, 180, 30);
+  if (!isVierge && detail.description) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(doc.splitTextToSize(detail.description, 175), 18, y + 6);
+  }
+  y += 38;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Accompagnants :', 15, y);
+  y += 8;
+  const accs = d.accompagnants || [];
+  for (let i = 0; i < 4; i++) {
+    missionDrawLineField(doc, 'Nom Prénom :', accs[i]?.nom || '', 20, y, 60);
+    missionDrawLineField(doc, 'Fonction :', accs[i]?.fonction || '', 120, y, 50);
+    y += 8;
+  }
+
+  y += 10;
+  doc.setTextColor(209, 104, 63);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MOYENS DE TRANSPORTS', 15, y);
+  doc.setTextColor(0, 0, 0);
+  y += 10;
+  const t = d.transport || {};
+  missionDrawCheckbox(doc, 25, y, 'Véhicule personnel', !!t.vehiculePersonnel);
+  missionDrawCheckbox(doc, 110, y, 'Vérification assurance avant départ', !!t.verifAssurance);
+  y += 10;
+  missionDrawCheckbox(doc, 25, y, `Véhicule de : ${t.vehiculeDe || '................................'}`, !!t.vehiculeDe);
+  missionDrawCheckbox(doc, 110, y, 'Vérification Permis avant départ', !!t.verifPermis);
+  y += 10;
+  missionDrawCheckbox(doc, 110, y, 'Contrôle formateur avant départ', !!t.controleFormateur);
+
+  y += 25;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  missionDrawLineField(doc, 'Fait à Auray le :', isVierge ? '' : formatDateFr(detail.faitLe), 15, y, 40);
+  y += 8;
+  doc.setLineWidth(0.5);
+  doc.line(15, y, 195, y);
+  y += 5;
+  const boxWidth = 56, boxHeight = 28;
+  doc.rect(15, y, boxWidth, boxHeight);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Le Demandeur :', 17, y + 5);
+  doc.rect(15 + boxWidth + 4, y, boxWidth, boxHeight);
+  doc.text('Formateur / Enseignant :', 15 + boxWidth + 6, y + 5);
+  doc.rect(15 + (boxWidth * 2) + 8, y, boxWidth, boxHeight);
+  doc.text('Direction (1 des 3 pers.) :', 15 + (boxWidth * 2) + 10, y + 5);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.text("- Chef d'établissement", 15 + (boxWidth * 2) + 10, y + 11);
+  doc.text('- Gestionnaire', 15 + (boxWidth * 2) + 10, y + 16);
+  doc.text('- Responsable UFA / CFA', 15 + (boxWidth * 2) + 10, y + 21);
+
+  return doc;
+}
+
+async function missionTelechargerPdf(isVierge = false) {
   const entity = missionEntity();
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
-  const win = window.open('', '_blank');
-  if (!win) { alert('Le navigateur a bloqué l’ouverture de la fenêtre d’impression. Autorisez les pop-ups pour ce site.'); return; }
-  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Ordre de mission — ${escapeHtml(missionTitreEntite(entity))}</title><style>${MISSION_PRINT_CSS}</style></head><body>${missionPagePrintHtml(entity, detail)}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
-  win.document.close();
+  const doc = await missionGenererPdfDoc(detail, isVierge);
+  doc.save(isVierge ? 'OM_vierge.pdf' : `OM_${detail.commandePar.nom || 'mission'}.pdf`);
+}
+
+function missionNettoyerCadreImpression(iframe, url) {
+  setTimeout(() => {
+    try { URL.revokeObjectURL(url); } catch (e) { /* tant pis */ }
+    try { iframe.remove(); } catch (e) { /* tant pis */ }
+  }, 30000);
+}
+
+async function missionImprimerPdf(isVierge = false) {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  const doc = await missionGenererPdfDoc(detail, isVierge);
+  const url = URL.createObjectURL(doc.output('blob'));
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      missionNettoyerCadreImpression(iframe, url);
+    }, 1);
+  };
 }
 
 // mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app) —
-// on ouvre donc d'abord l'impression (l'utilisateur choisit « Enregistrer en
-// PDF »), puis le mail pré-rempli qui le rappelle dans le corps du message.
-function missionSendMail() {
+// on télécharge donc d'abord le PDF, puis on ouvre le mail pré-rempli qui le
+// rappelle dans le corps du message.
+async function missionSendMail() {
   const entity = missionEntity();
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
-  missionOpenPrintWindow();
+  await missionTelechargerPdf(false);
   const sujet = `Ordre de mission — ${missionTitreEntite(entity)}`;
-  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? new Date(detail.dateMission).toLocaleDateString('fr-FR') : ''} (${detail.destination || ''}).\nMerci de joindre le PDF que vous venez d’enregistrer avant l’envoi.\n\nCordialement,\n${detail.commandePar.nom}`;
+  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? formatDateFr(detail.dateMission) : ''} (${detail.destination || ''}).\nMerci de joindre le PDF que vous venez de télécharger avant l’envoi.\n\nCordialement,\n${detail.commandePar.nom}`;
   const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
   window.location.href = href;
   detail.envoyeAt = new Date().toISOString();
@@ -7885,7 +7973,8 @@ function bindEvents() {
     memoriserMissionDestinataires(detail.destinataires);
     renderMissionView();
   });
-  $('#missionPdfButton')?.addEventListener('click', missionOpenPrintWindow);
+  $('#missionPdfButton')?.addEventListener('click', () => missionTelechargerPdf(false));
+  $('#missionBlankPdfButton')?.addEventListener('click', () => missionImprimerPdf(true));
   $('#missionSendButton')?.addEventListener('click', missionSendMail);
   missionChargerSignature();
 
