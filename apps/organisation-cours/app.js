@@ -181,7 +181,10 @@ let selectedReferenceCode = 'C4.2';
 let selectedReferenceModule = 'm4';
 let rubanTeacher = 'Tous';
 let creneauxPeriod = 'autumn'; // période affichée dans l'éditeur de créneaux type
-let creneauxTeacherFilter = ''; // '' -> par défaut mes créneaux (moiInitiales) une fois connu
+// Retour Martin (23/08/2026) : multi-sélection (cases à cocher) plutôt qu'un
+// choix exclusif « Mes créneaux / Tous / un collègue » — un Set d'initiales,
+// par défaut moi seul une fois moiInitiales connu (ensureCreneauxTeacherFilters).
+let creneauxTeacherFilters = null;
 let studentPlanningPromo = ''; // Écran 8 — promotion affichée, résolue au premier rendu (state.promotions[0])
 // Retours #3 (18-19/08/2026) — comme creneauxPeriod (Mes créneaux types) :
 // la semaine type d'une promotion n'est pas forcément la même sur les 2
@@ -189,6 +192,10 @@ let studentPlanningPromo = ''; // Écran 8 — promotion affichée, résolue au 
 let studentPlanningPeriod = 'autumn';
 let studentPlanningMineOnly = true; // case « Mettre mes cours en avant »
 let weekMaskActive = false;    // masque « créneaux type » dans le Planning hebdo
+// Retour Martin (23/08/2026) : quels enseignants montrer dans ce masque —
+// INDÉPENDANT du sélecteur de « Mes créneaux types » (Référentiel), par
+// défaut moi seul (ensureWeekMaskTeacherFilters).
+let weekMaskTeacherFilters = null;
 
 // initiales transmises par js/auth.js via OC_APP.demarrer(initiales) — sert
 // au périmètre strictement personnel du Tableau de bord (voir estVisiblePourMoi).
@@ -1894,8 +1901,23 @@ async function missionUploaderSignature(file) {
   } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
 }
 
-/* Badge du panneau Tableau de bord : nb + total des demandes NON terminées.
-   Visible même panneau replié, sans afficher les terminées.
+// Retour Martin (23/08/2026) : les frais partent à l'administration en fin
+// de mois — un déplacement « pas encore traité » en cours de mois est donc
+// normal, pas un retard. Un vrai retard ne commence qu'à plus de 15 jours
+// après la fin du mois DU DÉPLACEMENT (pas 15 jours après le déplacement
+// lui-même). Seule alerte de retard restante pour les frais (l'ancien
+// bandeau de retard de « Ma semaine » ne les mentionne plus, cf. dashRetards).
+function fraisEstEnRetard(d) {
+  const date = parseIsoDate(d.date);
+  if (!date) return false;
+  const finDeMois = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  finDeMois.setDate(finDeMois.getDate() + 15);
+  return dashAujourdhui() > finDeMois;
+}
+/* Badge du panneau Tableau de bord : nb de trajets en retard, plus de cumul
+   en euros (retour Martin, 23/08/2026 — juste « à traiter » n'a rien
+   d'alarmant tant que le mois n'est pas terminé depuis 15 jours). Rien
+   affiché tant qu'aucun trajet n'est réellement en retard.
    Filtré à estVisiblePourMoi (22/08/2026, partage inter-comptes) : une ligne
    réassignée au compte d'un collègue (d.teacher) sort de mon Frais — c'est
    justement le principe du partage, « vous n'aurez rien à déclarer ». */
@@ -1904,9 +1926,9 @@ function updateFraisBadge() {
   if (!badge) return;
   const all = (state.deplacements || []).filter(estVisiblePourMoi);
   const pending = all.filter(d => d.statut !== 'Terminée');
-  const total = pending.reduce((s, d) => s + deplacementTotal(d), 0);
-  badge.textContent = pending.length ? `${pending.length} à traiter · ${fmtEuro(total)}` : (all.length ? 'à jour' : '');
-  badge.classList.toggle('has-pending', pending.length > 0);
+  const enRetard = pending.filter(fraisEstEnRetard);
+  badge.textContent = enRetard.length ? `${enRetard.length} en retard` : '';
+  badge.classList.toggle('has-pending', enRetard.length > 0);
 }
 
 function renderFrais() {
@@ -2764,29 +2786,84 @@ function allTeachers() {
 }
 
 
+/* Sélecteur multi-collègues réutilisé par « Mes créneaux types » (Référentiel)
+   ET le masque du Planning hebdo (23/08/2026, retour Martin) — deux réglages
+   INDÉPENDANTS (chacun son Set d'initiales), même rendu de cases à cocher. */
+function buildTeacherPickerHtml(selected) {
+  const autres = allTeachers().filter(t => t.toLowerCase() !== (moiInitiales || '').toLowerCase());
+  const chip = (initiales, label) => `<label class="checkbox-chip"><input type="checkbox" value="${escapeAttr(initiales)}" ${selected.has(initiales) ? 'checked' : ''}><span>${escapeHtml(label)}</span></label>`;
+  const items = [
+    moiInitiales ? chip(moiInitiales, `Moi (${moiInitiales})`) : '',
+    ...autres.map(t => chip(t, t))
+  ].filter(Boolean);
+  return items.length ? items.join('') : '<p class="form-help tight">Aucun enseignant connu.</p>';
+}
+function teacherPickerSummary(selected) {
+  if (!selected.size) return '(aucun)';
+  if (moiInitiales && selected.size === 1 && selected.has(moiInitiales)) return `Moi (${moiInitiales})`;
+  const tous = allTeachers();
+  if (tous.length && tous.every(t => selected.has(t))) return 'Tous';
+  return [...selected].sort((a, b) => a.localeCompare(b, 'fr')).join(', ');
+}
+// `getSet` est appelé À CHAQUE clic (pas capturé une fois à l'appel de
+// bindEvents) : bindEvents() tourne avant que moiInitiales soit connu
+// (connexion Supabase pas encore faite), un Set capturé trop tôt resterait
+// vide pour toujours.
+function bindTeacherPickerChoices(boxSelector, getSet, onChange) {
+  $(boxSelector)?.addEventListener('change', (event) => {
+    const cb = event.target.closest('input[type=checkbox]');
+    if (!cb) return;
+    const set = getSet();
+    if (cb.checked) set.add(cb.value); else set.delete(cb.value);
+    onChange();
+  });
+}
+
 /* Référentiel & Ruban → Créneaux type : par défaut, seuls MES créneaux
    s'affichent (comme pour les ue/séquences/séances, un créneau sans
-   enseignant assigné reste visible de tous). Sélecteur pour voir "Tous" ou
-   ceux d'un collègue précis. */
+   enseignant assigné reste visible de tous). Cases à cocher pour ajouter
+   un ou plusieurs collègues. */
+function ensureCreneauxTeacherFilters() {
+  if (!creneauxTeacherFilters) creneauxTeacherFilters = new Set(moiInitiales ? [moiInitiales] : []);
+  return creneauxTeacherFilters;
+}
 function refreshCreneauxTeacherFilter() {
-  const select = $('#creneauxTeacherFilter');
-  if (!select) return;
-  if (!creneauxTeacherFilter) creneauxTeacherFilter = moiInitiales || 'Tous';
-  const autres = allTeachers().filter(t => t.toLowerCase() !== moiInitiales.toLowerCase());
-  const options = [
-    moiInitiales ? `<option value="${escapeAttr(moiInitiales)}">Mes créneaux (${escapeHtml(moiInitiales)})</option>` : '',
-    '<option value="Tous">Tous les enseignants</option>',
-    ...autres.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`)
-  ].filter(Boolean).join('');
-  setOptions('#creneauxTeacherFilter', options, creneauxTeacherFilter);
-  if (![...select.options].some(o => o.value === creneauxTeacherFilter)) creneauxTeacherFilter = 'Tous';
+  const box = $('#creneauxTeacherChoices');
+  if (!box) return;
+  const selected = ensureCreneauxTeacherFilters();
+  box.innerHTML = buildTeacherPickerHtml(selected);
+  const summary = $('#creneauxTeacherPickerSummary');
+  if (summary) summary.textContent = teacherPickerSummary(selected);
 }
 
 function matchesCreneauxTeacherFilter(slot) {
-  if (creneauxTeacherFilter === 'Tous') return true;
+  const selected = ensureCreneauxTeacherFilters();
   const tokens = teacherTokens(slot?.teacher);
   if (!tokens.length) return true;
-  return tokens.some(t => t.toLowerCase() === (creneauxTeacherFilter || '').toLowerCase());
+  if (!selected.size) return false;
+  return tokens.some(t => [...selected].some(f => f.toLowerCase() === t.toLowerCase()));
+}
+
+/* Masque « créneaux type » du Planning hebdo — même mécanique que ci-dessus,
+   réglage INDÉPENDANT (voir weekMaskTeacherFilters). */
+function ensureWeekMaskTeacherFilters() {
+  if (!weekMaskTeacherFilters) weekMaskTeacherFilters = new Set(moiInitiales ? [moiInitiales] : []);
+  return weekMaskTeacherFilters;
+}
+function refreshWeekMaskTeacherFilter() {
+  const box = $('#weekMaskTeacherChoices');
+  if (!box) return;
+  const selected = ensureWeekMaskTeacherFilters();
+  box.innerHTML = buildTeacherPickerHtml(selected);
+  const summary = $('#weekMaskTeacherPickerSummary');
+  if (summary) summary.textContent = teacherPickerSummary(selected);
+}
+function matchesWeekMaskTeacherFilter(slot) {
+  const selected = ensureWeekMaskTeacherFilters();
+  const tokens = teacherTokens(slot?.teacher);
+  if (!tokens.length) return true;
+  if (!selected.size) return false;
+  return tokens.some(t => [...selected].some(f => f.toLowerCase() === t.toLowerCase()));
 }
 
 /* Périmètre strictement personnel (distinct du filtre manuel ci-dessus, propre
@@ -2971,7 +3048,6 @@ function pruneOpenState() {
    ================================================================ */
 
 const DASH_SEMAINES = 2;        // « Les deux semaines suivantes » (REGLES.md — un seul écran, pas de pagination)
-const FRAIS_RETARD_JOURS = 45;  // les frais partent au mois : pas d'alerte avant
 
 // Lot B [1] (retours/ 17/08/2026) — navigation semaine par semaine du bloc
 // « Ma semaine », indépendante de « Les deux semaines suivantes » (qui reste
@@ -3078,24 +3154,58 @@ function dashActionsDeSeance(s, date) {
   return out;
 }
 
-function dashEtiquettes(actions) {
-  return actions.map(a => `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''}">${escapeHtml(a.texte)}</span>`).join('');
+// Retour Martin (23/08/2026) : jusqu'ici, seule la pile Urgences permettait de
+// cocher salle/véhicule/matériel réservés (case `.room-booked-check`) — la
+// même étiquette sur la carte d'une séance (Ma semaine, Prochainement,
+// Tableau de bord, mobile) restait un simple texte. Les 3 natures qui
+// correspondent à une case à cocher ailleurs deviennent ici aussi une case
+// (même attributs `data-reservation-*`, le même écouteur générique sur
+// document.body les enregistre — cf. bindModalActions) ; "mission"/"placer"/
+// "rattacher"/"reunion"/"periode" restent du texte, leur clic ouvre déjà la
+// fiche complète (ordre de mission, édition...), pas une simple case.
+const ACTIONS_RESERVABLES = new Set(['salle', 'vehicule', 'materiel']);
+// Retour Martin (23/08/2026) : l'ordre de mission devient lui aussi cliquable
+// depuis la carte — mais ce n'est pas une case à cocher (envoyer un ordre de
+// mission est un vrai geste, pas un booléen à inverser), donc un bouton qui
+// ouvre la même vue que le lien « Éditer » de la pile Urgences
+// (data-open-mission, déjà géré par bindEvents), pas une case cachée.
+function dashEtiquettes(actions, sessionId) {
+  return actions.map(a => {
+    if (sessionId && ACTIONS_RESERVABLES.has(a.cle)) {
+      // Retour Martin (23/08/2026) : bascule « véhicule de l'établissement
+      // indisponible → personnel » (déjà dans la pile Urgences,
+      // data-bascule-vehicule, exclu du clic-carte dans les 3 zones
+      // concernées depuis le début) accessible aussi depuis la carte, tant
+      // que ce n'est pas déjà réservé.
+      const bascule = (a.cle === 'vehicule' && !a.fait)
+        ? `<button type="button" class="act-bascule" data-bascule-vehicule="session:${escapeAttr(sessionId)}" title="Véhicule de l'établissement non disponible : passer en véhicule personnel (déclenche l'ordre de mission)">→ perso</button>`
+        : '';
+      return `<label class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''} act-toggle" title="Cliquer pour ${a.fait ? 'annuler' : 'confirmer'} la réservation">
+        <input type="checkbox" class="visually-hidden" data-reservation-kind="${a.cle}" data-reservation-source="session" data-reservation-id="${escapeAttr(sessionId)}" ${a.fait ? 'checked' : ''}>
+        <span>${escapeHtml(a.texte)}</span>
+      </label>${bascule}`;
+    }
+    if (sessionId && a.cle === 'mission') {
+      // Bascule inverse, tant que l'ordre de mission n'est pas déjà envoyé
+      // (même garde-fou que dans Urgences).
+      const bascule = !a.fait
+        ? `<button type="button" class="act-bascule" data-bascule-vehicule-retour="session:${escapeAttr(sessionId)}" title="Revenir à un déplacement en véhicule de l'établissement">→ établissement</button>`
+        : '';
+      return `<button type="button" class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''} act-toggle" data-open-mission="session:${escapeAttr(sessionId)}" title="Ouvrir l'ordre de mission">${escapeHtml(a.texte)}</button>${bascule}`;
+    }
+    return `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''}">${escapeHtml(a.texte)}</span>`;
+  }).join('');
 }
 
-/* Le retard : ce qui aurait dû être fait. Les frais de déplacement n'y entrent
-   qu'au-delà de FRAIS_RETARD_JOURS — ils partent à l'administration une fois
-   par mois, les afficher en rouge tout de suite n'aurait aucun sens. */
+/* Le retard : ce qui aurait dû être fait.
+   Retour Martin (23/08/2026) : les frais de déplacement en retard n'y
+   apparaissent plus — « pas très intéressant de les placer là », doublon du
+   compteur de la tuile Frais de déplacements (updateFraisBadge/
+   fraisEstEnRetard) qui fait déjà office d'alerte, et ce bandeau ne bouge
+   pas avec la semaine affichée (calculé sur TOUS les déplacements, pas la
+   semaine courante) — trompeur, on dirait une info liée à la semaine. */
 function dashRetards() {
   const out = [];
-  (state.deplacements || []).filter(d => d.statut !== 'Terminée').forEach(d => {
-    const j = dashJoursEntre(parseIsoDate(d.date));
-    if (j === null || j > -FRAIS_RETARD_JOURS) return;
-    out.push({
-      titre: 'Frais de déplacement qui traînent',
-      detail: `${d.lieu || 'lieu à préciser'} · ${fmtEuro(deplacementTotal(d))}`,
-      delai: dashDelaiCourt(j), cible: 'dash:frais'
-    });
-  });
   visibleSessions().filter(isFictiveSession).forEach(s => {
     const w = dashSemaineObjet(s.targetWeekId || s.weekId);
     if (!w || w.id === currentWeekId()) return; // déjà montrée dans « sans créneau »
@@ -3182,13 +3292,24 @@ function dashCarteSeance(s, date, compact) {
   // droite) ». .carte-corps regroupe le texte, .carte-pastilles la colonne de
   // droite (CSS : #dashboard aplatit ce wrapper en display:contents et rejoue
   // l'ordre d'origine par `order`, #mobileSemaine en fait une vraie colonne).
+  // MOBILE INCHANGÉ (plusieurs tours d'ajustements #7/#9 déjà validés).
   const pastilles = (promo || teachers) ? `<div class="carte-pastilles">${promo}${teachers ? `<span class="design-ue-pills carte-teachers">${teachers}</span>` : ''}</div>` : '';
+  // Retour Martin (23/08/2026, desktop uniquement) : promo/UE/enseignants
+  // regroupés sur UNE ligne (au lieu de deux : meta d'un côté, pastilles
+  // colonne de droite de l'autre) — reprend les mêmes pastilles que
+  // ci-dessus (`promo`/`teachers`), juste assemblées différemment pour cet
+  // usage ; masqué sur mobile (.carte-ligne2, cf. styles.css), qui garde sa
+  // propre colonne. Les initiales enseignant, demande récurrente de Martin,
+  // sont ainsi garanties visibles sur la même ligne que promo/UE plutôt que
+  // reléguées dans une colonne qui pouvait se perdre.
+  const ligne2 = `<span class="carte-ligne2">${promo}<span class="carte-meta-inline">${escapeHtml(meta)}</span>${teachers ? `<span class="design-ue-pills carte-teachers-inline">${teachers}</span>` : ''}</span>`;
   return `<li class="carte${aTraiter ? ' a-traiter' : ''}${urgent ? ' est-urgent' : ''}" data-edit-session="${escapeAttr(s.id)}" tabindex="0" role="button">
     <div class="carte-corps">
       <span class="carte-heure">${escapeHtml(dashHoraire(s) || '—')}</span>
       <span class="carte-titre">${escapeHtml(s.title)}</span>
       <span class="carte-meta">${escapeHtml(meta)}</span>
-      ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions)}</span>` : ''}
+      ${ligne2}
+      ${actions.length ? `<span class="carte-actions">${dashEtiquettes(actions, s.id)}</span>` : ''}
     </div>
     ${pastilles}
   </li>`;
@@ -3296,14 +3417,8 @@ function renderDashProchainement() {
   const ids = dashSemainesApres(DASH_SEMAINES);
   if (!ids.length) { hote.innerHTML = ''; hote.hidden = true; return; }
   hote.hidden = false;
-  const aAnticiper = ids.some(id => {
-    const c = dashContenuSemaine(id);
-    if (!c) return false;
-    return c.aPlacer.length || c.jours.some(j => j.seances.some(s => dashActionsDeSeance(s, j.date).some(a => a.urgent)));
-  });
   hote.innerHTML = `<div class="panel-heading-inline bloc-tete">
-      <h3>Les deux semaines suivantes <span class="bloc-id">ce qui demande d&rsquo;anticiper</span></h3>
-      ${aAnticiper ? `<span class="bloc-legende"><span class="bloc-legende-puce"></span>une réservation ou un ordre à produire</span>` : ''}
+      <h3>Les deux semaines suivantes</h3>
     </div>
     <div class="bande-compacte">${ids.map(dashLigneSemaine).join('')}</div>`;
 }
@@ -3669,7 +3784,7 @@ function renderMobileSeance() {
       <button type="button" class="mobile-verbe-btn" data-mobile-annoter="1">✎ Annoter</button>
       <button type="button" class="mobile-verbe-btn" data-edit-session="${escapeAttr(s.id)}">⚠ Consulter-modifier</button>
     </div>
-    ${actions.length ? `<div class="carte-actions mobile-seance-actions">${dashEtiquettes(actions)}</div>` : ''}
+    ${actions.length ? `<div class="carte-actions mobile-seance-actions">${dashEtiquettes(actions, s.id)}</div>` : ''}
     ${s.activities ? `<section class="mobile-seance-bloc"><h3>Déroulé</h3><p>${escapeHtml(s.activities)}</p></section>` : ''}
     ${s.objectives ? `<section class="mobile-seance-bloc"><h3>Objectifs</h3><p>${escapeHtml(s.objectives)}</p></section>` : ''}
     ${s.keywords ? `<section class="mobile-seance-bloc"><h3>Mots-clés</h3><p>${escapeHtml(s.keywords)}</p></section>` : ''}
@@ -3998,7 +4113,10 @@ function renderDesignSequencesPanel(ue, sequences) {
 
 function setDesignTab(tab) {
   designActiveTab = tab;
-  $$('.design-subtab').forEach(btn => {
+  // Scopé à .design-subtabs (voir le commentaire sur l'écouteur de clic,
+  // bindEvents) : sans ce scope, une boucle sur TOUS les .design-subtab de la
+  // page retirait aussi la classe .active des sous-onglets Référentiel/Ruban.
+  $$('.design-subtabs .design-subtab').forEach(btn => {
     const active = btn.dataset.designTab === tab;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', String(active));
@@ -4958,6 +5076,7 @@ function renderPlanning() {
   $('#weekSelect').value = selectedWeek;
   const currentWeek = state.weeks.find(w => w.id === selectedWeek);
   if (currentWeek) weekStripPeriod = weekStripPeriodOf(currentWeek);
+  refreshWeekMaskTeacherFilter();
   renderWeekStrip();
   renderWeekBacklog();
   $('#planningContainer').innerHTML = state.promotions.map(renderPromotionTable).join('');
@@ -5163,7 +5282,7 @@ function renderPromotionTable(promotion) {
   const blockedDay = dayConstraints.map(list => list.some(isBlockingConstraint) || eilSelf.length > 0);
   // Masque « créneaux type » : superpose la trame du planning hebdo type
   // (semestre déduit de la période de la semaine + promo) sur les cases vides.
-  const maskSlots = weekMaskActive ? templateSlotsFor(templateSemester(periodOfWeek(week), promotion)) : [];
+  const maskSlots = weekMaskActive ? templateSlotsFor(templateSemester(periodOfWeek(week), promotion)).filter(matchesWeekMaskTeacherFilter) : [];
   const skip = new Set();
   const rows = SLOTS.map((slot, slotIndex) => {
     if (slotIndex === 4) {
@@ -5234,8 +5353,18 @@ function renderPromotionTable(promotion) {
             const half = (m) => `<span class="mask-half">${head && m ? `<span class="mask-label">${escapeHtml(templateMaskLabel(m))}</span>` : ''}</span>`;
             return `<td class="${clsBase} mask-split" ${attrs}><span class="mask-split-inner">${half(left)}${half(right)}</span><span class="drop-hint">+</span></td>`;
           }
-          const label = templateMaskLabel(covering[0]);
-          return `<td class="${clsBase}" ${attrs}>${head && label ? `<span class="mask-label">${escapeHtml(label)}</span>` : ''}<span class="drop-hint">+</span></td>`;
+          // Chevauchement « résiduel » (≥2 créneaux type sans L/R, typiquement
+          // 2 enseignants différents sur la même case) : retour Martin
+          // (23/08/2026) — les empiler toutes plutôt que de n'en montrer
+          // qu'une seule (les autres restaient cachées, visibles seulement au
+          // survol via `tip` ci-dessus). Même patron visuel que .tpl-overlap
+          // dans l'éditeur de créneaux types.
+          const labelHtml = head
+            ? (covering.length > 1
+                ? `<span class="mask-label-stack">${covering.map(m => { const l = templateMaskLabel(m); return l ? `<span class="mask-label mask-label-item">${escapeHtml(l)}</span>` : ''; }).join('')}</span>`
+                : (templateMaskLabel(covering[0]) ? `<span class="mask-label">${escapeHtml(templateMaskLabel(covering[0]))}</span>` : ''))
+            : '';
+          return `<td class="${clsBase}" ${attrs}>${labelHtml}<span class="drop-hint">+</span></td>`;
         }
       }
       return `<td class="empty-slot drop-slot ${blockedDay[dayIndex] ? 'day-off-slot' : ''}" data-create='${escapeAttr(contextJson)}' data-drop-target='${escapeAttr(contextJson)}' title="Cliquer pour créer · Glisser une séance ici"><span class="drop-hint">+</span></td>`;
@@ -6804,13 +6933,6 @@ function renderCreneaux() {
   });
   const period = TEMPLATE_PERIODS.find(p => p.key === creneauxPeriod) || TEMPLATE_PERIODS[0];
   container.innerHTML = renderTemplateGrid(period);
-
-  // Retour de Martin (16/08/2026) : plus de compte de créneaux ni de calcul
-  // horaire — seule la portée affichée (personnel / tous / un collègue) reste.
-  const summaryEl = $('#creneauxSummary');
-  if (summaryEl) {
-    summaryEl.textContent = creneauxTeacherFilter === 'Tous' ? 'tous les enseignants' : (creneauxTeacherFilter.toLowerCase() === moiInitiales.toLowerCase() ? 'personnel' : creneauxTeacherFilter);
-  }
 }
 
 /* Une seule grille par période : les créneaux des DEUX promos y cohabitent
@@ -6898,7 +7020,15 @@ function openTemplateModal(slot, context = {}) {
   $('#templateUe').value = ueSelectValue;
   $('#templateUeCode').value = slot?.ueCode || '';
   $('#templateTitle').value = slot?.title || '';
-  $('#templateTeacher').value = slot?.teacher || '';
+  // Retour Martin (23/08/2026) : en ajout (pas en modification), pré-remplir
+  // avec le collègue actuellement filtré (widget enseignants-widget.js coche
+  // sa case s'il a un compte actif, sinon le laisse en résidu texte libre —
+  // aucune logique de compte à dupliquer ici).
+  // Pré-remplissage (retour Martin, 23/08/2026) : seulement si un SEUL
+  // collègue est actuellement coché dans le sélecteur multi-collègues (sinon
+  // ambigu — plusieurs cochés, impossible de deviner lequel).
+  const creneauxFilterSolo = !slot && creneauxTeacherFilters && creneauxTeacherFilters.size === 1 ? [...creneauxTeacherFilters][0] : '';
+  $('#templateTeacher').value = slot?.teacher || creneauxFilterSolo;
   const colorEl = $('#templateColor');
   if (colorEl) {
     const hasColor = isValidHexColor(slot?.color);
@@ -7894,7 +8024,7 @@ function bindEvents() {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
-      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour], [data-mobile-filtre-urgence], [data-mobile-goto]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour], [data-mobile-filtre-urgence], [data-mobile-goto]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
       if (nav) { dashChangerSemaine(Number(nav.dataset.dashWeekNav)); return; }
       const seance = event.target.closest('[data-edit-session]');
@@ -8164,7 +8294,8 @@ function bindEvents() {
     creneauxPeriod = btn.dataset.creneauxPeriod;
     renderCreneaux();
   }));
-  $('#creneauxTeacherFilter')?.addEventListener('change', e => { creneauxTeacherFilter = e.target.value; renderCreneaux(); });
+  bindTeacherPickerChoices('#creneauxTeacherChoices', ensureCreneauxTeacherFilters, () => { refreshCreneauxTeacherFilter(); renderCreneaux(); });
+  $('#creneauxTeacherPicker')?.addEventListener('toggle', (e) => { if (e.target.open) refreshCreneauxTeacherFilter(); });
   $('#creneauxGrids')?.addEventListener('click', async (event) => {
     const del = event.target.closest('[data-del-template]');
     if (del) {
@@ -8365,6 +8496,8 @@ function bindEvents() {
     weekMaskActive = event.target.checked;
     renderPlanning();
   });
+  bindTeacherPickerChoices('#weekMaskTeacherChoices', ensureWeekMaskTeacherFilters, () => { refreshWeekMaskTeacherFilter(); renderPlanning(); });
+  $('#weekMaskTeacherPicker')?.addEventListener('toggle', (e) => { if (e.target.open) refreshWeekMaskTeacherFilter(); });
   // Notes de semaine — enregistrement automatique (comme « À faire » / « Dev »)
   let weekNotesTimer;
   const persistWeekNotes = async () => {
@@ -8406,7 +8539,15 @@ function bindEvents() {
     designSelectedUeId = row.dataset.selectUe;
     renderDesign();
   });
-  $$('.design-subtab').forEach(btn => btn.addEventListener('click', () => setDesignTab(btn.dataset.designTab)));
+  // Bug trouvé le 23/08/2026 : .design-subtab est une classe CSS PARTAGÉE avec
+  // les sous-onglets Référentiel/Ruban (data-ruban-tab) — un sélecteur non
+  // scopé ici déclenchait setDesignTab(undefined) sur un clic dans le Ruban,
+  // ce qui rendait TOUS les boutons Référentiel « actifs » à la fois (aucun
+  // n'a de data-design-tab, donc tous valaient undefined === undefined dans
+  // setDesignTab). Scopé au conteneur .design-subtabs (Conception
+  // pédagogique uniquement) — voir aussi le même scope ajouté dans
+  // setDesignTab() ci-dessus.
+  $$('.design-subtabs .design-subtab').forEach(btn => btn.addEventListener('click', () => setDesignTab(btn.dataset.designTab)));
   $('#ganttPromoSwitch')?.addEventListener('click', (event) => {
     const btn = event.target.closest('[data-gantt-promo]');
     if (!btn) return;
@@ -8486,7 +8627,7 @@ function bindEvents() {
       // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
       // réservation, le lien « Éditer » (ordre de mission) et le × gardent
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
-      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
       if (nav) { dashChangerSemaine(Number(nav.dataset.dashWeekNav)); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
@@ -8517,7 +8658,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('.room-booked-check, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
       const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
@@ -8940,9 +9081,14 @@ function bindDashTuiles() {
     $('#missionListDialog')?.close();
     openMissionView('standalone', row.dataset.openMissionDraft);
   });
-  Object.values(DASH_TUILE_DIALOGS).forEach(sel => {
-    const dialog = $(sel);
-    dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  // Retour Martin (23/08/2026) : clic en dehors pour fermer, généralisé à
+  // TOUTES les <dialog> (avant : seulement les 6 tuiles du tableau de bord,
+  // DASH_TUILE_DIALOGS ci-dessus). `event.target === dialog` ne peut être
+  // vrai qu'en cliquant le fond/pourtour de la <dialog> elle-même (le clic
+  // sur un enfant — formulaire, champ… — cible cet enfant, jamais la
+  // <dialog>), donc aucun risque de fermer sur un clic dans le contenu.
+  $$('dialog').forEach(dialog => {
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   });
 }
 

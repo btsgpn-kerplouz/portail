@@ -208,7 +208,7 @@
         </div>
         <div class="promo-switch semester-switch" role="group" aria-label="Semestre" id="ganttSemesterSwitch"></div>
         <span class="progression-week-range" id="ganttWeekRange"></span>
-        <button type="button" class="small secondary" id="exportGanttButton">⎙ Exporter la frise</button>
+        <button type="button" class="icon-button small" id="exportGanttButton" title="Exporter la frise en PDF" aria-label="Exporter la frise en PDF">⎙</button>
       </div>
 
       <div class="progression-ue-row">
@@ -261,10 +261,14 @@
           <button type="button" class="promo-switch-btn" data-week-period="summer">Juin – août</button>
         </div>
         <div class="week-bar-group week-bar-actions">
-          <label class="mask-toggle" title="Afficher la trame de vos créneaux de cours type (onglet Référentiel) sur les cases libres">
+          <label class="mask-toggle" title="Afficher la trame des créneaux de cours type (onglet Référentiel) sur les cases libres">
             <input type="checkbox" id="weekMaskToggle" />
             <span>Ma trame de créneaux</span>
           </label>
+          <details class="teacher-picker" id="weekMaskTeacherPicker">
+            <summary>Collègues affichés <span id="weekMaskTeacherPickerSummary"></span></summary>
+            <div id="weekMaskTeacherChoices" class="checkbox-row"></div>
+          </details>
           <button id="printWeekButton" class="icon-button small" type="button" title="Exporter la semaine en PDF" aria-label="Exporter la semaine en PDF">⎙</button>
         </div>
       </div>
@@ -325,14 +329,17 @@
       <div class="ruban-bar ruban-subtabs" role="tablist" aria-label="Le référentiel et le ruban pédagogique">
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab" data-ruban-tab="reference" role="tab" aria-selected="false">Référentiel</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="pdf" role="tab" aria-selected="false">PDF d'origine</button>
         </span>
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab active" data-ruban-tab="ruban" role="tab" aria-selected="true">Ruban</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="repartition" role="tab" aria-selected="false">Répartition</button>
         </span>
         <span class="ruban-subtab-pair">
           <button type="button" class="design-subtab" data-ruban-tab="etudiant" role="tab" aria-selected="false">Planning étudiant</button>
+          <span class="ruban-subtab-sep" aria-hidden="true">·</span>
           <button type="button" class="design-subtab" data-ruban-tab="creneaux" role="tab" aria-selected="false">Mes créneaux types</button>
         </span>
         <div class="ruban-bar-group ruban-bar-filtres" id="rubanFilters">
@@ -460,10 +467,10 @@
               <button type="button" data-creneaux-period="autumn" class="active" aria-pressed="true">Septembre → décembre</button>
               <button type="button" data-creneaux-period="spring" aria-pressed="false">Janvier → mai</button>
             </div>
-            <span class="creneaux-summary" id="creneauxSummary"></span>
-            <label class="creneaux-teacher-filter">Créneaux affichés
-              <select id="creneauxTeacherFilter"></select>
-            </label>
+            <details class="teacher-picker" id="creneauxTeacherPicker">
+              <summary>Créneaux affichés <span id="creneauxTeacherPickerSummary"></span></summary>
+              <div id="creneauxTeacherChoices" class="checkbox-row"></div>
+            </details>
           </div>
           <p class="meta tight">Placez ici vos créneaux hebdomadaires fixes (UE, enseignant, intitulé, couleur). Ils alimentent le masque « Créneaux type » du Planning hebdo. Cliquer une case pour ajouter, un créneau pour le modifier.</p>
         </section>
@@ -659,7 +666,7 @@
         </label>
       </div>
       <label>Description / intention pédagogique
-        <textarea id="ueDescription" rows="4"></textarea>
+        <textarea id="ueDescription" rows="4" placeholder="En une ou deux phrases : pourquoi cette UE existe, sa place dans la formation."></textarea>
       </label>
       <section class="form-section readonly-section">
         <h4>Rappel des capacités de l’UE</h4>
@@ -878,16 +885,16 @@
 
       <div class="two-column-form">
         <label>Objectifs de la séquence
-          <textarea id="sequenceObjectives" rows="4"></textarea>
+          <textarea id="sequenceObjectives" rows="4" placeholder="Un objectif commence par un verbe d'action (identifier, analyser, mettre en œuvre…)."></textarea>
         </label>
         <label>Mots-clés / notions structurantes
           <textarea id="sequenceKeywords" rows="4" placeholder="Séparer par virgules ou retours ligne"></textarea>
         </label>
         <label>Apprentissages à réaliser / savoir-faire visés
-          <textarea id="sequenceLearningOutcomes" rows="4"></textarea>
+          <textarea id="sequenceLearningOutcomes" rows="4" placeholder="Décrire une capacité observable chez l'étudiant, pas un contenu enseigné."></textarea>
         </label>
         <label>Prérequis
-          <textarea id="sequencePrerequisites" rows="3"></textarea>
+          <textarea id="sequencePrerequisites" rows="3" placeholder="Ce que l'étudiant doit déjà maîtriser avant d'aborder la séquence."></textarea>
         </label>
         <label>Point de vigilance <small>— lu avant la séance, ne sort jamais</small>
           <textarea id="sequenceDifferentiation" rows="4" placeholder="Besoins élèves, vigilance terrain, points bloquants, classe, contraintes particulières…"></textarea>
@@ -902,7 +909,7 @@
           <input type="hidden" id="sequenceAssessmentType" />
         </div>
         <label>Évaluation prévue — précisions
-          <textarea id="sequenceAssessment" rows="3"></textarea>
+          <textarea id="sequenceAssessment" rows="3" placeholder="Préciser la forme de l'évaluation et ce qui est effectivement noté."></textarea>
         </label>
         <label>Production attendue / traces élèves
           <textarea id="sequenceDeliverables" rows="3" placeholder="Compte rendu, carte, diagnostic, support de médiation, restitution orale…"></textarea>
@@ -1040,16 +1047,16 @@
 
       <div class="two-column-form">
         <label>Objectifs de séance
-          <textarea id="sessionObjectives" rows="3"></textarea>
+          <textarea id="sessionObjectives" rows="3" placeholder="Un objectif commence par un verbe d'action (identifier, décrire, mesurer…)."></textarea>
         </label>
         <label>Mots-clefs
           <textarea id="sessionKeywords" rows="3" placeholder="Ex. clé de détermination, transect, pH…"></textarea>
         </label>
         <label>Déroulé
-          <textarea id="sessionActivities" rows="3"></textarea>
+          <textarea id="sessionActivities" rows="3" placeholder="Étapes chronologiques : ce que fait l'enseignant, ce que font les étudiants."></textarea>
         </label>
-        <label>Points de vigilance <small>— lus avant la séance, ne sortent jamais</small>
-          <textarea id="sessionDifferentiation" rows="3"></textarea>
+        <label>Points de vigilance
+          <textarea id="sessionDifferentiation" rows="3" placeholder="Ce qui peut mettre la séance en difficulté et qu'il faut anticiper."></textarea>
         </label>
         <label>Matériel
           <textarea id="sessionMaterials" rows="2" placeholder="Ex. 24 loupes, flore de Bretagne × 12"></textarea>
