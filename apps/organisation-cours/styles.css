@@ -3938,6 +3938,7 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-tuile-reunions { background: var(--clay); }
 #dashboard .dash-tuile-devnotes { background: var(--amber); }
 #dashboard .dash-tuile-materiel { background: var(--water); }
+#dashboard .dash-tuile-mission { background: var(--acc); }
 
 /* Bandeau de modale coloré (retour Martin, 23/08/2026) : le bandeau titre
    d'une modale ouverte depuis une tuile reprend la couleur de fond de cette
@@ -3950,6 +3951,13 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .modal-header.dash-tone-reunions { background: var(--clay); }
 .modal-header.dash-tone-devnotes { background: var(--amber); }
 .modal-header.dash-tone-materiel { background: var(--water); }
+.modal-header.dash-tone-mission { background: var(--acc); }
+
+/* Modale « Ordre de mission » (Lot C-bis, 23/08/2026) : hub d'accès rapide,
+   pas d'édition en place — les 2 actions ouvrent soit une impression directe
+   (modèle vierge), soit l'éditeur plein document (#missionView). */
+.mission-list-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin: var(--sp-3) 0; }
+.mission-list-drafts { display: flex; flex-direction: column; gap: var(--sp-2); }
 
 /* Modale « Matériel » (retours Martin, 23/08/2026 — 2e puis 3e retour) :
    3 vues internes basculées par materielAfficherVue() dans app.js (grille

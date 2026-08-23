@@ -1388,12 +1388,21 @@ function defaultMissionDetail(entity) {
   };
 }
 
+// Fusionne avec les valeurs par défaut plutôt que de supposer missionDetail
+// complet : un ordre de mission autonome peut avoir été créé avec un
+// missionDetail partiel (ex. fixture de retours/preview.js, ou une donnée
+// plus ancienne) — trouvé en testant la tuile « Ordre de mission » du
+// tableau de bord (Lot C-bis, 23/08/2026) : ça faisait planter l'ouverture.
 function ensureMissionDetail(entity) {
-  if (!entity.missionDetail) entity.missionDetail = defaultMissionDetail(entity);
+  const defauts = defaultMissionDetail(entity);
+  const detail = Object.assign({}, defauts, entity.missionDetail || {});
+  detail.commandePar = Object.assign({}, defauts.commandePar, entity.missionDetail?.commandePar || {});
+  detail.transport = Object.assign({}, defauts.transport, entity.missionDetail?.transport || {});
   // Toujours au moins une ligne réelle en état : le champ affiché doit pouvoir
   // s'écrire (accompagnants.0.nom) même avant tout clic sur « + Ajouter ».
-  if (!entity.missionDetail.accompagnants.length) entity.missionDetail.accompagnants.push({ nom: '', fonction: '' });
-  return entity.missionDetail;
+  if (!Array.isArray(detail.accompagnants) || !detail.accompagnants.length) detail.accompagnants = [{ nom: '', fonction: '' }];
+  entity.missionDetail = detail;
+  return detail;
 }
 
 // Écran 18 (mobile, 21/08/2026) — #missionView est partagé desktop/mobile
@@ -1625,6 +1634,33 @@ function renderMobileMission() {
     ${(!aFaire.length && !mesMissions.length) ? '<p class="empty-hint">Rien à signaler.</p>' : ''}`;
 }
 
+// Tuile « Ordre de mission » (Lot C-bis, 23/08/2026) — donne accès depuis le
+// Tableau de bord desktop aux ordres de mission autonomes (state.missions),
+// jusqu'ici seulement listés côté accueil mobile (renderMobileMission
+// ci-dessus). Le badge compte les brouillons non envoyés.
+function updateMissionListBadge() {
+  const badge = $('#missionListBadge');
+  if (!badge) return;
+  const enAttente = (state.missions || []).filter(m => !m.missionDetail?.envoyeAt);
+  badge.textContent = enAttente.length ? `${enAttente.length} en attente` : '';
+  badge.classList.toggle('has-pending', enAttente.length > 0);
+}
+
+function renderMissionListDialog() {
+  updateMissionListBadge();
+  const host = $('#missionListDrafts');
+  if (!host) return;
+  const mesMissions = (state.missions || []).slice()
+    .sort((a, b) => (b.missionDetail?.dateMission || '').localeCompare(a.missionDetail?.dateMission || ''));
+  host.innerHTML = mesMissions.length
+    ? mesMissions.map(m => {
+        const detail = m.missionDetail || {};
+        const statut = detail.envoyeAt ? `envoyé le ${formatDateFr(detail.envoyeAt.slice(0, 10))}` : 'non envoyé';
+        return `<div class="row-item" data-open-mission-draft="${escapeAttr(m.id)}"><div class="row-main"><strong class="row-title">${escapeHtml(m.titre || 'Ordre de mission')}</strong><span class="row-meta">${escapeHtml([detail.dateMission ? formatDateFr(detail.dateMission) : 'Date à préciser', statut].filter(Boolean).join(' · '))}</span></div></div>`;
+      }).join('')
+    : '<p class="empty-hint">Aucun ordre de mission en brouillon.</p>';
+}
+
 // Lot C (23/08/2026) — génération PDF au mm près, portée telle quelle depuis
 // le vrai document de l'établissement (retours/code_ordre-de-mission, jamais
 // commité) : mêmes coordonnées jsPDF que le PDF officiel, plutôt qu'une page
@@ -1777,11 +1813,7 @@ function missionNettoyerCadreImpression(iframe, url) {
   }, 30000);
 }
 
-async function missionImprimerPdf(isVierge = false) {
-  const entity = missionEntity();
-  if (!entity) return;
-  const detail = ensureMissionDetail(entity);
-  const doc = await missionGenererPdfDoc(detail, isVierge);
+function missionImprimerDoc(doc) {
   const url = URL.createObjectURL(doc.output('blob'));
   const iframe = document.createElement('iframe');
   iframe.style.display = 'none';
@@ -1794,6 +1826,21 @@ async function missionImprimerPdf(isVierge = false) {
       missionNettoyerCadreImpression(iframe, url);
     }, 1);
   };
+}
+
+async function missionImprimerPdf(isVierge = false) {
+  const entity = missionEntity();
+  if (!entity) return;
+  const detail = ensureMissionDetail(entity);
+  missionImprimerDoc(await missionGenererPdfDoc(detail, isVierge));
+}
+
+// Tuile « Ordre de mission » (Lot C-bis, 23/08/2026) — modèle vierge accessible
+// en un clic depuis le tableau de bord, sans passer par l'éditeur ni créer
+// d'ordre de mission : aucune entité n'est nécessaire, isVierge ignore de
+// toute façon le contenu passé à missionGenererPdfDoc.
+async function missionImprimerModeleVierge() {
+  missionImprimerDoc(await missionGenererPdfDoc({}, true));
 }
 
 // mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app) —
@@ -2708,6 +2755,7 @@ function renderAll(resetSelectors = true) {
   if ($('#fraisTableWrap')) renderFrais();
   if ($('#materielTypesGrid')) renderMaterielEmprunts();
   renderMaterielCatalogue();
+  if ($('#missionListDrafts')) renderMissionListDialog();
   if ($('#reunionsList')) renderReunions();
   if ($('#mobileAccueil')) renderMobileAccueil();
   if ($('#mobileAValider')) renderMobileAValider();
@@ -8742,11 +8790,12 @@ function confirmCloseModal(dialog) {
    (tuile plutôt que <details>). Un clic sur le fond (le <dialog> lui-même,
    hors de sa boîte) referme la modale, comme la croix — retour Martin du
    même jour : « quitter en cliquant en dehors ». */
-const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog' };
+const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog', materiel: '#materielDialog', mission: '#missionListDialog' };
 function bindDashTuiles() {
   $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.dashTuile === 'materiel') afficherMaterielGrille();
+      if (btn.dataset.dashTuile === 'mission') renderMissionListDialog();
       $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal();
     });
   });
@@ -8757,6 +8806,18 @@ function bindDashTuiles() {
   $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
   $('#materielGotoCatalogue')?.addEventListener('click', afficherMaterielCatalogue);
   $('#materielCatalogueBack')?.addEventListener('click', afficherMaterielGrille);
+  $('#closeMissionListDialog')?.addEventListener('click', () => $('#missionListDialog')?.close());
+  $('#missionListBlankButton')?.addEventListener('click', missionImprimerModeleVierge);
+  $('#missionListNewButton')?.addEventListener('click', () => {
+    $('#missionListDialog')?.close();
+    createStandaloneMission();
+  });
+  $('#missionListDrafts')?.addEventListener('click', (event) => {
+    const row = event.target.closest('[data-open-mission-draft]');
+    if (!row) return;
+    $('#missionListDialog')?.close();
+    openMissionView('standalone', row.dataset.openMissionDraft);
+  });
   Object.values(DASH_TUILE_DIALOGS).forEach(sel => {
     const dialog = $(sel);
     dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });

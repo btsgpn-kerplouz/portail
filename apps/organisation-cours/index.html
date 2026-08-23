@@ -148,6 +148,11 @@
                 <span class="dash-tuile-label">Matériel</span>
                 <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
               </button>
+              <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission">
+                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v3.3a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/></svg></span>
+                <span class="dash-tuile-label">Ordre de mission</span>
+                <span id="missionListBadge" class="dash-tuile-badge"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -1518,6 +1523,27 @@
         <div id="materielCatalogueList" class="materiel-catalogue-grid"></div>
       </div>
     </div>
+  </dialog>
+
+  <!-- Tuile « Ordre de mission » (Lot C-bis, 23/08/2026) : point d'entrée
+       rapide desktop pour les ordres de mission NON rattachés à une
+       séance/réunion (state.missions, jusqu'ici accessibles seulement
+       depuis l'accueil mobile). Imprimer un modèle vierge ne nécessite
+       aucune saisie ; « + Nouvel ordre de mission » ou un brouillon de la
+       liste ouvrent l'éditeur plein document (#missionView, partagé avec
+       Urgences et le mobile). -->
+  <dialog id="missionListDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header dash-tone dash-tone-mission">
+        <h3>Ordre de mission</h3>
+        <button type="button" class="icon-button" id="closeMissionListDialog">×</button>
+      </header>
+      <div class="mission-list-actions">
+        <button type="button" id="missionListBlankButton" class="secondary">Imprimer un modèle vierge</button>
+        <button type="button" id="missionListNewButton" class="primary">+ Nouvel ordre de mission</button>
+      </div>
+      <div id="missionListDrafts" class="mission-list-drafts"></div>
+    </form>
   </dialog>
 
   </div>
