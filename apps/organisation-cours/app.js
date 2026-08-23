@@ -4756,7 +4756,8 @@ function renderConstraintBandHtml(segment, gridRow) {
    heures/période (visibles dans le détail de la séquence, pas ici). */
 function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
   const seq = segment.seq;
-  const blockedCols = weeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
+  const spanWeeks = weeks.slice(segment.startIndex, segment.endIndex + 1);
+  const blockedCols = spanWeeks.some(w => isBlockedWeek(w, promotion));
   const sc = sequenceColor(seq.id);
   const bandKeywords = compactKeywords(seq.keywords, 5);
   const bandTeachers = teacherPillsMarkup(seq.teacher || findUe(seq.ueId)?.teacher || '', true);
@@ -4771,7 +4772,30 @@ function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
     : consultable
       ? `data-edit-sequence="${escapeAttr(seq.id)}"`
       : '';
-  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
+  const content = `<strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}`;
+  // Retours (23/08/2026) — une semaine bloquée (vacances/férié) AU MILIEU de la
+  // séquence ne doit plus laisser croire que la séquence s'y poursuit (fond
+  // plein par-dessus la hachure). On découpe le fond en tronçons calés sur les
+  // semaines réellement travaillées (le bouton lui-même reste transparent,
+  // laissant transparaître la hachure de fond dans les semaines bloquées), et
+  // le titre reste confiné au premier tronçon : il ne peut plus jamais se
+  // retrouver visuellement sous une semaine hachurée.
+  let inner = content;
+  if (blockedCols) {
+    const spanCount = spanWeeks.length;
+    const runs = [];
+    let runStart = null;
+    spanWeeks.forEach((w, i) => {
+      const blocked = isBlockedWeek(w, promotion);
+      if (!blocked && runStart === null) runStart = i;
+      if (blocked && runStart !== null) { runs.push([runStart, i - 1]); runStart = null; }
+    });
+    if (runStart !== null) runs.push([runStart, spanCount - 1]);
+    const runDivs = runs.map(([a, b]) => `<span class="timeline-band-run" style="grid-column:${a + 1} / ${b + 2};"></span>`).join('');
+    const [firstStart, firstEnd] = runs[0] || [0, spanCount - 1];
+    inner = `<span class="timeline-band-runs" style="grid-template-columns:repeat(${spanCount},1fr);">${runDivs}<span class="timeline-band-content" style="grid-column:${firstStart + 1} / ${firstEnd + 2};">${content}</span></span>`;
+  }
+  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored${blockedCols ? ' has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</button>`;
 }
 
 /* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
