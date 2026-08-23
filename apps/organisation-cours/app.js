@@ -1248,27 +1248,25 @@ let mobileUrgenceFiltre = 'tout';
 // Ajustements #5 (22/08/2026) : les sous-onglets passent du texte au
 // pictogramme. Ajustements #8 (22/08/2026) — Martin : les émojis choisis en
 // #5 (🏰🔭🚗👥) restent des « émoticones » colorées (rendu Noto Color Emoji
-// sous Chrome/Linux), pas les pictogrammes symboliques sobres demandés —
-// même retour pour les boutons de l'accueil (renderMobileAccueil). Un seul
-// jeu d'icônes SVG monochromes (trait, currentColor, cohérent avec le
-// « papier technique froid » : pas de remplissage, pas de couleur propre)
-// remplace les deux : ICON_SVG_PATHS/mobileIconSvg() ci-dessous, partagés.
+// sous Chrome/Linux), pas les pictogrammes symboliques sobres demandés.
+// Retour du 23/08/2026 — Martin repasse par des pictogrammes « type
+// émoticône » (formes reconnaissables, pas de tracé abstrait), mais fournis
+// en PNG 512px noir/blanc (dossier img/pictos/), pas en émoji couleur : le
+// masque CSS (.mobile-icon-png, voir styles.css) les recolore en
+// currentColor comme les SVG, pour garder le même contraste blanc sur fonds
+// colorés. ICON_PNG_NOMS liste les icônes ainsi remplacées ; ICON_SVG_PATHS
+// ne garde que celles où aucun pictogramme n'a encore été fourni (tout,
+// monnaie) — mobileIconMarkup() choisit entre les deux rendus.
 const ICON_SVG_PATHS = {
   tout: '<rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/>',
-  salle: '<path d="M4 21V9l8-6 8 6v12"/><path d="M4 21h16"/><rect x="10" y="14" width="4" height="7"/>',
-  caisse: '<path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/>',
-  voiture: '<path d="M4 16v-3.5l2-4.5h12l2 4.5V16"/><path d="M4 16h16"/><circle cx="7.5" cy="16.5" r="1.6"/><circle cx="16.5" cy="16.5" r="1.6"/>',
-  reunion: '<circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/>',
-  calendrier: '<rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/>',
-  alerte: '<path d="M4 4h15l-5 6 5 6H4V4z"/><line x1="4" y1="4" x2="4" y2="21"/>',
-  checklist: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/>',
-  itineraire: '<circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v3.3a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/>',
   monnaie: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/>'
 };
-function mobileIconSvg(name) {
+const ICON_PNG_NOMS = new Set(['salle', 'loupe', 'pelle', 'voiture', 'reunion', 'calendrier', 'alerte', 'checklist', 'document']);
+function mobileIconMarkup(name) {
+  if (ICON_PNG_NOMS.has(name)) return `<span class="mobile-icon-png picto-${name}" aria-hidden="true"></span>`;
   return `<svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_SVG_PATHS[name] || ''}</svg>`;
 }
-const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'caisse', deplacement: 'voiture', reunion: 'reunion' };
+const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'pelle', deplacement: 'voiture', reunion: 'reunion' };
 
 function renderMobileAValider() {
   const host = $('#mobileAValider');
@@ -1282,7 +1280,7 @@ function renderMobileAValider() {
   const groupe = (titre, liste, imminent) => liste.length
     ? `<div class="mobile-urgence-groupe${imminent ? ' est-imminent' : ''}"><h3 class="mobile-group-title">${titre}</h3>${liste.map(urgenceRowMarkup).join('')}</div>`
     : '';
-  const chip = (cle, label) => `<button type="button" class="mobile-filtre-chip${mobileUrgenceFiltre === cle ? ' active' : ''}" data-mobile-filtre-urgence="${cle}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${mobileIconSvg(MOBILE_URGENCE_PICTOS[cle])}</button>`;
+  const chip = (cle, label) => `<button type="button" class="mobile-filtre-chip${mobileUrgenceFiltre === cle ? ' active' : ''}" data-mobile-filtre-urgence="${cle}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${mobileIconMarkup(MOBILE_URGENCE_PICTOS[cle])}</button>`;
   const nbFaites = urgenceRowsFaites().length;
   host.innerHTML = `
     <div class="mobile-filtres">
@@ -1963,39 +1961,19 @@ function renderFrais() {
 
 /* Espace « Matériel emprunté » (ajustements #5, 22/08/2026) — nouvelle
    fonctionnalité mobile ET desktop, même principe que Frais : suivre qui a
-   emprunté quoi (élèves), pas de catalogue, texte libre. `estVisiblePourMoi`
-   partagé avec le reste de l'appli (même « Compte concerné » que Déplacements). */
+   emprunté quoi (élèves), pas de catalogue, texte libre.
+   Lot E (23/08/2026) — Martin : le matériel est un « outil commun de gestion
+   collective », contrairement au reste de l'appli (Déplacements, séances…) :
+   les emprunts sont visibles de TOUS les comptes enseignants, jamais filtrés
+   par `estVisiblePourMoi`. */
 function updateMaterielEmpruntsBadge() {
   const badge = $('#materielEmpruntsBadge');
   if (!badge) return;
-  const enCours = (state.materielEmprunts || []).filter(estVisiblePourMoi).filter(m => !m.dateRetour);
+  const enCours = (state.materielEmprunts || []).filter(m => !m.dateRetour);
   badge.textContent = enCours.length ? `${enCours.length} en cours` : '';
   badge.classList.toggle('has-pending', enCours.length > 0);
 }
 
-function materielEmpruntLabel(m) {
-  return [m.materielType, m.materielIdentifiant].filter(Boolean).join(' — ') || 'Matériel';
-}
-function materielEmpruntRowMarkup(m, mobile) {
-  const rendu = !!m.dateRetour;
-  const quand = [m.date ? formatDateFr(m.date) : 'date à préciser', rendu ? `rendu le ${formatDateFr(m.dateRetour)}` : ''].filter(Boolean).join(' · ');
-  if (mobile) {
-    const verbe = rendu ? '' : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-materiel-marquer-rendu="${escapeAttr(m.id)}"><span>Rendu</span></label>`;
-    return `<div class="urgence-row${rendu ? ' est-fait' : ''}" data-edit-materiel-emprunt="${escapeAttr(m.id)}" tabindex="0" role="button">
-      <strong class="urgence-titre">${escapeHtml(materielEmpruntLabel(m))}</strong>
-      <span class="urgence-detail">${escapeHtml([m.etudiant || 'étudiant à préciser', m.classe].filter(Boolean).join(' · '))} · ${escapeHtml(quand)}</span>
-      ${verbe}
-    </div>`;
-  }
-  return `<tr data-edit-materiel-emprunt="${escapeAttr(m.id)}">
-    <td>${escapeHtml(materielEmpruntLabel(m))}</td>
-    <td>${escapeHtml(m.etudiant || '—')}</td>
-    <td>${escapeHtml(m.classe || '—')}</td>
-    <td>${escapeHtml(m.date ? formatDateFr(m.date) : '—')}</td>
-    <td>${rendu ? escapeHtml(formatDateFr(m.dateRetour)) : '<span class="frais-status is-todo">En cours</span>'}</td>
-    <td class="frais-row-actions"><button type="button" class="icon-button small" data-edit-materiel-emprunt="${escapeAttr(m.id)}" title="Modifier">✎</button></td>
-  </tr>`;
-}
 
 /* Page « Matériel emprunté » (retours Martin, 23/08/2026, second retour) —
    plus une table à rallonge : une grille de types façon « stock de magasin »
@@ -2009,9 +1987,10 @@ function renderMaterielEmprunts() {
   if (!$('#materielTypesGrid')) return;
   renderMaterielTypesGrid();
   if (materielTypeOuvert) renderMaterielTypeDetail(materielTypeOuvert);
+  if (materielTypeOuvert && materielVueActuelle === 'calendrier') renderMaterielCalendrier();
 }
 function materielEmpruntsEnCoursParType(type) {
-  return (state.materielEmprunts || []).filter(estVisiblePourMoi).filter(m => m.materielType === type && !m.dateRetour);
+  return (state.materielEmprunts || []).filter(m => m.materielType === type && !m.dateRetour);
 }
 function renderMaterielTypesGrid() {
   const grid = $('#materielTypesGrid');
@@ -2059,39 +2038,179 @@ function renderMaterielTypeDetail(type) {
 /* 3e retour (23/08/2026) : Matériel redevient une seule tuile/modale — le
    catalogue (gestion des types/identifiants) en devient une 3e vue interne,
    à côté de la grille et du détail cochable d'un type. */
+let materielVueActuelle = 'grille';
+// Centralise le rendu desktop ET mobile à chaque changement de vue (Lot E,
+// 23/08/2026) — mobile réutilise les mêmes données via renderMobileMateriel,
+// pas de fonctions dupliquées d'affichage de vue.
 function materielAfficherVue(vue) {
+  materielVueActuelle = vue;
   if ($('#materielTypesGrid')) $('#materielTypesGrid').hidden = vue !== 'grille';
   if ($('#materielGotoCatalogue')) $('#materielGotoCatalogue').hidden = vue !== 'grille';
   if ($('#materielTypeDetail')) $('#materielTypeDetail').hidden = vue !== 'detail';
+  if ($('#materielCalendrierSection')) $('#materielCalendrierSection').hidden = vue !== 'calendrier';
   if ($('#materielCatalogueSection')) $('#materielCatalogueSection').hidden = vue !== 'catalogue';
+  if (vue === 'grille') renderMaterielTypesGrid();
+  if (vue === 'detail' && materielTypeOuvert) renderMaterielTypeDetail(materielTypeOuvert);
+  if (vue === 'calendrier' && materielTypeOuvert) renderMaterielCalendrier();
+  if ($('#mobileMateriel')) renderMobileMateriel();
 }
 function afficherMaterielGrille() {
   materielTypeOuvert = null;
   materielAfficherVue('grille');
 }
 function afficherMaterielType(type) {
+  if (type !== materielTypeOuvert) materielCalendrierMois = null;
   materielTypeOuvert = type;
-  renderMaterielTypeDetail(type);
   materielAfficherVue('detail');
 }
 function afficherMaterielCatalogue() {
   materielAfficherVue('catalogue');
 }
 
+/* Lot E (23/08/2026) : calendrier des emprunts d'un type — une ligne par
+   identifiant individuel, des cases journalières teintées tant que
+   l'identifiant est emprunté. Retour Martin (2e temps, même jour) : « on ne
+   sait en général pas quand la personne va rendre le matériel » — un emprunt
+   sans date de retour teinte donc aussi les jours FUTURS, jusqu'à une limite
+   dynamique d'aujourd'hui + 15 jours (recalculée à chaque rendu, pas une
+   date figée) ; un emprunt déjà rendu (dateRetour connue) s'arrête pile à
+   cette date, comme avant. `materielCalendrierMois` retient le mois affiché
+   (1er du mois), navigable sans bornage sur l'historique passé.
+   Écran partagé desktop (#materielCalendrierGrid) ET mobile
+   (renderMobileMaterielCalendrier) : même fonction de calcul/HTML des
+   lignes (materielCalendrierGrilleHtml), seul l'habillage (titre/nav) diffère. */
+let materielCalendrierMois = null;
+const MATERIEL_CAL_MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MATERIEL_CAL_JOURS_FUTURS = 15;
+function materielIsoDeDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function materielDateLimiteFuture() {
+  const d = new Date();
+  d.setDate(d.getDate() + MATERIEL_CAL_JOURS_FUTURS);
+  return materielIsoDeDate(d);
+}
+function afficherMaterielCalendrier() {
+  if (!materielTypeOuvert) return;
+  if (!materielCalendrierMois) {
+    const auj = new Date();
+    materielCalendrierMois = new Date(auj.getFullYear(), auj.getMonth(), 1);
+  }
+  materielAfficherVue('calendrier');
+}
+function materielCalendrierChangerMois(delta) {
+  if (!materielCalendrierMois) return;
+  materielCalendrierMois = new Date(materielCalendrierMois.getFullYear(), materielCalendrierMois.getMonth() + delta, 1);
+  materielAfficherVue('calendrier');
+}
+// Marquer rendu directement depuis une ligne du calendrier (bouton ✓ à côté
+// de l'identifiant, visible tant qu'il a un emprunt en cours) — Martin :
+// « je dois pouvoir facilement indiquer que le matériel est rendu ».
+async function materielMarquerRenduDepuisCalendrier(id) {
+  const m = (state.materielEmprunts || []).find(x => x.id === id);
+  if (!m) return;
+  m.dateRetour = todayIso();
+  await saveData('Matériel rendu');
+}
+function materielCalendrierGrilleHtml(type, mois) {
+  const items = (state.materielItems || []).filter(it => it.type === type);
+  if (!items.length) return '<p class="empty-hint">Aucun identifiant enregistré pour ce type.</p>';
+  const nbJours = new Date(mois.getFullYear(), mois.getMonth() + 1, 0).getDate();
+  const jours = Array.from({ length: nbJours }, (_, i) => materielIsoDeDate(new Date(mois.getFullYear(), mois.getMonth(), i + 1)));
+  const limite = materielDateLimiteFuture();
+  const emprunts = (state.materielEmprunts || []).filter(m => m.materielType === type);
+  const empruntPourJour = (identifiant, jourIso) =>
+    emprunts.find(m => m.materielIdentifiant === identifiant && m.date && m.date <= jourIso && jourIso <= (m.dateRetour || limite)) || null;
+  const enTete = `<div class="materiel-cal-row materiel-cal-head"><span class="materiel-cal-label"></span>${jours.map(j => `<span class="materiel-cal-jour">${Number(j.slice(8))}</span>`).join('')}</div>`;
+  const lignes = items.map(it => {
+    const enCours = emprunts.find(m => m.materielIdentifiant === it.identifiant && !m.dateRetour);
+    const boutonRendu = enCours ? `<button type="button" class="materiel-cal-rendu-btn" data-materiel-marquer-rendu-cal="${escapeAttr(enCours.id)}" title="Marquer rendu">✓</button>` : '';
+    const cellules = jours.map(j => {
+      const emprunt = empruntPourJour(it.identifiant, j);
+      if (!emprunt) return '<span class="materiel-cal-case"></span>';
+      const info = `${emprunt.etudiant || 'étudiant à préciser'}${emprunt.classe ? ' · ' + emprunt.classe : ''}${emprunt.teacher ? ' · prêté par ' + emprunt.teacher : ''}`;
+      return `<span class="materiel-cal-case est-emprunte" title="${escapeAttr(info)}" data-edit-materiel-emprunt="${escapeAttr(emprunt.id)}" tabindex="0" role="button"></span>`;
+    }).join('');
+    return `<div class="materiel-cal-row"><span class="materiel-cal-label"><span class="materiel-cal-label-nom">${escapeHtml(it.identifiant)}</span>${boutonRendu}</span>${cellules}</div>`;
+  }).join('');
+  return enTete + lignes;
+}
+function renderMaterielCalendrier() {
+  const grid = $('#materielCalendrierGrid');
+  const titre = $('#materielCalendrierTitre');
+  if (!grid || !titre || !materielTypeOuvert || !materielCalendrierMois) return;
+  titre.textContent = `${MATERIEL_CAL_MOIS_FR[materielCalendrierMois.getMonth()]} ${materielCalendrierMois.getFullYear()}`;
+  grid.innerHTML = materielCalendrierGrilleHtml(materielTypeOuvert, materielCalendrierMois);
+}
+
+/* Lot E (23/08/2026) : la page mobile « Matériel » abandonne sa liste plate
+   d'origine pour reprendre le même patron à 3 vues que le desktop (grille de
+   types / détail cochable d'un type / calendrier des emprunts) — état
+   partagé (materielTypeOuvert/materielVueActuelle/materielCalendrierMois),
+   seul le HTML change puisque mobile n'a pas de <dialog> mais un simple
+   <section> plein écran entièrement régénéré à chaque rendu. Le catalogue
+   reste un écran mobile à part (#mobileMaterielCatalogue, lien en bas de la
+   grille), pas une vue interne comme sur desktop. */
 function renderMobileMateriel() {
   const host = $('#mobileMateriel');
   if (!host) return;
-  const all = (state.materielEmprunts || []).filter(estVisiblePourMoi)
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const enCours = all.filter(m => !m.dateRetour);
-  const rendus = all.filter(m => m.dateRetour);
-  const groupe = (titre, liste) => liste.length
-    ? `<h3 class="mobile-group-title">${titre}</h3>${liste.map(m => materielEmpruntRowMarkup(m, true)).join('')}`
-    : '';
+  if (materielVueActuelle === 'detail' && materielTypeOuvert) return renderMobileMaterielDetail(host);
+  if (materielVueActuelle === 'calendrier' && materielTypeOuvert) return renderMobileMaterielCalendrier(host);
+  renderMobileMaterielGrille(host);
+}
+function renderMobileMaterielGrille(host) {
+  const types = state.materielTypes || [];
+  const cartes = types.length ? types.map(type => {
+    const total = (state.materielItems || []).filter(it => it.type === type).length;
+    const nb = materielEmpruntsEnCoursParType(type).length;
+    const compteur = total
+      ? `${nb}/${total} emprunté${nb > 1 ? 's' : ''}`
+      : (nb ? `${nb} emprunté${nb > 1 ? 's' : ''}` : 'Aucun identifiant');
+    return `<button type="button" class="materiel-type-btn${total && nb >= total ? ' est-complet' : ''}" data-mobile-materiel-type-ouvrir="${escapeAttr(type)}">
+      <span class="materiel-type-nom">${escapeHtml(type)}</span>
+      <span class="materiel-type-compteur">${escapeHtml(compteur)}</span>
+    </button>`;
+  }).join('') : '<p class="empty-hint">Catalogue vide pour l’instant — ajoutez un type de matériel depuis « Catalogue de matériel ».</p>';
   host.innerHTML = `
     <button type="button" class="mobile-add-deplacement" id="mobileAddMaterielEmpruntButton">+ Emprunt</button>
-    ${all.length ? (groupe('En cours', enCours) + groupe('Rendus', rendus)) : '<p class="empty-hint">Aucun emprunt enregistré.</p>'}
+    <div class="materiel-types-grid">${cartes}</div>
     <button type="button" class="lien mobile-gerer-catalogue" data-mobile-goto="mobileMaterielCatalogue">Catalogue de matériel →</button>`;
+}
+function renderMobileMaterielDetail(host) {
+  const type = materielTypeOuvert;
+  const items = (state.materielItems || []).filter(it => it.type === type);
+  const empruntsParIdentifiant = new Map(materielEmpruntsEnCoursParType(type).map(m => [m.materielIdentifiant, m]));
+  const lignes = items.length ? items.map(it => {
+    const emprunt = empruntsParIdentifiant.get(it.identifiant);
+    const etat = emprunt
+      ? [emprunt.etudiant || 'étudiant à préciser', emprunt.classe, emprunt.teacher ? `prêté par ${emprunt.teacher}` : ''].filter(Boolean).join(' · ')
+      : 'Disponible';
+    return `<div class="materiel-item-check-row${emprunt ? ' est-emprunte' : ''}">
+      <label>
+        <input type="checkbox" ${emprunt ? 'checked' : ''} data-materiel-item-toggle="${escapeAttr(it.identifiant)}" data-materiel-item-emprunt-id="${emprunt ? escapeAttr(emprunt.id) : ''}" />
+        <span class="materiel-item-check-nom">${escapeHtml(it.identifiant)}</span>
+      </label>
+      <span class="materiel-item-check-etat">${escapeHtml(etat)}</span>
+      ${emprunt ? `<button type="button" class="icon-button small" data-edit-materiel-emprunt="${escapeAttr(emprunt.id)}" title="Modifier cet emprunt">✎</button>` : ''}
+    </div>`;
+  }).join('') : '<p class="empty-hint">Aucun identifiant enregistré pour ce type. Ajoutez-en depuis « Catalogue de matériel ».</p>';
+  host.innerHTML = `
+    <button type="button" class="materiel-type-back" data-mobile-materiel-retour-grille="1">‹ Tous les types</button>
+    <h4>${escapeHtml(type)}</h4>
+    <div class="materiel-item-check-liste">${lignes}</div>
+    <button type="button" class="materiel-type-back materiel-catalogue-link" data-mobile-materiel-goto-calendrier="1">Voir le calendrier des emprunts →</button>`;
+}
+function renderMobileMaterielCalendrier(host) {
+  const mois = materielCalendrierMois;
+  const titre = `${MATERIEL_CAL_MOIS_FR[mois.getMonth()]} ${mois.getFullYear()}`;
+  host.innerHTML = `
+    <button type="button" class="materiel-type-back" data-mobile-materiel-retour-detail="1">‹ Retour</button>
+    <div class="materiel-calendrier-tete">
+      <button type="button" class="icon-button small" data-mobile-materiel-cal-nav="-1" title="Mois précédent">‹</button>
+      <h4>${escapeHtml(titre)}</h4>
+      <button type="button" class="icon-button small" data-mobile-materiel-cal-nav="1" title="Mois suivant">›</button>
+    </div>
+    <div class="materiel-calendrier-grid">${materielCalendrierGrilleHtml(materielTypeOuvert, mois)}</div>`;
 }
 
 /* Catalogue de matériel (ajustements #6, 22/08/2026) — encart desktop du
@@ -3347,7 +3466,10 @@ function updateMobileBannerBack() {
   // annonçait « Accueil » mais ramenait en fait à l'écran d'origine
   // (closeMissionView() → missionViewReturnTo, pas forcément mobileAccueil).
   // Libellé neutre dans ce cas précis, honnête quelle que soit l'origine.
-  backBtn.textContent = (active && active.id === 'missionView') ? '‹ Retour' : '‹ Accueil';
+  // Lot D (23/08/2026) : mobileSeance rejoint missionView — le bandeau ne
+  // ramène pas à l'accueil depuis cet écran (mobileGoBack le fait revenir à
+  // mobileSemaine), le libellé « Accueil » y serait donc trompeur.
+  backBtn.textContent = (active && (active.id === 'missionView' || active.id === 'mobileSeance')) ? '‹ Retour' : '‹ Accueil';
 }
 // #dashboard (desktop) ET #mobileAccueil (mobile) portent tous les deux la
 // classe .active-view au chargement (chacun caché/montré par CSS selon
@@ -3362,6 +3484,7 @@ function activeMobileView() {
 function mobileGoBack() {
   const active = activeMobileView();
   if (active && active.id === 'missionView') { closeMissionView(); return; }
+  if (active && active.id === 'mobileSeance') { showMobileScreen('mobileSemaine'); return; }
   showMobileScreen('mobileAccueil');
 }
 
@@ -3371,8 +3494,14 @@ function renderMobileAccueil() {
   const nbUrgences = urgenceRows().length;
   const nbFrais = (state.deplacements || []).filter(estVisiblePourMoi).filter(d => d.statut !== 'Terminée').length;
   const nbAFaire = (state.todoItems || []).filter(t => !t.done).length;
-  const nbMission = ordresDeMissionAFaire().length;
-  const nbMateriel = (state.materielEmprunts || []).filter(estVisiblePourMoi).filter(m => !m.dateRetour).length;
+  // Lot D (23/08/2026) : aligné sur le compteur desktop de la tuile « Ordre de
+  // mission » (updateMissionListBadge) — les brouillons autonomes non envoyés
+  // comptent aussi, pas seulement les déplacements sans ordre.
+  const nbMissionBrouillons = (state.missions || []).filter(m => !m.missionDetail?.envoyeAt).length;
+  const nbMission = ordresDeMissionAFaire().length + nbMissionBrouillons;
+  // Lot E (23/08/2026) : outil commun de gestion collective — jamais filtré
+  // par estVisiblePourMoi, contrairement au reste de l'appli.
+  const nbMateriel = (state.materielEmprunts || []).filter(m => !m.dateRetour).length;
   // Ajustements #7 (22/08/2026) — « une version un peu plus chaleureuse ou
   // contrastée » (à tester), liseré haut de couleur sur les 6 boutons.
   // Ajustements #8 (22/08/2026) — Martin : « à quoi correspondent les
@@ -3385,11 +3514,11 @@ function renderMobileAccueil() {
   // blancs), pas d'explication requise — un simple repère spatial, comme des
   // icônes d'appli (cf. styles.css, .mobile-home-btn-*).
   // Pictogrammes (retour #8, « toujours pas plus symbolique ») :
-  // ICON_SVG_PATHS/mobileIconSvg() (définis près de MOBILE_URGENCE_PICTOS)
+  // ICON_SVG_PATHS/ICON_PNG_NOMS/mobileIconMarkup() (définis près de MOBILE_URGENCE_PICTOS)
   // remplacent les émojis couleur par des tracés monochromes.
   const bouton = (icone, label, target, count, alerte, teinte) => `
     <button type="button" class="mobile-home-btn mobile-home-btn-${teinte}" data-mobile-goto="${target}">
-      <span class="mobile-home-icon" aria-hidden="true">${mobileIconSvg(icone)}</span>
+      <span class="mobile-home-icon" aria-hidden="true">${mobileIconMarkup(icone)}</span>
       <span class="mobile-home-label">${label}</span>
       ${count ? `<span class="mobile-home-badge${alerte ? ' is-alert' : ''}">${count}</span>` : ''}
     </button>`;
@@ -3398,9 +3527,9 @@ function renderMobileAccueil() {
       ${bouton('calendrier', 'Ma semaine', 'mobileSemaine', 0, false, 'semaine')}
       ${bouton('alerte', 'Urgences', 'mobileAValider', nbUrgences, true, 'urgences')}
       ${bouton('checklist', 'À faire', 'mobileAFaire', nbAFaire, false, 'afaire')}
-      ${bouton('itineraire', 'Ordre de mission', 'mobileMission', nbMission, false, 'mission')}
+      ${bouton('document', 'Ordre de mission', 'mobileMission', nbMission, false, 'mission')}
       ${bouton('monnaie', 'Frais', 'mobileFrais', nbFrais, false, 'frais')}
-      ${bouton('caisse', 'Matériel', 'mobileMateriel', nbMateriel, false, 'materiel')}
+      ${bouton('loupe', 'Emprunts matériels', 'mobileMateriel', nbMateriel, false, 'materiel')}
     </div>`;
 }
 
@@ -3533,15 +3662,12 @@ function renderMobileSeance() {
   const meta = [ueCodeOnly(s.ueId) !== 'UE ?' ? 'UE ' + ueCodeOnly(s.ueId) : 'sans UE', s.promotion, dashHoraire(s), date ? date.toLocaleDateString('fr-FR') : 'Date à préciser']
     .filter(Boolean).join(' · ');
   host.innerHTML = `
-    <div class="mobile-topbar">
-      <button type="button" class="lien mobile-back" data-mobile-goto="mobileSemaine">‹ Retour</button>
-    </div>
     <h2 class="mobile-seance-titre">${escapeHtml(s.title || 'Séance sans titre')}</h2>
     <p class="carte-meta">${escapeHtml(meta)}</p>
     <div class="mobile-seance-verbes">
       <button type="button" class="mobile-verbe-btn${s.realisee ? ' is-actif' : ''}" data-mobile-toggle-realisee="${escapeAttr(s.id)}">${s.realisee ? '✓ Faite' : 'Marquer faite'}</button>
       <button type="button" class="mobile-verbe-btn" data-mobile-annoter="1">✎ Annoter</button>
-      <button type="button" class="mobile-verbe-btn" data-edit-session="${escapeAttr(s.id)}">⚠ Modifier</button>
+      <button type="button" class="mobile-verbe-btn" data-edit-session="${escapeAttr(s.id)}">⚠ Consulter-modifier</button>
     </div>
     ${actions.length ? `<div class="carte-actions mobile-seance-actions">${dashEtiquettes(actions)}</div>` : ''}
     ${s.activities ? `<section class="mobile-seance-bloc"><h3>Déroulé</h3><p>${escapeHtml(s.activities)}</p></section>` : ''}
@@ -3574,9 +3700,6 @@ function mobileFraisRowMarkup(d) {
   const quand = d.date ? formatDateFr(d.date) : 'Date à préciser';
   const lieu = d.lieu || deplacementOrigin(d) || 'Déplacement';
   const detail = [`${Number(d.kmAR) || 0} km`, fmtEuro(deplacementTotal(d))].filter(Boolean).join(' · ');
-  const verbe = d.statut === DEPLACEMENT_STATUSES[0]
-    ? `<span class="urgence-verbe" data-edit-deplacement="${escapeAttr(d.id)}" tabindex="0" role="button">Déclarer</span>`
-    : '';
   // Même repère que le tableau desktop (renderFrais) : distingue une ligne
   // rattachée à une séance/réunion (préremplie, se remet à zéro si on la
   // supprime) d'une saisie libre (frais imprévu, pas de source à nettoyer).
@@ -3594,7 +3717,6 @@ function mobileFraisRowMarkup(d) {
     <strong class="urgence-titre">${escapeHtml(lieu)}${lien}</strong>
     ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
     <span class="urgence-detail">${escapeHtml(detail)}</span>
-    ${verbe}
   </div>`;
 }
 function renderMobileFrais() {
@@ -9169,15 +9291,6 @@ function bindModalActions() {
       saveData(mb.checked ? 'Ordre de mission marqué fait' : 'Ordre de mission remis à faire');
       return;
     }
-    // « Matériel emprunté » (ajustements #5, 22/08/2026) — coche rapide
-    // « Rendu » depuis la liste, sans rouvrir la fiche (même geste que les
-    // cases de réservation ci-dessus).
-    const me = event.target.closest('[data-materiel-marquer-rendu]');
-    if (!me) return;
-    const item = (state.materielEmprunts || []).find(m => m.id === me.dataset.materielMarquerRendu);
-    if (!item) return;
-    item.dateRetour = todayIso();
-    saveData('Matériel marqué rendu');
   });
   const openDeplacementFromEvent = (event) => {
     const el = event.target.closest('[data-edit-deplacement]');
@@ -9257,7 +9370,19 @@ function bindModalActions() {
   });
   $('#materielTypeDetailBack')?.addEventListener('click', afficherMaterielGrille);
   $('#materielTypeDetailList')?.addEventListener('click', openMaterielEmpruntFromEvent);
-  $('#materielTypeDetailList')?.addEventListener('change', async (event) => {
+  // Lot E (23/08/2026) : calendrier des emprunts d'un type, ouvert depuis le
+  // détail cochable ; clic sur une case colorée réouvre l'emprunt concerné.
+  $('#materielGotoCalendrier')?.addEventListener('click', afficherMaterielCalendrier);
+  $('#materielCalendrierBack')?.addEventListener('click', () => afficherMaterielType(materielTypeOuvert));
+  $('#materielCalendrierPrev')?.addEventListener('click', () => materielCalendrierChangerMois(-1));
+  $('#materielCalendrierNext')?.addEventListener('click', () => materielCalendrierChangerMois(1));
+  const handleMaterielCalendrierClick = (event) => {
+    const btnRendu = event.target.closest('[data-materiel-marquer-rendu-cal]');
+    if (btnRendu) { materielMarquerRenduDepuisCalendrier(btnRendu.dataset.materielMarquerRenduCal); return; }
+    openMaterielEmpruntFromEvent(event);
+  };
+  $('#materielCalendrierGrid')?.addEventListener('click', handleMaterielCalendrierClick);
+  const handleMaterielItemToggle = async (event) => {
     const cb = event.target.closest('[data-materiel-item-toggle]');
     if (!cb) return;
     if (cb.checked) {
@@ -9270,11 +9395,24 @@ function bindModalActions() {
     }
     const m = (state.materielEmprunts || []).find(x => x.id === cb.dataset.materielItemEmpruntId);
     if (m) { m.dateRetour = todayIso(); await saveData('Matériel rendu'); }
-  });
+  };
+  $('#materielTypeDetailList')?.addEventListener('change', handleMaterielItemToggle);
+  // Lot E (23/08/2026) : page mobile « Matériel » reprenant le patron desktop
+  // (grille/détail/calendrier), un seul <section> entièrement régénéré —
+  // délégation sur tout son contenu plutôt que sur des ids qui disparaissent
+  // à chaque rendu.
   $('#mobileMateriel')?.addEventListener('click', (event) => {
     if (event.target.closest('#mobileAddMaterielEmpruntButton')) { openMaterielEmpruntModal(); return; }
-    openMaterielEmpruntFromEvent(event);
+    const typeBtn = event.target.closest('[data-mobile-materiel-type-ouvrir]');
+    if (typeBtn) { afficherMaterielType(typeBtn.dataset.mobileMaterielTypeOuvrir); return; }
+    if (event.target.closest('[data-mobile-materiel-retour-grille]')) { afficherMaterielGrille(); return; }
+    if (event.target.closest('[data-mobile-materiel-goto-calendrier]')) { afficherMaterielCalendrier(); return; }
+    if (event.target.closest('[data-mobile-materiel-retour-detail]')) { afficherMaterielType(materielTypeOuvert); return; }
+    const nav = event.target.closest('[data-mobile-materiel-cal-nav]');
+    if (nav) { materielCalendrierChangerMois(Number(nav.dataset.mobileMaterielCalNav)); return; }
+    handleMaterielCalendrierClick(event);
   });
+  $('#mobileMateriel')?.addEventListener('change', handleMaterielItemToggle);
   $('#closeMaterielEmpruntModal')?.addEventListener('click', () => $('#materielEmpruntDialog').close());
   $('#cancelMaterielEmpruntButton')?.addEventListener('click', () => $('#materielEmpruntDialog').close());
   // Le type choisi filtre les identifiants proposés (catalogue à 2 niveaux,

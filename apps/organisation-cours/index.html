@@ -126,30 +126,30 @@
             <div class="dash-tuiles-grille">
               <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
                 <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
-                <span class="dash-tuile-label">Déplacements &amp; frais</span>
+                <span class="dash-tuile-label">Frais de déplacements</span>
                 <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
               </button>
               <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg></span>
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-calendrier"></span></span>
                 <span class="dash-tuile-label">Périodes particulières</span>
               </button>
               <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/></svg></span>
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-reunion"></span></span>
                 <span class="dash-tuile-label">Réunions</span>
                 <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
               </button>
               <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-checklist"></span></span>
                 <span class="dash-tuile-label">Améliorations de l'appli</span>
                 <span id="devNotesBadge" class="dash-tuile-badge"></span>
               </button>
               <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 7v10l-8 4.5-8-4.5V7l8-4.5z"/><path d="M12 12v9.5"/><path d="M4 7l8 4.5 8-4.5"/></svg></span>
-                <span class="dash-tuile-label">Matériel</span>
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-loupe"></span></span>
+                <span class="dash-tuile-label">Emprunts matériels</span>
                 <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
               </button>
               <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v3.3a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4"/></svg></span>
+                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-document"></span></span>
                 <span class="dash-tuile-label">Ordre de mission</span>
                 <span id="missionListBadge" class="dash-tuile-badge"></span>
               </button>
@@ -607,7 +607,7 @@
          suggestion). -->
     <section id="mobileMaterielCatalogue" class="view mobile-only">
       <div class="mobile-topbar">
-        <button type="button" class="lien mobile-back" data-mobile-goto="mobileMateriel">‹ Matériel</button>
+        <button type="button" class="lien mobile-back" data-mobile-goto="mobileMateriel">‹ Emprunts matériels</button>
         <h2 class="mobile-topbar-title">Catalogue de matériel</h2>
       </div>
       <p class="meta">Le catalogue alimente les menus du formulaire d’emprunt : un type de matériel (ex. Boussole), puis ses identifiants individuels (ex. Boussole n°3).</p>
@@ -1409,7 +1409,7 @@
     <form method="dialog" class="frais-panel">
       <header class="modal-header dash-tone dash-tone-frais">
         <div class="panel-heading-inline">
-          <h3>Déplacements &amp; frais</h3>
+          <h3>Frais de déplacements</h3>
           <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
         </div>
         <button type="button" class="icon-button" id="closeFraisDialog">×</button>
@@ -1500,7 +1500,7 @@
     <div class="modal-body">
       <header class="modal-header dash-tone dash-tone-materiel">
         <div class="panel-heading-inline">
-          <h3>Matériel</h3>
+          <h3>Emprunts matériels</h3>
           <button type="button" id="addMaterielEmpruntButton" class="small">+ Emprunt</button>
         </div>
         <button type="button" class="icon-button" id="closeMaterielDialog">×</button>
@@ -1511,6 +1511,16 @@
         <button type="button" id="materielTypeDetailBack" class="materiel-type-back">‹ Tous les types</button>
         <h4 id="materielTypeDetailTitle"></h4>
         <div id="materielTypeDetailList" class="materiel-item-check-liste"></div>
+        <button type="button" id="materielGotoCalendrier" class="materiel-type-back materiel-catalogue-link">Voir le calendrier des emprunts →</button>
+      </div>
+      <div id="materielCalendrierSection" class="materiel-calendrier-section" hidden>
+        <button type="button" id="materielCalendrierBack" class="materiel-type-back">‹ Retour</button>
+        <div class="materiel-calendrier-tete">
+          <button type="button" id="materielCalendrierPrev" class="icon-button small" title="Mois précédent">‹</button>
+          <h4 id="materielCalendrierTitre"></h4>
+          <button type="button" id="materielCalendrierNext" class="icon-button small" title="Mois suivant">›</button>
+        </div>
+        <div id="materielCalendrierGrid" class="materiel-calendrier-grid"></div>
       </div>
       <div id="materielCatalogueSection" class="materiel-catalogue-section" hidden>
         <button type="button" id="materielCatalogueBack" class="materiel-type-back">‹ Tous les types</button>

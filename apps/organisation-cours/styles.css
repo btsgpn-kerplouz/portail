@@ -479,12 +479,20 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .mobile-home-btn-mission:hover, .mobile-home-btn-frais:hover, .mobile-home-btn-materiel:hover {
   filter: brightness(.92);
 }
-.mobile-home-btn-semaine { background: var(--acc); }
+/* Retour Martin (23/08/2026) : harmonisation des couleurs avec les tuiles du
+   Tableau de bord desktop pour les 3 concepts présents des deux côtés — Frais
+   (déjà --success partout), Emprunts matériels (--water, comme
+   .dash-tuile-materiel) et Ordre de mission (--acc, comme .dash-tuile-mission).
+   Semaine cède donc --acc à Mission et reprend --clay (libre côté mobile,
+   déjà utilisé par .dash-tuile-reunions côté desktop — jamais à l'écran en
+   même temps, aucun conflit) : les 6 boutons de l'accueil restent 6 teintes
+   distinctes entre elles. */
+.mobile-home-btn-semaine { background: var(--clay); }
 .mobile-home-btn-urgences { background: var(--danger); }
 .mobile-home-btn-afaire { background: var(--plum); }
-.mobile-home-btn-mission { background: var(--water); }
+.mobile-home-btn-mission { background: var(--acc); }
 .mobile-home-btn-frais { background: var(--success); }
-.mobile-home-btn-materiel { background: var(--amber); }
+.mobile-home-btn-materiel { background: var(--water); }
 
 /* Écrans 15/16/17/19/20/21 — chrome commun d'un écran mobile secondaire
    (pas d'onglet permanent) : barre de retour + titre, puces de filtre. */
@@ -539,10 +547,31 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .mobile-filtre-chip.active { background: var(--acc); border-color: var(--acc); color: #fff; }
 /* Ajustements #8 (22/08/2026) — les pictogrammes (chips de filtre + boutons
    d'accueil) passent d'émojis couleur à des tracés SVG monochromes
-   (currentColor) : cf. ICON_SVG_PATHS/mobileIconSvg() dans app.js. */
-.mobile-icon-svg { display: block; width: 20px; height: 20px; }
-.mobile-filtre-chip .mobile-icon-svg { width: 19px; height: 19px; }
-.mobile-home-icon .mobile-icon-svg { width: 30px; height: 30px; stroke-width: 1.4; }
+   (currentColor) : cf. ICON_SVG_PATHS/mobileIconMarkup() dans app.js.
+   23/08/2026 — la plupart deviennent des PNG 512px noir/blanc fournis par
+   Martin (img/pictos/), affichés via masque CSS (.mobile-icon-png) plutôt
+   qu'en <img> : le masque garde le même contrôle de couleur par
+   currentColor que les SVG restants (tout, monnaie), donc le même
+   contraste blanc sur fonds colorés sans dupliquer un jeu d'icônes par
+   couleur de fond. */
+.mobile-icon-svg, .mobile-icon-png { display: block; width: 20px; height: 20px; }
+.mobile-icon-png {
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: contain; mask-size: contain;
+}
+.picto-salle { -webkit-mask-image: url('img/pictos/salle.png'); mask-image: url('img/pictos/salle.png'); }
+.picto-loupe { -webkit-mask-image: url('img/pictos/loupe.png'); mask-image: url('img/pictos/loupe.png'); }
+.picto-pelle { -webkit-mask-image: url('img/pictos/pelle.png'); mask-image: url('img/pictos/pelle.png'); }
+.picto-voiture { -webkit-mask-image: url('img/pictos/voiture.png'); mask-image: url('img/pictos/voiture.png'); }
+.picto-reunion { -webkit-mask-image: url('img/pictos/reunion.png'); mask-image: url('img/pictos/reunion.png'); }
+.picto-calendrier { -webkit-mask-image: url('img/pictos/calendrier.png'); mask-image: url('img/pictos/calendrier.png'); }
+.picto-alerte { -webkit-mask-image: url('img/pictos/alerte.png'); mask-image: url('img/pictos/alerte.png'); }
+.picto-checklist { -webkit-mask-image: url('img/pictos/checklist.png'); mask-image: url('img/pictos/checklist.png'); }
+.picto-document { -webkit-mask-image: url('img/pictos/document.png'); mask-image: url('img/pictos/document.png'); }
+.mobile-filtre-chip .mobile-icon-svg, .mobile-filtre-chip .mobile-icon-png { width: 19px; height: 19px; }
+.mobile-home-icon .mobile-icon-svg, .mobile-home-icon .mobile-icon-png { width: 30px; height: 30px; stroke-width: 1.4; }
 .mobile-group-title { font-family: var(--font-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: var(--sp-3) 0 .25rem; }
 .mobile-group-title:first-child { margin-top: 0; }
 
@@ -836,6 +865,15 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   .modal-footer .spacer { display: none; }
   .modal-footer button { flex: 1 1 100%; }
   .modal-footer button[type="submit"] { order: -1; }
+  /* Retour Martin (23/08/2026, Frais mobile) : le pied « collant » (sticky,
+     cf. règle générale .modal-header/.modal-footer plus haut) se plaque au
+     bas de l'écran dès l'ouverture d'un long formulaire (Déplacement en
+     compte 10 champs) — sur un petit écran, ça donne l'illusion que le
+     formulaire s'arrête à « Mots-clés » alors que Km/Taux/Statut/Total
+     restent cachés sous les boutons tant qu'on n'a pas fait défiler. Un pied
+     de page normal (pas collant) force à voir tout le formulaire au moins
+     une fois en le parcourant jusqu'au bout. */
+  .modal-footer { position: static; }
 }
 
 .form-section {
@@ -3896,40 +3934,35 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    compteur. Le clic ouvre la modale correspondante (#fraisDialog etc., voir
    bindDashTuiles() dans app.js) qui reprend tel quel l'ancien contenu ; un
    clic hors de la modale (sur le fond) la referme, comme la croix.
-   .dash-col-droite fait 330px fixes (cf. .dash-grille plus haut) : la
-   grille de tuiles y est étroite, 2 colonnes compactes (icône au-dessus du
-   libellé) ; au-delà de la bascule à 1 colonne de .dash-grille (≤1000px,
-   grand écran partagé en deux) la colonne redevient pleine largeur, la
-   grille repasse en tuiles larges façon accueil mobile (icône à côté du
-   libellé) réparties par `auto-fit`. */
+   Retour Martin (23/08/2026) : 1 seule colonne, une tuile prend toute la
+   largeur de sa colonne (même largeur que l'encart « À faire » juste
+   au-dessus) — y compris en plein écran large, plus de grille 2×N compacte
+   à >1000px. Icône à côté du libellé partout (même mise en page qu'à
+   l'accueil mobile), une seule variante quelle que soit la largeur. */
 #dashboard .dash-tuiles-grille {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); margin-bottom: var(--sp-3);
+  display: grid; grid-template-columns: 1fr; gap: var(--sp-2); margin-bottom: var(--sp-3);
 }
 #dashboard .dash-tuile {
   position: relative;
-  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
-  min-height: 3.6rem;
+  display: flex; flex-direction: row; align-items: center; gap: var(--sp-3);
+  min-height: 3.8rem;
   border: 1px solid transparent; color: #fff;
-  padding: var(--sp-2) var(--sp-3);
-  font-family: inherit; font-size: .8rem; font-weight: 700; text-align: left;
-}
-#dashboard .dash-tuile-badge { align-self: flex-end; }
-@media (max-width: 1000px) {
-  #dashboard .dash-tuiles-grille { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); }
-  #dashboard .dash-tuile {
-    flex-direction: row; align-items: center; gap: var(--sp-3);
-    min-height: 4rem; padding: var(--sp-3) var(--sp-4); font-size: .88rem;
-  }
-  #dashboard .dash-tuile-badge { align-self: auto; }
+  padding: var(--sp-3) var(--sp-4);
+  font-family: inherit; font-size: .85rem; font-weight: 700; text-align: left;
 }
 #dashboard .dash-tuile:hover { filter: brightness(.92); }
 #dashboard .dash-tuile.has-pending { box-shadow: inset 0 0 0 2px var(--ink); }
 #dashboard .dash-tuile-icon { display: flex; flex-shrink: 0; }
-#dashboard .dash-tuile-icon .mobile-icon-svg { width: 26px; height: 26px; stroke-width: 1.5; }
-#dashboard .dash-tuile-label { flex: 1; }
+#dashboard .dash-tuile-icon .mobile-icon-svg, #dashboard .dash-tuile-icon .mobile-icon-png { width: 26px; height: 26px; stroke-width: 1.5; }
+#dashboard .dash-tuile-label { flex: 1; min-width: 0; }
+/* Retour Martin (23/08/2026) : les compteurs (ex. « 2 à traiter · 84,70 € »)
+   débordaient, surtout en écran partagé en deux — tronqués proprement au
+   lieu de forcer la largeur de la tuile (min-width:0 sur le libellé
+   au-dessus est indispensable pour que l'ellipsis marche dans une ligne flex). */
 #dashboard .dash-tuile-badge {
   font-family: var(--font-mono); font-size: .72rem; font-weight: 700;
   color: var(--ink); background: #fff; padding: .1rem .5rem;
+  flex-shrink: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 #dashboard .dash-tuile-badge:empty { display: none; }
 #dashboard .dash-tuile-badge.has-pending { background: var(--niv-proche); color: #fff; }
@@ -3998,6 +4031,26 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .materiel-item-check-nom { font-weight: 600; }
 .materiel-item-check-etat { font-size: .82rem; color: var(--muted); }
 .materiel-item-check-row.est-emprunte .materiel-item-check-etat { color: var(--danger); }
+
+/* Lot E (23/08/2026) : calendrier des emprunts d'un type — une ligne par
+   identifiant, une case par jour du mois affiché, teintée tant que
+   l'identifiant est emprunté (voir renderMaterielCalendrier). */
+.materiel-calendrier-tete { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); }
+.materiel-calendrier-tete h4 { margin: 0; flex: 1; text-align: center; text-transform: capitalize; }
+.materiel-calendrier-grid { overflow-x: auto; }
+.materiel-cal-row { display: grid; grid-template-columns: 9rem repeat(31, 1.4rem); gap: 2px; align-items: center; }
+.materiel-cal-row + .materiel-cal-row { margin-top: 2px; }
+.materiel-cal-label { display: flex; align-items: center; gap: .3rem; font-size: .8rem; font-weight: 600; padding-right: var(--sp-2); overflow: hidden; }
+.materiel-cal-label-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.materiel-cal-rendu-btn {
+  flex: 0 0 auto; font-size: .65rem; line-height: 1; padding: .15rem .4rem;
+  border: 1px solid var(--water); background: var(--water-soft); color: #154a5c; cursor: pointer;
+}
+.materiel-cal-rendu-btn:hover { background: var(--water); color: #fff; }
+.materiel-cal-jour { font-family: var(--font-mono); font-size: .68rem; color: var(--muted); text-align: center; }
+.materiel-cal-case { display: block; height: 1.4rem; background: var(--surface-alt); border: 1px solid var(--line); }
+.materiel-cal-case.est-emprunte { background: var(--water-soft); border-color: var(--water); cursor: pointer; }
+.materiel-cal-case.est-emprunte:hover { background: var(--water); }
 
 /* ---- Encarts : même langue que les cartes ---- */
 #dashboard .frais-badge { font-size: .6875rem; }
