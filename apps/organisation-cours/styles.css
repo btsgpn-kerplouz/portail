@@ -3886,11 +3886,47 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #urgencesFaitesDetail summary::before { content: '▸ '; }
 #urgencesFaitesDetail[open] summary::before { content: '▾ '; }
 
-/* ---- Zone basse : quatre cartes discrètes ouvertes à la demande, en grille
-   2×2 (retours 17/08/2026 : Déplacements/Réunions à gauche, Périodes/
-   Amélioration à droite — l'ordre du DOM porte cette disposition, voir
-   index.html). Fermées ce sont des barres compactes ; ouvertes, la carte
-   s'étend sur toute la largeur pour ne pas écraser tableaux/filtres. ---- */
+/* ---- Zone basse, tuiles (Lot B, 23/08/2026) : Déplacements & frais,
+   Périodes particulières, Réunions et Améliorations de l'appli ne sont plus
+   des <details> repliées (leur contenu — tableau, filtres — n'aurait pas
+   tenu dans une tuile carrée) mais des points d'entrée façon accueil mobile
+   (.mobile-home-btn, cf. plus haut) : icône + libellé + pastille de
+   compteur, en rangée qui se replie sur 2 lignes en dessous de 900px. Le
+   clic ouvre la modale correspondante (#fraisDialog etc., voir
+   bindDashTuiles() dans app.js) qui reprend tel quel l'ancien contenu. */
+#dashboard .dash-tuiles-grille {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3);
+}
+#dashboard .dash-tuile {
+  position: relative;
+  display: flex; align-items: center; gap: var(--sp-3);
+  min-height: 4rem;
+  border: 1px solid transparent; color: #fff;
+  padding: var(--sp-3) var(--sp-4);
+  font-family: inherit; font-size: .88rem; font-weight: 700; text-align: left;
+}
+#dashboard .dash-tuile:hover { filter: brightness(.92); }
+#dashboard .dash-tuile.has-pending { box-shadow: inset 0 0 0 2px var(--ink); }
+#dashboard .dash-tuile-icon { display: flex; flex-shrink: 0; }
+#dashboard .dash-tuile-icon .mobile-icon-svg { width: 26px; height: 26px; stroke-width: 1.5; }
+#dashboard .dash-tuile-label { flex: 1; }
+#dashboard .dash-tuile-badge {
+  font-family: var(--font-mono); font-size: .72rem; font-weight: 700;
+  color: var(--ink); background: #fff; padding: .1rem .5rem;
+}
+#dashboard .dash-tuile-badge:empty { display: none; }
+#dashboard .dash-tuile-badge.has-pending { background: var(--niv-proche); color: #fff; }
+#dashboard .dash-tuile-frais { background: var(--success); }
+#dashboard .dash-tuile-periodes { background: var(--plum); }
+#dashboard .dash-tuile-reunions { background: var(--clay); }
+#dashboard .dash-tuile-devnotes { background: var(--amber); }
+@media (max-width: 900px) {
+  #dashboard .dash-tuiles-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---- Zone basse, cartes matériel : les deux dernières cartes discrètes
+   ouvertes à la demande (Emprunt/Catalogue), pas encore reprises dans une
+   tuile — portée du Lot E, pas du Lot B. ---- */
 #dashboard .zone-basse-grille {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start;
 }

@@ -3433,7 +3433,7 @@ function renderMobileFrais() {
    (purgerTachesFaites, appliqué au chargement). */
 const CHECKLISTS = {
   todo: { list: '#todoList', input: '#todoNewInput', panel: '#todoPriorityPanel', history: '#todoHistoryList', historyCount: '#todoHistoryCount', idPrefix: 'todo', field: 'todoItems' },
-  devnotes: { list: '#devNotesList', input: '#devNotesNewInput', panel: '#devNotesPanel', history: '#devNotesHistoryList', historyCount: '#devNotesHistoryCount', idPrefix: 'devnote', badge: '#devNotesBadge', field: 'devNotesItems' },
+  devnotes: { list: '#devNotesList', input: '#devNotesNewInput', panel: '#devNotesTuile', history: '#devNotesHistoryList', historyCount: '#devNotesHistoryCount', idPrefix: 'devnote', badge: '#devNotesBadge', field: 'devNotesItems' },
   // Écran d'accueil mobile (ajustements #5, 22/08/2026) — même tâches que le
   // panneau desktop « À faire » (state.todoItems), juste un second jeu d'id
   // DOM pour l'écran mobile dédié : même moteur, même donnée, deux vues.
@@ -8173,6 +8173,9 @@ function bindEvents() {
       if (ouvrir) {
         // « Séances pas encore placées » n'est plus un <details> repliable
         // (toujours visible, colonne de droite) : on y défile simplement.
+        // Lot B (23/08/2026) : Frais n'est plus non plus un <details> mais une
+        // modale ouverte depuis une tuile — ouvrir directement la modale.
+        if (ouvrir.dataset.ouvrir === 'dash:frais') { $('#fraisDialog')?.showModal(); return; }
         const cible = ouvrir.dataset.ouvrir === 'dash:backlog'
           ? $('#backlogPanel')
           : document.querySelector(`details[data-open-key="${ouvrir.dataset.ouvrir}"]`);
@@ -8552,6 +8555,7 @@ function bindEvents() {
   });
 
   bindModalActions();
+  bindDashTuiles();
 }
 
 /* Lot 3.1 — confirmation avant de fermer une saisie en cours. La modale
@@ -8575,6 +8579,22 @@ function guardUnsavedModal(dialog, form) {
 function confirmCloseModal(dialog) {
   if (dialog._dirty && !confirm('Fermer sans enregistrer les modifications en cours ?')) return;
   dialog.close();
+}
+
+/* Lot B (23/08/2026) : les 4 tuiles de .dash-tuiles-grille (Frais, Périodes
+   particulières, Réunions, Améliorations de l'appli) ouvrent chacune la
+   modale reprenant tel quel le contenu de l'ancien encart repliable — mêmes
+   ids, mêmes fonctions de rendu, seul le contenant change (tuile plutôt que
+   <details>). */
+const DASH_TUILE_DIALOGS = { frais: '#fraisDialog', periodes: '#periodesDialog', reunions: '#reunionsDialog', devnotes: '#devNotesDialog' };
+function bindDashTuiles() {
+  $$('.dash-tuile[data-dash-tuile]').forEach(btn => {
+    btn.addEventListener('click', () => $(DASH_TUILE_DIALOGS[btn.dataset.dashTuile])?.showModal());
+  });
+  $('#closeFraisDialog')?.addEventListener('click', () => $('#fraisDialog')?.close());
+  $('#closePeriodesDialog')?.addEventListener('click', () => $('#periodesDialog')?.close());
+  $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
+  $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
 }
 
 function bindModalActions() {

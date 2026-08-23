@@ -118,61 +118,34 @@
            temps en temps »). Titre retiré (retours/ 17/08/2026, demande
            Martin) : le filet du haut suffit à séparer les deux zones. -->
       <div class="zone-basse">
+        <!-- Lot B (23/08/2026) : Frais/Périodes/Réunions/Améliorations ne
+             sont plus des <details> repliés en place — trop de contenu (table,
+             filtres) pour tenir dans une tuile carrée façon accueil mobile.
+             La tuile est un point d'entrée pur (icône + libellé + pastille de
+             compteur), le contenu complet s'ouvre dans une modale
+             (voir #fraisDialog etc. et bindDashTuiles() dans app.js). -->
+        <div class="dash-tuiles-grille">
+          <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais">
+            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
+            <span class="dash-tuile-label">Déplacements &amp; frais</span>
+            <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
+          </button>
+          <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes">
+            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="1"/><line x1="3.5" y1="9" x2="20.5" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg></span>
+            <span class="dash-tuile-label">Périodes particulières</span>
+          </button>
+          <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions">
+            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-2.9 2.3-5.2 5-5.2s5 2.3 5 5.2"/><path d="M13.3 14.3c2.2.3 3.9 2.2 3.9 4.7"/></svg></span>
+            <span class="dash-tuile-label">Réunions</span>
+            <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
+          </button>
+          <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes">
+            <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><rect x="3" y="3.5" width="4" height="4"/><rect x="3" y="9.5" width="4" height="4"/><rect x="3" y="15.5" width="4" height="4"/></svg></span>
+            <span class="dash-tuile-label">Améliorations de l'appli</span>
+            <span id="devNotesBadge" class="dash-tuile-badge"></span>
+          </button>
+        </div>
         <div class="zone-basse-grille">
-      <details class="panel panel-collapsible frais-panel" id="fraisPanel" data-open-key="dash:frais">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Déplacements &amp; frais</h3>
-            <!-- Retours #3 (18-19/08/2026) : comme « + Période », reste visible
-                 et actionnable encart replié — remonté depuis .frais-filters.
-                 Retours #4 (18/08/2026) : bouton avant le compteur (et non
-                 après), pour retomber juste à droite du titre comme sur les
-                 autres encarts (ex. « + Période », sans badge entre les deux). -->
-            <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
-            <span id="fraisSummaryBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <div class="frais-toolbar">
-          <div class="frais-filters">
-            <label>Statut
-              <select id="fraisStatusFilter">
-                <option value="actives">Actives (hors terminées)</option>
-                <option value="all">Toutes</option>
-                <option value="Demande à faire">Demande à faire</option>
-                <option value="En cours">En cours</option>
-                <option value="Terminée">Terminée</option>
-              </select>
-            </label>
-          </div>
-          <div class="frais-export">
-            <span class="meta">Exporter (toutes lignes) :</span>
-            <button type="button" class="small secondary" data-export-frais="csv">CSV</button>
-            <button type="button" class="small secondary" data-export-frais="xls">Excel (.xls)</button>
-            <button type="button" class="small secondary" data-export-frais="ods">LibreOffice (.fods)</button>
-          </div>
-        </div>
-        <div id="fraisTableWrap" class="frais-table-wrap"></div>
-      </details>
-      <!-- Mise en page 2×2 (retours 17/08/2026) : l'ordre du DOM compte — grille
-           à 2 colonnes en remplissage naturel, donc Déplacements/Réunions à
-           gauche et Périodes/Amélioration à droite (voir .zone-basse-grille). -->
-      <details class="panel panel-collapsible" id="constraintsPanel" data-open-key="dash:constraints">
-        <summary><div class="panel-heading-inline"><h3>Périodes particulières</h3><button id="addConstraintDashboardButton" class="small">+ Période</button></div></summary>
-        <div id="constraintsList" class="list"></div>
-      </details>
-      <details class="panel panel-collapsible reunions-panel" id="reunionsPanel" data-open-key="dash:reunions">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Réunions</h3>
-            <button type="button" id="addReunionButton" class="small">+ Réunion</button>
-            <span id="reunionsSummaryBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <div class="reunions-toolbar">
-          <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
-        </div>
-        <div id="reunionsList" class="frais-table-wrap"></div>
-      </details>
       <details class="panel panel-collapsible" id="materielEmpruntsPanel" data-open-key="dash:materielEmprunts">
         <summary>
           <div class="panel-heading-inline">
@@ -200,21 +173,6 @@
           <button type="submit" class="secondary small">+ Type</button>
         </form>
         <div id="materielCatalogueList"></div>
-      </details>
-      <details class="panel panel-collapsible todo-panel dev-panel" id="devNotesPanel" data-open-key="dash:devnotes">
-        <summary>
-          <div class="panel-heading-inline">
-            <h3>Améliorations de l'appli</h3>
-            <span id="devNotesBadge" class="frais-badge"></span>
-          </div>
-        </summary>
-        <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
-        <div id="devNotesList" class="todo-list"></div>
-        <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
-        <details class="todo-history">
-          <summary id="devNotesHistoryCount">Tâches faites</summary>
-          <ul id="devNotesHistoryList" class="todo-history-list"></ul>
-        </details>
       </details>
         </div>
       </div>
@@ -1457,6 +1415,88 @@
         <button type="button" class="secondary" id="cancelUeCapsButton">Annuler</button>
         <button type="submit">Enregistrer</button>
       </footer>
+    </form>
+  </dialog>
+
+  <!-- Lot B (23/08/2026) : contenu des 4 anciens encarts repliables du
+       Tableau de bord (Frais/Périodes/Réunions/Améliorations), inchangé,
+       déplacé dans des modales ouvertes depuis les tuiles de .dash-tuiles-grille.
+       Pas de <form method="dialog"> à soumettre : uniquement un bouton fermer,
+       tout le reste (ajout, édition, filtres) garde son comportement d'origine. -->
+  <dialog id="fraisDialog" class="modal large-modal">
+    <form method="dialog" class="frais-panel">
+      <header class="modal-header">
+        <div class="panel-heading-inline">
+          <h3>Déplacements &amp; frais</h3>
+          <button type="button" id="addDeplacementButton" class="small">+ Déplacement</button>
+        </div>
+        <button type="button" class="icon-button" id="closeFraisDialog">×</button>
+      </header>
+      <div class="frais-toolbar">
+        <div class="frais-filters">
+          <label>Statut
+            <select id="fraisStatusFilter">
+              <option value="actives">Actives (hors terminées)</option>
+              <option value="all">Toutes</option>
+              <option value="Demande à faire">Demande à faire</option>
+              <option value="En cours">En cours</option>
+              <option value="Terminée">Terminée</option>
+            </select>
+          </label>
+        </div>
+        <div class="frais-export">
+          <span class="meta">Exporter (toutes lignes) :</span>
+          <button type="button" class="small secondary" data-export-frais="csv">CSV</button>
+          <button type="button" class="small secondary" data-export-frais="xls">Excel (.xls)</button>
+          <button type="button" class="small secondary" data-export-frais="ods">LibreOffice (.fods)</button>
+        </div>
+      </div>
+      <div id="fraisTableWrap" class="frais-table-wrap"></div>
+    </form>
+  </dialog>
+
+  <dialog id="periodesDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header">
+        <div class="panel-heading-inline">
+          <h3>Périodes particulières</h3>
+          <button type="button" id="addConstraintDashboardButton" class="small">+ Période</button>
+        </div>
+        <button type="button" class="icon-button" id="closePeriodesDialog">×</button>
+      </header>
+      <div id="constraintsList" class="list"></div>
+    </form>
+  </dialog>
+
+  <dialog id="reunionsDialog" class="modal large-modal">
+    <form method="dialog">
+      <header class="modal-header">
+        <div class="panel-heading-inline">
+          <h3>Réunions</h3>
+          <button type="button" id="addReunionButton" class="small">+ Réunion</button>
+        </div>
+        <button type="button" class="icon-button" id="closeReunionsDialog">×</button>
+      </header>
+      <div class="reunions-toolbar">
+        <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
+      </div>
+      <div id="reunionsList" class="frais-table-wrap"></div>
+    </form>
+  </dialog>
+
+  <dialog id="devNotesDialog" class="modal">
+    <form method="dialog">
+      <header class="modal-header">
+        <h3>Améliorations de l'appli</h3>
+        <button type="button" class="icon-button" id="closeDevNotesDialog">×</button>
+      </header>
+      <p class="meta tight">Visible et modifiable par tous les comptes connectés.</p>
+      <div id="devNotesList" class="todo-list"></div>
+      <textarea id="devNotesNewInput" class="todo-add-input" placeholder="+ signaler un bug ou une idée (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
+      <details class="todo-history">
+        <summary id="devNotesHistoryCount">Tâches faites</summary>
+        <ul id="devNotesHistoryList" class="todo-history-list"></ul>
+      </details>
     </form>
   </dialog>
 
