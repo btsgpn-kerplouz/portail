@@ -4729,7 +4729,7 @@ function renderGanttSequencesPanel(ues, weeks) {
     const bg = weeks.map((week, i) => `<div class="timeline-seq-bg ${isBlockedWeek(week, promotion) ? 'is-blocked' : ''} ${isThematicBlocked(week, promotion, ue.id, ueSessions) ? 'is-thematic' : ''}${week.id === currentWeekId() ? ' is-current-week' : ''}" style="grid-column: ${i + 2}; grid-row: ${rowCursor} / span ${lanes};" aria-hidden="true"></div>`).join('');
     const inner = !mienne
       ? `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Vous n’êtes pas enregistré·e comme enseignant·e sur cette UE.</div>`
-      : items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
+      : items.length ? items.map(item => renderSequenceBandHtml(item.segment, rowCursor + item.lane, promotion, weeks, ue.id, ueSessions)).join('') : `<div class="timeline-no-sequence" style="grid-column: 2 / -1; grid-row: ${rowCursor};">Aucune séquence positionnée.</div>`;
     const label = `<div class="timeline-row-label" style="grid-row: ${rowCursor} / span ${lanes};">${escapeHtml(ue.code)} — ${escapeHtml(ue.title)}</div>`;
     rowCursor += lanes;
     return bg + inner + label;
@@ -4754,9 +4754,18 @@ function renderConstraintBandHtml(segment, gridRow) {
 /* 18/08 — bande allégée à nom + mots-clés + pastilles seulement (consigne
    directe : « beaucoup plus fines »), plus de libellé « Séquence » ni de ligne
    heures/période (visibles dans le détail de la séquence, pas ici). */
-function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
+function renderSequenceBandHtml(segment, gridRow, promotion, weeks, ueId, ueSessions) {
   const seq = segment.seq;
-  const blockedCols = weeks.slice(segment.startIndex, segment.endIndex + 1).some(w => isBlockedWeek(w, promotion));
+  const spanWeeks = weeks.slice(segment.startIndex, segment.endIndex + 1);
+  // Retours (24/08/2026) — une semaine thématique (EIL) qui concerne la promo
+  // interrompt elle aussi la routine de cours habituelle, donc la séquence,
+  // au même titre qu'une semaine bloquée (vacances/férié). Même prédicat que
+  // le fond de colonne (.timeline-seq-bg) de la ligne de l'UE, pour rester
+  // pile aligné avec la hachure affichée dessous : isThematicBlocked exclut
+  // déjà l'UE porteuse de l'EIL et respecte le ciblage par promo (une EIL
+  // GPN2 n'interrompt pas les séquences GPN1).
+  const isCutWeek = w => isBlockedWeek(w, promotion) || isThematicBlocked(w, promotion, ueId, ueSessions);
+  const blockedCols = spanWeeks.some(isCutWeek);
   const sc = sequenceColor(seq.id);
   const bandKeywords = compactKeywords(seq.keywords, 5);
   const bandTeachers = teacherPillsMarkup(seq.teacher || findUe(seq.ueId)?.teacher || '', true);
@@ -4771,7 +4780,30 @@ function renderSequenceBandHtml(segment, gridRow, promotion, weeks) {
     : consultable
       ? `data-edit-sequence="${escapeAttr(seq.id)}"`
       : '';
-  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored ${blockedCols ? 'has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}"><strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}</button>`;
+  const content = `<strong>${escapeHtml(seq.title)}</strong>${bandKeywords.length ? `<span class="timeline-band-keywords">${escapeHtml(bandKeywords.join(' · '))}</span>` : ''}${bandTeachers ? `<span class="timeline-band-teachers design-ue-pills">${bandTeachers}</span>` : ''}`;
+  // Retours (23/08/2026) — une semaine bloquée (vacances/férié) AU MILIEU de la
+  // séquence ne doit plus laisser croire que la séquence s'y poursuit (fond
+  // plein par-dessus la hachure). On découpe le fond en tronçons calés sur les
+  // semaines réellement travaillées (le bouton lui-même reste transparent,
+  // laissant transparaître la hachure de fond dans les semaines bloquées), et
+  // le titre reste confiné au premier tronçon : il ne peut plus jamais se
+  // retrouver visuellement sous une semaine hachurée.
+  let inner = content;
+  if (blockedCols) {
+    const spanCount = spanWeeks.length;
+    const runs = [];
+    let runStart = null;
+    spanWeeks.forEach((w, i) => {
+      const cut = isCutWeek(w);
+      if (!cut && runStart === null) runStart = i;
+      if (cut && runStart !== null) { runs.push([runStart, i - 1]); runStart = null; }
+    });
+    if (runStart !== null) runs.push([runStart, spanCount - 1]);
+    const runDivs = runs.map(([a, b]) => `<span class="timeline-band-run" style="grid-column:${a + 1} / ${b + 2};"></span>`).join('');
+    const [firstStart, firstEnd] = runs[0] || [0, spanCount - 1];
+    inner = `<span class="timeline-band-runs" style="grid-template-columns:repeat(${spanCount},1fr);">${runDivs}<span class="timeline-band-content" style="grid-column:${firstStart + 1} / ${firstEnd + 2};">${content}</span></span>`;
+  }
+  return `<button ${interactiveAttrs} class="timeline-sequence-band seq-colored${blockedCols ? ' has-blocked-week' : ''}${mienne ? '' : ' is-collegue'}" style="grid-column: ${segment.startIndex + 2} / ${segment.endIndex + 3}; grid-row: ${gridRow}; --ue-color:${sc}; --ue-soft:${hexToRgba(sc, .42)}; --ue-deep:${deepColor(sc)};" title="${escapeAttr(seq.title)}${mienne ? '' : consultable ? ' — collègue(s) seul(s), lecture seule' : ' — collègue(s) seul(s), pas la vôtre'}">${inner}</button>`;
 }
 
 /* Bande SÉANCES : jours en lignes (Lundi→Vendredi + « à préciser »), semaines
@@ -10320,14 +10352,55 @@ function typeClass(type = '') {
 // periodOfWeek ci-dessus (année civile en dur, cassé par buildRollingWeeks) :
 // trouvé en cherchant d'autres `isoYear === 2026/2027` pendant l'investigation
 // du ticket « 7 cases en janvier-mai ». Même correctif, au numéro de semaine.
+// Retours (24/08/2026) — ce correctif au numéro de semaine restait incomplet :
+// la fenêtre glissante de state.weeks (buildRollingWeeks, ~52 semaines autour
+// d'aujourd'hui) peut contenir DEUX fois la plage « printemps » (S1 à ~S22) —
+// le reliquat du printemps de l'année scolaire précédente ET celui de l'année
+// en cours — puisqu'aucune année civile n'entre plus dans le filtre pour les
+// distinguer. Résultat pour Semestre 2/4 : les deux tronçons se mélangeaient
+// dans une seule grille (bornes fausses, semaines qui semblent « repartir en
+// arrière » S17→S01 au milieu de la frise). On regroupe donc les semaines
+// correspondantes en tronçons CONTIGUS et on ne garde que celui le plus
+// proche d'aujourd'hui — jamais plusieurs tronçons mélangés. Semestre 1/3 n'a
+// jamais ce problème (l'automne n'apparaît qu'une fois dans une fenêtre
+// glissante d'un an), mais passe par le même chemin pour rester cohérent.
 function weeksForSemester(semester) {
-  return state.weeks.filter(w => {
+  const inRange = w => {
     const n = weekNumberOf(w);
     if (semester === 'Semestre 1' || semester === 'Semestre 3') return n >= 36 && n <= 53;
     if (semester === 'Semestre 2') return n >= 1 && n <= 17;
     if (semester === 'Semestre 4') return n >= 1 && n <= 22;
     return true;
+  };
+  const matches = state.weeks.map((w, i) => ({ w, i })).filter(({ w }) => inRange(w));
+  if (!matches.length) return [];
+  const runs = [[matches[0]]];
+  matches.slice(1).forEach(m => {
+    const lastRun = runs[runs.length - 1];
+    if (m.i === lastRun[lastRun.length - 1].i + 1) lastRun.push(m);
+    else runs.push([m]);
   });
+  if (runs.length === 1) return runs[0].map(m => m.w);
+  // Semestre 2/4 (printemps) : toujours celui qui suit l'automne jumeau
+  // (Semestre 1/3) de la MÊME année scolaire — jamais le reliquat de l'année
+  // précédente, qui peut être à distance égale d'aujourd'hui (l'automne étant
+  // pile au milieu de la fenêtre glissante) et gagnerait sinon le départage
+  // générique ci-dessous par pur hasard de position dans le tableau.
+  const autumnSemester = semester === 'Semestre 2' ? 'Semestre 1' : semester === 'Semestre 4' ? 'Semestre 3' : null;
+  if (autumnSemester) {
+    const autumnEndId = weeksForSemester(autumnSemester).at(-1)?.id;
+    const autumnEndIndex = autumnEndId ? state.weeks.findIndex(w => w.id === autumnEndId) : -1;
+    const after = autumnEndIndex >= 0 ? runs.find(run => run[0].i > autumnEndIndex) : null;
+    if (after) return after.map(m => m.w);
+  }
+  // Repli générique (automne, ou printemps sans automne jumeau dans la fenêtre) —
+  // le tronçon le plus proche d'aujourd'hui.
+  const todayIndex = state.weeks.findIndex(w => w.id === currentWeekId());
+  const bestRun = runs.reduce((best, run) => {
+    const dist = Math.min(...run.map(m => Math.abs(m.i - todayIndex)));
+    return !best || dist < best.dist ? { run, dist } : best;
+  }, null).run;
+  return bestRun.map(m => m.w);
 }
 
 /* Semaines sélectionnables pour une séquence : TOUTE l'année de la promo (paire

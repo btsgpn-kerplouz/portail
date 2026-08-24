@@ -1725,7 +1725,22 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;
 }
 .timeline-sequence-band { cursor: grab; }
-.timeline-sequence-band.has-blocked-week { opacity: .55; }
+/* Retours (23/08/2026) — une semaine bloquée au milieu de la séquence : le
+   bouton garde son contour sur toute la durée (repère « c'est une seule
+   séquence »), mais son fond plein disparaît au profit des tronçons
+   `.timeline-band-run` (calés semaine par semaine par JS), laissant transparaître
+   la hachure `.timeline-seq-bg.is-blocked` dessous exactement là où il le faut. */
+.timeline-sequence-band.seq-colored.has-blocked-week { background: transparent; }
+.timeline-band-runs {
+  display: grid; align-self: stretch; width: 100%; min-width: 0;
+}
+.timeline-band-run { grid-row: 1; background: var(--ue-soft, #fbf3df); }
+/* Le titre ne vit que dans le premier tronçon travaillé : il ne peut plus,
+   quelle que soit sa longueur, se retrouver visuellement sous une hachure. */
+.timeline-band-content {
+  grid-row: 1; display: flex; align-items: center; gap: .4rem;
+  overflow: hidden; min-width: 0;
+}
 /* Retours #3 (18-19/08/2026) — Cas 2 de visibilité entre comptes enseignants :
    séquence de collègue(s) seul(s), visible mais pas ouvrable/glissable —
    neutralise les jetons --ue-* posés en style inline (!important nécessaire,
