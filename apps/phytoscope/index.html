@@ -1252,7 +1252,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
   <div class="refLightboxGrid exportModalGrid">
     <p class="muted">Télécharge tous tes relevés en CSV (une ligne par taxon observé, avec les indices Baseflor et les coordonnées Lambert 93) — réimportable ici via « Importer », ou exploitable dans un tableur ou un SIG comme QGIS.</p>
     <div class="row"><button type="button" id="exportCsvHome">Télécharger CSV</button></div>
-    <p class="muted">Télécharge les analyses calculées pour chaque relevé (moyennes simples et pondérées, écarts-types, par gradient écologique) en CSV.</p>
+    <p class="muted">Télécharge les analyses calculées pour chaque relevé en CSV (une ligne par relevé, métadonnées + moyennes simples et pondérées + écarts-types par gradient écologique + diagnostic zone humide, tout en colonnes).</p>
     <div class="row"><button type="button" class="secondary" id="exportCsvAnalysesHome">Télécharger CSV — Analyses</button></div>
   </div>
 </div>
@@ -2611,7 +2611,26 @@ function lambert93Cols(coordsStr){const p=parseCoordsWgs84(coordsStr); if(!p)ret
 const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93"];
 function linesToCsv(lines){return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
 function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords)]);})); return linesToCsv(lines);}
-function synthesisCsv(){return linesToCsv(sheetRowsSynthese());}
+function analysesWideRows(){
+  const header=["releve_id","releve_nom","site","code_projet","date","observateur","localisation","surface","coordonnees_gps","x_lambert93","y_lambert93",
+    ...GRADIENTS.flatMap(g=>[`${g.short}_moyenne_simple`,`${g.short}_moyenne_ponderee`,`${g.short}_ecart_type_simple`,`${g.short}_ecart_type_pondere`]),
+    "zone_humide_ellenberg_moyenne","zone_humide_ellenberg_moyenne_ponderee","zone_humide_ellenberg_statut",
+    "zone_humide_reglementaire_statut","zone_humide_reglementaire_pct_hygrophiles","zone_humide_reglementaire_nb_especes_retenues","zone_humide_reglementaire_nb_especes_hygrophiles",
+    "zone_humide_concordance"];
+  const rows=state.releves.map(r=>{
+    const st=stats(r,"Toutes strates");
+    const ell=computeWetlandEllenberg(r,"Toutes strates");
+    const reg=computeRegulatoryFlora(r);
+    const concord=wetlandConcord(ell.status,reg.status);
+    return [r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.coords||"",...lambert93Cols(r.coords),
+      ...st.flatMap(x=>[x.mean??"",x.wmean??"",x.sd??"",x.wsd??""]),
+      ell.mean??"",ell.wmean??"",wetlandStatusLabel(ell.status),
+      regStatusLabel(reg.status),reg.ratio!=null?Math.round(reg.ratio*1000)/10:"",reg.total,reg.wet,
+      concordLabel(concord)];
+  });
+  return [header,...rows];
+}
+function synthesisCsv(){return linesToCsv(analysesWideRows());}
 function downloadImportTemplate(){
   const pad=()=>GRADIENTS.map(()=>"");
   const rel1=["REL-EX1","Exemple — schorre moyen","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Schorre moyen","47.680, -3.350","25"];
@@ -3183,17 +3202,19 @@ function computeRegulatoryFlora(rel){
   let status="insuffisant"; if(total>0)status=ratio>=0.5?"valide":"non_valide";
   return {status,total,wet,ratio,retained,excluded,details};
 }
+function wetlandConcord(ellStatus,regStatus){
+  if(ellStatus==="humide"&&regStatus==="valide")return "coherent_humide";
+  if(ellStatus==="non_humide"&&regStatus==="non_valide")return "coherent_non_humide";
+  if((ellStatus==="humide"&&regStatus==="non_valide")||(ellStatus==="non_humide"&&regStatus==="valide"))return "divergence";
+  if(ellStatus==="insuffisant"||regStatus==="insuffisant")return "insuffisant";
+  return "transition";
+}
 function computeWetlandDiagnostics(){
   const filter=(document.getElementById("wetlandStratum")?.value)||"Toutes strates";
   return selectedReleves("wetland").map(rel=>{
     const ell=computeWetlandEllenberg(rel,filter);
     const reg=computeRegulatoryFlora(rel);
-    let concord="transition";
-    if(ell.status==="humide"&&reg.status==="valide")concord="coherent_humide";
-    else if(ell.status==="non_humide"&&reg.status==="non_valide")concord="coherent_non_humide";
-    else if((ell.status==="humide"&&reg.status==="non_valide")||(ell.status==="non_humide"&&reg.status==="valide"))concord="divergence";
-    else if(ell.status==="insuffisant"||reg.status==="insuffisant")concord="insuffisant";
-    return {rel,ell,reg,concord};
+    return {rel,ell,reg,concord:wetlandConcord(ell.status,reg.status)};
   });
 }
 /* Empile les étiquettes qui se chevaucheraient sur l'axe (plusieurs relevés proches en valeur),
