@@ -581,6 +581,7 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
   .psRailTitle .fullLabel{display:none}
   .psRailTitle .shortLabel{display:inline}
   #homeImportBtn{display:none}
+  #homeExportBtn{display:none}
   #homeNewReleveBtn{width:34px;height:34px;padding:0;font-size:1.2rem;line-height:1;border-radius:0}
   #homeNewReleveBtn .fullLabel{display:none}
   #homeNewReleveBtn .shortLabel{display:inline}
@@ -726,6 +727,9 @@ body.wetlandSourceOpen #wetlandSourceModal{display:flex;flex-direction:column;po
 body.importOpen #importModalOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
 body.importOpen #importModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,560px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
 .importModalGrid{padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+body.exportOpen #exportModalOverlay{display:block;position:fixed;inset:0;background:rgba(25,27,22,.55);z-index:88}
+body.exportOpen #exportModal{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,560px);max-height:86vh;background:var(--panel);border:1px solid var(--line);z-index:89}
+.exportModalGrid{padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
 .refLightboxHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--linesoft);flex:0 0 auto}
 .refLightboxHead h2{margin:0;font-size:1.02rem;font-family:var(--display);font-weight:600}
 .refLightboxClose{all:unset;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);padding:4px}
@@ -1239,6 +1243,19 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
     <input type="file" id="importCsvReleves" accept=".csv,text/csv" class="fileInputHidden">
   </div>
 </div>
+<div class="refLightboxOverlay noPrint" id="exportModalOverlay"></div>
+<div class="refLightbox noPrint exportModal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+  <div class="refLightboxHead">
+    <h2 id="exportModalTitle">Exporter mes relevés</h2>
+    <button type="button" class="refLightboxClose" id="exportModalClose" aria-label="Fermer">✕</button>
+  </div>
+  <div class="refLightboxGrid exportModalGrid">
+    <p class="muted">Télécharge tous tes relevés en CSV (une ligne par taxon observé, avec les indices Baseflor et les coordonnées Lambert 93) — réimportable ici via « Importer », ou exploitable dans un tableur ou un SIG comme QGIS.</p>
+    <div class="row"><button type="button" id="exportCsvHome">Télécharger CSV</button></div>
+    <p class="muted">Télécharge les analyses calculées pour chaque relevé (moyennes simples et pondérées, écarts-types, par gradient écologique) en CSV.</p>
+    <div class="row"><button type="button" class="secondary" id="exportCsvAnalysesHome">Télécharger CSV — Analyses</button></div>
+  </div>
+</div>
 <main>
   <section id="home" class="view active homeView">
     <div class="psHomeBody">
@@ -1250,6 +1267,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
           <div class="psRailActions">
             <button type="button" data-view="entry" id="homeNewReleveBtn" aria-label="Nouveau relevé"><span class="fullLabel">+ Nouveau relevé</span><span class="shortLabel" aria-hidden="true">+</span></button>
             <button type="button" class="secondary" id="homeImportBtn">Importer</button>
+            <button type="button" class="secondary" id="homeExportBtn">Exporter</button>
           </div>
         </div>
         <div class="psLibrary card" id="homeReleveCard">
@@ -1943,6 +1961,8 @@ function openBbHelp(){document.body.classList.add("bbHelpOpen");}
 function closeBbHelp(){document.body.classList.remove("bbHelpOpen");}
 function openImportModal(){document.body.classList.add("importOpen");}
 function closeImportModal(){document.body.classList.remove("importOpen");}
+function openExportModal(){document.body.classList.add("exportOpen");}
+function closeExportModal(){document.body.classList.remove("exportOpen");}
 function openRefLightbox(code){
   const title=document.getElementById("refLightboxTitle"), grid=document.getElementById("refLightboxGrid");
   if(!title||!grid||!BB_TILE_LEVELS[code])return;
@@ -2582,22 +2602,31 @@ function useGpsPosition(){
   );
 }
 function download(filename, text, mime="application/json"){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label)];
-function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i])]);})); return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+// Conversion WGS84 -> Lambert 93 (RGF93 / EPSG:2154), algorithme officiel IGN
+// (ellipsoïde GRS80, constantes précalculées de la projection conique conforme)
+// — colonnes X;Y ajoutées à l'export CSV pour réimport direct dans un SIG (QGIS).
+function wgs84ToLambert93(latDeg,lonDeg){const e=0.08181919106,lambda0=3*Math.PI/180,n=0.7256077650,C=11754255.426,Xs=700000,Ys=12655612.050; const lat=latDeg*Math.PI/180,lon=lonDeg*Math.PI/180; const sinLat=Math.sin(lat); const latIso=Math.atanh(sinLat)-e*Math.atanh(e*sinLat); const R=C*Math.exp(-n*latIso); const gamma=n*(lon-lambda0); return {x:Xs+R*Math.sin(gamma),y:Ys-R*Math.cos(gamma)};}
+function parseCoordsWgs84(str){const m=(str||"").toString().trim().match(/(-?\d+(?:[.,]\d+)?)\s*[,;]\s*(-?\d+(?:[.,]\d+)?)/); if(!m)return null; const lat=parseFloat(m[1].replace(",",".")),lon=parseFloat(m[2].replace(",",".")); if(Number.isNaN(lat)||Number.isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180)return null; return {lat,lon};}
+function lambert93Cols(coordsStr){const p=parseCoordsWgs84(coordsStr); if(!p)return ["",""]; const {x,y}=wgs84ToLambert93(p.lat,p.lon); return [Math.round(x),Math.round(y)];}
+const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93"];
+function linesToCsv(lines){return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
+function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords)]);})); return linesToCsv(lines);}
+function synthesisCsv(){return linesToCsv(sheetRowsSynthese());}
 function downloadImportTemplate(){
   const pad=()=>GRADIENTS.map(()=>"");
   const rel1=["REL-EX1","Exemple — schorre moyen","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Schorre moyen","47.680, -3.350","25"];
   const rel2=["REL-EX2","Exemple — haut schorre","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Haut schorre","47.681, -3.352","16"];
+  const l93rel1=lambert93Cols(rel1[7]), l93rel2=lambert93Cols(rel2[7]);
   const examples=[
-    [...rel1,3109,"Halimione portulacoides (L.) Aellen","","Herbacée","bb","2","",...pad()],
-    [...rel1,"","Puccinellia distans (Jacq.) Parl.","","Herbacée","pct","15","",...pad()],
-    [...rel1,6050,"Salicornia europaea L.","","Herbacée","bb","+","",...pad()],
-    [...rel1,-1,"Sol nu","","Sans végétation","bb","1","",...pad()],
-    [...rel2,786,"Tripolium pannonicum (Jacq.) Dobrocz. subsp. pannonicum","","Herbacée","bb","1","",...pad()],
-    [...rel2,"","Limonium vulgare Mill.","","Herbacée","pct","5","",...pad()],
+    [...rel1,3109,"Halimione portulacoides (L.) Aellen","","Herbacée","bb","2","",...pad(),...l93rel1],
+    [...rel1,"","Puccinellia distans (Jacq.) Parl.","","Herbacée","pct","15","",...pad(),...l93rel1],
+    [...rel1,6050,"Salicornia europaea L.","","Herbacée","bb","+","",...pad(),...l93rel1],
+    [...rel1,-1,"Sol nu","","Sans végétation","bb","1","",...pad(),...l93rel1],
+    [...rel2,786,"Tripolium pannonicum (Jacq.) Dobrocz. subsp. pannonicum","","Herbacée","bb","1","",...pad(),...l93rel2],
+    [...rel2,"","Limonium vulgare Mill.","","Herbacée","pct","5","",...pad(),...l93rel2],
   ];
   const lines=[CSV_LIGNES_HEADERS,...examples];
-  download(`gabarit_import_releves_${new Date().toISOString().slice(0,10)}.csv`, lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n"), "text/csv;charset=utf-8");
+  download(`gabarit_import_releves_${new Date().toISOString().slice(0,10)}.csv`, linesToCsv(lines), "text/csv;charset=utf-8");
 }
 function parseCsvLines(text){const rows=[]; let row=[],cell="",inQuotes=false; const s=text.replace(/^﻿/,""); for(let i=0;i<s.length;i++){const c=s[i]; if(inQuotes){if(c==='"'){if(s[i+1]==='"'){cell+='"'; i++;}else inQuotes=false;}else cell+=c;} else if(c==='"')inQuotes=true; else if(c===";"){row.push(cell); cell="";} else if(c==="\n"||c==="\r"){if(c==="\r"&&s[i+1]==="\n")i++; row.push(cell); rows.push(row); row=[]; cell="";} else cell+=c;} if(cell!==""||row.length){row.push(cell); rows.push(row);} return rows.filter(r=>r.some(c=>c!=="")); }
 function resolveImportTaxon(taxonIdRaw,nomRaw){const tid=parseInt(taxonIdRaw,10); if(!Number.isNaN(tid)&&byId.has(tid))return byId.get(tid); const nom=(nomRaw||"").toString().trim(); if(nom&&byName.has(nom))return byName.get(nom); const n=norm(nom); if(!n)return null; return TAXA.find(t=>t.nn===n)||TAXA.find(t=>t.ns===n)||null;}
@@ -2881,6 +2910,8 @@ function bind(){
  });
  const homeImportBtn=document.getElementById("homeImportBtn");
  if(homeImportBtn)homeImportBtn.addEventListener("click",openImportModal);
+ const homeExportBtn=document.getElementById("homeExportBtn");
+ if(homeExportBtn)homeExportBtn.addEventListener("click",openExportModal);
  const homeNewReleveBtn=document.getElementById("homeNewReleveBtn");
  if(homeNewReleveBtn)homeNewReleveBtn.addEventListener("click",()=>{const r=blankReleveFromPrevious(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; entryAutoOpenIdentity=true; renderAll();});
  const navToggle=document.getElementById("navToggle");
@@ -2936,6 +2967,15 @@ function bind(){
  const importModalClose=document.getElementById("importModalClose");
  if(importModalClose)importModalClose.addEventListener("click",closeImportModal);
  document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("importOpen"))closeImportModal();});
+ const exportModalOverlay=document.getElementById("exportModalOverlay");
+ if(exportModalOverlay)exportModalOverlay.addEventListener("click",closeExportModal);
+ const exportModalClose=document.getElementById("exportModalClose");
+ if(exportModalClose)exportModalClose.addEventListener("click",closeExportModal);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape" && document.body.classList.contains("exportOpen"))closeExportModal();});
+ const exportCsvHome=document.getElementById("exportCsvHome");
+ if(exportCsvHome)exportCsvHome.addEventListener("click",()=>download(`releves_botaniques_lignes_${new Date().toISOString().slice(0,10)}.csv`, rowsCsv(), "text/csv;charset=utf-8"));
+ const exportCsvAnalysesHome=document.getElementById("exportCsvAnalysesHome");
+ if(exportCsvAnalysesHome)exportCsvAnalysesHome.addEventListener("click",()=>download(`releves_botaniques_analyses_${new Date().toISOString().slice(0,10)}.csv`, synthesisCsv(), "text/csv;charset=utf-8"));
  releveSelect.addEventListener("change",e=>{state.selectedId=e.target.value; save(); renderAll();});
  newReleve.addEventListener("click",()=>{const r=blankReleveFromPrevious(`Relevé ${state.releves.length+1}`); draftReleve=r; state.selectedId=r.id; state.selectedIds=[r.id]; entryAutoOpenIdentity=true; renderAll();});
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
