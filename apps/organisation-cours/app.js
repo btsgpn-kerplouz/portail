@@ -2594,7 +2594,12 @@ function bootstrapWeeks() {
 // dur) : une fenêtre glissante centrée sur aujourd'hui, recalculée à chaque
 // chargement (voir normalizeData). L'app reste utilisable toute l'année,
 // vacances comprises, sans plus jamais avoir à mettre les bornes à jour.
-function buildRollingWeeks(centre = new Date(), avantSemaines = 26, apresSemaines = 26) {
+// Retours (24/08/2026) — 26 semaines en avant ne suffisent pas : au tout début
+// de l'année scolaire (rentrée, semaine ~36), il faut voir jusqu'à ~39 semaines
+// plus loin pour couvrir tout le Semestre 2/4 suivant (jusqu'à sa semaine 22).
+// 52 semaines en avant couvre ce pire cas avec marge, quel que soit le jour de
+// l'année où « aujourd'hui » tombe (pas de date en dur, cf. commentaire ci-dessus).
+function buildRollingWeeks(centre = new Date(), avantSemaines = 26, apresSemaines = 52) {
   const debut = addDays(centre, -avantSemaines * 7);
   const fin = addDays(centre, apresSemaines * 7);
   const { year: anDebut, week: semDebut } = isoWeekInfo(debut);
