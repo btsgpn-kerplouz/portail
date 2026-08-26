@@ -241,6 +241,10 @@ body.adminUnlockedView header{border-top-color:var(--adminbrand)}
 .tabs{display:flex;gap:3px;margin-left:24px;padding:0}
 .tab{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:13.5px;font-weight:500;color:var(--faint);background:none;border:0;padding:9px 14px;cursor:pointer;border-radius:0}
 .tab.active{font-weight:600;color:#fffefb;background:var(--adminbrand)}
+.psInstallHeaderBtn{display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12px;font-weight:500;color:var(--faint);background:none;border:1px solid rgba(255,255,255,.22);border-radius:0;padding:5px 10px;cursor:pointer;box-shadow:none;white-space:nowrap}
+.psInstallHeaderBtn[hidden]{display:none}
+.psInstallHeaderBtn:hover{color:#fffefb;border-color:rgba(255,255,255,.4);background:none;transform:none;box-shadow:none}
+body.adminUnlockedView .psInstallHeaderBtn{display:none}
 .tabAdmin{margin-left:auto;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12px;font-weight:500;color:var(--label);background:none;border:0;padding:6px 12px;opacity:.65;cursor:pointer;box-shadow:none}
 .tabAdmin:hover{opacity:.65;transform:none;box-shadow:none;background:none}
 .psAdminBadge{display:none;margin-left:24px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:13.5px;font-weight:600;color:#fffefb;background:var(--adminbrand);padding:6px 14px}
@@ -269,7 +273,7 @@ body.adminUnlockedView .psAdminBadge{display:inline-block}
   :root{--topbar-h:46px}
   header{height:var(--topbar-h);min-height:var(--topbar-h);padding:0 12px;gap:8px;flex-wrap:nowrap}
   .psNavToggle{display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 auto;background:none;border:0;color:#fffefb;font-size:19px;line-height:1;cursor:pointer;box-shadow:none;padding:0}
-  .psBacklink,.tabs,.tabAdmin,.headerIdentity,.psAdminBadge{display:none}
+  .psBacklink,.tabs,.tabAdmin,.headerIdentity,.psAdminBadge,.psInstallHeaderBtn{display:none}
   body.adminUnlockedView .psAdminBadge{display:none}
   .psLogo{width:28px;height:28px;padding:2px}
   .psName{font-size:15px}
@@ -293,6 +297,7 @@ body.adminUnlockedView .psAdminBadge{display:inline-block}
   .psNavSheetLink{text-align:left;background:none;border:0;color:#fffefb;font:inherit;font-size:.94rem;font-weight:500;padding:11px 10px;cursor:pointer;box-shadow:none;border-radius:0}
   .psNavSheetLink:hover{background:rgba(255,255,255,.08)}
   .psNavSheetLink.active{background:var(--adminbrand);font-weight:600}
+  #psInstallSheetBtn{border-top:1px solid rgba(255,255,255,.14);margin-top:8px;padding-top:15px}
   .psNavSheetPortail{display:block;font-family:var(--mono);font-size:.78rem;color:var(--faint);text-decoration:none;padding:10px;border-top:1px solid rgba(255,255,255,.14)}
   .psNavSheetPortail:hover{color:#fffefb}
   .psNavSheetIdentityWrap{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.14)}
@@ -1210,6 +1215,10 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
     <button class="tab" data-tab="analyse" data-view="analyse" type="button">Analyse</button>
     <button class="tab" data-tab="refs" data-view="refs" type="button">Référentiels</button>
   </nav>
+  <button type="button" class="psInstallHeaderBtn noPrint psInstallTrigger" id="psInstallHeaderBtn" aria-label="Installer l’application" title="Installer l’application">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg>
+    Installer
+  </button>
   <span class="psAdminBadge" id="psAdminBadge">Administration</span>
   <button type="button" class="tabAdmin" id="homeAdminBtn" data-view="data" title="Accès administrateur">Admin</button>
   <div class="headerIdentity" id="headerIdentity" aria-live="polite"></div>
@@ -1224,6 +1233,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
     <button type="button" class="psNavSheetLink" data-view="refs" data-tab="refs">Référentiels</button>
     <button type="button" class="psNavSheetLink" data-view="data" data-tab="data">Admin</button>
   </nav>
+  <button type="button" class="psNavSheetLink psInstallTrigger" id="psInstallSheetBtn">⭳ Installer l’application</button>
   <a class="psNavSheetPortail" href="https://portail-gpn.kerplouz.workers.dev/">‹ Retour au portail</a>
   <div class="psNavSheetIdentityWrap" id="navSheetIdentitySlot"></div>
 </div>
@@ -2361,7 +2371,7 @@ function releveCode(rel){
 function rowCoverPct(row){return row.mode==="pct"?(parseFloat(row.cover)||0):(BB[row.cover]||0);}
 function releveCoverPct(rel){return (rel.rows||[]).reduce((s,row)=>s+rowCoverPct(row),0);}
 function fmtDateShort(d){if(!d)return "—"; const parts=String(d).slice(0,10).split("-"); return parts.length===3?`${parts[2]}/${parts[1]}`:d;}
-function axisValueLabels(g,scaleFn,yNum,yLab,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; for(let t=g.min;t<=g.max;t++){if(!mobile && !(allowed.has(String(t))||(t-g.min)%2===0))continue; const x=scaleFn(t); out+=`<text x="${x}" y="${yNum}" text-anchor="middle" font-size="9.5" fill="#8b988c">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="10" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
+function axisValueLabels(g,scaleFn,yNum,yLab,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); const yAxis=yNum-15; let out=`<line x1="${scaleFn(g.min)}" y1="${yAxis}" x2="${scaleFn(g.max)}" y2="${yAxis}" stroke="#aebaac" stroke-width="1.2"></line>`; for(let t=g.min;t<=g.max;t++){const x=scaleFn(t), labeled=mobile||allowed.has(String(t))||(t-g.min)%2===0; out+=`<line x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis+(labeled?7:4)}" stroke="#8b988c" stroke-width="1"></line>`; if(!labeled)continue; out+=`<text x="${x}" y="${yNum}" text-anchor="middle" font-size="13" font-weight="600" fill="#4c5a4e">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="12" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
 function gradientSpreadPositions(items, sx, baseY){
   const groups=new Map();
   items.forEach((it,idx)=>{const key=String(it.v); if(!groups.has(key))groups.set(key,[]); groups.get(key).push({...it,idx});});
@@ -2384,8 +2394,8 @@ function gradientCard(i, groups, labelMode){const g=GRADIENTS[i], mobile=window.
     « l'axe de 1 à 9 peut être élargi jusqu'au bord droit de l'encart ») : marges désormais
     asymétriques — pl garde la place nécessaire au code de relevé (colonne de gauche), pr est
     réduit au minimum pour que la dernière graduation vienne presque toucher le bord droit. */
- pl=mobile?54:112, pr=mobile?14:112, rowGap=42, rowTop=40, H=Math.max(150,rowTop+groups.length*rowGap+30); const sx=v=>pl+(v-g.min)/(g.max-g.min)*(W-pl-pr); let sdBands=[], meanLines=[], species=[], labels=[], groupNames=[];
- groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, rawCode=releveCode(grp.rel), codeLabel=mobile?(rawCode.length>6?rawCode.slice(0,6)+"…":rawCode):rawCode, avail=pl-20, lenAttr=(!mobile && codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`); meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-pr+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});});
+ pl=mobile?54:112, pr=mobile?14:112, rowGap=42, rowTop=40, H=Math.max(150,rowTop+groups.length*rowGap+38); const sx=v=>pl+(v-g.min)/(g.max-g.min)*(W-pl-pr); let sdBands=[], meanLines=[], species=[], labels=[], groupNames=[];
+ groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, rawCode=releveLabel(grp.rel), codeLabel=mobile?(rawCode.length>6?rawCode.slice(0,6)+"…":rawCode):rawCode, avail=pl-20, lenAttr=(!mobile && codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`); meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-pr+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});});
  const ticks=axisValueLabels(g,sx,H-30,H-14,mobile); const title=groups.length>1?`${groups.length} relevés sélectionnés`:`n=${groups[0].stats[i].n} · m=${fmt(groups[0].stats[i].mean)} · mp=${fmt(groups[0].stats[i].wmean)} · σp=${fmt(groups[0].stats[i].wsd)}`;
  return `<details class="gradientCard" open data-gradient-key="${esc(g.key)}"><summary><strong>${esc(g.short)} · ${esc(g.label)}</strong><span class="gradientActions"><span class="small muted">${esc(title)}</span><button class="secondary iconBtn gradExportBtn noPrint" type="button" data-export-gradient="${esc(g.key)}" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></span></summary><div class="gradientCardBody"><div class="svgBox"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gradient ${esc(g.label)}" font-family="'IBM Plex Sans',system-ui,sans-serif"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/>${ticks}${groupNames.join("")}${sdBands.join("")}${meanLines.join("")}${species.join("")}${labels.join("")}</svg></div></div></details>`;
 }
@@ -3070,6 +3080,7 @@ function bind(){
  if(window.exportGradientsPng)exportGradientsPng.addEventListener("click",()=>exportVisibleSvgsPng("#gradientCharts .svgBox svg",`gradients_releves_${new Date().toISOString().slice(0,10)}.png`));
  if(window.exportScatterPng)exportScatterPng.addEventListener("click",()=>exportVisibleSvgsPng("#scatterSvg svg",`ecogramme_releves_${new Date().toISOString().slice(0,10)}.png`));
  if(window.installApp)installApp.addEventListener("click",installPwa);
+ document.querySelectorAll(".psInstallTrigger").forEach(btn=>btn.addEventListener("click",()=>{ document.body.classList.remove("navSheetOpen"); installPwa(); }));
  if(window.resetAppCache)resetAppCache.addEventListener("click",resetPwaCache);
  exportJson.addEventListener("click",()=>download(`releves_botaniques_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(state,null,2)));
  exportCsv.addEventListener("click",()=>download(`releves_botaniques_lignes_${new Date().toISOString().slice(0,10)}.csv`, rowsCsv(), "text/csv;charset=utf-8"));
@@ -3125,7 +3136,15 @@ window.addEventListener("beforeinstallprompt",e=>{
 window.addEventListener("appinstalled",()=>{
   deferredInstallPrompt=null;
   updateInstallStatus("application installée sur cet appareil.","ok");
+  setInstallTriggersVisible(false);
 });
+function isStandaloneDisplay(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+function setInstallTriggersVisible(visible){
+  document.querySelectorAll(".psInstallTrigger").forEach(btn=>{ btn.hidden=!visible; });
+}
+setInstallTriggersVisible(!isStandaloneDisplay());
 async function installPwa(){
   if(deferredInstallPrompt){
     deferredInstallPrompt.prompt();
