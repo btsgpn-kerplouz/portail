@@ -45,8 +45,15 @@ import {
 } from "./mapping.js";
 import * as enseignants from "./enseignants.js";
 
-const CLES_PERSO = ["todoNotes", "deplacements"];
-const CLES_PARTAGEES = ["devNotes", "weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
+// `todoNotes`/`devNotes` (texte libre) restent listés pour lire les valeurs
+// déjà en base chez qui avait écrit avant la refonte du 16/08/2026 (migration
+// faite côté app.js, normalizeData) ; `todoItems`/`devNotesItems` sont les
+// vraies listes à cocher utilisées depuis cette date — absentes d'ici, elles
+// n'étaient jamais envoyées à Supabase (bug trouvé le 27/08/2026 : les
+// tâches ajoutées survivaient en mémoire mais disparaissaient à la
+// fermeture/au rechargement).
+const CLES_PERSO = ["todoNotes", "todoItems", "deplacements"];
+const CLES_PARTAGEES = ["devNotes", "devNotesItems", "weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
 
 // Bug trouvé le 27/07/2026 (import d'un gros volume, ~150 écritures dans le
 // même enregistrer()) : envoyées TOUTES en une seule fois via Promise.all,
@@ -272,7 +279,9 @@ window.OC_SYNC = {
       constraints: constraints.map((r) => depuisLigne(SPEC_CONSTRAINTS, r)),
       reunions: reunions.map((r) => completerTeacher(depuisLigne(SPEC_REUNIONS, r), snapshot.teacherReunions.get(r.id))),
       todoNotes: blocsPersoParCle.get("todoNotes"),
+      todoItems: blocsPersoParCle.get("todoItems"),
       devNotes: blocsPartagesParCle.get("devNotes"),
+      devNotesItems: blocsPartagesParCle.get("devNotesItems"),
       deplacements: blocsPersoParCle.get("deplacements"),
       weekTemplates: blocsPartagesParCle.get("weekTemplates"),
       rubanOverrides: blocsPartagesParCle.get("rubanOverrides"),
