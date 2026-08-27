@@ -277,8 +277,14 @@ function afficherEtatActif(profil) {
       <input type="checkbox" id="chk-voir-collegues" ${profil.voir_collegues ? "checked" : ""}>
       Voir mes collègues partout
     </label>
+    <button type="button" id="btn-installer-app" class="lien" title="Installer l’application">Installer</button>
     <button type="button" id="btn-deconnexion" class="lien" title="Se déconnecter">Déconnexion</button>
   `;
+  const btnInstaller = document.getElementById("btn-installer-app");
+  if (btnInstaller) {
+    btnInstaller.hidden = !!(window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true);
+    btnInstaller.addEventListener("click", () => { if (typeof window.installPwa === "function") window.installPwa(); });
+  }
   document.getElementById("btn-modifier-initiales").addEventListener("click", () => {
     const actuelles = utilisateurCourant.profil.initiales;
     const saisie = window.prompt("Initiales affichées dans les pastilles (2-4 lettres) :", actuelles);

@@ -47,6 +47,12 @@
       }
     }
 
+    .bootSplash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);transition:opacity .25s ease}
+    .bootSplash.hide{opacity:0;pointer-events:none}
+    .bootSplashMark{width:96px;height:96px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+    .bootSplashMark svg{width:100%;height:100%;display:block}
+    .bootSplashName{font-family:var(--display);font-size:1.7rem;font-weight:600;color:var(--ink);letter-spacing:.01em}
+    .bootSplashTagline{margin:0;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:.86rem;color:var(--label);text-align:center;max-width:280px}
     .appTitle{display:flex;align-items:center;gap:14px}
     .installStatus{margin-top:10px}
     .installBadge{display:inline-flex;align-items:center;gap:7px;border-radius:0;padding:6px 10px;background:#edf6e8;color:#25512f;font-weight:750}
@@ -1202,6 +1208,11 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
 </style>
 </head>
 <body>
+<div id="bootSplash" class="bootSplash" aria-hidden="true">
+  <div class="bootSplashMark"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1f6b45"/><g transform="translate(19,19) scale(2.5833)" fill="none" stroke="#fffefb" stroke-width="1.6"><path d="M4 4v16h16" stroke-linecap="square"/><circle cx="9" cy="15" r="1.4" fill="#fffefb" stroke="none"/><circle cx="13" cy="10" r="2.1" fill="#fffefb" stroke="none"/><circle cx="17" cy="13" r="1.1" fill="#fffefb" stroke="none"/><circle cx="15.5" cy="6.5" r="1.7" fill="#fffefb" stroke="none"/></g></svg></div>
+  <div class="bootSplashName">PhytoScope</div>
+  <p class="bootSplashTagline">Outil pédagogique du BTS GPN de Kerplouz</p>
+</div>
 <div class="topbar">
 <header>
   <button type="button" class="psNavToggle noPrint" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
@@ -3417,6 +3428,8 @@ async function boot(){
   byName = new Map(TAXA.map(t => [t.n, t]));
   TAXA.forEach(t=>{t.nn=norm(t.n); t.ns=norm(t.s); t.q=(t.nn+" "+t.ns).trim();});
   initStatic(); bind(); initTooltip(); showView("home"); registerPwaServiceWorker();
+  const splash=document.getElementById("bootSplash");
+  if(splash){splash.classList.add("hide"); setTimeout(()=>splash.remove(),300);}
 }
 boot();
 

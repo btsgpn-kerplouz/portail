@@ -4,6 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Organisation des cours — BTS GPN</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#191b16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Organisation des cours">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -1591,5 +1599,30 @@
   <script type="module" src="./js/sync.js"></script>
   <script type="module" src="./js/enseignants-widget.js"></script>
   <script type="module" src="./js/auth.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));
+    }
+    let deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstallPrompt = e; });
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      const btn = document.getElementById("btn-installer-app");
+      if (btn) btn.hidden = true;
+    });
+    window.installPwa = async function () {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        return;
+      }
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      window.alert(isIOS
+        ? "Sur iPhone/iPad : ouvrir l’application dans Safari, toucher le bouton Partager, puis choisir Ajouter à l’écran d’accueil."
+        : "Si l’installation ne se propose pas automatiquement, utiliser le menu du navigateur : Ajouter à l’écran d’accueil ou Installer l’application.");
+    };
+  </script>
 </body>
 </html>
