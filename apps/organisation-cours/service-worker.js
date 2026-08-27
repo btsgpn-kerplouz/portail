@@ -1,16 +1,26 @@
-const CACHE_NAME = "phytoscope-pwa-v6-1-0";
+const CACHE_NAME = "organisation-cours-pwa-v1-0-0";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./taxa.json",
   "./manifest.webmanifest",
+  "./styles.css",
+  "./app.js",
+  "./reference-capacities.js",
+  "./reference-modules.js",
+  "./ruban-pedagogique.js",
+  "./js/supabase-client.js",
+  "./js/sync.js",
+  "./js/enseignants-widget.js",
+  "./js/auth.js",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./fonts/ibm-plex-sans.woff2",
-  "./fonts/ibm-plex-serif.woff2",
-  "./fonts/ibm-plex-serif-bold.woff2",
-  "./fonts/jetbrains-mono.woff2"
+  "./fonts/atkinson.woff2",
+  "./fonts/atkinson-bold.woff2",
+  "./fonts/atkinson-italic.woff2",
+  "./fonts/jetbrains-mono.woff2",
+  "./img/logo-kerplouz.png"
 ];
 
 self.addEventListener("install", event => {

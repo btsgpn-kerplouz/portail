@@ -1,14 +1,15 @@
 {
-  "name": "PhytoScope",
-  "short_name": "PhytoScope",
-  "description": "Application de saisie de relevés phytosociologiques et de visualisation d’indicateurs écologiques associés.",
-  "lang": "fr-FR",
+  "name": "Zonation — Petite Mer de Gâvres",
+  "short_name": "Zonation",
+  "description": "Relevés floristiques le long d'un transect, coefficients de Braun-Blanquet et identification des habitats — Petite Mer de Gâvres.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f6f3ed",
+  "orientation": "any",
+  "lang": "fr-FR",
   "theme_color": "#191b16",
+  "background_color": "#f4f2ec",
   "icons": [
     {
       "src": "icons/icon-192.png",
