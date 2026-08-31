@@ -108,6 +108,15 @@ sérieusement). Changements demandés :
   dans la refonte (moisson visible en direct, plus de modale), s'assurer
   que le geste « écarter avec motif » reste clairement visible et
   découvrable pour chaque candidat, pas caché.
+- **Déplacer une entrée vers un prochain numéro** : demandé le
+  31/08/2026 — actuellement impossible (limite déjà connue du Lot 4ter :
+  « le sélecteur de numéro en rédaction seulement pour l'instant, pas le
+  déplacement d'une entrée d'un numéro à un autre »). Concerne les
+  entrées déjà retenues dans un numéro (pas seulement les candidats de
+  moisson) — probablement un nouveau `data-action` sur chaque entrée qui
+  change son `numero_id` en base (`ecrireEntree`) et recharge, avec un
+  choix du numéro cible (sélecteur parmi les numéros existants, ou
+  création à la volée d'un nouveau brouillon).
 
 ## Où trouver le cadrage
 
