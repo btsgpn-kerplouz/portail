@@ -1882,7 +1882,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var redacActif = estRedacteurActif();
 
-    var modeToggleHtml = state.vue === "numero" && numeros.length
+    var modeToggleHtml = redacActif && state.vue === "numero" && numeros.length
       ? '<div class="mode-toggle" role="group" aria-label="Bascule rédaction / vue publiée">' +
           '<button type="button" data-action="mode" data-mode="redaction" aria-pressed="' + (state.mode === "redaction") + '">Rédaction</button>' +
           '<button type="button" data-action="mode" data-mode="publiee" aria-pressed="' + (state.mode === "publiee") + '">Vue publiée</button>' +

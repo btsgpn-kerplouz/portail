@@ -22,22 +22,35 @@ activés directement en SQL Editor sans attendre leur 1re connexion).
 (création de numéro, entrée, publication, sources suivies) — le Lot 6/7
 est donc entièrement clos, plus rien en attente de validation dessus.
 
-**Lot 8 engagé le 31/08/2026 (1er sous-chantier fait, reste le 2e)** —
-voir l'entrée « Lot 8 » ci-dessous pour le détail :
-1. *Fait* : brief éditorial versionné (`apps/affut/documents/brief-veille.md`)
-   et capture du motif d'écart d'un candidat de moisson (nouvelle table
-   `affut_candidats_ecartes`, migration `apps/affut/supabase/004-candidats-ecartes.sql`
-   **pas encore appliquée dans le SQL Editor** — à faire avant de tester le
-   bouton Écarter). Code front modifié (`ecarter-candidat`) : vérifié par
-   équilibrage accolades/parenthèses/crochets, pas testé dans un navigateur.
-2. *Pas encore fait* : brancher l'agent planifié lui-même (skill
-   `schedule`) — mis en pause volontairement pour caler avec l'utilisateur
-   le stockage de la clé `service_role` et la cadence avant d'engager un
-   agent cloud facturé.
+**Lot 8 engagé et pour l'essentiel branché le 31/08/2026** — voir
+l'entrée « Lot 8 » ci-dessous pour le détail :
+1. *Fait* : brief éditorial versionné (`apps/affut/documents/brief-veille.md`,
+   relu et amendé par l'utilisateur) et capture du motif d'écart d'un
+   candidat de moisson (nouvelle table `affut_candidats_ecartes`,
+   migration `apps/affut/supabase/004-candidats-ecartes.sql` **pas encore
+   appliquée dans le SQL Editor** — à faire avant de tester le bouton
+   Écarter).
+2. *Fait* : `apps/affut/` committé et poussé sur GitHub pour la première
+   fois (PR #53, mergée sur `main` le 31/08/2026) — nécessaire pour qu'une
+   routine cloud puisse lire le brief depuis son checkout. Configuration
+   machine faite dans la foulée (identité git, `gh` CLI + `gh auth login`),
+   plus rien à refaire pour les prochains commits/PR de ce poste.
+3. *Fait* : routine cloud planifiée créée (skill `schedule`), id
+   `trig_01MGPb4JdPKzBdA9nVf7bcT7`, nom `affut-veille-hebdo` —
+   hebdomadaire, samedi 8h Paris (`0 6 * * 6` UTC), modèle Opus 5, dépôt
+   `btsgpn-kerplouz/portail`, outils Bash/Read/Grep/Glob/WebSearch/WebFetch
+   (aucune écriture de fichier — écrit uniquement dans Supabase via curl).
+   **Pas encore opérationnelle** : attend que l'utilisateur pose la
+   variable secrète `SUPABASE_SERVICE_ROLE_KEY` sur l'environnement cloud
+   `env_017jkfQa3SeDkKVxfH3tybCr` (le prompt de la routine s'arrête
+   proprement et le signale si elle est absente) et que la migration 004
+   ci-dessus soit appliquée. Première exécution prévue le 05/09/2026.
 
-**Pas de commit pour l'instant** : `apps/affut/` reste entièrement
-non-suivi par git (`git status` le confirme), comme convenu pour cette app —
-ne pas committer sans demande explicite.
+**Nouvelles tâches identifiées le 31/08/2026, pas encore commencées** (à
+rattacher au Lot 9 — Déploiement) :
+- Générer une **URL Cloudflare Pages** dédiée pour ce carnet de veille.
+- Coder une **nouvelle tuile d'accès dans le portail** (`portail/index.html`)
+  qui centralise les applications pour les étudiants.
 
 ## Où trouver le cadrage
 
@@ -795,20 +808,30 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         plus précisément une fois le brief et l'agent réellement posés.
       *Fait le 31/08/2026 — brief éditorial* : `apps/affut/documents/brief-veille.md`,
       rédigé à partir de `documents/promptveilleportail.md` (partie A) et
-      des exemples de `documents/carnetveille.html`. Couvre le rôle de
-      l'agent (chercher + écrire en `moisson`, jamais publier), le public/
-      angle (chiffres de terrain concrets, pas de flux généraliste), le
-      territoire (Bretagne à sujet égal, pas de restriction stricte), les 4
-      rubriques avec leur définition, une liste de sources à privilégier
-      (CEN, parcs nationaux/PNR, associations naturalistes bretonnes, OFB,
-      MNHN/INPN — point de départ, pas fermée), des critères d'exclusion
-      explicites (pas de source primaire, contenu commercial, opinion sans
-      donnée, paywall), ce qui fait un bon « Usage en cours » pédagogique,
-      le format JSON exact d'un candidat de moisson (calqué sur l'objet lu
-      par le bouton « Retenir »), la boucle de retour (relire un échantillon
-      retenus/écartés avant de chercher) et une liste explicite
-      d'interdits (ne jamais publier, ne jamais inventer un chiffre, ne
-      jamais toucher une entrée déjà validée).
+      des exemples de `documents/carnetveille.html`, **puis relu et amendé
+      par l'utilisateur** (mêmes 31/08/2026) : rubriques renommées
+      **Gestion** (ex-« Terrain & gestion ») et **En bonus** (ex-
+      « Pépites »), chiffres de terrain devenus facultatifs (plus une
+      condition rédhibitoire), objectif ajouté de panel varié des
+      métiers/missions/territoires (jusqu'à débloquer des idées de stage,
+      sans que la sélection s'attarde sur ce critère), et surtout
+      **assouplissement du filtre politique/opinion** : les articles
+      d'opinion, tribunes et positions politiques ou polémiques sur le
+      champ de la protection de la nature sont désormais explicitement
+      bienvenus (le carnet est aussi vu comme un espace de découverte/
+      positionnement), alors que la première version les excluait.
+      Couvre : le rôle de l'agent (chercher + écrire en `moisson`, jamais
+      publier), le territoire (Bretagne à sujet égal, pas de restriction
+      stricte), les 4 rubriques avec leur définition, une liste de sources
+      à privilégier (CEN, parcs nationaux/PNR, associations naturalistes
+      bretonnes, OFB, MNHN/INPN — point de départ, pas fermée), les
+      critères d'exclusion restants (pas de source primaire, contenu
+      commercial, paywall, doublon), ce qui fait un bon « Usage en cours »
+      pédagogique, le format JSON exact d'un candidat de moisson (calqué
+      sur l'objet lu par le bouton « Retenir »), la boucle de retour
+      (relire un échantillon retenus/écartés avant de chercher) et une
+      liste d'interdits (ne jamais publier, ne jamais inventer un chiffre,
+      ne jamais toucher une entrée déjà validée).
       *Fait le 31/08/2026 — motif d'écart* : nouvelle table
       `affut_candidats_ecartes` (migration
       `apps/affut/supabase/004-candidats-ecartes.sql`, même schéma RLS
@@ -827,13 +850,52 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       crochets du script (pas de navigateur pilotable) — **à revalider
       manuellement** (appliquer la migration SQL, puis tester Écarter avec
       et sans motif, avec Annuler).
-      *Pas encore fait* : brancher l'agent planifié (skill `schedule`) —
-      reste à décider avec l'utilisateur où vit la clé `service_role`
-      (jamais dans le front, voir `CLAUDE.md`) et la cadence d'exécution
-      avant d'engager un agent cloud facturé.
+      *Fait le 31/08/2026 — dépôt et routine* : `apps/affut/` committé et
+      poussé sur GitHub pour la première fois (PR #53 → `main`), nécessaire
+      pour qu'une routine cloud puisse lire le brief depuis son checkout —
+      décision prise avec l'utilisateur, qui l'a explicitement demandé une
+      fois le blocage identifié. Configuration machine faite dans la
+      foulée (identité git `user.name`/`user.email`, installation `gh` CLI
+      + `gh auth login`) : plus rien à refaire pour les prochains commits/
+      PR sur ce poste. Routine cloud créée via la skill `schedule` :
+      `trig_01MGPb4JdPKzBdA9nVf7bcT7` (`affut-veille-hebdo`), hebdomadaire
+      samedi 8h Paris (`0 6 * * 6` UTC), modèle **Opus 5** (choisi plutôt
+      que Sonnet 5 : tâche de curation éditoriale, l'écart de qualité
+      compte plus que le coût vu la cadence hebdomadaire), dépôt
+      `btsgpn-kerplouz/portail`, outils Bash/Read/Grep/Glob/WebSearch/
+      WebFetch — pas d'écriture de fichier, écrit uniquement dans Supabase
+      via curl (voir le prompt complet dans la config de la routine sur
+      `claude.ai/code/routines/trig_01MGPb4JdPKzBdA9nVf7bcT7`).
+      *Pas encore fait avant que la routine serve à quelque chose* :
+      - poser la variable secrète `SUPABASE_SERVICE_ROLE_KEY` sur
+        l'environnement cloud `env_017jkfQa3SeDkKVxfH3tybCr`
+        (`claude.ai/code/environments`) — le prompt de la routine s'arrête
+        proprement et le signale si elle est absente, pas de risque à
+        l'avoir créée avant ;
+      - appliquer `apps/affut/supabase/004-candidats-ecartes.sql` dans le
+        SQL Editor du projet `portail`.
+      Première exécution prévue le 05/09/2026.
 - [ ] **Lot 9 — Déploiement** : Cloudflare Pages, cron de revérification
       des liens, purge de cache, tuile passée en « en service ».
       *Fin :* premier vrai numéro en ligne, URL stable.
+      **Fait le 31/08/2026 — Worker Cloudflare créé et déployé** :
+      `apps/affut/wrangler.jsonc` connecté en Git (Workers Builds) au
+      dépôt `btsgpn-kerplouz/portail`, branche `main`, racine `apps/affut`
+      (build command vide — vanilla, pas d'étape de build ; deploy command
+      par défaut `npx wrangler deploy` ; token API dédié créé, sur le même
+      principe qu'un token par app déjà en place pour phytoscope). Premier
+      build réussi, sous-domaine `workers.dev` activé puis renommé dans
+      Settings → General : **URL publique stable :
+      https://affut-veille-naturaliste.kerplouz.workers.dev** — répond
+      HTTP 200, sert bien `apps/affut/index.html` (vérifié par `curl`
+      depuis cet environnement). Déploiement automatique à chaque merge
+      sur `main` désormais actif pour cette app, indépendant des autres.
+      *Pas encore fait :* domaine personnalisé (pas demandé pour l'instant,
+      le `.workers.dev` suffit) ; cron de revérification des liens ; purge
+      de cache ; tuile portail toujours en statut « en chantier » — la
+      question de la nouvelle tuile centrée élève a été reportée par
+      l'utilisateur à après le déploiement (31/08/2026), à reprendre
+      maintenant que l'URL réelle existe.
 
 ## Idées pour plus tard (hors lots planifiés)
 
