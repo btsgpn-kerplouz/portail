@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#241d15">
+<title>À l'affût — carnet de veille naturaliste</title>
+
+<!--
+  Lot 1 (voir AVANCEMENT.md) : la page « Numéro », un seul numéro (n°12),
+  données en dur, pas de backend, pas de persistance. Bascule rédaction /
+  vue publiée réelle, décochage de blocs réel.
+
+  Lot 2 (voir AVANCEMENT.md) : persistance dans localStorage (clé
+  "affut:numero:12"), formulaire modal d'ajout/édition/suppression
+  d'entrée, édition en place (titre, résumé, méta source, chapô…) qui
+  écrit réellement dans le modèle et survit au rechargement. Un seul
+  numéro toujours — le multi-numéro est renvoyé au Lot 3.
+
+  Lot 3 (voir AVANCEMENT.md) : plusieurs numéros fictifs (n°5 à n°12),
+  écran Sommaire (regroupement par mois, mois les plus anciens repliés)
+  et écran Recherche transversale (actualités + leurs sources, filtrée
+  par rubrique). Persistance passée à la clé "affut:numeros" (un tableau
+  de numéros, chacun avec ses propres entrées) ; l'ancienne clé
+  "affut:numero:12" est migrée automatiquement une fois si elle existe,
+  pour ne pas perdre les données de test du lot 2.
+  Écarts assumés (30/08/2026) :
+  - Pas de routage par URL/hash : la navigation numéro ↔ sommaire ↔
+    recherche est un simple état en mémoire, pas de lien permanent.
+  - La recherche se déclenche par soumission (bouton « Chercher » /
+    Entrée), pas au fil de la frappe : l'affichage se reconstruit
+    entièrement à chaque rendu, une recherche « live » ferait perdre le
+    focus du champ à chaque caractère.
+  - Filtre par rubrique seulement (pas d'échelle ni d'année scolaire,
+    présents dans le dossier de passation) : suffisant pour valider la
+    navigation, les autres filtres pourront revenir plus tard.
+  - « Les sources » de la recherche liste les documents des actualités
+    trouvées (pas une recherche indépendante sur les seuls documents).
+  - Sommaire et Recherche sont toujours en lecture publique : la bascule
+    Rédaction / Vue publiée ne concerne que l'écran d'un numéro ouvert.
+  - Comme au lot 2, le résumé n'accepte pas de balise <em> : toujours
+    échappé avant affichage, y compris dans les extraits de recherche.
+
+  Lot 4 (voir AVANCEMENT.md) : écran « Sources suivies » (5a), les 6 états
+  limites (4b) et la feuille d'impression (4c). Numéro 13 ajouté comme
+  brouillon avec sa moisson (candidats non triés) et son statut de
+  collecte — c'est le terrain d'exercice organique des états ②③④. Les
+  QR codes d'impression sont générés à la volée avec vendor/qrcode.js
+  (Kazuhiko Arase, MIT, vendorisé tel quel — voir ce fichier).
+  Voir « Décisions arrêtées » dans AVANCEMENT.md pour le détail des choix
+  (déclenchement des états, validation de publication…).
+
+  Jetons repris de documents/GitHub repo et directions de design(5)/
+  design_handoff_carnet_veille/jetons.css, préfixe renommé --cv- → --af-.
+-->
+<style>
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/ibm-plex-sans.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:600;font-display:swap;src:url('./fonts/ibm-plex-serif-bold.woff2') format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
+
+:root{
+  --af-fond:            #fbf6ea;
+  --af-surface:         #fffdf6;
+  --af-surface-2:       #f5ead4;
+  --af-surface-3:       #f0e4cd;
+
+  --af-bandeau:         #241d15;
+  --af-sur-bandeau:     #fdf8ec;
+  --af-sur-bandeau-2:   #efe3cd;
+  --af-sur-bandeau-3:   #b3a893;
+  --af-filet-bandeau:   #55483a;
+
+  --af-filet-fin:       #eadfc8;
+  --af-filet:           #ddd2ba;
+  --af-filet-moyen:     #c9b896;
+  --af-filet-fort:      #9b8655; /* assombri (lot 5, audit RGAA) : #b9a87f ne tenait que 2,3:1 sur --af-surface, sous le seuil 3:1 (WCAG 1.4.11) pour les bordures de champs/boutons */
+
+  --af-encre:           #1a1611;
+  --af-encre-courant:   #2b241c;
+  --af-encre-2:         #4a4136;
+  --af-encre-3:         #6f6355;
+  --af-brun-rubrique:   #5b3d1f;
+  --af-filet-pastille:  #b79b6c;
+
+  --af-accent:          #8a2f39;
+  --af-sur-accent:      #fffdf6;
+  --af-sur-accent-2:    #f2ced2;
+
+  --af-valide:          #196549;
+  --af-mort:            #A6421B;
+
+  --af-prive:           #7a5b16;
+  --af-prive-fond:      #f4ead0;
+  --af-prive-champ:     #f9f2e3;
+  --af-prive-texte:     #5c4410;
+  --af-prive-texte-2:   #4a3a10;
+  --af-prive-hachure:   rgba(122,91,22,.32);
+
+  --af-edit-fond:       #f7edee;
+  --af-edit-pointille:  #b98088;
+  --af-edit-halo:       0 0 0 3px rgba(138,47,57,.15);
+  --af-surlignage-fond: #f2d78a;
+
+  /* Repère de mode rédaction — repris de l'ambre « en chantier » du portail */
+  --af-redaction:       #8a5f17;
+  --af-sur-redaction:   #fffdf6;
+
+  /* Impression (lot 4) — deux papiers seulement, celui-ci est le second */
+  --af-print-encre:     #000000;
+  --af-print-papier:    #ffffff;
+
+  --af-police:          'IBM Plex Sans', system-ui, sans-serif;
+  --af-police-mono:     'JetBrains Mono', monospace;
+  --af-police-serif:    'IBM Plex Serif', Georgia, serif;
+}
+
+*{box-sizing:border-box}
+/* lot 5, audit RGAA : titre de page pour les lecteurs d'écran, sans
+   impact visuel — le Sommaire, la Recherche et les Sources n'avaient
+   aucun <h1> (seul le bandeau de navigation, pas une vraie structure de
+   titres, indiquait la page en cours). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+html,body{color-scheme:light}
+body{margin:0;background:var(--af-fond);color:var(--af-encre-courant);font-family:var(--af-police);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0}
+ul{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--af-encre);outline-offset:2px}
+.tab-num{font-variant-numeric:tabular-nums}
+
+/* ---- coquille de l'app ---- */
+.page{padding:26px 16px 60px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.app{width:100%;max-width:1360px;border:1px solid var(--af-encre);background:var(--af-fond);transition:max-width .15s ease}
+.app.mode-redaction{
+  max-width:1560px;
+  border-color:var(--af-redaction);
+  /* papier plus neutre/atelier, distinct du crème de lecture */
+  --af-fond:      #eee7d7;
+  --af-surface:   #f8f3e6;
+  --af-surface-2: #e5ddc6;
+  --af-surface-3: #ded4b7;
+  --af-filet:     #ccc0a0;
+  --af-filet-fin: #d8cba8;
+}
+.app-liw{height:5px;background:var(--af-accent)}
+.mode-redaction .app-liw{background:var(--af-redaction)}
+
+.mode-banniere{background:var(--af-redaction);color:var(--af-sur-redaction);padding:6px 22px;font-family:var(--af-police-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center}
+
+.bandeau{background:var(--af-bandeau);padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-align:left}
+.brand svg{flex:none}
+.brand-name{font-family:var(--af-police-mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-sur-bandeau)}
+.brand-sub{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-sur-bandeau-3)}
+.bandeau-spacer{flex:1}
+.mode-toggle{display:flex;align-items:center}
+.mode-toggle button{font-family:var(--af-police-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border:1px solid var(--af-filet-bandeau)}
+.mode-toggle button[aria-pressed="true"]{background:var(--af-sur-bandeau);color:var(--af-encre);font-weight:700;border-color:var(--af-sur-bandeau)}
+.mode-toggle button[aria-pressed="false"]{color:var(--af-sur-bandeau-2)}
+.mode-toggle button[data-mode="redaction"][aria-pressed="true"]{background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
+.bandeau-nav{display:flex;align-items:center;gap:14px;padding-left:16px}
+.bandeau-nav button{font-family:var(--af-police-mono);font-size:11px;color:var(--af-sur-bandeau-3)}
+.bandeau-nav button:hover{color:var(--af-sur-bandeau-2)}
+.bandeau-nav button[aria-current="page"]{color:var(--af-sur-bandeau);text-decoration:underline;text-underline-offset:3px}
+/* Lot 7 : statut de connexion, même famille visuelle que .bandeau-nav
+   (fond sombre du bandeau — .lien-action, pensé pour la rédaction sur fond
+   clair, y serait illisible). */
+.auth-statut{display:flex;align-items:center;gap:8px;font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-sur-bandeau-3);padding-left:16px}
+.auth-statut button,button[data-action="ouvrir-connexion"]{font-family:var(--af-police-mono);font-size:11px;color:var(--af-sur-bandeau-3);text-decoration:underline;text-underline-offset:2px;padding-left:16px}
+.auth-statut button:hover,button[data-action="ouvrir-connexion"]:hover{color:var(--af-sur-bandeau-2)}
+
+/* ---- en-tête du numéro ---- */
+.numero-entete{background:var(--af-surface-2);border-bottom:1px solid var(--af-filet);padding:18px 22px;display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.entete-principal{display:flex;flex-direction:column;gap:8px;max-width:820px;flex:1;min-width:260px}
+.entete-num-ligne{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.entete-num-badge{background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-weight:700;font-size:25px;letter-spacing:-.02em;padding:7px 15px;display:inline-flex;align-items:baseline;gap:7px}
+.mode-redaction .entete-num-badge{background:var(--af-redaction);color:var(--af-sur-redaction)}
+.entete-num-badge .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.entete-semaine{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-2)}
+.entete-titre{margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.2;color:var(--af-encre)}
+.entete-chapo{font-size:13.5px;line-height:1.55;color:var(--af-encre-2)}
+.entete-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.select-numero-wrap{display:flex;align-items:center;gap:8px}
+.select-numero-wrap .lbl{font-family:var(--af-police-mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-encre-3)}
+.select-numero{font:inherit;font-family:var(--af-police-mono);font-size:12.5px;padding:7px 10px;border:1px solid var(--af-redaction);background:var(--af-surface);color:var(--af-encre-courant)}
+.entete-compteur{display:flex;align-items:baseline;gap:7px}
+.entete-compteur .n{font-family:var(--af-police-mono);font-size:19px;font-weight:700;color:var(--af-valide)}
+.entete-compteur .l{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-3)}
+.entete-boutons{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn-ligne{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;border:1px solid var(--af-redaction);color:var(--af-redaction)}
+.btn-plein{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:9px 15px;font-weight:700;background:var(--af-redaction);color:var(--af-sur-redaction)}
+
+/* ---- corps : grille vue publiée (colonne + rail) ---- */
+.corps{display:block}
+.mode-publiee .corps{display:grid;grid-template-columns:1fr 340px}
+.colonne{border-right:1px solid var(--af-filet)}
+.mode-redaction .colonne{border-right:0}
+
+.rubrique-tete{background:var(--af-surface-3);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:7px 20px;display:flex;align-items:center;gap:12px}
+.rubrique-tete .nom{font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--af-brun-rubrique)}
+.rubrique-tete .filet{flex:1;height:1px;background:var(--af-filet-moyen)}
+.rubrique-tete .position{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
+
+/* ---- entrée : ligne aplatie ---- */
+.entree{border-bottom:1px solid var(--af-filet)}
+.mode-publiee .entree:last-child{border-bottom:0}
+
+.entree-row{display:flex;align-items:center;min-height:64px}
+.entree-row-gauche{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 16px}
+.mode-publiee .entree-row{align-items:stretch}
+.valide-case{flex:none;margin-top:0}
+
+.etat-pastille{flex:none;font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3);white-space:nowrap}
+.etat-pastille.ok{color:var(--af-valide)}
+.etat-pastille.mort{color:var(--af-mort)}
+
+.flat{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.flat-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 8px;font-size:11.5px}
+.flat-meta .nom{font-weight:700;color:var(--af-encre)}
+.pastille-echelle{font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-brun-rubrique);border:1px solid var(--af-filet-pastille);padding:0 5px}
+.flat-meta .meta-mono{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
+.flat-titre{font-size:15.5px;font-weight:700;line-height:1.3;color:var(--af-accent)}
+.mode-redaction .flat-titre{color:var(--af-encre)}
+.bloc-ligne{display:flex;align-items:flex-start;gap:8px}
+.bloc-ligne .case-bloc{margin-top:2px}
+.bloc-masque-texte{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);padding-top:1px}
+.flat-chiffres{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flat-chiffres b{font-weight:700;color:var(--af-accent)}
+.flat-resume{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--af-encre-2)}
+
+.entree-row-droite{flex:none;display:flex;flex-direction:column;gap:6px}
+.btn-source-compact{flex:1;width:200px;min-height:52px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;background:var(--af-accent);color:var(--af-sur-accent);text-decoration:none;padding:8px 13px}
+.btn-source-compact .lib{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.btn-source-compact .lib .fleche{font-size:14px}
+.btn-source-compact .domaine{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-sur-accent-2)}
+/* vue publiée : le bouton occupe toute la hauteur du bandeau, plus grand,
+   sans encart — deux zones (contenu / bouton), pas un bouton posé dedans */
+.mode-publiee .btn-source-compact{width:240px;min-height:auto;align-items:center;justify-content:center;gap:5px;padding:16px 22px}
+.mode-publiee .btn-source-compact .lib{font-size:16px}
+.mode-publiee .btn-source-compact .lib .fleche{font-size:17px}
+.mode-publiee .btn-source-compact .domaine{font-size:11px}
+
+.entree-actions{display:flex;gap:6px}
+.btn-mini{flex:1;font-family:var(--af-police-mono);font-size:10px;letter-spacing:.02em;text-transform:uppercase;text-align:center;padding:7px 6px;border:1px solid var(--af-redaction);color:var(--af-redaction);background:var(--af-surface)}
+.btn-mini:hover{background:var(--af-redaction);color:var(--af-sur-redaction)}
+.btn-mini.danger{border-color:var(--af-mort);color:var(--af-mort)}
+.btn-mini.danger:hover{background:var(--af-mort);color:var(--af-sur-accent)}
+.lien-action{font-family:var(--af-police-mono);font-size:10px;letter-spacing:.02em;color:var(--af-redaction);text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.lien-action:hover{opacity:.75}
+.lien-action.danger{color:var(--af-mort)}
+
+/* ---- détails : toujours visibles, pas de repli ---- */
+.entree-details{padding:2px 16px 18px 16px;display:flex;flex-direction:column;gap:12px;max-width:760px}
+.mode-redaction .entree-details{max-width:900px}
+
+.usage{border:2px solid var(--af-prive);background:var(--af-surface);display:flex}
+.usage-lisere{width:24px;flex:none;background-color:var(--af-prive-fond);background-image:repeating-linear-gradient(135deg, var(--af-prive-hachure) 0 3px, rgba(122,91,22,0) 3px 8px);border-right:1px solid var(--af-prive);display:flex;align-items:center;justify-content:center}
+.usage-lisere span{font-family:var(--af-police-mono);font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-prive-texte);writing-mode:vertical-rl;transform:rotate(180deg)}
+.usage-corps{padding:10px 13px;display:flex;flex-direction:column;gap:5px;flex:1}
+.usage-titre{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-prive)}
+.usage-texte{margin:0;font-size:12px;line-height:1.5;color:var(--af-prive-texte-2)}
+
+/* ---- édition en place (rédaction seule) ---- */
+.mode-redaction [data-ed="true"]{background:var(--af-edit-fond);border-bottom:1px dotted var(--af-edit-pointille);padding:1px 5px;cursor:text}
+.mode-redaction [data-ed="true"]:focus{outline:1px solid var(--af-redaction);box-shadow:0 0 0 3px rgba(138,95,23,.18);background:var(--af-surface)}
+
+.case{width:15px;height:15px;flex:none;border:1.5px solid var(--af-encre-2);display:grid;place-items:center;font-size:11px;line-height:1;color:var(--af-sur-redaction);appearance:none;-webkit-appearance:none;background:var(--af-surface);margin:1px 0 0}
+.case:checked{background:var(--af-redaction);border-color:var(--af-redaction)}
+.case:checked::after{content:"✓"}
+.case:disabled{cursor:not-allowed}
+.case-bloc{border-color:var(--af-encre-3)}
+.case-bloc:checked{background:var(--af-encre-3);border-color:var(--af-encre-3)}
+
+/* ---- rail des sources (vue publiée, bureau) ---- */
+.rail{padding:20px 18px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;align-self:start}
+.rail-titre{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-brun-rubrique)}
+.rail-liste{display:flex;flex-direction:column;gap:10px}
+.rail-item{border:1px solid var(--af-filet-moyen);background:var(--af-surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px;text-decoration:none}
+.rail-item .titre{font-size:12px;font-weight:700;line-height:1.35;color:var(--af-accent)}
+.rail-item .domaine{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-2)}
+.rail-note{border-top:1px solid var(--af-filet);padding-top:14px;font-size:11.5px;line-height:1.55;color:var(--af-encre-2)}
+
+.pied{padding:14px 22px;font-family:var(--af-police-mono);font-size:10px;line-height:1.6;color:var(--af-encre-3);border-top:1px solid var(--af-filet)}
+
+/* ---- modal d'ajout / édition d'entrée (rédaction) ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(36,29,21,.6);display:flex;align-items:flex-start;justify-content:center;padding:26px 16px;overflow-y:auto;z-index:10}
+.modal{width:100%;max-width:640px;background:var(--af-surface);border:2px solid var(--af-redaction);padding:20px 22px 16px;display:flex;flex-direction:column;gap:14px}
+.modal-titre{font-family:var(--af-police-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-redaction)}
+.modal form{display:flex;flex-direction:column;gap:12px}
+.champs-ligne{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.champ{display:flex;flex-direction:column;gap:4px}
+.champ label{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
+.champ input,.champ textarea{font-family:var(--af-police);font-size:13px;padding:7px 9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
+.champ textarea{resize:vertical;min-height:56px;font-family:var(--af-police-mono);font-size:11.5px;line-height:1.5}
+.champ input:focus,.champ textarea:focus{outline:1px solid var(--af-redaction);box-shadow:0 0 0 3px rgba(138,95,23,.18)}
+.champ .aide{font-size:9.5px;color:var(--af-encre-3);font-family:var(--af-police-mono)}
+.modal-boutons{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--af-filet)}
+.modal-boutons-droite{display:flex;gap:10px;margin-left:auto}
+.btn-texte{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--af-filet-fort);color:var(--af-encre-2)}
+
+/* ---- sommaire (lot 3) ---- */
+.sommaire{padding:18px 22px 26px;display:flex;flex-direction:column}
+.sommaire-mois{display:flex;align-items:center;gap:14px;padding:8px 2px;margin-top:20px}
+.sommaire-mois:first-child{margin-top:0}
+.sommaire-mois .nom{font-family:var(--af-police-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-encre)}
+.sommaire-mois .filet,.groupe-titre .filet{flex:1;height:1px;background:var(--af-filet-fort)}
+.sommaire-mois .compte{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3);white-space:nowrap}
+/* .deplier n'est pas scopé à .sommaire-mois : réutilisé tel quel par le
+   groupe « les N autres » de l'écran Sources suivies (lot 4). */
+.deplier{display:inline-flex;align-items:center;gap:6px;font-family:var(--af-police-mono);font-size:10.5px;font-weight:700;color:var(--af-accent);border:1px solid var(--af-accent);padding:4px 10px;white-space:nowrap}
+.deplier:hover{background:var(--af-sur-accent-2)}
+.deplier .chevron{font-size:9px}
+
+.numero-carte{display:flex;align-items:stretch;border:1px solid var(--af-filet-moyen);background:var(--af-surface);margin-bottom:10px}
+.numero-carte.dernier{border-color:var(--af-accent)}
+.nc-badge{flex:none;width:110px;padding:14px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;background:var(--af-accent);color:var(--af-sur-accent)}
+.nc-badge .num{font-family:var(--af-police-mono);font-size:24px;font-weight:700;color:var(--af-sur-accent)}
+.nc-badge .dernier-tag{align-self:flex-start;border:1px solid var(--af-sur-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;margin-top:2px}
+.nc-corps{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.nc-titre{font-size:16px;font-weight:700;color:var(--af-encre)}
+.nc-liste{padding-left:16px;margin:0;font-size:12.5px;line-height:1.6;color:var(--af-encre-2)}
+.nc-liste li.plus{list-style:none;margin-left:-16px;color:var(--af-encre-3)}
+.nc-droite{flex:none;width:170px;padding:14px 16px;border-left:1px solid var(--af-filet);display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;text-align:right}
+.nc-compte{display:flex;flex-direction:column;align-items:flex-end}
+.nc-compte .n{font-family:var(--af-police-mono);font-size:21px;font-weight:700;color:var(--af-encre)}
+.nc-compte .l{font-family:var(--af-police-mono);font-size:9px;color:var(--af-encre-3);text-transform:uppercase;letter-spacing:.06em;line-height:1.4}
+.nc-ouvrir{align-self:stretch;background:var(--af-accent);color:var(--af-sur-accent);text-decoration:none;font-family:var(--af-police-mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:9px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nc-ouvrir:hover{opacity:.9}
+.nc-ouvrir .fleche{font-size:13px}
+
+.mois-replie{border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
+.mois-replie .chip{border:1px solid var(--af-filet-moyen);padding:4px 10px;background:var(--af-surface)}
+.mois-replie .chip:hover{background:var(--af-accent);border-color:var(--af-accent);color:var(--af-sur-accent)}
+
+/* ---- recherche transversale (lot 3) ---- */
+.recherche-barre{padding:18px 22px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--af-filet)}
+.recherche-label{display:block;font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--af-encre-3)}
+.recherche-ligne{display:flex;gap:10px;flex-wrap:wrap}
+.recherche-champ-texte{flex:1;min-width:220px;display:flex;border:1px solid var(--af-filet-fort);background:var(--af-surface)}
+.recherche-champ-texte input{flex:1;border:0;background:none;font:inherit;font-size:14px;padding:11px 12px;color:var(--af-encre-courant)}
+.recherche-champ-texte input:focus{outline:none}
+.recherche-champ-texte:focus-within{outline:2px solid var(--af-encre);outline-offset:-1px}
+.recherche-champ-texte button{flex:none;background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:0 18px}
+.recherche-filtres{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.filtre-groupe{display:flex;flex-direction:column;gap:4px}
+.filtre-groupe .lbl{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-encre-3)}
+.filtre-toggle{display:flex}
+.filtre-toggle button{font-family:var(--af-police-mono);font-size:10.5px;padding:7px 11px;border:1px solid var(--af-filet-fort);color:var(--af-encre-2)}
+.filtre-toggle button[aria-pressed="true"]{background:var(--af-encre);color:var(--af-sur-bandeau);border-color:var(--af-encre)}
+.filtre-select{font:inherit;font-family:var(--af-police-mono);font-size:11px;padding:7px 8px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
+.recherche-compteur{padding:10px 22px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-3);border-bottom:1px solid var(--af-filet)}
+.recherche-compteur strong{color:var(--af-encre);font-size:12px}
+.recherche-corps{padding:18px 22px;display:flex;flex-direction:column;gap:8px}
+.recherche-vide{padding:26px 4px;font-size:13px;color:var(--af-encre-3)}
+.resultats-tete{display:flex;align-items:center;gap:12px;font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--af-encre);margin:14px 0 8px}
+.resultats-tete:first-child{margin-top:0}
+.resultats-tete .filet{flex:1;height:1px;background:var(--af-filet-fort)}
+.resultat-actu{border:1px solid var(--af-filet-moyen);background:var(--af-surface);display:flex;margin-bottom:10px}
+.ra-corps{flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.ra-meta{display:flex;flex-wrap:wrap;gap:6px 8px;font-size:11px;color:var(--af-encre-3);align-items:baseline}
+.ra-meta .nom{font-weight:700;color:var(--af-encre)}
+.ra-titre{font-size:15px;font-weight:700;color:var(--af-encre)}
+.ra-extrait{font-size:12.5px;line-height:1.5;color:var(--af-encre-2)}
+.ra-ou{font-size:10px;font-family:var(--af-police-mono);color:var(--af-encre-3)}
+.ra-droite{flex:none;width:150px;padding:12px 16px;border-left:1px solid var(--af-filet);display:flex;flex-direction:column;gap:3px;font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3);text-align:right}
+.ra-droite .parue{text-transform:uppercase;font-size:9px;letter-spacing:.08em}
+.ra-droite .num{font-size:17px;font-weight:700;color:var(--af-accent);text-align:right}
+.sources-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.resultat-source{border:1px solid var(--af-filet-moyen);display:flex;flex-direction:column;background:var(--af-surface)}
+.rs-corps{padding:12px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.rs-nature{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-3);display:flex;justify-content:space-between}
+.rs-titre{font-size:13px;font-weight:700;color:var(--af-encre)}
+.rs-ouvrir{background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:11px;font-weight:700;text-decoration:none;padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
+mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);padding:0 1px}
+
+/* ---- sources suivies (lot 4, écran 5a) ---- */
+.sources{padding-bottom:26px}
+.sources-entete{background:var(--af-surface-2);border-bottom:1px solid var(--af-filet);padding:18px 22px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:22px}
+.sources-entete-principal{display:flex;flex-direction:column;gap:6px}
+.sources-entete-principal .label{font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--af-encre-3)}
+.sources-entete-principal .total{display:flex;align-items:baseline;gap:8px;font-size:14px;color:var(--af-encre-2)}
+.sources-entete-principal .total b{font-family:var(--af-police-mono);font-size:26px;font-weight:700;color:var(--af-encre)}
+.sources-collecte{display:flex;flex-direction:column;gap:4px}
+.sources-collecte .label{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-encre-3)}
+.sources-collecte .valeur{font-family:var(--af-police-mono);font-size:13px;color:var(--af-encre-2)}
+.sources-collecte .valeur .echec{color:var(--af-mort);font-weight:700}
+.sources-entete-actions{display:flex;gap:10px;margin-left:auto}
+.sources-table{display:flex;flex-direction:column}
+.sources-cols{display:grid;grid-template-columns:1fr 190px 190px 210px 130px;gap:14px;padding:9px 22px;border-bottom:1px solid var(--af-filet);font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
+.groupe-titre{display:flex;align-items:center;gap:12px;padding:8px 22px;font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-2);background:var(--af-surface-2);border-bottom:1px solid var(--af-filet)}
+.groupe-titre.echec{background:var(--af-sur-accent-2);color:var(--af-mort)}
+.source-row{display:grid;grid-template-columns:1fr 190px 190px 210px 130px;gap:14px;padding:13px 22px;border-bottom:1px solid var(--af-filet);align-items:start}
+.source-nom{display:flex;flex-direction:column;gap:2px;min-width:0}
+.source-nom .nom{font-size:14px;font-weight:700;color:var(--af-encre)}
+.source-nom .adresse{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3);word-break:break-all}
+.source-nom .echec-note{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-mort)}
+.source-rubrique{font-size:12.5px;color:var(--af-encre-2)}
+.source-moisson{font-family:var(--af-police-mono);font-size:11.5px;color:var(--af-encre-2)}
+.source-moisson .echec{color:var(--af-mort);font-weight:700}
+.source-rapporte{display:flex;flex-direction:column;gap:2px}
+.source-rapporte .n{font-family:var(--af-police-mono);font-size:15px;font-weight:700;color:var(--af-encre)}
+.source-rapporte .l{font-size:11px;color:var(--af-encre-2)}
+.source-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.sources-replie{margin:10px 22px;border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--af-encre-2)}
+.sources-replie .chip{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
+
+/* ---- moisson (lot 4) ---- */
+.moisson-barre{background:var(--af-surface-2);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:11px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--af-encre-2)}
+.moisson-barre .titre{font-weight:700;color:var(--af-encre)}
+.moisson-barre .spacer{flex:1}
+.moisson-liste{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto}
+.moisson-vide{margin:0;font-size:12.5px;color:var(--af-encre-3)}
+.moisson-item{border:1px solid var(--af-filet-moyen);padding:10px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--af-surface)}
+.moisson-item.probleme{border-color:var(--af-mort)}
+.moisson-item .infos{display:flex;flex-direction:column;gap:2px;min-width:0}
+.moisson-item .titre{font-size:13px;font-weight:700;color:var(--af-encre)}
+.moisson-item .meta{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
+.moisson-item .btns{display:flex;gap:8px;flex:none}
+
+/* ---- états limites (lot 4) ---- */
+.etat-limite{padding:34px 30px 30px;display:flex;flex-direction:column;gap:14px;max-width:620px}
+.etat-limite .glyphe{font-family:var(--af-police-mono);font-size:26px;line-height:1;color:var(--af-redaction)}
+.mode-publiee .etat-limite .glyphe{color:var(--af-accent)}
+.etat-limite.erreur .glyphe{color:var(--af-mort)}
+.etat-limite.alerte .glyphe{color:var(--af-mort)}
+.etat-limite h1,.etat-limite h2{font-size:21px;font-weight:700;color:var(--af-encre);line-height:1.25;margin:0}
+.etat-limite p{font-size:13.5px;line-height:1.6;color:var(--af-encre-2);margin:0}
+.etat-limite .detail-liste{border:1px solid var(--af-filet-fort);background:var(--af-surface);font-family:var(--af-police-mono);font-size:11.5px;line-height:1.7;padding:12px 14px;color:var(--af-encre-2);white-space:pre-line}
+.etat-limite .puces{display:flex;flex-direction:column;gap:8px}
+.etat-limite .puce{border:1px solid var(--af-filet-moyen);padding:8px 10px;font-size:12px}
+.etat-limite .puce b{color:var(--af-encre)}
+.etat-limite .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.etat-limite .rien-a-faire{border-top:1px solid var(--af-filet);padding-top:12px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-3)}
+.etat-limite .filtre-rappel{font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-3);border-top:1px solid var(--af-filet);padding-top:12px}
+
+/* ---- publication refusée (lot 4, état ⑥) ---- */
+.refus-liste{display:flex;flex-direction:column;gap:10px}
+.refus-item{border-left:3px solid var(--af-mort);background:var(--af-surface-2);padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--af-encre-courant)}
+.refus-item.vide{border-left-color:var(--af-prive)}
+.refus-item b{color:var(--af-encre)}
+.glyphe-alerte{font-family:var(--af-police-mono);font-size:22px;color:var(--af-mort);display:block}
+
+/* ---- outils de développement (lot 4) : aperçu des états limites ---- */
+.dev-outils{border-top:1px dashed var(--af-filet-fort);margin-top:8px;padding-top:8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
+.dev-outils .dev-label{font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-redaction)}
+.dev-outils select{font:inherit;font-family:var(--af-police-mono);font-size:10px;padding:3px 6px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
+.dev-outils .lien-action{font-size:10px}
+
+/* ---- impression (lot 4, écran 4c) : masqué à l'écran ---- */
+.qr-impression{display:none}
+.btn-imprimer{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--af-encre-2);border:1px solid var(--af-filet-fort);padding:8px 13px}
+.print-entete,.print-pied{display:none}
+
+@media print{
+  @page{size:A4;margin:12mm 14mm}
+  body{background:var(--af-print-papier)}
+  .page{padding:0;display:block}
+  .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.rail,.entree-actions,.valide-case,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-barre,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
+  .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
+  .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
+  .print-ligne2{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+  .print-numero{display:flex;align-items:baseline;gap:10px;min-width:0}
+  .print-numero .chiffre{font-family:var(--af-police-mono);font-size:15px;font-weight:700;white-space:nowrap}
+  .print-titre{font-size:15px;font-weight:700;color:var(--af-print-encre);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .print-meta{font-family:var(--af-police-mono);font-size:9px;color:var(--af-print-encre);white-space:nowrap}
+  .corps,.mode-publiee .corps{display:block}
+  /* grille 2 colonnes, largeur fixe / hauteur libre (lot 4quater) */
+  .colonne{border-right:0;column-count:2;column-gap:10mm}
+  /* rubrique-tete + sa 1re entrée forment un bloc insécable (retour d'usage
+     30/08/2026) : sans ça, la balance automatique des colonnes du navigateur
+     peut laisser le titre de rubrique seul en bas d'une colonne pendant que
+     sa carte part au sommet de la colonne suivante. */
+  .rubrique-groupe-tete{break-inside:avoid}
+  .rubrique-tete{background:none;border-top:2px solid var(--af-print-encre);border-bottom:1px solid var(--af-print-encre);padding:5px 0;margin-bottom:6px}
+  .rubrique-tete .nom{color:var(--af-print-encre)}
+  .rubrique-tete .filet{background:transparent}
+  .rubrique-tete .position{display:none}
+  /* cadre allégé (retour d'usage 30/08/2026) : un seul filet de séparation
+     par carte au lieu d'un encart complet + un encart QR imbriqué dedans */
+  .entree{border:0;border-bottom:1px solid var(--af-print-encre);padding:0 0 10px;margin:0 0 10px;break-inside:avoid}
+  .entree-row-gauche{padding:0}
+  .flat-titre{color:var(--af-print-encre);font-size:12.5px}
+  .flat-meta{gap:5px}
+  .flat-meta .nom,.meta-mono{color:var(--af-print-encre);border-color:var(--af-print-encre);font-size:9.5px}
+  .flat-resume{color:var(--af-print-encre);font-size:10px;line-height:1.4;text-align:justify;text-indent:0;hyphens:auto;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .entree-details{padding:6px 0 0;max-width:none}
+  .qr-impression{display:flex !important;gap:10px;align-items:center;border:0;border-top:1px solid var(--af-print-encre);padding:8px 0 0;margin-top:6px}
+  .qr-impression svg{flex:none;width:80px;height:80px}
+  .qr-impression .infos{display:flex;flex-direction:column;gap:3px;font-family:var(--af-police-mono);font-size:9px;color:var(--af-print-encre)}
+  .qr-impression .infos .lbl{font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .print-pied{display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:2px solid var(--af-print-encre);margin-top:14px;padding-top:8px;font-family:var(--af-police-mono);font-size:9px;color:var(--af-print-encre)}
+  .print-pied .gauche{display:flex;align-items:center;gap:8px}
+  .print-pied svg{width:28px;height:28px}
+}
+
+@media (max-width:640px){
+  .page{padding:0 0 40px}
+  .app,.app.mode-redaction{max-width:100%;border-left:0;border-right:0}
+  .bandeau{padding:11px 14px}
+  .bandeau-nav{padding-left:0}
+  .numero-entete{padding:14px 16px}
+  .entete-titre{font-size:19px}
+  .entete-actions{width:100%;align-items:stretch}
+  .select-numero-wrap{justify-content:space-between}
+  .select-numero{flex:1}
+  .entete-boutons{justify-content:space-between}
+  .mode-publiee .corps{display:block}
+  .colonne{border-right:0}
+  .rail{display:none}
+  .entree-row{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
+  .entree-row-gauche{padding:9px 12px}
+  .entree-row-droite{width:100%}
+  .btn-source-compact,.mode-publiee .btn-source-compact{width:100%;min-height:44px;flex-direction:row;align-items:center;justify-content:space-between;padding:10px 14px}
+  .mode-publiee .btn-source-compact .lib{font-size:14px}
+  .flat-titre{font-size:14.5px}
+  .entree-details,.mode-redaction .entree-details{padding:0 12px 16px 12px;max-width:none;display:flex;flex-direction:column}
+  .modal{padding:16px 14px 14px}
+  .sommaire,.recherche-barre,.recherche-compteur,.recherche-corps{padding-left:14px;padding-right:14px}
+  .numero-carte{flex-direction:column}
+  .nc-badge{flex-direction:row;align-items:center;justify-content:space-between;border-right:0;border-bottom:1px solid var(--af-filet);width:auto}
+  .nc-droite{flex-direction:row;align-items:center;border-left:0;border-top:1px solid var(--af-filet);width:auto}
+  .resultat-actu{flex-direction:column}
+  .ra-droite{flex-direction:row;flex-wrap:wrap;align-items:baseline;border-left:0;border-top:1px solid var(--af-filet);width:auto;text-align:left}
+  .recherche-champ-texte{flex-direction:column}
+  .recherche-champ-texte button{padding:11px}
+  .sources-entete{padding:14px}
+  .sources-entete-actions{margin-left:0;width:100%}
+  .sources-entete-actions .btn-plein,.sources-entete-actions .btn-ligne{flex:1}
+  .sources-cols{display:none}
+  .source-row,.groupe-titre{padding-left:14px;padding-right:14px}
+  .source-row{display:flex;flex-direction:column;gap:6px}
+  .source-actions{align-items:flex-start;flex-direction:row;flex-wrap:wrap}
+  .moisson-barre,.moisson-item{flex-direction:column;align-items:flex-start}
+  .etat-limite{padding:22px 16px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div id="app" class="app"></div>
+</div>
+
+<script src="./vendor/qrcode.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script>
+(function(){
+  "use strict";
+
+  var PICTO = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fdf8ec" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg>';
+
+  // ---- QR codes générés à la volée (lot 4, règle 6/29/CHANGELOG) ----
+  // vendor/qrcode.js (Kazuhiko Arase, MIT) n'auto-détecte pas la taille :
+  // on essaie les types du plus petit au plus grand jusqu'à ce que le texte
+  // tienne (il jette « code length overflow » sinon).
+  function makeQr(texte){
+    for (var t = 1; t <= 40; t++) {
+      try {
+        var qr = qrcode(t, "M");
+        qr.addData(String(texte || ""));
+        qr.make();
+        return qr;
+      } catch (err) { /* essaie le type suivant, plus grand */ }
+    }
+    return null;
+  }
+
+  function qrSvg(texte, alt){
+    var qr = makeQr(texte);
+    return qr ? qr.createSvgTag({ cellSize: 3, margin: 4, alt: alt, scalable: true }) : "";
+  }
+
+  function dateImpression(){
+    var d = new Date();
+    function p2(n){ return (n < 10 ? "0" : "") + n; }
+    return p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear();
+  }
+
+  // ---- Impression : PDF généré au mm près (lot 4quater bis, 30/08/2026) ----
+  // Le rendu CSS @media print (grille en colonnes du navigateur) restait
+  // insatisfaisant (cadres, colonnes mal réparties, QR trop petits) malgré
+  // deux passes de correction. Même choix qu'organisation-cours pour
+  // l'ordre de mission (Lot C, commit 6257c18) : dessiner le document au
+  // mm avec jsPDF plutôt que de compter sur le moteur d'impression du
+  // navigateur. Les QR sont dessinés en vecteur (rectangles noirs par
+  // module, via qr.isDark()/getModuleCount() de vendor/qrcode.js) plutôt
+  // qu'en image bitmap — plus net, pas de conversion à faire.
+  var PDF_PAGE_W = 210, PDF_PAGE_H = 297;
+  var PDF_MARGE_X = 16, PDF_MARGE_HAUT = 16, PDF_MARGE_BAS = 26;
+  var PDF_TITRE_SIZE = 12, PDF_TITRE_LH = 4.6;
+  var PDF_META_LH = 3.6;
+  var PDF_RESUME_SIZE = 9.5, PDF_RESUME_LH = 4.1;
+  var PDF_QR_SIZE = 28;
+  var PDF_TETE_H = 8.5;
+  var PDF_ENTREE_GAP = 8; // entre le bloc texte (gauche) et le bloc source/QR (droite)
+  var PDF_ENTREE_DROITE_W = 52; // largeur fixe du bloc droit (~1/3 de page)
+
+  function pdfDessinerQr(doc, texte, x, y, taille){
+    var qr = makeQr(texte);
+    if (!qr) return;
+    var n = qr.getModuleCount();
+    var cell = taille / n;
+    doc.setFillColor(0, 0, 0);
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) doc.rect(x + c * cell, y + r * cell, cell, cell, "F");
+      }
+    }
+  }
+
+  function pdfDessinerEntete(doc, numero, total){
+    var y = PDF_MARGE_HAUT;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+    doc.setTextColor(140, 130, 110);
+    doc.text("Carnet de veille naturaliste · BTS Gestion et protection de la nature · Kerplouz", PDF_MARGE_X, y);
+    y += 5.5;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+    doc.setTextColor(0, 0, 0);
+    var enteteMaxW = PDF_PAGE_W - 2 * PDF_MARGE_X;
+    var enteteLignes = doc.splitTextToSize("N° " + numero.numero + "  " + numero.titre, enteteMaxW);
+    var titreLigne = enteteLignes[0];
+    if (enteteLignes.length > 1) {
+      while (titreLigne.length > 1 && doc.getTextWidth(titreLigne + "…") > enteteMaxW) titreLigne = titreLigne.slice(0, -1).trim();
+      titreLigne += "…";
+    }
+    doc.text(titreLigne, PDF_MARGE_X, y);
+    y += 5;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.setTextColor(90, 80, 60);
+    var meta = numero.semaine.replace(/^semaine /, "sem. ") + " · " + total + " actualité" + (total > 1 ? "s" : "") + " · imprimé le " + dateImpression();
+    doc.text(meta, PDF_MARGE_X, y);
+    y += 3;
+    doc.setDrawColor(0); doc.setLineWidth(0.6);
+    doc.line(PDF_MARGE_X, y, PDF_PAGE_W - PDF_MARGE_X, y);
+    doc.setTextColor(0, 0, 0);
+    return y + 6;
+  }
+
+  function pdfDessinerPied(doc, numero){
+    // Reste dans la marge basse réservée (PDF_MARGE_BAS), loin du bord
+    // physique — retour d'usage 30/08/2026 : le pied précédent, collé au
+    // bord de la feuille, était illisible/coupé selon l'imprimante.
+    var y = PDF_PAGE_H - PDF_MARGE_BAS + 6;
+    doc.setDrawColor(0); doc.setLineWidth(0.4);
+    doc.line(PDF_MARGE_X, y, PDF_PAGE_W - PDF_MARGE_X, y);
+    y += 6;
+    pdfDessinerQr(doc, location.href, PDF_MARGE_X, y - 4, 10);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Tous les numéros du carnet", PDF_MARGE_X + 13, y);
+    doc.setTextColor(90, 80, 60);
+    doc.text("portail.btsgpn-kerplouz.fr/carnet-de-veille", PDF_MARGE_X + 13, y + 3.6);
+    doc.setTextColor(0, 0, 0);
+    var droite = "Adresses vérifiées le " + (numero.collecte ? numero.collecte.date : dateImpression());
+    var droiteW = doc.getTextWidth(droite);
+    doc.text(droite, PDF_PAGE_W - PDF_MARGE_X - droiteW, y);
+  }
+
+  function pdfPreparerEntree(doc, e, colW){
+    var gaucheW = colW - PDF_ENTREE_DROITE_W - PDF_ENTREE_GAP;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(PDF_TITRE_SIZE);
+    var titreLignes = doc.splitTextToSize(e.titre, gaucheW).slice(0, 2);
+    var resumeLignes = [], resumeClamped = false;
+    if (e.blocs.resume && e.resume) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(PDF_RESUME_SIZE);
+      var toutes = doc.splitTextToSize(e.resume, gaucheW);
+      resumeClamped = toutes.length > 5;
+      resumeLignes = toutes.slice(0, 5);
+      if (resumeClamped) {
+        var derniere = resumeLignes[4];
+        while (derniere.length > 1 && doc.getTextWidth(derniere + "…") > gaucheW) derniere = derniere.slice(0, -1).trim();
+        resumeLignes[4] = derniere + "…";
+      }
+    }
+    var hauteurGauche = PDF_META_LH + 1 + titreLignes.length * PDF_TITRE_LH + 1.5 +
+      (resumeLignes.length ? resumeLignes.length * PDF_RESUME_LH : 0);
+    // bloc droit : QR centré, puis domaine + accroche en dessous
+    var hauteurDroite = PDF_QR_SIZE + 4 + 3.6 + 3.6;
+    var hauteur = Math.max(hauteurGauche, hauteurDroite) + 8; // + séparateur bas
+    return { titreLignes: titreLignes, resumeLignes: resumeLignes, resumeClamped: resumeClamped, gaucheW: gaucheW, hauteur: hauteur };
+  }
+
+  function pdfDessinerRubriqueTete(doc, label, x, y, colW){
+    // Un seul filet, sous le libellé (retour d'usage 30/08/2026 : trop de
+    // lignes horizontales — le filet du haut faisait doublon avec le
+    // séparateur de l'entrée précédente, juste au-dessus).
+    y += 3;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.setTextColor(138, 47, 57);
+    doc.text(String(label).toUpperCase(), x, y);
+    y += 1.5;
+    doc.setDrawColor(0); doc.setLineWidth(0.3);
+    doc.line(x, y, x + colW, y);
+    doc.setTextColor(0, 0, 0);
+    return y + 4;
+  }
+
+  function pdfDessinerEntree(doc, e, layout, x, y, colW){
+    var xDroite = x + colW - PDF_ENTREE_DROITE_W;
+    var yDepart = y;
+
+    // ---- bloc gauche (2/3) : source, titre, résumé ----
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.setTextColor(90, 80, 60);
+    doc.text(e.source.domaine + "  ·  " + e.source.date, x, y + 3);
+    y += PDF_META_LH + 1;
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(PDF_TITRE_SIZE);
+    doc.setTextColor(0, 0, 0);
+    layout.titreLignes.forEach(function(ligne){ y += PDF_TITRE_LH; doc.text(ligne, x, y); });
+    y += 1.5;
+
+    if (layout.resumeLignes.length) {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(PDF_RESUME_SIZE);
+      doc.setTextColor(40, 36, 28);
+      layout.resumeLignes.forEach(function(ligne, i){
+        y += PDF_RESUME_LH;
+        var dernierNaturel = !layout.resumeClamped && i === layout.resumeLignes.length - 1;
+        if (dernierNaturel) doc.text(ligne, x, y);
+        else doc.text(ligne, x, y, { maxWidth: layout.gaucheW, align: "justify" });
+      });
+    }
+
+    // ---- bloc droit (1/3) : QR + source, centré sur sa colonne ----
+    var qrX = xDroite + (PDF_ENTREE_DROITE_W - PDF_QR_SIZE) / 2;
+    pdfDessinerQr(doc, e.url || ("https://" + e.source.domaine), qrX, yDepart, PDF_QR_SIZE);
+    var yTexteDroite = yDepart + PDF_QR_SIZE + 4;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    var domaineW = doc.getTextWidth(e.source.domaine);
+    doc.text(e.source.domaine, xDroite + (PDF_ENTREE_DROITE_W - domaineW) / 2, yTexteDroite);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+    doc.setTextColor(90, 80, 60);
+    var accroche = "Flasher pour ouvrir la source";
+    var accrocheW = doc.getTextWidth(accroche);
+    doc.text(accroche, xDroite + (PDF_ENTREE_DROITE_W - accrocheW) / 2, yTexteDroite + 3.6);
+    doc.setTextColor(0, 0, 0);
+
+    // Pas de filet sous l'entrée (retour d'usage 30/08/2026 : trop de
+    // lignes horizontales) — l'espacement entre les cartes, déjà prévu
+    // dans layout.hauteur, suffit à les distinguer.
+    return yDepart + layout.hauteur;
+  }
+
+  function pdfBuildBlocks(doc, groupes, colW){
+    var blocks = [];
+    groupes.forEach(function(g){
+      var premier = g.items[0];
+      blocks.push({ type: "groupe", rubrique: g.rubrique, entree: premier, layout: pdfPreparerEntree(doc, premier, colW) });
+      g.items.slice(1).forEach(function(e){
+        blocks.push({ type: "entree", entree: e, layout: pdfPreparerEntree(doc, e, colW) });
+      });
+    });
+    return blocks;
+  }
+
+  function numeroGenererPdfDoc(numeroCourant, visibles){
+    var groupes = groupByRubrique(visibles);
+    var total = visibles.length;
+    var doc = new window.jspdf.jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+    var colW = PDF_PAGE_W - 2 * PDF_MARGE_X;
+    var blocks = pdfBuildBlocks(doc, groupes, colW);
+    var pageBas = PDF_PAGE_H - PDF_MARGE_BAS;
+    var y = pdfDessinerEntete(doc, numeroCourant, total);
+
+    blocks.forEach(function(block){
+      var h = (block.type === "groupe" ? PDF_TETE_H : 0) + block.layout.hauteur;
+      if (y + h > pageBas) {
+        doc.addPage();
+        y = pdfDessinerEntete(doc, numeroCourant, total);
+      }
+      if (block.type === "groupe") y = pdfDessinerRubriqueTete(doc, block.rubrique, PDF_MARGE_X, y, colW);
+      y = pdfDessinerEntree(doc, block.entree, block.layout, PDF_MARGE_X, y, colW);
+    });
+
+    pdfDessinerPied(doc, numeroCourant);
+    return doc;
+  }
+
+  function numeroImprimerDoc(doc){
+    var url = URL.createObjectURL(doc.output("blob"));
+    var iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = function(){
+      setTimeout(function(){
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(function(){
+          try { URL.revokeObjectURL(url); } catch (err) {}
+          try { iframe.remove(); } catch (err) {}
+        }, 30000);
+      }, 1);
+    };
+  }
+
+  function numeroImprimer(){
+    // Toujours le contenu retenu (e.valide), même si on imprime depuis la
+    // rédaction où l'écran affiche aussi les entrées non retenues : le PDF
+    // représente le numéro tel qu'il sera lu par les élèves.
+    var visibles = entrees.filter(function(e){ return e.valide; });
+    numeroImprimerDoc(numeroGenererPdfDoc(numero, visibles));
+  }
+
+  // ==========================================================================
+  // Supabase (Lot 6+7, 31/08/2026) — remplace l'ancien localStorage
+  // ("affut:numeros") et le jeu de données de démonstration à 13 numéros.
+  // Projet Supabase "portail" (org btsgpn-kerplouz), déjà utilisé par
+  // organisation-cours — mêmes URL/clé anon publique (voir
+  // apps/organisation-cours/js/supabase-client.js), tables préfixées
+  // affut_ (voir apps/affut/supabase/00{1,2,3}-*.sql). Chargement en script
+  // classique (pas de modules, cohérent avec le reste de ce fichier unique) :
+  // même schéma que apps/phytoscope/index.html.
+  // ==========================================================================
+
+  var SUPABASE_URL = "https://uoeuzxstotqnembcpofx.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_eW4e-uYvC8aHbTwESRdGJw_ceyhagM1";
+
+  function waitForSupabaseLib(){
+    return new Promise(function(resolve, reject){
+      var n = 0;
+      var t = setInterval(function(){
+        if (window.supabase && window.supabase.createClient) { clearInterval(t); resolve(); }
+        else if (++n > 80) { clearInterval(t); reject(new Error("Bibliothèque Supabase non chargée (vérifier la connexion internet).")); }
+      }, 100);
+    });
+  }
+
+  var sb = null;
+  function client(){
+    if (!sb) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+    }
+    return sb;
+  }
+
+  // ---- mapping camelCase (état JS) <-> snake_case (colonnes Supabase) ----
+
+  function versLigneEntree(e, numeroId){
+    return {
+      id: e.id, numero_id: numeroId, rubrique: e.rubrique, valide: e.valide, origine: e.origine,
+      source: e.source, url: e.url, lien_mort: !!e.lienMort, lien_mort_depuis: e.lienMortDepuis || null,
+      titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs
+    };
+  }
+  function depuisLigneEntree(r){
+    return {
+      id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, source: r.source || {},
+      url: r.url, lienMort: r.lien_mort, lienMortDepuis: r.lien_mort_depuis,
+      titre: r.titre, chiffres: r.chiffres || [], resume: r.resume, usage: r.usage_en_cours,
+      blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source
+    };
+  }
+  function versLigneNumero(n){
+    return {
+      numero: n.numero, statut: n.statut, mois: n.mois, semaine: n.semaine, titre: n.titre,
+      chapo: n.chapo, candidates: n.candidates, collecte: n.collecte || null, moisson: n.moisson || null
+    };
+  }
+  function depuisLigneNumero(r, entreesDuNumero){
+    return {
+      numero: r.numero, statut: r.statut, mois: r.mois, semaine: r.semaine, titre: r.titre,
+      chapo: r.chapo, candidates: r.candidates, collecte: r.collecte, moisson: r.moisson,
+      vues: r.vues, entrees: entreesDuNumero
+    };
+  }
+  function versLigneSource(s){
+    return {
+      id: s.id, nom: s.nom, adresse: s.adresse, type: s.type, echelle: s.echelle, territoire: s.territoire,
+      rubrique_defaut: s.rubriqueDefaut, derniere_moisson: s.derniereMoisson, compteurs: s.compteurs
+    };
+  }
+  function depuisLigneSource(r){
+    return {
+      id: r.id, nom: r.nom, adresse: r.adresse, type: r.type, echelle: r.echelle, territoire: r.territoire,
+      rubriqueDefaut: r.rubrique_defaut, derniereMoisson: r.derniere_moisson || {}, compteurs: r.compteurs || {}
+    };
+  }
+
+  function assemblerNumeros(lignesNumeros, lignesEntrees){
+    var parNumero = {};
+    (lignesEntrees || []).forEach(function(r){
+      (parNumero[r.numero_id] = parNumero[r.numero_id] || []).push(depuisLigneEntree(r));
+    });
+    return (lignesNumeros || []).map(function(r){ return depuisLigneNumero(r, parNumero[r.numero] || []); });
+  }
+
+  // ---- lecture ----
+  // numeros/entrees/sourcesSuivies déclarées ci-dessous (var numeros, ...) ;
+  // ces fonctions les réaffectent globalement (pas de module, IIFE unique).
+
+  var numeros = [], numero, entrees = [], sourcesSuivies = [];
+
+  async function chargerDonneesPubliques(){
+    var s = client();
+    var resNum = await s.from("affut_numeros_public").select("*");
+    if (resNum.error) throw resNum.error;
+    var resEnt = await s.from("affut_entrees_public").select("*");
+    if (resEnt.error) throw resEnt.error;
+    numeros = assemblerNumeros(resNum.data, resEnt.data);
+    sourcesSuivies = [];
+  }
+
+  async function chargerDonneesRedaction(){
+    var s = client();
+    var resNum = await s.from("affut_numeros").select("*");
+    if (resNum.error) throw resNum.error;
+    var resEnt = await s.from("affut_entrees").select("*");
+    if (resEnt.error) throw resEnt.error;
+    var resSrc = await s.from("affut_sources_suivies").select("*");
+    if (resSrc.error) throw resSrc.error;
+    numeros = assemblerNumeros(resNum.data, resEnt.data);
+    sourcesSuivies = resSrc.data.map(depuisLigneSource);
+  }
+
+  async function chargerDonnees(){
+    if (state.auth.redacteur && state.auth.redacteur.actif) await chargerDonneesRedaction();
+    else await chargerDonneesPubliques();
+  }
+
+  // ---- écriture (rédaction seule — de toute façon imposé par la RLS) ----
+  // Chaque action garde sa mutation locale immédiate (rendu réactif), puis
+  // appelle l'une de ces fonctions au lieu de l'ancien saveData() unique —
+  // écriture directe, pas de copie locale ni de synchro de fond (décision du
+  // 31/08/2026, contrairement au modèle PhytoScope). Un échec réseau/RLS
+  // s'affiche (alert) mais n'annule pas la mutation déjà rendue à l'écran :
+  // se corrige en rejouant l'action.
+
+  function signalerErreurEcriture(err){
+    window.alert("Enregistrement impossible : " + (err && err.message ? err.message : "erreur réseau.") + " — la modification reste affichée mais n'est pas sauvegardée en base, réessayez.");
+  }
+
+  var MAPPING_COLONNES_ENTREE = { lienMort: "lien_mort", lienMortDepuis: "lien_mort_depuis", usage: "usage_en_cours", clicsSource: "clics_source" };
+  var MAPPING_COLONNES_SOURCE = { rubriqueDefaut: "rubrique_defaut", derniereMoisson: "derniere_moisson" };
+
+  function versColonnes(champs, mapping){
+    var colonnes = {};
+    Object.keys(champs).forEach(function(k){ colonnes[mapping[k] || k] = champs[k]; });
+    return colonnes;
+  }
+
+  async function ecrireNumero(champs){
+    var res = await client().from("affut_numeros").update(champs).eq("numero", numero.numero);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function ecrireEntree(id, champsPartiels){
+    var res = await client().from("affut_entrees").update(versColonnes(champsPartiels, MAPPING_COLONNES_ENTREE)).eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function creerEntree(entree){
+    var res = await client().from("affut_entrees").insert(versLigneEntree(entree, numero.numero));
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function supprimerEntreeDistante(id){
+    var res = await client().from("affut_entrees").delete().eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function ecrireSource(id, champsPartiels){
+    var res = await client().from("affut_sources_suivies").update(versColonnes(champsPartiels, MAPPING_COLONNES_SOURCE)).eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function creerOuRemplacerSource(source){
+    var res = await client().from("affut_sources_suivies").upsert(versLigneSource(source));
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function supprimerSourceDistante(id){
+    var res = await client().from("affut_sources_suivies").delete().eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  // Motif d'écart (Lot 8, préparation) : garde une trace d'un candidat de
+  // moisson écarté par l'enseignant, avec un motif optionnel — alimente la
+  // boucle de retour de l'agent de veille (voir documents/brief-veille.md).
+  async function creerCandidatEcarte(cand, motif){
+    var res = await client().from("affut_candidats_ecartes").insert({
+      numero_id: numero.numero, candidat_id: cand.id, rubrique: cand.rubrique,
+      source: cand.source, url: cand.url, titre: cand.titre, motif: motif || null
+    });
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  // Numéro suivant : le plus grand numéro existant + 1 (démo ou pas, la
+  // suite logique d'une parution hebdomadaire).
+  function prochainNumero(){
+    return numeros.reduce(function(m, n){ return n.numero > m ? n.numero : m; }, 0) + 1;
+  }
+
+  // ---- « Nouveau numéro » (Lot 6) : champ Semaine en menu déroulant natif
+  // (input type="week") plutôt qu'en rédaction libre — mois et libellé de
+  // semaine sont calculés, jamais saisis à la main.
+  var MOIS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+
+  function isoSemaineActuelle(){
+    var d = new Date();
+    var jour = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - jour); // jeudi de la semaine ISO courante
+    var anneeIso = d.getFullYear();
+    var jan1 = new Date(anneeIso, 0, 1);
+    var semaine = Math.ceil((((d - jan1) / 86400000) + 1) / 7);
+    return anneeIso + "-W" + (semaine < 10 ? "0" : "") + semaine;
+  }
+
+  function lundiSemaineIso(anneeIso, semaine){
+    var jan4 = new Date(Date.UTC(anneeIso, 0, 4));
+    var jourJan4 = jan4.getUTCDay() || 7; // lundi=1 .. dimanche=7
+    var lundi = new Date(jan4);
+    lundi.setUTCDate(jan4.getUTCDate() - jourJan4 + 1 + (semaine - 1) * 7);
+    return lundi;
+  }
+
+  // "2026-W34" -> { mois: "août 2026", semaine: "semaine 34 · 17 → 23 août 2026" }
+  function formaterSemaineIso(valeurWeek){
+    var m = /^(\d{4})-W(\d{2})$/.exec(valeurWeek || "");
+    if (!m) return null;
+    var anneeIso = parseInt(m[1], 10), semaine = parseInt(m[2], 10);
+    var lundi = lundiSemaineIso(anneeIso, semaine);
+    var dimanche = new Date(lundi); dimanche.setUTCDate(lundi.getUTCDate() + 6);
+    var moisLundi = MOIS_FR[lundi.getUTCMonth()], anneeLundi = lundi.getUTCFullYear();
+    var moisDim = MOIS_FR[dimanche.getUTCMonth()], anneeDim = dimanche.getUTCFullYear();
+    var plage = (moisLundi === moisDim && anneeLundi === anneeDim)
+      ? lundi.getUTCDate() + " → " + dimanche.getUTCDate() + " " + moisDim + " " + anneeDim
+      : lundi.getUTCDate() + " " + moisLundi + (anneeLundi !== anneeDim ? " " + anneeLundi : "") + " → " + dimanche.getUTCDate() + " " + moisDim + " " + anneeDim;
+    return { mois: moisLundi + " " + anneeLundi, semaine: "semaine " + semaine + " · " + plage };
+  }
+  async function creerNumeroDistant(n){
+    var res = await client().from("affut_numeros").insert(versLigneNumero(n)).select().single();
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
+  }
+
+  // Écrit soit dans affut_numeros (colonne = parts[1]), soit dans
+  // affut_entrees (colonne = parts[1], ou le sous-objet source entier si
+  // parts[1] === "source") — miroir de setEdValue() plus bas, appelé juste
+  // après elle sur le même path.
+  function persisterEdValue(path){
+    var parts = path.split(".");
+    if (parts[0] === "numero") {
+      var champsN = {}; champsN[parts[1]] = numero[parts[1]];
+      ecrireNumero(champsN);
+      return;
+    }
+    var cible = entrees.filter(function(e){ return e.id === parts[0]; })[0];
+    if (!cible) return;
+    if (parts[1] === "source") ecrireEntree(cible.id, { source: cible.source });
+    else { var champsE = {}; champsE[parts[1]] = cible[parts[1]]; ecrireEntree(cible.id, champsE); }
+  }
+
+  // Compteurs de fréquentation (RPC anon, voir 003-compteurs.sql) : simple
+  // best-effort sans blocage ni garde contre l'échec réseau (repère
+  // approximatif pour l'enseignant, pas un chiffre affiché publiquement).
+  function compterVueNumero(n){ client().rpc("affut_incrementer_vue_numero", { p_numero: n }); }
+  function compterClicSource(id){ client().rpc("affut_incrementer_clic_source", { p_entree_id: id }); }
+
+  // ---- authentification (Lot 7, calquée sur organisation-cours/js/auth.js) ----
+
+  async function chargerRedacteur(userId){
+    var res = await client().from("affut_redacteurs").select("user_id, actif").eq("user_id", userId).maybeSingle();
+    if (res.error) throw res.error;
+    return res.data;
+  }
+  async function creerRedacteur(userId){
+    var res = await client().from("affut_redacteurs").insert({ user_id: userId }).select("user_id, actif").single();
+    if (res.error) throw res.error;
+    return res.data;
+  }
+
+  async function connexionOuCreation(email, motDePasse){
+    var s = client();
+    var tentative = await s.auth.signInWithPassword({ email: email, password: motDePasse });
+    var session;
+    if (tentative.error) {
+      // Adresse inconnue (1re connexion) OU mot de passe incorrect : Supabase
+      // renvoie la même erreur générique dans les deux cas (par sécurité), donc
+      // on tente la création — cf. organisation-cours/js/auth.js.
+      var inscription = await s.auth.signUp({ email: email, password: motDePasse });
+      if (inscription.error) {
+        if (/already|registered|exists/i.test(inscription.error.message || "")) {
+          throw new Error("Ce mot de passe ne correspond pas à cette adresse. « Mot de passe oublié ? » pour le réinitialiser.");
+        }
+        throw inscription.error;
+      }
+      if (!inscription.data || !inscription.data.session) {
+        throw new Error("Compte créé, mais la connexion immédiate est bloquée : « Confirm email » doit être désactivé côté Supabase.");
+      }
+      session = inscription.data.session;
+    } else {
+      session = tentative.data.session;
+    }
+    var redacteur;
+    try {
+      redacteur = await chargerRedacteur(session.user.id);
+      if (!redacteur) redacteur = await creerRedacteur(session.user.id);
+    } catch (e) {
+      throw new Error("Adresse non autorisée à rédiger dans ce carnet — contacter l'enseignant responsable.");
+    }
+    return { user: session.user, redacteur: redacteur };
+  }
+
+  async function demanderReinitialisation(email){
+    var res = await client().auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if (res.error) throw res.error;
+  }
+
+  async function deconnexion(){
+    await client().auth.signOut();
+  }
+
+  // numeroId réglé à 0 ici (aucun numéro ne porte ce numéro) : la vraie
+  // valeur par défaut n'est calculable qu'une fois les données chargées
+  // depuis Supabase (async, voir numeroParDefaut()/init() plus bas).
+  var state = {
+    mode: "publiee",
+    modal: null,
+    modalSource: null,
+    modalAuth: null, // null | { attente: bool, erreur: string|null, enCours: bool }
+    modalNumero: null, // null | { erreur: string|null }
+    auth: { user: null, redacteur: null },
+    vuesComptees: {}, // { [numero]: true } — garde anti-double-comptage du compteur de vues sur re-render
+    vue: "numero",
+    numeroId: 0,
+    recherche: { q: "", champ: "tout", rubrique: "toutes" },
+    sommaireDeplie: {},
+    sourcesDeplie: false,
+    previewEtat: null,
+    publicationRefusee: null,
+    moissonOuverte: false
+  };
+
+  function estRedacteurActif(){ return !!(state.auth.redacteur && state.auth.redacteur.actif); }
+
+  function numeroParDefaut(){
+    var publies = numeros.filter(function(n){ return n.statut !== "brouillon"; });
+    var base = publies.length ? publies : numeros;
+    return base.reduce(function(m, n){ return n.numero > m ? n.numero : m; }, 0);
+  }
+
+  function currentNumero(){
+    return numeros.filter(function(n){ return n.numero === state.numeroId; })[0] || numeros[0];
+  }
+  function bindCurrent(){ numero = currentNumero(); entrees = numero ? numero.entrees : []; }
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  // role="textbox" (lot 5, audit RGAA) : un <span contenteditable> n'a par
+  // défaut aucune sémantique de champ de saisie pour un lecteur d'écran.
+  function ed(html, path){ return state.mode === "redaction" ? '<span data-ed="true" data-path="' + path + '" contenteditable="true" role="textbox">' + html + '</span>' : html; }
+
+  function setEdValue(path, value){
+    var parts = path.split(".");
+    if (parts[0] === "numero") { numero[parts[1]] = value; return; }
+    var entree = entrees.filter(function(e){ return e.id === parts[0]; })[0];
+    if (!entree) return;
+    if (parts[1] === "source") entree.source[parts[2]] = value;
+    else entree[parts[1]] = value;
+  }
+
+  function flatChiffres(e){
+    if (!e.chiffres.length) return "";
+    if (state.mode !== "redaction") {
+      if (!e.blocs.chiffres) return "";
+      var txtPub = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      return '<div class="flat-chiffres tab-num">' + txtPub + '</div>';
+    }
+    var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.chiffres ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="chiffres" title="Afficher les chiffres clés">';
+    var contenu;
+    if (e.blocs.chiffres) {
+      var txt = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      contenu = '<div class="flat-chiffres tab-num">' + txt + '</div>';
+    } else {
+      var vals = e.chiffres.map(function(c){ return c.v; }).join(" · ");
+      contenu = '<span class="bloc-masque-texte">Chiffres clés masqués — conservés : ' + esc(vals) + '</span>';
+    }
+    return '<div class="bloc-ligne">' + checkbox + contenu + '</div>';
+  }
+
+  function flatResume(e){
+    if (state.mode !== "redaction") {
+      return e.blocs.resume ? '<div class="flat-resume">' + esc(e.resume) + '</div>' : "";
+    }
+    var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.resume ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="resume" title="Afficher le résumé">';
+    var contenu = e.blocs.resume
+      ? '<div class="flat-resume">' + ed(esc(e.resume), e.id + ".resume") + '</div>'
+      : '<span class="bloc-masque-texte">Résumé masqué</span>';
+    return '<div class="bloc-ligne">' + checkbox + contenu + '</div>';
+  }
+
+  function renderUsage(e){
+    if (!e.usage || state.mode !== "redaction") return ""; // jamais publié : absent du rendu, pas seulement caché
+    return '<div class="usage"><div class="usage-lisere"><span>Privé</span></div><div class="usage-corps"><div class="usage-titre">Usage en cours — jamais publié</div><p class="usage-texte">' + ed(esc(e.usage), e.id + ".usage") + '</p></div></div>';
+  }
+
+  function renderEntree(e){
+    var redac = state.mode === "redaction";
+    var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
+    var actions = redac
+      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
+      : "";
+
+    var row =
+      '<div class="entree-row">' +
+        '<div class="entree-row-gauche">' +
+          (redac ? '<input type="checkbox" class="case valide-case" ' + (e.valide ? "checked" : "") + ' data-action="toggle-valide" data-id="' + e.id + '" title="Entrée retenue">' : "") +
+          '<div class="flat">' +
+            '<div class="flat-meta">' +
+              '<span class="nom">' + ed(esc(e.source.nom), e.id + ".source.nom") + '</span>' +
+              (e.source.territoire ? '<span class="pastille-echelle">' + esc(e.source.territoire) + '</span>' : "") +
+              '<span class="meta-mono">' + esc(e.source.domaine) + ' · ' + ed(esc(e.source.date), e.id + ".source.date") + '</span>' +
+              (redac ? '<span class="etat-pastille' + (e.valide ? " ok" : "") + '">' + (e.valide ? "✓ validée" : "en attente") + ' · ◇ ' + e.origine + '</span>' : "") +
+              (redac && e.lienMort ? '<span class="etat-pastille mort">✕ lien mort depuis le ' + esc(e.lienMortDepuis) + '</span>' : "") +
+              (redac && !e.lienMort && (!e.url || !e.url.trim()) ? '<span class="etat-pastille mort">✕ bloc source vide</span>' : "") +
+            '</div>' +
+            '<div class="flat-titre">' + ed(esc(e.titre), e.id + ".titre") + '</div>' +
+            flatChiffres(e) +
+            flatResume(e) +
+          '</div>' +
+        '</div>' +
+        '<div class="entree-row-droite">' +
+          btn +
+          actions +
+        '</div>' +
+      '</div>';
+
+    var qrImpression = '<div class="qr-impression">' + qrSvg(e.url || ("https://" + e.source.domaine), "Ouvrir " + esc(e.source.domaine)) +
+      '<div class="infos"><span class="lbl">La source</span><span>' + esc(e.source.domaine) + ' · flasher le code pour ouvrir</span></div></div>';
+
+    var detailsInner =
+      qrImpression +
+      renderUsage(e);
+
+    var details = '<div class="entree-details">' + detailsInner + '</div>';
+
+    return '<div class="entree" data-entree="' + e.id + '">' + row + details + '</div>';
+  }
+
+  function groupByRubrique(list){
+    var order = [], map = {};
+    list.forEach(function(e){
+      if (!map[e.rubrique]) { map[e.rubrique] = []; order.push(e.rubrique); }
+      map[e.rubrique].push(e);
+    });
+    return order.map(function(r){ return { rubrique: r, items: map[r] }; });
+  }
+
+  function renderRail(list){
+    return '<div class="rail"><div class="rail-titre">Les ' + (list.length === 3 ? "trois" : list.length) + ' sources du numéro</div><div class="rail-liste">' +
+      list.map(function(e){
+        return '<a class="rail-item" href="#' + e.id + '"><span class="titre">' + esc(e.titre) + '</span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
+      }).join("") +
+      '</div><div class="rail-note">Ce sommaire ne liste pas les titres du numéro mais <strong>ses documents</strong> : c\'est la seconde porte d\'entrée vers les sources.</div></div>';
+  }
+
+  function parseChiffres(text){
+    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(function(line){
+      var idx = line.indexOf("|");
+      if (idx === -1) return { v: line, l: "" };
+      var v = line.slice(0, idx).trim();
+      var l = line.slice(idx + 1).trim();
+      var accent = /\*$/.test(l);
+      if (accent) l = l.replace(/\*$/, "").trim();
+      return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
+    });
+  }
+
+  function chiffresToText(chiffres){
+    return (chiffres || []).map(function(c){ return c.v + " | " + c.l + (c.accent ? " *" : ""); }).join("\n");
+  }
+
+  function champ(label, name, value, aide, isTextarea){
+    var tag = isTextarea
+      ? '<textarea id="champ-' + name + '" name="' + name + '">' + esc(value || "") + '</textarea>'
+      : '<input id="champ-' + name + '" name="' + name + '" type="text" value="' + esc(value || "") + '">';
+    return '<div class="champ"><label for="champ-' + name + '">' + label + '</label>' + tag + (aide ? '<span class="aide">' + aide + '</span>' : "") + '</div>';
+  }
+
+  function renderModal(){
+    if (!state.modal) return "";
+    var editing = state.modal.mode === "edit";
+    var e = editing ? entrees.filter(function(x){ return x.id === state.modal.id; })[0] : null;
+    if (editing && !e) return "";
+
+    return '<div class="modal-overlay" data-action="close-modal-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="' + (editing ? "Modifier l’entrée" : "Ajouter une entrée") + '">' +
+        '<div class="modal-titre">' + (editing ? "Modifier l’entrée" : "Ajouter une entrée") + '</div>' +
+        '<form id="entree-form">' +
+          champ("Rubrique", "rubrique", e ? e.rubrique : "") +
+          '<div class="champs-ligne">' +
+            champ("Source", "nom", e ? e.source.nom : "") +
+            champ("Territoire", "territoire", e ? e.source.territoire : "", "ex. Bas-Rhin, national") +
+          '</div>' +
+          champ("Adresse de la source (URL)", "url", e ? e.url : "") +
+          '<div class="champs-ligne">' +
+            champ("Domaine affiché", "domaine", e ? e.source.domaine : "", "se remplit depuis l'URL — modifiable") +
+            champ("Date", "date", e ? e.source.date : "", "ex. 14 août 2026") +
+          '</div>' +
+          champ("Titre de l'entrée", "titre", e ? e.titre : "") +
+          champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "une valeur par ligne, « valeur | libellé », terminer par * pour la mettre en avant", true) +
+          champ("Résumé factuel", "resume", e ? e.resume : "", "", true) +
+          champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
+          '<div class="modal-boutons">' +
+            '<span></span>' +
+            '<div class="modal-boutons-droite">' +
+              '<button type="button" class="btn-texte" data-action="close-modal">Annuler</button>' +
+              '<button type="submit" class="btn-plein">Enregistrer</button>' +
+            '</div>' +
+          '</div>' +
+        '</form>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function numerosPublies(){
+    // un brouillon (le n° en cours, avec sa moisson) n'existe pas encore
+    // pour le public : sommaire, recherche et « dernier numéro » l'ignorent.
+    return numeros.filter(function(n){ return n.statut !== "brouillon"; });
+  }
+
+  function moisGroupes(){
+    var tries = numerosPublies().sort(function(a, b){ return b.numero - a.numero; });
+    var order = [], map = {};
+    tries.forEach(function(n){
+      if (!map[n.mois]) { map[n.mois] = []; order.push(n.mois); }
+      map[n.mois].push(n);
+    });
+    return order.map(function(m){ return { mois: m, items: map[m] }; });
+  }
+
+  function renderNumeroCarte(n, dernier){
+    var validees = n.entrees.filter(function(e){ return e.valide; });
+    var titresHtml = validees.slice(0, 3).map(function(e){ return "<li>" + esc(e.titre) + "</li>"; }).join("");
+    var reste = validees.length - 3;
+    var plusHtml = reste > 0 ? '<li class="plus">et ' + reste + ' autre' + (reste > 1 ? "s" : "") + ' actualité' + (reste > 1 ? "s" : "") + '</li>' : "";
+    return '<div class="numero-carte' + (dernier ? " dernier" : "") + '">' +
+      '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
+      '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + plusHtml + '</ul></div>' +
+      '<div class="nc-droite"><div class="nc-compte"><span class="n tab-num">' + validees.length + '</span><span class="l">actualités publiées</span></div><button type="button" class="nc-ouvrir" data-action="ouvrir-numero" data-numero="' + n.numero + '"><span>Ouvrir le numéro</span><span class="fleche">→</span></button></div>' +
+    '</div>';
+  }
+
+  function renderSommaire(){
+    var groupes = moisGroupes();
+    var dernierNumero = numerosPublies().reduce(function(m, n){ return n.numero > m ? n.numero : m; }, 0);
+    var html = groupes.map(function(g, gi){
+      var ouvert = gi === 0 || !!state.sommaireDeplie[g.mois];
+      var totalActus = g.items.reduce(function(s, n){ return s + n.entrees.filter(function(e){ return e.valide; }).length; }, 0);
+      var tete = '<div class="sommaire-mois"><span class="nom">' + esc(g.mois) + '</span><span class="filet"></span>' +
+        '<span class="compte">' + g.items.length + ' numéro' + (g.items.length > 1 ? "s" : "") + ' · ' + totalActus + ' actualité' + (totalActus > 1 ? "s" : "") + '</span>' +
+        (gi > 0 ? '<button type="button" class="deplier" data-action="deplier-mois" data-mois="' + esc(g.mois) + '"><span class="chevron">' + (ouvert ? "▾" : "▸") + '</span><span>' + (ouvert ? "Replier" : "Déplier") + '</span></button>' : "") +
+        '</div>';
+      if (!ouvert) {
+        var chips = g.items.map(function(n){
+          var sem = n.semaine.match(/semaine (\d+)/);
+          return '<button type="button" class="chip" data-action="ouvrir-numero" data-numero="' + n.numero + '">n° ' + n.numero + (sem ? " · sem. " + sem[1] : "") + '</button>';
+        }).join("");
+        return tete + '<div class="mois-replie">' + chips + '</div>';
+      }
+      return tete + g.items.map(function(n){ return renderNumeroCarte(n, n.numero === dernierNumero); }).join("");
+    }).join("");
+    return '<h1 class="sr-only">Sommaire</h1><div class="sommaire">' + html + '</div>';
+  }
+
+  function normalise(s){
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function toutesLesRubriques(){
+    var vues = {}, list = [];
+    numerosPublies().forEach(function(n){
+      n.entrees.forEach(function(e){
+        if (e.valide && !vues[e.rubrique]) { vues[e.rubrique] = true; list.push(e.rubrique); }
+      });
+    });
+    return list;
+  }
+
+  function extraitAutour(texte, qNorm, rayon){
+    var hay = normalise(texte);
+    var idx = hay.indexOf(qNorm);
+    if (idx === -1) return texte;
+    var start = Math.max(0, idx - rayon), end = Math.min(texte.length, idx + qNorm.length + rayon);
+    return (start > 0 ? "…" : "") + texte.slice(start, end) + (end < texte.length ? "…" : "");
+  }
+
+  function surligne(texte, qNorm){
+    if (!qNorm) return esc(texte);
+    var hay = normalise(texte), out = "", i = 0, idx;
+    while ((idx = hay.indexOf(qNorm, i)) !== -1) {
+      out += esc(texte.slice(i, idx)) + '<mark class="surlignage">' + esc(texte.slice(idx, idx + qNorm.length)) + '</mark>';
+      i = idx + qNorm.length;
+    }
+    return out + esc(texte.slice(i));
+  }
+
+  function rechercheResultats(){
+    var qRaw = state.recherche.q.trim();
+    var qNorm = normalise(qRaw);
+    if (!qNorm) return { qNorm: "", actus: [], sources: [] };
+    var champFiltre = state.recherche.champ, rubriqueFiltre = state.recherche.rubrique;
+    var actus = [];
+    numerosPublies().forEach(function(n){
+      n.entrees.forEach(function(e){
+        if (!e.valide) return; // la recherche ne porte que sur le publié
+        if (rubriqueFiltre !== "toutes" && e.rubrique !== rubriqueFiltre) return;
+        var pool = [{ texte: e.titre, label: "le titre" }, { texte: e.resume, label: "le résumé" }];
+        if (champFiltre !== "titres") {
+          pool.push({ texte: e.source.nom, label: "la source" });
+          (e.chiffres || []).forEach(function(c){ if (c.l) pool.push({ texte: c.l, label: "le bandeau de chiffres" }); });
+        }
+        // e.usage n'est jamais ajouté au pool : jamais publié, donc jamais indexé (règle 11)
+        var hit = pool.filter(function(p){ return p.texte && normalise(p.texte).indexOf(qNorm) !== -1; })[0];
+        if (!hit) return;
+        actus.push({ e: e, n: n, extrait: extraitAutour(hit.texte, qNorm, 70), label: hit.label });
+      });
+    });
+    actus.sort(function(a, b){ return b.n.numero - a.n.numero; });
+    var vues = {}, sources = [];
+    actus.forEach(function(r){
+      var key = r.e.url || r.e.id;
+      if (vues[key]) return;
+      vues[key] = true;
+      sources.push(r);
+    });
+    return { qNorm: qNorm, actus: actus, sources: sources };
+  }
+
+  function renderRecherche(){
+    var res = rechercheResultats();
+    var rubriques = toutesLesRubriques();
+    var numerosPub = numerosPublies();
+    var totalNumeros = numerosPub.length;
+    var totalActus = numerosPub.reduce(function(s, n){ return s + n.entrees.filter(function(e){ return e.valide; }).length; }, 0);
+
+    var barre = '<h1 class="sr-only">Recherche</h1><div class="recherche-barre">' +
+      '<label class="recherche-label" for="recherche-q">Chercher dans tous les numéros</label>' +
+      '<form id="recherche-form">' +
+        '<div class="recherche-ligne"><div class="recherche-champ-texte">' +
+          '<input id="recherche-q" type="text" placeholder="mot-clé, source, territoire…" value="' + esc(state.recherche.q) + '">' +
+          '<button type="submit">Chercher</button>' +
+        '</div></div>' +
+        '<div class="recherche-filtres">' +
+          '<div class="filtre-groupe"><span class="lbl">Chercher dans</span><div class="filtre-toggle">' +
+            '<button type="button" data-action="recherche-champ" data-champ="tout" aria-pressed="' + (state.recherche.champ === "tout") + '">tout le texte</button>' +
+            '<button type="button" data-action="recherche-champ" data-champ="titres" aria-pressed="' + (state.recherche.champ === "titres") + '">titres seuls</button>' +
+          '</div></div>' +
+          '<div class="filtre-groupe"><span class="lbl">Rubrique</span><select class="filtre-select" data-action="recherche-rubrique">' +
+            '<option value="toutes"' + (state.recherche.rubrique === "toutes" ? " selected" : "") + '>Toutes</option>' +
+            rubriques.map(function(r){ return '<option value="' + esc(r) + '"' + (state.recherche.rubrique === r ? " selected" : "") + '>' + esc(r) + '</option>'; }).join("") +
+          '</select></div>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+
+    if (!res.qNorm) {
+      return '<div class="recherche">' + barre + '<div class="recherche-corps"><div class="recherche-vide">Tapez un mot-clé pour chercher dans les ' + totalNumeros + ' numéros publiés (' + totalActus + ' actualités).</div></div></div>';
+    }
+
+    if (!res.actus.length) {
+      // état limite ⑤ « recherche sans résultat » (REGLES.md, écran 4a)
+      var rubriqueFiltre = state.recherche.rubrique;
+      var filtreHtml = "";
+      if (rubriqueFiltre !== "toutes") {
+        var elargi = (function(){
+          var save = state.recherche.rubrique;
+          state.recherche.rubrique = "toutes";
+          var r = rechercheResultats();
+          state.recherche.rubrique = save;
+          return r;
+        })();
+        var numsElargis = {};
+        elargi.actus.forEach(function(r){ numsElargis[r.n.numero] = true; });
+        var compte = Object.keys(numsElargis).length;
+        filtreHtml = '<div class="filtre-rappel">Le filtre « ' + esc(rubriqueFiltre) + ' » est actif' +
+          (compte ? " — l'élargir couvrirait " + compte + " numéro" + (compte > 1 ? "s" : "") + " de plus." : ".") + '</div>';
+      }
+      var corpsVide = '<div class="etat-limite">' +
+        '<span class="glyphe">⌕</span>' +
+        '<h2>Rien pour « ' + esc(state.recherche.q.trim()) + ' » dans les ' + totalNumeros + ' numéros</h2>' +
+        '<p>Le carnet cherche les noms comme ses sources : vérifier l\'orthographe, ou essayer un mot plus général.</p>' +
+        filtreHtml +
+      '</div>';
+      return '<div class="recherche">' + barre + '<div class="recherche-corps">' + corpsVide + '</div></div>';
+    }
+
+    var totalResultats = res.actus.length + res.sources.length;
+    var compteur = '<div class="recherche-compteur"><strong>' + totalResultats + ' résultat' + (totalResultats > 1 ? "s" : "") + '</strong> — ' +
+      res.actus.length + ' actualité' + (res.actus.length > 1 ? "s" : "") + ' · ' + res.sources.length + ' source' + (res.sources.length > 1 ? "s" : "") +
+      ' &nbsp;·&nbsp; cherché dans ' + totalNumeros + ' numéros, ' + totalActus + ' actualités publiées</div>';
+
+    var actusHtml = !res.actus.length
+      ? '<div class="recherche-vide">Aucune actualité ne correspond à cette recherche.</div>'
+      : '<div class="resultats-tete"><span>Les actualités</span><span class="filet"></span><span>' + res.actus.length + ' · classées par numéro</span></div>' +
+        res.actus.map(function(r){
+          var e = r.e, n = r.n;
+          return '<div class="resultat-actu">' +
+            '<div class="ra-corps">' +
+              '<div class="ra-meta"><span class="nom">' + esc(e.source.nom) + '</span>' + (e.source.territoire ? '<span class="pastille-echelle">' + esc(e.source.territoire) + '</span>' : "") + '<span class="meta-mono">' + esc(e.source.date) + '</span></div>' +
+              '<div class="ra-titre">' + surligne(e.titre, res.qNorm) + '</div>' +
+              '<div class="ra-extrait">' + surligne(r.extrait, res.qNorm) + '</div>' +
+              '<div class="ra-ou">trouvé dans ' + r.label + '</div>' +
+            '</div>' +
+            '<div class="ra-droite"><span class="parue">Parue dans</span><button type="button" class="num" data-action="ouvrir-numero" data-numero="' + n.numero + '">n° ' + n.numero + '</button><span class="meta-mono">' + esc(n.semaine.replace(/^semaine /, "sem. ")) + '</span><span>' + esc(e.rubrique) + '</span></div>' +
+          '</div>';
+        }).join("");
+
+    var sourcesHtml = !res.sources.length ? "" :
+      '<div class="resultats-tete"><span>Les sources</span><span class="filet"></span><span>' + res.sources.length + '</span></div>' +
+      '<div class="sources-grille">' +
+      res.sources.map(function(r){
+        var e = r.e;
+        return '<div class="resultat-source"><div class="rs-corps"><div class="rs-nature"><span>n° ' + r.n.numero + '</span></div><div class="rs-titre">' + surligne(e.titre, res.qNorm) + '</div></div>' +
+          '<a class="rs-ouvrir" href="' + esc(e.url || ("#" + e.id)) + '" data-action="clic-source" data-id="' + e.id + '"><span>Ouvrir la source</span><span>→</span></a></div>';
+      }).join("") +
+      '</div>';
+
+    return '<div class="recherche">' + barre + compteur + '<div class="recherche-corps">' + actusHtml + sourcesHtml + '</div></div>';
+  }
+
+  // Les 3 états limites d'un numéro en cours de collecte (REGLES.md, écran
+  // 4b) : ② aucune entrée retenue, ③ collecte sans nouveauté, ④ collecte en
+  // échec. Organiques (n° 13, le brouillon en cours) sauf le choix entre
+  // ③ et ④, simulé par le sélecteur dev faute d'un vrai job de collecte
+  // (voir AVANCEMENT.md).
+  function renderEtatNumeroVide(){
+    return '<div class="etat-limite">' +
+      '<span class="glyphe">▭</span>' +
+      '<h2>Le n° ' + numero.numero + ' est vide pour l\'instant</h2>' +
+      '<p>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' attendent dans la moisson du ' + esc(numero.collecte.date) + '. Cocher celles qui partiront dans le numéro, ou en ajouter une à la main.</p>' +
+      '<div class="actions"><button type="button" class="btn-plein" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button><button type="button" class="btn-ligne" data-action="new-entree">+ Ajouter</button></div>' +
+    '</div>';
+  }
+
+  function renderEtatCollecteRien(){
+    return '<div class="etat-limite">' +
+      '<span class="glyphe">◇</span>' +
+      '<h2>Aucune nouveauté chez les 14 sources suivies</h2>' +
+      '<p>La collecte du ' + esc(numero.collecte.date) + ' a bien tourné : les 14 sources ont répondu, aucune n\'a publié depuis la dernière moisson. C\'est un résultat, pas une panne.</p>' +
+      '<div class="actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-ligne" data-action="vue" data-vue="sources">Gérer les sources</button></div>' +
+    '</div>';
+  }
+
+  function renderEtatCollecteEchec(){
+    var enEchec = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut === "echec"; });
+    var detail = enEchec.map(function(s){ return s.nom + " · " + s.derniereMoisson.detail; }).join("\n");
+    var repondu = sourcesSuivies.length - enEchec.length;
+    return '<div class="etat-limite erreur">' +
+      '<span class="glyphe">✕</span>' +
+      '<h2>La collecte du ' + esc(numero.collecte.date) + ' ne s\'est pas terminée</h2>' +
+      '<p>' + repondu + ' sources sur ' + sourcesSuivies.length + ' ont répondu ; ' + enEchec.length + ' n\'' + (enEchec.length > 1 ? "ont" : "a") + ' pas pu être jointe' + (enEchec.length > 1 ? "s" : "") + '. Les entrées déjà rapportées sont dans la moisson, la liste des sources en échec est consultable.</p>' +
+      '<div class="detail-liste">' + esc(detail) + '</div>' +
+      '<div class="actions"><button type="button" class="btn-plein" data-action="relancer-collecte">Relancer les ' + enEchec.length + ' sources</button></div>' +
+    '</div>';
+  }
+
+  function renderMoissonAlerte(){
+    if (numero.moisson == null) return null; // numéro déjà bouclé : pas de suivi de moisson
+    if (entrees.filter(function(e){ return e.valide; }).length > 0) return null; // au moins une entrée retenue : écran normal
+    if (numero.collecte.statut === "echec") return renderEtatCollecteEchec();
+    if (numero.collecte.statut === "rien") return renderEtatCollecteRien();
+    return renderEtatNumeroVide();
+  }
+
+  function renderMoissonBarre(){
+    if (numero.moisson == null || !numero.moisson.length) return "";
+    if (numero.collecte.statut !== "rapporte") return ""; // état ③/④ déjà affiché à la place
+    if (!entrees.filter(function(e){ return e.valide; }).length) return ""; // état ② déjà affiché à la place
+    return '<div class="moisson-barre"><span class="titre">Moisson du ' + esc(numero.collecte.date) + '</span><span>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' encore en attente de tri</span><span class="spacer"></span><button type="button" class="btn-ligne" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button></div>';
+  }
+
+  function devOutilsCollecte(){
+    if (numero.moisson == null) return "";
+    function opt(v, l){ return '<option value="' + v + '"' + (numero.collecte.statut === v ? " selected" : "") + '>' + l + '</option>'; }
+    return '<div class="dev-outils"><span class="dev-label">Dev</span><span>Simuler la collecte du ' + esc(numero.collecte.date) + '</span>' +
+      '<select data-action="collecte-statut">' + opt("rapporte", "rapportée (normale)") + opt("rien", "rien de neuf") + opt("echec", "échec partiel") + '</select></div>';
+  }
+
+  function renderSelecteurNumero(){
+    var tries = numeros.slice().sort(function(a, b){ return b.numero - a.numero; });
+    var options = tries.map(function(n){
+      var sem = n.semaine.match(/^semaine (\d+)/);
+      var label = "n° " + n.numero + (n.statut === "brouillon" ? " · brouillon" : (sem ? " · sem. " + sem[1] : " · publié"));
+      return '<option value="' + n.numero + '"' + (n.numero === numero.numero ? " selected" : "") + '>' + esc(label) + '</option>';
+    }).join("");
+    return '<label class="select-numero-wrap"><span class="lbl">Numéro en cours</span><select class="select-numero" data-action="changer-numero">' + options + '</select></label>';
+  }
+
+  function renderNumeroPage(){
+    if (state.mode === "publiee" && numero.statut === "brouillon") {
+      return '<div class="etat-limite"><span class="glyphe">◇</span><h1>Ce numéro n\'est pas encore publié</h1><p>Il est en cours de préparation en rédaction et n\'existe pas encore pour les étudiants.</p></div>';
+    }
+
+    // Compteur de fréquentation (Lot 6) : une fois par ouverture d'un numéro
+    // publié en vue publiée, pas à chaque re-rendu (state.vuesComptees).
+    if (state.mode === "publiee" && numero.statut === "publie" && !state.vuesComptees[numero.numero]) {
+      state.vuesComptees[numero.numero] = true;
+      compterVueNumero(numero.numero);
+    }
+
+    var visibles = entrees.filter(function(e){ return state.mode === "redaction" || e.valide; });
+    var groupes = groupByRubrique(visibles);
+    var total = visibles.length;
+    var compte = 0;
+
+    var alerte = state.mode === "redaction" ? renderMoissonAlerte() : null;
+    var corpsHtml = alerte !== null ? alerte : groupes.map(function(g){
+      var teteHtml = '<div class="rubrique-tete"><span class="nom">' + esc(g.rubrique) + '</span><span class="filet"></span>' +
+        (state.mode !== "redaction" ? '<span class="position">' + (compte + 1) + ' sur ' + total + '</span>' : "") + '</div>';
+      var itemsHtml = g.items.map(function(e){ compte++; return renderEntree(e); });
+      // Rubrique-tête + sa 1re entrée regroupées dans un même bloc : en
+      // impression (grille 2 colonnes), ça évite qu'un titre de rubrique
+      // se retrouve seul en bas d'une colonne, séparé de sa carte.
+      return '<div class="rubrique-groupe-tete">' + teteHtml + (itemsHtml[0] || "") + '</div>' + itemsHtml.slice(1).join("");
+    }).join("");
+
+    var publieBadge = numero.statut === "publie" ? '<span class="etat-pastille ok">✓ publié</span>' : "";
+    var enteteActions = state.mode === "redaction"
+      ? '<div class="entete-actions">' + renderSelecteurNumero() +
+        '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
+        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button><button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button></div>' +
+        '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
+        devOutilsCollecte() +
+      '</div>'
+      : "";
+
+    var corpsWrap = state.mode === "redaction"
+      ? '<div class="corps"><div class="colonne">' + renderMoissonBarre() + corpsHtml + '</div></div>'
+      : '<div class="corps"><div class="colonne">' + corpsHtml + '</div>' + renderRail(visibles) + '</div>';
+
+    var banniere = state.mode === "redaction" ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>' : "";
+
+    var printEntete = '<div class="print-entete">' +
+      '<div class="print-ligne1">Carnet de veille naturaliste · BTS Gestion et protection de la nature · Kerplouz</div>' +
+      '<div class="print-ligne2">' +
+        '<span class="print-numero"><span class="chiffre">N° ' + numero.numero + '</span><span class="print-titre">' + esc(numero.titre) + '</span></span>' +
+        '<span class="print-meta">' + esc(numero.semaine.replace(/^semaine /, "sem. ")) + ' · ' + total + ' actualité' + (total > 1 ? "s" : "") + ' · imprimé le ' + esc(dateImpression()) + '</span>' +
+      '</div>' +
+    '</div>';
+
+    var printPied = '<div class="print-pied"><div class="gauche">' + qrSvg(location.href, "QR vers tous les numéros du carnet") + '<span>Tous les numéros du carnet<br>portail.btsgpn-kerplouz.fr/carnet-de-veille</span></div><span>Adresses vérifiées le ' + esc(numero.collecte ? numero.collecte.date : dateImpression()) + '</span></div>';
+
+    return banniere +
+      '<div class="numero-entete">' +
+        '<div class="entete-principal">' +
+          '<div class="entete-num-ligne"><span class="entete-num-badge"><span class="lbl">N°</span>' + numero.numero + '</span><h1 class="entete-titre">' + ed(esc(numero.titre), "numero.titre") + '</h1></div>' +
+          '<div class="entete-semaine">' + ed(esc(numero.semaine), "numero.semaine") + '</div>' +
+          (state.mode === "redaction" ? '<p class="entete-chapo">' + ed(esc(numero.chapo), "numero.chapo") + '</p>' : "") +
+        '</div>' +
+        enteteActions +
+      '</div>' +
+      printEntete +
+      corpsWrap +
+      printPied;
+  }
+
+  // État limite ① (REGLES.md, écran 4b) : « OÙ · à la place du numéro, sur
+  // l'adresse du carnet, tant qu'aucun numéro n'est publié. » Comme aucun
+  // vrai premier lancement n'est reproductible avec le jeu de démonstration
+  // (8 numéros déjà publiés), il se déclenche par le lien dev de la barre
+  // d'actions en rédaction plutôt que par un état réel — voir AVANCEMENT.md.
+  function renderEtatPremierLancement(){
+    return '<div class="etat-limite">' +
+      '<span class="glyphe">◇</span>' +
+      '<h1>Le premier numéro paraîtra vendredi</h1>' +
+      '<p>Le carnet est une veille hebdomadaire : chaque vendredi, l\'équipe pédagogique publie les actualités naturalistes de la semaine, avec leurs documents d\'origine.</p>' +
+      '<div class="rien-a-faire">Rien à faire — revenir vendredi.</div>' +
+      '<div class="actions"><button type="button" class="lien-action" data-action="preview-normal">‹ Revenir à l\'aperçu normal (dev)</button></div>' +
+    '</div>';
+  }
+
+  function validerPublication(){
+    return entrees.filter(function(e){ return e.valide; }).map(function(e){
+      if (e.lienMort) return { id: e.id, titre: e.titre, type: "mort", message: "lien mort depuis le " + e.lienMortDepuis + ". Corriger l'adresse ou écarter l'entrée." };
+      if (!e.url || !e.url.trim()) return { id: e.id, titre: e.titre, type: "vide", message: "bloc source vide. Un lien au minimum est exigé." };
+      return null;
+    }).filter(Boolean);
+  }
+
+  function renderPublicationRefusee(){
+    if (!state.publicationRefusee) return "";
+    var pr = state.publicationRefusee;
+    var titre = pr.fautives.length > 1 ? (pr.fautives.length + " entrées bloquent la publication du n° " + pr.numeroId) : ("Une entrée bloque la publication du n° " + pr.numeroId);
+    return '<div class="modal-overlay" data-action="close-refus-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Publication refusée">' +
+        '<span class="glyphe-alerte">⚠</span>' +
+        '<div class="modal-titre">' + esc(titre) + '</div>' +
+        '<div class="refus-liste">' +
+          pr.fautives.map(function(f){ return '<div class="refus-item' + (f.type === "vide" ? " vide" : "") + '"><b>' + esc(f.titre) + '</b> — ' + esc(f.message) + '</div>'; }).join("") +
+        '</div>' +
+        '<div class="modal-boutons"><button type="button" class="btn-plein" data-action="regler-fautive" data-id="' + pr.fautives[0].id + '">Régler la première</button><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-refus">Fermer</button></div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderMoissonModal(){
+    if (!state.moissonOuverte || numero.moisson == null) return "";
+    return '<div class="modal-overlay" data-action="close-moisson-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Moisson du numéro">' +
+        '<div class="modal-titre">Moisson du ' + esc(numero.collecte.date) + ' — ' + numero.moisson.length + ' en attente</div>' +
+        '<div class="moisson-liste">' +
+          (!numero.moisson.length ? '<p class="moisson-vide">Plus rien en attente de tri.</p>' : "") +
+          numero.moisson.map(function(c){
+            var probleme = !c.url || c.lienMort;
+            var noteProbleme = c.lienMort ? " · lien mort" : (!c.url ? " · pas encore de lien" : "");
+            return '<div class="moisson-item' + (probleme ? " probleme" : "") + '">' +
+              '<div class="infos"><span class="titre">' + esc(c.titre) + '</span><span class="meta">' + esc(c.source.nom) + ' · ' + esc(c.rubrique) + esc(noteProbleme) + '</span></div>' +
+              '<div class="btns"><button type="button" class="lien-action danger" data-action="ecarter-candidat" data-id="' + c.id + '">Écarter</button><button type="button" class="btn-ligne" data-action="retenir-candidat" data-id="' + c.id + '">Retenir</button></div>' +
+            '</div>';
+          }).join("") +
+        '</div>' +
+        '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-moisson">Fermer</button></div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // ---- sources suivies (lot 4, écran 5a) ----
+  function renderSourceRow(s, retirable){
+    var actions = [];
+    if (s.derniereMoisson.statut === "echec") actions.push('<button type="button" class="lien-action" data-action="source-reessayer" data-id="' + s.id + '">Réessayer</button>');
+    actions.push('<button type="button" class="lien-action" data-action="source-edit" data-id="' + s.id + '">Modifier</button>');
+    if (retirable) actions.push('<button type="button" class="lien-action danger" data-action="source-remove" data-id="' + s.id + '">Ne plus suivre</button>');
+
+    var moissonTxt = s.derniereMoisson.statut === "echec"
+      ? '<span class="echec">échec · ' + esc(s.derniereMoisson.date) + '</span>'
+      : esc(s.derniereMoisson.date) + ' · ' + s.derniereMoisson.entrees + ' entrée' + (s.derniereMoisson.entrees > 1 ? "s" : "");
+
+    return '<div class="source-row">' +
+      '<div class="source-nom">' +
+        '<span class="nom">' + esc(s.nom) + '</span>' +
+        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + '</span>' +
+        (s.derniereMoisson.statut === "echec" ? '<span class="echec-note">× ' + esc(s.derniereMoisson.detail) + (s.derniereMoisson.note ? " · " + esc(s.derniereMoisson.note) : "") + '</span>' : "") +
+      '</div>' +
+      '<div class="source-rubrique">' + esc(s.rubriqueDefaut) + '</div>' +
+      '<div class="source-moisson">' + moissonTxt + '</div>' +
+      '<div class="source-rapporte"><span class="n tab-num">' + s.compteurs.retenues + '</span><span class="l">retenue' + (s.compteurs.retenues > 1 ? "s" : "") + ' sur ' + s.compteurs.rapportees + ' rapportée' + (s.compteurs.rapportees > 1 ? "s" : "") + (s.compteurs.depuis ? " depuis " + esc(s.compteurs.depuis) : "") + '</span></div>' +
+      '<div class="source-actions">' + actions.join("") + '</div>' +
+    '</div>';
+  }
+
+  function renderSourcesEcran(){
+    var totalEchec = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut === "echec"; }).length;
+    var derniereDate = sourcesSuivies.length ? sourcesSuivies[0].derniereMoisson.date : "";
+
+    var entete = '<h1 class="sr-only">Sources suivies</h1><div class="sources-entete">' +
+      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>interrogées chaque samedi à 6 h</span></div>' +
+      '<div class="sources-collecte"><span class="label">Dernière collecte</span><span class="valeur">' + esc(derniereDate) + (totalEchec ? ' · <span class="echec">' + totalEchec + ' en échec</span>' : "") + '</span></div>' +
+      '<div class="sources-entete-actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-plein" data-action="source-add">+ Suivre une source</button></div>' +
+    '</div>';
+
+    var cols = '<div class="sources-cols"><span>Source</span><span>Rubrique par défaut</span><span>Dernière moisson</span><span>Ce qu\'elle a rapporté</span><span></span></div>';
+
+    var echec = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut === "echec"; });
+    var reste = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut !== "echec"; });
+    var attention = reste.filter(function(s){ return s.compteurs.rapportees && (s.compteurs.retenues / s.compteurs.rapportees) < 0.05; });
+    var autres = reste.filter(function(s){ return attention.indexOf(s) === -1; });
+
+    var groupeEchec = !echec.length ? "" :
+      '<div class="groupe-titre echec"><span>En échec à la dernière collecte — ' + echec.length + '</span></div>' +
+      echec.map(function(s){ return renderSourceRow(s, false); }).join("");
+
+    var groupeAttention = !attention.length ? "" :
+      '<div class="groupe-titre"><span>Rien de retenu depuis longtemps — ' + attention.length + ' · à confirmer ou à retirer</span></div>' +
+      attention.map(function(s){ return renderSourceRow(s, true); }).join("");
+
+    var visiblesAutres = state.sourcesDeplie ? autres : autres.slice(0, 2);
+    var masquees = state.sourcesDeplie ? [] : autres.slice(2);
+    var groupeAutres = !autres.length ? "" :
+      '<div class="groupe-titre"><span>Les ' + autres.length + ' autres — rien à décider</span><span class="filet"></span>' +
+      (autres.length > 2 ? '<button type="button" class="deplier" data-action="deplier-sources">' + (state.sourcesDeplie ? "Replier" : "Déplier les " + (autres.length - 2)) + '</button>' : "") +
+      '</div>' +
+      visiblesAutres.map(function(s){ return renderSourceRow(s, false); }).join("") +
+      (masquees.length ? '<div class="sources-replie"><span class="chip">' + masquees.map(function(s){ return esc(s.nom); }).join(" · ") + '</span></div>' : "");
+
+    return '<div class="sources">' + entete + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
+  }
+
+  function renderModalSource(){
+    if (!state.modalSource) return "";
+    var editing = state.modalSource.mode === "edit";
+    var s = editing ? sourcesSuivies.filter(function(x){ return x.id === state.modalSource.id; })[0] : null;
+    if (editing && !s) return "";
+
+    return '<div class="modal-overlay" data-action="close-modal-source-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="' + (editing ? "Modifier la source" : "Suivre une source") + '">' +
+        '<div class="modal-titre">' + (editing ? "Modifier la source" : "Suivre une nouvelle source") + '</div>' +
+        '<form id="source-form">' +
+          champ("Nom de la source", "nom", s ? s.nom : "") +
+          '<div class="champs-ligne">' +
+            champ("Adresse (flux ou page)", "adresse", s ? s.adresse : "", "ex. exemple.fr/actualites.rss") +
+            champ("Type", "type", s ? s.type : "flux RSS", "flux RSS ou page suivie") +
+          '</div>' +
+          '<div class="champs-ligne">' +
+            champ("Échelle", "echelle", s ? s.echelle : "", "ex. national, régional") +
+            champ("Territoire", "territoire", s ? s.territoire : "") +
+          '</div>' +
+          champ("Rubrique par défaut", "rubriqueDefaut", s ? s.rubriqueDefaut : "") +
+          '<div class="modal-boutons">' +
+            (editing ? '<button type="button" class="lien-action danger" data-action="source-remove" data-id="' + s.id + '">Ne plus suivre cette source</button>' : '<span></span>') +
+            '<div class="modal-boutons-droite">' +
+              '<button type="button" class="btn-texte" data-action="close-modal-source">Annuler</button>' +
+              '<button type="submit" class="btn-plein">Enregistrer</button>' +
+            '</div>' +
+          '</div>' +
+        '</form>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Modale ouverte au dernier rendu — sert uniquement à détecter une
+  // ouverture (lot 5, audit RGAA) : render() reconstruit tout le DOM à
+  // chaque appel, y compris pour des changements sans rapport avec la
+  // modale (ex. cocher une case) ; sans ce repère, on redonnerait le focus
+  // à la modale à chaque rendu et on l'arracherait au champ en cours de
+  // saisie par le clavier.
+  var modaleFoyerPrecedent = null;
+  function modaleFoyerActuel(){
+    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.moissonOuverte ? "moisson" : state.publicationRefusee ? "refus" : null;
+  }
+
+  // ---- Lot 7 : connexion / compte en attente / déconnexion ----
+
+  function renderModalAuth(){
+    if (!state.modalAuth) return "";
+    if (state.auth.redacteur && !state.auth.redacteur.actif) {
+      return '<div class="modal-overlay" data-action="close-modal-auth-backdrop">' +
+        '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Compte en attente d\'activation">' +
+          '<div class="modal-titre">Compte en attente d\'activation</div>' +
+          '<p>Le compte a bien été créé, mais il doit être activé par l\'enseignant responsable avant de pouvoir rédiger — le prévenir.</p>' +
+          '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="deconnexion">Se déconnecter</button><button type="button" class="btn-plein" data-action="close-modal-auth">Fermer</button></div></div>' +
+        '</div>' +
+      '</div>';
+    }
+    var a = state.modalAuth;
+    return '<div class="modal-overlay" data-action="close-modal-auth-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Connexion rédaction">' +
+        '<div class="modal-titre">Connexion — rédaction</div>' +
+        '<p class="aide">Adresse e-mail professionnelle. Le mot de passe est personnel : il est créé automatiquement à la première connexion.</p>' +
+        '<form id="auth-form" novalidate>' +
+          '<div class="champ"><label for="champ-auth-email">E-mail</label><input id="champ-auth-email" name="email" type="email" autocomplete="username" required></div>' +
+          '<div class="champ"><label for="champ-auth-mdp">Mot de passe</label><input id="champ-auth-mdp" name="motdepasse" type="password" autocomplete="current-password" required minlength="6"></div>' +
+          '<div class="modal-boutons">' +
+            '<button type="button" class="lien-action" data-action="mdp-oublie"' + (a.enCours ? " disabled" : "") + '>Mot de passe oublié ?</button>' +
+            '<div class="modal-boutons-droite">' +
+              '<button type="button" class="btn-texte" data-action="close-modal-auth">Annuler</button>' +
+              '<button type="submit" class="btn-plein"' + (a.enCours ? " disabled" : "") + '>' + (a.enCours ? "Connexion…" : "Se connecter") + '</button>' +
+            '</div>' +
+          '</div>' +
+          (a.erreur ? '<p class="erreur" role="alert">' + esc(a.erreur) + '</p>' : "") +
+          (a.info ? '<p class="aide">' + esc(a.info) + '</p>' : "") +
+        '</form>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderModalNumero(){
+    if (!state.modalNumero) return "";
+    var n = state.modalNumero;
+    return '<div class="modal-overlay" data-action="close-modal-numero-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Nouveau numéro">' +
+        '<div class="modal-titre">Nouveau numéro</div>' +
+        '<form id="numero-form">' +
+          champ("Numéro", "numero", String(prochainNumero())) +
+          '<div class="champ"><label for="champ-numero-semaine">Semaine</label><input id="champ-numero-semaine" name="semaineIso" type="week" value="' + esc(isoSemaineActuelle()) + '" required></div>' +
+          '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-modal-numero">Annuler</button><button type="submit" class="btn-plein">Créer</button></div></div>' +
+          (n.erreur ? '<p class="erreur" role="alert">' + esc(n.erreur) + '</p>' : "") +
+        '</form>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderAucunNumero(){
+    if (estRedacteurActif()) {
+      return '<div class="etat-limite"><span class="glyphe">◇</span><h1>Aucun numéro pour l\'instant</h1><p>Créez le premier numéro du carnet pour commencer à rédiger.</p><div class="actions"><button type="button" class="btn-plein" data-action="nouveau-numero">+ Nouveau numéro</button></div></div>';
+    }
+    return '<div class="etat-limite"><span class="glyphe">◇</span><h1>Le premier numéro paraîtra bientôt</h1><p>Le carnet est une veille hebdomadaire : chaque semaine, l\'équipe pédagogique publie les actualités naturalistes, avec leurs documents d\'origine.</p><div class="rien-a-faire">Rien à faire — revenir plus tard.</div></div>';
+  }
+
+  function render(){
+    bindCurrent();
+    var app = document.getElementById("app");
+    app.className = "app" + (state.vue === "numero" ? " mode-" + state.mode : " mode-publiee");
+
+    var redacActif = estRedacteurActif();
+
+    var modeToggleHtml = redacActif && state.vue === "numero" && numeros.length
+      ? '<div class="mode-toggle" role="group" aria-label="Bascule rédaction / vue publiée">' +
+          '<button type="button" data-action="mode" data-mode="redaction" aria-pressed="' + (state.mode === "redaction") + '">Rédaction</button>' +
+          '<button type="button" data-action="mode" data-mode="publiee" aria-pressed="' + (state.mode === "publiee") + '">Vue publiée</button>' +
+        '</div>'
+      : "";
+
+    var authHtml = redacActif
+      ? '<span class="auth-statut">' + esc(state.auth.user.email) + '<button type="button" data-action="deconnexion">Déconnexion</button></span>'
+      : '<button type="button" data-action="ouvrir-connexion">Se connecter</button>';
+
+    var bandeau =
+      '<div class="bandeau">' +
+        '<button type="button" class="brand" data-action="vue" data-vue="sommaire">' + PICTO + '<span class="brand-name">À l\'affût</span><span class="brand-sub">BTS GPN · Kerplouz</span></button>' +
+        '<div class="bandeau-spacer"></div>' +
+        modeToggleHtml +
+        '<div class="bandeau-nav">' +
+          '<button type="button" data-action="vue" data-vue="sommaire"' + (state.vue === "sommaire" ? ' aria-current="page"' : '') + '>Sommaire</button>' +
+          '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
+          (redacActif ? '<button type="button" data-action="vue" data-vue="sources"' + (state.vue === "sources" ? ' aria-current="page"' : '') + '>Sources</button>' : "") +
+        '</div>' +
+        authHtml +
+      '</div>';
+
+    var corps = !numeros.length ? renderAucunNumero()
+      : state.previewEtat === "premier" ? renderEtatPremierLancement()
+      : state.vue === "sommaire" ? renderSommaire()
+      : state.vue === "recherche" ? renderRecherche()
+      : state.vue === "sources" && redacActif ? renderSourcesEcran()
+      : renderNumeroPage();
+
+    app.innerHTML =
+      '<div class="app-liw"></div>' +
+      bandeau +
+      corps +
+      '<div class="pied">Carnet de veille naturaliste · BTS Gestion et Protection de la Nature · Kerplouz.</div>' +
+      renderModal() +
+      renderModalSource() +
+      renderModalAuth() +
+      renderModalNumero() +
+      renderMoissonModal() +
+      renderPublicationRefusee();
+
+    // Focus envoyé dans la modale seulement si elle vient de s'ouvrir
+    // (lot 5, audit RGAA — 2.4.3) : sans ça, le focus clavier restait
+    // perdu en haut de page après ouverture, la modale n'étant jamais
+    // atteinte au Tab suivant.
+    var foyerActuel = modaleFoyerActuel();
+    if (foyerActuel && foyerActuel !== modaleFoyerPrecedent) {
+      var modaleEl = app.querySelector('.modal[role="dialog"]');
+      if (modaleEl) modaleEl.focus();
+    }
+    modaleFoyerPrecedent = foyerActuel;
+  }
+
+  function ouvrirConnexion(){ state.modalAuth = { erreur: null, enCours: false, info: null }; render(); }
+
+  document.addEventListener("click", async function(ev){
+    var srcClicBtn = ev.target.closest('[data-action="clic-source"]');
+    if (srcClicBtn) { compterClicSource(srcClicBtn.getAttribute("data-id")); }
+
+    var vueBtn = ev.target.closest('[data-action="vue"]');
+    if (vueBtn) {
+      state.vue = vueBtn.getAttribute("data-vue");
+      state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
+      state.moissonOuverte = false; state.publicationRefusee = null;
+      render();
+      return;
+    }
+
+    var ouvrirBtn = ev.target.closest('[data-action="ouvrir-numero"]');
+    if (ouvrirBtn) {
+      state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
+      state.vue = "numero";
+      state.modal = null;
+      render();
+      return;
+    }
+
+    var deplierBtn = ev.target.closest('[data-action="deplier-mois"]');
+    if (deplierBtn) {
+      var mois = deplierBtn.getAttribute("data-mois");
+      state.sommaireDeplie[mois] = !state.sommaireDeplie[mois];
+      render();
+      return;
+    }
+
+    var champBtn = ev.target.closest('[data-action="recherche-champ"]');
+    if (champBtn) {
+      var qEl = document.getElementById("recherche-q");
+      if (qEl) state.recherche.q = qEl.value;
+      state.recherche.champ = champBtn.getAttribute("data-champ");
+      render();
+      return;
+    }
+
+    var modeBtn = ev.target.closest('[data-action="mode"]');
+    if (modeBtn) {
+      var modeVoulu = modeBtn.getAttribute("data-mode");
+      if (modeVoulu === "redaction" && !estRedacteurActif()) { ouvrirConnexion(); return; }
+      state.mode = modeVoulu; state.modal = null; render(); return;
+    }
+
+    // ---- Lot 7 : connexion / déconnexion ----
+    if (ev.target.closest('[data-action="ouvrir-connexion"]')) { ouvrirConnexion(); return; }
+
+    if (ev.target.closest('[data-action="deconnexion"]')) {
+      state.modalAuth = null;
+      render();
+      try { await deconnexion(); } catch (e) { window.alert("Déconnexion : " + (e && e.message || e)); }
+      return;
+    }
+
+    if (ev.target.closest('[data-action="close-modal-auth"]') || ev.target === document.querySelector('[data-action="close-modal-auth-backdrop"]')) {
+      state.modalAuth = null; render(); return;
+    }
+
+    if (ev.target.closest('[data-action="mdp-oublie"]')) {
+      var champEmail = document.getElementById("champ-auth-email");
+      var emailVal = champEmail ? (champEmail.value || "").trim().toLowerCase() : "";
+      if (!emailVal) { if (champEmail) champEmail.focus(); return; }
+      try {
+        await demanderReinitialisation(emailVal);
+        state.modalAuth = { erreur: null, info: "Si un compte existe pour " + emailVal + ", un lien de réinitialisation vient d'être envoyé." };
+      } catch (e) {
+        state.modalAuth = { erreur: e.message || "Échec de l'envoi du lien.", info: null };
+      }
+      render();
+      return;
+    }
+
+    // ---- Lot 6 : « Nouveau numéro » ----
+    if (ev.target.closest('[data-action="nouveau-numero"]')) { state.modalNumero = { erreur: null }; render(); return; }
+
+    if (ev.target.closest('[data-action="close-modal-numero"]') || ev.target === document.querySelector('[data-action="close-modal-numero-backdrop"]')) {
+      state.modalNumero = null; render(); return;
+    }
+
+    var toggleBloc = ev.target.closest('[data-action="toggle-bloc"]');
+    if (toggleBloc) {
+      var id = toggleBloc.getAttribute("data-id"), bloc = toggleBloc.getAttribute("data-bloc");
+      var entree = entrees.filter(function(e){ return e.id === id; })[0];
+      if (entree) { entree.blocs[bloc] = !entree.blocs[bloc]; ecrireEntree(id, { blocs: entree.blocs }); render(); }
+      return;
+    }
+
+    if (ev.target.closest('[data-action="new-entree"]')) { state.modal = { mode: "add" }; render(); return; }
+
+    var editBtn = ev.target.closest('[data-action="edit-entree"]');
+    if (editBtn) { state.modal = { mode: "edit", id: editBtn.getAttribute("data-id") }; render(); return; }
+
+    var delBtn = ev.target.closest('[data-action="delete-entree"]');
+    if (delBtn) {
+      var delId = delBtn.getAttribute("data-id");
+      if (window.confirm("Supprimer définitivement cette entrée du numéro ?")) {
+        entrees = entrees.filter(function(e){ return e.id !== delId; });
+        numero.entrees = entrees;
+        state.modal = null;
+        supprimerEntreeDistante(delId);
+        render();
+      }
+      return;
+    }
+
+    if (ev.target.closest('[data-action="close-modal"]') || ev.target === document.querySelector('[data-action="close-modal-backdrop"]')) {
+      state.modal = null; render(); return;
+    }
+
+    // ---- lot 4 : impression ----
+    if (ev.target.closest('[data-action="imprimer"]')) { numeroImprimer(); return; }
+
+    // ---- lot 4 : aperçu dev de l'état limite ① ----
+    if (ev.target.closest('[data-action="preview-premier"]')) {
+      state.previewEtat = "premier"; state.vue = "numero"; state.mode = "publiee"; render(); return;
+    }
+    if (ev.target.closest('[data-action="preview-normal"]')) { state.previewEtat = null; render(); return; }
+
+    // ---- lot 4 : moisson du numéro en cours (états ②③④) ----
+    if (ev.target.closest('[data-action="voir-moisson"]')) { state.moissonOuverte = true; render(); return; }
+    if (ev.target.closest('[data-action="close-moisson"]') || ev.target === document.querySelector('[data-action="close-moisson-backdrop"]')) {
+      state.moissonOuverte = false; render(); return;
+    }
+
+    var retenirBtn = ev.target.closest('[data-action="retenir-candidat"]');
+    if (retenirBtn) {
+      var cid = retenirBtn.getAttribute("data-id");
+      var cand = numero.moisson.filter(function(c){ return c.id === cid; })[0];
+      if (cand) {
+        numero.moisson = numero.moisson.filter(function(c){ return c.id !== cid; });
+        var nouvelleEntree = {
+          id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
+          source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
+          titre: cand.titre, chiffres: cand.chiffres, resume: cand.resume, usage: cand.usage,
+          blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
+        };
+        entrees.push(nouvelleEntree);
+        numero.entrees = entrees;
+        creerEntree(nouvelleEntree);
+        ecrireNumero({ moisson: numero.moisson });
+        render();
+      }
+      return;
+    }
+
+    var ecarterBtn = ev.target.closest('[data-action="ecarter-candidat"]');
+    if (ecarterBtn) {
+      var eid = ecarterBtn.getAttribute("data-id");
+      var candEcarte = numero.moisson.filter(function(c){ return c.id === eid; })[0];
+      var motif = window.prompt("Écarter définitivement ce candidat de la moisson ?\nMotif (facultatif, aide l'agent de veille à s'améliorer) :", "");
+      if (motif !== null) {
+        numero.moisson = numero.moisson.filter(function(c){ return c.id !== eid; });
+        ecrireNumero({ moisson: numero.moisson });
+        if (candEcarte) creerCandidatEcarte(candEcarte, motif.trim());
+        render();
+      }
+      return;
+    }
+
+    // ---- lot 4 : publication (état ⑥) ----
+    if (ev.target.closest('[data-action="publier-numero"]')) {
+      var fautives = validerPublication();
+      if (fautives.length) {
+        state.publicationRefusee = { numeroId: numero.numero, fautives: fautives };
+      } else {
+        numero.statut = "publie";
+        ecrireNumero({ statut: "publie" });
+      }
+      render();
+      return;
+    }
+
+    var reglerBtn = ev.target.closest('[data-action="regler-fautive"]');
+    if (reglerBtn) {
+      state.publicationRefusee = null;
+      state.modal = { mode: "edit", id: reglerBtn.getAttribute("data-id") };
+      render();
+      return;
+    }
+
+    if (ev.target.closest('[data-action="close-refus"]') || ev.target === document.querySelector('[data-action="close-refus-backdrop"]')) {
+      state.publicationRefusee = null; render(); return;
+    }
+
+    // ---- lot 4 : sources suivies (écran 5a) ----
+    if (ev.target.closest('[data-action="relancer-collecte"]')) {
+      sourcesSuivies.forEach(function(s){
+        if (s.derniereMoisson.statut === "echec") {
+          s.derniereMoisson.statut = "ok"; delete s.derniereMoisson.detail; delete s.derniereMoisson.note;
+          s.derniereMoisson.entrees = s.derniereMoisson.entrees || 0;
+          ecrireSource(s.id, { derniereMoisson: s.derniereMoisson });
+        }
+      });
+      if (numero.moisson != null) { numero.collecte.statut = "rapporte"; ecrireNumero({ collecte: numero.collecte }); }
+      render();
+      return;
+    }
+
+    var reessayerBtn = ev.target.closest('[data-action="source-reessayer"]');
+    if (reessayerBtn) {
+      var srcId = reessayerBtn.getAttribute("data-id");
+      var src = sourcesSuivies.filter(function(s){ return s.id === srcId; })[0];
+      if (src) {
+        src.derniereMoisson.statut = "ok"; delete src.derniereMoisson.detail; delete src.derniereMoisson.note;
+        src.derniereMoisson.entrees = src.derniereMoisson.entrees || 0;
+        ecrireSource(src.id, { derniereMoisson: src.derniereMoisson });
+        render();
+      }
+      return;
+    }
+
+    if (ev.target.closest('[data-action="source-add"]')) { state.modalSource = { mode: "add" }; render(); return; }
+
+    var srcEditBtn = ev.target.closest('[data-action="source-edit"]');
+    if (srcEditBtn) { state.modalSource = { mode: "edit", id: srcEditBtn.getAttribute("data-id") }; render(); return; }
+
+    var srcRemoveBtn = ev.target.closest('[data-action="source-remove"]');
+    if (srcRemoveBtn) {
+      var srcRemoveId = srcRemoveBtn.getAttribute("data-id");
+      if (window.confirm("Ne plus suivre cette source ?")) {
+        sourcesSuivies = sourcesSuivies.filter(function(s){ return s.id !== srcRemoveId; });
+        state.modalSource = null;
+        supprimerSourceDistante(srcRemoveId);
+        render();
+      }
+      return;
+    }
+
+    if (ev.target.closest('[data-action="close-modal-source"]') || ev.target === document.querySelector('[data-action="close-modal-source-backdrop"]')) {
+      state.modalSource = null; render(); return;
+    }
+
+    if (ev.target.closest('[data-action="deplier-sources"]')) { state.sourcesDeplie = !state.sourcesDeplie; render(); return; }
+  });
+
+  document.addEventListener("change", function(ev){
+    var toggleValide = ev.target.closest('[data-action="toggle-valide"]');
+    if (toggleValide) {
+      var id = toggleValide.getAttribute("data-id");
+      var entree = entrees.filter(function(e){ return e.id === id; })[0];
+      if (entree) { entree.valide = toggleValide.checked; ecrireEntree(id, { valide: entree.valide }); render(); }
+      return;
+    }
+
+    var rubriqueSel = ev.target.closest('[data-action="recherche-rubrique"]');
+    if (rubriqueSel) {
+      var qEl = document.getElementById("recherche-q");
+      if (qEl) state.recherche.q = qEl.value;
+      state.recherche.rubrique = rubriqueSel.value;
+      render();
+      return;
+    }
+
+    var collecteSel = ev.target.closest('[data-action="collecte-statut"]');
+    if (collecteSel) { numero.collecte.statut = collecteSel.value; ecrireNumero({ collecte: numero.collecte }); render(); }
+
+    var numeroSel = ev.target.closest('[data-action="changer-numero"]');
+    if (numeroSel) {
+      state.numeroId = parseInt(numeroSel.value, 10);
+      state.modal = null;
+      render();
+      return;
+    }
+  });
+
+  // Domaine affiché déduit de l'URL collée/tapée (lot 4bis) : ne complète que
+  // si le champ est encore vide, pour ne jamais écraser une valeur déjà
+  // saisie à la main (édition d'une entrée existante, ou correction manuelle).
+  document.addEventListener("input", function(ev){
+    if (!ev.target.form || ev.target.form.id !== "entree-form" || ev.target.name !== "url") return;
+    var domaineField = ev.target.form.elements["domaine"];
+    if (!domaineField || domaineField.value.trim()) return;
+    var host = "";
+    try { host = new URL(ev.target.value).hostname.replace(/^www\./, ""); } catch (err) {}
+    if (host) domaineField.value = host;
+  });
+
+  document.addEventListener("focusout", function(ev){
+    var el = ev.target.closest && ev.target.closest('[data-ed="true"]');
+    if (!el) return;
+    var path = el.getAttribute("data-path");
+    var value = el.textContent.replace(/\s+/g, " ").trim();
+    setEdValue(path, value);
+    persisterEdValue(path);
+    render();
+  });
+
+  document.addEventListener("keydown", function(ev){
+    if (ev.key !== "Escape") return;
+    if (state.modal) { state.modal = null; render(); return; }
+    if (state.modalSource) { state.modalSource = null; render(); return; }
+    if (state.modalAuth) { state.modalAuth = null; render(); return; }
+    if (state.modalNumero) { state.modalNumero = null; render(); return; }
+    if (state.moissonOuverte) { state.moissonOuverte = false; render(); return; }
+    if (state.publicationRefusee) { state.publicationRefusee = null; render(); return; }
+  });
+
+  document.addEventListener("submit", async function(ev){
+    if (ev.target.id === "recherche-form") {
+      ev.preventDefault();
+      var qEl = document.getElementById("recherche-q");
+      state.recherche.q = qEl ? qEl.value : "";
+      render();
+      return;
+    }
+
+    if (ev.target.id === "source-form") {
+      ev.preventDefault();
+      var sf = ev.target.elements;
+      function sval(name){ return sf[name] ? sf[name].value.trim() : ""; }
+
+      var editingS = state.modalSource && state.modalSource.mode === "edit";
+      var sid = editingS ? state.modalSource.id : "s" + Date.now();
+      var existingS = editingS ? sourcesSuivies.filter(function(x){ return x.id === sid; })[0] : null;
+
+      var srcEntry = {
+        id: sid,
+        nom: sval("nom"), adresse: sval("adresse"), type: sval("type") || "flux RSS",
+        echelle: sval("echelle"), territoire: sval("territoire"), rubriqueDefaut: sval("rubriqueDefaut"),
+        derniereMoisson: existingS ? existingS.derniereMoisson : { date: dateImpression(), statut: "ok", entrees: 0 },
+        compteurs: existingS ? existingS.compteurs : { retenues: 0, rapportees: 0 }
+      };
+      if (existingS) sourcesSuivies[sourcesSuivies.indexOf(existingS)] = srcEntry;
+      else sourcesSuivies.push(srcEntry);
+
+      state.modalSource = null;
+      creerOuRemplacerSource(srcEntry);
+      render();
+      return;
+    }
+
+    if (ev.target.id === "auth-form") {
+      ev.preventDefault();
+      var af = ev.target.elements;
+      var email = (af.email.value || "").trim().toLowerCase();
+      var mdp = af.motdepasse.value || "";
+      state.modalAuth = { erreur: null, enCours: true }; render();
+      try {
+        var resAuth = await connexionOuCreation(email, mdp);
+        state.auth.user = resAuth.user; state.auth.redacteur = resAuth.redacteur;
+        if (resAuth.redacteur.actif) {
+          state.modalAuth = null;
+          await chargerDonneesRedaction();
+        } else {
+          state.modalAuth = { erreur: null, enCours: false };
+        }
+      } catch (e) {
+        state.modalAuth = { erreur: e.message || "Erreur de connexion.", enCours: false };
+      }
+      render();
+      return;
+    }
+
+    if (ev.target.id === "numero-form") {
+      ev.preventDefault();
+      var nf = ev.target.elements;
+      var num = parseInt(nf.numero.value, 10);
+      if (!num || numeros.some(function(n){ return n.numero === num; })) {
+        state.modalNumero = { erreur: "Numéro invalide ou déjà utilisé." }; render(); return;
+      }
+      var semaineInfo = formaterSemaineIso(nf.semaineIso.value);
+      if (!semaineInfo) {
+        state.modalNumero = { erreur: "Semaine invalide." }; render(); return;
+      }
+      var nouveauNumero = {
+        numero: num, statut: "brouillon", mois: semaineInfo.mois,
+        semaine: semaineInfo.semaine, titre: "", chapo: "", candidates: 0,
+        collecte: null, moisson: null, vues: 0, entrees: []
+      };
+      var ok = await creerNumeroDistant(nouveauNumero);
+      if (!ok) { render(); return; }
+      numeros.push(nouveauNumero);
+      state.modalNumero = null;
+      state.numeroId = num;
+      render();
+      return;
+    }
+
+    if (ev.target.id !== "entree-form") return;
+    ev.preventDefault();
+    var f = ev.target.elements;
+    function val(name){ return f[name] ? f[name].value.trim() : ""; }
+
+    var editing = state.modal && state.modal.mode === "edit";
+    var id = editing ? state.modal.id : "e" + Date.now();
+    var existing = editing ? entrees.filter(function(x){ return x.id === id; })[0] : null;
+    var chiffres = parseChiffres(val("chiffres"));
+
+    var entry = {
+      id: id,
+      rubrique: val("rubrique") || "Sans rubrique",
+      valide: existing ? existing.valide : true,
+      origine: existing ? existing.origine : "manuel",
+      source: { nom: val("nom"), territoire: val("territoire"), domaine: val("domaine"), date: val("date") },
+      url: val("url") || ("#" + id),
+      titre: val("titre"),
+      chiffres: chiffres,
+      resume: val("resume"),
+      usage: val("usage") || null,
+      blocs: existing
+        ? { chiffres: existing.blocs.chiffres && !!chiffres.length, resume: existing.blocs.resume }
+        : { chiffres: !!chiffres.length, resume: true }
+    };
+
+    if (existing) {
+      entrees[entrees.indexOf(existing)] = entry;
+      var champsEntree = {}; Object.keys(entry).forEach(function(k){ if (k !== "id") champsEntree[k] = entry[k]; });
+      ecrireEntree(id, champsEntree);
+    } else {
+      entrees.push(entry);
+      creerEntree(entry);
+    }
+
+    state.modal = null;
+    render();
+  });
+
+  // ---- Amorçage (Lot 6+7) : async — attend la lib Supabase puis la session
+  // avant le premier rendu (contrairement à l'ancien loadData() synchrone).
+  async function init(){
+    var app = document.getElementById("app");
+    app.innerHTML = '<div class="etat-limite"><span class="glyphe">◇</span><h1>Chargement…</h1></div>';
+    try { await waitForSupabaseLib(); }
+    catch (e) {
+      app.innerHTML = '<div class="etat-limite"><span class="glyphe">⚠</span><h1>Connexion impossible</h1><p>' + esc(e.message) + '</p></div>';
+      return;
+    }
+    var s = client();
+    try {
+      var sess = await s.auth.getSession();
+      if (sess.data && sess.data.session) {
+        state.auth.user = sess.data.session.user;
+        try { state.auth.redacteur = await chargerRedacteur(state.auth.user.id); }
+        catch (e) { /* profil rédacteur indisponible : reste en lecture publique */ }
+      }
+    } catch (e) { /* pas de session : lecture publique */ }
+
+    try { await chargerDonnees(); }
+    catch (e) {
+      app.innerHTML = '<div class="etat-limite"><span class="glyphe">⚠</span><h1>Chargement impossible</h1><p>' + esc(e.message || "erreur réseau") + '</p></div>';
+      return;
+    }
+    state.numeroId = numeroParDefaut();
+    render();
+
+    s.auth.onAuthStateChange(function(event){
+      if (event === "SIGNED_OUT") {
+        state.auth.user = null; state.auth.redacteur = null; state.mode = "publiee";
+        if (state.vue === "sources") state.vue = "numero";
+        chargerDonneesPubliques().then(function(){ state.numeroId = numeroParDefaut(); render(); });
+      }
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
