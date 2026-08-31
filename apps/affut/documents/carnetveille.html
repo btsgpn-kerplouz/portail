@@ -1,0 +1,627 @@
+<title>Carnet de veille naturaliste</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#f6f3ea;
+    --surface:#fffdf7;
+    --surface-2:#efeadd;
+    --ink:#1d2420;
+    --ink-2:#4c5751;
+    --ink-3:#7b857e;
+    --rule:#ddd6c4;
+    --accent:#3f6b4a;
+    --accent-soft:#e2ece2;
+    --ocre:#a8702c;
+    --ocre-soft:#f3e6d3;
+    --shadow:0 1px 2px rgba(29,36,32,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#12160f;
+      --surface:#191e17;
+      --surface-2:#20261e;
+      --ink:#e9e7dc;
+      --ink-2:#b3b8ac;
+      --ink-3:#848b80;
+      --rule:#2f372b;
+      --accent:#8fbf95;
+      --accent-soft:#22301f;
+      --ocre:#d6a25e;
+      --ocre-soft:#312516;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#12160f;
+    --surface:#191e17;
+    --surface-2:#20261e;
+    --ink:#e9e7dc;
+    --ink-2:#b3b8ac;
+    --ink-3:#848b80;
+    --rule:#2f372b;
+    --accent:#8fbf95;
+    --accent-soft:#22301f;
+    --ocre:#d6a25e;
+    --ocre-soft:#312516;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:16.5px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 96px;}
+
+  /* ---------- Bandeau ---------- */
+  .banner{
+    border-bottom:2px solid var(--ink);
+    padding:44px 0 20px;
+    margin-bottom:44px;
+  }
+  .banner h1{
+    font-family:"Fraunces", Georgia, "Times New Roman", serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(2.1rem,5.2vw,3.1rem);
+    line-height:1.05;
+    letter-spacing:-.02em;
+    margin:0 0 14px;
+    text-wrap:balance;
+  }
+  .banner .kicker{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:.7rem;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 12px;
+  }
+  .meta{
+    display:flex;flex-wrap:wrap;gap:10px 26px;
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:.74rem;
+    color:var(--ink-2);
+    font-variant-numeric:tabular-nums;
+  }
+  .meta b{color:var(--ink);font-weight:500;}
+  .standfirst{
+    margin:18px 0 0;
+    max-width:62ch;
+    color:var(--ink-2);
+    font-size:1rem;
+  }
+
+  /* ---------- Rubriques ---------- */
+  .rubrique{margin:0 0 12px;}
+  .rubrique h2{
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:1.35rem;
+    margin:56px 0 6px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:12px;
+  }
+  .rubrique h2 span{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.68rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    font-weight:400;
+  }
+
+  /* ---------- Entrée ---------- */
+  .entry{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:0 28px;
+    padding:30px 0;
+    border-bottom:1px solid var(--rule);
+  }
+  .rail{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.72rem;
+    line-height:1.5;
+    color:var(--ink-3);
+    display:flex;flex-direction:column;gap:8px;
+    padding-top:5px;
+  }
+  .tag{
+    display:inline-block;
+    align-self:flex-start;
+    background:var(--accent-soft);
+    color:var(--accent);
+    padding:3px 8px;
+    border-radius:2px;
+    font-size:.66rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:500;
+  }
+  .tag.data{background:var(--ocre-soft);color:var(--ocre);}
+  .rail .date{color:var(--ink-2);font-variant-numeric:tabular-nums;}
+  .rail .src{color:var(--ink-3);}
+
+  .entry h3{
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:1.28rem;
+    line-height:1.25;
+    margin:0 0 12px;
+    text-wrap:balance;
+  }
+  .entry p{margin:0 0 12px;max-width:66ch;color:var(--ink-2);}
+  .entry p.lede{color:var(--ink);}
+
+  ul.figures{
+    list-style:none;
+    margin:0 0 14px;
+    padding:0;
+    display:flex;flex-direction:column;gap:5px;
+    border-left:2px solid var(--accent);
+    padding-left:14px;
+  }
+  ul.figures li{
+    font-size:.9rem;
+    color:var(--ink-2);
+    font-variant-numeric:tabular-nums;
+  }
+  ul.figures li b{color:var(--ink);font-weight:600;}
+
+  .box{
+    background:var(--surface);
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:14px 16px;
+    margin:0 0 14px;
+    box-shadow:var(--shadow);
+  }
+  .box .lbl{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.64rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ocre);
+    display:block;
+    margin-bottom:6px;
+  }
+  .box p{margin:0;color:var(--ink);font-size:.97rem;}
+  .box p + p{margin-top:8px;}
+
+  .links{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.72rem;
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .links a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--rule);align-self:flex-start;}
+  .links a:hover,.links a:focus-visible{border-bottom-color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+
+  .caveat{
+    font-size:.85rem;
+    color:var(--ink-3);
+    font-style:italic;
+    margin:0 0 12px;
+    max-width:66ch;
+  }
+
+  /* ---------- Notes / pépites / sections de pied ---------- */
+  .note{
+    background:var(--surface-2);
+    border-radius:3px;
+    padding:16px 18px;
+    margin:24px 0 0;
+    font-size:.92rem;
+    color:var(--ink-2);
+  }
+  .note .lbl{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-3);display:block;margin-bottom:6px;
+  }
+  .note a{color:var(--accent);}
+
+  .pepites{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;}
+  .pepites li{
+    padding:20px 0;
+    border-bottom:1px solid var(--rule);
+    max-width:70ch;
+  }
+  .pepites h4{
+    font-family:"Fraunces", Georgia, serif;
+    font-size:1.05rem;font-weight:600;margin:0 0 6px;
+  }
+  .pepites p{margin:0 0 6px;color:var(--ink-2);font-size:.95rem;}
+  .pepites .stamp{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.66rem;color:var(--ink-3);letter-spacing:.06em;
+  }
+  .pepites a{color:var(--accent);font-size:.8rem;font-family:"IBM Plex Mono",monospace;}
+
+  .cols{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:8px 28px;
+    font-size:.9rem;
+    color:var(--ink-2);
+  }
+  .cols ul{margin:0;padding-left:18px;}
+  .cols li{margin-bottom:3px;}
+
+  footer{
+    margin-top:64px;
+    padding-top:20px;
+    border-top:2px solid var(--ink);
+    font-family:"IBM Plex Mono", monospace;
+    font-size:.72rem;
+    color:var(--ink-3);
+    display:flex;flex-wrap:wrap;gap:8px 24px;
+    justify-content:space-between;
+  }
+  footer a{color:var(--accent);}
+
+  @media (max-width:640px){
+    .entry{grid-template-columns:1fr;gap:12px;}
+    .rail{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-top:0;}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="banner">
+    <p class="kicker">Numéro 01 · Veille hebdomadaire</p>
+    <h1>Carnet de veille naturaliste</h1>
+    <div class="meta">
+      <span>Semaine du <b>22 au 29 août 2026</b></span>
+      <span><b>9</b> entrées</span>
+      <span><b>6</b> issues de sources régionales</span>
+    </div>
+    <p class="standfirst">Ce que la semaine a donné, trié pour la salle de classe : des histoires à raconter, des protocoles à démonter, des chiffres à faire manipuler. Les sources régionales et les réseaux de gestionnaires portent l'essentiel du numéro — l'été creuse les publications nationales.</p>
+  </header>
+
+  <!-- ============ TERRAIN & GESTION ============ -->
+  <section class="rubrique">
+    <h2>Terrain &amp; gestion <span>4 entrées</span></h2>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Espèce · crise</span>
+        <span class="date">28 août 2026</span>
+        <span class="src">Bretagne Vivante<br>(SEPNB – CEN Bretagne)<br>Finistère · Côtes-d'Armor</span>
+      </div>
+      <div>
+        <h3>Les mulettes perlières sorties à la main de rivières à sec</h3>
+        <p class="lede">Depuis la mi-juillet, l'équipe « mulette perlière » suit les niveaux d'eau des ruisseaux bretons face à la canicule et au déficit de pluie. Deux missions de sauvetage d'urgence ont été menées : la totalité des individus a été transférée vers des cours d'eau de substitution proches. Sur le ruisseau du Follezou, en amont des gorges du Corong, la population est désormais « considérée comme probablement éteinte » après plusieurs semaines d'assèchement.</p>
+        <ul class="figures">
+          <li><b>3</b> cours d'eau touchés : le Roudoudour (affluent de l'Elez, monts d'Arrée), le ruisseau du Loc'h et le ruisseau du Follezou</li>
+          <li><b>2</b> opérations de sauvetage depuis la mi-juillet</li>
+          <li>Les jeunes mulettes, enfouies dans les sédiments, restent très difficiles à localiser — le taux de survie n'est pas quantifiable en l'état</li>
+        </ul>
+        <div class="box">
+          <span class="lbl">À raconter</span>
+          <p>Une moule d'eau douce qui vit un siècle, immobile dans un ruisseau granitique, et qu'il faut aller chercher une par une dans le lit à sec pour la porter ailleurs. Les étudiants retiennent l'image ; derrière elle, il y a tout le dossier : espèce parapluie des cours d'eau oligotrophes, translocation d'urgence, programme de renforcement, suivi de débit. Et une phrase à faire peser : une population qu'on suit depuis des années est déclarée probablement éteinte, cet été, dans une actualité de trois paragraphes.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.bretagne-vivante.org/2026/08/situation-concernant-la-mulette-perliere-en-bretagne-en-aout-2026/">Bretagne Vivante — Situation de la mulette perlière en août 2026</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Suivi · MAEC</span>
+        <span class="date">17 août 2026</span>
+        <span class="src">Parc national des Écrins<br>&amp; LPO PACA<br>Hautes-Alpes (Champsaur)</span>
+      </div>
+      <div>
+        <h3>Le râle des genêts se reproduit à nouveau dans le Champsaur — et un mâle traverse les Alpes</h3>
+        <p class="lede">Trois juvéniles ont été observés en juillet 2026 fuyant une parcelle fauchée au col de Moissières : première reproduction confirmée dans le Champsaur depuis plus de trente ans. En parallèle, un mâle équipé d'une balise GPS le 23 juin a quitté la zone et enchaîné Seyne-les-Alpes, le haut Verdon, la haute Tinée et l'Ubaye en onze jours, avant que le signal ne se perde côté italien.</p>
+        <ul class="figures">
+          <li><b>11</b> mâles chanteurs en 2025 (8 sur Ancelle, 3 sur Chaillol) ; au moins <b>5</b> simultanés en 2026 sur Ancelle</li>
+          <li><b>5</b> agriculteurs en fauche retardée au 1<sup>er</sup>–14 juillet en 2025, <b>4</b> en 2026</li>
+          <li><b>3</b> juvéniles observés en juillet 2026 au col de Moissières</li>
+          <li>Plus de <b>150 km</b> parcourus en <b>11 jours</b> par le mâle équipé</li>
+          <li><b>40 000 €</b> par an consacrés par la LPO PACA aux actions régionales</li>
+          <li>Déclin national de <b>97 %</b> en 40 ans : de plus de 2 500 couples à moins de 100</li>
+        </ul>
+        <div class="box">
+          <span class="lbl">À raconter</span>
+          <p>On protège une prairie de fauche pour un oiseau — et la balise montre que le même oiseau utilise tout l'arc alpin en onze jours. C'est l'accroche parfaite pour poser la question de l'échelle de gestion : à quoi sert de négocier une date de fauche sur trois hectares quand l'individu qu'on protège dort à 150 km de là la semaine suivante ? Enchaîner avec la fauche retardée, la contractualisation avec l'agriculteur, et la notion d'espèce parapluie.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.ecrins-parcnational.fr/actualite/2025-2026-annees-exceptionnelles-rale-genets">PN des Écrins — 2025-2026, années exceptionnelles pour le râle des genêts</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Génie écologique</span>
+        <span class="date">20 août 2026</span>
+        <span class="src">Parc national des Écrins<br>Hautes-Alpes · Isère</span>
+      </div>
+      <div>
+        <h3>Zones humides d'alpage : ce que devient un inventaire, deux ans après</h3>
+        <p class="lede">L'inventaire des zones humides en alpage lancé en 2024 débouche sur des travaux concrets sur quatre sites. Mise en défens des berges par piquets et cordons, filets et portillons pour canaliser les troupeaux, captage de source vers des abreuvoirs de report, balisage explicatif à destination des randonneurs. Le matériel est monté à dos d'âne.</p>
+        <ul class="figures">
+          <li><b>4</b> sites : lac Palluel (Freissinières), alpage de la Lavey (Saint-Christophe-en-Oisans), lac Labarre (Valjouffrey), hameau des Gourniers (Réallon)</li>
+          <li><b>3</b> ânes, <b>1 000 m</b> de dénivelé en <b>2 h 30</b> (prestataire Équi'grimpe)</li>
+          <li>Projet européen <b>Aclimo</b> : <b>8</b> parcs français et italiens, terme fin 2026</li>
+          <li>Le Parc rappelle que <b>40 %</b> des espèces animales et végétales dépendent des zones humides — chiffre mondial, à ne pas transposer aux Alpes</li>
+        </ul>
+        <div class="box">
+          <span class="lbl">Usage en cours</span>
+          <p>C'est la séquence complète — inventaire, diagnostic, travaux, suivi — sur un objet que les étudiants voient en stage. Et c'est la meilleure réponse au « ça sert à quoi de compter ? » : deux ans après le relevé, il y a des piquets dans la tourbe et un abreuvoir déporté. Le détail des ânes n'est pas anecdotique : il pose la contrainte logistique comme paramètre de conception d'un chantier en site protégé.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.ecrins-parcnational.fr/actualite/zones-humides-apres-inventaire-protection">PN des Écrins — Zones humides : après l'inventaire, la protection</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Plan de gestion</span>
+        <span class="date">11 août 2026</span>
+        <span class="src">Conservatoire des Sites Alsaciens<br>Bas-Rhin</span>
+      </div>
+      <div>
+        <h3>Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</h3>
+        <p class="lede">Le Conservatoire des Sites Alsaciens publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein. Dix-huit mois d'étude scientifique préalable, actualisation des diagnostics par une chargée d'études appuyée par des experts naturalistes, cartographie des mares, prairies, milieux palustres et cours d'eau, puis validation en comité consultatif de réserve.</p>
+        <ul class="figures">
+          <li><b>2</b> réserves, <b>18</b> mois d'étude, plans couvrant <b>10</b> ans</li>
+          <li><b>65 205 €</b> au total, dont <b>35 184 €</b> de FEDER, complément Agence de l'eau Rhin-Meuse</li>
+          <li>Protocoles par taxon : odonates, orthoptères, lépidoptères, abeilles, bryophytes — dont le grillon des marais, retrouvé dans les deux réserves</li>
+          <li>Espèces exotiques envahissantes suivies : érable negundo, renouée du Japon, azolla</li>
+        </ul>
+        <div class="box">
+          <span class="lbl">Usage en cours</span>
+          <p>Les coûts et les durées réels d'un plan de gestion ne sont presque jamais publiés : celui-ci l'est, avec son plan de financement. À utiliser tel quel dans le module plan de gestion — faire reconstituer aux étudiants l'enchaînement diagnostic → protocoles par taxon → cartographie d'habitats → validation en comité consultatif, puis leur demander de répartir 65 205 € entre ces postes avant de discuter du résultat.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.conservatoire-sites-alsaciens.eu/2026/08/11/renouvellement-des-plans-de-gestion-des-reserves-naturelles-nationales-de-lile-de-rhinau-et-de-la-foret-derstein-et-suivis-ecologiques/">CSA — Renouvellement des plans de gestion des RNN de Rhinau et d'Erstein</a>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============ SCIENCE & PROTOCOLES ============ -->
+  <section class="rubrique">
+    <h2>Science &amp; protocoles <span>3 entrées</span></h2>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Chiroptères</span>
+        <span class="date">10 août 2026</span>
+        <span class="src">Parc national des Cévennes<br>Gard (secteur d'Aumessas)</span>
+      </div>
+      <div>
+        <h3>770 rhinolophes un soir, 30 quelques jours plus tard</h3>
+        <p class="lede">Une cavité connue dans les années 1990 pour une trentaine d'individus a été redécouverte en 2022. Depuis, deux comptages en sortie de gîte sont menés chaque été à la tombée de la nuit. Les effectifs montent très haut, puis s'évanouissent fin juillet, avant la mise bas des femelles : le site serait un gîte de transition et non une nurserie — ce qui implique l'existence, à plusieurs dizaines de kilomètres, d'une nurserie commune à plusieurs colonies, toujours non localisée.</p>
+        <ul class="figures">
+          <li>Années 1990 : environ <b>30</b> individus ; juin 2022 : <b>110</b> ; juillet 2022 : <b>550</b></li>
+          <li>Automne 2025, en période de <b>swarming</b> : environ <b>1 300</b> individus</li>
+          <li>Juillet 2026 : <b>770</b> en sortie de gîte, puis <b>30</b> quelques jours plus tard</li>
+          <li>Recommandation de non-visite : mai-septembre et novembre-mars</li>
+        </ul>
+        <div class="box">
+          <span class="lbl">À raconter</span>
+          <p>Le chiffre qui s'effondre de 770 à 30 en quelques jours est l'entrée idéale sur les limites d'un comptage ponctuel. Donner les deux nombres aux étudiants sans le contexte, leur demander de conclure — puis leur expliquer le gîte de transit. C'est aussi une énigme ouverte : une nurserie de plusieurs centaines de femelles existe quelque part dans les Cévennes et personne ne sait où.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.cevennes-parcnational.fr/fr/actualites/jusqua-1-300-rhinolophes-dans-une-grotte-oubliee-une-colonie-majeure-et-une-enigme">PN des Cévennes — Jusqu'à 1 300 rhinolophes dans une grotte oubliée</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Indicateurs</span>
+        <span class="date">27 août 2026</span>
+        <span class="src">LPO Auvergne-Rhône-Alpes<br>Loire · Drôme-Ardèche</span>
+      </div>
+      <div>
+        <h3>Deux bilans de reproduction publiés le même jour : 165 cigogneaux, zéro courlis</h3>
+        <p class="lede">La LPO Auvergne-Rhône-Alpes a mis en ligne le même jour deux bilans de saison qui ne racontent pas la même histoire. Dans le Roannais et le Forez, la cigogne blanche signe un record de jeunes à l'envol. En Drôme-Ardèche, le courlis cendré termine l'année à zéro, malgré un protocole de protection des nids.</p>
+        <ul class="figures">
+          <li>Cigogne : <b>65</b> couples en 2026 contre 60 en 2025, <b>61</b> couples reproducteurs, <b>165</b> jeunes à l'envol</li>
+          <li>Mais <b>3,0</b> jeunes par nid contre <b>3,3</b> de moyenne sur 19 ans ; <b>12</b> nouveaux couples pour <b>5</b> en croissance nette</li>
+          <li>Retour le plus précoce jamais enregistré : <b>23 janvier 2026</b> ; <b>5</b> poussins perdus par chute de branches de peupliers morts</li>
+          <li>Courlis : <b>5</b> individus au maximum lors du comptage simultané du <b>8 avril 2026</b> ; un nid clôturé le <b>30 avril</b> (zone tampon de <b>25 × 25 m</b>), un nid prédaté, <b>aucun jeune produit</b></li>
+        </ul>
+        <div class="box">
+          <span class="lbl">Usage en cours</span>
+          <p>Le meilleur TP d'analyse de données de la semaine, et il est gratuit. Quatre indicateurs cohabitent dans le seul bilan cigogne — effectif, nombre de couples reproducteurs, productivité par nid, croissance nette — et ils ne disent pas la même chose : record absolu de jeunes, productivité sous la moyenne. Mettre le courlis en face : cinq oiseaux, une clôture posée quand l'incubation touchait à sa fin, zéro jeune. La leçon tient en une phrase — une mesure de protection hors fenêtre temporelle ne produit rien.</p>
+        </div>
+        <div class="links">
+          <a href="https://auvergne-rhone-alpes.lpo.fr/2026-une-bonne-annee-pour-les-cigognes-blanches-ligeriennes/">LPO AuRA — 2026, une bonne année pour les cigognes blanches ligériennes</a>
+          <a href="https://auvergne-rhone-alpes.lpo.fr/les-courlis-cendres-en-2026/">LPO AuRA — Les courlis cendrés en 2026</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag">Bioacoustique</span>
+        <span class="date">25 août 2026</span>
+        <span class="src">EPHE-PSL / CNRS<br>National</span>
+      </div>
+      <div>
+        <h3>Tout le chant des passereaux tient en huit motifs</h3>
+        <p class="lede">Une équipe internationale a analysé l'architecture acoustique fine des chants de passereaux à l'échelle mondiale et montre qu'ils se ramènent à huit motifs élémentaires combinables : trois types de trilles, trois types de sifflements, et deux structures complexes (notes chaotiques, empilements harmoniques). La répartition géographique de ces motifs suit un compromis entre richesse d'information et portée du signal, indexé sur la densité végétale, la température et l'humidité.</p>
+        <ul class="figures">
+          <li><b>116 792</b> enregistrements analysés, <b>3 160</b> espèces</li>
+          <li><b>8</b> motifs élémentaires ; <b>5</b> utilisés en moyenne par espèce</li>
+        </ul>
+        <p class="caveat">Communiqué EPHE du 25 août 2026 ; l'article original (<i>Science</i>, DOI 10.1126/science.aee6239) est daté du 23 juillet 2026 — seul le communiqué tombe dans la semaine.</p>
+        <div class="box">
+          <span class="lbl">À raconter</span>
+          <p>Un alphabet de huit signes pour tout le chant du monde. L'image est immédiate, et elle ouvre une séance de bioacoustique sans matériel : faire écouter trois chants, faire nommer trille, sifflement, structure complexe. Le lien habitat-signal est le vrai contenu — un chant de sous-bois dense ne peut pas être construit comme un chant de milieu ouvert, et c'est vérifiable à l'oreille sur un enregistrement local.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.ephe.psl.eu/chanter-sous-la-pluie-et-la-foret-quand-les-oiseaux-chantent-selon-8-motifs">EPHE-PSL — Quand les oiseaux chantent selon 8 motifs</a>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============ DONNÉES & RÉFÉRENTIELS ============ -->
+  <section class="rubrique">
+    <h2>Données &amp; référentiels <span>2 entrées</span></h2>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag data">Réglementation</span>
+        <span class="date">21 août 2026</span>
+        <span class="src">Journal officiel<br>National</span>
+      </div>
+      <div>
+        <h3>ESOD 2026-2029 : l'arrêté est publié, le recours est annoncé</h3>
+        <p class="lede">L'arrêté du 10 août 2026, pris pour l'application de l'article R. 427-6 du code de l'environnement, fixe pour quatre ans la liste, les périodes et les modalités de destruction des espèces susceptibles d'occasionner des dégâts, département par département. Il a été publié au Journal officiel du 21 août 2026. La LPO annonce un recours devant le Conseil d'État, en s'appuyant sur la décision n° 480617 du 13 mai 2025, qui avait annulé le classement de la martre dans 26 départements.</p>
+        <ul class="figures">
+          <li>Période <b>2026-2029</b>, cycle quadriennal, classement départementalisé</li>
+          <li><b>9</b> espèces au niveau national selon la LPO : martre, belette, fouine, renard, pie bavarde, geai des chênes, corneille noire, corbeau freux, étourneau sansonnet</li>
+          <li>Consultation publique : environ <b>75 000</b> contributions, <b>89 %</b> défavorables (chiffres LPO)</li>
+          <li>Précédent contentieux : décision du Conseil d'État <b>n° 480617</b> du <b>13 mai 2025</b></li>
+        </ul>
+        <p class="caveat">Vérification incomplète. La fiche Légifrance de l'arrêté (JORFTEXT000054728726) renvoie une erreur 403 depuis cet environnement : le texte n'a pas pu être lu à la source. La référence, la date de signature et la date de publication au JO sont confirmées par une source juridique secondaire ; la liste d'espèces et les chiffres de consultation proviennent du communiqué de la LPO, qui est partie au contentieux. À recouper avant tout usage en cours.</p>
+        <div class="box">
+          <span class="lbl">Usage en cours</span>
+          <p>Cas d'école de droit de l'environnement appliqué, et il est chaud. Faire suivre la chaîne complète : article du code, arrêté ministériel, consultation publique, arrêtés préfectoraux d'application, recours contentieux, annulation partielle. Puis la question qui fâche et qui se travaille : que vaut une consultation publique dont 89 % des avis sont défavorables ? Vérifier ensuite l'arrêté préfectoral du département de l'établissement — c'est lui qui s'applique sur le terrain de stage.</p>
+        </div>
+        <div class="links">
+          <a href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054728726">Légifrance — Arrêté du 10 août 2026 (art. R. 427-6)</a>
+          <a href="https://www.lpo.fr/qui-sommes-nous/espace-presse/communiques/cp-2026/esod-la-lpo-engage-un-nouveau-recours-devant-le-conseil-d-etat">LPO — Communiqué : nouveau recours devant le Conseil d'État</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="rail">
+        <span class="tag data">Science participative</span>
+        <span class="date">18 août 2026</span>
+        <span class="src">GON<br>Nord · Pas-de-Calais</span>
+      </div>
+      <div>
+        <h3>Chrysomèle du romarin : une enquête régionale à protocole minimal</h3>
+        <p class="lede">Le Groupe ornithologique et naturaliste des Hauts-de-France ouvre une enquête participative sur <i>Chrysolina americana</i>, coléoptère originaire du sud de l'Europe et d'Afrique du Nord, aujourd'hui répandu dans l'Ouest européen. Aucune expertise n'est demandée : noter le lieu, la date et la plante-hôte, puis saisir l'observation dans SiRF, la base régionale du GON.</p>
+        <ul class="figures">
+          <li>Adultes de <b>7 à 8 mm</b>, élytres à reflets métalliques verts et pourpres</li>
+          <li>Protocole en <b>3</b> champs : lieu, date, plante-hôte</li>
+          <li>Saisie dans <b>SiRF</b>, base de données régionale du GON</li>
+        </ul>
+        <p class="caveat">Le GON décrit une expansion d'aire depuis le sud de l'Europe et ne qualifie pas l'espèce d'exotique envahissante : ne pas la présenter comme telle sur la foi de cette source.</p>
+        <div class="box">
+          <span class="lbl">Usage en cours</span>
+          <p>Le protocole le plus court de l'année, et donc le meilleur pour une première séance : trois champs, une espèce reconnaissable à l'œil nu sur le romarin d'un jardin, une base régionale réelle où la donnée part. Faire produire la donnée puis faire critiquer le protocole — que perd-on à ne pas noter l'effectif, la météo, la pression d'observation ? C'est aussi l'occasion de faire la différence entre expansion d'aire et invasion biologique, que les étudiants confondent presque toujours.</p>
+        </div>
+        <div class="links">
+          <a href="https://gon.fr/cap-biodiversite/chrysomele-du-romarin/">GON — Enquête Chrysomèle du romarin (Cap Biodiversité)</a>
+        </div>
+      </div>
+    </article>
+
+    <div class="note">
+      <span class="lbl">Signalement de veille</span>
+      <p>Vérifié le 29 août 2026 : <b>faune-alsace.org renvoie désormais une redirection 302 vers faune-grandest.org</b>. La LPO Champagne-Ardenne a par ailleurs publié un article intitulé « Faune Champagne Ardenne devient Faune Grand Est ». La date de bascule, le sort des trois bases régionales (Alsace, Lorraine, Champagne-Ardenne) et les conséquences pour la continuité des séries de données <b>n'ont pas pu être confirmés</b> : le corps des articles concernés n'a pas été rendu. Point à reprendre au prochain numéro. La liste de sources du dispositif devra remplacer faune-alsace.org par faune-grandest.org si la fusion se confirme.</p>
+    </div>
+
+    <div class="note">
+      <span class="lbl">Sources inaccessibles cette semaine</span>
+      <p>Signalées plutôt que relayées sans contrôle : <b>Légifrance</b> (403), <b>PatriNat</b> et <b>INPN référentiels espèces</b> (timeout et erreur 500 — aucune actualité TAXREF vérifiable ce numéro), <b>Actu-Environnement</b> et <b>Tela Botanica</b> (blocage robots), <b>Picardie Nature</b> et <b>GRETIA</b> (boucle de redirection https/http), <b>CEN Auvergne</b> (503), <b>CEN Normandie</b> — lettres d'information (404), <b>Faune-PACA Publication</b> (liste rendue en JavaScript, aucun numéro datable). Les portails Biolovision — Faune-France, Faune-Bretagne, Faune-Guyane, Faune-Grand Est — n'ont livré aucune actualité datée : connexion requise ou rendu dynamique. <i>ornitho.ch</i> échoue sur un certificat auto-signé.</p>
+    </div>
+  </section>
+
+  <!-- ============ PÉPITES ============ -->
+  <section class="rubrique">
+    <h2>Pépites <span>stock d'anecdotes, hors actualité chaude</span></h2>
+    <ul class="pepites">
+
+      <li>
+        <h4>Plus de 120 barbastelles derrière un volet</h4>
+        <p class="stamp">PN des Cévennes · Alzon (Gard) · 3 août 2026</p>
+        <p>Une colonie découverte en juin 2025 sous le volet d'un ancien manoir, reproduction confirmée en juin 2026. Une colonie typique de barbastelle d'Europe compte 5 à 20 femelles en France : celle-ci en aligne plus de 120, probablement la plus importante connue en Occitanie. Comptage en sortie de gîte à la caméra 4K et au projecteur infrarouge, sans dérangement. Tout le cycle annuel de l'espèce tient ici dans une zone de 20 km², à condition que coexistent des forêts matures à arbres sénescents et du bâti ancien préservé.</p>
+        <a href="https://www.cevennes-parcnational.fr/fr/actualites/plus-de-120-barbastelles-sous-un-volet-une-colonie-hors-norme-decouverte-dans-les">Lire l'article</a>
+      </li>
+
+      <li>
+        <h4>La fourmi de l'Oural retrouvée pendant un relevé de flore</h4>
+        <p class="stamp">CEN Franche-Comté · Jura · 19 août 2026</p>
+        <p><i>Formica uralensis</i> n'est connue en France que de deux départements, le Doubs et le Jura ; ses populations les plus proches sont en Pologne. En juillet 2026, un chargé de mission repère sur une tourbière gérée par le Conservatoire un individu à la « tête noire, très singulière » — en marge d'un suivi botanique patrimonial. Confirmation par un stagiaire entomologue, puis recensement systématique : une quinzaine de dômes de fourmilières en prairies humides paratourbeuses. La chaîne complète de la validation naturaliste, déclenchée par une découverte hors sujet.</p>
+        <a href="https://cen-franchecomte.org/decouverte-fourmi-de-l-oural-jura/">Lire l'article</a>
+      </li>
+
+      <li>
+        <h4>Une promo de BTS GPN au radiopistage de noctules</h4>
+        <p class="stamp">LPO AuRA pour le Syndicat de gestion des gorges de l'Ardèche · 27 août 2026</p>
+        <p>Trois sessions de terrain en juin 2026 sur les arbres-gîtes des chiroptères de la ripisylve : observation des sorties de gîte au crépuscule, retours au petit matin, captures et pose d'émetteurs pour remonter jusqu'aux arbres à cavités. Espèce prioritaire, la noctule commune, tributaire des loges de pics. Les étudiants de BTS GPN du lycée agricole d'Aubenas étaient de la session du 9 juin. Un modèle de convention lycée-association, et la preuve qu'une commande de gestionnaire peut se faire avec une classe sur le terrain.</p>
+        <a href="https://auvergne-rhone-alpes.lpo.fr/a-la-recherche-des-arbres-gites-des-chauves-souris-dans-les-gorges-de-lardeche/">Lire l'article</a>
+      </li>
+
+      <li>
+        <h4>Une mission libellules qui tourne à l'enquête policière</h4>
+        <p class="stamp">CEN Franche-Comté · Port-sur-Saône (Haute-Saône) · 5 août 2026</p>
+        <p>Inventaire odonates et orthoptères sur deux hectares à mares, trois passages en mai, juin et juillet. En cours de prospection, une coquille de moule d'eau douce conduit à l'identification d'<i>Anodonta anatina</i>, l'anodonte des rivières, classée vulnérable et généralement observée dans le sud de la France sous forme de coquilles vides seulement. Bilan du site : 18 espèces d'odonates, 6 sauterelles, 4 criquets, 2 cuivrés des marais. Le groupe cible n'est pas celui qui livre la découverte.</p>
+        <a href="https://cen-franchecomte.org/une-mission-libellules-qui-tourne-a-lenquete-policiere/">Lire l'article</a>
+      </li>
+
+      <li>
+        <h4>Une nacre d'Atlantique, 21 individus vivants connus</h4>
+        <p class="stamp">Bretagne Vivante, avec l'Ifremer et l'IUEM · archipel des Glénan · 28 août 2026</p>
+        <p><i>Atrina fragilis</i>, grand bivalve autrefois commun, se résume aujourd'hui à une population relictuelle : 21 individus vivants recensés depuis 2020, dont 71 % dans les herbiers de zostère des Glénan et 19 % en baie de Morlaix. Trente échantillons séquencés révèlent une très faible diversité génétique et une méta-population unique. Une demande de protection nationale est en construction ; les pistes de restauration empruntent à l'ostréiculture — collecteurs biosourcés et cages de captage larvaire.</p>
+        <a href="https://www.bretagne-vivante.org/2026/08/nacre-datlantique-les-glenan-dernier-refuge-dune-population-relictuelle/">Lire l'article</a>
+      </li>
+
+    </ul>
+  </section>
+
+  <!-- ============ SECTIONS PERMANENTES ============ -->
+  <section class="rubrique">
+    <h2>Revues suivies <span>socle national</span></h2>
+    <div class="note">
+      <p style="margin:0 0 12px">Balayage mensuel, au premier numéro de chaque mois. L'annuaire complet — <b>137 titres</b>, région par région, avec éditeur, territoire, thématique, adresse des sommaires, statut d'accès et statut de parution — est publié à part : <a href="https://claude.ai/code/artifact/08d1fdc1-9002-4036-aa9a-fa21d9f427e3">Annuaire des revues naturalistes</a>.</p>
+      <div class="cols">
+        <ul>
+          <li><i>Naturae</i> (MNHN)</li>
+          <li>Revues de l'OFB</li>
+          <li><i>Plume de Naturalistes</i></li>
+          <li><i>Les Carnets natures</i></li>
+          <li><i>Martinia</i> (odonates)</li>
+          <li><i>Insectes</i> (OPIE)</li>
+          <li><i>MalaCo</i></li>
+        </ul>
+        <ul>
+          <li>Bulletin de la SHF</li>
+          <li><i>L'Envol des Chiros</i> (SFEPM)</li>
+          <li><i>Carnets botaniques</i></li>
+          <li><i>Revue forestière française</i></li>
+          <li><i>Sciences Eaux &amp; Territoires</i></li>
+          <li><i>Le Courrier de la Nature</i> (SNPN)</li>
+          <li><i>Espèces</i> · <i>La Hulotte</i></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="rubrique">
+    <h2>Comment tourne cette veille</h2>
+    <div class="note">
+      <p style="margin:0 0 10px"><b>Chaque semaine.</b> Sources nationales (OFB, MNHN, PatriNat, INPN, Vigie-Nature, SFE², LPO, SFEPM, OPIE, Tela Botanica, Légifrance et consultations publiques, INRAE, CNRS, Actu-Environnement), portails d'observation Biolovision, et surtout les réseaux de gestionnaires : Fédération des CEN et lettres des CEN régionaux, Fédération des PNR, journaux des parcs nationaux, LPO régionales, associations naturalistes régionales. C'est là que se trouve la matière la plus proche du terrain.</p>
+      <p style="margin:0 0 10px"><b>Une fois par mois.</b> Au premier numéro du mois, balayage des sommaires de revues et rubrique dédiée.</p>
+      <p style="margin:0 0 10px"><b>Filtre.</b> Un item entre s'il coche au moins deux critères sur trois : <b>racontable</b> (une histoire, un chiffre frappant, une image mentale), <b>exploitable</b> (cours, TP, situation professionnelle), <b>structurant</b> (change une pratique, une règle, un référentiel).</p>
+      <p style="margin:0"><b>Règle absolue.</b> Vérification à la source primaire. Une source inaccessible est signalée dans la page plutôt que relayée sans contrôle. Aucun chiffre, aucune date, aucun lien n'est inventé.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Carnet de veille naturaliste — n° 01</span>
+    <span>Collecte du 29 août 2026</span>
+    <span>BTS Gestion et Protection de la Nature</span>
+  </footer>
+
+</div>
