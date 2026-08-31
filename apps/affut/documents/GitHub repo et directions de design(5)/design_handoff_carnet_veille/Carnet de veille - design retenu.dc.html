@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #e6e3d8; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #191b16; }
+  a { color: #8a2f39; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: #6d232c; }
+</style>
+</helmet>
+
+<div style="padding:44px 48px 96px; display:flex; flex-direction:column; gap:44px">
+
+<section style="display:flex; flex-direction:column; gap:28px">
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:1180px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Tour 5 — les sources suivies, et l'entrée dans le portail</div>
+    <h1 style="margin:0; font-size:27px; font-weight:700; letter-spacing:-.01em">Les deux derniers écrans</h1>
+    <p style="margin:0; font-size:14px; line-height:1.55; color:#3b3e36; text-wrap:pretty; max-width:920px"><a href="#5a">5a</a> l'administration des sources suivies — la liste que la collecte interroge chaque semaine, et vers laquelle renvoie l'état ④. <a href="#5b">5b</a> la tuile du carnet dans le portail, sixième app, dessinée avec les conventions du portail existant (fond plein pour ce qui s'ouvre, pictogramme dans son voile clair, serif pour le nom).</p>
+  </div>
+
+  <!-- ===== 5a — SOURCES SUIVIES ===== -->
+  <div id="5a" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:1000px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">5a</span>
+      <span style="font-size:17px; font-weight:700">Les sources suivies</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">1000 px · réservé à l'équipe pédagogique</span>
+    </div>
+    <p style="margin:0; max-width:1000px; font-size:12.5px; line-height:1.55; color:#3b3e36; text-wrap:pretty">Une ligne par source, classée par ce qui demande une décision : les sources en échec d'abord, puis celles qui n'ont rien donné depuis longtemps, puis les autres. La colonne qui compte n'est pas « active » mais <strong>« ce qu'elle a rapporté »</strong> — une source qui ne produit jamais rien retenu coûte du temps de tri.</p>
+
+    <div style="width:1000px; border:1px solid #1a1611; background:#fbf6ea">
+      <div style="height:5px; background:#8a2f39"></div>
+      <div style="background:#241d15; padding:12px 22px; display:flex; align-items:center; gap:12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fdf8ec" stroke-width="1.6" stroke-linecap="square" style="flex:none"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fdf8ec">Carnet de veille</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#b3a893">BTS GPN · Kerplouz</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">Sommaire</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">Rechercher</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#fdf8ec; border-bottom:1px solid #fdf8ec">Sources</span>
+      </div>
+
+      <div style="background:#f5ead4; border-bottom:1px solid #ddd2ba; padding:18px 22px; display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap">
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Les sources suivies</span>
+          <div style="display:flex; align-items:baseline; gap:9px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; letter-spacing:-.02em; color:#1a1611">14</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#4a4136">interrogées chaque samedi à 6 h</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Dernière collecte</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#1a1611">15 août, 06:04 · <span style="color:#A6421B">3 en échec</span></span>
+        </div>
+        <span style="flex:1"></span>
+        <div style="display:flex; gap:10px; align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#8a2f39; border:1px solid #8a2f39; padding:9px 13px; cursor:pointer">Relancer la collecte</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:10px 15px; font-weight:700; cursor:pointer">+ Suivre une source</span>
+        </div>
+      </div>
+
+      <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:#5b3d1f">
+        <span>Source</span><span>Rubrique par défaut</span><span>Dernière moisson</span><span>Ce qu'elle a rapporté</span><span></span>
+      </div>
+
+      <div style="padding:0 0 18px">
+        <div style="background:#f7e5dc; border-bottom:1px solid #e0c4b6; padding:8px 22px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#7d3413">En échec à la dernière collecte — 3</div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">PatriNat (OFB · MNHN · CNRS)</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">inpn.mnhn.fr/actualites.rss · flux RSS · national</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#7d3413">✕ délai dépassé · déjà en échec les 8 et 15 août</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Données &amp; référentiels</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#7d3413">échec · 15 août</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#1a1611">6 <span style="font-size:10px; font-weight:400; color:#6f6355">retenues</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sur 21 rapportées</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Réessayer</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+          </div>
+        </div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">OFB — actualités</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">ofb.gouv.fr/actualites · page suivie · national</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#7d3413">✕ erreur 503 · premier échec</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Science &amp; protocoles</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#7d3413">échec · 15 août</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#1a1611">11 <span style="font-size:10px; font-weight:400; color:#6f6355">retenues</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sur 38 rapportées</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Réessayer</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+          </div>
+        </div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">Tela Botanica</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">tela-botanica.org/feed · flux RSS · national</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#7d3413">✕ flux illisible · le format a changé le 12 août</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Pépites</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#7d3413">échec · 15 août</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#1a1611">4 <span style="font-size:10px; font-weight:400; color:#6f6355">retenues</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sur 46 rapportées</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Réessayer</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+          </div>
+        </div>
+
+        <div style="background:#f4ead0; border-bottom:1px solid #d8c79a; padding:8px 22px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5c4410">Rien de retenu depuis longtemps — 2 · à confirmer ou à retirer</div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">Fédération des chasseurs du Morbihan</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">chasse56.fr/actualites · page suivie · régional · Morbihan</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Terrain &amp; gestion</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">15 août · 2 entrées</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#5c4410">0 <span style="font-size:10px; font-weight:400; color:#6f6355">retenue</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#5c4410">sur 29 rapportées · depuis février</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Ne plus suivre</span>
+          </div>
+        </div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">Journal officiel — environnement</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">legifrance.gouv.fr/jorf · flux RSS · national</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Données &amp; référentiels</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">15 août · 17 entrées</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#5c4410">1 <span style="font-size:10px; font-weight:400; color:#6f6355">retenue</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#5c4410">sur 214 rapportées</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Ne plus suivre</span>
+          </div>
+        </div>
+
+        <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 22px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5b3d1f">Les neuf autres — rien à décider</div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">Conservatoire des Sites Alsaciens</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">conservatoire-sites-alsaciens.eu/feed · flux RSS · régional · Bas-Rhin</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Terrain &amp; gestion</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">15 août · 1 entrée</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#1a1611">9 <span style="font-size:10px; font-weight:400; color:#6f6355">retenues</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sur 24 rapportées</span>
+          </div>
+          <div style="display:flex; justify-content:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+          </div>
+        </div>
+
+        <div style="border-bottom:1px solid #eadfc8; background:#fffdf6; padding:13px 22px; display:grid; grid-template-columns:1fr 128px 128px 132px 96px; gap:14px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+            <span style="font-size:13.5px; font-weight:700; color:#1a1611">Parc national des Cévennes</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">cevennes-parcnational.fr/feed · flux RSS · régional · Gard</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">Science &amp; protocoles</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">15 août · 3 entrées</span>
+          <div style="display:flex; flex-direction:column; gap:1px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#1a1611">12 <span style="font-size:10px; font-weight:400; color:#6f6355">retenues</span></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sur 31 rapportées</span>
+          </div>
+          <div style="display:flex; justify-content:flex-end">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#4a4136; border-bottom:1px solid #b9a87f; cursor:pointer">Modifier</span>
+          </div>
+        </div>
+
+        <div style="padding:13px 22px; display:flex; align-items:center; gap:12px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355">Bretagne Vivante · CEN Bretagne · PN Port-Cros · Agence de l'eau Loire-Bretagne · Réserves naturelles de France · CBN de Brest · SFEPM</span>
+          <span style="flex:1"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer; flex:none">Déplier les 7</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 5b — TUILE DU PORTAIL ===== -->
+  <div id="5b" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:1000px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">5b</span>
+      <span style="font-size:17px; font-weight:700">La tuile dans le portail</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">sixième app · conventions du portail existant</span>
+    </div>
+    <p style="margin:0; max-width:1000px; font-size:12.5px; line-height:1.55; color:#3b3e36; text-wrap:pretty">Fond plein grenat (le plein est réservé à ce qui s'ouvre), pictogramme de 28 px dans son voile clair de 44 px, nom en IBM Plex Serif, badge « en service » en filet clair, bouton « Ouvrir → » en encre claire sur fond de la couleur d'app. Le décompte du bandeau passe de « 5 outils · 3 en service » à <strong>6 outils · 4 en service</strong>.</p>
+
+    <div style="width:1000px; background:#f4f2ec; border:1px solid #191b16; padding:26px 32px 30px; display:flex; flex-direction:column; gap:18px">
+      <div style="display:flex; align-items:baseline; gap:14px; border-bottom:1px solid #d8d4c6; padding-bottom:12px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#565a4e">extrait de la grille du portail — la nouvelle tuile en premier</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#191b16">6 outils · 4 en service · 2 en chantier</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px">
+        <div style="background:#8a2f39; display:flex">
+          <div style="flex:1; min-width:0; padding:16px 18px; display:flex; flex-direction:column; gap:11px">
+            <div style="display:flex; align-items:center; gap:14px">
+              <span style="width:44px; height:44px; flex:0 0 auto; background:rgba(244,242,236,.16); display:grid; place-items:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f4f2ec" stroke-width="1.6" stroke-linecap="square" style="width:28px; height:28px; display:block"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg>
+              </span>
+              <div style="flex:1; min-width:0">
+                <div style="font-family:'IBM Plex Serif',Georgia,serif; font-size:21px; font-weight:600; line-height:1.15; color:#f4f2ec">Carnet de veille naturaliste</div>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#f4f2ec; border:1px solid rgba(244,242,236,.5); padding:3px 9px; white-space:nowrap">✓ en service</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.6; color:rgba(244,242,236,.86)">L'actualité naturaliste de la semaine, avec le document d'origine de chaque information.</p>
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(244,242,236,.66)">n° 12 · publié le 16 août</span>
+              <span style="flex:1"></span>
+              <span style="font-size:14px; font-weight:700; color:#8a2f39; background:#f4f2ec; padding:10px 17px">Ouvrir →</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#1f6b45; display:flex">
+          <div style="flex:1; min-width:0; padding:16px 18px; display:flex; flex-direction:column; gap:11px">
+            <div style="display:flex; align-items:center; gap:14px">
+              <span style="width:44px; height:44px; flex:0 0 auto; background:rgba(244,242,236,.16); display:grid; place-items:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f4f2ec" stroke-width="1.6" style="width:28px; height:28px; display:block"><path d="M4 4v16h16" stroke-linecap="square"></path><circle cx="9" cy="15" r="1.4" fill="#f4f2ec" stroke="none"></circle><circle cx="13" cy="10" r="2.1" fill="#f4f2ec" stroke="none"></circle><circle cx="17" cy="13" r="1.1" fill="#f4f2ec" stroke="none"></circle><circle cx="15.5" cy="6.5" r="1.7" fill="#f4f2ec" stroke="none"></circle></svg>
+              </span>
+              <div style="flex:1; min-width:0">
+                <div style="font-family:'IBM Plex Serif',Georgia,serif; font-size:21px; font-weight:600; line-height:1.15; color:#f4f2ec">PhytoScope</div>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#f4f2ec; border:1px solid rgba(244,242,236,.5); padding:3px 9px; white-space:nowrap">✓ en service</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.6; color:rgba(244,242,236,.86)">Relevés phytosociologiques, indices d'Ellenberg, écogrammes, diagnostic zone humide.</p>
+            <div style="display:flex; justify-content:flex-end">
+              <span style="font-size:14px; font-weight:700; color:#1f6b45; background:#f4f2ec; padding:10px 17px">Ouvrir →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#565a4e">La tuile PhytoScope est reprise telle quelle du portail existant, pour comparaison.</div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start; margin-top:6px">
+      <div style="display:flex; flex-direction:column; gap:9px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#565a4e">Report mobile · 390 px</span>
+        <div style="width:390px; background:#f4f2ec; border:1px solid #191b16; padding:14px">
+          <div style="background:#8a2f39; padding:14px 15px; display:flex; flex-direction:column; gap:10px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:42px; height:42px; flex:0 0 auto; background:rgba(244,242,236,.16); display:grid; place-items:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f4f2ec" stroke-width="1.6" stroke-linecap="square" style="width:27px; height:27px; display:block"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg>
+              </span>
+              <div style="flex:1; min-width:0">
+                <div style="font-family:'IBM Plex Serif',Georgia,serif; font-size:19px; font-weight:600; line-height:1.15; color:#f4f2ec">Carnet de veille naturaliste</div>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.55; color:rgba(244,242,236,.86)">L'actualité naturaliste de la semaine, avec le document d'origine de chaque information.</p>
+            <div style="display:flex; align-items:center; gap:10px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#f4f2ec; border:1px solid rgba(244,242,236,.5); padding:3px 9px">✓ en service</span>
+              <span style="flex:1"></span>
+              <span style="font-size:14px; font-weight:700; color:#8a2f39; background:#f4f2ec; padding:12px 18px">Ouvrir →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:9px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#565a4e">Le pictogramme seul</span>
+        <div style="border:1px solid #d8d4c6; background:#fffefb; padding:20px 24px; display:flex; align-items:center; gap:26px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8a2f39" stroke-width="1.6" stroke-linecap="square" style="width:96px; height:96px; display:block"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg>
+          <div style="display:flex; flex-direction:column; gap:6px; max-width:280px">
+            <span style="font-size:13px; font-weight:700; color:#191b16">Un feuillet, une flèche qui en sort</span>
+            <span style="font-size:12.5px; line-height:1.55; color:#3b3e36">Le feuillet à bandeau plein est le numéro ; la flèche est le geste que l'app cherche à provoquer — aller au document. Grille 24 × 24, <span style="font-family:'JetBrains Mono',monospace">stroke-width 1.6</span>, <span style="font-family:'JetBrains Mono',monospace">fill:none</span>, angles carrés.</span>
+            <span style="font-size:12.5px; line-height:1.55; color:#3b3e36">Distinct de celui d'Organisation des cours (cadre à bandeau plein + trois barres, sans flèche).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="border:1px solid #d8d4c6; border-left:3px solid #8a2f39; background:#fffefb; padding:16px 20px; max-width:1000px; display:flex; flex-direction:column; gap:8px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Notes de canevas · pas de l'interface</div>
+    <ul style="margin:0; padding-left:18px; font-size:12.5px; line-height:1.65; color:#3b3e36; display:flex; flex-direction:column; gap:5px">
+      <li><strong>Le tri de 5a est le sujet</strong> : la liste n'est pas alphabétique mais ordonnée par décision à prendre — en échec, puis stériles, puis le reste replié. La colonne « ce qu'elle a rapporté » compare <em>retenues</em> et <em>rapportées</em> : c'est elle qui justifie un « ne plus suivre ».</li>
+      <li>Les 14 sources et leurs compteurs sont de la substitution ; les organismes cités sont réels.</li>
+      <li><strong>Impact sur le portail</strong> : une tuile de plus, décompte du bandeau à reprendre, et la couleur grenat <span style="font-family:'JetBrains Mono',monospace">#8a2f39</span> à ajouter au jeu des couleurs d'app.</li>
+    </ul>
+  </div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:28px">
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:1180px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Tour 4 — chercher, les états limites, imprimer</div>
+    <h1 style="margin:0; font-size:27px; font-weight:700; letter-spacing:-.01em">Les trois écrans qui manquaient</h1>
+    <p style="margin:0; font-size:14px; line-height:1.55; color:#3b3e36; text-wrap:pretty; max-width:920px"><a href="#4a">4a</a> la recherche transversale, qui cherche dans <em>tous</em> les numéros et sait rendre des sources autant que des actualités. <a href="#4b">4b</a> les six états limites, sur le papier chaud. <a href="#4c">4c</a> la feuille d'impression d'un numéro, un code QR par source.</p>
+  </div>
+
+  <!-- ===== 4a — RECHERCHE ===== -->
+  <div id="4a" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:1000px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">4a</span>
+      <span style="font-size:17px; font-weight:700">Recherche transversale</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">1000 px · douze numéros, 41 actualités, 38 sources</span>
+    </div>
+    <p style="margin:0; max-width:1000px; font-size:12.5px; line-height:1.55; color:#3b3e36; text-wrap:pretty">Deux jeux de résultats séparés, jamais mélangés : <strong>les actualités</strong> (une ligne par entrée publiée, avec l'extrait où le mot est trouvé et son numéro d'origine) et <strong>les sources</strong> (un organisme, ce qu'il a publié pour le carnet). Chercher « FEDER » doit pouvoir répondre « trois actualités, mais surtout deux documents ».</p>
+
+    <div style="width:1000px; border:1px solid #1a1611; background:#fbf6ea">
+      <div style="height:5px; background:#8a2f39"></div>
+      <div style="background:#241d15; padding:12px 22px; display:flex; align-items:center; gap:12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fdf8ec" stroke-width="1.6" stroke-linecap="square" style="flex:none"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fdf8ec">Carnet de veille</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#b3a893">BTS GPN · Kerplouz</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">Sommaire</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#fdf8ec; border-bottom:1px solid #fdf8ec">Rechercher</span>
+      </div>
+
+      <div style="background:#f5ead4; border-bottom:1px solid #ddd2ba; padding:20px 22px; display:flex; flex-direction:column; gap:14px">
+        <div style="display:flex; gap:0; align-items:stretch">
+          <div style="flex:1; border:1px solid #8a2f39; border-right:0; background:#fffdf6; padding:13px 15px; display:flex; align-items:center; gap:11px; box-shadow:0 0 0 3px rgba(138,47,57,.15)">
+            <span style="color:#6f6355; font-size:15px">⌕</span>
+            <span style="font-size:16px; color:#1a1611">financement FEDER</span>
+            <span style="display:inline-block; width:2px; height:19px; background:#8a2f39"></span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:0 22px; display:flex; align-items:center; font-weight:700">Chercher</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:center">
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Chercher dans</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#fffdf6; background:#1a1611; padding:5px 11px">tout le texte</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c; border:1px solid #b9a87f; padding:4px 11px; cursor:pointer">titres seuls</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Rubrique</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c; border:1px solid #b9a87f; background:#fffdf6; padding:4px 11px">Toutes ▾</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Échelle</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c; border:1px solid #b9a87f; background:#fffdf6; padding:4px 11px">Toutes ▾</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Période</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c; border:1px solid #b9a87f; background:#fffdf6; padding:4px 11px">2026-2027 ▾</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 22px; display:flex; flex-wrap:wrap; gap:16px; align-items:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c">
+        <span style="letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; font-weight:700">7 résultats</span>
+        <span>3 actualités</span><span style="color:#c9b896">|</span><span>4 sources</span>
+        <span style="flex:1"></span>
+        <span style="color:#6f6355">cherché dans 12 numéros · 41 actualités publiées</span>
+      </div>
+
+      <div style="padding:22px; display:flex; flex-direction:column; gap:24px">
+        <div style="display:flex; flex-direction:column; gap:13px">
+          <div style="display:flex; align-items:center; gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#1a1611">Les actualités</span>
+            <span style="flex:1; height:2px; background:#1a1611"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">3 · classées par date</span>
+          </div>
+
+          <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:14px 16px; display:grid; grid-template-columns:1fr 118px; gap:16px">
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 9px">
+                <span style="font-size:12.5px; font-weight:700; color:#1a1611">Conservatoire des Sites Alsaciens</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">régional · Bas-Rhin</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">11 août 2026</span>
+              </div>
+              <a href="#3b" style="font-size:17px; font-weight:700; line-height:1.3; letter-spacing:-.01em; text-decoration:none; color:#1a1611">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</a>
+              <p style="margin:0; font-size:12.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">…coût total de 65 205 €, dont 35 184 € de <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark> ; le solde est porté par la région et l'agence de l'eau…</p>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">trouvé dans le résumé et dans le bandeau de chiffres</span>
+            </div>
+            <div style="border-left:1px solid #eadfc8; padding-left:16px; display:flex; flex-direction:column; gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#6f6355">Parue dans</span>
+              <a href="#3b" style="font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; text-decoration:none">n° 12</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sem. 33 · août 2026</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; margin-top:3px">Terrain &amp; gestion</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:14px 16px; display:grid; grid-template-columns:1fr 118px; gap:16px">
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 9px">
+                <span style="font-size:12.5px; font-weight:700; color:#1a1611">Agence de l'eau Loire-Bretagne</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">national</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">22 juin 2026</span>
+              </div>
+              <a href="#4a" style="font-size:17px; font-weight:700; line-height:1.3; letter-spacing:-.01em; text-decoration:none; color:#1a1611">Restauration de continuité écologique : le taux d'aide passe à 70 %</a>
+              <p style="margin:0; font-size:12.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">…cumul possible avec les crédits <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark> dans la limite de 80 % d'aide publique…</p>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">trouvé dans le résumé</span>
+            </div>
+            <div style="border-left:1px solid #eadfc8; padding-left:16px; display:flex; flex-direction:column; gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#6f6355">Parue dans</span>
+              <a href="#4a" style="font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; text-decoration:none">n° 5</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sem. 26 · juin 2026</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; margin-top:3px">Terrain &amp; gestion</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:14px 16px; display:grid; grid-template-columns:1fr 118px; gap:16px">
+            <div style="display:flex; flex-direction:column; gap:7px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 9px">
+                <span style="font-size:12.5px; font-weight:700; color:#1a1611">Conservatoire d'espaces naturels de Bretagne</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">régional · Morbihan</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">5 août 2026</span>
+              </div>
+              <a href="#4a" style="font-size:17px; font-weight:700; line-height:1.3; letter-spacing:-.01em; text-decoration:none; color:#1a1611">Un inventaire de 43 mares bocagères en Morbihan</a>
+              <p style="margin:0; font-size:12.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">…campagne financée dans le cadre du programme <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark> Bretagne 2021-2027…</p>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">trouvé dans « ce qu'on trouve dans le document »</span>
+            </div>
+            <div style="border-left:1px solid #eadfc8; padding-left:16px; display:flex; flex-direction:column; gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#6f6355">Parue dans</span>
+              <a href="#4a" style="font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; text-decoration:none">n° 11</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">sem. 32 · août 2026</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; margin-top:3px">Terrain &amp; gestion</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:13px">
+          <div style="display:flex; align-items:center; gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#8a2f39">Les sources</span>
+            <span style="flex:1; height:2px; background:#8a2f39"></span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:13px">
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; flex-direction:column">
+              <div style="background:#f7ecdd; border-bottom:1px solid #e0c9b5; padding:11px 14px; display:flex; flex-direction:column; gap:4px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">PDF · 24 pages · n° 12</span>
+                <span style="font-size:13.5px; font-weight:700; line-height:1.35; color:#1a1611">Communiqué + plan de gestion des RNN de Rhinau et d'Erstein</span>
+                <span style="font-size:11.5px; color:#4a4136; line-height:1.5">contient le budget poste par poste, avec la part <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark></span>
+              </div>
+              <a href="#3b" style="background:#8a2f39; color:#fffdf6; text-decoration:none; padding:13px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px">
+                <span style="font-size:14px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">conservatoire-sites-alsaciens.eu</span></span>
+                <span style="font-size:19px">→</span>
+              </a>
+            </div>
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; flex-direction:column">
+              <div style="background:#f7ecdd; border-bottom:1px solid #e0c9b5; padding:11px 14px; display:flex; flex-direction:column; gap:4px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">PDF · 12 pages · n° 5</span>
+                <span style="font-size:13.5px; font-weight:700; line-height:1.35; color:#1a1611">Délibération du conseil d'administration — taux d'aide 2026</span>
+                <span style="font-size:11.5px; color:#4a4136; line-height:1.5">contient les règles de cumul avec les crédits <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark></span>
+              </div>
+              <a href="#4a" style="background:#8a2f39; color:#fffdf6; text-decoration:none; padding:13px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px">
+                <span style="font-size:14px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">eau-loire-bretagne.fr</span></span>
+                <span style="font-size:19px">→</span>
+              </a>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:13px">
+            <a href="#4a" style="flex:1; min-width:280px; border:1px solid #ddd2ba; background:#fffdf6; padding:11px 14px; display:flex; align-items:center; gap:12px; text-decoration:none">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355; border:1px solid #c9b896; padding:2px 6px; flex:none">page web</span>
+              <span style="flex:1; font-size:12.5px; font-weight:600; color:#1a1611; line-height:1.35">Programme <mark style="background:#f7d9a8; color:#1a1611; padding:0 2px">FEDER</mark> Bretagne 2021-2027 — fiche mesure 3.2</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355; flex:none">n° 11</span>
+              <span style="color:#8a2f39; font-size:16px; flex:none">→</span>
+            </a>
+            <a href="#4a" style="flex:1; min-width:280px; border:1px solid #ddd2ba; background:#fffdf6; padding:11px 14px; display:flex; align-items:center; gap:12px; text-decoration:none">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355; border:1px solid #c9b896; padding:2px 6px; flex:none">PDF · 4 p.</span>
+              <span style="flex:1; font-size:12.5px; font-weight:600; color:#1a1611; line-height:1.35">Bilan financier du contrat nature 2022-2025</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355; flex:none">n° 3</span>
+              <span style="color:#8a2f39; font-size:16px; flex:none">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 4b — ÉTATS LIMITES ===== -->
+  <div id="4b" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:1216px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">4b</span>
+      <span style="font-size:17px; font-weight:700">Les six états limites</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">chacun dit ce qui s'est passé, puis le geste qui débloque</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:16px; width:1216px">
+
+      <div style="width:390px; border:1px solid #1a1611; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5b3d1f">① Le tout premier lancement · vue étudiante</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · à la place du numéro, sur <strong>l’adresse du carnet</strong> — tant qu’aucun numéro n’est publié. Disparaît définitivement au premier envoi.</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#c9b896">◇</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">Le premier numéro paraîtra vendredi</span>
+          <p style="margin:0; font-size:13.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">Le carnet est une veille hebdomadaire : chaque vendredi, l'équipe pédagogique publie les actualités naturalistes de la semaine, avec leurs documents d'origine.</p>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355; border-top:1px solid #ddd2ba; padding-top:11px">Rien à faire — revenir vendredi.</span>
+        </div>
+      </div>
+
+      <div style="width:390px; border:1px solid #1a1611; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5b3d1f">② Numéro en cours, aucune entrée retenue · rédaction</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · dans la <strong>vue rédaction (2a)</strong>, à la place de la liste des entrées, quand le numéro ouvert n’a rien de coché.</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#c9b896">▭</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">Le n° 13 est vide pour l'instant</span>
+          <p style="margin:0; font-size:13.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">Six entrées attendent dans la moisson du 15 août. Cocher celles qui partiront dans le numéro, ou en ajouter une à la main.</p>
+          <div style="display:flex; gap:10px; margin-top:2px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:11px 14px; font-weight:700; cursor:pointer">Voir la moisson (6)</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#8a2f39; border:1px solid #8a2f39; padding:10px 14px; cursor:pointer">+ Ajouter</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:390px; border:1px solid #1a1611; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5b3d1f">③ La collecte n'a rien rapporté · rédaction</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · dans la <strong>bande de moisson</strong> de la vue rédaction (2a), sous le bandeau du numéro, à la place du décompte « 9 entrées déposées ».</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#c9b896">◇</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">Aucune nouveauté chez les 14 sources suivies</span>
+          <p style="margin:0; font-size:13.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">La collecte du 15 août a bien tourné : les 14 sources ont répondu, aucune n'a publié depuis le 8. C'est un résultat, pas une panne.</p>
+          <div style="display:flex; gap:10px; margin-top:2px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#8a2f39; border:1px solid #8a2f39; padding:10px 14px; cursor:pointer">Relancer la collecte</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#2b241c; border:1px solid #b9a87f; padding:10px 14px; cursor:pointer">Gérer les sources</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:390px; border:1px solid #A6421B; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f7e5dc; border-bottom:1px solid #A6421B; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#7d3413">④ La collecte a échoué · rédaction</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · même emplacement que ③, dans la <strong>bande de moisson</strong> — les deux ne s’affichent jamais ensemble.</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#A6421B">✕</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">La collecte du 15 août ne s'est pas terminée</span>
+          <p style="margin:0; font-size:13.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">Onze sources sur quatorze ont répondu ; trois n'ont pas pu être jointes. Les entrées déjà rapportées sont dans la moisson, la liste des sources en échec est consultable.</p>
+          <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:9px 12px; font-family:'JetBrains Mono',monospace; font-size:10.5px; line-height:1.7; color:#4a4136">PatriNat · délai dépassé<br>OFB — actualités · erreur 503<br>Tela Botanica · flux illisible</div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:11px 14px; font-weight:700; cursor:pointer; align-self:flex-start">Relancer les 3 sources</span>
+        </div>
+      </div>
+
+      <div style="width:390px; border:1px solid #1a1611; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5b3d1f">⑤ Recherche sans résultat</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · dans l’<strong>écran de recherche (4a)</strong>, à la place des deux listes de résultats ; le bandeau de filtres reste en place au-dessus.</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#c9b896">⌕</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">Rien pour « chiroptère » dans les 12 numéros</span>
+          <p style="margin:0; font-size:13.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">Le carnet écrit les noms comme ses sources : essayer <strong>chauve-souris</strong> (7 résultats) ou <strong>rhinolophe</strong> (3 résultats).</p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:2px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border:1px solid #8a2f39; padding:8px 12px; cursor:pointer">chauve-souris</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border:1px solid #8a2f39; padding:8px 12px; cursor:pointer">rhinolophe</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355; border-top:1px solid #ddd2ba; padding-top:11px">Le filtre « 2026-2027 » est actif — l'élargir couvrirait 3 numéros de plus.</span>
+        </div>
+      </div>
+
+      <div style="width:390px; border:1px solid #7a5b16; background:#fbf6ea; display:flex; flex-direction:column">
+        <div style="background:#f4ead0; border-bottom:1px solid #7a5b16; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#5c4410">⑥ Publication refusée · rédaction</div>
+        <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f">OÙ · en <strong>surimpression de la vue rédaction (2a)</strong>, déclenché par le bouton « Publier le n° 13 » ; se ferme et renvoie vers l’entrée fautive.</div>
+        <div style="padding:26px 20px 24px; display:flex; flex-direction:column; gap:12px; min-height:230px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#7a5b16">⚠</span>
+          <span style="font-size:19px; font-weight:700; line-height:1.3; color:#1a1611">Deux entrées bloquent la publication du n° 13</span>
+          <div style="display:flex; flex-direction:column; gap:9px">
+            <div style="border-left:3px solid #A6421B; background:#fffdf6; padding:8px 12px; font-size:12.5px; line-height:1.5; color:#2b241c"><strong>Référentiel taxonomique</strong> — lien mort depuis le 28/08. Corriger l'adresse ou écarter l'entrée.</div>
+            <div style="border-left:3px solid #7a5b16; background:#fffdf6; padding:8px 12px; font-size:12.5px; line-height:1.5; color:#2b241c"><strong>Assecs en tête de bassin</strong> — bloc source vide. Un lien au minimum est exigé.</div>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:11px 14px; font-weight:700; cursor:pointer; align-self:flex-start">Régler la première</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 4c — FEUILLE D'IMPRESSION ===== -->
+  <div id="4c" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:794px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">4c</span>
+      <span style="font-size:17px; font-weight:700">La feuille d'impression</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">A4 · noir et blanc · un code QR par source</span>
+    </div>
+    <p style="margin:0; max-width:794px; font-size:12.5px; line-height:1.55; color:#3b3e36; text-wrap:pretty">Sur papier, le bouton « Ouvrir la source » ne veut plus rien dire : chaque entrée porte un <strong>code QR flashable</strong> et son domaine en clair, à la place de l'adresse complète qu'il fallait recopier à la main. Les codes ci-dessous sont réels et pointent vers les adresses des trois sources ; celui du pied mène au carnet. Le papier crème et le grenat disparaissent — l'accent devient un filet noir. Un numéro tient sur une feuille recto.</p>
+
+    <div style="box-sizing:border-box; width:794px; height:1123px; background:#ffffff; border:1px solid #b9a87f; padding:46px 52px 38px; display:flex; flex-direction:column; gap:17px; color:#000">
+      <div style="display:flex; align-items:flex-start; gap:16px; border-bottom:2px solid #000; padding-bottom:12px">
+        <div style="display:flex; flex-direction:column; gap:4px; flex:1">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase">Carnet de veille naturaliste · BTS Gestion et Protection de la Nature · Kerplouz</span>
+          <div style="display:flex; align-items:baseline; gap:10px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-.02em">n° 12</span>
+            <span style="font-size:21px; font-weight:700; letter-spacing:-.015em">Compter, coûter, se tromper</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px">semaine 33 · 10 → 16 août 2026 · 3 actualités</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; text-align:right; line-height:1.6">imprimé le 29/08/2026<br>page 1 / 1</span>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; border-bottom:1px solid #000; padding-bottom:3px">Terrain &amp; gestion</span>
+        <div style="display:flex; flex-direction:column; gap:7px; padding-top:6px">
+          <span style="font-size:16.5px; font-weight:700; line-height:1.3; letter-spacing:-.01em">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px">Conservatoire des Sites Alsaciens · régional, Bas-Rhin · 11 août 2026</span>
+          <div style="border-top:1px solid #000; border-bottom:1px solid #000; padding:7px 0; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; font-family:'JetBrains Mono',monospace; font-size:11px">
+            <span><strong>2</strong> réserves</span><span><strong>18</strong> mois d'étude</span><span><strong>10</strong> ans couverts</span><span><strong>65 205 €</strong> dont 35 184 € FEDER</span>
+          </div>
+          <p style="margin:0; font-size:12.5px; line-height:1.6; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein : dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif.</p>
+          <div style="border:1px solid #000; padding:10px 12px; display:grid; grid-template-columns:1fr 76px; gap:14px; align-items:center">
+            <div style="display:flex; flex-direction:column; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase">La source — PDF, 24 pages</span>
+              <span style="font-size:11.5px; line-height:1.5">le budget poste par poste avec la part FEDER · les protocoles retenus, taxon par taxon · le calendrier des dix-huit mois</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.02em">conservatoire-sites-alsaciens.eu · flasher le code pour ouvrir</span>
+            </div>
+            <img src="qr-csa.png" alt="Code QR vers conservatoire-sites-alsaciens.eu" width="76" height="76" style="display:block; image-rendering:pixelated">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; border-bottom:1px solid #000; padding-bottom:3px">Science &amp; protocoles</span>
+        <div style="display:flex; flex-direction:column; gap:7px; padding-top:6px">
+          <span style="font-size:16.5px; font-weight:700; line-height:1.3; letter-spacing:-.01em">770 rhinolophes un soir, 30 quelques jours plus tard</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px">Parc national des Cévennes · régional, Gard · 10 août 2026</span>
+          <p style="margin:0; font-size:12.5px; line-height:1.6; text-wrap:pretty">Une cavité redécouverte en 2022 accueille des effectifs qui s'évanouissent fin juillet, avant la mise bas. Le site serait un gîte de transition, ce qui implique une nurserie commune non localisée à plusieurs dizaines de kilomètres.</p>
+          <div style="border:1px solid #000; padding:10px 12px; display:grid; grid-template-columns:1fr 76px; gap:14px; align-items:center">
+            <div style="display:flex; flex-direction:column; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase">La source — page web, ≈ 5 min</span>
+              <span style="font-size:11.5px; line-height:1.5">la série complète des comptages depuis les années 1990 · la méthode de comptage en sortie de gîte · l'hypothèse du gîte de transit</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.02em">cevennes-parcnational.fr · flasher le code pour ouvrir</span>
+            </div>
+            <img src="qr-cevennes.png" alt="Code QR vers cevennes-parcnational.fr" width="76" height="76" style="display:block; image-rendering:pixelated">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; border-bottom:1px solid #000; padding-bottom:3px">Pépites</span>
+        <div style="display:flex; flex-direction:column; gap:7px; padding-top:6px">
+          <span style="font-size:16.5px; font-weight:700; line-height:1.3; letter-spacing:-.01em">Vingt-et-une grandes nacres vivantes, et pas une de plus</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px">Parc national de Port-Cros · régional, Var · 7 août 2026</span>
+          <p style="margin:0; font-size:12.5px; line-height:1.6; text-wrap:pretty">Les plongées de l'été ne retrouvent que vingt-et-un individus vivants de <em>Pinna nobilis</em> sur l'ensemble des stations suivies.</p>
+          <div style="border:1px solid #000; padding:10px 12px; display:grid; grid-template-columns:1fr 76px; gap:14px; align-items:center">
+            <div style="display:flex; flex-direction:column; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase">La source — PDF, 6 pages</span>
+              <span style="font-size:11.5px; line-height:1.5">la liste des stations suivies et leur profondeur · le protocole de comptage en plongée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.02em">portcros-parcnational.fr · flasher le code pour ouvrir</span>
+            </div>
+            <img src="qr-portcros.png" alt="Code QR vers portcros-parcnational.fr" width="76" height="76" style="display:block; image-rendering:pixelated">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:auto; border-top:1px solid #000; padding-top:11px; display:flex; gap:16px; align-items:center">
+        <img src="qr-carnet.png" alt="Code QR vers le carnet de veille" width="58" height="58" style="display:block; image-rendering:pixelated; flex:none">
+        <div style="flex:1; display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.6">
+          <span style="font-weight:700">Tous les numéros du carnet</span>
+          <span>portail.btsgpn-kerplouz.fr/carnet-de-veille</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px">Adresses vérifiées le 16/08/2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="border:1px solid #d8d4c6; border-left:3px solid #8a2f39; background:#fffefb; padding:16px 20px; max-width:1000px; display:flex; flex-direction:column; gap:8px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Notes de canevas · pas de l'interface</div>
+    <ul style="margin:0; padding-left:18px; font-size:12.5px; line-height:1.65; color:#3b3e36; display:flex; flex-direction:column; gap:5px">
+      <li><strong>Deux jeux de résultats</strong> dans la recherche : les actualités portent leur numéro d'origine et la ligne « trouvé dans… » ; les sources sont des documents ouvrables directement, avec le même bouton grenat que dans le numéro. C'est la troisième porte vers les sources, après le bloc de l'entrée et la colonne de droite du grand écran.</li>
+      <li><strong>Suggestions de l'état ⑤</strong> : elles supposent un index des mots réellement présents dans le carnet (« chauve-souris », « rhinolophe »), pas un dictionnaire de synonymes. À confirmer à l'implémentation — sinon, ne garder que le rappel du filtre actif.</li>
+      <li><strong>États ③ et ④ distingués volontairement</strong> : « rien de neuf » est un résultat normal de la veille, « la collecte a échoué » est une panne — ne pas les fondre dans un même écran vide.</li>
+      <li>La feuille d'impression sort aussi les entrées <em>sans</em> chiffres clés et sans « ce qu'on trouve » : les deux blocs disparaissent, comme à l'écran. Elle n'imprime jamais l'encadré « Usage en cours ».</li>
+      <li><strong>Pictogramme de l'app</strong>, posé dans les bandeaux : un feuillet à bandeau plein (le numéro) et une flèche qui en sort (la source). SVG inline 24 × 24, <span style="font-family:'JetBrains Mono',monospace">stroke-width 1.6</span>, <span style="font-family:'JetBrains Mono',monospace">fill:none</span> — même convention que les cinq dessins du portail, et distinct de celui d'Organisation (bandeau + trois barres, sans flèche). Il sera repris sur la tuile du portail, en grenat <span style="font-family:'JetBrains Mono',monospace">#8a2f39</span> sur fond plein.</li>
+    </ul>
+  </div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:28px">
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:1180px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Tour 3 — la vue publiée, plus chaleureuse, la source au centre</div>
+    <h1 style="margin:0; font-size:27px; font-weight:700; letter-spacing:-.01em">Le numéro publié : aller à la source devient le geste principal</h1>
+    <p style="margin:0; font-size:14px; line-height:1.55; color:#3b3e36; text-wrap:pretty; max-width:920px">Trois changements. <strong>Papier plus chaud</strong> (crème <span style="font-family:'JetBrains Mono',monospace">#fbf6ea</span>, filets bruns, bandeaux de rubrique en sable) et plus d'air, sans quitter l'angle droit ni ajouter d'ombre. <strong>La source devient l'auteur</strong> : elle est nommée avant le titre, avec son domaine visible. <strong>Le résumé s'arrête volontairement</strong> et rend la main à un bloc « la source » plein cadre, haut de 60 px, qui dit ce qu'on va y trouver — l'étudiant ne peut plus s'arrêter au titre sans voir qu'il manque le document.</p>
+    <p style="margin:0; font-size:12.5px; line-height:1.55; color:#6b6a5e; font-family:'JetBrains Mono',monospace"><a href="#3a">3a</a> téléphone (390 × 844) · <a href="#3b">3b</a> grand écran · <a href="#3c">3c</a> le bloc source, thème sombre chaud</p>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start">
+
+    <div id="3a" style="display:flex; flex-direction:column; gap:12px">
+      <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; width:1222px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">3a</span>
+        <span style="font-size:17px; font-weight:700">Numéro 12 publié — téléphone</span>
+        <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">390 × 844 · trois écrans, mobile d'abord — chaque cadre continue au défilement</span>
+      </div>
+
+      <div style="display:flex; gap:26px">
+        <!-- écran 1 -->
+        <div style="width:390px; height:844px; border:1px solid #1a1611; background:#fbf6ea; overflow:hidden; display:flex; flex-direction:column">
+          <div style="height:5px; background:#8a2f39; flex:none"></div>
+          <div style="background:#241d15; padding:11px 14px; display:flex; align-items:center; gap:10px; flex:none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fdf8ec" stroke-width="1.6" stroke-linecap="square" style="flex:none"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg><span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fdf8ec">Carnet de veille</span>
+            <span style="flex:1"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#efe3cd; border:1px solid #55483a; padding:7px 10px">Numéros</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#efe3cd; border:1px solid #55483a; padding:6px 11px">⌕</span>
+          </div>
+
+          <div style="background:#f5ead4; border-bottom:1px solid #ddd2ba; padding:18px 16px 16px; flex:none; display:flex; flex-direction:column; gap:7px">
+            <div style="display:flex; align-items:baseline; gap:9px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:21px; font-weight:700; letter-spacing:-.02em; color:#1a1611">n° 12</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#4a4136">sem. 33 · 10 → 16 août 2026</span>
+            </div>
+            <div style="font-size:20px; font-weight:700; letter-spacing:-.015em; line-height:1.25; color:#1a1611">Compter, coûter, se tromper</div>
+            <div style="font-size:13px; line-height:1.55; color:#4a4136; text-wrap:pretty">Trois documents à ouvrir cette semaine : un budget de plan de gestion, deux comptages de chauves-souris qui se contredisent, un suivi d'espèce marine.</div>
+          </div>
+
+          <div style="overflow:hidden; display:flex; flex-direction:column">
+            <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 16px; display:flex; align-items:center; gap:10px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Terrain &amp; gestion</span>
+              <span style="flex:1; height:1px; background:#c9b896"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">1 sur 3</span>
+            </div>
+
+            <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:18px 16px; display:flex; flex-direction:column; gap:13px">
+              <div style="display:flex; flex-direction:column; gap:3px">
+                <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px">
+                  <span style="font-size:13px; font-weight:700; color:#1a1611">Conservatoire des Sites Alsaciens</span>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">régional · Bas-Rhin</span>
+                </div>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">conservatoire-sites-alsaciens.eu · 11 août 2026</span>
+              </div>
+
+              <h2 style="margin:0; font-size:21px; font-weight:700; line-height:1.24; letter-spacing:-.015em; color:#1a1611; text-wrap:pretty">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</h2>
+
+              <div style="border-top:1px solid #1a1611; border-bottom:1px solid #1a1611; padding:11px 0; display:grid; grid-template-columns:1fr 1fr; gap:11px 16px">
+                <div style="display:flex; flex-direction:column"><span style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">2</span><span style="font-size:10px; color:#6f6355">réserves</span></div>
+                <div style="display:flex; flex-direction:column"><span style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">18</span><span style="font-size:10px; color:#6f6355">mois d'étude</span></div>
+                <div style="display:flex; flex-direction:column"><span style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">10</span><span style="font-size:10px; color:#6f6355">ans couverts</span></div>
+                <div style="display:flex; flex-direction:column"><span style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; color:#8a2f39">65 205 €</span><span style="font-size:10px; color:#6f6355">dont 35 184 € FEDER</span></div>
+              </div>
+
+              <p style="margin:0; font-size:14.5px; line-height:1.6; color:#2b241c; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves de l'île de Rhinau et de la forêt d'Erstein : dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif.</p>
+
+              <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; flex-direction:column">
+                <div style="background:#f7ecdd; border-bottom:1px solid #e0c9b5; padding:9px 13px; display:flex; flex-direction:column; gap:5px">
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document</span>
+                  <ul style="margin:0; padding-left:15px; font-size:12px; line-height:1.55; color:#2b241c">
+                    <li>le budget poste par poste, avec la part FEDER</li>
+                    <li>les protocoles retenus, taxon par taxon</li>
+                    <li>le calendrier des dix-huit mois d'étude</li>
+                  </ul>
+                </div>
+                <div style="padding:13px; display:flex; flex-direction:column; gap:9px">
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">Communiqué + plan de gestion · PDF · 24 pages</div>
+                  <a href="#3a" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:16px 15px; min-height:56px">
+                    <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">conservatoire-sites-alsaciens.eu</span></span>
+                    <span style="font-size:20px">→</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 16px; display:flex; align-items:center; gap:10px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Science &amp; protocoles</span>
+              <span style="flex:1; height:1px; background:#c9b896"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">2 sur 3</span>
+            </div>
+            <div style="background:#fffdf6; padding:18px 16px; display:flex; flex-direction:column; gap:9px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px">
+                <span style="font-size:13px; font-weight:700; color:#1a1611">Parc national des Cévennes</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">régional · Gard</span>
+              </div>
+              <h2 style="margin:0; font-size:21px; font-weight:700; line-height:1.24; letter-spacing:-.015em; color:#1a1611; text-wrap:pretty">770 rhinolophes un soir, 30 quelques jours plus tard</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- écran 2 -->
+        <div style="width:390px; height:844px; border:1px solid #1a1611; background:#fbf6ea; overflow:hidden; display:flex; flex-direction:column">
+          <div style="height:5px; background:#8a2f39; flex:none"></div>
+          <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 16px; flex:none; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">suite du n° 12</div>
+
+          <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:16px; display:flex; flex-direction:column; gap:13px; flex:none">
+            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#2b241c; text-wrap:pretty">Une cavité redécouverte en 2022 accueille des effectifs qui s'évanouissent fin juillet, avant la mise bas. Le site serait un gîte de transition, ce qui implique une nurserie commune non localisée à plusieurs dizaines de kilomètres.</p>
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; flex-direction:column">
+              <div style="background:#f7ecdd; border-bottom:1px solid #e0c9b5; padding:9px 13px; display:flex; flex-direction:column; gap:5px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document</span>
+                <ul style="margin:0; padding-left:15px; font-size:12px; line-height:1.55; color:#2b241c">
+                  <li>la série complète des comptages depuis les années 1990</li>
+                  <li>la méthode de comptage en sortie de gîte</li>
+                  <li>l'hypothèse du gîte de transit, écrite par le Parc</li>
+                </ul>
+              </div>
+              <div style="padding:13px; display:flex; flex-direction:column; gap:9px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">Actualité du Parc · page web · lecture ≈ 5 min</div>
+                <a href="#3a" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:16px 15px; min-height:56px">
+                  <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">cevennes-parcnational.fr</span></span>
+                  <span style="font-size:20px">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 16px; display:flex; align-items:center; gap:10px; flex:none">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Pépites</span>
+            <span style="flex:1; height:1px; background:#c9b896"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">3 sur 3</span>
+          </div>
+
+          <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:18px 16px; display:flex; flex-direction:column; gap:13px; flex:none">
+            <div style="display:flex; flex-direction:column; gap:3px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px">
+                <span style="font-size:13px; font-weight:700; color:#1a1611">Parc national de Port-Cros</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 5px">régional · Var</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">portcros-parcnational.fr · 7 août 2026</span>
+            </div>
+            <h2 style="margin:0; font-size:21px; font-weight:700; line-height:1.24; letter-spacing:-.015em; color:#1a1611; text-wrap:pretty">Vingt-et-une grandes nacres vivantes, et pas une de plus</h2>
+            <p style="margin:0; font-size:14.5px; line-height:1.6; color:#2b241c; text-wrap:pretty">Les plongées de l'été ne retrouvent que vingt-et-un individus vivants de <em>Pinna nobilis</em> sur l'ensemble des stations suivies.</p>
+                        </div>
+        </div>
+
+        <div style="width:390px; height:844px; border:1px solid #1a1611; background:#fbf6ea; overflow:hidden; display:flex; flex-direction:column">
+          <div style="height:5px; background:#8a2f39; flex:none"></div>
+          <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:9px 16px; flex:none; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">fin du n° 12</div>
+          <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:16px; display:flex; flex-direction:column; gap:13px; flex:none">
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; flex-direction:column">
+              <div style="background:#f7ecdd; border-bottom:1px solid #e0c9b5; padding:9px 13px; display:flex; flex-direction:column; gap:5px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document</span>
+                <ul style="margin:0; padding-left:15px; font-size:12px; line-height:1.55; color:#2b241c">
+                  <li>la liste des stations suivies et leur profondeur</li>
+                  <li>le protocole de comptage en plongée</li>
+                </ul>
+              </div>
+              <div style="padding:13px; display:flex; flex-direction:column; gap:9px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">Note de suivi · PDF · 6 pages</div>
+                <a href="#3a" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:16px 15px; min-height:56px">
+                  <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">portcros-parcnational.fr</span></span>
+                  <span style="font-size:20px">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div style="padding:16px; display:flex; flex-direction:column; gap:14px; flex:1; background:#fbf6ea">
+            <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:13px 15px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Numéro précédent</span>
+              <span style="font-size:14.5px; font-weight:700; color:#1a1611">n° 11 — semaine 32 · 3 → 9 août</span>
+              <span style="font-size:12.5px; color:#4a4136; line-height:1.5">Un inventaire de 43 mares bocagères · Le protocole rhopalocères révisé · Deux autres</span>
+              <a href="#2c" style="font-size:13px; font-weight:700">Tous les numéros (12) →</a>
+            </div>
+            <div style="border-top:1px solid #ddd2ba; padding-top:13px; font-family:'JetBrains Mono',monospace; font-size:10px; line-height:1.6; color:#6f6355">Carnet de veille naturaliste · BTS Gestion et Protection de la Nature · Kerplouz — veille hebdomadaire tenue par l'équipe pédagogique. Chaque actualité renvoie à sa source primaire.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="3c" style="display:flex; flex-direction:column; gap:12px; width:390px">
+      <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">3c</span>
+        <span style="font-size:15px; font-weight:700">Le bloc source en sombre</span>
+      </div>
+      <p style="margin:0; font-size:12.5px; line-height:1.55; color:#3b3e36">Le bouton reste plein, l'accent s'éclaircit à <span style="font-family:'JetBrains Mono',monospace">#d9838c</span> sur fond brun-noir pour tenir le contraste du texte blanc.</p>
+      <div style="border:1px solid #3b3228; background:#14100d; padding:16px; display:flex; flex-direction:column; gap:13px">
+        <div style="display:flex; flex-direction:column; gap:3px">
+          <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px">
+            <span style="font-size:13px; font-weight:700; color:#f7f2e8">Conservatoire des Sites Alsaciens</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:#d9c79a; border:1px solid #6d6255; padding:1px 5px">régional · Bas-Rhin</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#a49a8b">conservatoire-sites-alsaciens.eu · 11 août 2026</span>
+        </div>
+        <h2 style="margin:0; font-size:20px; font-weight:700; line-height:1.24; letter-spacing:-.015em; color:#f7f2e8; text-wrap:pretty">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</h2>
+        <p style="margin:0; font-size:14px; line-height:1.6; color:#d5cbbb; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves de l'île de Rhinau et de la forêt d'Erstein.</p>
+        <div style="border:1px solid #d9838c; background:#1e1811; display:flex; flex-direction:column">
+          <div style="background:#2a1e1c; border-bottom:1px solid #4a2d31; padding:9px 13px; display:flex; flex-direction:column; gap:5px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#e79aa2">Ce qu'on trouve dans le document</span>
+            <ul style="margin:0; padding-left:15px; font-size:12px; line-height:1.55; color:#d5cbbb">
+              <li>le budget poste par poste, avec la part FEDER</li>
+              <li>les protocoles retenus, taxon par taxon</li>
+              <li>le calendrier des dix-huit mois d'étude</li>
+            </ul>
+          </div>
+          <div style="padding:13px; display:flex; flex-direction:column; gap:9px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#a49a8b">Communiqué + plan de gestion · PDF · 24 pages</div>
+            <a href="#3c" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#d9838c; color:#14100d; text-decoration:none; padding:16px 15px; min-height:56px">
+              <span style="font-size:15px; font-weight:700; line-height:1.3; color:#14100d">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:500; color:#14100d">conservatoire-sites-alsaciens.eu</span></span>
+              <span style="font-size:20px; color:#14100d">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3b grand écran -->
+  <div id="3b" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px; max-width:1000px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">3b</span>
+      <span style="font-size:17px; font-weight:700">Le même numéro sur grand écran</span>
+      <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">colonne de lecture 640 px · sommaire des sources à droite</span>
+    </div>
+    <div style="width:1000px; border:1px solid #1a1611; background:#fbf6ea">
+      <div style="height:5px; background:#8a2f39"></div>
+      <div style="background:#241d15; padding:12px 22px; display:flex; align-items:center; gap:12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fdf8ec" stroke-width="1.6" stroke-linecap="square" style="flex:none"><path d="M3 6.5h10v14H3z"/><path d="M3 10h10"/><path d="M5.5 13.5h5M5.5 16.5h5"/><path d="M14.5 9 21 2.5"/><path d="M16 2.5h5v5"/></svg><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fdf8ec">Carnet de veille</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#b3a893">BTS GPN · Kerplouz</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">Sommaire</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">Rechercher</span>
+      </div>
+      <div style="background:#f5ead4; border-bottom:1px solid #ddd2ba; padding:22px; display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap">
+        <div style="display:flex; flex-direction:column; gap:7px; max-width:640px">
+          <div style="display:flex; align-items:baseline; gap:10px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; letter-spacing:-.02em; color:#1a1611">n° 12</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#4a4136">semaine 33 · 10 → 16 août 2026</span>
+          </div>
+          <div style="font-size:27px; font-weight:700; letter-spacing:-.018em; line-height:1.2; color:#1a1611">Compter, coûter, se tromper</div>
+          <div style="font-size:14.5px; line-height:1.6; color:#4a4136; text-wrap:pretty">Trois documents à ouvrir cette semaine : un budget de plan de gestion, deux comptages de chauves-souris qui se contredisent, un suivi d'espèce marine.</div>
+        </div>
+        <span style="flex:1"></span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 296px">
+        <div style="padding:0 0 26px; border-right:1px solid #ddd2ba">
+          <div style="background:#f0e4cd; border-bottom:1px solid #ddd2ba; padding:10px 26px; display:flex; align-items:center; gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Terrain &amp; gestion</span>
+            <span style="flex:1; height:1px; background:#c9b896"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">1 sur 3</span>
+          </div>
+          <div style="padding:24px 26px; display:flex; flex-direction:column; gap:15px; max-width:640px">
+            <div style="display:flex; flex-direction:column; gap:3px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 9px">
+                <span style="font-size:14px; font-weight:700; color:#1a1611">Conservatoire des Sites Alsaciens</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 6px">régional · Bas-Rhin</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355">conservatoire-sites-alsaciens.eu · 11 août 2026</span>
+            </div>
+            <h2 style="margin:0; font-size:29px; font-weight:700; line-height:1.2; letter-spacing:-.018em; color:#1a1611; text-wrap:pretty">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</h2>
+            <div style="border-top:1px solid #1a1611; border-bottom:1px solid #1a1611; padding:13px 0; display:grid; grid-template-columns:repeat(4,1fr); gap:14px">
+              <div style="display:flex; flex-direction:column; gap:2px"><span style="font-family:'JetBrains Mono',monospace; font-size:21px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">2</span><span style="font-size:10.5px; color:#6f6355">réserves</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px"><span style="font-family:'JetBrains Mono',monospace; font-size:21px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">18</span><span style="font-size:10.5px; color:#6f6355">mois d'étude</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px"><span style="font-family:'JetBrains Mono',monospace; font-size:21px; font-weight:500; font-variant-numeric:tabular-nums; color:#1a1611">10</span><span style="font-size:10.5px; color:#6f6355">ans couverts</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px"><span style="font-family:'JetBrains Mono',monospace; font-size:21px; font-weight:700; font-variant-numeric:tabular-nums; color:#8a2f39">65 205 €</span><span style="font-size:10.5px; color:#6f6355">dont 35 184 € de FEDER</span></div>
+            </div>
+            <p style="margin:0; font-size:15.5px; line-height:1.65; color:#2b241c; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein : dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif.</p>
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:grid; grid-template-columns:1fr 268px">
+              <div style="background:#f7ecdd; border-right:1px solid #e0c9b5; padding:14px 16px; display:flex; flex-direction:column; gap:6px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document</span>
+                <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.6; color:#2b241c">
+                  <li>le budget poste par poste, avec la part FEDER</li>
+                  <li>les protocoles retenus, taxon par taxon</li>
+                  <li>le calendrier des dix-huit mois d'étude</li>
+                </ul>
+              </div>
+              <div style="padding:14px 16px; display:flex; flex-direction:column; gap:10px; justify-content:center">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">PDF · 24 pages</div>
+                <a href="#3b" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:15px; min-height:56px">
+                  <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">conservatoire-sites-alsaciens.eu</span></span>
+                  <span style="font-size:20px">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f0e4cd; border-top:1px solid #ddd2ba; border-bottom:1px solid #ddd2ba; padding:10px 26px; display:flex; align-items:center; gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Science &amp; protocoles</span>
+            <span style="flex:1; height:1px; background:#c9b896"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">2 sur 3</span>
+          </div>
+          <div style="padding:24px 26px 0; display:flex; flex-direction:column; gap:13px; max-width:640px">
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 9px">
+              <span style="font-size:14px; font-weight:700; color:#1a1611">Parc national des Cévennes</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 6px">régional · Gard</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355">cevennes-parcnational.fr · 10 août 2026</span>
+            </div>
+            <h2 style="margin:0; font-size:29px; font-weight:700; line-height:1.2; letter-spacing:-.018em; color:#1a1611; text-wrap:pretty">770 rhinolophes un soir, 30 quelques jours plus tard</h2>
+            <p style="margin:0; font-size:15.5px; line-height:1.65; color:#2b241c; text-wrap:pretty">Une cavité redécouverte en 2022 accueille des effectifs qui s'évanouissent fin juillet, avant la mise bas. Le site serait un gîte de transition, ce qui implique une nurserie commune non localisée à plusieurs dizaines de kilomètres.</p>
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:grid; grid-template-columns:1fr 268px">
+              <div style="background:#f7ecdd; border-right:1px solid #e0c9b5; padding:14px 16px; display:flex; flex-direction:column; gap:6px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document</span>
+                <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.6; color:#2b241c">
+                  <li>la série complète des comptages depuis les années 1990</li>
+                  <li>la méthode de comptage en sortie de gîte</li>
+                  <li>l'hypothèse du gîte de transit, écrite par le Parc</li>
+                </ul>
+              </div>
+              <div style="padding:14px 16px; display:flex; flex-direction:column; gap:10px; justify-content:center">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">page web · ≈ 5 min</div>
+                <a href="#3b" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:15px; min-height:56px">
+                  <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">cevennes-parcnational.fr</span></span>
+                  <span style="font-size:20px">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top:1px dashed #c9b896; background:#f5ead4; padding:7px 26px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:1.5; color:#5b3d1f; margin-top:24px">TROISIÈME ENTRÉE · rien n'a été écrit dans « ce qu'on trouve » : le cartouche n'existe pas, le bloc se réduit au bouton</div>
+          <div style="background:#f0e4cd; border-top:1px solid #ddd2ba; border-bottom:1px solid #ddd2ba; padding:10px 26px; display:flex; align-items:center; gap:12px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#5b3d1f">Pépites</span>
+            <span style="flex:1; height:1px; background:#c9b896"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">3 sur 3</span>
+          </div>
+          <div style="padding:24px 26px 26px; display:flex; flex-direction:column; gap:15px; max-width:640px">
+            <div style="display:flex; flex-direction:column; gap:3px">
+              <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 9px">
+                <span style="font-size:14px; font-weight:700; color:#1a1611">Parc national de Port-Cros</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#5b3d1f; border:1px solid #b79b6c; padding:1px 6px">régional · Var</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355">portcros-parcnational.fr · 7 août 2026</span>
+            </div>
+            <h2 style="margin:0; font-size:29px; font-weight:700; line-height:1.2; letter-spacing:-.018em; color:#1a1611; text-wrap:pretty">Vingt-et-une grandes nacres vivantes, et pas une de plus</h2>
+            <p style="margin:0; font-size:15.5px; line-height:1.65; color:#2b241c; text-wrap:pretty">Les plongées de l'été ne retrouvent que vingt-et-un individus vivants de <em>Pinna nobilis</em> sur l'ensemble des stations suivies. Le protocole de comptage et la liste des stations sont détaillés dans la note de suivi.</p>
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:flex; align-items:center; gap:16px; padding:14px 16px">
+              <div style="flex:1; display:flex; flex-direction:column; gap:3px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">Note de suivi · PDF · 6 pages</span>
+              </div>
+              <a href="#3b" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#8a2f39; color:#fffdf6; text-decoration:none; padding:15px; min-height:56px; width:268px; box-sizing:border-box">
+                <span style="font-size:15px; font-weight:700; line-height:1.3">Ouvrir la source<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:400; color:#f2ced2">portcros-parcnational.fr</span></span>
+                <span style="font-size:20px">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:22px 20px; display:flex; flex-direction:column; gap:16px; align-self:start">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#5b3d1f">Les trois sources du numéro</div>
+          <div style="display:flex; flex-direction:column; gap:11px">
+            <a href="#3b" style="border:1px solid #c9b896; background:#fffdf6; padding:11px 13px; display:flex; flex-direction:column; gap:4px; text-decoration:none">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">PDF · 24 p.</span>
+              <span style="font-size:12.5px; font-weight:700; line-height:1.35; color:#8a2f39">Communiqué + plan de gestion</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4a4136">conservatoire-sites-alsaciens.eu</span>
+            </a>
+            <a href="#3b" style="border:1px solid #c9b896; background:#fffdf6; padding:11px 13px; display:flex; flex-direction:column; gap:4px; text-decoration:none">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">page web · ≈ 5 min</span>
+              <span style="font-size:12.5px; font-weight:700; line-height:1.35; color:#8a2f39">Actualité du Parc national</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4a4136">cevennes-parcnational.fr</span>
+            </a>
+            <a href="#3b" style="border:1px solid #c9b896; background:#fffdf6; padding:11px 13px; display:flex; flex-direction:column; gap:4px; text-decoration:none">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">PDF · 6 p.</span>
+              <span style="font-size:12.5px; font-weight:700; line-height:1.35; color:#8a2f39">Note de suivi Pinna nobilis</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4a4136">portcros-parcnational.fr</span>
+            </a>
+          </div>
+          <div style="border-top:1px solid #ddd2ba; padding-top:14px; font-size:12px; line-height:1.6; color:#4a4136">Le sommaire de droite ne liste pas les titres du numéro mais <strong>ses documents</strong> : c'est la seconde porte d'entrée vers les sources.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="border:1px solid #d8d4c6; border-left:3px solid #8a2f39; background:#fffefb; padding:16px 20px; max-width:1000px; display:flex; flex-direction:column; gap:8px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Notes de canevas · pas de l'interface</div>
+    <ul style="margin:0; padding-left:18px; font-size:12.5px; line-height:1.65; color:#3b3e36; display:flex; flex-direction:column; gap:5px">
+      <li><strong>« Ce qu'on trouve dans le document »</strong> — deux ou trois lignes écrites par l'enseignant, publiées (à ne pas confondre avec « Usage en cours », qui reste privé). C'est ce qui fait cliquer : le résumé dit le fait, cette liste dit ce qui manque au lecteur. <strong>Éditable et décochable</strong> ; décoché ou laissé vide, le cartouche <em>n'existe pas</em> — jamais de cadre vide dans le numéro publié, le bloc se réduit au bouton et à la nature du document. L'entrée Port-Cros de <a href="#3b">3b</a> le montre.</li>
+      <li><strong>Métadonnées de source</strong> (type de document, nombre de pages, durée de lecture) : à saisir ou à déduire du lien lors de la vérification — à confirmer côté collecte.</li>
+      <li>Le papier chaud est <em>local à la vue publiée</em> : la vue rédaction du tour 2 reste sur le papier froid du portail, ce qui renforce la bascule. À valider — l'alternative est d'unifier les deux.</li>
+      <li>Recherche, états limites et feuille imprimée sont au tour 4 ; les sources suivies et la tuile du portail au tour 5. Reste hors maquette : le thème sombre appliqué à un écran entier — écarté d'un commun accord.</li>
+    </ul>
+  </div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:28px">
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:1180px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Tour 2 — le numéro, l'archive, la saisie</div>
+    <h1 style="margin:0; font-size:27px; font-weight:700; letter-spacing:-.01em">La rédaction : tout est éditable, chaque bloc se décoche</h1>
+    <p style="margin:0; font-size:14px; line-height:1.55; color:#2b241c; text-wrap:pretty; max-width:900px">Trois écrans, repassés au papier chaud du tour 3 : <a href="#2a">2a</a> le numéro en vue rédaction (l'enseignant modifie le texte en place, décoche des blocs entiers et écrit le « ce qu'on trouve » du bloc source), <a href="#2c">2c</a> le sommaire des numéros, <a href="#2d">2d</a> le formulaire d'ajout. La bascule rédaction ↔ publiée est l'interrupteur du bandeau, sur la même page ; la vue publiée est en <a href="#3a">3a</a>.</p>
+    <div style="border:1px solid #ddd2ba; background:#fffdf6; padding:12px 16px; display:flex; flex-wrap:wrap; gap:18px; align-items:center; font-size:12px; color:#2b241c">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#6f6355">Convention d'édition</span>
+      <span style="display:flex; align-items:center; gap:7px"><span style="background:#f7edee; border-bottom:1px dotted #b98088; padding:2px 8px">texte modifiable</span> fond rosé, souligné pointillé</span>
+      <span style="display:flex; align-items:center; gap:7px"><span style="background:#fffdf6; border:1px solid #8a2f39; box-shadow:0 0 0 3px rgba(138,47,57,.15); padding:2px 8px">champ actif</span> encadré + halo</span>
+      <span style="display:flex; align-items:center; gap:7px"><span style="width:15px; height:15px; border:1.5px solid #4a4136; display:inline-block"></span> bloc décoché = absent du numéro publié</span>
+    </div>
+  </div>
+
+  <!-- ===== 2a — VUE RÉDACTION ===== -->
+  <div id="2a" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #1a1611; padding-bottom:8px; max-width:1240px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffdf6; background:#8a2f39; padding:3px 8px">2a</span>
+      <span style="font-size:17px; font-weight:700">Numéro 12 — vue rédaction</span>
+      <span style="font-size:12px; color:#6f6355; font-family:'JetBrains Mono',monospace">1240 px · tout modifiable en place</span>
+    </div>
+
+    <div style="width:1240px; border:1px solid #ddd2ba; background:#fbf6ea">
+      <div style="height:5px; background:#8a2f39"></div>
+      <div style="background:#241d15; padding:0 20px; display:flex; align-items:stretch; gap:0">
+        <div style="display:flex; align-items:center; gap:10px; padding:11px 0">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fffdf6">Carnet de veille</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#b3a893">BTS GPN · Kerplouz</span>
+        </div>
+        <span style="flex:1"></span>
+        <div style="display:flex; align-items:center; gap:0; align-self:center">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#1a1611; background:#fffdf6; padding:6px 13px; font-weight:700">Rédaction</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#efe3cd; border:1px solid #55483a; padding:5px 13px; cursor:pointer">Vue publiée</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; padding-left:20px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#b3a893">Sommaire</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#b3a893">Rechercher</span>
+        </div>
+      </div>
+
+      <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:16px 20px; display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap">
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Numéro</span>
+          <div style="display:flex; align-items:baseline; gap:9px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; letter-spacing:-.02em">n° 12</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:2px 7px">semaine 33 · 10 → 16 août 2026</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Titre du numéro (facultatif)</span>
+          <span style="font-size:14.5px; font-weight:600; background:#f7edee; border-bottom:1px dotted #b98088; padding:3px 8px; min-width:280px">Compter, coûter, se tromper</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Retenues</span>
+          <div style="display:flex; align-items:baseline; gap:7px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; color:#196549">3</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6f6355">sur 9 candidates</span>
+          </div>
+        </div>
+        <span style="flex:1"></span>
+        <div style="display:flex; gap:10px; align-items:center">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#8a2f39; border:1px solid #8a2f39; padding:8px 13px; cursor:pointer">+ Ajouter une entrée</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:9px 15px; font-weight:700; cursor:pointer">Publier le n° 12</span>
+        </div>
+      </div>
+
+      <div style="background:#f5ead4; border-bottom:1px solid #ddd2ba; padding:9px 20px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">
+        <span style="letter-spacing:.08em; text-transform:uppercase; color:#6f6355">Moisson du 8 août</span>
+        <span>9 entrées déposées en brouillon</span>
+        <span style="color:#c9b896">|</span>
+        <span style="color:#196549">3 validées</span>
+        <span style="color:#6f6355">4 en attente</span>
+        <span style="color:#A6421B">1 lien mort</span>
+        <span style="color:#6f6355">1 écartée</span>
+      </div>
+
+      <div style="padding:20px; display:flex; flex-direction:column; gap:20px">
+        <div style="display:flex; align-items:center; gap:12px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#1a1611">Terrain &amp; gestion</span>
+          <span style="flex:1; height:2px; background:#1a1611"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">1 validée · 2 candidates</span>
+        </div>
+
+        <!-- carte en cours d'édition -->
+        <div style="border:1px solid #8a2f39; background:#fffdf6; display:grid; grid-template-columns:1fr 258px">
+          <div style="padding:16px 22px 20px; display:flex; flex-direction:column; gap:13px; border-right:1px solid #eadfc8">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #196549; background:#196549; color:#fff; font-size:12px; line-height:14px; text-align:center; flex:none">✓</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39; background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 7px">Terrain &amp; gestion</span>
+              <span style="flex:1; height:1px; background:#ddd2ba"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#196549">validée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">◇ auto</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#8a2f39">Titre — en cours de modification</span>
+              <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; background:#fffdf6; border:1px solid #8a2f39; box-shadow:0 0 0 3px rgba(138,47,57,.15); padding:5px 9px; text-wrap:pretty">Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves<span style="display:inline-block; width:2px; height:22px; background:#8a2f39; vertical-align:-3px; margin-left:2px"></span></h2>
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#4a4136">
+              <span style="color:#1a1611; font-weight:500; background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 6px">Conservatoire des Sites Alsaciens</span>
+              <span style="border:1px solid #c9b896; padding:1px 6px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#2b241c; background:#f7edee">régional · Bas-Rhin ▾</span>
+              <span style="color:#c9b896">·</span>
+              <span style="background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 6px">11 août 2026</span>
+            </div>
+
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#1a1611; font-weight:500; background:#f7edee; border-bottom:1px dotted #b98088; padding:5px 8px; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein.</p>
+
+            <div style="border-top:1px solid #1a1611; border-bottom:1px solid #1a1611; padding:11px 0; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px">
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">2</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6f6355; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">réserves</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">18</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6f6355; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">mois d'étude</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">10</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6f6355; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">ans couverts</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; color:#8a2f39; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">65 205 €</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6f6355; background:#f7edee; border-bottom:1px dotted #b98088; padding:0 5px; align-self:flex-start">dont 35 184 € de FEDER</span>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39">
+              <span style="border-bottom:1px solid #8a2f39; cursor:pointer">+ ajouter un chiffre</span>
+              <span style="border-bottom:1px solid #8a2f39; cursor:pointer">réordonner</span>
+              <span style="color:#6f6355; border-bottom:1px solid #b9a87f; cursor:pointer">supprimer le 4e</span>
+            </div>
+
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:5px 8px; text-wrap:pretty">Dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif : le document donne l'enchaînement complet et le budget poste par poste.</p>
+
+            <div style="border:1px solid #8a2f39; background:#fffdf6; display:grid; grid-template-columns:1fr 250px">
+              <div style="background:#f7ecdd; border-right:1px solid #e0c9b5; padding:12px 14px; display:flex; flex-direction:column; gap:6px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Ce qu'on trouve dans le document — publié</span>
+                <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.7; color:#2b241c">
+                  <li><span style="background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 5px">le budget poste par poste, avec la part FEDER</span></li>
+                  <li><span style="background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 5px">les protocoles retenus, taxon par taxon</span></li>
+                  <li><span style="background:#f7edee; border-bottom:1px dotted #b98088; padding:1px 5px">le calendrier des dix-huit mois d'étude</span></li>
+                </ul>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer; align-self:flex-start">+ ajouter une ligne</span>
+              </div>
+              <div style="padding:12px 14px; display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center">
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:2px 6px">PDF ▾</span>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:2px 6px">24 pages</span>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#196549">✓ vérifié 11/08</span>
+                </div>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:2px 6px; word-break:break-all">conservatoire-sites-alsaciens.eu/…/plans-de-gestion-rhinau-erstein</span>
+                <div style="background:#8a2f39; color:#fffdf6; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px">
+                  <span style="font-size:14px; font-weight:700">Ouvrir la source</span><span style="font-size:18px">→</span>
+                </div>
+                <div style="display:flex; gap:12px; font-family:'JetBrains Mono',monospace; font-size:10.5px">
+                  <span style="color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">revérifier</span>
+                  <span style="color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">+ second lien</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="border:2px solid #7a5b16; background:#fffdf6; display:flex">
+              <div style="width:26px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#5c4410; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px; flex:1">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#4a3a10; background:#f9f2e3; border-bottom:1px dotted #a98a3c; padding:4px 7px">Les coûts réels d'un plan de gestion ne sont presque jamais publiés. Faire reconstituer l'enchaînement diagnostic → protocoles → cartographie → validation, puis faire répartir 65 205 € entre ces postes avant de comparer au réel.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- panneau de composition -->
+          <div style="background:#f5ead4; padding:16px; display:flex; flex-direction:column; gap:14px">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#1a1611">Ce qui part dans le numéro</div>
+            <div style="display:flex; flex-direction:column; gap:9px">
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Rail d'identification<br><span style="font-size:10.5px; color:#6f6355">source, échelle, date</span></span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Chapô</span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Bandeau de chiffres clés<br><span style="font-size:10.5px; color:#6f6355">4 valeurs · décochable entrée par entrée</span></span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Résumé factuel</span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #6f6355; background:#6f6355; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Bouton et adresse de la source<br><span style="font-size:10.5px; color:#6f6355">verrouillé · une entrée sans lien n'est pas publiable</span></span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>« Ce qu'on trouve dans le document »<br><span style="font-size:10.5px; color:#6f6355">3 lignes écrites · décoché ou laissé vide : le cartouche n'existe pas</span></span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#6f6355"><span style="width:15px; height:15px; border:1.5px dashed #7a5b16; background:#f4ead0; flex:none"></span><span style="color:#4a3a10">Usage en cours<br><span style="font-size:10.5px; color:#6f6355">jamais publié, quoi qu'il arrive</span></span></label>
+            </div>
+            <div style="border-top:1px solid #ddd2ba; padding-top:12px; display:flex; flex-direction:column; gap:9px">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#1a1611">Réglage du numéro entier</div>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #4a4136; background:#fffdf6; flex:none"></span><span>Afficher les chiffres clés partout<br><span style="font-size:10.5px; color:#6f6355">décoché : chaque entrée décide</span></span></label>
+              <label style="display:flex; gap:9px; align-items:flex-start; font-size:12.5px; color:#1a1611"><span style="width:15px; height:15px; border:1.5px solid #1a1611; background:#1a1611; color:#fffdf6; font-size:11px; line-height:12px; text-align:center; flex:none">✓</span><span>Grouper par rubrique</span></label>
+            </div>
+            <div style="border-top:1px solid #ddd2ba; padding-top:12px; display:flex; flex-direction:column; gap:8px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer; align-self:flex-start">Voir cette entrée comme les étudiants</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6f6355; border-bottom:1px solid #b9a87f; cursor:pointer; align-self:flex-start">Écarter l'entrée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">Enregistré à 09:41</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- carte avec bandeau chiffres décoché -->
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">entrée suivante — bandeau de chiffres clés décoché pour celle-ci</div>
+          <div style="border-top:2px solid #1a1611; border-bottom:1px solid #ddd2ba; background:#fffdf6; padding:16px 22px 18px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #196549; background:#196549; color:#fff; font-size:12px; line-height:14px; text-align:center; flex:none">✓</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Science &amp; protocoles</span>
+              <span style="flex:1; height:1px; background:#ddd2ba"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#196549">validée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">◇ auto</span>
+            </div>
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; background:#f7edee; border-bottom:1px dotted #b98088; padding:3px 8px; text-wrap:pretty">770 rhinolophes un soir, 30 quelques jours plus tard</h2>
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#4a4136">
+              <span style="color:#1a1611; font-weight:500">Parc national des Cévennes</span>
+              <span style="border:1px solid #c9b896; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#2b241c">régional · Gard</span>
+              <span style="color:#c9b896">·</span>
+              <span>10 août 2026</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#1a1611; font-weight:500; background:#f7edee; border-bottom:1px dotted #b98088; padding:4px 8px; text-wrap:pretty">Une cavité redécouverte en 2022 accueille des effectifs qui s'évanouissent fin juillet, avant la mise bas.</p>
+            <div style="border:1px dashed #b9a87f; background:#f5ead4; padding:9px 13px; display:flex; flex-wrap:wrap; align-items:center; gap:12px">
+              <span style="width:15px; height:15px; border:1.5px solid #4a4136; background:#fffdf6; flex:none"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#2b241c">Bandeau de chiffres clés masqué pour cette entrée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">4 valeurs conservées : ≈ 30 · 550 · ≈ 1 300 · 770 → 30</span>
+              <span style="flex:1"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Réafficher</span>
+            </div>
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#2b241c; background:#f7edee; border-bottom:1px dotted #b98088; padding:4px 8px; text-wrap:pretty">Le site serait un gîte de transition, ce qui implique une nurserie commune non localisée à plusieurs dizaines de kilomètres. Les deux comptages de juillet sont donnés dans le corps du texte plutôt qu'en bandeau : c'est leur écart qui compte, pas la série.</p>
+            <div style="display:flex; align-items:baseline; gap:10px; font-size:13px">
+              <a href="#2a" style="font-weight:600">Lire l'actualité du Parc national</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#196549">✓ vérifié 10/08</span>
+            </div>
+            <div style="border:2px solid #7a5b16; background:#fffdf6; display:flex">
+              <div style="width:26px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#5c4410; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#4a3a10; background:#f9f2e3; border-bottom:1px dotted #a98a3c; padding:4px 7px">Donner les deux chiffres sans le contexte, faire conclure, puis expliquer le gîte de transit. Entrée idéale sur les limites d'un comptage ponctuel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ligne en attente repliée -->
+        <div style="border-top:1px solid #ddd2ba; border-bottom:1px solid #ddd2ba; background:#fffdf6; padding:12px 22px; display:flex; align-items:center; gap:14px">
+          <span style="width:17px; height:17px; border:1.5px solid #4a4136; background:#fffdf6; flex:none"></span>
+          <div style="flex:1; display:flex; flex-direction:column; gap:2px; min-width:0">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#6f6355">Données &amp; référentiels · PatriNat · national · 4 août 2026</span>
+            <span style="font-size:15px; font-weight:600; color:#2b241c">Nouvelle version du référentiel taxonomique : ce qui change pour les relevés</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#fffdf6; background:#A6421B; padding:2px 6px; flex:none">lien mort</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer; flex:none">Ouvrir</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">Les entrées non validées restent repliées : un clic les déplie pour lecture et modification.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 2b + 2d ===== -->
+  <div style="display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start">
+
+    <div id="2d" style="display:flex; flex-direction:column; gap:12px">
+      <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #1a1611; padding-bottom:8px; width:390px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffdf6; background:#8a2f39; padding:3px 8px">2d</span>
+        <span style="font-size:15px; font-weight:700">Ajouter une entrée</span>
+      </div>
+      <p style="margin:0; width:390px; font-size:12.5px; line-height:1.55; color:#2b241c">Au téléphone, l'enseignant colle un lien : le titre, la source et la date se remplissent, il complète et enregistre. Rien n'est obligatoire hors lien et titre.</p>
+      <div style="width:390px; height:844px; border:1px solid #1a1611; background:#fbf6ea; overflow:hidden; display:flex; flex-direction:column">
+        <div style="height:5px; background:#8a2f39; flex:none"></div>
+        <div style="background:#241d15; padding:10px 14px; display:flex; align-items:center; gap:10px; flex:none">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#efe3cd">← n° 12</span>
+          <span style="flex:1"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#fffdf6">Nouvelle entrée</span>
+        </div>
+        <div style="padding:14px; display:flex; flex-direction:column; gap:13px; overflow:hidden">
+          <div style="display:flex; flex-direction:column; gap:5px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2b241c">Lien vers la source</span>
+            <div style="background:#fffdf6; border:1px solid #8a2f39; box-shadow:0 0 0 3px rgba(138,47,57,.15); padding:11px 12px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#1a1611; word-break:break-all">portcros-parcnational.fr/actualites/suivi-pinna-nobilis-2026</div>
+            <div style="border:1px solid #196549; background:#eaf3ee; padding:9px 11px; display:flex; flex-direction:column; gap:4px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#155e46">✓ Lien joignable · vérifié à l'instant</span>
+              <span style="font-size:11.5px; color:#2b241c; line-height:1.45">Source reconnue : <strong>Parc national de Port-Cros</strong> · régional · Var (83). Date de publication lue : 7 août 2026.</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:5px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2b241c">Titre</span>
+            <div style="background:#fffdf6; border:1px solid #b9a87f; padding:10px 12px; font-size:14px; font-weight:600; line-height:1.35">Vingt-et-une grandes nacres vivantes, et pas une de plus</div>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">titre repris de la page — modifiable</span>
+          </div>
+          <div style="display:flex; gap:10px">
+            <div style="flex:1; display:flex; flex-direction:column; gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2b241c">Rubrique</span>
+              <div style="background:#fffdf6; border:1px solid #b9a87f; padding:11px 12px; font-size:13px; display:flex; align-items:center; gap:8px"><span style="flex:1">Pépites</span><span style="color:#6f6355">▾</span></div>
+            </div>
+            <div style="width:120px; display:flex; flex-direction:column; gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2b241c">Échelle</span>
+              <div style="background:#fffdf6; border:1px solid #b9a87f; padding:11px 12px; font-size:13px; display:flex; align-items:center; gap:8px"><span style="flex:1">Régional</span><span style="color:#6f6355">▾</span></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:5px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#2b241c">Résumé factuel</span>
+            <div style="background:#fffdf6; border:1px solid #b9a87f; padding:10px 12px; font-size:12.5px; line-height:1.55; color:#2b241c; min-height:62px">Les plongées de l'été ne retrouvent que vingt-et-un individus vivants sur l'ensemble des stations suivies.</div>
+          </div>
+          <div style="border:1px dashed #b9a87f; background:#f5ead4; padding:11px 13px; display:flex; align-items:center; gap:11px">
+            <span style="width:17px; height:17px; border:1.5px solid #4a4136; background:#fffdf6; flex:none"></span>
+            <span style="font-size:12.5px; color:#1a1611; line-height:1.4">Ajouter des chiffres clés<br><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6f6355">décoché : aucun bandeau sur cette entrée</span></span>
+          </div>
+          <div style="border:2px solid #7a5b16; background:#fffdf6; display:flex">
+            <div style="width:22px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16"></div>
+            <div style="padding:10px 12px; display:flex; flex-direction:column; gap:5px; flex:1">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</span>
+              <div style="background:#f9f2e3; border:1px solid #cbb277; padding:8px 10px; font-size:12px; line-height:1.5; color:#4a3a10; min-height:44px">Effectif connu contre effectif réel : faire écrire la phrase juste avant de commenter le chiffre.</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:auto; border-top:1px solid #ddd2ba; background:#fffdf6; padding:12px 14px; display:flex; gap:10px; flex:none">
+          <span style="flex:1; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; color:#2b241c; border:1px solid #b9a87f; padding:13px 0">Enregistrer en attente</span>
+          <span style="flex:1; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; color:#fffdf6; background:#8a2f39; padding:13px 0; font-weight:700">Retenir pour le n° 12</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 2c — SOMMAIRE ===== -->
+  <div id="2c" style="display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #1a1611; padding-bottom:8px; max-width:1240px">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffdf6; background:#8a2f39; padding:3px 8px">2c</span>
+      <span style="font-size:17px; font-weight:700">Sommaire des numéros</span>
+      <span style="font-size:12px; color:#6f6355; font-family:'JetBrains Mono',monospace">groupé par année scolaire puis par mois · tient à 50 numéros</span>
+    </div>
+    <div style="width:1240px; border:1px solid #ddd2ba; background:#fbf6ea">
+      <div style="height:5px; background:#8a2f39"></div>
+      <div style="background:#241d15; padding:11px 20px; display:flex; align-items:center; gap:10px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#fffdf6">Carnet de veille</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#b3a893">BTS GPN · Kerplouz</span>
+        <span style="flex:1"></span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#fffdf6; border-bottom:1px solid #fffdf6">Sommaire</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#b3a893">Rechercher</span>
+      </div>
+      <div style="background:#fffdf6; border-bottom:1px solid #ddd2ba; padding:16px 20px; display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end">
+        <div style="display:flex; flex-direction:column; gap:5px; flex:1; min-width:320px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Chercher dans tous les numéros</span>
+          <div style="border:1px solid #b9a87f; background:#fffdf6; padding:10px 12px; display:flex; align-items:center; gap:9px">
+            <span style="color:#6f6355">⌕</span>
+            <span style="font-size:13px; color:#6f6355">mot-clé, source, territoire, année…</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Année scolaire</span>
+          <div style="display:flex; gap:0">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#fffdf6; background:#241d15; padding:9px 13px; font-weight:700">2026-2027</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#2b241c; border:1px solid #b9a87f; padding:8px 13px; cursor:pointer">2025-2026</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#6f6355">Rubrique</span>
+          <div style="border:1px solid #b9a87f; background:#fffdf6; padding:9px 12px; font-size:12.5px; display:flex; gap:9px; align-items:center"><span>Toutes</span><span style="color:#6f6355">▾</span></div>
+        </div>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px">
+        <div style="display:flex; align-items:center; gap:12px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#1a1611">Août 2026</span>
+          <span style="flex:1; height:2px; background:#1a1611"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">3 numéros · 11 actualités</span>
+        </div>
+
+        <div style="border:1px solid #8a2f39; background:#fffdf6; display:grid; grid-template-columns:132px 1fr auto">
+          <div style="background:#f7edee; border-right:1px solid #e2c9cc; padding:14px; display:flex; flex-direction:column; gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-.02em; color:#8a2f39">n° 12</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">semaine 33</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">10 → 16 août</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#8a2f39; border:1px solid #8a2f39; padding:1px 5px; align-self:flex-start; margin-top:5px">Dernier</span>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; gap:7px">
+            <span style="font-size:16px; font-weight:700; letter-spacing:-.01em">Compter, coûter, se tromper</span>
+            <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.6; color:#2b241c">
+              <li>Ce que coûte un plan de gestion : 18 mois et 65 205 € pour deux réserves</li>
+              <li>770 rhinolophes un soir, 30 quelques jours plus tard</li>
+              <li>Vingt-et-une grandes nacres vivantes, et pas une de plus</li>
+            </ul>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; min-width:150px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums">3</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">actualités publiées</span>
+            <span style="flex:1"></span>
+            <a href="#2b" style="font-size:13px; font-weight:600">Ouvrir le numéro →</a>
+          </div>
+        </div>
+
+        <div style="border:1px solid #ddd2ba; background:#fffdf6; display:grid; grid-template-columns:132px 1fr auto">
+          <div style="background:#f5ead4; border-right:1px solid #ddd2ba; padding:14px; display:flex; flex-direction:column; gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-.02em">n° 11</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">semaine 32</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">3 → 9 août</span>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; gap:7px">
+            <span style="font-size:16px; font-weight:700; letter-spacing:-.01em">Des mares, des papillons, un référentiel</span>
+            <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.6; color:#2b241c">
+              <li>Un inventaire de 43 mares bocagères en Morbihan</li>
+              <li>Le protocole rhopalocères révisé pour la saison 2027</li>
+              <li style="color:#6f6355">et 2 autres actualités</li>
+            </ul>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; min-width:150px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums">4</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">actualités publiées</span>
+            <span style="flex:1"></span>
+            <a href="#2b" style="font-size:13px; font-weight:600">Ouvrir le numéro →</a>
+          </div>
+        </div>
+
+        <div style="border:1px solid #ddd2ba; background:#fffdf6; display:grid; grid-template-columns:132px 1fr auto">
+          <div style="background:#f5ead4; border-right:1px solid #ddd2ba; padding:14px; display:flex; flex-direction:column; gap:3px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-.02em">n° 10</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#2b241c">semaine 31</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">27 juil. → 2 août</span>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; gap:7px">
+            <span style="font-size:16px; font-weight:700; letter-spacing:-.01em">Sécheresse et suivis d'été</span>
+            <ul style="margin:0; padding-left:16px; font-size:12.5px; line-height:1.6; color:#2b241c">
+              <li>Assecs précoces sur les têtes de bassin bretonnes</li>
+              <li>Deux gestionnaires publient leurs bilans de pâturage</li>
+              <li style="color:#6f6355">et 1 autre actualité</li>
+            </ul>
+          </div>
+          <div style="padding:14px 16px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; min-width:150px">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums">3</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#6f6355">actualités publiées</span>
+            <span style="flex:1"></span>
+            <a href="#2b" style="font-size:13px; font-weight:600">Ouvrir le numéro →</a>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; margin-top:4px">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#1a1611">Juillet 2026</span>
+          <span style="flex:1; height:2px; background:#1a1611"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6f6355">4 numéros · 15 actualités</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Déplier</span>
+        </div>
+        <div style="border:1px solid #ddd2ba; background:#f5ead4; padding:11px 16px; display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:#2b241c">
+          <span>n° 9 · sem. 30</span><span>n° 8 · sem. 29</span><span>n° 7 · sem. 28</span><span>n° 6 · sem. 27</span>
+          <span style="flex:1"></span>
+          <span style="color:#6f6355">mois replié : les titres apparaissent au dépliage</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="border:1px solid #ddd2ba; border-left:3px solid #8a2f39; background:#fffdf6; padding:16px 20px; max-width:1000px; display:flex; flex-direction:column; gap:8px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Notes de canevas · pas de l'interface</div>
+    <ul style="margin:0; padding-left:18px; font-size:12.5px; line-height:1.65; color:#2b241c; display:flex; flex-direction:column; gap:5px">
+      <li><strong>Éditable :</strong> tout ce qui porte le fond rosé et le pointillé — titre, chapô, résumé, source, échelle, date, chaque chiffre et son libellé, l'usage en cours, le titre du numéro et sa semaine. Le champ actif prend l'encadré grenat et le halo.</li>
+      <li><strong>Décochable :</strong> six blocs par entrée dans le panneau de droite (rail, chapô, chiffres clés, résumé, liens, usage). Un bloc décoché reste en place en rédaction, replié en bandeau pointillé, et disparaît du numéro publié — l'entrée « rhinolophes » le montre. Deux exceptions dures : au moins un lien, et l'usage en cours jamais publiable.</li>
+      <li><strong>Réglage de numéro</strong> pour ne pas décocher dix fois : « afficher les chiffres clés partout » et « grouper par rubrique ».</li>
+      <li>Le papier de la rédaction suit désormais celui de la vue publiée (tour 3) : mêmes crème, filets bruns et bandeaux sable. Seuls restent froids les repères d'édition — fond rosé, halo grenat, cases à cocher.</li>
+    </ul>
+  </div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:28px">
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:1180px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Tour 1 — la carte d'entrée</div>
+    <h1 style="margin:0; font-size:27px; font-weight:700; letter-spacing:-.01em">Carnet de veille naturaliste — la carte d'entrée et ses variantes</h1>
+    <p style="margin:0; font-size:14px; line-height:1.55; color:#3b3e36; text-wrap:pretty; max-width:900px">La brique centrale seule, avec du contenu réel, dans le registre retenu (revue de presse spécialisée)&nbsp;: la carte validée en thème clair <em>et</em> en thème sombre chaud, puis ses quatre autres variantes en clair. Les deux autres pistes explorées ici — carnet de relevés, fiche d'inventaire — ont été retirées du canevas. Accent de l'app&nbsp;: grenat <span style="font-family:'JetBrains Mono',monospace">#8a2f39</span> — IBM Plex Sans + JetBrains Mono, angle droit, aucune ombre, comme le reste du portail.</p>
+    <p style="margin:0; font-size:12.5px; line-height:1.5; color:#6b6a5e; font-family:'JetBrains Mono',monospace">Répondre en chat par l'identifiant&nbsp;: <a href="#1a">1a</a> · <a href="#1b">1b</a> · <a href="#1c">1c</a> — ou par un mélange (« le rail de 1b avec les titres de 1c »).</p>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start">
+
+    <!-- ============ 1c — REVUE DE PRESSE SPÉCIALISÉE ============ -->
+    <div id="1c" style="width:640px; display:flex; flex-direction:column; gap:14px">
+      <div style="display:flex; align-items:baseline; gap:12px; border-bottom:2px solid #191b16; padding-bottom:8px">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fffefb; background:#8a2f39; padding:3px 8px">1c</span>
+        <span style="font-size:17px; font-weight:700">Revue de presse spécialisée</span>
+        <span style="font-size:12px; color:#565a4e; font-family:'JetBrains Mono',monospace">chapô · filets fins · respiration</span>
+      </div>
+      <p style="margin:0; font-size:12.5px; line-height:1.55; color:#3b3e36">Hiérarchie éditoriale&nbsp;: surtitre filé, titre large, chapô, puis une ligne de chiffres posée entre deux filets — les chiffres se lisent comme un encadré de journal. C'est la piste qui respire le plus, donc la plus coûteuse en hauteur d'écran.</p>
+
+      <div style="border:1px solid #d8d4c6; background:#f4f2ec">
+        <div style="height:5px; background:#8a2f39"></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#6b6a5e">① validée · collecte automatique · avec chiffres clés</div>
+
+          <div style="border-top:2px solid #191b16; border-bottom:1px solid #d8d4c6; background:#fffefb; padding:16px 20px 18px; display:flex; flex-direction:column; gap:13px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #1F7A5C; background:#1F7A5C; color:#fff; font-size:12px; line-height:14px; text-align:center; flex:none">✓</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Terrain &amp; gestion</span>
+              <span style="flex:1; height:1px; background:#d8d4c6"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#1F7A5C">validée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">◇ auto</span>
+            </div>
+
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; text-wrap:pretty">Ce que coûte un plan de gestion&nbsp;: 18 mois et 65 205 € pour deux réserves</h2>
+
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#565a4e">
+              <span style="color:#191b16; font-weight:500">Conservatoire des Sites Alsaciens</span>
+              <span style="border:1px solid #c3bda9; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">régional · Bas-Rhin</span>
+              <span style="color:#c3bda9">·</span>
+              <span>11 août 2026</span>
+            </div>
+
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#191b16; font-weight:500; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein.</p>
+
+            <div style="border-top:1px solid #191b16; border-bottom:1px solid #191b16; padding:11px 0; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px">
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">2</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">réserves</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">18</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">mois d'étude</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">10</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">ans couverts</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#8a2f39">65 205 €</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">dont 35 184 € de FEDER</span>
+              </div>
+            </div>
+
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#3b3e36; text-wrap:pretty">Dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif&nbsp;: le document donne l'enchaînement complet et le budget poste par poste.</p>
+
+            <div style="display:flex; align-items:baseline; gap:10px; font-size:13px">
+              <a href="#1c" style="font-weight:600">Lire le communiqué du Conservatoire</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1F7A5C">✓ vérifié 11/08</span>
+            </div>
+
+            <div style="border:2px solid #7a5b16; background:#fffefb; margin-top:2px; display:flex">
+              <div style="width:26px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#5c4410; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#4a3a10">Les coûts réels d'un plan de gestion ne sont presque jamais publiés. Faire reconstituer l'enchaînement diagnostic → protocoles → cartographie → validation, puis faire répartir 65 205 € entre ces postes avant de comparer au réel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1c sombre -->
+      <div style="border:1px solid #3b3228; background:#14100d">
+        <div style="height:5px; background:#d9838c"></div>
+        <div style="padding:18px; display:flex; flex-direction:column; gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#948b7d">même carte · thème sombre chaud (réglage du système)</div>
+          <div style="border-top:2px solid #6d6255; border-bottom:1px solid #3b3228; background:#1e1811; padding:16px 20px 18px; display:flex; flex-direction:column; gap:13px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #4FBF92; background:#4FBF92; color:#14100d; font-size:12px; line-height:14px; text-align:center; flex:none">✓</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#e79aa2">Terrain &amp; gestion</span>
+              <span style="flex:1; height:1px; background:#3b3228"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#4FBF92">validée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#948b7d">◇ auto</span>
+            </div>
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; color:#f7f2e8; text-wrap:pretty">Ce que coûte un plan de gestion&nbsp;: 18 mois et 65 205 € pour deux réserves</h2>
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#c9c0b1">
+              <span style="color:#f2ece1; font-weight:500">Conservatoire des Sites Alsaciens</span>
+              <span style="border:1px solid #5a4f42; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#948b7d">régional · Bas-Rhin</span>
+              <span style="color:#5a4f42">·</span>
+              <span>11 août 2026</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#f2ece1; font-weight:500; text-wrap:pretty">Le Conservatoire publie le détail du renouvellement des plans de gestion des réserves naturelles nationales de l'île de Rhinau et de la forêt d'Erstein.</p>
+            <div style="border-top:1px solid #6d6255; border-bottom:1px solid #6d6255; padding:11px 0; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px">
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#f7f2e8">2</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#948b7d">réserves</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#f7f2e8">18</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#948b7d">mois d'étude</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#f7f2e8">10</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#948b7d">ans couverts</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#e79aa2">65 205 €</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#948b7d">dont 35 184 € de FEDER</span>
+              </div>
+            </div>
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#c9c0b1; text-wrap:pretty">Dix-huit mois d'étude préalable, protocoles par taxon, cartographie d'habitats, validation en comité consultatif&nbsp;: le document donne l'enchaînement complet et le budget poste par poste.</p>
+            <div style="display:flex; align-items:baseline; gap:10px; font-size:13px">
+              <a href="#1c" style="color:#e79aa2; font-weight:600">Lire le communiqué du Conservatoire</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#4FBF92">✓ vérifié 11/08</span>
+            </div>
+            <div style="border:2px solid #b08c3a; background:#221c15; margin-top:2px; display:flex">
+              <div style="width:26px; flex:none; background-color:#2b2312; background-image:repeating-linear-gradient(135deg, rgba(215,177,86,.35) 0 3px, rgba(0,0,0,0) 3px 8px); border-right:1px solid #b08c3a; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#d7b156; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#d7b156">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#e2d3ab">Les coûts réels d'un plan de gestion ne sont presque jamais publiés. Faire reconstituer l'enchaînement diagnostic → protocoles → cartographie → validation, puis faire répartir 65 205 € entre ces postes avant de comparer au réel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1c variantes -->
+      <div style="border:1px solid #d8d4c6; background:#f4f2ec; padding:18px; display:flex; flex-direction:column; gap:16px">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#6b6a5e">les quatre autres variantes · thème clair</div>
+
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6b6a5e">② en attente — pas encore cochée</div>
+          <div style="border-top:2px solid #c3bda9; border-bottom:1px solid #d8d4c6; background:#fffefb; padding:16px 20px 18px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #8a958c; background:#fffefb; flex:none"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Science &amp; protocoles</span>
+              <span style="flex:1; height:1px; background:#d8d4c6"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">en attente</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">◇ auto</span>
+            </div>
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; text-wrap:pretty">770 rhinolophes un soir, 30 quelques jours plus tard</h2>
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#565a4e">
+              <span style="color:#191b16; font-weight:500">Parc national des Cévennes</span>
+              <span style="border:1px solid #c3bda9; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">régional · Gard</span>
+              <span style="color:#c3bda9">·</span>
+              <span>10 août 2026</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#191b16; font-weight:500; text-wrap:pretty">Une cavité redécouverte en 2022 accueille des effectifs qui s'évanouissent fin juillet, avant la mise bas.</p>
+            <div style="border-top:1px solid #191b16; border-bottom:1px solid #191b16; padding:11px 0; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px">
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">≈ 30</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">années 1990</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">550</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">juillet 2022</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:-.02em">≈ 1 300</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">automne 2025</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:#8a2f39">770 → 30</span>
+                <span style="font-size:10.5px; line-height:1.3; color:#6b6a5e">juillet 2026, à quelques jours</span>
+              </div>
+            </div>
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#3b3e36; text-wrap:pretty">Le site serait un gîte de transition, ce qui implique une nurserie commune non localisée à plusieurs dizaines de kilomètres.</p>
+            <div style="display:flex; align-items:baseline; gap:10px; font-size:13px">
+              <a href="#1c" style="font-weight:600">Lire l'actualité du Parc national</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1F7A5C">✓ vérifié 10/08</span>
+            </div>
+            <div style="border:2px solid #7a5b16; background:#fffefb; display:flex">
+              <div style="width:26px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#5c4410; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#4a3a10">Donner les deux chiffres sans le contexte, faire conclure, puis expliquer le gîte de transit. Entrée idéale sur les limites d'un comptage ponctuel.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6b6a5e">③ saisie à la main — sans chiffres clés</div>
+          <div style="border-top:2px solid #191b16; border-bottom:1px solid #d8d4c6; background:#fffefb; padding:16px 20px 18px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #1F7A5C; background:#1F7A5C; color:#fff; font-size:12px; line-height:14px; text-align:center; flex:none">✓</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Pépites</span>
+              <span style="flex:1; height:1px; background:#d8d4c6"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#1F7A5C">validée</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#565a4e">✎ à la main</span>
+            </div>
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; text-wrap:pretty">Vingt-et-une grandes nacres vivantes, et pas une de plus</h2>
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#565a4e">
+              <span style="color:#191b16; font-weight:500">Parc national de Port-Cros</span>
+              <span style="border:1px solid #c3bda9; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">régional · Var</span>
+              <span style="color:#c3bda9">·</span>
+              <span>7 août 2026</span>
+            </div>
+            <p style="margin:0; font-size:15px; line-height:1.55; color:#191b16; font-weight:500; text-wrap:pretty">Les plongées de l'été ne retrouvent que vingt-et-un individus vivants de <em>Pinna nobilis</em> sur l'ensemble des stations suivies.</p>
+            <p style="margin:0; font-size:13.5px; line-height:1.65; color:#3b3e36; text-wrap:pretty">Sans bloc de chiffres clés, la carte se ferme sur le chapô et le résumé&nbsp;: aucun cadre vide, aucun tiret de remplissage. Le protocole de comptage et la liste des stations sont détaillés dans la note de suivi.</p>
+            <div style="display:flex; align-items:baseline; gap:10px; font-size:13px">
+              <a href="#1c" style="font-weight:600">Lire la note de suivi du Parc</a>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#1F7A5C">✓ vérifié 08/08</span>
+            </div>
+            <div style="border:2px solid #7a5b16; background:#fffefb; display:flex">
+              <div style="width:26px; flex:none; background-color:#f4ead0; background-image:repeating-linear-gradient(135deg, rgba(122,91,22,.32) 0 3px, rgba(122,91,22,0) 3px 8px); border-right:1px solid #7a5b16; display:flex; align-items:center; justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#5c4410; writing-mode:vertical-rl; transform:rotate(180deg)">Privé</span>
+              </div>
+              <div style="padding:11px 14px; display:flex; flex-direction:column; gap:6px">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#7a5b16">Usage en cours — jamais publié</div>
+                <p style="margin:0; font-size:12.5px; line-height:1.55; color:#4a3a10">Cas d'école pour la notion d'effectif connu contre effectif réel&nbsp;: faire écrire la phrase juste (« 21 individus vivants connus sur les stations suivies ») avant de commenter le chiffre.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6b6a5e">④ lien mort — source signalée inaccessible</div>
+          <div style="border-top:2px solid #C0562B; border-bottom:1px solid #C0562B; background:#fffefb; padding:16px 20px 18px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="width:17px; height:17px; border:1.5px solid #8a958c; background:#fffefb; flex:none"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:#8a2f39">Données &amp; référentiels</span>
+              <span style="flex:1; height:1px; background:#e0c4b6"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#fffefb; background:#C0562B; padding:2px 6px">lien mort</span>
+            </div>
+            <h2 style="margin:0; font-size:24px; font-weight:700; line-height:1.22; letter-spacing:-.015em; color:#3b3e36; text-wrap:pretty">Nouvelle version du référentiel taxonomique&nbsp;: ce qui change pour les relevés</h2>
+            <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#565a4e">
+              <span style="color:#191b16; font-weight:500">PatriNat (OFB · MNHN · CNRS)</span>
+              <span style="border:1px solid #c3bda9; padding:0 5px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e">national</span>
+              <span style="color:#c3bda9">·</span>
+              <span>4 août 2026</span>
+            </div>
+            <p style="margin:0; font-size:14.5px; line-height:1.55; color:#565a4e; font-weight:500; text-wrap:pretty">Mise à jour annuelle&nbsp;: noms acceptés, synonymies et statuts de protection, avec l'incidence sur les exports d'inventaire.</p>
+            <div style="border:1px solid #C0562B; background:#f7e5dc; padding:11px 14px; display:flex; flex-direction:column; gap:8px">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#8f3a17">✕ Lien inaccessible — vérifié le 28/08 · erreur 404</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#565a4e; word-break:break-all; text-decoration:line-through">inpn.mnhn.fr/telechargement/referentielEspece/…</div>
+              <div style="font-size:12.5px; line-height:1.5; color:#3b3e36">Tant que l'adresse n'est pas réparée, l'entrée ne peut pas être publiée&nbsp;: la case de validation reste inactive.</div>
+              <div style="display:flex; flex-wrap:wrap; gap:10px">
+                <span style="font-size:12px; font-weight:600; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Corriger l'adresse</span>
+                <span style="font-size:12px; font-weight:600; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer">Chercher une copie archivée</span>
+                <span style="font-size:12px; font-weight:600; color:#565a4e; border-bottom:1px solid #8a958c; cursor:pointer">Écarter l'entrée</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:7px">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#6b6a5e">⑤ écartée — le titre passe en filet simple, reste rattrapable</div>
+          <div style="border-top:1px solid #d8d4c6; border-bottom:1px solid #d8d4c6; background:#f0ede2; padding:11px 20px; display:flex; align-items:center; gap:14px">
+            <span style="width:17px; height:17px; border:1.5px solid #b3ab99; background:#f0ede2; color:#6b6a5e; font-size:12px; line-height:14px; text-align:center; flex:none">✕</span>
+            <div style="flex:1; display:flex; flex-direction:column; gap:2px; min-width:0">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#6b6a5e">Pépites · Bretagne Vivante · 2 août 2026</span>
+              <span style="font-size:15px; font-weight:600; color:#6b6a5e; text-decoration:line-through">Un hôtel à hirondelles inauguré dans le bourg</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:#6b6a5e; flex:none">écartée</span>
+            <span style="font-size:12px; font-weight:600; color:#8a2f39; border-bottom:1px solid #8a2f39; cursor:pointer; flex:none">Reprendre</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="border:1px solid #d8d4c6; border-left:3px solid #8a2f39; background:#fffefb; padding:16px 20px; max-width:900px; display:flex; flex-direction:column; gap:8px">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a2f39">Notes de canevas · pas de l'interface</div>
+    <ul style="margin:0; padding-left:18px; font-size:12.5px; line-height:1.65; color:#3b3e36; display:flex; flex-direction:column; gap:5px">
+      <li>Contenu réel&nbsp;: plan de gestion (CSA), rhinolophes (PN Cévennes), <em>Pinna nobilis</em> (PN Port-Cros), référentiel taxonomique (PatriNat). Les adresses sont écrites en forme abrégée&nbsp;: à remplacer par les URL exactes avant tout handoff.</li>
+      <li>Le thème sombre suit le réglage du système, sans bouton — d'où l'absence d'interrupteur dans les cartes.</li>
+      <li>La couleur ne porte jamais seule une information&nbsp;: état = mot + forme (case cochée, barré, hachures), échelle territoriale = mot dans un cadre, origine = glyphe + mot.</li>
+      <li>Développée aux tours 2 et 3&nbsp;: numéro en rédaction, numéro publié, sommaire, formulaire d'ajout.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</x-dc>
+</body>
+</html>

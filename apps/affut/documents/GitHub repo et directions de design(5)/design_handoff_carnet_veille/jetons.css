@@ -1,0 +1,84 @@
+/* Carnet de veille naturaliste — jetons de design
+   Préfixe --cv-. À coller tel quel. Voir JETONS.md pour le nom → valeur commenté,
+   REGLES.md pour les règles fermes. Aucun arrondi, aucune ombre hors halo de focus. */
+
+:root {
+  /* ---- Papier chaud : la vue publiée ET la rédaction ---- */
+  --cv-fond:              #fbf6ea;  /* fond de l'app */
+  --cv-surface:           #fffdf6;  /* carte d'entrée, panneaux, champs */
+  --cv-surface-2:         #f5ead4;  /* en-tête de numéro, bandeaux d'annotation */
+  --cv-surface-3:         #f0e4cd;  /* bandeau de rubrique, barre de moisson */
+
+  /* ---- Bandeau titre (encre) ---- */
+  --cv-bandeau:           #241d15;
+  --cv-sur-bandeau:       #fdf8ec;
+  --cv-sur-bandeau-2:     #efe3cd;
+  --cv-sur-bandeau-3:     #b3a893;
+  --cv-filet-bandeau:     #55483a;
+
+  /* ---- Filets ---- */
+  --cv-filet-fin:         #eadfc8;  /* séparateur interne de carte */
+  --cv-filet:             #ddd2ba;  /* bordure de carte, de bandeau */
+  --cv-filet-moyen:       #c9b896;  /* filet de rubrique, pointillé de canevas */
+  --cv-filet-fort:        #b9a87f;  /* bordure de champ au repos */
+
+  /* ---- Encre ---- */
+  --cv-encre:             #1a1611;  /* titres, valeurs */
+  --cv-encre-courant:     #2b241c;  /* corps de texte */
+  --cv-encre-2:           #4a4136;  /* texte secondaire */
+  --cv-encre-3:           #6f6355;  /* libellés, méta — contraste 5,1:1 sur --cv-surface */
+  --cv-brun-rubrique:     #5b3d1f;  /* nom de rubrique, en-têtes de colonne */
+  --cv-filet-pastille:    #b79b6c;  /* cadre de la pastille d'échelle */
+
+  /* ---- Accent de l'app ---- */
+  --cv-accent:            #8a2f39;
+  --cv-sur-accent:        #fffdf6;
+  --cv-sur-accent-2:      #f2ced2;  /* domaine sous « Ouvrir la source » */
+  --cv-cartouche:         #f7ecdd;  /* fond de « ce qu'on trouve » */
+  --cv-cartouche-filet:   #e0c9b5;
+
+  /* ---- Sémantique d'état ---- */
+  --cv-valide:            #196549;
+  --cv-mort:              #A6421B;
+  --cv-mort-fond:         #f7e5dc;
+  --cv-mort-filet:        #e0c4b6;
+  --cv-mort-texte:        #7d3413;
+  --cv-prive:             #7a5b16;  /* encadré « Usage en cours » */
+  --cv-prive-fond:        #f4ead0;
+  --cv-prive-champ:       #f9f2e3;
+  --cv-prive-champ-filet: #cbb277;
+  --cv-prive-texte:       #5c4410;
+  --cv-prive-texte-2:     #4a3a10;
+  --cv-prive-hachure:     rgba(122,91,22,.32);
+
+  /* ---- Repères d'édition (vue rédaction seulement) ---- */
+  --cv-edit-fond:         #f7edee;
+  --cv-edit-pointille:    #b98088;
+  --cv-edit-halo:         0 0 0 3px rgba(138,47,57,.15);
+
+  /* ---- Recherche ---- */
+  --cv-surlignage:        #f7d9a8;
+
+  /* ---- Tuile du portail (jetons du portail, rappelés ici) ---- */
+  --cv-tuile-fond:        #8a2f39;
+  --cv-tuile-voile:       rgba(244,242,236,.16);
+  --cv-tuile-texte:       #f4f2ec;
+  --cv-tuile-desc:        rgba(244,242,236,.86);
+  --cv-tuile-meta:        rgba(244,242,236,.66);
+  --cv-tuile-filet:       rgba(244,242,236,.5);
+
+  /* ---- Impression ---- */
+  --cv-print-encre:       #000000;
+  --cv-print-papier:      #ffffff;
+
+  /* ---- Typographie ---- */
+  --cv-police:            'IBM Plex Sans', system-ui, sans-serif;
+  --cv-police-mono:       'JetBrains Mono', monospace;
+  --cv-police-serif:      'IBM Plex Serif', Georgia, serif; /* tuile du portail UNIQUEMENT */
+
+  /* ---- Formes ---- */
+  --cv-rayon:             0;        /* aucun arrondi, sans exception */
+  --cv-ombre:             none;     /* seule ombre autorisée : --cv-edit-halo */
+  --cv-cible:             48px;     /* cible tactile minimale */
+  --cv-bouton-source:     56px;     /* hauteur minimale du bouton « Ouvrir la source » */
+}
