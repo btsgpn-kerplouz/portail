@@ -22,52 +22,101 @@ activés directement en SQL Editor sans attendre leur 1re connexion).
 (création de numéro, entrée, publication, sources suivies) — le Lot 6/7
 est donc entièrement clos, plus rien en attente de validation dessus.
 
-**Lot 8 opérationnel depuis le 31/08/2026** — voir l'entrée « Lot 8 »
-ci-dessous pour le détail complet :
+**Lot 8 ENTIÈREMENT opérationnel et validé en conditions réelles le
+31/08/2026** — voir l'entrée « Lot 8 » ci-dessous pour le détail complet :
 1. Brief éditorial versionné (`apps/affut/documents/brief-veille.md`, relu
    et amendé par l'utilisateur) et capture du motif d'écart d'un candidat
    de moisson (table `affut_candidats_ecartes`, migration
    `004-candidats-ecartes.sql`, appliquée).
 2. `apps/affut/` committé et poussé sur GitHub pour la première fois
-   (PR #53 puis #55, mergées sur `main` le 31/08/2026) — nécessaire pour
+   (PR #53, #55, #56, mergées sur `main` le 31/08/2026) — nécessaire pour
    qu'une routine cloud puisse lire le brief depuis son checkout.
    Configuration machine faite dans la foulée (identité git, `gh` CLI +
    `gh auth login`), plus rien à refaire pour les prochains commits/PR de
    ce poste.
-3. **Architecture finale (révisée en cours de session, voir « Lot 8 » pour
-   le pourquoi) : la routine cloud n'a jamais accès à `service_role`.**
-   Elle appelle une **Edge Function Supabase** (`affut-veille`,
-   `apps/affut/supabase/functions/affut-veille/index.ts`) qui fait le
-   travail privilégié en interne (service_role fournie automatiquement par
-   la plateforme) ; la routine ne détient qu'un jeton étroit
-   (`AFFUT_VEILLE_TOKEN`) qui n'autorise qu'un GET (contexte) et un POST
-   (ajout de candidats à un brouillon) sur cette seule fonction — jamais un
-   accès direct à la base. Fonction durcie (31/08/2026, après discussion
-   sur le risque d'une fuite du jeton) : plafonds de taille par champ,
-   20 candidats max par appel, 100 par numéro, **limite de fréquence réelle
-   (10 appels/heure, table `affut_veille_appels`)** — testée en conditions
-   réelles (429 déclenché au 10e appel). `motif` reste exposé en lecture
-   (décision assumée de l'utilisateur après avoir vu le risque précis) ;
-   l'écran Moisson rappelle ce risque au moment de la saisie du motif.
-4. Routine cloud planifiée créée puis mise à jour (skill `schedule`), id
+3. **Architecture finale : la routine cloud n'a jamais accès à
+   `service_role`.** Elle appelle une **Edge Function Supabase**
+   (`affut-veille`, `apps/affut/supabase/functions/affut-veille/index.ts`)
+   qui fait le travail privilégié en interne (service_role fournie
+   automatiquement par la plateforme) ; la routine ne détient qu'un jeton
+   étroit (`AFFUT_VEILLE_TOKEN`) qui n'autorise qu'un GET (contexte) et un
+   POST (ajout de candidats à un brouillon) sur cette seule fonction —
+   jamais un accès direct à la base. Fonction durcie (31/08/2026, après
+   discussion sur le risque d'une fuite du jeton) : plafonds de taille par
+   champ, 20 candidats max par appel, 100 par numéro, limite de fréquence
+   réelle (10 appels/heure) — testée en conditions réelles (429 déclenché
+   au 10e appel). `motif` reste exposé en lecture (décision assumée de
+   l'utilisateur) ; l'écran Moisson rappelle ce risque au moment de la
+   saisie du motif.
+4. Routine cloud planifiée créée (skill `schedule`), id
    `trig_01MGPb4JdPKzBdA9nVf7bcT7`, nom `affut-veille-hebdo` —
-   hebdomadaire, samedi 8h Paris (`0 6 * * 6` UTC), modèle Opus 5, dépôt
-   `btsgpn-kerplouz/portail`, outils Bash/Read/Grep/Glob/WebSearch/WebFetch
-   (aucune écriture de fichier, aucun accès direct à Supabase — uniquement
-   GET/POST vers la fonction). **Reste à poser** : `AFFUT_VEILLE_TOKEN`
-   dans les variables d'environnement de l'environnement cloud
-   `env_017jkfQa3SeDkKVxfH3tybCr` (décision de l'utilisateur, pas encore
-   faite à la clôture de cette session — voir « Lot 8 »). Première
-   exécution prévue le 05/09/2026.
+   hebdomadaire, samedi 8h Paris (`0 6 * * 6` UTC), modèle Opus 5.
+   `AFFUT_VEILLE_TOKEN` posé sur l'environnement cloud utilisé
+   (`env_01US7dF8TxHiVbduaxdT74a8`, réglé en **« Network access: Full »**
+   — voir plus bas, nécessaire pour que `WebFetch` marche). Prochaine
+   exécution planifiée : 05/09/2026 (samedi), mais peut aussi être
+   redéclenchée manuellement à tout moment (`RemoteTrigger action: run`).
+5. **Premier run réel réussi le 31/08/2026** (après un faux départ dû à la
+   politique réseau, voir plus bas) : **7 candidats déposés dans un
+   numéro 2 en brouillon**, réparti sur les 4 rubriques, 4 sur 7 concernant
+   la Bretagne — conforme au brief. Repère RGA : les 7 candidats de ce
+   premier run datent d'avant le passage en « Network access: Full »,
+   leurs URLs n'ont donc **pas** été vérifiées automatiquement (pas de
+   test 404/paywall) — à vérifier manuellement avant de les retenir dans
+   la Moisson. Les prochains runs (avec Full activé) feront cette
+   vérification eux-mêmes.
 
-**Nouvelles tâches identifiées le 31/08/2026, pas encore commencées** (à
-rattacher au Lot 9 — Déploiement) :
-- **Fait entre-temps dans cette même session** : URL Cloudflare dédiée
-  (`https://affut-veille-naturaliste.kerplouz.workers.dev`) et tuile
-  portail cliquable — voir « Lot 9 » ci-dessous.
-- Reste à faire : nouvelle tuile d'accès pensée côté élève (distincte de
-  l'accès rédacteur) — question posée à l'utilisateur, reportée par lui à
-  plus tard.
+**Piège réseau rencontré et résolu (31/08/2026)** — à connaître pour toute
+future routine cloud qui doit utiliser `WebFetch`/`curl` vers des domaines
+imprévisibles à l'avance : par défaut, un environnement cloud Claude Code
+bloque tout accès réseau sortant sauf une allowlist. Ajouter un domaine
+précis dans « Accès réseau » (fait d'abord pour l'hôte Supabase) ne suffit
+**pas** pour un usage type veille web (des dizaines de sites imprévisibles) —
+la vraie solution est de régler le sélecteur **« Network access » sur
+« Full »** dans les réglages de l'environnement (`claude.ai/code` →
+sélecteur d'environnement → engrenage → Network access → Full). C'est fait
+sur `env_01US7dF8TxHiVbduaxdT74a8`, l'environnement utilisé par la routine.
+Feedback envoyé sur l'absence de mécanisme de secret dédié pour les
+routines simples (question distincte, voir historique `/feedback`).
+
+**PROCHAINE REPRISE — écran Moisson à retravailler (demandé le
+31/08/2026, pas commencé) :**
+Retour d'usage de l'utilisateur après avoir vu le n°2 en brouillon avec
+7 candidats réels : le bouton « Voir la moisson (7) » actuel ouvre une
+modale beaucoup trop petite (juste le titre, pas exploitable pour valider
+sérieusement). Changements demandés :
+- **Supprimer le bouton/la modale « Voir la moisson »** — la moisson
+  devrait être visible directement dans l'écran du numéro (pas cachée
+  derrière un clic).
+- **Valider au fur et à mesure l'ensemble du contenu** de chaque candidat
+  (pas juste le titre) — probablement le même niveau de détail qu'une
+  entrée normale (résumé, chiffres, etc.), pas une ligne compacte.
+- **Accès direct à l'URL source** depuis chaque candidat de la moisson —
+  actuellement absent de `renderMoisson()`/`.moisson-item`
+  (`apps/affut/index.html`), à ajouter en priorité (c'est le point que
+  l'utilisateur a souligné le plus fortement : impossible de vérifier une
+  source sans lien cliquable).
+- **Bouton « + Ajouter » en doublon** (ligne ~1530, état ② « candidats en
+  attente ») : fait exactement la même chose (`data-action="new-entree"`)
+  que le bouton « + Ajouter une entrée » déjà présent en permanence dans
+  la barre d'actions du numéro (ligne ~1620) — les deux s'affichent en
+  même temps dans cet état, à dédoublonner (retirer celui de la ligne 1530
+  probablement, le second étant déjà toujours visible).
+- **Justification d'un candidat non retenu peu visible** : la capture du
+  motif existe déjà (bouton « Écarter » de la modale actuelle,
+  `window.prompt`), mais l'utilisateur ne l'a pas trouvée/vue à l'usage —
+  dans la refonte (moisson visible en direct, plus de modale), s'assurer
+  que le geste « écarter avec motif » reste clairement visible et
+  découvrable pour chaque candidat, pas caché.
+- **Déplacer une entrée vers un prochain numéro** : demandé le
+  31/08/2026 — actuellement impossible (limite déjà connue du Lot 4ter :
+  « le sélecteur de numéro en rédaction seulement pour l'instant, pas le
+  déplacement d'une entrée d'un numéro à un autre »). Concerne les
+  entrées déjà retenues dans un numéro (pas seulement les candidats de
+  moisson) — probablement un nouveau `data-action` sur chaque entrée qui
+  change son `numero_id` en base (`ecrireEntree`) et recharge, avec un
+  choix du numéro cible (sélecteur parmi les numéros existants, ou
+  création à la volée d'un nouveau brouillon).
 
 ## Où trouver le cadrage
 
@@ -914,12 +963,16 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       retour), avec un rappel ajouté dans l'invite d'écran Moisson pour
       inciter à une rédaction professionnelle du motif. Détail complet de
       la fonction et de son durcissement en tête de `index.ts`.
-      *Pas encore fait avant que la routine serve à quelque chose* :
-      poser `AFFUT_VEILLE_TOKEN` dans les variables d'environnement de
-      `env_017jkfQa3SeDkKVxfH3tybCr` (`claude.ai/code/environments`) —
-      **décision de l'utilisateur, pas encore faite à la clôture de cette
-      session**. Le prompt de la routine s'arrête proprement et le signale
-      si le jeton est absent. Première exécution prévue le 05/09/2026.
+      *Fait le 31/08/2026 — jeton posé, bascule d'environnement, premier
+      run réel réussi.* `AFFUT_VEILLE_TOKEN` posé, puis la routine a été
+      rebasculée sur `env_01US7dF8TxHiVbduaxdT74a8` (2e essai, la 1ère
+      exécution avait buté sur la politique réseau — voir le piège réseau
+      documenté en tête de fichier). Réglage **« Network access: Full »**
+      appliqué sur cet environnement (3e essai) : premier run complet
+      réussi, **7 candidats déposés dans un numéro 2 brouillon**. Détail
+      du run et de la limite « leurs URLs de ce 1er run n'ont pas été
+      vérifiées » en tête de fichier. Lot 8 clos — **le prochain chantier
+      est l'écran Moisson**, voir « PROCHAINE REPRISE » en tête de fichier.
 - [ ] **Lot 9 — Déploiement** : Cloudflare Pages, cron de revérification
       des liens, purge de cache, tuile passée en « en service ».
       *Fin :* premier vrai numéro en ligne, URL stable.
