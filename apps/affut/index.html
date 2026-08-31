@@ -2090,7 +2090,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (ecarterBtn) {
       var eid = ecarterBtn.getAttribute("data-id");
       var candEcarte = numero.moisson.filter(function(c){ return c.id === eid; })[0];
-      var motif = window.prompt("Écarter définitivement ce candidat de la moisson ?\nMotif (facultatif, aide l'agent de veille à s'améliorer) :", "");
+      var motif = window.prompt("Écarter définitivement ce candidat de la moisson ?\nMotif (facultatif, aide l'agent de veille à s'améliorer) — rédigez de façon factuelle et professionnelle : ce texte peut être lu par la routine automatisée de veille, jamais par les élèves :", "");
       if (motif !== null) {
         numero.moisson = numero.moisson.filter(function(c){ return c.id !== eid; });
         ecrireNumero({ moisson: numero.moisson });

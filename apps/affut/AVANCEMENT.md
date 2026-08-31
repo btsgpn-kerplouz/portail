@@ -22,35 +22,52 @@ activés directement en SQL Editor sans attendre leur 1re connexion).
 (création de numéro, entrée, publication, sources suivies) — le Lot 6/7
 est donc entièrement clos, plus rien en attente de validation dessus.
 
-**Lot 8 engagé et pour l'essentiel branché le 31/08/2026** — voir
-l'entrée « Lot 8 » ci-dessous pour le détail :
-1. *Fait* : brief éditorial versionné (`apps/affut/documents/brief-veille.md`,
-   relu et amendé par l'utilisateur) et capture du motif d'écart d'un
-   candidat de moisson (nouvelle table `affut_candidats_ecartes`,
-   migration `apps/affut/supabase/004-candidats-ecartes.sql` **pas encore
-   appliquée dans le SQL Editor** — à faire avant de tester le bouton
-   Écarter).
-2. *Fait* : `apps/affut/` committé et poussé sur GitHub pour la première
-   fois (PR #53, mergée sur `main` le 31/08/2026) — nécessaire pour qu'une
-   routine cloud puisse lire le brief depuis son checkout. Configuration
-   machine faite dans la foulée (identité git, `gh` CLI + `gh auth login`),
-   plus rien à refaire pour les prochains commits/PR de ce poste.
-3. *Fait* : routine cloud planifiée créée (skill `schedule`), id
+**Lot 8 opérationnel depuis le 31/08/2026** — voir l'entrée « Lot 8 »
+ci-dessous pour le détail complet :
+1. Brief éditorial versionné (`apps/affut/documents/brief-veille.md`, relu
+   et amendé par l'utilisateur) et capture du motif d'écart d'un candidat
+   de moisson (table `affut_candidats_ecartes`, migration
+   `004-candidats-ecartes.sql`, appliquée).
+2. `apps/affut/` committé et poussé sur GitHub pour la première fois
+   (PR #53 puis #55, mergées sur `main` le 31/08/2026) — nécessaire pour
+   qu'une routine cloud puisse lire le brief depuis son checkout.
+   Configuration machine faite dans la foulée (identité git, `gh` CLI +
+   `gh auth login`), plus rien à refaire pour les prochains commits/PR de
+   ce poste.
+3. **Architecture finale (révisée en cours de session, voir « Lot 8 » pour
+   le pourquoi) : la routine cloud n'a jamais accès à `service_role`.**
+   Elle appelle une **Edge Function Supabase** (`affut-veille`,
+   `apps/affut/supabase/functions/affut-veille/index.ts`) qui fait le
+   travail privilégié en interne (service_role fournie automatiquement par
+   la plateforme) ; la routine ne détient qu'un jeton étroit
+   (`AFFUT_VEILLE_TOKEN`) qui n'autorise qu'un GET (contexte) et un POST
+   (ajout de candidats à un brouillon) sur cette seule fonction — jamais un
+   accès direct à la base. Fonction durcie (31/08/2026, après discussion
+   sur le risque d'une fuite du jeton) : plafonds de taille par champ,
+   20 candidats max par appel, 100 par numéro, **limite de fréquence réelle
+   (10 appels/heure, table `affut_veille_appels`)** — testée en conditions
+   réelles (429 déclenché au 10e appel). `motif` reste exposé en lecture
+   (décision assumée de l'utilisateur après avoir vu le risque précis) ;
+   l'écran Moisson rappelle ce risque au moment de la saisie du motif.
+4. Routine cloud planifiée créée puis mise à jour (skill `schedule`), id
    `trig_01MGPb4JdPKzBdA9nVf7bcT7`, nom `affut-veille-hebdo` —
    hebdomadaire, samedi 8h Paris (`0 6 * * 6` UTC), modèle Opus 5, dépôt
    `btsgpn-kerplouz/portail`, outils Bash/Read/Grep/Glob/WebSearch/WebFetch
-   (aucune écriture de fichier — écrit uniquement dans Supabase via curl).
-   **Pas encore opérationnelle** : attend que l'utilisateur pose la
-   variable secrète `SUPABASE_SERVICE_ROLE_KEY` sur l'environnement cloud
-   `env_017jkfQa3SeDkKVxfH3tybCr` (le prompt de la routine s'arrête
-   proprement et le signale si elle est absente) et que la migration 004
-   ci-dessus soit appliquée. Première exécution prévue le 05/09/2026.
+   (aucune écriture de fichier, aucun accès direct à Supabase — uniquement
+   GET/POST vers la fonction). **Reste à poser** : `AFFUT_VEILLE_TOKEN`
+   dans les variables d'environnement de l'environnement cloud
+   `env_017jkfQa3SeDkKVxfH3tybCr` (décision de l'utilisateur, pas encore
+   faite à la clôture de cette session — voir « Lot 8 »). Première
+   exécution prévue le 05/09/2026.
 
 **Nouvelles tâches identifiées le 31/08/2026, pas encore commencées** (à
 rattacher au Lot 9 — Déploiement) :
-- Générer une **URL Cloudflare Pages** dédiée pour ce carnet de veille.
-- Coder une **nouvelle tuile d'accès dans le portail** (`portail/index.html`)
-  qui centralise les applications pour les étudiants.
+- **Fait entre-temps dans cette même session** : URL Cloudflare dédiée
+  (`https://affut-veille-naturaliste.kerplouz.workers.dev`) et tuile
+  portail cliquable — voir « Lot 9 » ci-dessous.
+- Reste à faire : nouvelle tuile d'accès pensée côté élève (distincte de
+  l'accès rédacteur) — question posée à l'utilisateur, reportée par lui à
+  plus tard.
 
 ## Où trouver le cadrage
 
@@ -866,15 +883,43 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       WebFetch — pas d'écriture de fichier, écrit uniquement dans Supabase
       via curl (voir le prompt complet dans la config de la routine sur
       `claude.ai/code/routines/trig_01MGPb4JdPKzBdA9nVf7bcT7`).
+      *Revu en cours de session : architecture service_role abandonnée.*
+      En cherchant où poser `SUPABASE_SERVICE_ROLE_KEY` sur l'environnement
+      cloud, le champ « Variables d'environnement » de Claude Code a
+      affiché un avertissement explicite (« visibles par toute personne
+      utilisant cet environnement, n'ajoutez pas de secrets ni
+      d'identifiants ») — une recherche de doc (agent `claude-code-guide`)
+      n'a trouvé aucun mécanisme de secret distinct pour les routines
+      simples (seulement pour les « vaults » d'un autre produit, Managed
+      Agents). Feedback produit envoyé sur ce manque. Plutôt que d'exposer
+      `service_role` (accès total, contourne toute RLS) dans ce champ,
+      **nouvelle architecture** : une **Edge Function Supabase**
+      (`affut-veille`, voir `apps/affut/supabase/functions/affut-veille/`)
+      fait désormais tout le travail privilégié — `service_role` lui est
+      fournie automatiquement par la plateforme Supabase, jamais stockée
+      nulle part par nous. La routine ne détient plus qu'un jeton étroit
+      (`AFFUT_VEILLE_TOKEN`) qui n'autorise qu'un GET (contexte) et un POST
+      (ajout à un brouillon) sur cette seule fonction.
+      **Discussion de risque menée avec l'utilisateur (31/08/2026)** avant
+      d'accepter de poser ce jeton dans le même champ « Variables
+      d'environnement » : même en fuite, il ne permet ni lecture de
+      `usage_en_cours`, ni publication, ni modification d'une entrée
+      validée — seulement l'ajout de candidats à un brouillon (visible par
+      l'enseignant seul) et la lecture du contexte de veille. Risque
+      résiduel identifié et corrigé : contenu libre non modéré en écriture
+      (nuisance ciblant l'enseignant, jamais les élèves) → plafonds de
+      taille + limite de fréquence ajoutés ; `motif` d'écart (raisonnement
+      privé) exposé en lecture → **gardé sciemment** après explication
+      précise du risque (l'utilisateur voulait conserver la boucle de
+      retour), avec un rappel ajouté dans l'invite d'écran Moisson pour
+      inciter à une rédaction professionnelle du motif. Détail complet de
+      la fonction et de son durcissement en tête de `index.ts`.
       *Pas encore fait avant que la routine serve à quelque chose* :
-      - poser la variable secrète `SUPABASE_SERVICE_ROLE_KEY` sur
-        l'environnement cloud `env_017jkfQa3SeDkKVxfH3tybCr`
-        (`claude.ai/code/environments`) — le prompt de la routine s'arrête
-        proprement et le signale si elle est absente, pas de risque à
-        l'avoir créée avant ;
-      - appliquer `apps/affut/supabase/004-candidats-ecartes.sql` dans le
-        SQL Editor du projet `portail`.
-      Première exécution prévue le 05/09/2026.
+      poser `AFFUT_VEILLE_TOKEN` dans les variables d'environnement de
+      `env_017jkfQa3SeDkKVxfH3tybCr` (`claude.ai/code/environments`) —
+      **décision de l'utilisateur, pas encore faite à la clôture de cette
+      session**. Le prompt de la routine s'arrête proprement et le signale
+      si le jeton est absent. Première exécution prévue le 05/09/2026.
 - [ ] **Lot 9 — Déploiement** : Cloudflare Pages, cron de revérification
       des liens, purge de cache, tuile passée en « en service ».
       *Fin :* premier vrai numéro en ligne, URL stable.
