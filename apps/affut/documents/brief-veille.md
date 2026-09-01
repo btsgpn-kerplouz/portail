@@ -79,6 +79,29 @@ sérieuse et pertinente qui n'y figure pas encore reste un bon candidat.
 Des articles d'opinions ou tribune, même sans données de terrain, des positions politiques voire polémique sans aussi bienvenus. 
 le carnet de veille est aussi un espace de découverte, voire de positionnement, par rapport à des tendances politiques dans le champs de la protection de la nature/écologie scientifique. 
 
+## Sources à moissonner en priorité (écran « Sources »)
+
+Le contexte (`GET`, voir `apps/affut/supabase/functions/affut-veille/README.md`)
+renvoie un champ `sources_a_moissonner` : la liste que l'enseignant compile à
+la main dans l'appli, onglet **Sources**. Chaque entrée porte `nom`,
+`adresse` (URL d'une page ou d'un flux RSS), `type` (« flux RSS » ou « page
+suivie »), `echelle`, `territoire`, `rubrique_defaut`.
+
+Contrairement à la liste ci-dessus (point de départ pour une recherche
+ouverte), celle-ci est une **consigne, pas une suggestion** : à chaque
+exécution, visiter effectivement chacune de ces adresses (lire le flux RSS,
+ou parcourir la page suivie) et regarder ce qui y est récent. Ne pas se
+contenter d'une recherche web générale qui les ignorerait. Une source de
+cette liste sans nouveauté publiable cette semaine n'est pas une erreur —
+ne rien proposer plutôt que forcer un candidat faible.
+
+Un candidat trouvé via une de ces sources reprend par défaut sa `rubrique`,
+`territoire` et `echelle` (ajustables si l'article le justifie clairement).
+Si une adresse est inaccessible (404, site down, redirection de connexion),
+ne pas insister ni la remplacer par une autre — le signaler dans le
+résumé de fin d'exécution pour que l'enseignant la corrige lui-même dans
+l'écran Sources.
+
 ## Critères d'exclusion explicites
 
 Rejeter d'emblée, ne pas proposer en candidat :
