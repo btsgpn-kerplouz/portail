@@ -957,6 +957,9 @@
     });
   }
 
+  // Recherche par fragments : chaque bout tapé doit être le début d'un mot du
+  // nom (français ou scientifique). « go arg » → Goéland argenté, « lar arg »
+  // → Larus argentatus, « mes cha » → Mésange charbonnière.
   function buildSuggestions(){
     var input = $("answerInput"), sug = $("suggestions");
     var q = norm(input.value);
@@ -965,13 +968,26 @@
       curSug = []; activeSug = -1; input.setAttribute("aria-expanded", "false");
       return;
     }
-    var starts = [], contains = [];
+    var toks = q.split(" ").filter(Boolean);
+    var scored = [];
     answerScope().forEach(function(t){
       var nf = norm(t.common_name_fr), ns = norm(t.scientific_name);
-      if(nf.indexOf(q) === 0 || ns.indexOf(q) === 0) starts.push(t);
-      else if(nf.indexOf(q) >= 0 || ns.indexOf(q) >= 0) contains.push(t);
+      var bag = (nf + " " + ns).split(" ").filter(Boolean);
+      var allWordPrefix = toks.every(function(tk){
+        return bag.some(function(w){ return w.indexOf(tk) === 0; });
+      });
+      var score;
+      if(nf.indexOf(q) === 0 || ns.indexOf(q) === 0) score = 0;                 // le nom commence par la saisie
+      else if(allWordPrefix &&
+              (nf.split(" ")[0].indexOf(toks[0]) === 0 ||
+               ns.split(" ")[0].indexOf(toks[0]) === 0)) score = 1;            // 1er mot amorcé + tout le reste
+      else if(allWordPrefix) score = 2;                                        // chaque bout amorce un mot
+      else if(toks.every(function(tk){ return (nf + " " + ns).indexOf(tk) >= 0; })) score = 3; // bouts présents ailleurs
+      else return;
+      scored.push({ t:t, s:score });
     });
-    curSug = starts.concat(contains).slice(0, 8);
+    scored.sort(function(a, b){ return a.s - b.s; });
+    curSug = scored.slice(0, 8).map(function(x){ return x.t; });
     activeSug = -1;
     sug.innerHTML = "";
     if(!curSug.length){
