@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <meta name="theme-color" content="#191b16">
-<meta name="description" content="Entraînement à la reconnaissance visuelle d'espèces (oiseaux, plantes, insectes) pour le BTS GPN. Photos iNaturalist sous licence libre.">
+<meta name="description" content="Entraînement à la reconnaissance visuelle d'espèces (oiseaux, plantes, insectes, mammifères, herpéto) pour le BTS GPN. Photos iNaturalist sous licence libre.">
 <title>Coup d'œil — reconnaissance d'espèces — BTS GPN</title>
 
 <link rel="manifest" href="./manifest.webmanifest">
@@ -68,7 +68,7 @@
     border-top:5px solid var(--acc);
     padding:14px 20px 18px;
   }
-  .banner-in{max-width:720px;margin:0 auto}
+  .banner-in{max-width:860px;margin:0 auto}
   .banner-back{
     display:inline-block;margin-bottom:12px;
     font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
@@ -93,98 +93,141 @@
   .banner p{margin:3px 0 0;font-size:.86rem;color:rgba(244,242,236,.66)}
 
   /* ---------- Corps ---------- */
-  .wrap{max-width:720px;margin:0 auto;padding:22px 20px 40px}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 20px 40px}
   .card{
     background:var(--card);border:1px solid var(--filet);
-    padding:22px 22px 24px;margin-bottom:16px;
+    padding:22px 20px 24px;margin-bottom:16px;
   }
 
   /* Étiquette de section — Mono, capitales (repère, pas du texte courant) */
   .label{
     display:block;font-family:var(--mono);font-size:.7rem;font-weight:500;
     letter-spacing:.14em;text-transform:uppercase;color:var(--t3);
-    margin:22px 0 8px;
   }
-  .label:first-of-type{margin-top:0}
+  .hint{color:var(--t3);font-size:.8rem;margin:7px 0 0}
+  .kb-hint{margin:12px 2px 0}
 
-  .hint{color:var(--t3);font-size:.82rem;margin:7px 0 0}
-  .choices-hint{margin-top:18px;padding-top:14px;border-top:1px solid var(--filet-soft)}
-
-  /* ---------- Segmented (choix unique) — grille de cellules à filet ---------- */
-  .seg{display:flex;flex-wrap:wrap;gap:1px;background:var(--filet);border:1px solid var(--filet)}
-  .seg button{
-    font:inherit;font-size:.9rem;color:var(--t2);background:var(--card);
-    border:0;padding:9px 14px;min-height:40px;cursor:pointer;
-    transition:background .12s ease,color .12s ease;flex:1 1 auto;
+  /* ================= BLOC FILTRES ================= */
+  .fcard{background:var(--card);border:1px solid var(--filet);margin-bottom:16px}
+  .fcard-head{
+    display:flex;align-items:baseline;gap:12px;
+    padding:13px 16px;border-bottom:1px solid var(--filet);background:var(--fond-2);
   }
-  .seg button:hover{background:var(--fond)}
-  .seg button[aria-pressed="true"]{background:var(--acc);color:#fff;font-weight:700}
-
-  /* ---------- Sous-groupes : bloc dépliable + liste à cocher groupée ---------- */
-  .disclose{border:1px solid var(--filet);background:var(--card)}
-  .disclose > summary{
-    list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;
-    padding:11px 13px;min-height:44px;font-size:.92rem;color:var(--encre);
+  .fcard-sum{
+    margin-left:auto;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--t3);
   }
-  .disclose > summary::-webkit-details-marker{display:none}
-  .disclose > summary .chev{margin-left:auto;font-size:.8rem;color:var(--t3);transition:transform .15s ease}
-  .disclose[open] > summary{border-bottom:1px solid var(--filet)}
-  .disclose[open] > summary .chev{transform:rotate(180deg)}
-  .disclose-foot{padding:9px 13px;border-top:1px solid var(--filet);display:flex;justify-content:flex-end;min-height:40px;align-items:center}
-  .disclose-foot .hidden{display:none}
 
+  /* puces de sélection */
+  .chips{
+    display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+    padding:12px 16px;border-bottom:1px solid var(--filet-soft);min-height:56px;
+  }
+  .chips-empty{font-size:.84rem;color:var(--t4)}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.82rem;
+    background:var(--acc);color:#fff;border:1px solid var(--acc);
+    padding:5px 9px 5px 11px;min-height:32px;cursor:pointer;transition:filter .12s ease;
+  }
+  .chip:hover{filter:brightness(.9)}
+  .chip .chip-n{font-family:var(--mono);font-size:.72rem;opacity:.72}
+  .chip .chip-x{font-family:var(--mono);font-size:.9rem;line-height:1;opacity:.85}
   .link-clear{
-    font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
     background:none;border:0;color:var(--acc-d);cursor:pointer;padding:2px 0;
     text-decoration:underline;text-underline-offset:3px;
   }
   .link-clear:hover{color:var(--acc)}
+  .chips .link-clear{margin-left:6px}
 
-  .checkset{display:flex;flex-direction:column}
-  .checkgroup + .checkgroup{border-top:1px solid var(--filet)}
-  .checkgroup-head{
-    display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
-    font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;
-    color:var(--t2);background:var(--fond-2);border:0;border-bottom:1px solid var(--filet);
-    padding:10px 12px;min-height:42px;
+  /* deux colonnes : groupe | sous-groupes */
+  .fcols{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);align-items:stretch}
+  .grpcol{border-right:1px solid var(--filet);background:var(--fond-2)}
+  .col-label{
+    display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--t3);padding:11px 14px 8px;
   }
-  .checkgroup-head .cg-count{margin-left:auto;color:var(--t3);letter-spacing:.06em}
-  .checkgroup-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grplist{display:flex;flex-direction:column}
+  .grpbtn{
+    display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;
+    font-size:.94rem;border:0;border-bottom:1px solid var(--filet-soft);
+    padding:9px 14px;min-height:52px;cursor:pointer;
+    background:transparent;color:var(--encre);transition:background .12s ease;
+  }
+  .grplist .grpbtn:last-child{border-bottom:0}
+  .grpbtn:hover{background:var(--fond)}
+  .grpbtn.active{background:var(--acc);color:#fff;font-weight:700}
+  .grp-ico{flex:0 0 28px;height:28px;display:grid;place-items:center;color:var(--t2)}
+  .grpbtn.active .grp-ico{color:#fff}
+  .grp-ico svg{width:24px;height:24px;display:block}
+  .grp-lbl{min-width:0;line-height:1.2}
+  .grp-count{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--t4)}
+  .grpbtn.active .grp-count{color:rgba(255,255,255,.82)}
+
+  .souscol{min-width:0}
+  .souscol-head{display:flex;align-items:center;gap:10px;padding:11px 14px 8px}
+  .souscol-head .link-clear{margin-left:auto}
+  .sousgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}
   .checkitem{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;
     font-size:.88rem;color:var(--encre);background:var(--card);
-    border:0;border-top:1px solid var(--filet-soft);
-    padding:10px 12px;min-height:44px;cursor:pointer;
+    border:0;border-top:1px solid var(--filet-soft);border-right:1px solid var(--filet-soft);
+    padding:10px 12px;min-height:46px;cursor:pointer;transition:background .12s ease;
   }
-  .checkgroup-list .checkitem:nth-child(1),
-  .checkgroup-list .checkitem:nth-child(2){border-top:0}
-  .checkitem:hover,.checkgroup-head:hover{background:var(--fond)}
+  .checkitem:hover{background:var(--fond)}
+  .checkitem[aria-checked="true"]{color:var(--acc-d);font-weight:600}
   .checkitem .ci-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .checkitem .ci-count{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--t4)}
-  .checkitem[aria-checked="true"]{color:var(--acc-d);font-weight:600}
   .checkitem[aria-checked="true"] .ci-count{color:var(--acc-d)}
-
   .box{
     flex:0 0 auto;width:18px;height:18px;border:1.5px solid var(--t4);background:#fff;
     display:grid;place-items:center;font-size:12px;line-height:1;color:#fff;
   }
-  .checkitem[aria-checked="true"] .box,
-  .checkgroup-head[aria-checked="true"] .cg-box,
-  .checkgroup-head[aria-checked="mixed"] .cg-box{background:var(--acc);border-color:var(--acc)}
-  .checkitem[aria-checked="true"] .box::after,
-  .checkgroup-head[aria-checked="true"] .cg-box::after{content:"✓"}
-  .checkgroup-head[aria-checked="mixed"] .cg-box::after{content:"–"}
+  .checkitem[aria-checked="true"] .box{background:var(--acc);border-color:var(--acc)}
+
+  /* ================= RÉGLAGES ================= */
+  .segrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px 22px}
+  .segblock{min-width:0}
+  .segblock .label{margin-bottom:8px}
+  .seg{display:flex;flex-wrap:nowrap;gap:1px;background:var(--filet);border:1px solid var(--filet)}
+  .seg button{
+    font:inherit;font-size:.8rem;line-height:1.15;color:var(--t2);background:var(--card);
+    border:0;padding:8px 5px;min-height:42px;cursor:pointer;flex:1 1 0;min-width:0;
+    text-align:center;hyphens:auto;overflow-wrap:break-word;
+    transition:background .12s ease,color .12s ease;
+  }
+  .seg button:hover{background:var(--fond)}
+  .seg button[aria-pressed="true"]{background:var(--acc);color:#fff;font-weight:700}
+
+  .opts{margin-top:20px;border-top:1px solid var(--filet-soft);padding-top:14px}
+  .opts > summary{
+    list-style:none;cursor:pointer;font-family:var(--mono);font-size:.68rem;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--t3);
+  }
+  .opts > summary::-webkit-details-marker{display:none}
+  .opts-in{margin-top:12px;max-width:360px}
+  .opts-in .label{margin-bottom:8px}
+
+  /* ================= BARRE DE LANCEMENT ================= */
+  .launch{
+    position:sticky;bottom:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--encre);color:var(--fond);padding:13px 16px;
+  }
+  .launch-line{
+    font-family:var(--mono);font-size:.76rem;letter-spacing:.04em;text-transform:uppercase;
+    color:rgba(244,242,236,.72);
+  }
+  .launch .btn{margin-left:auto}
 
   /* ---------- Boutons ---------- */
   .btn{
     font:inherit;font-weight:700;cursor:pointer;border:1px solid var(--acc);
-    padding:.7rem 1.15rem;background:var(--acc);color:#fff;
+    padding:.72rem 1.4rem;background:var(--acc);color:#fff;min-height:46px;
     transition:filter .12s ease;
   }
   .btn:hover{filter:brightness(.9)}
   .btn.ghost{background:#fff;color:var(--acc-d)}
   .btn.ghost:hover{filter:none;background:var(--fond)}
-  .btn:disabled{opacity:.45;cursor:default;filter:none}
+  .btn:disabled{opacity:.5;cursor:default;filter:none}
 
   /* ---------- En-tête de partie ---------- */
   .topbar{
@@ -259,7 +302,7 @@
 
   /* ---------- Pied ---------- */
   .foot{
-    max-width:720px;margin:0 auto;padding:0 20px 32px;
+    max-width:860px;margin:0 auto;padding:0 20px 32px;
     font-family:var(--mono);font-size:11px;letter-spacing:.04em;line-height:1.7;
     color:var(--t4);text-align:center;
   }
@@ -269,12 +312,21 @@
   /* ---------- Focus clavier — seule ombre tolérée par la charte ---------- */
   :focus-visible{outline:2px solid var(--encre);outline-offset:2px}
   .btn:focus-visible,.seg button:focus-visible,.choice:focus-visible,
-  .checkitem:focus-visible,.checkgroup-head:focus-visible,
-  .disclose > summary:focus-visible,.link-clear:focus-visible{
-    outline:2px solid var(--acc-d);outline-offset:2px;
-    box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+  .checkitem:focus-visible,.grpbtn:focus-visible,.chip:focus-visible,
+  .opts > summary:focus-visible,.link-clear:focus-visible{
+    outline:2px solid var(--acc-d);outline-offset:-2px;
+    box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
   }
-  .disclose > summary:focus-visible{outline-offset:-2px}
+
+  @media (max-width:700px){
+    .fcols{grid-template-columns:1fr}
+    .grpcol{border-right:0;border-bottom:1px solid var(--filet)}
+    .grplist{flex-direction:row;overflow-x:auto}
+    .grplist .grpbtn{
+      flex:0 0 auto;min-width:158px;border-bottom:0;border-right:1px solid var(--filet-soft);
+    }
+    .sousgrid{grid-template-columns:1fr}
+  }
 
   @media (max-width:640px){
     .banner{padding:12px 16px 15px}
@@ -283,8 +335,7 @@
     .wrap{padding:16px 16px 30px}
     .card{padding:16px 16px 20px}
     .big{font-size:2.3rem}
-    .checkgroup-list{grid-template-columns:1fr}
-    .checkgroup-list .checkitem:nth-child(2){border-top:1px solid var(--filet-soft)}
+    .fcard-head,.chips{padding-left:13px;padding-right:13px}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -316,58 +367,81 @@
 <div class="wrap">
 
   <!-- ---------- Ecran de configuration ---------- -->
-  <section id="setup" class="card">
-    <span class="label">Groupe</span>
-    <div class="seg" id="grp"></div>
+  <section id="setup">
 
-    <span class="label">Sous-groupes</span>
-    <details class="disclose" id="sousDisclose">
-      <summary>
-        <span id="sousSummary">Tous les sous-groupes</span>
-        <span class="chev" aria-hidden="true">▾</span>
-      </summary>
-      <div class="checkset" id="sous"></div>
-      <div class="disclose-foot">
-        <button type="button" class="link-clear hidden" id="sousClear">Tout décocher</button>
+    <!-- Bloc filtres -->
+    <section class="fcard">
+      <div class="fcard-head">
+        <span class="label">Filtres</span>
+        <span class="fcard-sum" id="filterSum">aucun filtre</span>
       </div>
-    </details>
-    <p class="hint">Aucune coche = tous les sous-groupes du groupe choisi.</p>
+      <div class="chips" id="chips"></div>
+      <div class="fcols">
+        <div class="grpcol">
+          <span class="col-label">Groupe</span>
+          <div class="grplist" id="grpList"></div>
+        </div>
+        <div class="souscol">
+          <div class="souscol-head">
+            <span class="col-label" style="padding:0">Sous-groupes</span>
+            <button type="button" class="link-clear" id="toggleAllSous">Tout cocher</button>
+          </div>
+          <div class="sousgrid" id="sousGrid"></div>
+        </div>
+      </div>
+    </section>
 
-    <span class="label">Difficulté</span>
-    <div class="seg" id="diff">
-      <button data-v="decouverte">Découverte</button>
-      <button data-v="entrainement" aria-pressed="true">Entraînement</button>
-      <button data-v="expert">Expert</button>
-    </div>
-    <p class="hint" id="diffHint"></p>
+    <!-- Réglages -->
+    <section class="card">
+      <div class="segrow">
+        <div class="segblock">
+          <span class="label">Difficulté</span>
+          <div class="seg" id="diff">
+            <button data-v="decouverte">Découverte</button>
+            <button data-v="entrainement" aria-pressed="true">Entraînement</button>
+            <button data-v="expert">Expert</button>
+          </div>
+          <p class="hint" id="diffHint"></p>
+        </div>
+        <div class="segblock">
+          <span class="label">Chrono</span>
+          <div class="seg" id="chrono">
+            <button data-v="0" aria-pressed="true">Sans</button>
+            <button data-v="20">20 s</button>
+            <button data-v="10">10 s</button>
+          </div>
+          <p class="hint">Temps écoulé = réponse comptée fausse.</p>
+        </div>
+        <div class="segblock">
+          <span class="label">Questions</span>
+          <div class="seg" id="count">
+            <button data-v="10" aria-pressed="true">10</button>
+            <button data-v="20">20</button>
+            <button data-v="0">Illimité</button>
+          </div>
+          <p class="hint">Illimité : la série tourne jusqu'à « Arrêter ».</p>
+        </div>
+      </div>
 
-    <span class="label">Chrono</span>
-    <div class="seg" id="chrono">
-      <button data-v="0" aria-pressed="true">Sans</button>
-      <button data-v="20">20 s</button>
-      <button data-v="10">10 s</button>
-    </div>
-    <p class="hint">Temps écoulé = réponse comptée fausse.</p>
+      <details class="opts">
+        <summary>Options d'affichage ▾</summary>
+        <div class="opts-in">
+          <span class="label">Réponses proposées</span>
+          <div class="seg" id="labelmode">
+            <button data-v="fr" aria-pressed="true">Nom français</button>
+            <button data-v="sci">Nom scientifique</button>
+            <button data-v="both">Les deux</button>
+          </div>
+        </div>
+      </details>
+    </section>
 
-    <span class="label">Nombre de questions</span>
-    <div class="seg" id="count">
-      <button data-v="10" aria-pressed="true">10</button>
-      <button data-v="20">20</button>
-      <button data-v="0">Illimité</button>
-    </div>
-
-    <span class="label">Réponses proposées</span>
-    <div class="seg" id="labelmode">
-      <button data-v="fr" aria-pressed="true">Nom français</button>
-      <button data-v="sci">Nom scientifique</button>
-      <button data-v="both">Les deux</button>
-    </div>
-
-    <div class="row">
-      <span class="hint" id="poolInfo"></span>
+    <!-- Barre de lancement -->
+    <div class="launch">
+      <span class="launch-line" id="launchLine"></span>
       <button class="btn" id="start">Commencer</button>
     </div>
-    <p class="hint choices-hint">Clavier : touches <strong>1</strong> à <strong>9</strong> pour répondre, <strong>Entrée</strong> pour la question suivante.</p>
+    <p class="hint kb-hint">Clavier : touches <strong>1</strong> à <strong>9</strong> pour répondre, <strong>Entrée</strong> pour la question suivante.</p>
   </section>
 
   <!-- ---------- Ecran de quiz ---------- -->
@@ -421,8 +495,8 @@
   var $ = function(id){ return document.getElementById(id); };
 
   if(!DATA || !DATA.taxa || !DATA.taxa.length){
-    $("setup").innerHTML = "<strong>Données absentes.</strong><br>Lance d'abord " +
-      "<code>node export_quiz_data.mjs</code> pour générer <code>quiz-data.js</code>.";
+    $("setup").innerHTML = "<section class=\"card\"><strong>Données absentes.</strong><br>Lance d'abord " +
+      "<code>node export_quiz_data.mjs</code> pour générer <code>quiz-data.js</code>.</section>";
     return;
   }
 
@@ -434,15 +508,26 @@
 
   var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0 };
 
-  // Presets de difficulté — agit sur la provenance des 3 distracteurs :
-  //   mixte      = sous-groupes variés du groupe (réponse souvent facile)
-  //   sousgroupe = même sous-groupe que la bonne réponse
-  //   genre      = même genre si ≥ 3 espèces dispo, sinon même sous-groupe
+  // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
-    decouverte:   { scope:"mixte",      label:"distracteurs de familles / sous-groupes variés" },
-    entrainement: { scope:"sousgroupe", label:"distracteurs du même sous-groupe" },
-    expert:       { scope:"genre",      label:"distracteurs du même genre quand c'est possible" }
+    decouverte:   { scope:"mixte",      name:"découverte",   label:"Propositions très différentes entre elles." },
+    entrainement: { scope:"sousgroupe", name:"entraînement", label:"Propositions du même sous-groupe, à bien regarder." },
+    expert:       { scope:"genre",      name:"expert",       label:"Propositions du même genre quand c'est possible — espèces jumelles." }
   };
+
+  // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
+  // fichiers PhyloPic (CC0 / CC BY) si l'on veut la vraie source + crédit.
+  var SIL = {
+    oiseaux:    "M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.75V21M7 18a6 6 0 0 0 3.84-10.61",
+    insectes:   "M8 2l1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4",
+    plantes:    "M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z",
+    mammifères: "M13 16a3 3 0 0 1 2.24 5M18 12h.01M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h-.9a2 2 0 0 0-2 2v.5M20 8.54V4a2 2 0 1 0-4 0v3M7.61 12.53a3 3 0 1 0-1.6 4.3",
+    "herpéto":  "M13.4 10.5c1-.5 2.6-.5 3.6.5M18 12h.01M6 9c-.6.5-1 1.2-1 2 0 1.4.8 2.6 2 3.2M14.5 17.5 18 20M11.5 17.5 8 20M8.5 14 6 16.5M2 16h.01M21.8 16c.2-2 .13-5.35 0-6-.7-3.5-3-5.5-6-6-3-.5-5 1-6 2-1 1-2 2.5-2 5s1 4 2 5c1.5 1.5 4 3 6 3s5-.5 6-3M13 20.5c1.3-.4 2.7-.4 4 0"
+  };
+
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(ch){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]; }); }
+  function titleCase(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
   // ----- controle "segmented" (choix unique) -----
   function seg(container, onpick){
@@ -453,109 +538,7 @@
     });
   }
 
-  // ----- sous-groupes : liste à cocher groupée par groupe parent -----
-  function titleCase(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-
-  function updateSousSummary(){
-    var sel = Object.keys(cfg.sous).sort();
-    var sum = $("sousSummary");
-    if(!sel.length){
-      sum.textContent = "Tous les sous-groupes";
-    } else {
-      var shown = sel.slice(0, 3).join(", ");
-      sum.textContent = sel.length + (sel.length > 1 ? " sélectionnés — " : " sélectionné — ") +
-        shown + (sel.length > 3 ? "…" : "");
-    }
-    $("sousClear").classList.toggle("hidden", !sel.length);
-  }
-
-  // Répercute cfg.sous dans le DOM (cases, entêtes de groupe, résumé).
-  function syncSous(){
-    var box = $("sous");
-    [].forEach.call(box.querySelectorAll(".checkitem"), function(it){
-      it.setAttribute("aria-checked", !!cfg.sous[it.dataset.k]);
-    });
-    [].forEach.call(box.querySelectorAll(".checkgroup"), function(sec){
-      var keys = [].map.call(sec.querySelectorAll(".checkitem"), function(it){ return it.dataset.k; });
-      var on = keys.filter(function(k){ return cfg.sous[k]; }).length;
-      sec.querySelector(".checkgroup-head").setAttribute("aria-checked",
-        on === 0 ? "false" : (on === keys.length ? "true" : "mixed"));
-    });
-    updateSousSummary();
-  }
-
-  function buildSous(){
-    var box = $("sous");
-    box.innerHTML = "";
-    var grps = cfg.grp === "tous" ? GROUPS : [cfg.grp];
-
-    grps.forEach(function(g){
-      var sg = FACETS.sousGroupes[g] || {};
-      var keys = Object.keys(sg).sort();
-      if(!keys.length) return;
-
-      var sec = document.createElement("div");
-      sec.className = "checkgroup";
-
-      var head = document.createElement("button");
-      head.type = "button";
-      head.className = "checkgroup-head";
-      head.innerHTML = '<span class="box cg-box" aria-hidden="true"></span>' +
-        '<span>' + esc(titleCase(g)) + '</span>' +
-        '<span class="cg-count">' + (FACETS.groupes[g] || 0) + '</span>';
-      head.addEventListener("click", function(){
-        var allOn = keys.every(function(k){ return cfg.sous[k]; });
-        keys.forEach(function(k){ if(allOn) delete cfg.sous[k]; else cfg.sous[k] = true; });
-        syncSous(); refreshPool();
-      });
-      sec.appendChild(head);
-
-      var list = document.createElement("div");
-      list.className = "checkgroup-list";
-      keys.forEach(function(k){
-        var it = document.createElement("button");
-        it.type = "button";
-        it.className = "checkitem";
-        it.dataset.k = k;
-        it.setAttribute("role", "checkbox");
-        it.innerHTML = '<span class="box" aria-hidden="true"></span>' +
-          '<span class="ci-label">' + esc(k) + '</span>' +
-          '<span class="ci-count">' + sg[k] + '</span>';
-        it.addEventListener("click", function(){
-          if(cfg.sous[k]) delete cfg.sous[k]; else cfg.sous[k] = true;
-          syncSous(); refreshPool();
-        });
-        list.appendChild(it);
-      });
-      sec.appendChild(list);
-      box.appendChild(sec);
-    });
-
-    syncSous();
-  }
-
-  // Groupe
-  var grpBox = $("grp");
-  grpBox.innerHTML = '<button data-v="tous" aria-pressed="true">Tous</button>' +
-    GROUPS.map(function(g){
-      return '<button data-v="'+esc(g)+'">'+esc(g)+' ('+FACETS.groupes[g]+')</button>';
-    }).join("");
-  seg(grpBox, function(v){
-    cfg.grp = v; cfg.sous = {};
-    $("sousDisclose").open = false;
-    buildSous(); refreshPool();
-  });
-  $("sousClear").addEventListener("click", function(){
-    cfg.sous = {}; syncSous(); refreshPool();
-  });
-  seg($("count"), function(v){ cfg.count = +v; });
-  seg($("labelmode"), function(v){ cfg.labelmode = v; });
-  seg($("chrono"), function(v){ cfg.chrono = +v; });
-  seg($("diff"), function(v){ cfg.diff = v; $("diffHint").textContent = DIFF[v].label; });
-  $("diffHint").textContent = DIFF[cfg.diff].label;
-
-  buildSous();
-
+  // ----- données de filtre -----
   function pool(){
     var sousSel = Object.keys(cfg.sous);
     return DATA.taxa.filter(function(t){
@@ -564,20 +547,140 @@
       return true;
     });
   }
-  function refreshPool(){
+  // sous-groupes visibles (dans l'ordre des groupes) selon le groupe choisi
+  function visibleSous(){
+    var grps = cfg.grp === "tous" ? GROUPS : [cfg.grp];
+    var out = [];
+    grps.forEach(function(g){
+      var sg = FACETS.sousGroupes[g] || {};
+      Object.keys(sg).sort().forEach(function(k){ out.push({ key:k, count:sg[k], groupe:g }); });
+    });
+    return out;
+  }
+  function sousCount(k){
+    var n = 0;
+    Object.keys(FACETS.sousGroupes).forEach(function(g){
+      if(FACETS.sousGroupes[g][k] != null) n = FACETS.sousGroupes[g][k];
+    });
+    return n;
+  }
+
+  // ----- rendu du bloc filtres -----
+  function renderGroups(){
+    var box = $("grpList");
+    box.innerHTML = "";
+    var rows = [{ key:"tous", label:"Tous les groupes", count:DATA.taxa.length }].concat(
+      GROUPS.map(function(g){ return { key:g, label:titleCase(g), count:FACETS.groupes[g] }; }));
+    rows.forEach(function(r){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "grpbtn" + (cfg.grp === r.key ? " active" : "");
+      var path = SIL[r.key];
+      var ico = path
+        ? '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="'+path+'"></path></svg></span>'
+        : '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"></circle></svg></span>';
+      b.innerHTML = ico +
+        '<span class="grp-lbl">'+esc(r.label)+'</span>' +
+        '<span class="grp-count">'+r.count+'</span>';
+      b.addEventListener("click", function(){
+        if(cfg.grp === r.key) return;
+        cfg.grp = r.key; cfg.sous = {};
+        renderFilters();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function renderSous(){
+    var box = $("sousGrid");
+    box.innerHTML = "";
+    var vis = visibleSous();
+    vis.forEach(function(v){
+      var on = !!cfg.sous[v.key];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "checkitem";
+      b.setAttribute("role", "checkbox");
+      b.setAttribute("aria-checked", on);
+      b.innerHTML = '<span class="box" aria-hidden="true">'+(on ? "✓" : "")+'</span>' +
+        '<span class="ci-label">'+esc(v.key)+'</span>' +
+        '<span class="ci-count">'+v.count+'</span>';
+      b.addEventListener("click", function(){
+        if(cfg.sous[v.key]) delete cfg.sous[v.key]; else cfg.sous[v.key] = true;
+        renderFilters();
+      });
+      box.appendChild(b);
+    });
+    var allOn = vis.length > 0 && vis.every(function(v){ return cfg.sous[v.key]; });
+    var t = $("toggleAllSous");
+    t.textContent = allOn ? "Tout décocher" : "Tout cocher";
+    t.onclick = function(){
+      vis.forEach(function(v){ if(allOn) delete cfg.sous[v.key]; else cfg.sous[v.key] = true; });
+      renderFilters();
+    };
+  }
+
+  function renderChips(){
+    var box = $("chips");
+    box.innerHTML = "";
+    var keys = Object.keys(cfg.sous).sort();
+    if(!keys.length){
+      var span = document.createElement("span");
+      span.className = "chips-empty";
+      span.textContent = "Aucun filtre — les " + pool().length + " espèces sont dans le tirage.";
+      box.appendChild(span);
+      return;
+    }
+    keys.forEach(function(k){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.innerHTML = '<span>'+esc(k)+'</span>' +
+        '<span class="chip-n">'+sousCount(k)+'</span>' +
+        '<span class="chip-x" aria-hidden="true">×</span>';
+      b.setAttribute("aria-label", "Retirer le filtre " + k);
+      b.addEventListener("click", function(){ delete cfg.sous[k]; renderFilters(); });
+      box.appendChild(b);
+    });
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "link-clear";
+    clear.textContent = "Tout effacer";
+    clear.addEventListener("click", function(){ cfg.sous = {}; renderFilters(); });
+    box.appendChild(clear);
+  }
+
+  function renderFilters(){
+    renderGroups();
+    renderSous();
+    renderChips();
+
     var n = pool().length;
-    $("poolInfo").textContent = n + " espèce" + (n > 1 ? "s" : "") + " disponible" + (n > 1 ? "s" : "");
+    var sel = Object.keys(cfg.sous).length;
+    $("filterSum").textContent = sel
+      ? (sel + (sel > 1 ? " sous-groupes cochés" : " sous-groupe coché"))
+      : "aucun filtre";
+
+    $("launchLine").textContent =
+      n + (n > 1 ? " espèces" : " espèce") + " dans le tirage · " +
+      (cfg.count > 0 ? cfg.count + " questions" : "série illimitée") + " · " + DIFF[cfg.diff].name;
     $("start").disabled = n < 2;
   }
-  refreshPool();
 
-  // ----- utilitaires -----
+  // ----- init des contrôles -----
+  seg($("count"),     function(v){ cfg.count = +v; renderFilters(); });
+  seg($("labelmode"), function(v){ cfg.labelmode = v; });
+  seg($("chrono"),    function(v){ cfg.chrono = +v; });
+  seg($("diff"),      function(v){ cfg.diff = v; $("diffHint").textContent = DIFF[v].label; renderFilters(); });
+  $("diffHint").textContent = DIFF[cfg.diff].label;
+
+  renderFilters();
+
+  // ----- utilitaires de partie -----
   function shuffle(a){ a = a.slice();
     for(var i=a.length-1;i>0;i--){ var j=Math.random()*(i+1)|0; var t=a[i]; a[i]=a[j]; a[j]=t; }
     return a; }
   function pick(a){ return a[Math.random()*a.length|0]; }
-  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(ch){
-    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]; }); }
   function hasFr(t){ return t.common_name_fr && t.common_name_fr !== t.scientific_name; }
   function labelOf(t){
     var fr = esc(t.common_name_fr), sci = "<em>" + esc(t.scientific_name) + "</em>";
@@ -586,7 +689,6 @@
     if(cfg.labelmode === "both") return sci;
     return hasFr(t) ? fr : sci;
   }
-  // "Nom français (Nom scientifique)" ou juste le nom scientifique si pas de nom fr.
   function fullName(t){
     return hasFr(t) ? esc(t.common_name_fr) + " (<em>" + esc(t.scientific_name) + "</em>)"
                     : "<em>" + esc(t.scientific_name) + "</em>";
@@ -597,6 +699,7 @@
 
   function startGame(){
     var p = pool();
+    if(p.length < 2) return;
     var total = cfg.count > 0 ? cfg.count : 9999;
     game = { i:0, answered:0, correct:0, total:total, unlimited: cfg.count===0,
              missed:[], pool:p, current:null, timer:null };
@@ -644,8 +747,8 @@
     render();
   }
 
-  // Les distracteurs sont tirés de TOUT le jeu de données (pas seulement du pool
-  // filtré) pour rester plausibles ; on élargit si le vivier est trop petit.
+  // Distracteurs tirés de TOUT le jeu de données pour rester plausibles ;
+  // on élargit si le vivier est trop petit.
   function distractorBase(answer){
     var all = DATA.taxa.filter(function(t){ return t.id !== answer.id; });
     var scope = DIFF[cfg.diff].scope;

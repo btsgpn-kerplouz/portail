@@ -1,9 +1,10 @@
 # Coup d'œil
 
 Entraînement à la **reconnaissance visuelle d'espèces** (oiseaux, plantes,
-insectes) pour le BTS GPN. QCM à partir de photos : groupe → sous-groupe
-taxonomique, difficulté réglable (proximité taxonomique des distracteurs),
-chrono optionnel, clavier `1`–`9` / `Entrée`.
+insectes, mammifères, herpéto) pour le BTS GPN. QCM à partir de photos :
+sélecteur **groupe (colonne, silhouettes)** → **sous-groupes (cases à cocher,
+puces retirables)**, difficulté réglable (proximité taxonomique des
+distracteurs), chrono optionnel, clavier `1`–`9` / `Entrée`.
 
 App **purement statique + PWA coquille**, sur le modèle de
 `vegetations-armoricaines`. Pas de Supabase, pas d'auth.
@@ -13,7 +14,7 @@ App **purement statique + PWA coquille**, sur le modèle de
 | Fichier | Rôle |
 |---|---|
 | `index.html` | L'app entière (HTML/CSS/JS vanilla, sans build). Charte « papier technique froid », accent rouille sombre `#9c3d2e`. |
-| `quiz-data.js` | Les données : ~210 espèces / ~4700 photos, définit `window.QUIZ_DATA`. |
+| `quiz-data.js` | Les données : ~386 espèces / ~4600 photos (≤ 12 par espèce), définit `window.QUIZ_DATA`. |
 | `manifest.webmanifest` · `service-worker.js` · `icons/` · `fonts/` | Coquille PWA. |
 | `wrangler.jsonc` | Déploiement Cloudflare (worker `coup-doeil`). |
 
@@ -35,10 +36,14 @@ de ce dépôt. En résumé :
 ```bash
 node import_inaturalist.mjs --init
 node import_inaturalist.mjs --especes especes.csv --par-espece 40 --place-id 6753 --auto-approve
-node export_quiz_data.mjs        # quiz.db -> quiz-data.js
+node export_quiz_data.mjs --max-photos 12   # quiz.db -> quiz-data.js (coquille légère)
 ```
 
 Puis recopier le `quiz-data.js` obtenu dans ce dossier.
+
+`especes.csv` (colonnes `groupe;sous_groupe;nom_scientifique`) pilote la liste :
+5 groupes — oiseaux, plantes, insectes, mammifères, herpéto (reptiles /
+amphibiens).
 
 ## Icônes
 
