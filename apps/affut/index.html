@@ -405,18 +405,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .sources-replie{margin:10px 22px;border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--af-encre-2)}
 .sources-replie .chip{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 
-/* ---- moisson (lot 4) ---- */
-.moisson-barre{background:var(--af-surface-2);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:11px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--af-encre-2)}
-.moisson-barre .titre{font-weight:700;color:var(--af-encre)}
-.moisson-barre .spacer{flex:1}
-.moisson-liste{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto}
-.moisson-vide{margin:0;font-size:12.5px;color:var(--af-encre-3)}
-.moisson-item{border:1px solid var(--af-filet-moyen);padding:10px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--af-surface)}
-.moisson-item.probleme{border-color:var(--af-mort)}
-.moisson-item .infos{display:flex;flex-direction:column;gap:2px;min-width:0}
-.moisson-item .titre{font-size:13px;font-weight:700;color:var(--af-encre)}
-.moisson-item .meta{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
-.moisson-item .btns{display:flex;gap:8px;flex:none}
+/* ---- moisson (lot 10 : liste intégrée à l'écran du numéro, plus de modale
+   séparée — chaque candidat au même niveau de détail qu'une entrée retenue,
+   voir renderCandidat()) ---- */
+.moisson-section{border-top:3px solid var(--af-redaction)}
+.moisson-entete{background:var(--af-redaction);color:var(--af-sur-redaction);padding:10px 20px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.moisson-entete .titre{font-family:var(--af-police-mono);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.moisson-candidat{background:var(--af-surface-2)}
+.moisson-candidat .flat-titre{color:var(--af-redaction)}
+.moisson-candidat.probleme{background:var(--af-sur-accent-2)}
+.moisson-candidat .btn-mini{border-color:var(--af-redaction);color:var(--af-redaction)}
+.moisson-candidat .btn-mini:hover{background:var(--af-redaction);color:var(--af-sur-redaction)}
+.btn-source-compact.desactive{background:var(--af-surface-3);color:var(--af-encre-3)}
+.ecart-panel{border-top:1px solid var(--af-filet-fort);padding:10px 16px 14px;display:flex;flex-direction:column;gap:8px;background:var(--af-surface)}
+.ecart-panel .lbl{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-3);line-height:1.5}
+.ecart-panel textarea{font:inherit;font-family:var(--af-police-mono);font-size:11.5px;padding:7px 9px;border:1px solid var(--af-filet-fort);min-height:52px;resize:vertical;background:var(--af-surface);color:var(--af-encre-courant)}
+.ecart-panel .boutons{display:flex;gap:8px;justify-content:flex-end}
+.deplacer-select-wrap{padding:8px 16px 12px;border-top:1px solid var(--af-filet)}
+.deplacer-select-wrap .lbl{display:block;font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3);margin-bottom:4px}
+.deplacer-select-wrap select{font:inherit;font-family:var(--af-police-mono);font-size:11px;padding:6px 8px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant);width:100%}
 
 /* ---- états limites (lot 4) ---- */
 .etat-limite{padding:34px 30px 30px;display:flex;flex-direction:column;gap:14px;max-width:620px}
@@ -457,7 +464,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   body{background:var(--af-print-papier)}
   .page{padding:0;display:block}
   .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
-  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.rail,.entree-actions,.valide-case,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-barre,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.rail,.entree-actions,.valide-case,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
   /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
   .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
   .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
@@ -533,7 +540,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .source-row,.groupe-titre{padding-left:14px;padding-right:14px}
   .source-row{display:flex;flex-direction:column;gap:6px}
   .source-actions{align-items:flex-start;flex-direction:row;flex-wrap:wrap}
-  .moisson-barre,.moisson-item{flex-direction:column;align-items:flex-start}
   .etat-limite{padding:22px 16px}
 }
 </style>
@@ -961,6 +967,24 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var res = await client().from("affut_entrees").delete().eq("id", id);
     if (res.error) signalerErreurEcriture(res.error);
   }
+  async function deplacerEntreeDistante(id, numeroCible){
+    var res = await client().from("affut_entrees").update({ numero_id: numeroCible }).eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  // Déplacement d'une entrée déjà retenue vers un autre numéro (Lot 10) :
+  // mutation locale immédiate dans les deux numéros (source et cible, tous
+  // deux déjà chargés en mémoire en rédaction — chargerDonneesRedaction()
+  // lit affut_entrees sans filtre) puis écriture distante, même principe
+  // que le reste de l'app (pas de copie locale / synchro de fond).
+  function deplacerEntreeVersNumero(id, numeroCible){
+    var e = entrees.filter(function(x){ return x.id === id; })[0];
+    if (!e) return;
+    entrees = entrees.filter(function(x){ return x.id !== id; });
+    numero.entrees = entrees;
+    var cible = numeros.filter(function(n){ return n.numero === numeroCible; })[0];
+    if (cible) { cible.entrees = cible.entrees || []; cible.entrees.push(e); }
+    deplacerEntreeDistante(id, numeroCible);
+  }
   async function ecrireSource(id, champsPartiels){
     var res = await client().from("affut_sources_suivies").update(versColonnes(champsPartiels, MAPPING_COLONNES_SOURCE)).eq("id", id);
     if (res.error) signalerErreurEcriture(res.error);
@@ -1127,7 +1151,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     sourcesDeplie: false,
     previewEtat: null,
     publicationRefusee: null,
-    moissonOuverte: false
+    ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
+    deplacerOuvert: null // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
   };
 
   function estRedacteurActif(){ return !!(state.auth.redacteur && state.auth.redacteur.actif); }
@@ -1157,17 +1182,34 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     else entree[parts[1]] = value;
   }
 
+  // esc(c.v) + " " + esc(c.l) sans le v (cas des chiffres repris d'un
+  // candidat de moisson, voir chiffresCandidatVersBlocs) laisserait une
+  // espace insécable en tête du texte affiché.
+  function chiffreTexte(c){
+    var v = c.v ? esc(c.v) + " " : "";
+    return c.accent ? "<b>" + v + "</b>" + esc(c.l) : v + esc(c.l);
+  }
+
+  // Un candidat de moisson (Edge Function affut-veille) porte des chiffres
+  // en chaîne brute, sans couple valeur/libellé — convertis au même format
+  // {v,l} que le reste de l'app au moment de le retenir comme entrée
+  // (sinon flatChiffres() essaie de lire .v/.l sur une chaîne et affiche
+  // "undefined").
+  function chiffresCandidatVersBlocs(chiffres){
+    return (chiffres || []).map(function(s){ return { v: "", l: s }; });
+  }
+
   function flatChiffres(e){
     if (!e.chiffres.length) return "";
     if (state.mode !== "redaction") {
       if (!e.blocs.chiffres) return "";
-      var txtPub = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      var txtPub = e.chiffres.map(chiffreTexte).join(" · ");
       return '<div class="flat-chiffres tab-num">' + txtPub + '</div>';
     }
     var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.chiffres ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="chiffres" title="Afficher les chiffres clés">';
     var contenu;
     if (e.blocs.chiffres) {
-      var txt = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      var txt = e.chiffres.map(chiffreTexte).join(" · ");
       contenu = '<div class="flat-chiffres tab-num">' + txt + '</div>';
     } else {
       var vals = e.chiffres.map(function(c){ return c.v; }).join(" · ");
@@ -1196,7 +1238,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var redac = state.mode === "redaction";
     var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
     var actions = redac
-      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
+      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
       : "";
 
     var row =
@@ -1228,11 +1270,29 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var detailsInner =
       qrImpression +
-      renderUsage(e);
+      renderUsage(e) +
+      (redac && state.deplacerOuvert === e.id ? renderDeplacerPanel(e) : "");
 
     var details = '<div class="entree-details">' + detailsInner + '</div>';
 
     return '<div class="entree" data-entree="' + e.id + '">' + row + details + '</div>';
+  }
+
+  // Déplacement d'une entrée retenue vers un autre numéro (Lot 10) : simple
+  // <select> natif, même principe que renderSelecteurNumero() ; « + Nouveau
+  // numéro » ouvre le formulaire de création existant et termine le
+  // déplacement une fois le numéro créé (voir le submit de #numero-form).
+  function renderDeplacerPanel(e){
+    var autres = numeros.filter(function(n){ return n.numero !== numero.numero; }).sort(function(a, b){ return b.numero - a.numero; });
+    var options = '<option value="">Déplacer vers…</option>' +
+      autres.map(function(n){
+        var sem = n.semaine.match(/^semaine (\d+)/);
+        var label = "n° " + n.numero + (n.statut === "brouillon" ? " · brouillon" : (sem ? " · sem. " + sem[1] : " · publié"));
+        return '<option value="' + n.numero + '">' + esc(label) + '</option>';
+      }).join("") +
+      '<option value="__nouveau__">+ Nouveau numéro (n° ' + prochainNumero() + ')</option>';
+    return '<div class="deplacer-select-wrap"><label class="lbl" for="deplacer-' + e.id + '">Déplacer cette entrée vers un autre numéro</label>' +
+      '<select id="deplacer-' + e.id + '" data-action="deplacer-select" data-id="' + e.id + '">' + options + '</select></div>';
   }
 
   function groupByRubrique(list){
@@ -1526,8 +1586,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="etat-limite">' +
       '<span class="glyphe">▭</span>' +
       '<h2>Le n° ' + numero.numero + ' est vide pour l\'instant</h2>' +
-      '<p>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' attendent dans la moisson du ' + esc(numero.collecte.date) + '. Cocher celles qui partiront dans le numéro, ou en ajouter une à la main.</p>' +
-      '<div class="actions"><button type="button" class="btn-plein" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button><button type="button" class="btn-ligne" data-action="new-entree">+ Ajouter</button></div>' +
+      '<p>Aucune entrée retenue pour l\'instant. Trier les candidats de la moisson du ' + esc(numero.collecte.date) + ' ci-dessous, ou ajouter une entrée à la main via « + Ajouter une entrée » en haut de page.</p>' +
     '</div>';
   }
 
@@ -1561,11 +1620,69 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return renderEtatNumeroVide();
   }
 
-  function renderMoissonBarre(){
+  // Un candidat de moisson au même niveau de détail qu'une entrée retenue
+  // (renderEntree) : titre, chiffres, résumé, lien source cliquable — plus
+  // le geste « écarter avec motif » toujours visible sur la carte (Lot 10,
+  // retour d'usage du 31/08/2026 : la modale précédente était trop petite
+  // et le motif d'écart, caché derrière un window.prompt, n'était pas
+  // découvert à l'usage).
+  function renderCandidat(c){
+    var src = c.source || {};
+    var probleme = !c.url || c.lienMort;
+    var noteProbleme = c.lienMort ? "lien mort" : (!c.url ? "pas encore de lien" : "");
+    var btn = c.url
+      ? '<a class="btn-source-compact" href="' + esc(c.url) + '" target="_blank" rel="noopener"><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(src.domaine || "") + '</span></a>'
+      : '<span class="btn-source-compact desactive"><span class="lib">Pas encore de lien</span></span>';
+    var chiffresHtml = (c.chiffres && c.chiffres.length)
+      ? '<div class="flat-chiffres tab-num">' + c.chiffres.map(esc).join(" · ") + '</div>'
+      : "";
+    var resumeHtml = c.resume ? '<div class="flat-resume">' + esc(c.resume) + '</div>' : "";
+    var ecartPanel = state.ecarterOuvert === c.id
+      ? '<div class="ecart-panel">' +
+          '<label class="lbl" for="motif-ecart-' + c.id + '">Motif de l\'écart (facultatif — lu par la routine de veille automatisée, jamais par les élèves)</label>' +
+          '<textarea id="motif-ecart-' + c.id + '" data-role="motif-ecart"></textarea>' +
+          '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-ecart" data-id="' + c.id + '">Écarter définitivement</button></div>' +
+        '</div>'
+      : "";
+
+    return '<div class="entree moisson-candidat' + (probleme ? " probleme" : "") + '" data-candidat="' + c.id + '">' +
+      '<div class="entree-row">' +
+        '<div class="entree-row-gauche">' +
+          '<div class="flat">' +
+            '<div class="flat-meta">' +
+              '<span class="nom">' + esc(src.nom || "") + '</span>' +
+              (src.territoire ? '<span class="pastille-echelle">' + esc(src.territoire) + '</span>' : "") +
+              '<span class="meta-mono">' + esc(src.domaine || "") + (src.date ? ' · ' + esc(src.date) : "") + '</span>' +
+              '<span class="etat-pastille">◇ candidat · ' + esc(c.rubrique) + '</span>' +
+              (noteProbleme ? '<span class="etat-pastille mort">✕ ' + noteProbleme + '</span>' : "") +
+            '</div>' +
+            '<div class="flat-titre">' + esc(c.titre) + '</div>' +
+            chiffresHtml +
+            resumeHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="entree-row-droite">' +
+          btn +
+          '<div class="entree-actions">' +
+            '<button type="button" class="btn-mini" data-action="retenir-candidat" data-id="' + c.id + '">Retenir</button>' +
+            '<button type="button" class="btn-mini danger" data-action="ecarter-candidat" data-id="' + c.id + '">Écarter…</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      ecartPanel +
+    '</div>';
+  }
+
+  // Liste de moisson intégrée directement à l'écran du numéro (Lot 10) : plus
+  // de modale « Voir la moisson » — retour d'usage du 31/08/2026 après un
+  // 1er run réel (7 candidats), la modale était « beaucoup trop petite »
+  // pour valider sérieusement chaque candidat.
+  function renderMoissonSection(){
     if (numero.moisson == null || !numero.moisson.length) return "";
-    if (numero.collecte.statut !== "rapporte") return ""; // état ③/④ déjà affiché à la place
-    if (!entrees.filter(function(e){ return e.valide; }).length) return ""; // état ② déjà affiché à la place
-    return '<div class="moisson-barre"><span class="titre">Moisson du ' + esc(numero.collecte.date) + '</span><span>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' encore en attente de tri</span><span class="spacer"></span><button type="button" class="btn-ligne" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button></div>';
+    return '<div class="moisson-section">' +
+      '<div class="moisson-entete"><span class="titre">Moisson du ' + esc(numero.collecte.date) + '</span><span>' + numero.moisson.length + ' candidat' + (numero.moisson.length > 1 ? "s" : "") + ' en attente de tri — retenir ou écarter chacun ci-dessous</span></div>' +
+      numero.moisson.map(renderCandidat).join("") +
+    '</div>';
   }
 
   function devOutilsCollecte(){
@@ -1624,7 +1741,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       : "";
 
     var corpsWrap = state.mode === "redaction"
-      ? '<div class="corps"><div class="colonne">' + renderMoissonBarre() + corpsHtml + '</div></div>'
+      ? '<div class="corps"><div class="colonne">' + corpsHtml + renderMoissonSection() + '</div></div>'
       : '<div class="corps"><div class="colonne">' + corpsHtml + '</div>' + renderRail(visibles) + '</div>';
 
     var banniere = state.mode === "redaction" ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>' : "";
@@ -1688,27 +1805,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           pr.fautives.map(function(f){ return '<div class="refus-item' + (f.type === "vide" ? " vide" : "") + '"><b>' + esc(f.titre) + '</b> — ' + esc(f.message) + '</div>'; }).join("") +
         '</div>' +
         '<div class="modal-boutons"><button type="button" class="btn-plein" data-action="regler-fautive" data-id="' + pr.fautives[0].id + '">Régler la première</button><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-refus">Fermer</button></div></div>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function renderMoissonModal(){
-    if (!state.moissonOuverte || numero.moisson == null) return "";
-    return '<div class="modal-overlay" data-action="close-moisson-backdrop">' +
-      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Moisson du numéro">' +
-        '<div class="modal-titre">Moisson du ' + esc(numero.collecte.date) + ' — ' + numero.moisson.length + ' en attente</div>' +
-        '<div class="moisson-liste">' +
-          (!numero.moisson.length ? '<p class="moisson-vide">Plus rien en attente de tri.</p>' : "") +
-          numero.moisson.map(function(c){
-            var probleme = !c.url || c.lienMort;
-            var noteProbleme = c.lienMort ? " · lien mort" : (!c.url ? " · pas encore de lien" : "");
-            return '<div class="moisson-item' + (probleme ? " probleme" : "") + '">' +
-              '<div class="infos"><span class="titre">' + esc(c.titre) + '</span><span class="meta">' + esc(c.source.nom) + ' · ' + esc(c.rubrique) + esc(noteProbleme) + '</span></div>' +
-              '<div class="btns"><button type="button" class="lien-action danger" data-action="ecarter-candidat" data-id="' + c.id + '">Écarter</button><button type="button" class="btn-ligne" data-action="retenir-candidat" data-id="' + c.id + '">Retenir</button></div>' +
-            '</div>';
-          }).join("") +
-        '</div>' +
-        '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-moisson">Fermer</button></div></div>' +
       '</div>' +
     '</div>';
   }
@@ -1814,7 +1910,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // saisie par le clavier.
   var modaleFoyerPrecedent = null;
   function modaleFoyerActuel(){
-    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.moissonOuverte ? "moisson" : state.publicationRefusee ? "refus" : null;
+    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.publicationRefusee ? "refus" : null;
   }
 
   // ---- Lot 7 : connexion / compte en attente / déconnexion ----
@@ -1922,7 +2018,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       renderModalSource() +
       renderModalAuth() +
       renderModalNumero() +
-      renderMoissonModal() +
       renderPublicationRefusee();
 
     // Focus envoyé dans la modale seulement si elle vient de s'ouvrir
@@ -1947,7 +2042,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (vueBtn) {
       state.vue = vueBtn.getAttribute("data-vue");
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.moissonOuverte = false; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
       render();
       return;
     }
@@ -1957,6 +2052,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
       state.vue = "numero";
       state.modal = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null;
       render();
       return;
     }
@@ -2059,12 +2155,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }
     if (ev.target.closest('[data-action="preview-normal"]')) { state.previewEtat = null; render(); return; }
 
-    // ---- lot 4 : moisson du numéro en cours (états ②③④) ----
-    if (ev.target.closest('[data-action="voir-moisson"]')) { state.moissonOuverte = true; render(); return; }
-    if (ev.target.closest('[data-action="close-moisson"]') || ev.target === document.querySelector('[data-action="close-moisson-backdrop"]')) {
-      state.moissonOuverte = false; render(); return;
-    }
-
+    // ---- lot 9 : moisson intégrée à l'écran du numéro (états ②③④) ----
     var retenirBtn = ev.target.closest('[data-action="retenir-candidat"]');
     if (retenirBtn) {
       var cid = retenirBtn.getAttribute("data-id");
@@ -2074,29 +2165,53 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         var nouvelleEntree = {
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
-          titre: cand.titre, chiffres: cand.chiffres, resume: cand.resume, usage: cand.usage,
+          titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
           blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
         };
         entrees.push(nouvelleEntree);
         numero.entrees = entrees;
         creerEntree(nouvelleEntree);
         ecrireNumero({ moisson: numero.moisson });
+        if (state.ecarterOuvert === cid) state.ecarterOuvert = null;
         render();
       }
       return;
     }
 
+    // Panneau « écarter avec motif » : ouvert/fermé en place sur la carte du
+    // candidat (retour d'usage du 31/08/2026 : un window.prompt() pour le
+    // motif n'a pas été trouvé/vu à l'usage — le geste doit rester visible).
     var ecarterBtn = ev.target.closest('[data-action="ecarter-candidat"]');
     if (ecarterBtn) {
       var eid = ecarterBtn.getAttribute("data-id");
-      var candEcarte = numero.moisson.filter(function(c){ return c.id === eid; })[0];
-      var motif = window.prompt("Écarter définitivement ce candidat de la moisson ?\nMotif (facultatif, aide l'agent de veille à s'améliorer) — rédigez de façon factuelle et professionnelle : ce texte peut être lu par la routine automatisée de veille, jamais par les élèves :", "");
-      if (motif !== null) {
-        numero.moisson = numero.moisson.filter(function(c){ return c.id !== eid; });
-        ecrireNumero({ moisson: numero.moisson });
-        if (candEcarte) creerCandidatEcarte(candEcarte, motif.trim());
-        render();
-      }
+      state.ecarterOuvert = state.ecarterOuvert === eid ? null : eid;
+      render();
+      return;
+    }
+
+    if (ev.target.closest('[data-action="annuler-ecart"]')) { state.ecarterOuvert = null; render(); return; }
+
+    var confirmerEcartBtn = ev.target.closest('[data-action="confirmer-ecart"]');
+    if (confirmerEcartBtn) {
+      var ceid = confirmerEcartBtn.getAttribute("data-id");
+      var candEcarte = numero.moisson.filter(function(c){ return c.id === ceid; })[0];
+      var motifEl = document.getElementById("motif-ecart-" + ceid);
+      var motif = motifEl ? motifEl.value.trim() : "";
+      numero.moisson = numero.moisson.filter(function(c){ return c.id !== ceid; });
+      state.ecarterOuvert = null;
+      ecrireNumero({ moisson: numero.moisson });
+      if (candEcarte) creerCandidatEcarte(candEcarte, motif);
+      render();
+      return;
+    }
+
+    // Déplacement d'une entrée retenue vers un autre numéro (Lot 10) : bascule
+    // du sélecteur inline, voir renderDeplacerPanel().
+    var deplacerBtn = ev.target.closest('[data-action="toggle-deplacer"]');
+    if (deplacerBtn) {
+      var did = deplacerBtn.getAttribute("data-id");
+      state.deplacerOuvert = state.deplacerOuvert === did ? null : did;
+      render();
       return;
     }
 
@@ -2201,6 +2316,22 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (numeroSel) {
       state.numeroId = parseInt(numeroSel.value, 10);
       state.modal = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null;
+      render();
+      return;
+    }
+
+    var deplacerSel = ev.target.closest('[data-action="deplacer-select"]');
+    if (deplacerSel) {
+      var idADeplacer = deplacerSel.getAttribute("data-id");
+      var cibleVal = deplacerSel.value;
+      if (!cibleVal) return;
+      if (cibleVal === "__nouveau__") {
+        state.modalNumero = { erreur: null, deplacerEntreeId: idADeplacer };
+      } else {
+        deplacerEntreeVersNumero(idADeplacer, parseInt(cibleVal, 10));
+        state.deplacerOuvert = null;
+      }
       render();
       return;
     }
@@ -2234,7 +2365,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (state.modalSource) { state.modalSource = null; render(); return; }
     if (state.modalAuth) { state.modalAuth = null; render(); return; }
     if (state.modalNumero) { state.modalNumero = null; render(); return; }
-    if (state.moissonOuverte) { state.moissonOuverte = false; render(); return; }
+    if (state.ecarterOuvert) { state.ecarterOuvert = null; render(); return; }
+    if (state.deplacerOuvert) { state.deplacerOuvert = null; render(); return; }
     if (state.publicationRefusee) { state.publicationRefusee = null; render(); return; }
   });
 
@@ -2313,8 +2445,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       var ok = await creerNumeroDistant(nouveauNumero);
       if (!ok) { render(); return; }
       numeros.push(nouveauNumero);
+      // « + Nouveau numéro » choisi depuis le sélecteur « Déplacer vers… »
+      // d'une entrée (Lot 10) : termine le déplacement une fois le numéro créé,
+      // avant de rebasculer numeroId (deplacerEntreeVersNumero() déplace
+      // depuis le numéro actuellement affiché, donc avant ce changement).
+      var deplacerId = state.modalNumero.deplacerEntreeId;
+      if (deplacerId) deplacerEntreeVersNumero(deplacerId, num);
       state.modalNumero = null;
       state.numeroId = num;
+      state.deplacerOuvert = null;
       render();
       return;
     }

@@ -4,7 +4,7 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 31/08/2026 — reprendre ici
+## État au 01/09/2026 — reprendre ici
 
 **Fait :** Lots 1 à 7 complets. Lots 1-5 : page numéro, persistance,
 sommaire/recherche, sources suivies + impression PDF via jsPDF, audit RGAA.
@@ -79,44 +79,26 @@ sur `env_01US7dF8TxHiVbduaxdT74a8`, l'environnement utilisé par la routine.
 Feedback envoyé sur l'absence de mécanisme de secret dédié pour les
 routines simples (question distincte, voir historique `/feedback`).
 
-**PROCHAINE REPRISE — écran Moisson à retravailler (demandé le
-31/08/2026, pas commencé) :**
-Retour d'usage de l'utilisateur après avoir vu le n°2 en brouillon avec
-7 candidats réels : le bouton « Voir la moisson (7) » actuel ouvre une
-modale beaucoup trop petite (juste le titre, pas exploitable pour valider
-sérieusement). Changements demandés :
-- **Supprimer le bouton/la modale « Voir la moisson »** — la moisson
-  devrait être visible directement dans l'écran du numéro (pas cachée
-  derrière un clic).
-- **Valider au fur et à mesure l'ensemble du contenu** de chaque candidat
-  (pas juste le titre) — probablement le même niveau de détail qu'une
-  entrée normale (résumé, chiffres, etc.), pas une ligne compacte.
-- **Accès direct à l'URL source** depuis chaque candidat de la moisson —
-  actuellement absent de `renderMoisson()`/`.moisson-item`
-  (`apps/affut/index.html`), à ajouter en priorité (c'est le point que
-  l'utilisateur a souligné le plus fortement : impossible de vérifier une
-  source sans lien cliquable).
-- **Bouton « + Ajouter » en doublon** (ligne ~1530, état ② « candidats en
-  attente ») : fait exactement la même chose (`data-action="new-entree"`)
-  que le bouton « + Ajouter une entrée » déjà présent en permanence dans
-  la barre d'actions du numéro (ligne ~1620) — les deux s'affichent en
-  même temps dans cet état, à dédoublonner (retirer celui de la ligne 1530
-  probablement, le second étant déjà toujours visible).
-- **Justification d'un candidat non retenu peu visible** : la capture du
-  motif existe déjà (bouton « Écarter » de la modale actuelle,
-  `window.prompt`), mais l'utilisateur ne l'a pas trouvée/vue à l'usage —
-  dans la refonte (moisson visible en direct, plus de modale), s'assurer
-  que le geste « écarter avec motif » reste clairement visible et
-  découvrable pour chaque candidat, pas caché.
-- **Déplacer une entrée vers un prochain numéro** : demandé le
-  31/08/2026 — actuellement impossible (limite déjà connue du Lot 4ter :
-  « le sélecteur de numéro en rédaction seulement pour l'instant, pas le
-  déplacement d'une entrée d'un numéro à un autre »). Concerne les
-  entrées déjà retenues dans un numéro (pas seulement les candidats de
-  moisson) — probablement un nouveau `data-action` sur chaque entrée qui
-  change son `numero_id` en base (`ecrireEntree`) et recharge, avec un
-  choix du numéro cible (sélecteur parmi les numéros existants, ou
-  création à la volée d'un nouveau brouillon).
+**PROCHAINE REPRISE — Lot 10 (refonte de l'écran Moisson) codé le
+01/09/2026, pas encore revalidé dans un vrai navigateur :**
+Tous les points demandés le 31/08/2026 (modale supprimée, moisson visible
+en direct dans l'écran du numéro, chaque candidat avec le même niveau de
+détail qu'une entrée + lien source cliquable, doublon « + Ajouter »
+retiré, geste « écarter avec motif » rendu visible via un panneau inline,
+déplacement d'une entrée retenue vers un autre numéro) sont codés — détail
+complet dans l'entrée « Lot 10 » ci-dessous. Un bug latent du Lot 8 a été
+corrigé au passage : le bouton « Retenir » copiait les chiffres clés d'un
+candidat dans un format que l'affichage ne savait pas lire (`undefined` à
+l'écran une fois retenu).
+**À faire en premier à la reprise** : se connecter en rédaction, ouvrir le
+n°2 brouillon (les 7 candidats réels du 1er run de veille du Lot 8) et
+vérifier dans le navigateur : la moisson s'affiche bien sous les entrées
+sans clic, chaque candidat a bien son résumé/chiffres/lien source, retenir
+un candidat affiche bien ses chiffres clés une fois devenu une entrée (pas
+de régression du bug corrigé), le panneau « Écarter… » s'ouvre/se ferme et
+écrit bien un motif dans `affut_candidats_ecartes`, et le sélecteur
+« Déplacer » d'une entrée retenue fonctionne vers un numéro existant et
+vers un nouveau brouillon créé à la volée.
 
 ## Où trouver le cadrage
 
@@ -994,6 +976,79 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       question de la nouvelle tuile centrée élève a été reportée par
       l'utilisateur à après le déploiement (31/08/2026), à reprendre
       maintenant que l'URL réelle existe.
+- [x] **Lot 10 — Refonte de l'écran Moisson** (retour d'usage du 31/08/2026,
+      après le 1er run réel du Lot 8 : 7 candidats déposés dans un n°2
+      brouillon, la modale « Voir la moisson » trop petite pour valider
+      sérieusement).
+      *Fin :* la moisson est visible directement dans l'écran du numéro
+      (plus de modale), chaque candidat au même niveau de détail qu'une
+      entrée retenue, avec accès direct à la source et geste « écarter avec
+      motif » toujours visible.
+      *Fait le 01/09/2026* (`apps/affut/index.html`) :
+      - **Modale « Voir la moisson » supprimée** (`renderMoissonModal()`,
+        `state.moissonOuverte`, boutons `voir-moisson`/`close-moisson`) au
+        profit d'une nouvelle section intégrée à l'écran du numéro,
+        `renderMoissonSection()` : affichée directement sous les entrées
+        déjà retenues (ou sous le bandeau « numéro vide » à l'état ②),
+        toujours visible sans clic supplémentaire.
+      - **Chaque candidat rendu au même niveau de détail qu'une entrée**
+        (`renderCandidat()`, réutilise les classes `.entree`/`.entree-row`/
+        `.flat` de `renderEntree()`) : source, territoire, domaine, date,
+        rubrique, titre, chiffres clés, résumé complet — plus de simple
+        ligne titre+meta comme dans l'ancienne modale.
+      - **Accès direct à la source** : bouton « Ouvrir la source » plein
+        format (ouvre dans un nouvel onglet, `target="_blank"`), absent de
+        l'ancienne modale (point le plus souligné par l'utilisateur — « impossible
+        de vérifier une source sans lien cliquable »). Un candidat sans URL
+        affiche un bouton désactivé « Pas encore de lien » plutôt qu'un
+        lien mort.
+      - **Bug corrigé au passage** : le bouton « Retenir » copiait
+        `cand.chiffres` (tableau de chaînes brutes, format de l'Edge
+        Function `affut-veille`) tel quel dans `entree.chiffres`, qui
+        attend des couples `{v,l,accent}` — une fois retenue, une entrée
+        née de la moisson aurait affiché "undefined" à la place de ses
+        chiffres clés. Nouvelle fonction `chiffresCandidatVersBlocs()`,
+        appelée au moment de retenir. Corrigé en même temps : `flatChiffres()`
+        laissait une espace insécable en tête du texte quand `v` est vide
+        (nouvelle fonction commune `chiffreTexte()`).
+      - **Geste « écarter avec motif » rendu visible** : remplacé le
+        `window.prompt()` du Lot 8 (motif jamais trouvé/vu à l'usage selon
+        le retour utilisateur) par un panneau inline (`.ecart-panel`,
+        `state.ecarterOuvert`) qui s'ouvre sous la carte du candidat au clic
+        sur « Écarter… », avec le même rappel de confidentialité qu'avant
+        (motif lu par la routine automatisée, jamais par les élèves) et un
+        bouton « Écarter définitivement » explicite plutôt qu'une boîte de
+        dialogue navigateur.
+      - **Bouton « + Ajouter » en doublon supprimé** de l'état ② (« le n° X
+        est vide pour l'instant ») : le texte renvoie maintenant vers le
+        bouton « + Ajouter une entrée », déjà présent en permanence dans la
+        barre d'actions du numéro (signalé comme doublon par l'utilisateur).
+      - **Déplacement d'une entrée retenue vers un autre numéro** (demandé
+        le 31/08/2026, limite connue du Lot 4ter) : nouveau bouton
+        « Déplacer » dans les actions de chaque entrée en rédaction, ouvre
+        un sélecteur inline (`renderDeplacerPanel()`) listant tous les
+        numéros existants (comme `renderSelecteurNumero()`) plus une option
+        « + Nouveau numéro » qui ouvre le formulaire de création existant et
+        termine le déplacement une fois le numéro créé
+        (`deplacerEntreeVersNumero()`/`deplacerEntreeDistante()`, écrit
+        `numero_id` en base). Mutation locale immédiate dans les deux
+        numéros (source et cible), tous deux déjà chargés en mémoire en
+        rédaction (`chargerDonneesRedaction()` lit `affut_entrees` sans
+        filtre) — pas de rechargement réseau nécessaire.
+      - CSS : ancien bloc `.moisson-barre`/`.moisson-item`/`.moisson-liste`
+        remplacé par `.moisson-section`/`.moisson-candidat`/`.ecart-panel`/
+        `.deplacer-select-wrap` ; règle d'impression et règle mobile mises à
+        jour en conséquence (nouvelles classes ajoutées à la liste masquée
+        à l'impression, ancienne règle mobile devenue inutile retirée).
+      *Validé le 01/09/2026* par relecture de code et vérification
+      d'équilibrage des accolades/parenthèses/crochets du script (même
+      limite d'environnement que les lots précédents — pas de compte
+      Supabase disponible dans cet environnement pour se connecter en
+      rédaction et charger de vraies données de moisson) — **à revalider
+      manuellement dans un vrai navigateur, connecté en rédaction sur le n°2
+      brouillon qui porte les 7 candidats réels du 1er run de veille**,
+      notamment : rendu des chiffres clés d'un candidat retenu (bug corrigé
+      ci-dessus), panneau « écarter avec motif », sélecteur « Déplacer vers ».
 
 ## Idées pour plus tard (hors lots planifiés)
 
