@@ -1321,10 +1321,20 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       touche pas `affut_sources_suivies`) ; le texte « interrogées chaque
       samedi à 6 h » de l'écran Sources reste donc optimiste tant que ce
       bouclage n'est pas fait — signalé à l'utilisateur, pas demandé.
-      **⚠️ Nécessite un redéploiement manuel de la fonction Edge
-      `affut-veille`** (voir `affut-veille/README.md`) — le code source du
-      dépôt seul ne suffit pas, comme pour toute évolution de cette
-      fonction.
+      *Fait le 01/09/2026 — fonction Edge `affut-veille` redéployée avec
+      succès* (confirmé par l'utilisateur ; les autres fonctions listées
+      dans le dashboard Supabase du projet `portail` ne viennent pas de ce
+      dépôt — au moins une est le modèle « Hello World » par défaut,
+      inoffensive, jamais appelée par l'app).
+      *Piège de session concurrente (01/09/2026)* : le geste « supprimer
+      une entrée déjà retenue avec motif » (partie 1 de cette demande,
+      voir ci-dessus) a été mergé dans le même commit que le Lot 10sexies
+      (PR #64) par une **session Claude Code concurrente** travaillant
+      dans le même dossier de travail — le message de commit ne le
+      mentionne pas, seul `git show 6d564e9 -- apps/affut/index.html`
+      le révèle. Fonctionnellement complet et vérifié en place, juste mal
+      étiqueté dans l'historique — à garder en tête si deux sessions
+      tournent en parallèle sur ce dépôt.
 
 ## Idées pour plus tard (hors lots planifiés)
 
