@@ -79,17 +79,15 @@ sur `env_01US7dF8TxHiVbduaxdT74a8`, l'environnement utilisé par la routine.
 Feedback envoyé sur l'absence de mécanisme de secret dédié pour les
 routines simples (question distincte, voir historique `/feedback`).
 
-**Lots 10 à 10quater (refonte Moisson, ordre manuel des entrées,
-dépublier, rail retiré) mergés sur `main` le 01/09/2026** — PR #58, testés
-en vrai navigateur (skill `claude-in-chrome`) sur le vrai n°2 (7 candidats
-réels du Lot 8, tous retenus et publiés). Les deux scripts SQL du lot
-(`006-ordre-entrees.sql`, `fix-chiffres-candidats-legacy.sql`) ont été
-appliqués et confirmés par l'utilisateur — plus rien en attente côté
-données. **Lot 10quinquies (nav à deux barres) codé et testé en vrai
-navigateur le 01/09/2026, mais PAS ENCORE commité/poussé** — reste en
-local dans `apps/affut/index.html`/`AVANCEMENT.md` sur la branche `main`
-locale ; à committer/pousser dès que l'utilisateur le demande. Détail
-complet dans les entrées « Lot 10 » à « Lot 10quinquies » ci-dessous.
+**Lots 10 à 10quinquies (refonte Moisson, ordre manuel des entrées,
+dépublier, rail retiré, nav à deux barres) ENTIÈREMENT clos et mergés sur
+`main` le 01/09/2026** (PR #58 puis PR #62), testés en vrai navigateur
+(skill `claude-in-chrome`) sur le vrai n°2 (7 candidats réels du Lot 8,
+tous retenus et publiés). Les deux scripts SQL du lot (`006-ordre-
+entrees.sql`, `fix-chiffres-candidats-legacy.sql`) ont été appliqués et
+confirmés par l'utilisateur — plus rien en attente côté données ni côté
+git pour ce thread de travail. Détail complet dans les entrées « Lot 10 »
+à « Lot 10quinquies » ci-dessous.
 
 **PROCHAINE REPRISE — backlog du 01/09/2026, voir « Idées pour plus tard »
 en fin de fichier pour le détail et l'ordre conseillé :**
