@@ -4,7 +4,7 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 31/08/2026 — reprendre ici
+## État au 01/09/2026 — reprendre ici
 
 **Fait :** Lots 1 à 7 complets. Lots 1-5 : page numéro, persistance,
 sommaire/recherche, sources suivies + impression PDF via jsPDF, audit RGAA.
@@ -79,44 +79,26 @@ sur `env_01US7dF8TxHiVbduaxdT74a8`, l'environnement utilisé par la routine.
 Feedback envoyé sur l'absence de mécanisme de secret dédié pour les
 routines simples (question distincte, voir historique `/feedback`).
 
-**PROCHAINE REPRISE — écran Moisson à retravailler (demandé le
-31/08/2026, pas commencé) :**
-Retour d'usage de l'utilisateur après avoir vu le n°2 en brouillon avec
-7 candidats réels : le bouton « Voir la moisson (7) » actuel ouvre une
-modale beaucoup trop petite (juste le titre, pas exploitable pour valider
-sérieusement). Changements demandés :
-- **Supprimer le bouton/la modale « Voir la moisson »** — la moisson
-  devrait être visible directement dans l'écran du numéro (pas cachée
-  derrière un clic).
-- **Valider au fur et à mesure l'ensemble du contenu** de chaque candidat
-  (pas juste le titre) — probablement le même niveau de détail qu'une
-  entrée normale (résumé, chiffres, etc.), pas une ligne compacte.
-- **Accès direct à l'URL source** depuis chaque candidat de la moisson —
-  actuellement absent de `renderMoisson()`/`.moisson-item`
-  (`apps/affut/index.html`), à ajouter en priorité (c'est le point que
-  l'utilisateur a souligné le plus fortement : impossible de vérifier une
-  source sans lien cliquable).
-- **Bouton « + Ajouter » en doublon** (ligne ~1530, état ② « candidats en
-  attente ») : fait exactement la même chose (`data-action="new-entree"`)
-  que le bouton « + Ajouter une entrée » déjà présent en permanence dans
-  la barre d'actions du numéro (ligne ~1620) — les deux s'affichent en
-  même temps dans cet état, à dédoublonner (retirer celui de la ligne 1530
-  probablement, le second étant déjà toujours visible).
-- **Justification d'un candidat non retenu peu visible** : la capture du
-  motif existe déjà (bouton « Écarter » de la modale actuelle,
-  `window.prompt`), mais l'utilisateur ne l'a pas trouvée/vue à l'usage —
-  dans la refonte (moisson visible en direct, plus de modale), s'assurer
-  que le geste « écarter avec motif » reste clairement visible et
-  découvrable pour chaque candidat, pas caché.
-- **Déplacer une entrée vers un prochain numéro** : demandé le
-  31/08/2026 — actuellement impossible (limite déjà connue du Lot 4ter :
-  « le sélecteur de numéro en rédaction seulement pour l'instant, pas le
-  déplacement d'une entrée d'un numéro à un autre »). Concerne les
-  entrées déjà retenues dans un numéro (pas seulement les candidats de
-  moisson) — probablement un nouveau `data-action` sur chaque entrée qui
-  change son `numero_id` en base (`ecrireEntree`) et recharge, avec un
-  choix du numéro cible (sélecteur parmi les numéros existants, ou
-  création à la volée d'un nouveau brouillon).
+**PROCHAINE REPRISE — Lot 10 (refonte de l'écran Moisson) codé le
+01/09/2026, pas encore revalidé dans un vrai navigateur :**
+Tous les points demandés le 31/08/2026 (modale supprimée, moisson visible
+en direct dans l'écran du numéro, chaque candidat avec le même niveau de
+détail qu'une entrée + lien source cliquable, doublon « + Ajouter »
+retiré, geste « écarter avec motif » rendu visible via un panneau inline,
+déplacement d'une entrée retenue vers un autre numéro) sont codés — détail
+complet dans l'entrée « Lot 10 » ci-dessous. Un bug latent du Lot 8 a été
+corrigé au passage : le bouton « Retenir » copiait les chiffres clés d'un
+candidat dans un format que l'affichage ne savait pas lire (`undefined` à
+l'écran une fois retenu).
+**À faire en premier à la reprise** : se connecter en rédaction, ouvrir le
+n°2 brouillon (les 7 candidats réels du 1er run de veille du Lot 8) et
+vérifier dans le navigateur : la moisson s'affiche bien sous les entrées
+sans clic, chaque candidat a bien son résumé/chiffres/lien source, retenir
+un candidat affiche bien ses chiffres clés une fois devenu une entrée (pas
+de régression du bug corrigé), le panneau « Écarter… » s'ouvre/se ferme et
+écrit bien un motif dans `affut_candidats_ecartes`, et le sélecteur
+« Déplacer » d'une entrée retenue fonctionne vers un numéro existant et
+vers un nouveau brouillon créé à la volée.
 
 ## Où trouver le cadrage
 
@@ -994,6 +976,270 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       question de la nouvelle tuile centrée élève a été reportée par
       l'utilisateur à après le déploiement (31/08/2026), à reprendre
       maintenant que l'URL réelle existe.
+- [x] **Lot 10 — Refonte de l'écran Moisson** (retour d'usage du 31/08/2026,
+      après le 1er run réel du Lot 8 : 7 candidats déposés dans un n°2
+      brouillon, la modale « Voir la moisson » trop petite pour valider
+      sérieusement).
+      *Fin :* la moisson est visible directement dans l'écran du numéro
+      (plus de modale), chaque candidat au même niveau de détail qu'une
+      entrée retenue, avec accès direct à la source et geste « écarter avec
+      motif » toujours visible.
+      *Fait le 01/09/2026* (`apps/affut/index.html`) :
+      - **Modale « Voir la moisson » supprimée** (`renderMoissonModal()`,
+        `state.moissonOuverte`, boutons `voir-moisson`/`close-moisson`) au
+        profit d'une nouvelle section intégrée à l'écran du numéro,
+        `renderMoissonSection()` : affichée directement sous les entrées
+        déjà retenues (ou sous le bandeau « numéro vide » à l'état ②),
+        toujours visible sans clic supplémentaire.
+      - **Chaque candidat rendu au même niveau de détail qu'une entrée**
+        (`renderCandidat()`, réutilise les classes `.entree`/`.entree-row`/
+        `.flat` de `renderEntree()`) : source, territoire, domaine, date,
+        rubrique, titre, chiffres clés, résumé complet — plus de simple
+        ligne titre+meta comme dans l'ancienne modale.
+      - **Accès direct à la source** : bouton « Ouvrir la source » plein
+        format (ouvre dans un nouvel onglet, `target="_blank"`), absent de
+        l'ancienne modale (point le plus souligné par l'utilisateur — « impossible
+        de vérifier une source sans lien cliquable »). Un candidat sans URL
+        affiche un bouton désactivé « Pas encore de lien » plutôt qu'un
+        lien mort.
+      - **Bug corrigé au passage** : le bouton « Retenir » copiait
+        `cand.chiffres` (tableau de chaînes brutes, format de l'Edge
+        Function `affut-veille`) tel quel dans `entree.chiffres`, qui
+        attend des couples `{v,l,accent}` — une fois retenue, une entrée
+        née de la moisson aurait affiché "undefined" à la place de ses
+        chiffres clés. Nouvelle fonction `chiffresCandidatVersBlocs()`,
+        appelée au moment de retenir. Corrigé en même temps : `flatChiffres()`
+        laissait une espace insécable en tête du texte quand `v` est vide
+        (nouvelle fonction commune `chiffreTexte()`).
+      - **Geste « écarter avec motif » rendu visible** : remplacé le
+        `window.prompt()` du Lot 8 (motif jamais trouvé/vu à l'usage selon
+        le retour utilisateur) par un panneau inline (`.ecart-panel`,
+        `state.ecarterOuvert`) qui s'ouvre sous la carte du candidat au clic
+        sur « Écarter… », avec le même rappel de confidentialité qu'avant
+        (motif lu par la routine automatisée, jamais par les élèves) et un
+        bouton « Écarter définitivement » explicite plutôt qu'une boîte de
+        dialogue navigateur.
+      - **Bouton « + Ajouter » en doublon supprimé** de l'état ② (« le n° X
+        est vide pour l'instant ») : le texte renvoie maintenant vers le
+        bouton « + Ajouter une entrée », déjà présent en permanence dans la
+        barre d'actions du numéro (signalé comme doublon par l'utilisateur).
+      - **Déplacement d'une entrée retenue vers un autre numéro** (demandé
+        le 31/08/2026, limite connue du Lot 4ter) : nouveau bouton
+        « Déplacer » dans les actions de chaque entrée en rédaction, ouvre
+        un sélecteur inline (`renderDeplacerPanel()`) listant tous les
+        numéros existants (comme `renderSelecteurNumero()`) plus une option
+        « + Nouveau numéro » qui ouvre le formulaire de création existant et
+        termine le déplacement une fois le numéro créé
+        (`deplacerEntreeVersNumero()`/`deplacerEntreeDistante()`, écrit
+        `numero_id` en base). Mutation locale immédiate dans les deux
+        numéros (source et cible), tous deux déjà chargés en mémoire en
+        rédaction (`chargerDonneesRedaction()` lit `affut_entrees` sans
+        filtre) — pas de rechargement réseau nécessaire.
+      - CSS : ancien bloc `.moisson-barre`/`.moisson-item`/`.moisson-liste`
+        remplacé par `.moisson-section`/`.moisson-candidat`/`.ecart-panel`/
+        `.deplacer-select-wrap` ; règle d'impression et règle mobile mises à
+        jour en conséquence (nouvelles classes ajoutées à la liste masquée
+        à l'impression, ancienne règle mobile devenue inutile retirée).
+      *Validé le 01/09/2026* par relecture de code et vérification
+      d'équilibrage des accolades/parenthèses/crochets du script (même
+      limite d'environnement que les lots précédents — pas de compte
+      Supabase disponible dans cet environnement pour se connecter en
+      rédaction et charger de vraies données de moisson) — **à revalider
+      manuellement dans un vrai navigateur, connecté en rédaction sur le n°2
+      brouillon qui porte les 7 candidats réels du 1er run de veille**,
+      notamment : rendu des chiffres clés d'un candidat retenu (bug corrigé
+      ci-dessus), panneau « écarter avec motif », sélecteur « Déplacer vers ».
+      **Un serveur statique local a été lancé pour que l'utilisateur teste
+      lui-même** (`python3 -m http.server 8765` dans `apps/affut/`,
+      http://localhost:8765/) — l'app pointe directement sur le vrai projet
+      Supabase (`SUPABASE_URL` en dur dans `index.html`), donc la connexion
+      rédaction réelle fonctionne depuis ce serveur local.
+      **PAS PUSHÉ, PAS DE PR** pour cette passe-ci suite au retour du
+      01/09/2026 (« Tu n'as jamais eu l'autorisation de push sans mon
+      accord ») — attendre l'accord explicite avant `git push`/`gh pr
+      create` désormais, y compris pour un lot déjà entièrement codé (voir
+      mémoire `feedback_git_push_permission`). La PR #58 du Lot 10
+      lui-même avait déjà été poussée avant ce recadrage.
+- [x] **Lot 10bis — Ordre d'affichage manuel des entrées** (demandé le
+      01/09/2026, même session que le Lot 10).
+      *Fin :* une entrée retenue peut être déplacée d'un cran vers le haut
+      ou le bas au sein de sa rubrique, en rédaction.
+      *Fait le 01/09/2026* (`apps/affut/index.html` +
+      `apps/affut/supabase/006-ordre-entrees.sql`, **pas encore appliquée
+      dans le SQL Editor du projet `portail`**) :
+      - Nouvelle colonne `ordre` (entier, défaut 0) sur `affut_entrees` —
+        migration `006-ordre-entrees.sql`, avec backfill des entrées déjà
+        en base par ordre de création (`cree_le`) au sein de chaque
+        `(numero_id, rubrique)`, et ajout de `ordre` à la vue publique
+        `affut_entrees_public` (le tri s'applique aussi côté élèves, même
+        code de rendu que la rédaction).
+      - `groupByRubrique()` trie désormais les entrées de chaque rubrique
+        par `ordre` avant affichage — **l'ordre des rubriques elles-mêmes
+        ne change pas** (toujours la 1re apparition dans la liste chargée,
+        comme avant ce lot) : deux rubriques différentes peuvent réutiliser
+        les mêmes valeurs d'`ordre` sans aucun effet l'une sur l'autre, le
+        tri est scopé par rubrique.
+      - Boutons compacts ▲/▼ (`renderEntree()`, nouvelle classe
+        `.reorder-btns`), désactivés en butée de rubrique plutôt que
+        masqués. `deplacerOrdreEntree()` réassigne 0..n-1 à **toutes** les
+        entrées de la rubrique concernée à chaque clic (pas un simple
+        échange de deux valeurs) — évite tout cas particulier avec des
+        `ordre` par défaut à 0 ou déjà égaux.
+      - Nouvelles entrées (formulaire manuel ou candidat retenu de la
+        moisson) : `prochainOrdreRubrique()` les place en fin de leur
+        rubrique plutôt qu'à une position arbitraire.
+      *Validé le 01/09/2026* par relecture de code et vérification
+      d'équilibrage du script (même limite d'environnement que les lots
+      précédents) — **à revalider manuellement** après avoir appliqué
+      `006-ordre-entrees.sql` dans le SQL Editor : Monter/Descendre sur une
+      rubrique à plusieurs entrées, boutons bien désactivés en haut/bas de
+      rubrique, ordre conservé après rechargement de page, ordre repris
+      côté vue publique.
+      **Bug corrigé en cours de route (`006-ordre-entrees.sql`)** : le
+      `create or replace view` initial insérait `ordre` au milieu de la
+      liste des colonnes de `affut_entrees_public`, ce que Postgres refuse
+      (« cannot change name of view column "clics_source" to "ordre" » —
+      un `CREATE OR REPLACE VIEW` ne peut qu'AJOUTER des colonnes en toute
+      fin de liste, jamais en insérer une au milieu). Corrigé en déplaçant
+      `ordre` après `clics_source` ; script relançable sans risque
+      (`alter table ... if not exists`, backfill idempotent).
+      **Premier test réel dans un vrai navigateur (01/09/2026, via la
+      skill `claude-in-chrome`, contrairement aux lots précédents)** sur le
+      vrai n°2 (7 candidats du run de veille, déjà tous retenus et publiés
+      par l'utilisateur entre-temps) : bandeau de rédaction, sélecteur de
+      numéro, compteur « 7 sur 7 candidates », boutons ▲/▼ sur chaque
+      entrée, bouton Déplacer, tout s'affiche correctement.
+- [x] **Lot 10ter — retours d'usage post-Lot 10/10bis** (01/09/2026, même
+      session).
+      *Fait le 01/09/2026* (`apps/affut/index.html` sauf mention contraire) :
+      - **Bug confirmé en conditions réelles** : les chiffres clés de
+        l'entrée « Ours infos 2025 » (numéro 2 réel) affichaient
+        littéralement `undefined · undefined · ...` — c'est exactement le
+        bug corrigé au Lot 10 (`chiffresCandidatVersBlocs()`), mais sur des
+        **données déjà enregistrées avant le correctif** (un ou plusieurs
+        candidats du numéro 2 avaient déjà été retenus avec l'ancien code
+        bogué). Le correctif du Lot 10 empêche le problème pour tout
+        nouveau « Retenir », mais ne répare pas ce qui est déjà en base.
+        Nouveau script de réparation ponctuelle,
+        `apps/affut/supabase/fix-chiffres-candidats-legacy.sql` : convertit
+        tout élément `chiffres` de type chaîne brute en `{v:"", l: <la
+        chaîne>}`, sans toucher aux entrées déjà au bon format — **à lancer
+        dans le SQL Editor du projet `portail`**, idempotent (relançable
+        sans risque).
+      - **Onglet Rédaction/Vue publiée toujours visible** dans le bandeau,
+        y compris sur Sommaire/Recherche/Sources (avant : seulement sur la
+        page d'un numéro) — condition `state.vue === "numero"` retirée de
+        `modeToggleHtml`. Le mode choisi n'a d'effet visible que sur la
+        page d'un numéro, mais reste actif quand on y revient depuis un
+        autre écran, sans avoir à rebasculer à chaque fois.
+      - **Dépublier un numéro** : le bouton « Publier le n° X » devient
+        « Dépublier le n° X » (nouvelle classe `.btn-ligne.danger`, accent
+        `--af-mort`) une fois le numéro publié, avec confirmation
+        (`window.confirm`) avant de repasser `statut` à `brouillon` — le
+        numéro redevient alors invisible des élèves (les vues publiques ne
+        servent que `statut = publie`) et de nouveau librement modifiable.
+        Jusqu'ici publier était un aller simple, sans retour possible sans
+        intervention en base.
+      - **Rail (`renderRail()`, colonne de droite d'un numéro publié)
+        retravaillé** : affichait le **domaine** (ex. `ofb.gouv.fr`) en
+        texte brut sous chaque titre, plus un texte de bas de rail
+        affirmant à tort « ne pas lister les titres du numéro » — devenu
+        faux depuis que le rail liste une entrée par ligne (stale depuis
+        un lot antérieur). Remplacé par le **nom de la source** (ex.
+        « Office français de la biodiversité — Réseau Ours brun ») en
+        pastille (nouvelle classe `.rail-item .source-pastille`, même
+        recette visuelle que `.pastille-echelle`) ; titre du rail passé de
+        « Les N sources du numéro » à « N titres de ce numéro » ; texte de
+        bas de rail obsolète retiré. CSS `.rail-item .domaine`/`.rail-note`
+        supprimées (plus référencées nulle part).
+      *Validé le 01/09/2026* — **testé dans un vrai navigateur** (skill
+      `claude-in-chrome`, serveur local + vrai compte connecté) sur le
+      vrai n°2 : onglet Rédaction visible sur l'écran Sommaire confirmé
+      par capture d'écran, bouton « Dépublier le n° 2 » bien affiché (le
+      numéro est déjà publié), rail affichant « 7 titres de ce numéro »
+      avec pastilles de source. **Non testé** : le clic réel sur
+      « Dépublier » (confirmation + republication), et le script SQL de
+      réparation des chiffres légués (pas encore lancé au moment de ce
+      commit).
+- [x] **Lot 10quater — correction du Lot 10ter** (01/09/2026, retour
+      d'usage à chaud : « c'est un peu n'importe quoi là », le rail n'était
+      pas ce qui était demandé et le script de réparation débordait
+      l'écran).
+      *Fait le 01/09/2026* :
+      - **Le rail n'a pas été « corrigé », il a été SUPPRIMÉ** :
+        malentendu du Lot 10ter — l'utilisateur le juge « totalement en
+        doublon inutile » avec le bouton « Ouvrir la source » déjà sur
+        chaque entrée. `renderRail()` et tout son CSS (`.rail`,
+        `.rail-titre`, `.rail-liste`, `.rail-item*`) retirés ; `.corps`
+        repasse à une seule colonne pleine largeur, identique en rédaction
+        et en vue publiée (`.mode-publiee .corps{display:grid;
+        grid-template-columns:1fr 340px}` supprimé).
+      - **Cause racine du débordement à l'écran identifiée** : ce n'était
+        PAS un problème de longueur de texte des chiffres réparés, mais un
+        piège classique de CSS Grid — `.mode-publiee .corps` était en
+        `display:grid`, et un item de grille garde par défaut
+        `min-width:auto` (contrairement à un item flex) : un texte non
+        cassable (`white-space:nowrap` sur `.flat-chiffres`) peut donc
+        forcer toute la piste `1fr` à s'élargir bien au-delà, au lieu de se
+        faire tronquer par son `text-overflow:ellipsis`. En supprimant la
+        grille (ci-dessus) le problème disparaît structurellement — testé
+        en vrai navigateur, plus aucun débordement en rédaction ni en vue
+        publiée.
+      - **2e bug dans le script de réparation lui-même** : la 1ère version
+        de `fix-chiffres-candidats-legacy.sql` empaquetait toute la chaîne
+        brute d'un candidat dans le libellé (`{v:"", l:"108 | ours détectés
+        a minima…"}`) sans la découper — alors que
+        `documents/brief-veille.md` documente explicitement le format
+        `"valeur | libellé"` pour ces chaînes (même convention que le
+        textarea de saisie manuelle). Script réécrit avec une fonction
+        PL/pgSQL (`affut_reparer_chiffre_legacy`, auto-supprimée en fin de
+        script) qui découpe sur le premier `|` — répare en une seule passe
+        aussi bien les chaînes encore brutes que celles déjà mal réparées
+        par la 1ère version (idempotent). **Front corrigé au même endroit**
+        (`chiffresCandidatVersBlocs()`) via une nouvelle fonction partagée
+        `parseChiffreLigne()` (extraite de `parseChiffres()`, qui servait
+        déjà à parser exactement ce format côté formulaire manuel) — plus
+        aucun futur « Retenir » ne pourra reproduire ce bug.
+      - **Sommaire (tuile d'un numéro, `renderNumeroCarte()`)** : montre
+        désormais **toutes** les actualités du numéro (pas seulement les 3
+        premières + « et N autres »), chacune avec le **nom de la source**
+        en pastille — en texte simple, sans lien (demande explicite : la
+        tuile sert à se repérer avant d'ouvrir le numéro, pas à ouvrir une
+        source directement). Nouvelles classes `.nc-titre-entree`/
+        `.nc-source-pastille`, `.nc-liste li.plus` retirée (plus de
+        troncature à afficher).
+      - **Bascule Rédaction/Vue publiée : re-limitée à la page d'un numéro**
+        (retour à son comportement d'avant le Lot 10ter) — visible sur
+        Sommaire/Recherche/Sources, elle n'avait strictement aucun effet
+        (ces écrans ignorent `state.mode`), un contrôle qui ne fait rien au
+        clic se lit comme cassé.
+      - **Nouveau bouton permanent « Rédaction »** dans `.bandeau-nav`
+        (à côté de Sommaire/Rechercher/Sources), visible sur tous les
+        écrans dès qu'un rédacteur actif est connecté — clarification de
+        l'utilisateur juste après : ce n'est **pas** la bascule
+        rédaction/vue publiée d'un numéro déjà ouvert (celle-ci, propre à
+        `renderNumeroPage()`, reste limitée à cette page), mais un simple
+        **bouton de retour** vers l'espace de rédaction depuis n'importe
+        où. `data-action="aller-redaction"` force `state.vue = "numero"` +
+        `state.mode = "redaction"`, en gardant `state.numeroId` inchangé
+        (revient donc au dernier numéro affiché, pas nécessairement le
+        plus récent).
+      - **Sommaire, ordre du texte dans une tuile** : nom de la source
+        avant le titre de chaque actualité (demandé le 01/09/2026, après
+        un premier essai titre-puis-source) — simple inversion des deux
+        `<span>` dans `renderNumeroCarte()`, `.nc-liste li` étant déjà en
+        flex, l'ordre visuel suit l'ordre du balisage.
+      *Validé le 01/09/2026* — **revérifié dans un vrai navigateur** (skill
+      `claude-in-chrome`) sur le vrai n°2, en rédaction et en vue publiée :
+      plus aucun débordement à l'écran, tuile du Sommaire affichant les 7
+      actualités avec pastille de source avant le titre, bouton
+      « Rédaction » présent sur Sommaire et ramenant bien au n°2 en
+      rédaction au clic. **Le script SQL de réparation a été relancé par
+      l'utilisateur entre-temps** : les chiffres clés affichent maintenant
+      la valeur en gras suivie du libellé, sans le `|` brut (ex. « **108**
+      ours détectés a minima sur l'ensemble des Pyrénées en 2025 »),
+      confirmé visuellement — plus rien en attente côté données sur ce
+      point.
 
 ## Idées pour plus tard (hors lots planifiés)
 

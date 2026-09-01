@@ -189,13 +189,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entete-compteur .l{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-3)}
 .entete-boutons{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .btn-ligne{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;border:1px solid var(--af-redaction);color:var(--af-redaction)}
+.btn-ligne.danger{border-color:var(--af-mort);color:var(--af-mort)}
+.btn-ligne.danger:hover{background:var(--af-mort);color:var(--af-sur-accent)}
 .btn-plein{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:9px 15px;font-weight:700;background:var(--af-redaction);color:var(--af-sur-redaction)}
 
-/* ---- corps : grille vue publiée (colonne + rail) ---- */
+/* ---- corps : une seule colonne pleine largeur, rédaction et vue publiée
+   (le rail à droite d'un numéro publié a été retiré le 01/09/2026, doublon
+   inutile avec le bouton « Ouvrir la source » déjà sur chaque entrée) ---- */
 .corps{display:block}
-.mode-publiee .corps{display:grid;grid-template-columns:1fr 340px}
-.colonne{border-right:1px solid var(--af-filet)}
-.mode-redaction .colonne{border-right:0}
 
 .rubrique-tete{background:var(--af-surface-3);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:7px 20px;display:flex;align-items:center;gap:12px}
 .rubrique-tete .nom{font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--af-brun-rubrique)}
@@ -210,6 +211,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entree-row-gauche{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 16px}
 .mode-publiee .entree-row{align-items:stretch}
 .valide-case{flex:none;margin-top:0}
+
+/* ---- ordre des entrées au sein d'une rubrique (lot 10bis) ---- */
+.reorder-btns{flex:none;display:flex;flex-direction:column;gap:2px}
+.btn-reorder{width:20px;height:18px;padding:0;line-height:1;font-size:9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-2)}
+.btn-reorder:hover:not(:disabled){background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
+.btn-reorder:disabled{opacity:.3}
 
 .etat-pastille{flex:none;font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3);white-space:nowrap}
 .etat-pastille.ok{color:var(--af-valide)}
@@ -272,15 +279,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .case-bloc{border-color:var(--af-encre-3)}
 .case-bloc:checked{background:var(--af-encre-3);border-color:var(--af-encre-3)}
 
-/* ---- rail des sources (vue publiée, bureau) ---- */
-.rail{padding:20px 18px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;align-self:start}
-.rail-titre{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-brun-rubrique)}
-.rail-liste{display:flex;flex-direction:column;gap:10px}
-.rail-item{border:1px solid var(--af-filet-moyen);background:var(--af-surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px;text-decoration:none}
-.rail-item .titre{font-size:12px;font-weight:700;line-height:1.35;color:var(--af-accent)}
-.rail-item .domaine{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-2)}
-.rail-note{border-top:1px solid var(--af-filet);padding-top:14px;font-size:11.5px;line-height:1.55;color:var(--af-encre-2)}
-
 .pied{padding:14px 22px;font-family:var(--af-police-mono);font-size:10px;line-height:1.6;color:var(--af-encre-3);border-top:1px solid var(--af-filet)}
 
 /* ---- modal d'ajout / édition d'entrée (rédaction) ---- */
@@ -319,8 +317,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .nc-badge .dernier-tag{align-self:flex-start;border:1px solid var(--af-sur-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;margin-top:2px}
 .nc-corps{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .nc-titre{font-size:16px;font-weight:700;color:var(--af-encre)}
-.nc-liste{padding-left:16px;margin:0;font-size:12.5px;line-height:1.6;color:var(--af-encre-2)}
-.nc-liste li.plus{list-style:none;margin-left:-16px;color:var(--af-encre-3)}
+.nc-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.nc-liste li{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nc-titre-entree{font-size:12.5px;line-height:1.4;color:var(--af-encre-2)}
+.nc-source-pastille{flex:none;font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-brun-rubrique);border:1px solid var(--af-filet-pastille);padding:0 5px;white-space:nowrap}
 .nc-droite{flex:none;width:170px;padding:14px 16px;border-left:1px solid var(--af-filet);display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;text-align:right}
 .nc-compte{display:flex;flex-direction:column;align-items:flex-end}
 .nc-compte .n{font-family:var(--af-police-mono);font-size:21px;font-weight:700;color:var(--af-encre)}
@@ -405,18 +405,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .sources-replie{margin:10px 22px;border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--af-encre-2)}
 .sources-replie .chip{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 
-/* ---- moisson (lot 4) ---- */
-.moisson-barre{background:var(--af-surface-2);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:11px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--af-encre-2)}
-.moisson-barre .titre{font-weight:700;color:var(--af-encre)}
-.moisson-barre .spacer{flex:1}
-.moisson-liste{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto}
-.moisson-vide{margin:0;font-size:12.5px;color:var(--af-encre-3)}
-.moisson-item{border:1px solid var(--af-filet-moyen);padding:10px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--af-surface)}
-.moisson-item.probleme{border-color:var(--af-mort)}
-.moisson-item .infos{display:flex;flex-direction:column;gap:2px;min-width:0}
-.moisson-item .titre{font-size:13px;font-weight:700;color:var(--af-encre)}
-.moisson-item .meta{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
-.moisson-item .btns{display:flex;gap:8px;flex:none}
+/* ---- moisson (lot 10 : liste intégrée à l'écran du numéro, plus de modale
+   séparée — chaque candidat au même niveau de détail qu'une entrée retenue,
+   voir renderCandidat()) ---- */
+.moisson-section{border-top:3px solid var(--af-redaction)}
+.moisson-entete{background:var(--af-redaction);color:var(--af-sur-redaction);padding:10px 20px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.moisson-entete .titre{font-family:var(--af-police-mono);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.moisson-candidat{background:var(--af-surface-2)}
+.moisson-candidat .flat-titre{color:var(--af-redaction)}
+.moisson-candidat.probleme{background:var(--af-sur-accent-2)}
+.moisson-candidat .btn-mini{border-color:var(--af-redaction);color:var(--af-redaction)}
+.moisson-candidat .btn-mini:hover{background:var(--af-redaction);color:var(--af-sur-redaction)}
+.btn-source-compact.desactive{background:var(--af-surface-3);color:var(--af-encre-3)}
+.ecart-panel{border-top:1px solid var(--af-filet-fort);padding:10px 16px 14px;display:flex;flex-direction:column;gap:8px;background:var(--af-surface)}
+.ecart-panel .lbl{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-3);line-height:1.5}
+.ecart-panel textarea{font:inherit;font-family:var(--af-police-mono);font-size:11.5px;padding:7px 9px;border:1px solid var(--af-filet-fort);min-height:52px;resize:vertical;background:var(--af-surface);color:var(--af-encre-courant)}
+.ecart-panel .boutons{display:flex;gap:8px;justify-content:flex-end}
+.deplacer-select-wrap{padding:8px 16px 12px;border-top:1px solid var(--af-filet)}
+.deplacer-select-wrap .lbl{display:block;font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3);margin-bottom:4px}
+.deplacer-select-wrap select{font:inherit;font-family:var(--af-police-mono);font-size:11px;padding:6px 8px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant);width:100%}
 
 /* ---- états limites (lot 4) ---- */
 .etat-limite{padding:34px 30px 30px;display:flex;flex-direction:column;gap:14px;max-width:620px}
@@ -457,7 +464,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   body{background:var(--af-print-papier)}
   .page{padding:0;display:block}
   .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
-  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.rail,.entree-actions,.valide-case,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-barre,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
   /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
   .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
   .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
@@ -468,7 +475,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .print-meta{font-family:var(--af-police-mono);font-size:9px;color:var(--af-print-encre);white-space:nowrap}
   .corps,.mode-publiee .corps{display:block}
   /* grille 2 colonnes, largeur fixe / hauteur libre (lot 4quater) */
-  .colonne{border-right:0;column-count:2;column-gap:10mm}
+  .colonne{column-count:2;column-gap:10mm}
   /* rubrique-tete + sa 1re entrée forment un bloc insécable (retour d'usage
      30/08/2026) : sans ça, la balance automatique des colonnes du navigateur
      peut laisser le titre de rubrique seul en bas d'une colonne pendant que
@@ -507,9 +514,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .select-numero-wrap{justify-content:space-between}
   .select-numero{flex:1}
   .entete-boutons{justify-content:space-between}
-  .mode-publiee .corps{display:block}
-  .colonne{border-right:0}
-  .rail{display:none}
   .entree-row{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
   .entree-row-gauche{padding:9px 12px}
   .entree-row-droite{width:100%}
@@ -533,7 +537,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .source-row,.groupe-titre{padding-left:14px;padding-right:14px}
   .source-row{display:flex;flex-direction:column;gap:6px}
   .source-actions{align-items:flex-start;flex-direction:row;flex-wrap:wrap}
-  .moisson-barre,.moisson-item{flex-direction:column;align-items:flex-start}
   .etat-limite{padding:22px 16px}
 }
 </style>
@@ -845,13 +848,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function versLigneEntree(e, numeroId){
     return {
       id: e.id, numero_id: numeroId, rubrique: e.rubrique, valide: e.valide, origine: e.origine,
+      ordre: e.ordre || 0,
       source: e.source, url: e.url, lien_mort: !!e.lienMort, lien_mort_depuis: e.lienMortDepuis || null,
       titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs
     };
   }
   function depuisLigneEntree(r){
     return {
-      id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, source: r.source || {},
+      id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, ordre: r.ordre || 0, source: r.source || {},
       url: r.url, lienMort: r.lien_mort, lienMortDepuis: r.lien_mort_depuis,
       titre: r.titre, chiffres: r.chiffres || [], resume: r.resume, usage: r.usage_en_cours,
       blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source
@@ -960,6 +964,24 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   async function supprimerEntreeDistante(id){
     var res = await client().from("affut_entrees").delete().eq("id", id);
     if (res.error) signalerErreurEcriture(res.error);
+  }
+  async function deplacerEntreeDistante(id, numeroCible){
+    var res = await client().from("affut_entrees").update({ numero_id: numeroCible }).eq("id", id);
+    if (res.error) signalerErreurEcriture(res.error);
+  }
+  // Déplacement d'une entrée déjà retenue vers un autre numéro (Lot 10) :
+  // mutation locale immédiate dans les deux numéros (source et cible, tous
+  // deux déjà chargés en mémoire en rédaction — chargerDonneesRedaction()
+  // lit affut_entrees sans filtre) puis écriture distante, même principe
+  // que le reste de l'app (pas de copie locale / synchro de fond).
+  function deplacerEntreeVersNumero(id, numeroCible){
+    var e = entrees.filter(function(x){ return x.id === id; })[0];
+    if (!e) return;
+    entrees = entrees.filter(function(x){ return x.id !== id; });
+    numero.entrees = entrees;
+    var cible = numeros.filter(function(n){ return n.numero === numeroCible; })[0];
+    if (cible) { cible.entrees = cible.entrees || []; cible.entrees.push(e); }
+    deplacerEntreeDistante(id, numeroCible);
   }
   async function ecrireSource(id, champsPartiels){
     var res = await client().from("affut_sources_suivies").update(versColonnes(champsPartiels, MAPPING_COLONNES_SOURCE)).eq("id", id);
@@ -1127,7 +1149,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     sourcesDeplie: false,
     previewEtat: null,
     publicationRefusee: null,
-    moissonOuverte: false
+    ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
+    deplacerOuvert: null // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
   };
 
   function estRedacteurActif(){ return !!(state.auth.redacteur && state.auth.redacteur.actif); }
@@ -1157,17 +1180,40 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     else entree[parts[1]] = value;
   }
 
+  // esc(c.v) + " " + esc(c.l) sans le v (cas des chiffres repris d'un
+  // candidat de moisson, voir chiffresCandidatVersBlocs) laisserait une
+  // espace insécable en tête du texte affiché.
+  function chiffreTexte(c){
+    var v = c.v ? esc(c.v) + " " : "";
+    return c.accent ? "<b>" + v + "</b>" + esc(c.l) : v + esc(c.l);
+  }
+
+  // Un candidat de moisson (Edge Function affut-veille) porte ses chiffres
+  // en chaînes brutes au format "valeur | libellé" (voir la consigne
+  // donnée à l'agent, documents/brief-veille.md) — même convention que le
+  // textarea du formulaire d'entrée (parseChiffreLigne ci-dessous), donc
+  // réutilisée telle quelle au moment de retenir un candidat comme entrée.
+  // Bug corrigé le 01/09/2026 : la 1re version empaquetait la chaîne
+  // entière dans `l` sans la découper — en plus d'un antique "undefined"
+  // (le tout premier bug, .v/.l lus sur une chaîne brute jamais convertie),
+  // ça produisait des lignes bien plus longues que prévu ("108 | ours
+  // détectés…" affiché tel quel), qui débordaient de l'écran une fois
+  // enregistrées.
+  function chiffresCandidatVersBlocs(chiffres){
+    return (chiffres || []).map(function(s){ return parseChiffreLigne(String(s || "").trim()); });
+  }
+
   function flatChiffres(e){
     if (!e.chiffres.length) return "";
     if (state.mode !== "redaction") {
       if (!e.blocs.chiffres) return "";
-      var txtPub = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      var txtPub = e.chiffres.map(chiffreTexte).join(" · ");
       return '<div class="flat-chiffres tab-num">' + txtPub + '</div>';
     }
     var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.chiffres ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="chiffres" title="Afficher les chiffres clés">';
     var contenu;
     if (e.blocs.chiffres) {
-      var txt = e.chiffres.map(function(c){ return c.accent ? "<b>" + esc(c.v) + "</b> " + esc(c.l) : esc(c.v) + " " + esc(c.l); }).join(" · ");
+      var txt = e.chiffres.map(chiffreTexte).join(" · ");
       contenu = '<div class="flat-chiffres tab-num">' + txt + '</div>';
     } else {
       var vals = e.chiffres.map(function(c){ return c.v; }).join(" · ");
@@ -1192,16 +1238,23 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="usage"><div class="usage-lisere"><span>Privé</span></div><div class="usage-corps"><div class="usage-titre">Usage en cours — jamais publié</div><p class="usage-texte">' + ed(esc(e.usage), e.id + ".usage") + '</p></div></div>';
   }
 
-  function renderEntree(e){
+  function renderEntree(e, estPremier, estDernier){
     var redac = state.mode === "redaction";
     var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
     var actions = redac
-      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
+      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
+      : "";
+    // Ordre d'affichage au sein de la rubrique (Lot 10bis) : boutons compacts
+    // Monter/Descendre, désactivés en butée de rubrique plutôt que masqués
+    // (repère visuel stable, pas de saut de mise en page).
+    var reorder = redac
+      ? '<div class="reorder-btns"><button type="button" class="btn-reorder" data-action="monter-entree" data-id="' + e.id + '" title="Monter dans la rubrique"' + (estPremier ? " disabled" : "") + '>▲</button><button type="button" class="btn-reorder" data-action="descendre-entree" data-id="' + e.id + '" title="Descendre dans la rubrique"' + (estDernier ? " disabled" : "") + '>▼</button></div>'
       : "";
 
     var row =
       '<div class="entree-row">' +
         '<div class="entree-row-gauche">' +
+          reorder +
           (redac ? '<input type="checkbox" class="case valide-case" ' + (e.valide ? "checked" : "") + ' data-action="toggle-valide" data-id="' + e.id + '" title="Entrée retenue">' : "") +
           '<div class="flat">' +
             '<div class="flat-meta">' +
@@ -1228,40 +1281,100 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var detailsInner =
       qrImpression +
-      renderUsage(e);
+      renderUsage(e) +
+      (redac && state.deplacerOuvert === e.id ? renderDeplacerPanel(e) : "");
 
     var details = '<div class="entree-details">' + detailsInner + '</div>';
 
     return '<div class="entree" data-entree="' + e.id + '">' + row + details + '</div>';
   }
 
+  // Déplacement d'une entrée retenue vers un autre numéro (Lot 10) : simple
+  // <select> natif, même principe que renderSelecteurNumero() ; « + Nouveau
+  // numéro » ouvre le formulaire de création existant et termine le
+  // déplacement une fois le numéro créé (voir le submit de #numero-form).
+  function renderDeplacerPanel(e){
+    var autres = numeros.filter(function(n){ return n.numero !== numero.numero; }).sort(function(a, b){ return b.numero - a.numero; });
+    var options = '<option value="">Déplacer vers…</option>' +
+      autres.map(function(n){
+        var sem = n.semaine.match(/^semaine (\d+)/);
+        var label = "n° " + n.numero + (n.statut === "brouillon" ? " · brouillon" : (sem ? " · sem. " + sem[1] : " · publié"));
+        return '<option value="' + n.numero + '">' + esc(label) + '</option>';
+      }).join("") +
+      '<option value="__nouveau__">+ Nouveau numéro (n° ' + prochainNumero() + ')</option>';
+    return '<div class="deplacer-select-wrap"><label class="lbl" for="deplacer-' + e.id + '">Déplacer cette entrée vers un autre numéro</label>' +
+      '<select id="deplacer-' + e.id + '" data-action="deplacer-select" data-id="' + e.id + '">' + options + '</select></div>';
+  }
+
+  // Ordre des rubriques (blocs) inchangé : 1re apparition dans `list`, comme
+  // avant le Lot 10bis. Seul l'ordre DES ENTRÉES à l'intérieur d'une même
+  // rubrique suit désormais `ordre` (boutons Monter/Descendre, voir
+  // deplacerOrdreEntree()) — trié uniquement au sein de chaque case de
+  // `map`, donc deux rubriques différentes peuvent réutiliser les mêmes
+  // valeurs d'`ordre` sans aucun effet l'une sur l'autre.
   function groupByRubrique(list){
     var order = [], map = {};
     list.forEach(function(e){
       if (!map[e.rubrique]) { map[e.rubrique] = []; order.push(e.rubrique); }
       map[e.rubrique].push(e);
     });
-    return order.map(function(r){ return { rubrique: r, items: map[r] }; });
+    return order.map(function(r){
+      var items = map[r].slice().sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+      return { rubrique: r, items: items };
+    });
   }
 
-  function renderRail(list){
-    return '<div class="rail"><div class="rail-titre">Les ' + (list.length === 3 ? "trois" : list.length) + ' sources du numéro</div><div class="rail-liste">' +
-      list.map(function(e){
-        return '<a class="rail-item" href="#' + e.id + '"><span class="titre">' + esc(e.titre) + '</span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
-      }).join("") +
-      '</div><div class="rail-note">Ce sommaire ne liste pas les titres du numéro mais <strong>ses documents</strong> : c\'est la seconde porte d\'entrée vers les sources.</div></div>';
+  // Voisines d'une entrée au sein de la même rubrique du même numéro,
+  // triées par ordre — base des boutons Monter/Descendre.
+  function voisinsRubrique(e){
+    return entrees.filter(function(x){ return x.rubrique === e.rubrique; })
+      .sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+  }
+
+  // Prochaine valeur d'`ordre` libre pour une nouvelle entrée dans une
+  // rubrique donnée (nouvelle entrée manuelle, ou candidat retenu de la
+  // moisson) : ajoutée en fin de la rubrique visée, jamais mélangée au
+  // milieu par surprise.
+  function prochainOrdreRubrique(rubrique){
+    return entrees.filter(function(x){ return x.rubrique === rubrique; })
+      .reduce(function(m, x){ return Math.max(m, (x.ordre || 0) + 1); }, 0);
+  }
+
+  // Déplace une entrée d'un cran (sens -1 = monter, +1 = descendre) au sein
+  // de sa rubrique : réassigne 0..n-1 à TOUTES les entrées de cette
+  // rubrique plutôt que d'échanger deux valeurs — évite tout cas
+  // particulier avec des `ordre` par défaut à 0 ou déjà égaux.
+  function deplacerOrdreEntree(id, sens){
+    var e = entrees.filter(function(x){ return x.id === id; })[0];
+    if (!e) return;
+    var voisins = voisinsRubrique(e);
+    var idx = voisins.indexOf(e);
+    var idxCible = idx + sens;
+    if (idxCible < 0 || idxCible >= voisins.length) return;
+    voisins.splice(idx, 1);
+    voisins.splice(idxCible, 0, e);
+    voisins.forEach(function(x, i){
+      if (x.ordre !== i) { x.ordre = i; ecrireEntree(x.id, { ordre: i }); }
+    });
+    render();
+  }
+
+  // Une ligne "valeur | libellé" (le "*" final marque l'accent) -> {v,l[,accent]}.
+  // Partagée entre le textarea de saisie manuelle (parseChiffres) et les
+  // chiffres bruts d'un candidat de moisson (chiffresCandidatVersBlocs) —
+  // même convention des deux côtés.
+  function parseChiffreLigne(line){
+    var idx = line.indexOf("|");
+    if (idx === -1) return { v: line, l: "" };
+    var v = line.slice(0, idx).trim();
+    var l = line.slice(idx + 1).trim();
+    var accent = /\*$/.test(l);
+    if (accent) l = l.replace(/\*$/, "").trim();
+    return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
   }
 
   function parseChiffres(text){
-    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(function(line){
-      var idx = line.indexOf("|");
-      if (idx === -1) return { v: line, l: "" };
-      var v = line.slice(0, idx).trim();
-      var l = line.slice(idx + 1).trim();
-      var accent = /\*$/.test(l);
-      if (accent) l = l.replace(/\*$/, "").trim();
-      return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
-    });
+    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(parseChiffreLigne);
   }
 
   function chiffresToText(chiffres){
@@ -1327,14 +1440,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return order.map(function(m){ return { mois: m, items: map[m] }; });
   }
 
+  // Toutes les actualités du numéro, titre + nom de la source en pastille,
+  // en texte simple (pas de lien : cette tuile sert à se repérer avant
+  // d'ouvrir le numéro, pas à ouvrir directement une source depuis le
+  // Sommaire — retour d'usage du 01/09/2026, remplace l'ancienne
+  // troncature à 3 titres + « et N autres »).
   function renderNumeroCarte(n, dernier){
     var validees = n.entrees.filter(function(e){ return e.valide; });
-    var titresHtml = validees.slice(0, 3).map(function(e){ return "<li>" + esc(e.titre) + "</li>"; }).join("");
-    var reste = validees.length - 3;
-    var plusHtml = reste > 0 ? '<li class="plus">et ' + reste + ' autre' + (reste > 1 ? "s" : "") + ' actualité' + (reste > 1 ? "s" : "") + '</li>' : "";
+    var titresHtml = validees.map(function(e){
+      return '<li><span class="nc-source-pastille">' + esc(e.source.nom) + '</span><span class="nc-titre-entree">' + esc(e.titre) + '</span></li>';
+    }).join("");
     return '<div class="numero-carte' + (dernier ? " dernier" : "") + '">' +
       '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
-      '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + plusHtml + '</ul></div>' +
+      '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + '</ul></div>' +
       '<div class="nc-droite"><div class="nc-compte"><span class="n tab-num">' + validees.length + '</span><span class="l">actualités publiées</span></div><button type="button" class="nc-ouvrir" data-action="ouvrir-numero" data-numero="' + n.numero + '"><span>Ouvrir le numéro</span><span class="fleche">→</span></button></div>' +
     '</div>';
   }
@@ -1526,8 +1644,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="etat-limite">' +
       '<span class="glyphe">▭</span>' +
       '<h2>Le n° ' + numero.numero + ' est vide pour l\'instant</h2>' +
-      '<p>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' attendent dans la moisson du ' + esc(numero.collecte.date) + '. Cocher celles qui partiront dans le numéro, ou en ajouter une à la main.</p>' +
-      '<div class="actions"><button type="button" class="btn-plein" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button><button type="button" class="btn-ligne" data-action="new-entree">+ Ajouter</button></div>' +
+      '<p>Aucune entrée retenue pour l\'instant. Trier les candidats de la moisson du ' + esc(numero.collecte.date) + ' ci-dessous, ou ajouter une entrée à la main via « + Ajouter une entrée » en haut de page.</p>' +
     '</div>';
   }
 
@@ -1561,11 +1678,69 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return renderEtatNumeroVide();
   }
 
-  function renderMoissonBarre(){
+  // Un candidat de moisson au même niveau de détail qu'une entrée retenue
+  // (renderEntree) : titre, chiffres, résumé, lien source cliquable — plus
+  // le geste « écarter avec motif » toujours visible sur la carte (Lot 10,
+  // retour d'usage du 31/08/2026 : la modale précédente était trop petite
+  // et le motif d'écart, caché derrière un window.prompt, n'était pas
+  // découvert à l'usage).
+  function renderCandidat(c){
+    var src = c.source || {};
+    var probleme = !c.url || c.lienMort;
+    var noteProbleme = c.lienMort ? "lien mort" : (!c.url ? "pas encore de lien" : "");
+    var btn = c.url
+      ? '<a class="btn-source-compact" href="' + esc(c.url) + '" target="_blank" rel="noopener"><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(src.domaine || "") + '</span></a>'
+      : '<span class="btn-source-compact desactive"><span class="lib">Pas encore de lien</span></span>';
+    var chiffresHtml = (c.chiffres && c.chiffres.length)
+      ? '<div class="flat-chiffres tab-num">' + c.chiffres.map(esc).join(" · ") + '</div>'
+      : "";
+    var resumeHtml = c.resume ? '<div class="flat-resume">' + esc(c.resume) + '</div>' : "";
+    var ecartPanel = state.ecarterOuvert === c.id
+      ? '<div class="ecart-panel">' +
+          '<label class="lbl" for="motif-ecart-' + c.id + '">Motif de l\'écart (facultatif — lu par la routine de veille automatisée, jamais par les élèves)</label>' +
+          '<textarea id="motif-ecart-' + c.id + '" data-role="motif-ecart"></textarea>' +
+          '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-ecart" data-id="' + c.id + '">Écarter définitivement</button></div>' +
+        '</div>'
+      : "";
+
+    return '<div class="entree moisson-candidat' + (probleme ? " probleme" : "") + '" data-candidat="' + c.id + '">' +
+      '<div class="entree-row">' +
+        '<div class="entree-row-gauche">' +
+          '<div class="flat">' +
+            '<div class="flat-meta">' +
+              '<span class="nom">' + esc(src.nom || "") + '</span>' +
+              (src.territoire ? '<span class="pastille-echelle">' + esc(src.territoire) + '</span>' : "") +
+              '<span class="meta-mono">' + esc(src.domaine || "") + (src.date ? ' · ' + esc(src.date) : "") + '</span>' +
+              '<span class="etat-pastille">◇ candidat · ' + esc(c.rubrique) + '</span>' +
+              (noteProbleme ? '<span class="etat-pastille mort">✕ ' + noteProbleme + '</span>' : "") +
+            '</div>' +
+            '<div class="flat-titre">' + esc(c.titre) + '</div>' +
+            chiffresHtml +
+            resumeHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="entree-row-droite">' +
+          btn +
+          '<div class="entree-actions">' +
+            '<button type="button" class="btn-mini" data-action="retenir-candidat" data-id="' + c.id + '">Retenir</button>' +
+            '<button type="button" class="btn-mini danger" data-action="ecarter-candidat" data-id="' + c.id + '">Écarter…</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      ecartPanel +
+    '</div>';
+  }
+
+  // Liste de moisson intégrée directement à l'écran du numéro (Lot 10) : plus
+  // de modale « Voir la moisson » — retour d'usage du 31/08/2026 après un
+  // 1er run réel (7 candidats), la modale était « beaucoup trop petite »
+  // pour valider sérieusement chaque candidat.
+  function renderMoissonSection(){
     if (numero.moisson == null || !numero.moisson.length) return "";
-    if (numero.collecte.statut !== "rapporte") return ""; // état ③/④ déjà affiché à la place
-    if (!entrees.filter(function(e){ return e.valide; }).length) return ""; // état ② déjà affiché à la place
-    return '<div class="moisson-barre"><span class="titre">Moisson du ' + esc(numero.collecte.date) + '</span><span>' + numero.moisson.length + ' entrée' + (numero.moisson.length > 1 ? "s" : "") + ' encore en attente de tri</span><span class="spacer"></span><button type="button" class="btn-ligne" data-action="voir-moisson">Voir la moisson (' + numero.moisson.length + ')</button></div>';
+    return '<div class="moisson-section">' +
+      '<div class="moisson-entete"><span class="titre">Moisson du ' + esc(numero.collecte.date) + '</span><span>' + numero.moisson.length + ' candidat' + (numero.moisson.length > 1 ? "s" : "") + ' en attente de tri — retenir ou écarter chacun ci-dessous</span></div>' +
+      numero.moisson.map(renderCandidat).join("") +
+    '</div>';
   }
 
   function devOutilsCollecte(){
@@ -1606,7 +1781,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var corpsHtml = alerte !== null ? alerte : groupes.map(function(g){
       var teteHtml = '<div class="rubrique-tete"><span class="nom">' + esc(g.rubrique) + '</span><span class="filet"></span>' +
         (state.mode !== "redaction" ? '<span class="position">' + (compte + 1) + ' sur ' + total + '</span>' : "") + '</div>';
-      var itemsHtml = g.items.map(function(e){ compte++; return renderEntree(e); });
+      var itemsHtml = g.items.map(function(e, i){ compte++; return renderEntree(e, i === 0, i === g.items.length - 1); });
       // Rubrique-tête + sa 1re entrée regroupées dans un même bloc : en
       // impression (grille 2 colonnes), ça évite qu'un titre de rubrique
       // se retrouve seul en bas d'une colonne, séparé de sa carte.
@@ -1614,18 +1789,27 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }).join("");
 
     var publieBadge = numero.statut === "publie" ? '<span class="etat-pastille ok">✓ publié</span>' : "";
+    // Dépublier (demandé le 01/09/2026) : remet un numéro publié en
+    // brouillon (invisible des élèves, à nouveau modifiable librement) —
+    // jusqu'ici publier était une action à sens unique, aucun moyen de
+    // revenir en arrière sans intervention en base.
+    var boutonPublication = numero.statut === "publie"
+      ? '<button class="btn-ligne danger" type="button" data-action="depublier-numero">Dépublier le n° ' + numero.numero + '</button>'
+      : '<button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button>';
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
-        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button><button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button></div>' +
+        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '</div>' +
         '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
         devOutilsCollecte() +
       '</div>'
       : "";
 
-    var corpsWrap = state.mode === "redaction"
-      ? '<div class="corps"><div class="colonne">' + renderMoissonBarre() + corpsHtml + '</div></div>'
-      : '<div class="corps"><div class="colonne">' + corpsHtml + '</div>' + renderRail(visibles) + '</div>';
+    // Rail à droite ("Les N sources du numéro") retiré (retour d'usage du
+    // 01/09/2026 : doublon inutile avec le bouton « Ouvrir la source » déjà
+    // sur chaque entrée) — une seule colonne pleine largeur, même structure
+    // en rédaction et en vue publiée.
+    var corpsWrap = '<div class="corps"><div class="colonne">' + corpsHtml + (state.mode === "redaction" ? renderMoissonSection() : "") + '</div></div>';
 
     var banniere = state.mode === "redaction" ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>' : "";
 
@@ -1688,27 +1872,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           pr.fautives.map(function(f){ return '<div class="refus-item' + (f.type === "vide" ? " vide" : "") + '"><b>' + esc(f.titre) + '</b> — ' + esc(f.message) + '</div>'; }).join("") +
         '</div>' +
         '<div class="modal-boutons"><button type="button" class="btn-plein" data-action="regler-fautive" data-id="' + pr.fautives[0].id + '">Régler la première</button><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-refus">Fermer</button></div></div>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function renderMoissonModal(){
-    if (!state.moissonOuverte || numero.moisson == null) return "";
-    return '<div class="modal-overlay" data-action="close-moisson-backdrop">' +
-      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Moisson du numéro">' +
-        '<div class="modal-titre">Moisson du ' + esc(numero.collecte.date) + ' — ' + numero.moisson.length + ' en attente</div>' +
-        '<div class="moisson-liste">' +
-          (!numero.moisson.length ? '<p class="moisson-vide">Plus rien en attente de tri.</p>' : "") +
-          numero.moisson.map(function(c){
-            var probleme = !c.url || c.lienMort;
-            var noteProbleme = c.lienMort ? " · lien mort" : (!c.url ? " · pas encore de lien" : "");
-            return '<div class="moisson-item' + (probleme ? " probleme" : "") + '">' +
-              '<div class="infos"><span class="titre">' + esc(c.titre) + '</span><span class="meta">' + esc(c.source.nom) + ' · ' + esc(c.rubrique) + esc(noteProbleme) + '</span></div>' +
-              '<div class="btns"><button type="button" class="lien-action danger" data-action="ecarter-candidat" data-id="' + c.id + '">Écarter</button><button type="button" class="btn-ligne" data-action="retenir-candidat" data-id="' + c.id + '">Retenir</button></div>' +
-            '</div>';
-          }).join("") +
-        '</div>' +
-        '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-moisson">Fermer</button></div></div>' +
       '</div>' +
     '</div>';
   }
@@ -1814,7 +1977,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // saisie par le clavier.
   var modaleFoyerPrecedent = null;
   function modaleFoyerActuel(){
-    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.moissonOuverte ? "moisson" : state.publicationRefusee ? "refus" : null;
+    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.publicationRefusee ? "refus" : null;
   }
 
   // ---- Lot 7 : connexion / compte en attente / déconnexion ----
@@ -1882,6 +2045,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var redacActif = estRedacteurActif();
 
+    // Revenu à « numéro seulement » (01/09/2026) : rendu visible sur tous
+    // les écrans dans une passe précédente, mais un bouton sans aucun
+    // effet visible sur Sommaire/Recherche/Sources (ces écrans ignorent
+    // state.mode) se lit comme cassé — retour d'usage justifié.
     var modeToggleHtml = redacActif && state.vue === "numero" && numeros.length
       ? '<div class="mode-toggle" role="group" aria-label="Bascule rédaction / vue publiée">' +
           '<button type="button" data-action="mode" data-mode="redaction" aria-pressed="' + (state.mode === "redaction") + '">Rédaction</button>' +
@@ -1902,6 +2069,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '<button type="button" data-action="vue" data-vue="sommaire"' + (state.vue === "sommaire" ? ' aria-current="page"' : '') + '>Sommaire</button>' +
           '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
           (redacActif ? '<button type="button" data-action="vue" data-vue="sources"' + (state.vue === "sources" ? ' aria-current="page"' : '') + '>Sources</button>' : "") +
+          // Bouton permanent pour revenir à l'espace de rédaction depuis
+          // n'importe quel écran (01/09/2026, corrige le Lot 10ter : un
+          // simple bouton de RETOUR, pas la bascule rédaction/vue publiée
+          // d'un numéro déjà ouvert — celle-ci reste modeToggleHtml,
+          // propre à la page d'un numéro). Ramène au dernier numéro
+          // affiché (state.numeroId, inchangé quand on navigue ailleurs).
+          (redacActif && numeros.length ? '<button type="button" data-action="aller-redaction"' + (state.vue === "numero" && state.mode === "redaction" ? ' aria-current="page"' : '') + '>Rédaction</button>' : "") +
         '</div>' +
         authHtml +
       '</div>';
@@ -1922,7 +2096,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       renderModalSource() +
       renderModalAuth() +
       renderModalNumero() +
-      renderMoissonModal() +
       renderPublicationRefusee();
 
     // Focus envoyé dans la modale seulement si elle vient de s'ouvrir
@@ -1947,7 +2120,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (vueBtn) {
       state.vue = vueBtn.getAttribute("data-vue");
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.moissonOuverte = false; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      render();
+      return;
+    }
+
+    if (ev.target.closest('[data-action="aller-redaction"]')) {
+      state.vue = "numero";
+      state.mode = "redaction";
+      state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
       render();
       return;
     }
@@ -1957,6 +2139,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
       state.vue = "numero";
       state.modal = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null;
       render();
       return;
     }
@@ -2059,12 +2242,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }
     if (ev.target.closest('[data-action="preview-normal"]')) { state.previewEtat = null; render(); return; }
 
-    // ---- lot 4 : moisson du numéro en cours (états ②③④) ----
-    if (ev.target.closest('[data-action="voir-moisson"]')) { state.moissonOuverte = true; render(); return; }
-    if (ev.target.closest('[data-action="close-moisson"]') || ev.target === document.querySelector('[data-action="close-moisson-backdrop"]')) {
-      state.moissonOuverte = false; render(); return;
-    }
-
+    // ---- lot 10 : moisson intégrée à l'écran du numéro (états ②③④) ----
     var retenirBtn = ev.target.closest('[data-action="retenir-candidat"]');
     if (retenirBtn) {
       var cid = retenirBtn.getAttribute("data-id");
@@ -2073,32 +2251,64 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         numero.moisson = numero.moisson.filter(function(c){ return c.id !== cid; });
         var nouvelleEntree = {
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
+          ordre: prochainOrdreRubrique(cand.rubrique),
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
-          titre: cand.titre, chiffres: cand.chiffres, resume: cand.resume, usage: cand.usage,
+          titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
           blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
         };
         entrees.push(nouvelleEntree);
         numero.entrees = entrees;
         creerEntree(nouvelleEntree);
         ecrireNumero({ moisson: numero.moisson });
+        if (state.ecarterOuvert === cid) state.ecarterOuvert = null;
         render();
       }
       return;
     }
 
+    // Panneau « écarter avec motif » : ouvert/fermé en place sur la carte du
+    // candidat (retour d'usage du 31/08/2026 : un window.prompt() pour le
+    // motif n'a pas été trouvé/vu à l'usage — le geste doit rester visible).
     var ecarterBtn = ev.target.closest('[data-action="ecarter-candidat"]');
     if (ecarterBtn) {
       var eid = ecarterBtn.getAttribute("data-id");
-      var candEcarte = numero.moisson.filter(function(c){ return c.id === eid; })[0];
-      var motif = window.prompt("Écarter définitivement ce candidat de la moisson ?\nMotif (facultatif, aide l'agent de veille à s'améliorer) — rédigez de façon factuelle et professionnelle : ce texte peut être lu par la routine automatisée de veille, jamais par les élèves :", "");
-      if (motif !== null) {
-        numero.moisson = numero.moisson.filter(function(c){ return c.id !== eid; });
-        ecrireNumero({ moisson: numero.moisson });
-        if (candEcarte) creerCandidatEcarte(candEcarte, motif.trim());
-        render();
-      }
+      state.ecarterOuvert = state.ecarterOuvert === eid ? null : eid;
+      render();
       return;
     }
+
+    if (ev.target.closest('[data-action="annuler-ecart"]')) { state.ecarterOuvert = null; render(); return; }
+
+    var confirmerEcartBtn = ev.target.closest('[data-action="confirmer-ecart"]');
+    if (confirmerEcartBtn) {
+      var ceid = confirmerEcartBtn.getAttribute("data-id");
+      var candEcarte = numero.moisson.filter(function(c){ return c.id === ceid; })[0];
+      var motifEl = document.getElementById("motif-ecart-" + ceid);
+      var motif = motifEl ? motifEl.value.trim() : "";
+      numero.moisson = numero.moisson.filter(function(c){ return c.id !== ceid; });
+      state.ecarterOuvert = null;
+      ecrireNumero({ moisson: numero.moisson });
+      if (candEcarte) creerCandidatEcarte(candEcarte, motif);
+      render();
+      return;
+    }
+
+    // Déplacement d'une entrée retenue vers un autre numéro (Lot 10) : bascule
+    // du sélecteur inline, voir renderDeplacerPanel().
+    var deplacerBtn = ev.target.closest('[data-action="toggle-deplacer"]');
+    if (deplacerBtn) {
+      var did = deplacerBtn.getAttribute("data-id");
+      state.deplacerOuvert = state.deplacerOuvert === did ? null : did;
+      render();
+      return;
+    }
+
+    // Ordre d'affichage au sein d'une rubrique (Lot 10bis).
+    var monterBtn = ev.target.closest('[data-action="monter-entree"]');
+    if (monterBtn) { deplacerOrdreEntree(monterBtn.getAttribute("data-id"), -1); return; }
+
+    var descendreBtn = ev.target.closest('[data-action="descendre-entree"]');
+    if (descendreBtn) { deplacerOrdreEntree(descendreBtn.getAttribute("data-id"), 1); return; }
 
     // ---- lot 4 : publication (état ⑥) ----
     if (ev.target.closest('[data-action="publier-numero"]')) {
@@ -2110,6 +2320,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         ecrireNumero({ statut: "publie" });
       }
       render();
+      return;
+    }
+
+    // Dépublier (Lot 10bis) : demande confirmation, remet le numéro en
+    // brouillon — retiré immédiatement du Sommaire/Recherche/vue publique
+    // (les vues publiques ne servent que les numéros statut=publie).
+    if (ev.target.closest('[data-action="depublier-numero"]')) {
+      if (window.confirm("Dépublier le n° " + numero.numero + " ? Il redevient un brouillon, invisible des élèves, jusqu'à sa republication.")) {
+        numero.statut = "brouillon";
+        ecrireNumero({ statut: "brouillon" });
+        render();
+      }
       return;
     }
 
@@ -2201,6 +2423,22 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (numeroSel) {
       state.numeroId = parseInt(numeroSel.value, 10);
       state.modal = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null;
+      render();
+      return;
+    }
+
+    var deplacerSel = ev.target.closest('[data-action="deplacer-select"]');
+    if (deplacerSel) {
+      var idADeplacer = deplacerSel.getAttribute("data-id");
+      var cibleVal = deplacerSel.value;
+      if (!cibleVal) return;
+      if (cibleVal === "__nouveau__") {
+        state.modalNumero = { erreur: null, deplacerEntreeId: idADeplacer };
+      } else {
+        deplacerEntreeVersNumero(idADeplacer, parseInt(cibleVal, 10));
+        state.deplacerOuvert = null;
+      }
       render();
       return;
     }
@@ -2234,7 +2472,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (state.modalSource) { state.modalSource = null; render(); return; }
     if (state.modalAuth) { state.modalAuth = null; render(); return; }
     if (state.modalNumero) { state.modalNumero = null; render(); return; }
-    if (state.moissonOuverte) { state.moissonOuverte = false; render(); return; }
+    if (state.ecarterOuvert) { state.ecarterOuvert = null; render(); return; }
+    if (state.deplacerOuvert) { state.deplacerOuvert = null; render(); return; }
     if (state.publicationRefusee) { state.publicationRefusee = null; render(); return; }
   });
 
@@ -2313,8 +2552,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       var ok = await creerNumeroDistant(nouveauNumero);
       if (!ok) { render(); return; }
       numeros.push(nouveauNumero);
+      // « + Nouveau numéro » choisi depuis le sélecteur « Déplacer vers… »
+      // d'une entrée (Lot 10) : termine le déplacement une fois le numéro créé,
+      // avant de rebasculer numeroId (deplacerEntreeVersNumero() déplace
+      // depuis le numéro actuellement affiché, donc avant ce changement).
+      var deplacerId = state.modalNumero.deplacerEntreeId;
+      if (deplacerId) deplacerEntreeVersNumero(deplacerId, num);
       state.modalNumero = null;
       state.numeroId = num;
+      state.deplacerOuvert = null;
       render();
       return;
     }
@@ -2328,12 +2574,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var id = editing ? state.modal.id : "e" + Date.now();
     var existing = editing ? entrees.filter(function(x){ return x.id === id; })[0] : null;
     var chiffres = parseChiffres(val("chiffres"));
+    var rubriqueSaisie = val("rubrique") || "Sans rubrique";
 
     var entry = {
       id: id,
-      rubrique: val("rubrique") || "Sans rubrique",
+      rubrique: rubriqueSaisie,
       valide: existing ? existing.valide : true,
       origine: existing ? existing.origine : "manuel",
+      // Conserve la place déjà occupée dans sa rubrique en modification ;
+      // une nouvelle entrée s'ajoute en fin de la rubrique visée (Lot 10bis).
+      ordre: existing ? existing.ordre : prochainOrdreRubrique(rubriqueSaisie),
       source: { nom: val("nom"), territoire: val("territoire"), domaine: val("domaine"), date: val("date") },
       url: val("url") || ("#" + id),
       titre: val("titre"),
