@@ -89,6 +89,11 @@ confirmés par l'utilisateur — plus rien en attente côté données ni côté
 git pour ce thread de travail. Détail complet dans les entrées « Lot 10 »
 à « Lot 10quinquies » ci-dessous.
 
+**Lot 10sexies (boutons visibles sur la barre publique) fait le
+01/09/2026, PAS ENCORE COMMITTÉ** — modification locale de
+`apps/affut/index.html` (CSS `.bandeau-nav`), en attente de l'accord de
+l'utilisateur pour committer/PR (voir entrée « Lot 10sexies » ci-dessous).
+
 **PROCHAINE REPRISE — backlog du 01/09/2026, voir « Idées pour plus tard »
 en fin de fichier pour le détail et l'ordre conseillé :**
 1. Chiffres clés éditables **en place** (pas seulement via le formulaire
@@ -1260,6 +1265,66 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       ce point. *Validé* en vrai navigateur (skill `claude-in-chrome`) :
       barre unique confirmée sur Sommaire et sur un numéro, positions
       cohérentes.
+- [x] **Lot 10sexies — boutons visibles sur la barre publique**
+      (01/09/2026, retour d'usage : « je ne suis pas satisfait de la barre
+      d'onglet […] je veux des boutons visibles, pas seulement des liens
+      cliquables »). Audit : le **contenu** des deux barres était déjà
+      correct (5 pastilles connecté — Sommaire/Rechercher/Sources/
+      Rédaction/Vue publiée, 2 en public — Sommaire/Rechercher, posé au
+      Lot 10quinquies), seul le **style** de `.bandeau-nav` (barre publique,
+      non connecté) restait celui d'avant le Lot 10quinquies : texte simple
+      coloré, souligné au survol/actif, sans bordure ni fond — un vrai lien,
+      pas un bouton.
+      *Fait le 01/09/2026* : `.bandeau-nav button` reprend exactement le
+      même traitement que `.mode-toggle button` (bordure `--af-filet-
+      bandeau`, padding 6px 13px, fond `--af-sur-bandeau` + texte encre sur
+      l'onglet actif via `aria-current="page"`) — les deux barres ont
+      désormais un rendu bouton identique, seul le nombre/l'étiquette des
+      onglets change selon la connexion. Règle responsive `.bandeau-nav{
+      padding-left:0}` (640px) retirée avec le `gap`/`padding-left` de base
+      qu'elle neutralisait, devenue sans effet.
+      *Validé le 01/09/2026* — **testé dans un vrai navigateur** (skill
+      `claude-in-chrome`, serveur local) : barre publique confirmée par
+      capture d'écran (SOMMAIRE / RECHERCHER en boutons bordés). Barre
+      connectée **non re-testée visuellement** (pas d'identifiants de
+      rédacteur disponibles dans cet environnement pour se connecter) —
+      son CSS/HTML n'a pas été touché, seule `.bandeau-nav` a changé ; le
+      rendu pastille de `.mode-toggle` avait déjà été validé en vrai
+      navigateur au Lot 10quinquies — **à confirmer d'un coup d'œil à la
+      prochaine connexion réelle**.
+- [x] **Lot 11 — Les sources suivies alimentent la veille automatique**
+      (demandé le 01/09/2026 : l'utilisateur avait remarqué que l'écran
+      « Sources » — liste compilée à la main, lot 4 — n'avait en réalité
+      aucun effet sur la routine de veille du Lot 8, qui ne fait qu'une
+      recherche web générale guidée par `brief-veille.md`. Deux demandes,
+      dont une déjà satisfaite avant même d'être posée :
+      1. « Espace de rédaction expliquant pourquoi on écarte une entrée » —
+         **déjà fait au Lot 10** (`.ecart-panel`, motif écrit dans
+         `affut_candidats_ecartes.motif`, déjà relu par l'agent via
+         `candidats_ecartes_recents`). Rien à ajouter.
+      2. « Compiler à la main les liens que la veille doit moissonner » —
+         **le vrai manque**, comblé ici : `handleContext()`
+         (`affut-veille/index.ts`) interroge maintenant
+         `affut_sources_suivies` et renvoie un nouveau champ
+         `sources_a_moissonner` (id/nom/adresse/type/echelle/territoire/
+         rubrique_defaut, 50 lignes max) — aucune migration SQL, la table
+         existait déjà (posée au Lot 4, jamais lue jusqu'ici). `brief-
+         veille.md` reçoit une nouvelle section « Sources à moissonner en
+         priorité » : consigne (pas suggestion) de visiter effectivement
+         chaque adresse à chaque exécution, distincte de la liste
+         générique « Sources à privilégier » (point de départ pour une
+         recherche ouverte).
+      *Volontairement pas fait ici* : boucler le retour d'état par source
+      (`derniere_moisson`/`compteurs`, écran Sources) — ces champs et les
+      boutons « Relancer la collecte »/« Réessayer » restent purement
+      manuels (l'agent n'écrit toujours que via `handleIngest()`, qui ne
+      touche pas `affut_sources_suivies`) ; le texte « interrogées chaque
+      samedi à 6 h » de l'écran Sources reste donc optimiste tant que ce
+      bouclage n'est pas fait — signalé à l'utilisateur, pas demandé.
+      **⚠️ Nécessite un redéploiement manuel de la fonction Edge
+      `affut-veille`** (voir `affut-veille/README.md`) — le code source du
+      dépôt seul ne suffit pas, comme pour toute évolution de cette
+      fonction.
 
 ## Idées pour plus tard (hors lots planifiés)
 

@@ -159,10 +159,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .mode-toggle button[aria-pressed="true"]{background:var(--af-sur-bandeau);color:var(--af-encre);font-weight:700;border-color:var(--af-sur-bandeau)}
 .mode-toggle button[aria-pressed="false"]{color:var(--af-sur-bandeau-2)}
 .mode-toggle button[data-mode="redaction"][aria-pressed="true"]{background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
-.bandeau-nav{display:flex;align-items:center;gap:14px;padding-left:16px}
-.bandeau-nav button{font-family:var(--af-police-mono);font-size:11px;color:var(--af-sur-bandeau-3)}
-.bandeau-nav button:hover{color:var(--af-sur-bandeau-2)}
-.bandeau-nav button[aria-current="page"]{color:var(--af-sur-bandeau);text-decoration:underline;text-underline-offset:3px}
+.bandeau-nav{display:flex;align-items:center}
+.bandeau-nav button{font-family:var(--af-police-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border:1px solid var(--af-filet-bandeau);color:var(--af-sur-bandeau-2)}
+.bandeau-nav button:hover{color:var(--af-sur-bandeau)}
+.bandeau-nav button[aria-current="page"]{background:var(--af-sur-bandeau);color:var(--af-encre);font-weight:700;border-color:var(--af-sur-bandeau)}
 /* Lot 7 : statut de connexion, même famille visuelle que .bandeau-nav
    (fond sombre du bandeau — .lien-action, pensé pour la rédaction sur fond
    clair, y serait illisible). */
@@ -507,7 +507,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .page{padding:0 0 40px}
   .app,.app.mode-redaction{max-width:100%;border-left:0;border-right:0}
   .bandeau{padding:11px 14px}
-  .bandeau-nav{padding-left:0}
   .numero-entete{padding:14px 16px}
   .entete-titre{font-size:19px}
   .entete-actions{width:100%;align-items:stretch}
@@ -1150,7 +1149,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     previewEtat: null,
     publicationRefusee: null,
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
-    deplacerOuvert: null // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
+    deplacerOuvert: null, // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
+    ecarterEntreeOuvert: null // id de l'entrée retenue dont le panneau « supprimer et écarter » est ouvert
   };
 
   function estRedacteurActif(){ return !!(state.auth.redacteur && state.auth.redacteur.actif); }
@@ -1242,7 +1242,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var redac = state.mode === "redaction";
     var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
     var actions = redac
-      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
+      ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="ecarter-entree" data-id="' + e.id + '">Supprimer</button></div>'
       : "";
     // Ordre d'affichage au sein de la rubrique (Lot 10bis) : boutons compacts
     // Monter/Descendre, désactivés en butée de rubrique plutôt que masqués
@@ -1282,7 +1282,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var detailsInner =
       qrImpression +
       renderUsage(e) +
-      (redac && state.deplacerOuvert === e.id ? renderDeplacerPanel(e) : "");
+      (redac && state.deplacerOuvert === e.id ? renderDeplacerPanel(e) : "") +
+      (redac && state.ecarterEntreeOuvert === e.id ? renderEcartEntreePanel(e) : "");
 
     var details = '<div class="entree-details">' + detailsInner + '</div>';
 
@@ -1304,6 +1305,22 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       '<option value="__nouveau__">+ Nouveau numéro (n° ' + prochainNumero() + ')</option>';
     return '<div class="deplacer-select-wrap"><label class="lbl" for="deplacer-' + e.id + '">Déplacer cette entrée vers un autre numéro</label>' +
       '<select id="deplacer-' + e.id + '" data-action="deplacer-select" data-id="' + e.id + '">' + options + '</select></div>';
+  }
+
+  // Supprimer une entrée retenue avec motif (Lot 11) : même geste et même
+  // panneau que « écarter avec motif » sur un candidat de moisson
+  // (renderCandidat), pour qu'une entrée retirée APRÈS avoir été retenue —
+  // y compris après une dépublication — nourrisse elle aussi la boucle de
+  // retour de l'agent de veille (creerCandidatEcarte réutilise
+  // affut_candidats_ecartes, l'entrée a déjà exactement la forme attendue :
+  // id/rubrique/source/url/titre). Disponible à tout moment en rédaction,
+  // quel que soit numero.statut (brouillon ou publié).
+  function renderEcartEntreePanel(e){
+    return '<div class="ecart-panel">' +
+      '<label class="lbl" for="motif-ecart-entree-' + e.id + '">Motif de la suppression (facultatif — lu par la routine de veille automatisée, jamais par les élèves)</label>' +
+      '<textarea id="motif-ecart-entree-' + e.id + '" data-role="motif-ecart-entree"></textarea>' +
+      '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart-entree">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-suppression-entree" data-id="' + e.id + '">Supprimer définitivement</button></div>' +
+    '</div>';
   }
 
   // Ordre des rubriques (blocs) inchangé : 1re apparition dans `list`, comme
@@ -2119,7 +2136,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (vueBtn) {
       state.vue = vueBtn.getAttribute("data-vue");
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
       render();
       return;
     }
@@ -2128,7 +2145,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.vue = "numero";
       state.mode = "redaction";
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
       render();
       return;
     }
@@ -2137,7 +2154,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.vue = "numero";
       state.mode = "publiee";
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
       render();
       return;
     }
@@ -2147,7 +2164,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
       state.vue = "numero";
       state.modal = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null;
       render();
       return;
     }
@@ -2218,16 +2235,34 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var editBtn = ev.target.closest('[data-action="edit-entree"]');
     if (editBtn) { state.modal = { mode: "edit", id: editBtn.getAttribute("data-id") }; render(); return; }
 
-    var delBtn = ev.target.closest('[data-action="delete-entree"]');
-    if (delBtn) {
-      var delId = delBtn.getAttribute("data-id");
-      if (window.confirm("Supprimer définitivement cette entrée du numéro ?")) {
-        entrees = entrees.filter(function(e){ return e.id !== delId; });
-        numero.entrees = entrees;
-        state.modal = null;
-        supprimerEntreeDistante(delId);
-        render();
-      }
+    // Panneau « supprimer et écarter avec motif » (Lot 11) : même geste que
+    // « écarter avec motif » sur un candidat de moisson, disponible à tout
+    // moment en rédaction (même après une dépublication) sur une entrée déjà
+    // retenue — voir renderEcartEntreePanel().
+    var ecarterEntreeBtn = ev.target.closest('[data-action="ecarter-entree"]');
+    if (ecarterEntreeBtn) {
+      var eeid = ecarterEntreeBtn.getAttribute("data-id");
+      state.ecarterEntreeOuvert = state.ecarterEntreeOuvert === eeid ? null : eeid;
+      state.deplacerOuvert = null;
+      render();
+      return;
+    }
+
+    if (ev.target.closest('[data-action="annuler-ecart-entree"]')) { state.ecarterEntreeOuvert = null; render(); return; }
+
+    var confirmerSuppEntreeBtn = ev.target.closest('[data-action="confirmer-suppression-entree"]');
+    if (confirmerSuppEntreeBtn) {
+      var delId = confirmerSuppEntreeBtn.getAttribute("data-id");
+      var entreeEcartee = entrees.filter(function(e){ return e.id === delId; })[0];
+      var motifElEntree = document.getElementById("motif-ecart-entree-" + delId);
+      var motifEntree = motifElEntree ? motifElEntree.value.trim() : "";
+      entrees = entrees.filter(function(e){ return e.id !== delId; });
+      numero.entrees = entrees;
+      state.ecarterEntreeOuvert = null;
+      state.modal = null;
+      supprimerEntreeDistante(delId);
+      if (entreeEcartee) creerCandidatEcarte(entreeEcartee, motifEntree);
+      render();
       return;
     }
 
@@ -2301,6 +2336,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (deplacerBtn) {
       var did = deplacerBtn.getAttribute("data-id");
       state.deplacerOuvert = state.deplacerOuvert === did ? null : did;
+      state.ecarterEntreeOuvert = null;
       render();
       return;
     }
@@ -2425,7 +2461,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (numeroSel) {
       state.numeroId = parseInt(numeroSel.value, 10);
       state.modal = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null;
       render();
       return;
     }
@@ -2476,6 +2512,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (state.modalNumero) { state.modalNumero = null; render(); return; }
     if (state.ecarterOuvert) { state.ecarterOuvert = null; render(); return; }
     if (state.deplacerOuvert) { state.deplacerOuvert = null; render(); return; }
+    if (state.ecarterEntreeOuvert) { state.ecarterEntreeOuvert = null; render(); return; }
     if (state.publicationRefusee) { state.publicationRefusee = null; render(); return; }
   });
 
