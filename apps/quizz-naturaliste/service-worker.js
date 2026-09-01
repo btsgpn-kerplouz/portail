@@ -3,7 +3,7 @@
    Les photos iNaturalist sont des ressources distantes (cross-origin) : elles ne
    sont JAMAIS mises en cache — l'app a besoin du réseau pour afficher les images. */
 
-const CACHE_NAME = 'coup-doeil-shell-v2';
+const CACHE_NAME = 'coup-doeil-shell-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -51,12 +51,19 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Ressources de la coquille : cache d'abord.
+  // Ressources de la coquille : stale-while-revalidate — on sert le cache tout
+  // de suite (rapide, marche hors ligne) et on rafraîchit en arrière-plan, pour
+  // qu'un nouveau déploiement (quiz-data.js, index.html) soit pris à la visite
+  // suivante sans dépendre du numéro de version du cache.
   event.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-      return res;
-    }))
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(req).then(cached => {
+        const network = fetch(req).then(res => {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || network;
+      })
+    )
   );
 });
