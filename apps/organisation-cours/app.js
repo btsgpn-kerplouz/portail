@@ -33,7 +33,7 @@ const SLOT_BOUNDS_MIN = [
 const DEFAULT_PROMOTIONS = ['GPN1', 'GPN2'];
 const DEPLACEMENT_STATUSES = ['Demande à faire', 'En cours', 'Terminée'];
 const DEFAULT_TAUX = 0.55;
-const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre' };
+const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre', atelier: 'Atelier' };
 const VEHICULE_LABEL = 'Véhicule de l’établissement';
 const MATERIEL_LABEL = 'Matériel à réserver';
 const ROOM_ALERT_DAYS = 15;
@@ -4060,6 +4060,33 @@ function wireChecklist(key) {
   });
 }
 
+/* Bouton ⧉ de l'encart « Améliorations de l'appli » : copie la liste (en
+   attente + faites) en texte brut dans le presse-papiers, pour la coller
+   telle quelle dans une conversation (l'IA n'a pas d'accès direct à la base). */
+async function copyDevNotesToClipboard() {
+  const items = checklistItems('devnotes');
+  const bouton = $('#copyDevNotesButton');
+  if (!items.length) {
+    if (bouton) flashIconButton(bouton, 'Rien à copier');
+    return;
+  }
+  const texte = items
+    .map(t => `- [${t.done ? 'x' : ' '}] ${t.text}`)
+    .join('\n');
+  try {
+    await navigator.clipboard.writeText(texte);
+    if (bouton) flashIconButton(bouton, '✓');
+  } catch {
+    if (bouton) flashIconButton(bouton, '⚠');
+  }
+}
+function flashIconButton(bouton, glyphe, dureeMs = 1400) {
+  const original = bouton.textContent;
+  bouton.textContent = glyphe;
+  bouton.disabled = true;
+  setTimeout(() => { bouton.textContent = original; bouton.disabled = false; }, dureeMs);
+}
+
 function setWeekNotesStatus(text) {
   const status = $('#weekNotesStatus');
   if (status) status.textContent = text || '';
@@ -5050,13 +5077,25 @@ async function moveSessionToTimeline(session, context) {
   if (context.part === 'day' && context.day !== '' && context.day !== null && context.day !== undefined) {
     // Lot O — déposer une séance sur une JOURNÉE de la frise revient à la placer
     // dans l'emploi du temps ce jour-là (source de vérité unique : `day`, relu
-    // par le Planning hebdo). La frise n'ayant pas d'heures, on auto-empile la
-    // séance depuis le 1er créneau libre du matin (durée déduite de sa saisie).
+    // par le Planning hebdo). Si la séance avait déjà une plage horaire (elle
+    // était déjà placée : on la déplace juste de semaine), on la conserve —
+    // sinon (1er placement depuis la frise, pas d'heure connue) on l'auto-
+    // empile depuis le 1er créneau libre du matin (durée déduite de sa saisie).
     const day = Number(context.day);
     if (promotion) session.promotion = promotion;
-    const durationSlots = sessionDurationSlotsFromText(session);
-    const start = autoSlotStart(promotion, context.weekId, day, durationSlots, session.id);
-    const end = inferEndSlot(start, session.expectedDuration || session.fictiveSlot || '');
+    // Glisser-déposer d'une séance déjà placée : on conserve sa plage horaire
+    // d'origine sur la nouvelle semaine, au lieu de la ré-empiler depuis le matin.
+    const hadTimeRange = session.startSlot !== null && session.startSlot !== undefined
+      && session.endSlot !== null && session.endSlot !== undefined;
+    let start, end;
+    if (hadTimeRange) {
+      start = Number(session.startSlot);
+      end = Number(session.endSlot);
+    } else {
+      const durationSlots = sessionDurationSlotsFromText(session);
+      start = autoSlotStart(promotion, context.weekId, day, durationSlots, session.id);
+      end = inferEndSlot(start, session.expectedDuration || session.fictiveSlot || '');
+    }
     Object.assign(session, {
       placementStatus: 'definitif',
       weekId: context.weekId,
@@ -9296,6 +9335,7 @@ function bindDashTuiles() {
   $('#closePeriodesDialog')?.addEventListener('click', () => $('#periodesDialog')?.close());
   $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
   $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
+  $('#copyDevNotesButton')?.addEventListener('click', () => copyDevNotesToClipboard());
   $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
   $('#materielGotoCatalogue')?.addEventListener('click', afficherMaterielCatalogue);
   $('#materielCatalogueBack')?.addEventListener('click', afficherMaterielGrille);
