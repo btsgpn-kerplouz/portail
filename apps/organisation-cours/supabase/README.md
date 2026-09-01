@@ -84,6 +84,11 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
 19. `016-visibilite-collegues.sql` — colonne `oc_enseignants.voir_collegues`
     (défaut `false`) : préférence de compte « voir le contenu de mes
     collègues » (Cas 2 du partage entre comptes). Aucune policy à changer.
+20. `017-oc-constraints-edition-partagee.sql` — **à appliquer** : ouvre
+    l'UPDATE/DELETE de `oc_constraints` (« Périodes particulières ») à tout
+    compte enseignant actif, plus seulement au créateur — l'écran ne
+    distingue pas les périodes des collègues comme lecture seule, la RLS ne
+    doit donc plus les bloquer.
 
 ## Réglage obligatoire côté Auth
 
