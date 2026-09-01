@@ -3,9 +3,14 @@
 Entraînement à la **reconnaissance visuelle d'espèces** (oiseaux, plantes,
 insectes, mammifères, herpéto) pour le BTS GPN. QCM à partir de photos :
 secteur **Bretagne / France métropolitaine** → **groupe (colonne,
-silhouettes)** → **sous-groupes (cases à cocher, puces retirables)**,
-difficulté réglable (proximité taxonomique des distracteurs), chrono
+silhouettes)** → **sous-groupes (cases à cocher, puces retirables)**, chrono
 optionnel, clavier `1`–`9` / `Entrée`.
+
+**Difficulté** : *Découverte* / *Entraînement* = QCM 4 choix (distracteurs de
+plus en plus proches taxonomiquement) ; *Expert* = **pas de propositions**, on
+saisit le nom (français ou scientifique) dans un champ avec **autocomplétion**
+sur toutes les espèces du secteur (flèches + `Entrée`, ou clic ; « Je ne sais
+pas » révèle la réponse et la compte fausse).
 
 App **purement statique + PWA coquille**, sur le modèle de
 `vegetations-armoricaines`. Pas de Supabase, pas d'auth.

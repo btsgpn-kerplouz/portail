@@ -276,6 +276,37 @@
   .choice.wrong .k{background:var(--bad);color:#fff}
   .choice:disabled{cursor:default}
 
+  /* ---------- Mode Expert : champ de saisie + autocomplétion ---------- */
+  .answerbox{margin-top:16px}
+  .suggest-wrap{position:relative}
+  .answer-input{
+    width:100%;font:inherit;font-size:1rem;color:var(--encre);background:#fff;
+    border:1px solid var(--filet);padding:12px 13px;min-height:48px;
+    transition:border-color .12s ease,box-shadow .12s ease;
+  }
+  .answer-input::placeholder{color:var(--t4)}
+  .answer-input:focus{
+    outline:none;border-color:var(--acc-d);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+  }
+  .answer-input:disabled{background:var(--fond-2);color:var(--t2)}
+  .suggestions{
+    list-style:none;margin:0;padding:0;position:absolute;left:0;right:0;top:calc(100% - 1px);
+    background:#fff;border:1px solid var(--acc-d);border-top:0;z-index:20;
+    max-height:280px;overflow:auto;display:none;
+  }
+  .suggestions.open{display:block}
+  .suggestion{
+    padding:9px 13px;cursor:pointer;border-top:1px solid var(--filet-soft);
+    font-size:.92rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+  }
+  .suggestion:first-child{border-top:0}
+  .suggestion:hover,.suggestion.active{background:color-mix(in srgb, var(--acc) 9%, #fff)}
+  .suggestion .s-sci{font-style:italic;color:var(--t3);font-size:.85rem}
+  .suggestions .s-none{padding:9px 13px;color:var(--t4);font-size:.86rem}
+  .giveup{margin-top:12px;display:inline-block}
+  .giveup:disabled{opacity:.4;cursor:default;text-decoration:none}
+
   .feedback{margin-top:13px;font-weight:700;min-height:1.5em;font-size:.95rem}
   .feedback.ok{color:var(--ok)}
   .feedback.ko{color:var(--bad)}
@@ -447,7 +478,7 @@
       <span class="launch-line" id="launchLine"></span>
       <button class="btn" id="start">Commencer</button>
     </div>
-    <p class="hint kb-hint">Clavier : touches <strong>1</strong> à <strong>9</strong> pour répondre, <strong>Entrée</strong> pour la question suivante.</p>
+    <p class="hint kb-hint">Clavier : <strong>1</strong>–<strong>9</strong> pour répondre au QCM (ou saisie du nom en mode Expert), <strong>Entrée</strong> pour valider / passer à la suite.</p>
   </section>
 
   <!-- ---------- Ecran de quiz ---------- -->
@@ -463,6 +494,19 @@
     <p class="credit" id="credit"></p>
 
     <div class="choices" id="choices"></div>
+
+    <!-- Mode Expert : saisie libre du nom, avec autocomplétion -->
+    <div class="answerbox hidden" id="answerBox">
+      <div class="suggest-wrap">
+        <input type="text" id="answerInput" class="answer-input" role="combobox"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions"
+               aria-label="Nom de l'espèce" placeholder="Tape le nom de l'espèce…">
+        <ul class="suggestions" id="suggestions" role="listbox"></ul>
+      </div>
+      <button type="button" class="link-clear giveup" id="answerGiveUp">Je ne sais pas — voir la réponse</button>
+    </div>
+
     <p class="feedback" id="feedback"></p>
 
     <div class="row">
@@ -518,7 +562,7 @@
   var DIFF = {
     decouverte:   { scope:"mixte",      name:"découverte",   label:"Propositions très différentes entre elles." },
     entrainement: { scope:"sousgroupe", name:"entraînement", label:"Propositions du même sous-groupe, à bien regarder." },
-    expert:       { scope:"genre",      name:"expert",       label:"Propositions du même genre quand c'est possible — espèces jumelles." }
+    expert:       { scope:"genre",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion." }
   };
 
   // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
@@ -722,8 +766,19 @@
                     : "<em>" + esc(t.scientific_name) + "</em>";
   }
 
+  function isExpert(){ return cfg.diff === "expert"; }
+  // normalise pour la comparaison / recherche : minuscules, sans accents,
+  // ligatures développées, ponctuation et espaces multiples réduits.
+  function norm(s){
+    return String(s == null ? "" : s).toLowerCase()
+      .replace(/œ/g, "oe").replace(/æ/g, "ae")
+      .normalize("NFD").replace(/\p{Diacritic}/gu, "")
+      .replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
   // ----- état de la partie -----
   var game = null;
+  var curSug = [], activeSug = -1;   // suggestions du champ Expert
 
   function startGame(){
     var p = pool();
@@ -765,10 +820,12 @@
     game.i++;
 
     var answ = pick(game.pool);
-    var base = distractorBase(answ);
-    var nOpt = Math.min(4, base.length + 1);
-    var distract = shuffle(base).slice(0, nOpt - 1);
-    var options = shuffle([answ].concat(distract));
+    var options = [];
+    if(!isExpert()){
+      var base = distractorBase(answ);
+      var nOpt = Math.min(4, base.length + 1);
+      options = shuffle([answ].concat(shuffle(base).slice(0, nOpt - 1)));
+    }
     var photo = pick(answ.photos);
 
     game.current = { answer:answ, options:options, photo:photo, done:false };
@@ -807,13 +864,21 @@
 
     var box = $("choices");
     box.innerHTML = "";
-    c.options.forEach(function(t, idx){
-      var b = document.createElement("button");
-      b.className = "choice";
-      b.innerHTML = '<span class="k">'+(idx+1)+'</span><span>'+labelOf(t)+'</span>';
-      b.addEventListener("click", function(){ answer(t, b); });
-      box.appendChild(b);
-    });
+    if(isExpert()){
+      box.classList.add("hidden");
+      $("answerBox").classList.remove("hidden");
+      resetAnswerField();
+    } else {
+      $("answerBox").classList.add("hidden");
+      box.classList.remove("hidden");
+      c.options.forEach(function(t, idx){
+        var b = document.createElement("button");
+        b.className = "choice";
+        b.innerHTML = '<span class="k">'+(idx+1)+'</span><span>'+labelOf(t)+'</span>';
+        b.addEventListener("click", function(){ answer(t, b); });
+        box.appendChild(b);
+      });
+    }
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     $("next").disabled = true;
@@ -822,7 +887,7 @@
     else $("chronoBar").classList.add("hidden");
   }
 
-  function answer(chosen, btn){
+  function answer(chosen, btn, reason){
     var c = game.current;
     if(c.done) return;
     clearTimer();
@@ -832,23 +897,128 @@
     if(good) game.correct++;
     else game.missed.push(c.answer);
 
-    var buttons = $("choices").children;
-    [].forEach.call(buttons, function(b, idx){
-      b.disabled = true;
-      var t = c.options[idx];
-      if(t.id === c.answer.id) b.classList.add("correct");
-      else if(b === btn) b.classList.add("wrong");
-    });
+    if(isExpert()){
+      $("answerInput").disabled = true;
+      $("answerGiveUp").disabled = true;
+      $("suggestions").classList.remove("open");
+      if(chosen && !$("answerInput").value){
+        $("answerInput").value = hasFr(chosen) ? chosen.common_name_fr : chosen.scientific_name;
+      }
+    } else {
+      [].forEach.call($("choices").children, function(b, idx){
+        b.disabled = true;
+        var t = c.options[idx];
+        if(t.id === c.answer.id) b.classList.add("correct");
+        else if(b === btn) b.classList.add("wrong");
+      });
+    }
 
     var fb = $("feedback");
-    if(good){ fb.textContent = "Correct !"; fb.className = "feedback ok"; }
-    else {
-      fb.innerHTML = (chosen ? "Raté — c'était " : "Temps écoulé — c'était ") + fullName(c.answer);
+    if(good){
+      fb.innerHTML = isExpert() ? ("Correct ! — " + fullName(c.answer)) : "Correct !";
+      fb.className = "feedback ok";
+    } else {
+      var lead = chosen ? "Raté — c'était "
+        : (reason === "giveup" ? "C'était " : "Temps écoulé — c'était ");
+      fb.innerHTML = lead + fullName(c.answer);
       fb.className = "feedback ko";
     }
     $("next").disabled = false;
     $("next").focus();
   }
+
+  // ----- mode Expert : champ de saisie + suggestions -----
+  function resetAnswerField(){
+    var input = $("answerInput");
+    input.value = ""; input.disabled = false;
+    input.setAttribute("aria-expanded", "false");
+    $("suggestions").innerHTML = ""; $("suggestions").classList.remove("open");
+    curSug = []; activeSug = -1;
+    $("answerGiveUp").disabled = false;
+    setTimeout(function(){
+      if(isExpert() && game && game.current && !game.current.done) input.focus();
+    }, 0);
+  }
+
+  function highlightSug(){
+    [].forEach.call($("suggestions").querySelectorAll(".suggestion"), function(li, i){
+      li.classList.toggle("active", i === activeSug);
+      if(i === activeSug) li.scrollIntoView({ block:"nearest" });
+    });
+  }
+
+  function buildSuggestions(){
+    var input = $("answerInput"), sug = $("suggestions");
+    var q = norm(input.value);
+    if(q.length < 2){
+      sug.classList.remove("open"); sug.innerHTML = "";
+      curSug = []; activeSug = -1; input.setAttribute("aria-expanded", "false");
+      return;
+    }
+    var starts = [], contains = [];
+    scopedTaxa().forEach(function(t){
+      var nf = norm(t.common_name_fr), ns = norm(t.scientific_name);
+      if(nf.indexOf(q) === 0 || ns.indexOf(q) === 0) starts.push(t);
+      else if(nf.indexOf(q) >= 0 || ns.indexOf(q) >= 0) contains.push(t);
+    });
+    curSug = starts.concat(contains).slice(0, 8);
+    activeSug = -1;
+    sug.innerHTML = "";
+    if(!curSug.length){
+      var none = document.createElement("li");
+      none.className = "s-none"; none.textContent = "Aucune espèce ne correspond";
+      sug.appendChild(none);
+    } else {
+      curSug.forEach(function(t){
+        var li = document.createElement("li");
+        li.className = "suggestion"; li.setAttribute("role", "option");
+        li.innerHTML = '<span>' + esc(hasFr(t) ? t.common_name_fr : t.scientific_name) + '</span>' +
+          (hasFr(t) ? '<span class="s-sci">' + esc(t.scientific_name) + '</span>' : '');
+        li.addEventListener("mousedown", function(e){ e.preventDefault(); submitAnswer(t); });
+        sug.appendChild(li);
+      });
+    }
+    sug.classList.add("open");
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  function submitAnswer(t){
+    if(!game || !game.current || game.current.done) return;
+    answer(t, null);
+  }
+
+  $("answerInput").addEventListener("input", buildSuggestions);
+  $("answerInput").addEventListener("focus", function(){
+    if(curSug.length) $("suggestions").classList.add("open");
+  });
+  $("answerInput").addEventListener("blur", function(){
+    setTimeout(function(){ $("suggestions").classList.remove("open"); }, 120);
+  });
+  $("answerInput").addEventListener("keydown", function(e){
+    if(game && game.current && game.current.done) return;
+    if(e.key === "ArrowDown" && curSug.length){
+      e.preventDefault(); activeSug = (activeSug + 1) % curSug.length; highlightSug();
+    } else if(e.key === "ArrowUp" && curSug.length){
+      e.preventDefault(); activeSug = (activeSug - 1 + curSug.length) % curSug.length; highlightSug();
+    } else if(e.key === "Enter"){
+      e.preventDefault(); e.stopPropagation();
+      if(activeSug >= 0 && curSug[activeSug]){ submitAnswer(curSug[activeSug]); return; }
+      var q = norm(this.value);
+      if(q){
+        var exact = scopedTaxa().filter(function(t){
+          return norm(t.common_name_fr) === q || norm(t.scientific_name) === q;
+        });
+        if(exact.length === 1) submitAnswer(exact[0]);
+        else if(curSug.length === 1) submitAnswer(curSug[0]);
+      }
+    } else if(e.key === "Escape"){
+      $("suggestions").classList.remove("open");
+    }
+  });
+  $("answerGiveUp").addEventListener("click", function(){
+    if(!game || !game.current || game.current.done) return;
+    answer(null, null, "giveup");
+  });
 
   function finish(){
     clearTimer();
@@ -896,10 +1066,11 @@
   // clavier : 1-9 pour répondre, Entrée/Espace pour continuer
   document.addEventListener("keydown", function(e){
     if($("quiz").classList.contains("hidden")) return;
-    if(e.key >= "1" && e.key <= "9"){
+    if(!isExpert() && e.key >= "1" && e.key <= "9"){
       var b = $("choices").children[+e.key - 1];
       if(b && !b.disabled) b.click();
-    } else if((e.key === "Enter" || e.key === " ") && !$("next").disabled){
+    } else if((e.key === "Enter" || e.key === " ") &&
+              game && game.current && game.current.done && !$("next").disabled){
       e.preventDefault(); nextQuestion();
     }
   });
