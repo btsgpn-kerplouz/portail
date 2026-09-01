@@ -2045,16 +2045,27 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var redacActif = estRedacteurActif();
 
-    // Revenu à « numéro seulement » (01/09/2026) : rendu visible sur tous
-    // les écrans dans une passe précédente, mais un bouton sans aucun
-    // effet visible sur Sommaire/Recherche/Sources (ces écrans ignorent
-    // state.mode) se lit comme cassé — retour d'usage justifié.
-    var modeToggleHtml = redacActif && state.vue === "numero" && numeros.length
-      ? '<div class="mode-toggle" role="group" aria-label="Bascule rédaction / vue publiée">' +
-          '<button type="button" data-action="mode" data-mode="redaction" aria-pressed="' + (state.mode === "redaction") + '">Rédaction</button>' +
-          '<button type="button" data-action="mode" data-mode="publiee" aria-pressed="' + (state.mode === "publiee") + '">Vue publiée</button>' +
+    // Deux barres d'onglets distinctes (01/09/2026, retour d'usage sur le
+    // Lot 10quater : un simple bouton « Rédaction » perdu dans le nav
+    // public ne convenait pas). Hors connexion (ou compte pas encore
+    // actif) : nav publique classique (texte souligné au survol/actif).
+    // Rédacteur actif : une seule barre en pastilles (même style que
+    // l'ancienne bascule Rédaction/Vue publiée, jugé « satisfaisant et
+    // extrapolable ») avec les 3 onglets publics EN PLUS de Rédaction/Vue
+    // publiée — Sommaire reste donc toujours la 1re pastille juste après
+    // le logo, à la même position dans les deux cas.
+    var navHtml = redacActif && numeros.length
+      ? '<div class="mode-toggle" role="group" aria-label="Navigation">' +
+          '<button type="button" data-action="vue" data-vue="sommaire" aria-pressed="' + (state.vue === "sommaire") + '">Sommaire</button>' +
+          '<button type="button" data-action="vue" data-vue="recherche" aria-pressed="' + (state.vue === "recherche") + '">Rechercher</button>' +
+          '<button type="button" data-action="vue" data-vue="sources" aria-pressed="' + (state.vue === "sources") + '">Sources</button>' +
+          '<button type="button" data-action="aller-redaction" data-mode="redaction" aria-pressed="' + (state.vue === "numero" && state.mode === "redaction") + '">Rédaction</button>' +
+          '<button type="button" data-action="aller-vue-publiee" aria-pressed="' + (state.vue === "numero" && state.mode === "publiee") + '">Vue publiée</button>' +
         '</div>'
-      : "";
+      : '<div class="bandeau-nav">' +
+          '<button type="button" data-action="vue" data-vue="sommaire"' + (state.vue === "sommaire" ? ' aria-current="page"' : '') + '>Sommaire</button>' +
+          '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
+        '</div>';
 
     var authHtml = redacActif
       ? '<span class="auth-statut">' + esc(state.auth.user.email) + '<button type="button" data-action="deconnexion">Déconnexion</button></span>'
@@ -2064,19 +2075,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       '<div class="bandeau">' +
         '<button type="button" class="brand" data-action="vue" data-vue="sommaire">' + PICTO + '<span class="brand-name">À l\'affût</span><span class="brand-sub">BTS GPN · Kerplouz</span></button>' +
         '<div class="bandeau-spacer"></div>' +
-        modeToggleHtml +
-        '<div class="bandeau-nav">' +
-          '<button type="button" data-action="vue" data-vue="sommaire"' + (state.vue === "sommaire" ? ' aria-current="page"' : '') + '>Sommaire</button>' +
-          '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
-          (redacActif ? '<button type="button" data-action="vue" data-vue="sources"' + (state.vue === "sources" ? ' aria-current="page"' : '') + '>Sources</button>' : "") +
-          // Bouton permanent pour revenir à l'espace de rédaction depuis
-          // n'importe quel écran (01/09/2026, corrige le Lot 10ter : un
-          // simple bouton de RETOUR, pas la bascule rédaction/vue publiée
-          // d'un numéro déjà ouvert — celle-ci reste modeToggleHtml,
-          // propre à la page d'un numéro). Ramène au dernier numéro
-          // affiché (state.numeroId, inchangé quand on navigue ailleurs).
-          (redacActif && numeros.length ? '<button type="button" data-action="aller-redaction"' + (state.vue === "numero" && state.mode === "redaction" ? ' aria-current="page"' : '') + '>Rédaction</button>' : "") +
-        '</div>' +
+        navHtml +
         authHtml +
       '</div>';
 
@@ -2134,6 +2133,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       return;
     }
 
+    if (ev.target.closest('[data-action="aller-vue-publiee"]')) {
+      state.vue = "numero";
+      state.mode = "publiee";
+      state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      render();
+      return;
+    }
+
     var ouvrirBtn = ev.target.closest('[data-action="ouvrir-numero"]');
     if (ouvrirBtn) {
       state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
@@ -2161,12 +2169,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       return;
     }
 
-    var modeBtn = ev.target.closest('[data-action="mode"]');
-    if (modeBtn) {
-      var modeVoulu = modeBtn.getAttribute("data-mode");
-      if (modeVoulu === "redaction" && !estRedacteurActif()) { ouvrirConnexion(); return; }
-      state.mode = modeVoulu; state.modal = null; render(); return;
-    }
 
     // ---- Lot 7 : connexion / déconnexion ----
     if (ev.target.closest('[data-action="ouvrir-connexion"]')) { ouvrirConnexion(); return; }
