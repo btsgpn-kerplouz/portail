@@ -79,26 +79,30 @@ sur `env_01US7dF8TxHiVbduaxdT74a8`, l'environnement utilisé par la routine.
 Feedback envoyé sur l'absence de mécanisme de secret dédié pour les
 routines simples (question distincte, voir historique `/feedback`).
 
-**PROCHAINE REPRISE — Lot 10 (refonte de l'écran Moisson) codé le
-01/09/2026, pas encore revalidé dans un vrai navigateur :**
-Tous les points demandés le 31/08/2026 (modale supprimée, moisson visible
-en direct dans l'écran du numéro, chaque candidat avec le même niveau de
-détail qu'une entrée + lien source cliquable, doublon « + Ajouter »
-retiré, geste « écarter avec motif » rendu visible via un panneau inline,
-déplacement d'une entrée retenue vers un autre numéro) sont codés — détail
-complet dans l'entrée « Lot 10 » ci-dessous. Un bug latent du Lot 8 a été
-corrigé au passage : le bouton « Retenir » copiait les chiffres clés d'un
-candidat dans un format que l'affichage ne savait pas lire (`undefined` à
-l'écran une fois retenu).
-**À faire en premier à la reprise** : se connecter en rédaction, ouvrir le
-n°2 brouillon (les 7 candidats réels du 1er run de veille du Lot 8) et
-vérifier dans le navigateur : la moisson s'affiche bien sous les entrées
-sans clic, chaque candidat a bien son résumé/chiffres/lien source, retenir
-un candidat affiche bien ses chiffres clés une fois devenu une entrée (pas
-de régression du bug corrigé), le panneau « Écarter… » s'ouvre/se ferme et
-écrit bien un motif dans `affut_candidats_ecartes`, et le sélecteur
-« Déplacer » d'une entrée retenue fonctionne vers un numéro existant et
-vers un nouveau brouillon créé à la volée.
+**Lots 10 à 10quater (refonte Moisson, ordre manuel des entrées,
+dépublier, rail retiré) mergés sur `main` le 01/09/2026** — PR #58, testés
+en vrai navigateur (skill `claude-in-chrome`) sur le vrai n°2 (7 candidats
+réels du Lot 8, tous retenus et publiés). Les deux scripts SQL du lot
+(`006-ordre-entrees.sql`, `fix-chiffres-candidats-legacy.sql`) ont été
+appliqués et confirmés par l'utilisateur — plus rien en attente côté
+données. **Lot 10quinquies (nav à deux barres) codé et testé en vrai
+navigateur le 01/09/2026, mais PAS ENCORE commité/poussé** — reste en
+local dans `apps/affut/index.html`/`AVANCEMENT.md` sur la branche `main`
+locale ; à committer/pousser dès que l'utilisateur le demande. Détail
+complet dans les entrées « Lot 10 » à « Lot 10quinquies » ci-dessous.
+
+**PROCHAINE REPRISE — backlog du 01/09/2026, voir « Idées pour plus tard »
+en fin de fichier pour le détail et l'ordre conseillé :**
+1. Chiffres clés éditables **en place** (pas seulement via le formulaire
+   modal, qui le permet déjà).
+2. Espace bilan/analyse (vues + clics par entrée/numéro), nouvel onglet
+   dans la barre connectée.
+3. Miniature automatique pour une URL YouTube sur une entrée.
+4. Images/illustrations générales sur une entrée (Supabase Storage).
+5. Illustration dans les tuiles du Sommaire (reprend celle de la 1re
+   entrée du numéro) — dépend du point 4.
+**Rien commencé** : l'utilisateur a explicitement demandé de tout noter
+avant un `/clear` de conversation, sans démarrer l'implémentation.
 
 ## Où trouver le cadrage
 
@@ -1240,14 +1244,64 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       ours détectés a minima sur l'ensemble des Pyrénées en 2025 »),
       confirmé visuellement — plus rien en attente côté données sur ce
       point.
+- [x] **Lot 10quinquies — deux barres d'onglets distinctes** (01/09/2026,
+      l'utilisateur n'était pas d'accord avec le bouton « Rédaction » isolé
+      du Lot 10quater). Nav publique inchangée (Sommaire/Rechercher, texte
+      classique) ; rédacteur actif : **une seule barre en pastilles**
+      (classe `.mode-toggle`, déjà utilisée pour Rédaction/Vue publiée —
+      « satisfaisant et extrapolable » selon l'utilisateur) regroupant
+      Sommaire, Rechercher, Sources, Rédaction, Vue publiée — Sommaire
+      reste donc la 1re pastille juste après le logo dans les deux cas
+      (« onglets en commun au même endroit »). Anciens `data-action="mode"`
+      (bascule 2 boutons, numéro seulement) retiré, remplacé par
+      `aller-redaction`/`aller-vue-publiee` (déjà génériques, utilisables
+      depuis n'importe quel écran). « Sources » n'a PAS été rendu public
+      malgré sa présence dans la liste donnée par l'utilisateur pour la
+      barre publique — **confirmé le 01/09/2026 : c'était une erreur de sa
+      part**, Sources reste rédaction-only comme avant, rien à changer sur
+      ce point. *Validé* en vrai navigateur (skill `claude-in-chrome`) :
+      barre unique confirmée sur Sommaire et sur un numéro, positions
+      cohérentes.
 
 ## Idées pour plus tard (hors lots planifiés)
 
-- **Espace bilan en rédaction avec compteur de vues** par entrée/numéro
-  (demandé le 30/08/2026) : le comptage lui-même est maintenant réel
-  (RPC `affut_incrementer_vue_numero`/`affut_incrementer_clic_source`
-  branchées au Lot 6, colonnes `vues`/`clics_source` déjà lues côté
-  rédaction) — reste seulement à construire l'écran qui les affiche.
+**PROCHAINE REPRISE — backlog du 01/09/2026, ordre conseillé (avis Claude,
+pas encore arbitré par l'utilisateur — il a explicitement demandé de tout
+noter sans démarrer, avant un `/clear` de conversation) :**
+
+1. **Chiffres clés éditables en place** (confirmé le 01/09/2026 : édition
+   **en place** voulue, comme titre/résumé — pas seulement via le
+   formulaire modal, qui le permet déjà). Conseillé en premier : plus
+   petit chantier, aucune nouvelle dépendance (pas de Storage, pas de
+   changement de schéma), lève une vraie friction quotidienne côté
+   rédaction. Piste : un bloc `contenteditable` reprenant la même syntaxe
+   ligne à ligne « valeur | libellé[*] » que le textarea du formulaire
+   (`chiffresToText()`/`parseChiffres()` déjà là), parsé au blur comme les
+   autres champs `ed()`.
+2. **Espace bilan/analyse (vues + clics)** par entrée/numéro (demandé le
+   30/08/2026, reprécisé le 01/09/2026 : « un onglet supplémentaire » dans
+   la barre connectée, voir Lot 10quinquies). Conseillé en second : le
+   comptage est déjà réel (RPC `affut_incrementer_vue_numero`/
+   `affut_incrementer_clic_source` branchées au Lot 6, colonnes `vues`/
+   `clics_source` déjà lues côté rédaction) — pur travail d'écran, aucune
+   nouvelle donnée à collecter.
+3. **Miniature automatique pour une URL YouTube** sur une entrée :
+   faisable sans stockage ni clé API —
+   `https://img.youtube.com/vi/<ID>/hqdefault.jpg` à partir de l'ID
+   extrait de `entree.url` (fonctionne pour toute vidéo publique, aucune
+   authentification requise). Conseillé en troisième : gain visuel rapide,
+   zéro nouvelle infrastructure, réutilise le champ `url` déjà présent sur
+   chaque entrée.
+4. **Images/illustrations générales sur une entrée** (upload libre, pas
+   seulement YouTube) : chantier plus lourd — nouveau bucket Supabase
+   Storage, policies, UI d'upload, affichage dans l'entrée. Reste à
+   définir avec l'utilisateur : illustration obligatoire ou facultative,
+   formats acceptés, poids max.
+5. **Illustration dans les tuiles du Sommaire** : ne reprendre que
+   l'illustration de la **1re entrée** du numéro (pas de montage/collage)
+   — dépend directement du point 4 (une entrée doit d'abord pouvoir
+   porter une image), donc à faire juste après/avec lui plutôt qu'en
+   chantier séparé.
 
 ## Points laissés ouverts par le brief (à trancher en cours de route)
 
