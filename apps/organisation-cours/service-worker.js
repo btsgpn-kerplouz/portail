@@ -1,4 +1,4 @@
-const CACHE_NAME = "organisation-cours-pwa-v1-1-0";
+const CACHE_NAME = "organisation-cours-pwa-v1-2-0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -44,9 +44,16 @@ self.addEventListener("fetch", event => {
     }).catch(() => caches.match("./index.html")));
     return;
   }
-  event.respondWith(caches.match(req).then(cached => cached || fetch(req).then(res => {
+  // Réseau d'abord (pas cache d'abord) pour app.js/styles.css/js/* : sans ça,
+  // une install desktop (PWA) reste bloquée sur le code mis en cache au jour
+  // de l'install tant que service-worker.js lui-même n'a pas changé (seul
+  // déclencheur qui force le navigateur à réinstaller le SW et à rafraîchir
+  // le cache) — un push-merge qui ne touche que app.js/js/*.js/styles.css
+  // passait donc inaperçu indéfiniment. Le cache ne sert plus que de repli
+  // hors-ligne.
+  event.respondWith(fetch(req).then(res => {
     const copy = res.clone();
     caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
     return res;
-  })));
+  }).catch(() => caches.match(req)));
 });
