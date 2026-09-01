@@ -110,12 +110,14 @@
   /* ================= BLOC FILTRES ================= */
   .fcard{background:var(--card);border:1px solid var(--filet);margin-bottom:16px}
   .fcard-head{
-    display:flex;align-items:baseline;gap:12px;
-    padding:13px 16px;border-bottom:1px solid var(--filet);background:var(--fond-2);
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:11px 16px;border-bottom:1px solid var(--filet);background:var(--fond-2);
   }
   .fcard-sum{
     margin-left:auto;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--t3);
   }
+  .seg-sm{flex:0 0 auto}
+  .seg-sm button{padding:5px 11px;min-height:30px;font-size:.74rem;flex:0 0 auto;white-space:nowrap}
 
   /* puces de sélection */
   .chips{
@@ -373,6 +375,10 @@
     <section class="fcard">
       <div class="fcard-head">
         <span class="label">Filtres</span>
+        <div class="seg seg-sm" id="secteur">
+          <button type="button" data-v="bzh" aria-pressed="true">Bretagne</button>
+          <button type="button" data-v="national">France métro.</button>
+        </div>
         <span class="fcard-sum" id="filterSum">aucun filtre</span>
       </div>
       <div class="chips" id="chips"></div>
@@ -506,7 +512,7 @@
   var FACETS = DATA.facets || { groupes:{}, sousGroupes:{} };
   var GROUPS = Object.keys(FACETS.groupes).sort();
 
-  var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0 };
+  var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0, secteur:"bzh" };
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
@@ -539,29 +545,46 @@
   }
 
   // ----- données de filtre -----
+  // Secteur d'abord (Bretagne = espèces avec assez d'observations research-grade
+  // en Bretagne sur iNaturalist ; France métro. = tout le référentiel), puis
+  // groupe / sous-groupe. Les compteurs sont donc recalculés à chaque rendu
+  // plutôt que lus depuis les facettes précalculées (nationales) de quiz-data.js.
+  function scopedTaxa(){
+    return cfg.secteur === "bzh" ? DATA.taxa.filter(function(t){ return t.bzh; }) : DATA.taxa;
+  }
   function pool(){
     var sousSel = Object.keys(cfg.sous);
-    return DATA.taxa.filter(function(t){
+    return scopedTaxa().filter(function(t){
       if(cfg.grp !== "tous" && t.groupe !== cfg.grp) return false;
       if(sousSel.length && !cfg.sous[t.sous_groupe]) return false;
       return true;
     });
   }
+  function groupCounts(){
+    var m = {};
+    scopedTaxa().forEach(function(t){ m[t.groupe] = (m[t.groupe] || 0) + 1; });
+    return m;
+  }
   // sous-groupes visibles (dans l'ordre des groupes) selon le groupe choisi
   function visibleSous(){
     var grps = cfg.grp === "tous" ? GROUPS : [cfg.grp];
+    var counts = {}, present = {};
+    scopedTaxa().forEach(function(t){
+      if(grps.indexOf(t.groupe) === -1) return;
+      counts[t.sous_groupe] = (counts[t.sous_groupe] || 0) + 1;
+      (present[t.groupe] || (present[t.groupe] = {}))[t.sous_groupe] = true;
+    });
     var out = [];
     grps.forEach(function(g){
-      var sg = FACETS.sousGroupes[g] || {};
-      Object.keys(sg).sort().forEach(function(k){ out.push({ key:k, count:sg[k], groupe:g }); });
+      Object.keys(present[g] || {}).sort().forEach(function(k){
+        out.push({ key:k, count:counts[k] || 0, groupe:g });
+      });
     });
     return out;
   }
   function sousCount(k){
     var n = 0;
-    Object.keys(FACETS.sousGroupes).forEach(function(g){
-      if(FACETS.sousGroupes[g][k] != null) n = FACETS.sousGroupes[g][k];
-    });
+    scopedTaxa().forEach(function(t){ if(t.sous_groupe === k) n++; });
     return n;
   }
 
@@ -569,8 +592,9 @@
   function renderGroups(){
     var box = $("grpList");
     box.innerHTML = "";
-    var rows = [{ key:"tous", label:"Tous les groupes", count:DATA.taxa.length }].concat(
-      GROUPS.map(function(g){ return { key:g, label:titleCase(g), count:FACETS.groupes[g] }; }));
+    var gc = groupCounts();
+    var rows = [{ key:"tous", label:"Tous les groupes", count:scopedTaxa().length }].concat(
+      GROUPS.map(function(g){ return { key:g, label:titleCase(g), count:gc[g] || 0 }; }));
     rows.forEach(function(r){
       var b = document.createElement("button");
       b.type = "button";
@@ -668,6 +692,10 @@
   }
 
   // ----- init des contrôles -----
+  seg($("secteur"), function(v){
+    cfg.secteur = v; cfg.grp = "tous"; cfg.sous = {};
+    renderFilters();
+  });
   seg($("count"),     function(v){ cfg.count = +v; renderFilters(); });
   seg($("labelmode"), function(v){ cfg.labelmode = v; });
   seg($("chrono"),    function(v){ cfg.chrono = +v; });
@@ -747,10 +775,11 @@
     render();
   }
 
-  // Distracteurs tirés de TOUT le jeu de données pour rester plausibles ;
-  // on élargit si le vivier est trop petit.
+  // Distracteurs tirés de tout le secteur en cours (Bretagne ou France) pour
+  // rester plausibles et cohérents avec le tirage ; on élargit si le vivier
+  // filtré est trop petit.
   function distractorBase(answer){
-    var all = DATA.taxa.filter(function(t){ return t.id !== answer.id; });
+    var all = scopedTaxa().filter(function(t){ return t.id !== answer.id; });
     var scope = DIFF[cfg.diff].scope;
     var sameGenre = all.filter(function(t){ return t.genre && t.genre === answer.genre; });
     var sameSous  = all.filter(function(t){ return t.sous_groupe === answer.sous_groupe && t.groupe === answer.groupe; });
