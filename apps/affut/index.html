@@ -189,13 +189,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entete-compteur .l{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-3)}
 .entete-boutons{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .btn-ligne{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;border:1px solid var(--af-redaction);color:var(--af-redaction)}
+.btn-ligne.danger{border-color:var(--af-mort);color:var(--af-mort)}
+.btn-ligne.danger:hover{background:var(--af-mort);color:var(--af-sur-accent)}
 .btn-plein{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:9px 15px;font-weight:700;background:var(--af-redaction);color:var(--af-sur-redaction)}
 
-/* ---- corps : grille vue publiée (colonne + rail) ---- */
+/* ---- corps : une seule colonne pleine largeur, rédaction et vue publiée
+   (le rail à droite d'un numéro publié a été retiré le 01/09/2026, doublon
+   inutile avec le bouton « Ouvrir la source » déjà sur chaque entrée) ---- */
 .corps{display:block}
-.mode-publiee .corps{display:grid;grid-template-columns:1fr 340px}
-.colonne{border-right:1px solid var(--af-filet)}
-.mode-redaction .colonne{border-right:0}
 
 .rubrique-tete{background:var(--af-surface-3);border-top:1px solid var(--af-filet);border-bottom:1px solid var(--af-filet);padding:7px 20px;display:flex;align-items:center;gap:12px}
 .rubrique-tete .nom{font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--af-brun-rubrique)}
@@ -210,6 +211,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entree-row-gauche{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:9px 16px}
 .mode-publiee .entree-row{align-items:stretch}
 .valide-case{flex:none;margin-top:0}
+
+/* ---- ordre des entrées au sein d'une rubrique (lot 10bis) ---- */
+.reorder-btns{flex:none;display:flex;flex-direction:column;gap:2px}
+.btn-reorder{width:20px;height:18px;padding:0;line-height:1;font-size:9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-2)}
+.btn-reorder:hover:not(:disabled){background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
+.btn-reorder:disabled{opacity:.3}
 
 .etat-pastille{flex:none;font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3);white-space:nowrap}
 .etat-pastille.ok{color:var(--af-valide)}
@@ -272,15 +279,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .case-bloc{border-color:var(--af-encre-3)}
 .case-bloc:checked{background:var(--af-encre-3);border-color:var(--af-encre-3)}
 
-/* ---- rail des sources (vue publiée, bureau) ---- */
-.rail{padding:20px 18px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;align-self:start}
-.rail-titre{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-brun-rubrique)}
-.rail-liste{display:flex;flex-direction:column;gap:10px}
-.rail-item{border:1px solid var(--af-filet-moyen);background:var(--af-surface);padding:10px 12px;display:flex;flex-direction:column;gap:4px;text-decoration:none}
-.rail-item .titre{font-size:12px;font-weight:700;line-height:1.35;color:var(--af-accent)}
-.rail-item .domaine{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-2)}
-.rail-note{border-top:1px solid var(--af-filet);padding-top:14px;font-size:11.5px;line-height:1.55;color:var(--af-encre-2)}
-
 .pied{padding:14px 22px;font-family:var(--af-police-mono);font-size:10px;line-height:1.6;color:var(--af-encre-3);border-top:1px solid var(--af-filet)}
 
 /* ---- modal d'ajout / édition d'entrée (rédaction) ---- */
@@ -319,8 +317,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .nc-badge .dernier-tag{align-self:flex-start;border:1px solid var(--af-sur-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;margin-top:2px}
 .nc-corps{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .nc-titre{font-size:16px;font-weight:700;color:var(--af-encre)}
-.nc-liste{padding-left:16px;margin:0;font-size:12.5px;line-height:1.6;color:var(--af-encre-2)}
-.nc-liste li.plus{list-style:none;margin-left:-16px;color:var(--af-encre-3)}
+.nc-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.nc-liste li{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nc-titre-entree{font-size:12.5px;line-height:1.4;color:var(--af-encre-2)}
+.nc-source-pastille{flex:none;font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-brun-rubrique);border:1px solid var(--af-filet-pastille);padding:0 5px;white-space:nowrap}
 .nc-droite{flex:none;width:170px;padding:14px 16px;border-left:1px solid var(--af-filet);display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;text-align:right}
 .nc-compte{display:flex;flex-direction:column;align-items:flex-end}
 .nc-compte .n{font-family:var(--af-police-mono);font-size:21px;font-weight:700;color:var(--af-encre)}
@@ -464,7 +464,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   body{background:var(--af-print-papier)}
   .page{padding:0;display:block}
   .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
-  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.rail,.entree-actions,.valide-case,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
   /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
   .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
   .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
@@ -475,7 +475,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .print-meta{font-family:var(--af-police-mono);font-size:9px;color:var(--af-print-encre);white-space:nowrap}
   .corps,.mode-publiee .corps{display:block}
   /* grille 2 colonnes, largeur fixe / hauteur libre (lot 4quater) */
-  .colonne{border-right:0;column-count:2;column-gap:10mm}
+  .colonne{column-count:2;column-gap:10mm}
   /* rubrique-tete + sa 1re entrée forment un bloc insécable (retour d'usage
      30/08/2026) : sans ça, la balance automatique des colonnes du navigateur
      peut laisser le titre de rubrique seul en bas d'une colonne pendant que
@@ -514,9 +514,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .select-numero-wrap{justify-content:space-between}
   .select-numero{flex:1}
   .entete-boutons{justify-content:space-between}
-  .mode-publiee .corps{display:block}
-  .colonne{border-right:0}
-  .rail{display:none}
   .entree-row{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
   .entree-row-gauche{padding:9px 12px}
   .entree-row-droite{width:100%}
@@ -851,13 +848,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function versLigneEntree(e, numeroId){
     return {
       id: e.id, numero_id: numeroId, rubrique: e.rubrique, valide: e.valide, origine: e.origine,
+      ordre: e.ordre || 0,
       source: e.source, url: e.url, lien_mort: !!e.lienMort, lien_mort_depuis: e.lienMortDepuis || null,
       titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs
     };
   }
   function depuisLigneEntree(r){
     return {
-      id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, source: r.source || {},
+      id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, ordre: r.ordre || 0, source: r.source || {},
       url: r.url, lienMort: r.lien_mort, lienMortDepuis: r.lien_mort_depuis,
       titre: r.titre, chiffres: r.chiffres || [], resume: r.resume, usage: r.usage_en_cours,
       blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source
@@ -1190,13 +1188,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return c.accent ? "<b>" + v + "</b>" + esc(c.l) : v + esc(c.l);
   }
 
-  // Un candidat de moisson (Edge Function affut-veille) porte des chiffres
-  // en chaîne brute, sans couple valeur/libellé — convertis au même format
-  // {v,l} que le reste de l'app au moment de le retenir comme entrée
-  // (sinon flatChiffres() essaie de lire .v/.l sur une chaîne et affiche
-  // "undefined").
+  // Un candidat de moisson (Edge Function affut-veille) porte ses chiffres
+  // en chaînes brutes au format "valeur | libellé" (voir la consigne
+  // donnée à l'agent, documents/brief-veille.md) — même convention que le
+  // textarea du formulaire d'entrée (parseChiffreLigne ci-dessous), donc
+  // réutilisée telle quelle au moment de retenir un candidat comme entrée.
+  // Bug corrigé le 01/09/2026 : la 1re version empaquetait la chaîne
+  // entière dans `l` sans la découper — en plus d'un antique "undefined"
+  // (le tout premier bug, .v/.l lus sur une chaîne brute jamais convertie),
+  // ça produisait des lignes bien plus longues que prévu ("108 | ours
+  // détectés…" affiché tel quel), qui débordaient de l'écran une fois
+  // enregistrées.
   function chiffresCandidatVersBlocs(chiffres){
-    return (chiffres || []).map(function(s){ return { v: "", l: s }; });
+    return (chiffres || []).map(function(s){ return parseChiffreLigne(String(s || "").trim()); });
   }
 
   function flatChiffres(e){
@@ -1234,16 +1238,23 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="usage"><div class="usage-lisere"><span>Privé</span></div><div class="usage-corps"><div class="usage-titre">Usage en cours — jamais publié</div><p class="usage-texte">' + ed(esc(e.usage), e.id + ".usage") + '</p></div></div>';
   }
 
-  function renderEntree(e){
+  function renderEntree(e, estPremier, estDernier){
     var redac = state.mode === "redaction";
     var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
     var actions = redac
       ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="delete-entree" data-id="' + e.id + '">Supprimer</button></div>'
       : "";
+    // Ordre d'affichage au sein de la rubrique (Lot 10bis) : boutons compacts
+    // Monter/Descendre, désactivés en butée de rubrique plutôt que masqués
+    // (repère visuel stable, pas de saut de mise en page).
+    var reorder = redac
+      ? '<div class="reorder-btns"><button type="button" class="btn-reorder" data-action="monter-entree" data-id="' + e.id + '" title="Monter dans la rubrique"' + (estPremier ? " disabled" : "") + '>▲</button><button type="button" class="btn-reorder" data-action="descendre-entree" data-id="' + e.id + '" title="Descendre dans la rubrique"' + (estDernier ? " disabled" : "") + '>▼</button></div>'
+      : "";
 
     var row =
       '<div class="entree-row">' +
         '<div class="entree-row-gauche">' +
+          reorder +
           (redac ? '<input type="checkbox" class="case valide-case" ' + (e.valide ? "checked" : "") + ' data-action="toggle-valide" data-id="' + e.id + '" title="Entrée retenue">' : "") +
           '<div class="flat">' +
             '<div class="flat-meta">' +
@@ -1295,33 +1306,75 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       '<select id="deplacer-' + e.id + '" data-action="deplacer-select" data-id="' + e.id + '">' + options + '</select></div>';
   }
 
+  // Ordre des rubriques (blocs) inchangé : 1re apparition dans `list`, comme
+  // avant le Lot 10bis. Seul l'ordre DES ENTRÉES à l'intérieur d'une même
+  // rubrique suit désormais `ordre` (boutons Monter/Descendre, voir
+  // deplacerOrdreEntree()) — trié uniquement au sein de chaque case de
+  // `map`, donc deux rubriques différentes peuvent réutiliser les mêmes
+  // valeurs d'`ordre` sans aucun effet l'une sur l'autre.
   function groupByRubrique(list){
     var order = [], map = {};
     list.forEach(function(e){
       if (!map[e.rubrique]) { map[e.rubrique] = []; order.push(e.rubrique); }
       map[e.rubrique].push(e);
     });
-    return order.map(function(r){ return { rubrique: r, items: map[r] }; });
+    return order.map(function(r){
+      var items = map[r].slice().sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+      return { rubrique: r, items: items };
+    });
   }
 
-  function renderRail(list){
-    return '<div class="rail"><div class="rail-titre">Les ' + (list.length === 3 ? "trois" : list.length) + ' sources du numéro</div><div class="rail-liste">' +
-      list.map(function(e){
-        return '<a class="rail-item" href="#' + e.id + '"><span class="titre">' + esc(e.titre) + '</span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
-      }).join("") +
-      '</div><div class="rail-note">Ce sommaire ne liste pas les titres du numéro mais <strong>ses documents</strong> : c\'est la seconde porte d\'entrée vers les sources.</div></div>';
+  // Voisines d'une entrée au sein de la même rubrique du même numéro,
+  // triées par ordre — base des boutons Monter/Descendre.
+  function voisinsRubrique(e){
+    return entrees.filter(function(x){ return x.rubrique === e.rubrique; })
+      .sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+  }
+
+  // Prochaine valeur d'`ordre` libre pour une nouvelle entrée dans une
+  // rubrique donnée (nouvelle entrée manuelle, ou candidat retenu de la
+  // moisson) : ajoutée en fin de la rubrique visée, jamais mélangée au
+  // milieu par surprise.
+  function prochainOrdreRubrique(rubrique){
+    return entrees.filter(function(x){ return x.rubrique === rubrique; })
+      .reduce(function(m, x){ return Math.max(m, (x.ordre || 0) + 1); }, 0);
+  }
+
+  // Déplace une entrée d'un cran (sens -1 = monter, +1 = descendre) au sein
+  // de sa rubrique : réassigne 0..n-1 à TOUTES les entrées de cette
+  // rubrique plutôt que d'échanger deux valeurs — évite tout cas
+  // particulier avec des `ordre` par défaut à 0 ou déjà égaux.
+  function deplacerOrdreEntree(id, sens){
+    var e = entrees.filter(function(x){ return x.id === id; })[0];
+    if (!e) return;
+    var voisins = voisinsRubrique(e);
+    var idx = voisins.indexOf(e);
+    var idxCible = idx + sens;
+    if (idxCible < 0 || idxCible >= voisins.length) return;
+    voisins.splice(idx, 1);
+    voisins.splice(idxCible, 0, e);
+    voisins.forEach(function(x, i){
+      if (x.ordre !== i) { x.ordre = i; ecrireEntree(x.id, { ordre: i }); }
+    });
+    render();
+  }
+
+  // Une ligne "valeur | libellé" (le "*" final marque l'accent) -> {v,l[,accent]}.
+  // Partagée entre le textarea de saisie manuelle (parseChiffres) et les
+  // chiffres bruts d'un candidat de moisson (chiffresCandidatVersBlocs) —
+  // même convention des deux côtés.
+  function parseChiffreLigne(line){
+    var idx = line.indexOf("|");
+    if (idx === -1) return { v: line, l: "" };
+    var v = line.slice(0, idx).trim();
+    var l = line.slice(idx + 1).trim();
+    var accent = /\*$/.test(l);
+    if (accent) l = l.replace(/\*$/, "").trim();
+    return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
   }
 
   function parseChiffres(text){
-    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(function(line){
-      var idx = line.indexOf("|");
-      if (idx === -1) return { v: line, l: "" };
-      var v = line.slice(0, idx).trim();
-      var l = line.slice(idx + 1).trim();
-      var accent = /\*$/.test(l);
-      if (accent) l = l.replace(/\*$/, "").trim();
-      return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
-    });
+    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(parseChiffreLigne);
   }
 
   function chiffresToText(chiffres){
@@ -1387,14 +1440,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return order.map(function(m){ return { mois: m, items: map[m] }; });
   }
 
+  // Toutes les actualités du numéro, titre + nom de la source en pastille,
+  // en texte simple (pas de lien : cette tuile sert à se repérer avant
+  // d'ouvrir le numéro, pas à ouvrir directement une source depuis le
+  // Sommaire — retour d'usage du 01/09/2026, remplace l'ancienne
+  // troncature à 3 titres + « et N autres »).
   function renderNumeroCarte(n, dernier){
     var validees = n.entrees.filter(function(e){ return e.valide; });
-    var titresHtml = validees.slice(0, 3).map(function(e){ return "<li>" + esc(e.titre) + "</li>"; }).join("");
-    var reste = validees.length - 3;
-    var plusHtml = reste > 0 ? '<li class="plus">et ' + reste + ' autre' + (reste > 1 ? "s" : "") + ' actualité' + (reste > 1 ? "s" : "") + '</li>' : "";
+    var titresHtml = validees.map(function(e){
+      return '<li><span class="nc-source-pastille">' + esc(e.source.nom) + '</span><span class="nc-titre-entree">' + esc(e.titre) + '</span></li>';
+    }).join("");
     return '<div class="numero-carte' + (dernier ? " dernier" : "") + '">' +
       '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
-      '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + plusHtml + '</ul></div>' +
+      '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + '</ul></div>' +
       '<div class="nc-droite"><div class="nc-compte"><span class="n tab-num">' + validees.length + '</span><span class="l">actualités publiées</span></div><button type="button" class="nc-ouvrir" data-action="ouvrir-numero" data-numero="' + n.numero + '"><span>Ouvrir le numéro</span><span class="fleche">→</span></button></div>' +
     '</div>';
   }
@@ -1723,7 +1781,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var corpsHtml = alerte !== null ? alerte : groupes.map(function(g){
       var teteHtml = '<div class="rubrique-tete"><span class="nom">' + esc(g.rubrique) + '</span><span class="filet"></span>' +
         (state.mode !== "redaction" ? '<span class="position">' + (compte + 1) + ' sur ' + total + '</span>' : "") + '</div>';
-      var itemsHtml = g.items.map(function(e){ compte++; return renderEntree(e); });
+      var itemsHtml = g.items.map(function(e, i){ compte++; return renderEntree(e, i === 0, i === g.items.length - 1); });
       // Rubrique-tête + sa 1re entrée regroupées dans un même bloc : en
       // impression (grille 2 colonnes), ça évite qu'un titre de rubrique
       // se retrouve seul en bas d'une colonne, séparé de sa carte.
@@ -1731,18 +1789,27 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }).join("");
 
     var publieBadge = numero.statut === "publie" ? '<span class="etat-pastille ok">✓ publié</span>' : "";
+    // Dépublier (demandé le 01/09/2026) : remet un numéro publié en
+    // brouillon (invisible des élèves, à nouveau modifiable librement) —
+    // jusqu'ici publier était une action à sens unique, aucun moyen de
+    // revenir en arrière sans intervention en base.
+    var boutonPublication = numero.statut === "publie"
+      ? '<button class="btn-ligne danger" type="button" data-action="depublier-numero">Dépublier le n° ' + numero.numero + '</button>'
+      : '<button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button>';
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
-        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button><button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button></div>' +
+        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '</div>' +
         '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
         devOutilsCollecte() +
       '</div>'
       : "";
 
-    var corpsWrap = state.mode === "redaction"
-      ? '<div class="corps"><div class="colonne">' + corpsHtml + renderMoissonSection() + '</div></div>'
-      : '<div class="corps"><div class="colonne">' + corpsHtml + '</div>' + renderRail(visibles) + '</div>';
+    // Rail à droite ("Les N sources du numéro") retiré (retour d'usage du
+    // 01/09/2026 : doublon inutile avec le bouton « Ouvrir la source » déjà
+    // sur chaque entrée) — une seule colonne pleine largeur, même structure
+    // en rédaction et en vue publiée.
+    var corpsWrap = '<div class="corps"><div class="colonne">' + corpsHtml + (state.mode === "redaction" ? renderMoissonSection() : "") + '</div></div>';
 
     var banniere = state.mode === "redaction" ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>' : "";
 
@@ -1978,6 +2045,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var redacActif = estRedacteurActif();
 
+    // Revenu à « numéro seulement » (01/09/2026) : rendu visible sur tous
+    // les écrans dans une passe précédente, mais un bouton sans aucun
+    // effet visible sur Sommaire/Recherche/Sources (ces écrans ignorent
+    // state.mode) se lit comme cassé — retour d'usage justifié.
     var modeToggleHtml = redacActif && state.vue === "numero" && numeros.length
       ? '<div class="mode-toggle" role="group" aria-label="Bascule rédaction / vue publiée">' +
           '<button type="button" data-action="mode" data-mode="redaction" aria-pressed="' + (state.mode === "redaction") + '">Rédaction</button>' +
@@ -1998,6 +2069,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '<button type="button" data-action="vue" data-vue="sommaire"' + (state.vue === "sommaire" ? ' aria-current="page"' : '') + '>Sommaire</button>' +
           '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
           (redacActif ? '<button type="button" data-action="vue" data-vue="sources"' + (state.vue === "sources" ? ' aria-current="page"' : '') + '>Sources</button>' : "") +
+          // Bouton permanent pour revenir à l'espace de rédaction depuis
+          // n'importe quel écran (01/09/2026, corrige le Lot 10ter : un
+          // simple bouton de RETOUR, pas la bascule rédaction/vue publiée
+          // d'un numéro déjà ouvert — celle-ci reste modeToggleHtml,
+          // propre à la page d'un numéro). Ramène au dernier numéro
+          // affiché (state.numeroId, inchangé quand on navigue ailleurs).
+          (redacActif && numeros.length ? '<button type="button" data-action="aller-redaction"' + (state.vue === "numero" && state.mode === "redaction" ? ' aria-current="page"' : '') + '>Rédaction</button>' : "") +
         '</div>' +
         authHtml +
       '</div>';
@@ -2041,6 +2119,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var vueBtn = ev.target.closest('[data-action="vue"]');
     if (vueBtn) {
       state.vue = vueBtn.getAttribute("data-vue");
+      state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
+      render();
+      return;
+    }
+
+    if (ev.target.closest('[data-action="aller-redaction"]')) {
+      state.vue = "numero";
+      state.mode = "redaction";
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
       state.ecarterOuvert = null; state.deplacerOuvert = null; state.publicationRefusee = null;
       render();
@@ -2155,7 +2242,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }
     if (ev.target.closest('[data-action="preview-normal"]')) { state.previewEtat = null; render(); return; }
 
-    // ---- lot 9 : moisson intégrée à l'écran du numéro (états ②③④) ----
+    // ---- lot 10 : moisson intégrée à l'écran du numéro (états ②③④) ----
     var retenirBtn = ev.target.closest('[data-action="retenir-candidat"]');
     if (retenirBtn) {
       var cid = retenirBtn.getAttribute("data-id");
@@ -2164,6 +2251,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         numero.moisson = numero.moisson.filter(function(c){ return c.id !== cid; });
         var nouvelleEntree = {
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
+          ordre: prochainOrdreRubrique(cand.rubrique),
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
           titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
           blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
@@ -2215,6 +2303,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       return;
     }
 
+    // Ordre d'affichage au sein d'une rubrique (Lot 10bis).
+    var monterBtn = ev.target.closest('[data-action="monter-entree"]');
+    if (monterBtn) { deplacerOrdreEntree(monterBtn.getAttribute("data-id"), -1); return; }
+
+    var descendreBtn = ev.target.closest('[data-action="descendre-entree"]');
+    if (descendreBtn) { deplacerOrdreEntree(descendreBtn.getAttribute("data-id"), 1); return; }
+
     // ---- lot 4 : publication (état ⑥) ----
     if (ev.target.closest('[data-action="publier-numero"]')) {
       var fautives = validerPublication();
@@ -2225,6 +2320,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         ecrireNumero({ statut: "publie" });
       }
       render();
+      return;
+    }
+
+    // Dépublier (Lot 10bis) : demande confirmation, remet le numéro en
+    // brouillon — retiré immédiatement du Sommaire/Recherche/vue publique
+    // (les vues publiques ne servent que les numéros statut=publie).
+    if (ev.target.closest('[data-action="depublier-numero"]')) {
+      if (window.confirm("Dépublier le n° " + numero.numero + " ? Il redevient un brouillon, invisible des élèves, jusqu'à sa republication.")) {
+        numero.statut = "brouillon";
+        ecrireNumero({ statut: "brouillon" });
+        render();
+      }
       return;
     }
 
@@ -2467,12 +2574,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var id = editing ? state.modal.id : "e" + Date.now();
     var existing = editing ? entrees.filter(function(x){ return x.id === id; })[0] : null;
     var chiffres = parseChiffres(val("chiffres"));
+    var rubriqueSaisie = val("rubrique") || "Sans rubrique";
 
     var entry = {
       id: id,
-      rubrique: val("rubrique") || "Sans rubrique",
+      rubrique: rubriqueSaisie,
       valide: existing ? existing.valide : true,
       origine: existing ? existing.origine : "manuel",
+      // Conserve la place déjà occupée dans sa rubrique en modification ;
+      // une nouvelle entrée s'ajoute en fin de la rubrique visée (Lot 10bis).
+      ordre: existing ? existing.ordre : prochainOrdreRubrique(rubriqueSaisie),
       source: { nom: val("nom"), territoire: val("territoire"), domaine: val("domaine"), date: val("date") },
       url: val("url") || ("#" + id),
       titre: val("titre"),
