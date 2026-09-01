@@ -40,8 +40,9 @@ node export_quiz_data.mjs        # quiz.db -> quiz-data.js
 
 Puis recopier le `quiz-data.js` obtenu dans ce dossier.
 
-## Note
+## Icônes
 
-Les icônes PWA sont en SVG unique (`icons/icon.svg`) faute d'outil de
-rastérisation dans l'environnement de build ; à compléter par des PNG
-192/512 si besoin d'une meilleure prise en charge de l'installation.
+`icons/icon.svg` (source, œil rouille sur fond `#9c3d2e`) + `icon-192.png` /
+`icon-512.png` (rastérisées depuis le SVG). Pour les régénérer après un
+changement de couleur/tracé : ouvrir le SVG dans un navigateur, le dessiner
+sur un `<canvas>` de 192 puis 512, `toDataURL('image/png')`.

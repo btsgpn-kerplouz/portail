@@ -3,13 +3,15 @@
    Les photos iNaturalist sont des ressources distantes (cross-origin) : elles ne
    sont JAMAIS mises en cache — l'app a besoin du réseau pour afficher les images. */
 
-const CACHE_NAME = 'coup-doeil-shell-v1';
+const CACHE_NAME = 'coup-doeil-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './quiz-data.js',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './fonts/ibm-plex-sans.woff2',
   './fonts/ibm-plex-serif-bold.woff2',
   './fonts/jetbrains-mono.woff2'
