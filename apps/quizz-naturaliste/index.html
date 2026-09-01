@@ -928,10 +928,20 @@
   }
 
   // ----- mode Expert : champ de saisie + suggestions -----
+  // L'autocomplétion ne propose que des espèces du MÊME groupe taxo que la
+  // réponse (dans le secteur en cours) : on voit déjà sur la photo si c'est un
+  // oiseau, une plante… — ça n'aide donc pas, mais ça garde une liste lisible.
+  function answerScope(){
+    var grp = (game && game.current && game.current.answer) ? game.current.answer.groupe : null;
+    return scopedTaxa().filter(function(t){ return !grp || t.groupe === grp; });
+  }
+
   function resetAnswerField(){
     var input = $("answerInput");
     input.value = ""; input.disabled = false;
     input.setAttribute("aria-expanded", "false");
+    var grp = (game && game.current && game.current.answer) ? game.current.answer.groupe : null;
+    input.placeholder = grp ? ("Nom de l'espèce · " + titleCase(grp)) : "Tape le nom de l'espèce…";
     $("suggestions").innerHTML = ""; $("suggestions").classList.remove("open");
     curSug = []; activeSug = -1;
     $("answerGiveUp").disabled = false;
@@ -956,7 +966,7 @@
       return;
     }
     var starts = [], contains = [];
-    scopedTaxa().forEach(function(t){
+    answerScope().forEach(function(t){
       var nf = norm(t.common_name_fr), ns = norm(t.scientific_name);
       if(nf.indexOf(q) === 0 || ns.indexOf(q) === 0) starts.push(t);
       else if(nf.indexOf(q) >= 0 || ns.indexOf(q) >= 0) contains.push(t);
@@ -1005,7 +1015,7 @@
       if(activeSug >= 0 && curSug[activeSug]){ submitAnswer(curSug[activeSug]); return; }
       var q = norm(this.value);
       if(q){
-        var exact = scopedTaxa().filter(function(t){
+        var exact = answerScope().filter(function(t){
           return norm(t.common_name_fr) === q || norm(t.scientific_name) === q;
         });
         if(exact.length === 1) submitAnswer(exact[0]);

@@ -9,8 +9,9 @@ optionnel, clavier `1`–`9` / `Entrée`.
 **Difficulté** : *Découverte* / *Entraînement* = QCM 4 choix (distracteurs de
 plus en plus proches taxonomiquement) ; *Expert* = **pas de propositions**, on
 saisit le nom (français ou scientifique) dans un champ avec **autocomplétion**
-sur toutes les espèces du secteur (flèches + `Entrée`, ou clic ; « Je ne sais
-pas » révèle la réponse et la compte fausse).
+limitée aux espèces **du même groupe taxo que la réponse** (oiseau, plante,
+insecte…) et du secteur en cours — flèches + `Entrée`, ou clic ; « Je ne sais
+pas » révèle la réponse et la compte fausse.
 
 App **purement statique + PWA coquille**, sur le modèle de
 `vegetations-armoricaines`. Pas de Supabase, pas d'auth.
