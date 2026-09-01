@@ -4060,6 +4060,33 @@ function wireChecklist(key) {
   });
 }
 
+/* Bouton ⧉ de l'encart « Améliorations de l'appli » : copie la liste (en
+   attente + faites) en texte brut dans le presse-papiers, pour la coller
+   telle quelle dans une conversation (l'IA n'a pas d'accès direct à la base). */
+async function copyDevNotesToClipboard() {
+  const items = checklistItems('devnotes');
+  const bouton = $('#copyDevNotesButton');
+  if (!items.length) {
+    if (bouton) flashIconButton(bouton, 'Rien à copier');
+    return;
+  }
+  const texte = items
+    .map(t => `- [${t.done ? 'x' : ' '}] ${t.text}`)
+    .join('\n');
+  try {
+    await navigator.clipboard.writeText(texte);
+    if (bouton) flashIconButton(bouton, '✓');
+  } catch {
+    if (bouton) flashIconButton(bouton, '⚠');
+  }
+}
+function flashIconButton(bouton, glyphe, dureeMs = 1400) {
+  const original = bouton.textContent;
+  bouton.textContent = glyphe;
+  bouton.disabled = true;
+  setTimeout(() => { bouton.textContent = original; bouton.disabled = false; }, dureeMs);
+}
+
 function setWeekNotesStatus(text) {
   const status = $('#weekNotesStatus');
   if (status) status.textContent = text || '';
@@ -9308,6 +9335,7 @@ function bindDashTuiles() {
   $('#closePeriodesDialog')?.addEventListener('click', () => $('#periodesDialog')?.close());
   $('#closeReunionsDialog')?.addEventListener('click', () => $('#reunionsDialog')?.close());
   $('#closeDevNotesDialog')?.addEventListener('click', () => $('#devNotesDialog')?.close());
+  $('#copyDevNotesButton')?.addEventListener('click', () => copyDevNotesToClipboard());
   $('#closeMaterielDialog')?.addEventListener('click', () => $('#materielDialog')?.close());
   $('#materielGotoCatalogue')?.addEventListener('click', afficherMaterielCatalogue);
   $('#materielCatalogueBack')?.addEventListener('click', afficherMaterielGrille);
