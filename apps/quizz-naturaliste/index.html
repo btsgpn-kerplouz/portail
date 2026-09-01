@@ -199,6 +199,11 @@
   }
   .seg button:hover{background:var(--fond)}
   .seg button[aria-pressed="true"]{background:var(--acc);color:#fff;font-weight:700}
+  /* 4 options (Difficulté) : passe en 2×2 quand la ligne devient trop étroite */
+  @media (max-width:560px){
+    .seg--wrap{flex-wrap:wrap}
+    .seg--wrap button{flex:1 1 45%}
+  }
 
   .opts{margin-top:20px;border-top:1px solid var(--filet-soft);padding-top:14px}
   .opts > summary{
@@ -433,9 +438,10 @@
       <div class="segrow">
         <div class="segblock">
           <span class="label">Difficulté</span>
-          <div class="seg" id="diff">
+          <div class="seg seg--wrap" id="diff">
             <button data-v="decouverte">Découverte</button>
             <button data-v="entrainement" aria-pressed="true">Entraînement</button>
+            <button data-v="confirme">Confirmé</button>
             <button data-v="expert">Expert</button>
           </div>
           <p class="hint" id="diffHint"></p>
@@ -560,9 +566,10 @@
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
-    decouverte:   { scope:"mixte",      name:"découverte",   label:"Propositions très différentes entre elles." },
-    entrainement: { scope:"sousgroupe", name:"entraînement", label:"Propositions du même sous-groupe, à bien regarder." },
-    expert:       { scope:"genre",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion." }
+    decouverte:   { scope:"mixte",       name:"découverte",   label:"Propositions très différentes entre elles." },
+    entrainement: { scope:"sousgroupe",  name:"entraînement", label:"Propositions du même sous-groupe (passereaux, limicoles…), à bien regarder." },
+    confirme:     { scope:"genrefamille", name:"confirmé",    label:"Propositions du même genre si possible, sinon de la même famille — espèces jumelles." },
+    expert:       { scope:"saisie",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion." }
   };
 
   // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
@@ -838,12 +845,25 @@
   function distractorBase(answer){
     var all = scopedTaxa().filter(function(t){ return t.id !== answer.id; });
     var scope = DIFF[cfg.diff].scope;
-    var sameGenre = all.filter(function(t){ return t.genre && t.genre === answer.genre; });
-    var sameSous  = all.filter(function(t){ return t.sous_groupe === answer.sous_groupe && t.groupe === answer.groupe; });
-    var sameGrp   = all.filter(function(t){ return t.groupe === answer.groupe; });
-    if(scope === "genre"  && sameGenre.length >= 3) return sameGenre;
-    if((scope === "genre" || scope === "sousgroupe") && sameSous.length >= 3) return sameSous;
-    if(scope !== "mixte"  && sameGrp.length >= 3) return sameGrp;
+    var sameSous = all.filter(function(t){ return t.sous_groupe === answer.sous_groupe && t.groupe === answer.groupe; });
+    var sameGrp  = all.filter(function(t){ return t.groupe === answer.groupe; });
+
+    // « Confirmé » : d'abord le même genre (espèces jumelles) ; si le vivier de
+    // congénères est mince, on le complète avec la même famille taxo, puis avec
+    // le sous-groupe. On retombe sur le groupe seulement en dernier recours.
+    if(scope === "genrefamille"){
+      var sameGenre = all.filter(function(t){ return t.genre && t.genre === answer.genre; });
+      if(sameGenre.length >= 3) return sameGenre;
+      var proche = sameGenre.slice();
+      if(answer.famille) all.forEach(function(t){
+        if(t.famille === answer.famille && proche.indexOf(t) < 0) proche.push(t);
+      });
+      if(proche.length >= 3) return proche;
+      sameSous.forEach(function(t){ if(proche.indexOf(t) < 0) proche.push(t); });
+      if(proche.length >= 3) return proche;
+    }
+    if(scope !== "mixte" && sameSous.length >= 3) return sameSous;
+    if(scope !== "mixte" && sameGrp.length >= 3) return sameGrp;
     return sameGrp.length >= 3 ? sameGrp : all;
   }
 
