@@ -1,7 +1,11 @@
 # Coup d'œil
 
-Entraînement à la **reconnaissance visuelle d'espèces** (oiseaux, plantes,
-insectes, mammifères, herpéto) pour le BTS GPN. QCM à partir de photos :
+Entraînement à la **reconnaissance visuelle d'espèces** (oiseaux, insectes,
+mammifères, herpéto) pour le BTS GPN. QCM à partir de photos :
+
+> Le groupe **plantes** est présent dans les données mais **masqué**
+> (`HIDDEN_GROUPS` dans `index.html`) le temps d'être retravaillé.
+
 secteur **Bretagne / France métropolitaine** → **groupe (colonne,
 silhouettes)** → **sous-groupes (cases à cocher, puces retirables)**, chrono
 optionnel, clavier `1`–`9` / `Entrée`.

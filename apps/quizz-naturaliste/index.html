@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <meta name="theme-color" content="#191b16">
-<meta name="description" content="Entraînement à la reconnaissance visuelle d'espèces (oiseaux, plantes, insectes, mammifères, herpéto) pour le BTS GPN. Photos iNaturalist sous licence libre.">
+<meta name="description" content="Entraînement à la reconnaissance visuelle d'espèces (oiseaux, insectes, mammifères, herpéto) pour le BTS GPN. Photos iNaturalist sous licence libre.">
 <title>Coup d'œil — reconnaissance d'espèces — BTS GPN</title>
 
 <link rel="manifest" href="./manifest.webmanifest">
@@ -584,7 +584,13 @@
               "cc-by-nc":"CC BY-NC", "cc-by-nd":"CC BY-ND",
               "cc-by-nc-sa":"CC BY-NC-SA", "cc-by-nc-nd":"CC BY-NC-ND" };
   var FACETS = DATA.facets || { groupes:{}, sousGroupes:{} };
-  var GROUPS = Object.keys(FACETS.groupes).sort();
+
+  // Groupes masqués temporairement (les données restent dans quiz-data.js).
+  // « plantes » : à retravailler avant réintégration.
+  var HIDDEN_GROUPS = { "plantes": true };
+
+  var GROUPS = Object.keys(FACETS.groupes).sort()
+    .filter(function(g){ return !HIDDEN_GROUPS[g]; });
 
   var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0, secteur:"bzh" };
 
@@ -625,7 +631,10 @@
   // groupe / sous-groupe. Les compteurs sont donc recalculés à chaque rendu
   // plutôt que lus depuis les facettes précalculées (nationales) de quiz-data.js.
   function scopedTaxa(){
-    return cfg.secteur === "bzh" ? DATA.taxa.filter(function(t){ return t.bzh; }) : DATA.taxa;
+    return DATA.taxa.filter(function(t){
+      if(HIDDEN_GROUPS[t.groupe]) return false;
+      return cfg.secteur === "bzh" ? t.bzh : true;
+    });
   }
   function pool(){
     var sousSel = Object.keys(cfg.sous);
