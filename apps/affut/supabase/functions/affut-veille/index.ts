@@ -18,7 +18,8 @@
 //
 // GET  : renvoie le contexte utile à la recherche (numéro cible, moisson
 //        actuelle, entrées déjà publiées récemment, candidats récemment
-//        écartés, URLs déjà utilisées) — voir handleContext().
+//        écartés, URLs déjà utilisées, sources suivies à moissonner en
+//        priorité — écran « Sources », voir brief-veille.md) — handleContext().
 // POST : reçoit { numero, candidats: [...] } et les écrit dans
 //        affut_numeros.moisson (dédoublonnées), journalise dans
 //        affut_ingestion_log — voir handleIngest().
@@ -150,11 +151,23 @@ async function handleContext(): Promise<Response> {
     new Set((toutesEntrees ?? []).map((e) => e.url).filter(Boolean)),
   );
 
+  // Sources suivies (écran « Sources », lot 4) : liste compilée à la main par
+  // l'enseignant — voir brief-veille.md, section « Sources à moissonner en
+  // priorité ». Contrairement à `entrees_retenues_recentes`/`candidats_ecartes_recents`
+  // (de l'historique), cette liste est une consigne : chaque source doit être
+  // effectivement visitée à chaque exécution, pas seulement lue comme contexte.
+  const { data: sourcesSuivies } = await supabase
+    .from("affut_sources_suivies")
+    .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut")
+    .order("cree_le", { ascending: true })
+    .limit(50);
+
   return json({
     cible,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
     urls_deja_utilisees: urlsDejaUtilisees,
+    sources_a_moissonner: sourcesSuivies ?? [],
   });
 }
 

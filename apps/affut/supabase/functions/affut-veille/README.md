@@ -38,7 +38,8 @@ détient désormais, à la place de la clé `service_role` complète.
 ```
 GET  https://uoeuzxstotqnembcpofx.supabase.co/functions/v1/affut-veille
      -H "x-veille-token: $AFFUT_VEILLE_TOKEN"
-     → contexte (numéro cible, moisson actuelle, retenus/écartés récents, URLs déjà utilisées)
+     → contexte (numéro cible, moisson actuelle, retenus/écartés récents, URLs déjà
+       utilisées, sources suivies à moissonner en priorité — écran « Sources »)
 
 POST https://uoeuzxstotqnembcpofx.supabase.co/functions/v1/affut-veille
      -H "x-veille-token: $AFFUT_VEILLE_TOKEN"
