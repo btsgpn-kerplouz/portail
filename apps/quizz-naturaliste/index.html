@@ -833,7 +833,8 @@
     if(p.length < 2) return;
     var total = cfg.count > 0 ? cfg.count : 9999;
     game = { i:0, answered:0, correct:0, total:total, unlimited: cfg.count===0,
-             missed:[], pool:p, current:null, timer:null };
+             missed:[], pool:p, current:null, timer:null,
+             usedTaxa:{}, usedPhotos:{} };
     $("setup").classList.add("hidden");
     $("end").classList.add("hidden");
     $("quiz").classList.remove("hidden");
@@ -867,14 +868,23 @@
     if(!game.unlimited && game.i >= game.total) return finish();
     game.i++;
 
-    var answ = pick(game.pool);
+    // Sur une série : on évite de retomber sur une espèce déjà tirée tant qu'il
+    // en reste des neuves, et jamais deux fois la même photo.
+    var libres = game.pool.filter(function(t){ return !game.usedTaxa[t.id]; });
+    if(!libres.length){ libres = game.pool; game.usedTaxa = {}; }
+    var answ = pick(libres);
+    game.usedTaxa[answ.id] = true;
+
+    var neuves = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
+    var photo = pick(neuves.length ? neuves : answ.photos);
+    game.usedPhotos[photo.id] = true;
+
     var options = [];
     if(!isExpert()){
       var base = distractorBase(answ);
       var nOpt = Math.min(4, base.length + 1);
       options = shuffle([answ].concat(shuffle(base).slice(0, nOpt - 1)));
     }
-    var photo = pick(answ.photos);
 
     game.current = { answer:answ, options:options, photo:photo, done:false };
     render();
