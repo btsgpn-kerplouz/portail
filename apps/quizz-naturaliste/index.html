@@ -6,8 +6,8 @@
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <meta name="theme-color" content="#191b16">
-<meta name="description" content="Entraînement à la reconnaissance visuelle d'espèces (oiseaux, insectes, mammifères, herpéto) pour le BTS GPN. Photos iNaturalist sous licence libre.">
-<title>Coup d'œil — reconnaissance d'espèces — BTS GPN</title>
+<meta name="description" content="Quiz pour reconnaître des espèces sur photo (oiseaux, insectes, mammifères, herpéto). BTS GPN.">
+<title>Quizz naturaliste — BTS GPN</title>
 
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Coup d'œil">
+<meta name="apple-mobile-web-app-title" content="Quizz naturaliste">
 
 <style>
   /* Polices « papier technique froid » — copiées de portail/fonts/ (app déployée à part). */
@@ -26,7 +26,7 @@
   /* ---------------------------------------------------------------------------
      Charte btsgpn-kerplouz — « Papier technique froid » (cf. DESIGN.md du dépôt).
      Angle droit partout, aucune ombre (sauf halo de focus), bandeau encre plein +
-     filet de tête à l'accent de l'app. Accent « Coup d'œil » : rouille sombre.
+     filet de tête à l'accent de l'app. Accent « Quizz naturaliste » : rouille sombre.
      Copie locale des jetons — shared/theme.css n'est pas encore à jour.
   --------------------------------------------------------------------------- */
   :root{
@@ -117,7 +117,9 @@
     margin-left:auto;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--t3);
   }
   .seg-sm{flex:0 0 auto}
-  .seg-sm button{padding:5px 11px;min-height:30px;font-size:.74rem;flex:0 0 auto;white-space:nowrap}
+  /* .seg.seg-sm : spécificité > .seg button (défini plus bas) pour garder les
+     boutons à la taille du texte (« France métropolitaine » ne doit pas déborder) */
+  .seg.seg-sm button{padding:5px 11px;min-height:30px;font-size:.74rem;flex:0 0 auto;white-space:nowrap}
 
   /* puces de sélection */
   .chips{
@@ -413,8 +415,8 @@
       </span>
       <div class="banner-text">
         <span class="banner-eyebrow">btsgpn — kerplouz</span>
-        <h1>Coup d'œil</h1>
-        <p>Reconnaissance visuelle d'espèces — BTS GPN</p>
+        <h1>Quizz naturaliste</h1>
+        <p>Reconnaître des espèces sur photo — BTS GPN</p>
       </div>
     </div>
   </div>
@@ -431,7 +433,7 @@
         <span class="label">Filtres</span>
         <div class="seg seg-sm" id="secteur">
           <button type="button" data-v="bzh" aria-pressed="true">Bretagne</button>
-          <button type="button" data-v="national">France métro.</button>
+          <button type="button" data-v="national">France métropolitaine</button>
         </div>
         <span class="fcard-sum" id="filterSum">aucun filtre</span>
       </div>
