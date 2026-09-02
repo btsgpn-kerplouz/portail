@@ -1,0 +1,69 @@
+/* Quizz naturaliste — service worker « coquille seule ».
+   On ne met en cache QUE la coquille de l'app (HTML, données, polices, icône).
+   Les photos iNaturalist sont des ressources distantes (cross-origin) : elles ne
+   sont JAMAIS mises en cache — l'app a besoin du réseau pour afficher les images. */
+
+const CACHE_NAME = 'quizz-naturaliste-shell-v1';
+const APP_SHELL = [
+  './',
+  './index.html',
+  './quiz-data.js',
+  './manifest.webmanifest',
+  './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './fonts/ibm-plex-sans.woff2',
+  './fonts/ibm-plex-serif-bold.woff2',
+  './fonts/jetbrains-mono.woff2'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null)
+    ))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+
+  // Tout ce qui n'est pas notre propre origine (= les photos iNaturalist) :
+  // on laisse le navigateur faire, sans intercepter ni mettre en cache.
+  if (url.origin !== self.location.origin) return;
+
+  // Navigation : réseau d'abord, repli sur la coquille hors ligne.
+  if (req.mode === 'navigate') {
+    event.respondWith(fetch(req).catch(() => caches.match('./index.html')));
+    return;
+  }
+
+  // Ressources de la coquille : stale-while-revalidate — on sert le cache tout
+  // de suite (rapide, marche hors ligne) et on rafraîchit en arrière-plan, pour
+  // qu'un nouveau déploiement (quiz-data.js, index.html) soit pris à la visite
+  // suivante sans dépendre du numéro de version du cache.
+  event.respondWith(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(req).then(cached => {
+        const network = fetch(req).then(res => {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || network;
+      })
+    )
+  );
+});

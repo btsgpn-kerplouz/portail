@@ -14,7 +14,7 @@ dans la foulée** : tuile « À l'affût » activée dans le portail général
 (`portail/index.html`, passée de « en chantier » à « en service ») avec un
 badge « n°X disponible » lu en direct sur Supabase — détail et piège
 rencontré (main local périmé) dans l'entrée « Lot 22 » en fin de fichier.
-**Pas encore committé/poussé** à ce stade.
+Committé, poussé et fusionné dans `main` (PR #73).
 
 **✅ Correctif Lot 19 appliqué et confirmé par l'utilisateur** (« ok c'est
 mieux ») — la migration a bien été jouée, les entrées s'affichent
