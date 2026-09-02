@@ -200,6 +200,17 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .accueil-bouton .txt span{font-size:.8rem;opacity:.85;font-weight:400;}
 .accueil-bouton.principal{background:var(--acc);color:#fff;border:1px solid var(--acc);}
 .accueil-bouton.secondaire2{background:var(--card);color:var(--ink);border:1px solid var(--line);}
+/* Installation : proposition volontairement discrète, sous les trois actions
+   principales. Masquée tant que rien n'est réellement installable, pour ne pas
+   promettre ce que le navigateur ne sait pas faire. */
+.accueil-installer{display:flex;align-items:center;gap:.55em;width:100%;margin-top:.5em;
+  padding:.55em .8em;background:none;border:1px dashed var(--line);border-radius:var(--rayon);
+  color:var(--ink);font-family:var(--sans);font-size:.82rem;text-align:left;opacity:.75;cursor:pointer;}
+.accueil-installer:hover{opacity:1;border-style:solid;}
+.accueil-installer .picto{font-size:1rem;line-height:1;}
+.accueil-installer[hidden]{display:none;}
+.installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
+.installer-etat[hidden]{display:none;}
 .champ{margin-bottom:.9em;}
 .champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
 .ligne2{display:flex;gap:.6em;}
@@ -442,6 +453,11 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
     </button>
+    <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
+      <span class="picto" aria-hidden="true">⭳</span>
+      <span id="btn-installer-txt">Installer l'application sur cet appareil</span>
+    </button>
+    <p class="installer-etat" id="installer-etat" hidden></p>
   </section>
 
   <!-- ECRAN IDENTITE DU RELEVE (page 1 du bordereau) -->
@@ -1717,6 +1733,65 @@ function majBarreActions(){
 }
 const _allerA = allerA;
 allerA = function(nom){ _allerA(nom); majBarreActions(); };
+
+/* ---------- Installation sur l'appareil ----------
+   Le service worker sert deux fins : rendre l'application installable (Chrome
+   n'émet « beforeinstallprompt » que si un service worker gère les requêtes) et
+   la rendre utilisable hors réseau, ce qui est le cas d'usage réel sur le site.
+   Safari iOS n'implémente pas cet événement : on y affiche la marche à suivre
+   plutôt qu'un bouton qui ne ferait rien. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+
+let promptInstallation = null;
+const estIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const dejaInstallee = ()=> window.matchMedia('(display-mode: standalone)').matches
+                       || window.navigator.standalone === true;
+
+function majEtatInstallation(texte){
+  const p = document.getElementById('installer-etat');
+  if(!p) return;
+  p.textContent = texte || '';
+  p.hidden = !texte;
+}
+function afficherBoutonInstallation(visible, libelle){
+  const b = document.getElementById('btn-installer');
+  if(!b) return;
+  b.hidden = !visible;
+  if(libelle) document.getElementById('btn-installer-txt').textContent = libelle;
+}
+
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  promptInstallation = e;
+  afficherBoutonInstallation(true, "Installer l'application sur cet appareil");
+});
+window.addEventListener('appinstalled', ()=>{
+  promptInstallation = null;
+  afficherBoutonInstallation(false);
+  majEtatInstallation("Application installée : elle s'ouvre désormais depuis l'écran d'accueil, même sans réseau.");
+});
+
+async function installerApplication(){
+  if(promptInstallation){
+    promptInstallation.prompt();
+    const choix = await promptInstallation.userChoice;
+    promptInstallation = null;
+    if(choix && choix.outcome === 'accepted') afficherBoutonInstallation(false);
+    else majEtatInstallation("Installation annulée. Le bouton reviendra à la prochaine visite.");
+    return;
+  }
+  if(estIOS){
+    majEtatInstallation("Sur iPhone et iPad : bouton Partager (carré avec une flèche), puis « Sur l'écran d'accueil ».");
+    return;
+  }
+  majEtatInstallation("Ce navigateur ne propose pas l'installation directe. Chercher « Installer l'application » ou « Ajouter à l'écran d'accueil » dans son menu.");
+}
+
+/* iOS ne signalant jamais l'installabilité, on propose le bouton d'emblée ;
+   ailleurs il n'apparaît qu'une fois « beforeinstallprompt » reçu. */
+if(estIOS && !dejaInstallee()) afficherBoutonInstallation(true, "Ajouter l'application à l'écran d'accueil");
 </script>
 </body>
 </html>
