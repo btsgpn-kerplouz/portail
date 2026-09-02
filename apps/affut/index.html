@@ -132,6 +132,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 /* ---- coquille de l'app ---- */
 .page{padding:26px 16px 60px;display:flex;flex-direction:column;align-items:center;gap:16px}
 .app{width:100%;max-width:1360px;border:1px solid var(--af-encre);background:var(--af-fond);transition:max-width .15s ease}
+.app.vue-sommaire{max-width:1560px}
 .app.mode-redaction{
   max-width:1560px;
   border-color:var(--af-redaction);
@@ -218,6 +219,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .btn-reorder:hover:not(:disabled){background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
 .btn-reorder:disabled{opacity:.3}
 
+
 .etat-pastille{flex:none;font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3);white-space:nowrap}
 .etat-pastille.ok{color:var(--af-valide)}
 .etat-pastille.mort{color:var(--af-mort)}
@@ -226,17 +228,30 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .flat-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 8px;font-size:11.5px}
 .flat-meta .nom{font-weight:700;color:var(--af-encre)}
 .pastille-echelle{font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-brun-rubrique);border:1px solid var(--af-filet-pastille);padding:0 5px}
+/* Pastille de rubrique (Lot 17) : remplace les sections/titres de
+   rubrique retirés de l'écran — pleine plutôt que juste contourée
+   (contrairement à .pastille-echelle) pour rester le repère principal de
+   catégorisation malgré sa petite taille, en premier dans .flat-meta. */
+.pastille-rubrique{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--af-sur-accent);background:var(--af-brun-rubrique);padding:1px 6px}
 .flat-meta .meta-mono{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 .flat-titre{font-size:15.5px;font-weight:700;line-height:1.3;color:var(--af-accent)}
 .mode-redaction .flat-titre{color:var(--af-encre)}
+/* Titre-bouton mobile en rédaction (Lot 20) : reset des styles de bouton du
+   navigateur, garde la mise en forme de .flat-titre. */
+.flat-titre-bouton{display:flex;align-items:baseline;gap:6px;width:100%;font:inherit;text-align:left;background:none;border:0;padding:0;cursor:pointer}
+.flat-titre-bouton:hover{text-decoration:underline}
+.flat-titre-chevron{flex:none;color:var(--af-encre-3);font-weight:400}
 .bloc-ligne{display:flex;align-items:flex-start;gap:8px}
 .bloc-ligne .case-bloc{margin-top:2px}
 .bloc-masque-texte{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);padding-top:1px}
 .flat-chiffres{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.flat-chiffres b{font-weight:700;color:var(--af-accent)}
+.flat-chiffres b{display:inline-block;font-weight:700;background:var(--af-accent);color:var(--af-sur-accent);padding:1px 6px;margin-right:1px}
+.mode-redaction .flat-chiffres b [data-ed="true"]{color:var(--af-encre-courant)}
 .flat-resume{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--af-encre-2)}
 
-.entree-row-droite{flex:none;display:flex;flex-direction:column;gap:6px}
+.entree-row-droite{flex:none;display:flex;flex-direction:row;align-items:center;gap:18px;padding-right:4px}
+.entree-droite-colonne{flex:none;display:flex;flex-direction:column;gap:6px}
+.entree-image{flex:none;width:118px;height:88px;object-fit:cover;border:1px solid var(--af-filet-fort);transform:rotate(-2deg);box-shadow:0 4px 10px rgba(26,22,17,.28)}
 .btn-source-compact{flex:1;width:200px;min-height:52px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;background:var(--af-accent);color:var(--af-sur-accent);text-decoration:none;padding:8px 13px}
 .btn-source-compact .lib{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
 .btn-source-compact .lib .fleche{font-size:14px}
@@ -247,6 +262,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .mode-publiee .btn-source-compact .lib{font-size:16px}
 .mode-publiee .btn-source-compact .lib .fleche{font-size:17px}
 .mode-publiee .btn-source-compact .domaine{font-size:11px}
+
+/* ---- carte « réseaux sociaux » (Lot 15, grille à plat au Lot 17) : rendu
+   écran de la vue publiée, à la place de la ligne compacte renderEntree()
+   — celle-ci reste générée en repli pour l'impression navigateur directe
+   (Ctrl+P, voir @media print plus bas) ; le bouton « Imprimer ce numéro »
+   de l'app, lui, ne passe jamais par ce HTML (jsPDF indépendant). Grille
+   responsive (pas de media query : `auto-fit` choisit 1 colonne sur
+   mobile, 2 voire 3 sur desktop selon la largeur réellement disponible),
+   une seule pour tout le numéro depuis le Lot 17 (plus de blocs par
+   rubrique — voir la pastille de rubrique sur chaque carte à la place). */
+.mode-publiee .entree{display:none}
+.carte-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:22px;padding:16px 22px 26px}
+.carte-entree{background:var(--af-surface);border:1px solid var(--af-filet)}
+.carte-lien-image{display:block;position:relative;text-decoration:none}
+.carte-image{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.carte-legende{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(0deg,rgba(26,22,17,.82),rgba(26,22,17,0));padding:26px 16px 10px}
+.carte-legende-texte{font-family:var(--af-police-mono);font-size:13px;font-weight:700;color:var(--af-sur-accent);display:flex;align-items:center;gap:6px}
+.carte-legende-texte .fleche{font-size:14px}
+.carte-legende .domaine{font-family:var(--af-police-mono);font-size:10px;color:var(--af-sur-accent-2)}
+.carte-lien-texte{width:100%}
+.carte-corps{padding:14px 18px 18px;display:flex;flex-direction:column;gap:7px}
+.carte-titre{font-size:18px;font-weight:700;line-height:1.32;color:var(--af-accent)}
+.carte-corps .flat-chiffres{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px}
+.carte-corps .flat-resume{font-size:13.5px;line-height:1.5}
+@media print{
+  .mode-publiee .entree{display:block !important}
+  .carte-grille{display:none !important}
+}
 
 .entree-actions{display:flex;gap:6px}
 .btn-mini{flex:1;font-family:var(--af-police-mono);font-size:10px;letter-spacing:.02em;text-transform:uppercase;text-align:center;padding:7px 6px;border:1px solid var(--af-redaction);color:var(--af-redaction);background:var(--af-surface)}
@@ -293,12 +336,26 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .champ textarea{resize:vertical;min-height:56px;font-family:var(--af-police-mono);font-size:11.5px;line-height:1.5}
 .champ input:focus,.champ textarea:focus{outline:1px solid var(--af-redaction);box-shadow:0 0 0 3px rgba(138,95,23,.18)}
 .champ .aide{font-size:9.5px;color:var(--af-encre-3);font-family:var(--af-police-mono)}
+.illustration-ligne{display:flex;gap:8px;align-items:stretch}
+.illustration-ligne input{flex:1;min-width:0}
+.illustration-ligne .btn-ligne{flex:none;white-space:nowrap}
+.illustration-apercu{width:120px;height:80px;object-fit:cover;border:1px solid var(--af-filet-fort);margin-top:2px}
+
+.illustration-numero{display:flex;flex-direction:column;gap:5px}
+.illustration-numero label{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
+.illustration-numero .illustration-ligne{align-items:center}
+.illustration-numero input{font-family:var(--af-police);font-size:13px;padding:7px 9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant);min-width:260px}
+.illustration-apercu-mini{flex:none;width:64px;height:48px;object-fit:cover;border:1px solid var(--af-filet-fort)}
 .modal-boutons{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--af-filet)}
 .modal-boutons-droite{display:flex;gap:10px;margin-left:auto}
 .btn-texte{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--af-filet-fort);color:var(--af-encre-2)}
 
 /* ---- sommaire (lot 3) ---- */
 .sommaire{padding:18px 22px 26px;display:flex;flex-direction:column}
+/* Connexion (Lot 20, 02/09/2026) : discrète, alignée à droite, sous la
+   dernière ligne du Sommaire — pas un bouton plein, pas dans le bandeau. */
+.connexion-discrete{align-self:flex-end;margin-top:22px;font-family:var(--af-police-mono);font-size:10px;letter-spacing:.06em;color:var(--af-encre-3);padding:6px 4px}
+.connexion-discrete:hover{color:var(--af-encre-2)}
 .sommaire-mois{display:flex;align-items:center;gap:14px;padding:8px 2px;margin-top:20px}
 .sommaire-mois:first-child{margin-top:0}
 .sommaire-mois .nom{font-family:var(--af-police-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--af-encre)}
@@ -310,24 +367,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .deplier:hover{background:var(--af-sur-accent-2)}
 .deplier .chevron{font-size:9px}
 
-.numero-carte{display:flex;align-items:stretch;border:1px solid var(--af-filet-moyen);background:var(--af-surface);margin-bottom:10px}
+/* .numero-carte est un <button> depuis le Lot 16 (toute la tuile ouvre le
+   numéro, plus de bouton "Ouvrir le numéro" séparé) : reset des styles de
+   bouton du navigateur (bordure, fond, police, alignement) en plus des
+   styles propres à la tuile. */
+.numero-carte{display:flex;align-items:stretch;border:1px solid var(--af-filet-moyen);background:var(--af-surface);margin-bottom:10px;padding:0;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.numero-carte:hover{border-color:var(--af-accent)}
 .numero-carte.dernier{border-color:var(--af-accent)}
 .nc-badge{flex:none;width:110px;padding:14px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;background:var(--af-accent);color:var(--af-sur-accent)}
 .nc-badge .num{font-family:var(--af-police-mono);font-size:24px;font-weight:700;color:var(--af-sur-accent)}
 .nc-badge .dernier-tag{align-self:flex-start;border:1px solid var(--af-sur-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;margin-top:2px}
+.nc-image{flex:none;width:220px;object-fit:cover;border-right:1px solid var(--af-filet-moyen)}
 .nc-corps{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .nc-titre{font-size:16px;font-weight:700;color:var(--af-encre)}
 .nc-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
 .nc-liste li{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .nc-titre-entree{font-size:12.5px;line-height:1.4;color:var(--af-encre-2)}
 .nc-source-pastille{flex:none;font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-brun-rubrique);border:1px solid var(--af-filet-pastille);padding:0 5px;white-space:nowrap}
-.nc-droite{flex:none;width:170px;padding:14px 16px;border-left:1px solid var(--af-filet);display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;text-align:right}
-.nc-compte{display:flex;flex-direction:column;align-items:flex-end}
-.nc-compte .n{font-family:var(--af-police-mono);font-size:21px;font-weight:700;color:var(--af-encre)}
-.nc-compte .l{font-family:var(--af-police-mono);font-size:9px;color:var(--af-encre-3);text-transform:uppercase;letter-spacing:.06em;line-height:1.4}
-.nc-ouvrir{align-self:stretch;background:var(--af-accent);color:var(--af-sur-accent);text-decoration:none;font-family:var(--af-police-mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:9px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.nc-ouvrir:hover{opacity:.9}
-.nc-ouvrir .fleche{font-size:13px}
+/* Mobile (Lot 16, retour d'usage : « simplement une suite de bandeau/carte
+   avec n°+illustration cliquable ») : empilé plutôt que côte à côte
+   (badge/image/corps ne tiendraient pas sur une largeur de téléphone), et
+   la liste détaillée des actualités masquée — seul le titre du numéro
+   reste, l'image et le numéro suffisent à se repérer avant d'ouvrir. */
+@media (max-width:640px){
+  .numero-carte{flex-direction:column;align-items:stretch}
+  .nc-badge{width:auto;flex-direction:row;align-items:center;justify-content:space-between}
+  .nc-image{width:100%;aspect-ratio:16/9;border-right:0;border-bottom:1px solid var(--af-filet-moyen)}
+  .nc-liste{display:none}
+}
 
 .mois-replie{border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
 .mois-replie .chip{border:1px solid var(--af-filet-moyen);padding:4px 10px;background:var(--af-surface)}
@@ -405,6 +472,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .sources-replie{margin:10px 22px;border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--af-encre-2)}
 .sources-replie .chip{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 
+.bilan-section{margin-top:22px}
+.bilan-cols,.bilan-row{grid-template-columns:1fr 150px 220px}
+.bilan-cols-2,.bilan-row-2{grid-template-columns:1fr 220px}
+.bilan-mesure{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.bilan-barre{flex:1;height:6px;background:var(--af-surface-2);border:1px solid var(--af-filet)}
+.bilan-barre-remplie{height:100%;background:var(--af-accent)}
+.bilan-mesure .n{font-family:var(--af-police-mono);font-size:15px;font-weight:700;color:var(--af-encre);min-width:26px;text-align:right}
+
 /* ---- moisson (lot 10 : liste intégrée à l'écran du numéro, plus de modale
    séparée — chaque candidat au même niveau de détail qu'une entrée retenue,
    voir renderCandidat()) ---- */
@@ -479,7 +554,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   /* rubrique-tete + sa 1re entrée forment un bloc insécable (retour d'usage
      30/08/2026) : sans ça, la balance automatique des colonnes du navigateur
      peut laisser le titre de rubrique seul en bas d'une colonne pendant que
-     sa carte part au sommet de la colonne suivante. */
+     sa carte part au sommet de la colonne suivante.
+     Devenues MORTES depuis le Lot 17 (02/09/2026, plus de sections par
+     rubrique à l'écran) : aucune entrée n'émet plus ce balisage. Laissées
+     en l'état (rien ne les référence, aucun risque) — .entree{break-inside:
+     avoid} plus bas suffit seul à empêcher la coupure d'une carte entre
+     deux colonnes d'impression sur la liste à plat. */
   .rubrique-groupe-tete{break-inside:avoid}
   .rubrique-tete{background:none;border-top:2px solid var(--af-print-encre);border-bottom:1px solid var(--af-print-encre);padding:5px 0;margin-bottom:6px}
   .rubrique-tete .nom{color:var(--af-print-encre)}
@@ -507,6 +587,17 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .page{padding:0 0 40px}
   .app,.app.mode-redaction{max-width:100%;border-left:0;border-right:0}
   .bandeau{padding:11px 14px}
+  /* Barre d'onglets rédacteur (Sommaire/Rechercher/Sources/Bilan/
+     Rédaction/Vue publiée, 6 boutons) : constaté le 02/09/2026, sans repli
+     elle dépassait la largeur de l'écran (aucun des deux blocs .bandeau ne
+     prévoyait de repli pour elle, contrairement au reste du bandeau qui
+     wrap déjà). Faite défiler horizontalement plutôt que passer à la
+     ligne : 6 pastilles sur plusieurs lignes aurait pris toute la hauteur
+     de l'écran, un bandeau d'onglets qui défile est un motif mobile
+     courant et reste compact. */
+  .mode-toggle{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mode-toggle button{flex:none}
+  .auth-statut{padding-left:0;flex-wrap:wrap;max-width:100%;row-gap:4px}
   .numero-entete{padding:14px 16px}
   .entete-titre{font-size:19px}
   .entete-actions{width:100%;align-items:stretch}
@@ -516,12 +607,36 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .entree-row{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
   .entree-row-gauche{padding:9px 12px}
   .entree-row-droite{width:100%}
+  /* Bug préexistant trouvé le 02/09/2026 en testant le Lot 20 (pas
+     introduit par lui) : .entree-droite-colonne est flex:none (largeur de
+     contenu) alors que .btn-source-compact réclame width:100% — sizing
+     circulaire côté navigateur, qui retombe sur la largeur naturelle du
+     contenu (bouton + Déplacer/Supprimer) et dépasse l'écran. En rédaction
+     mobile spécifiquement (jamais vu en vue publiée, qui n'affiche pas
+     .entree-actions). Corrigé : la colonne prend l'espace restant à côté
+     de l'illustration (flex:1, min-width:0 empêche le contenu incompressible
+     de forcer un débordement malgré tout). */
+  .entree-droite-colonne{flex:1;min-width:0}
   .btn-source-compact,.mode-publiee .btn-source-compact{width:100%;min-height:44px;flex-direction:row;align-items:center;justify-content:space-between;padding:10px 14px}
   .mode-publiee .btn-source-compact .lib{font-size:14px}
   .flat-titre{font-size:14.5px}
+  /* Bouton "Modifier" redondant (Lot 20) : le titre ouvre déjà la même
+     modale sur mobile (voir renderEntree()) — Déplacer/Supprimer restent. */
+  .entree-actions [data-action="edit-entree"]{display:none}
   .entree-details,.mode-redaction .entree-details{padding:0 12px 16px 12px;max-width:none;display:flex;flex-direction:column}
   .modal{padding:16px 14px 14px}
   .sommaire,.recherche-barre,.recherche-compteur,.recherche-corps{padding-left:14px;padding-right:14px}
+  /* Constaté le 02/09/2026 : sans repli, le nom du mois + le filet + le
+     décompte + le bouton "Déplier" (tous en white-space:nowrap ou en
+     largeur minimale incompressible) dépassaient la largeur de l'écran et
+     forçaient TOUTE l'app en défilement horizontal sur mobile — un mois
+     replié (avec bouton) suffisait à déclencher le bug, un mois ouvert
+     (sans bouton, ex. le premier) ne le déclenchait pas. Le filet n'étant
+     que décoratif, il cède la place en premier ; nom + décompte + bouton
+     passent sur une seconde ligne au besoin. */
+  .sommaire-mois{flex-wrap:wrap;row-gap:6px}
+  .sommaire-mois .filet{display:none}
+  .sommaire-mois .compte{margin-left:auto}
   .numero-carte{flex-direction:column}
   .nc-badge{flex-direction:row;align-items:center;justify-content:space-between;border-right:0;border-bottom:1px solid var(--af-filet);width:auto}
   .nc-droite{flex-direction:row;align-items:center;border-left:0;border-top:1px solid var(--af-filet);width:auto}
@@ -849,7 +964,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       id: e.id, numero_id: numeroId, rubrique: e.rubrique, valide: e.valide, origine: e.origine,
       ordre: e.ordre || 0,
       source: e.source, url: e.url, lien_mort: !!e.lienMort, lien_mort_depuis: e.lienMortDepuis || null,
-      titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs
+      titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs,
+      image_url: e.imageUrl || null
     };
   }
   function depuisLigneEntree(r){
@@ -857,20 +973,21 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, ordre: r.ordre || 0, source: r.source || {},
       url: r.url, lienMort: r.lien_mort, lienMortDepuis: r.lien_mort_depuis,
       titre: r.titre, chiffres: r.chiffres || [], resume: r.resume, usage: r.usage_en_cours,
-      blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source
+      blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source, imageUrl: r.image_url
     };
   }
   function versLigneNumero(n){
     return {
       numero: n.numero, statut: n.statut, mois: n.mois, semaine: n.semaine, titre: n.titre,
-      chapo: n.chapo, candidates: n.candidates, collecte: n.collecte || null, moisson: n.moisson || null
+      chapo: n.chapo, candidates: n.candidates, collecte: n.collecte || null, moisson: n.moisson || null,
+      image_url: n.imageUrl || null
     };
   }
   function depuisLigneNumero(r, entreesDuNumero){
     return {
       numero: r.numero, statut: r.statut, mois: r.mois, semaine: r.semaine, titre: r.titre,
       chapo: r.chapo, candidates: r.candidates, collecte: r.collecte, moisson: r.moisson,
-      vues: r.vues, entrees: entreesDuNumero
+      vues: r.vues, entrees: entreesDuNumero, imageUrl: r.image_url
     };
   }
   function versLigneSource(s){
@@ -939,7 +1056,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     window.alert("Enregistrement impossible : " + (err && err.message ? err.message : "erreur réseau.") + " — la modification reste affichée mais n'est pas sauvegardée en base, réessayez.");
   }
 
-  var MAPPING_COLONNES_ENTREE = { lienMort: "lien_mort", lienMortDepuis: "lien_mort_depuis", usage: "usage_en_cours", clicsSource: "clics_source" };
+  var MAPPING_COLONNES_ENTREE = { lienMort: "lien_mort", lienMortDepuis: "lien_mort_depuis", usage: "usage_en_cours", clicsSource: "clics_source", imageUrl: "image_url" };
   var MAPPING_COLONNES_SOURCE = { rubriqueDefaut: "rubrique_defaut", derniereMoisson: "derniere_moisson" };
 
   function versColonnes(champs, mapping){
@@ -1141,11 +1258,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     modalNumero: null, // null | { erreur: string|null }
     auth: { user: null, redacteur: null },
     vuesComptees: {}, // { [numero]: true } — garde anti-double-comptage du compteur de vues sur re-render
-    vue: "numero",
+    // Sommaire par défaut (02/09/2026, retour d'usage mobile ET desktop) :
+    // atterrir directement sur le dernier numéro laissait une page vide et
+    // sans intérêt tant que ce numéro n'a pas encore d'entrées (le cas
+    // courant en tout début de rédaction) — le Sommaire liste toujours au
+    // moins quelque chose (les numéros parus). numeroId reste calculé
+    // normalement (voir numeroParDefaut()/init()) : ouvrir un numéro depuis
+    // le Sommaire ou passer en Rédaction retombe bien sur le bon numéro.
+    vue: "sommaire",
     numeroId: 0,
     recherche: { q: "", champ: "tout", rubrique: "toutes" },
     sommaireDeplie: {},
     sourcesDeplie: false,
+    bilanEntreesDeplie: false,
     previewEtat: null,
     publicationRefusee: null,
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
@@ -1154,6 +1279,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   };
 
   function estRedacteurActif(){ return !!(state.auth.redacteur && state.auth.redacteur.actif); }
+
+  // Lot 20 (02/09/2026, retour d'usage : « la vue rédaction n'est pas très
+  // pratique [sur mobile] ») : à cette largeur, l'édition en place
+  // (contenteditable) cède la place à la modale « Modifier » existante
+  // (renderModal(), déjà tous les champs) — voir ed() et renderEntree().
+  function mobileActif(){ return !!(window.matchMedia && window.matchMedia("(max-width:640px)").matches); }
 
   function numeroParDefaut(){
     var publies = numeros.filter(function(n){ return n.statut !== "brouillon"; });
@@ -1169,7 +1300,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   // role="textbox" (lot 5, audit RGAA) : un <span contenteditable> n'a par
   // défaut aucune sémantique de champ de saisie pour un lecteur d'écran.
-  function ed(html, path){ return state.mode === "redaction" ? '<span data-ed="true" data-path="' + path + '" contenteditable="true" role="textbox">' + html + '</span>' : html; }
+  function ed(html, path){ return (state.mode === "redaction" && !mobileActif()) ? '<span data-ed="true" data-path="' + path + '" contenteditable="true" role="textbox">' + html + '</span>' : html; }
 
   function setEdValue(path, value){
     var parts = path.split(".");
@@ -1177,15 +1308,21 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var entree = entrees.filter(function(e){ return e.id === parts[0]; })[0];
     if (!entree) return;
     if (parts[1] === "source") entree.source[parts[2]] = value;
+    else if (parts[1] === "chiffres") entree.chiffres[parseInt(parts[2], 10)][parts[3]] = value;
     else entree[parts[1]] = value;
   }
 
   // esc(c.v) + " " + esc(c.l) sans le v (cas des chiffres repris d'un
   // candidat de moisson, voir chiffresCandidatVersBlocs) laisserait une
   // espace insécable en tête du texte affiché.
-  function chiffreTexte(c){
-    var v = c.v ? esc(c.v) + " " : "";
-    return c.accent ? "<b>" + v + "</b>" + esc(c.l) : v + esc(c.l);
+  // `path` (Lot 12) : préfixe "eid.chiffres.i" pour rendre valeur et libellé
+  // éditables en place chacun séparément, plutôt qu'un bloc texte unique —
+  // ajout/suppression/accent restent du ressort du formulaire modal.
+  function chiffreTexte(c, path){
+    var vTxt = path ? ed(esc(c.v), path + ".v") : esc(c.v);
+    var lTxt = path ? ed(esc(c.l), path + ".l") : esc(c.l);
+    var v = c.v || path ? vTxt + " " : "";
+    return c.accent ? "<b>" + v + "</b>" + lTxt : v + lTxt;
   }
 
   // Un candidat de moisson (Edge Function affut-veille) porte ses chiffres
@@ -1213,7 +1350,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.chiffres ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="chiffres" title="Afficher les chiffres clés">';
     var contenu;
     if (e.blocs.chiffres) {
-      var txt = e.chiffres.map(chiffreTexte).join(" · ");
+      var txt = e.chiffres.map(function(c, i){ return chiffreTexte(c, e.id + ".chiffres." + i); }).join(" · ");
       contenu = '<div class="flat-chiffres tab-num">' + txt + '</div>';
     } else {
       var vals = e.chiffres.map(function(c){ return c.v; }).join(" · ");
@@ -1244,11 +1381,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var actions = redac
       ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="ecarter-entree" data-id="' + e.id + '">Supprimer</button></div>'
       : "";
-    // Ordre d'affichage au sein de la rubrique (Lot 10bis) : boutons compacts
-    // Monter/Descendre, désactivés en butée de rubrique plutôt que masqués
-    // (repère visuel stable, pas de saut de mise en page).
+    // Ordre d'affichage du numéro (Lot 10bis, à plat sur tout le numéro
+    // depuis le Lot 17) : boutons compacts Monter/Descendre, désactivés en
+    // butée de liste plutôt que masqués (repère visuel stable, pas de saut
+    // de mise en page).
     var reorder = redac
-      ? '<div class="reorder-btns"><button type="button" class="btn-reorder" data-action="monter-entree" data-id="' + e.id + '" title="Monter dans la rubrique"' + (estPremier ? " disabled" : "") + '>▲</button><button type="button" class="btn-reorder" data-action="descendre-entree" data-id="' + e.id + '" title="Descendre dans la rubrique"' + (estDernier ? " disabled" : "") + '>▼</button></div>'
+      ? '<div class="reorder-btns"><button type="button" class="btn-reorder" data-action="monter-entree" data-id="' + e.id + '" title="Monter"' + (estPremier ? " disabled" : "") + '>▲</button><button type="button" class="btn-reorder" data-action="descendre-entree" data-id="' + e.id + '" title="Descendre"' + (estDernier ? " disabled" : "") + '>▼</button></div>'
       : "";
 
     var row =
@@ -1258,6 +1396,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           (redac ? '<input type="checkbox" class="case valide-case" ' + (e.valide ? "checked" : "") + ' data-action="toggle-valide" data-id="' + e.id + '" title="Entrée retenue">' : "") +
           '<div class="flat">' +
             '<div class="flat-meta">' +
+              '<span class="pastille-rubrique">' + esc(e.rubrique) + '</span>' +
               '<span class="nom">' + ed(esc(e.source.nom), e.id + ".source.nom") + '</span>' +
               (e.source.territoire ? '<span class="pastille-echelle">' + esc(e.source.territoire) + '</span>' : "") +
               '<span class="meta-mono">' + esc(e.source.domaine) + ' · ' + ed(esc(e.source.date), e.id + ".source.date") + '</span>' +
@@ -1265,14 +1404,21 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
               (redac && e.lienMort ? '<span class="etat-pastille mort">✕ lien mort depuis le ' + esc(e.lienMortDepuis) + '</span>' : "") +
               (redac && !e.lienMort && (!e.url || !e.url.trim()) ? '<span class="etat-pastille mort">✕ bloc source vide</span>' : "") +
             '</div>' +
-            '<div class="flat-titre">' + ed(esc(e.titre), e.id + ".titre") + '</div>' +
+            // Sur mobile en rédaction (Lot 20), le titre ouvre directement
+            // la modale « Modifier » (tous les champs) au lieu de l'édition
+            // en place : au doigt, un <span contenteditable> minuscule au
+            // milieu d'une ligne dense est peu praticable, et avoir les deux
+            // façons d'éditer en même temps prêtait à confusion.
+            (redac && mobileActif()
+              ? '<button type="button" class="flat-titre flat-titre-bouton" data-action="edit-entree" data-id="' + e.id + '">' + esc(e.titre) + '<span class="flat-titre-chevron">›</span></button>'
+              : '<div class="flat-titre">' + ed(esc(e.titre), e.id + ".titre") + '</div>') +
             flatChiffres(e) +
             flatResume(e) +
           '</div>' +
         '</div>' +
         '<div class="entree-row-droite">' +
-          btn +
-          actions +
+          (e.imageUrl ? '<img class="entree-image" src="' + esc(e.imageUrl) + '" alt="" loading="lazy">' : "") +
+          '<div class="entree-droite-colonne">' + btn + actions + '</div>' +
         '</div>' +
       '</div>';
 
@@ -1288,6 +1434,50 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var details = '<div class="entree-details">' + detailsInner + '</div>';
 
     return '<div class="entree" data-entree="' + e.id + '">' + row + details + '</div>';
+  }
+
+  // Carte « format réseaux sociaux » (Lot 15, 02/09/2026) : rendu ALTERNATIF
+  // d'une entrée, réservé à la vue publiée sur écran — l'image, quand il y
+  // en a une, devient elle-même le lien vers la source (plus grande que ce
+  // que la ligne compacte de renderEntree() permet), à la place du bouton
+  // « Ouvrir la source ». N'existe qu'à côté de renderEntree(), jamais à sa
+  // place : l'impression continue d'utiliser le rendu compact existant
+  // (Lot 4quater, mise en page 2 colonnes déjà réglée) — cette carte est
+  // seulement affichée à l'écran et masquée à l'impression (voir
+  // `@media print{.carte-entree{display:none}}`), et renderEntree() reste,
+  // lui, masqué à l'écran en vue publiée mais toujours généré et affiché à
+  // l'impression (`.mode-publiee .entree{display:none}`, réaffiché en
+  // print). D'où les deux rendus émis côte à côte pour chaque entrée
+  // publiée (voir renderNumeroPage()) plutôt qu'un remplacement.
+  function renderEntreeCarte(e){
+    // Légende toujours visible (jamais l'image seule comme lien) : nom de
+    // l'accessible du lien pour les lecteurs d'écran, et repère visuel
+    // explicite que l'image mène quelque part — même dans un format
+    // « réseaux sociaux », personne ne devine qu'une photo est cliquable
+    // sans indice.
+    var texteOuvrir = 'Ouvrir la source<span class="fleche">→</span>';
+    var domaineSpan = '<span class="domaine">' + esc(e.source.domaine) + '</span>';
+    var lien = e.imageUrl
+      ? '<a class="carte-lien-image" href="' + esc(e.url || ("#" + e.id)) + '" data-action="clic-source" data-id="' + e.id + '">' +
+          '<img class="carte-image" src="' + esc(e.imageUrl) + '" alt="" loading="lazy">' +
+          '<span class="carte-legende"><span class="carte-legende-texte">' + texteOuvrir + '</span>' + domaineSpan + '</span>' +
+        '</a>'
+      : '<a class="btn-source-compact carte-lien-texte" href="' + esc(e.url || ("#" + e.id)) + '" data-action="clic-source" data-id="' + e.id + '"><span class="lib">' + texteOuvrir + '</span>' + domaineSpan + '</a>';
+
+    return '<div class="carte-entree">' +
+      lien +
+      '<div class="carte-corps">' +
+        '<div class="flat-meta">' +
+          '<span class="pastille-rubrique">' + esc(e.rubrique) + '</span>' +
+          '<span class="nom">' + esc(e.source.nom) + '</span>' +
+          (e.source.territoire ? '<span class="pastille-echelle">' + esc(e.source.territoire) + '</span>' : "") +
+          '<span class="meta-mono">' + esc(e.source.domaine) + ' · ' + esc(e.source.date) + '</span>' +
+        '</div>' +
+        '<div class="carte-titre">' + esc(e.titre) + '</div>' +
+        flatChiffres(e) +
+        flatResume(e) +
+      '</div>' +
+    '</div>';
   }
 
   // Déplacement d'une entrée retenue vers un autre numéro (Lot 10) : simple
@@ -1324,11 +1514,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   // Ordre des rubriques (blocs) inchangé : 1re apparition dans `list`, comme
-  // avant le Lot 10bis. Seul l'ordre DES ENTRÉES à l'intérieur d'une même
-  // rubrique suit désormais `ordre` (boutons Monter/Descendre, voir
-  // deplacerOrdreEntree()) — trié uniquement au sein de chaque case de
-  // `map`, donc deux rubriques différentes peuvent réutiliser les mêmes
-  // valeurs d'`ordre` sans aucun effet l'une sur l'autre.
+  // avant le Lot 10bis. Toujours utilisée par l'export PDF
+  // (numeroGenererPdfDoc()/pdfBuildBlocks(), dessiné indépendamment via
+  // jsPDF — jamais lu depuis le DOM/CSS) qui continue de grouper par
+  // rubrique dans le document exporté. **Plus utilisée pour l'affichage
+  // écran depuis le Lot 17** (02/09/2026, retour d'usage : « on n'est plus
+  // obligé d'afficher les entrées par blocs de rubriques ») — voir
+  // entreesOrdonnees() plus bas et la rubrique en pastille sur chaque
+  // entrée (renderEntree()/renderEntreeCarte()) à la place des sections.
   function groupByRubrique(list){
     var order = [], map = {};
     list.forEach(function(e){
@@ -1341,30 +1534,39 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     });
   }
 
-  // Voisines d'une entrée au sein de la même rubrique du même numéro,
-  // triées par ordre — base des boutons Monter/Descendre.
-  function voisinsRubrique(e){
-    return entrees.filter(function(x){ return x.rubrique === e.rubrique; })
-      .sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+  // Liste à PLAT de toutes les entrées du numéro, dans l'ordre d'affichage
+  // (Lot 17, 02/09/2026 — remplace l'ordre par rubrique du Lot 10bis, plus
+  // de blocs à l'écran). Tri direct par `ordre` — PAS via groupByRubrique()
+  // (correctif du 02/09/2026 : passer par groupByRubrique() groupait
+  // d'abord par rubrique puis triait seulement à l'intérieur de chaque
+  // groupe, donc Monter/Descendre ne pouvait jamais faire franchir à une
+  // entrée sa frontière de rubrique à l'écran, malgré un `ordre` à jour en
+  // base — retour d'usage : « je ne peux pas vraiment ordonner les entrées
+  // ... seulement au sein d'une rubrique »). Suppose que `ordre` est unique
+  // à plat sur tout le numéro : voir supabase/009-ordre-entrees-plat.sql,
+  // la migration de bascule qui renumérote les entrées déjà en base (avant
+  // elle, `ordre` était attribué PAR RUBRIQUE depuis le Lot 10bis, deux
+  // rubriques pouvant partager les mêmes valeurs 0,1,2…).
+  function entreesOrdonnees(){
+    return entrees.slice().sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
   }
 
-  // Prochaine valeur d'`ordre` libre pour une nouvelle entrée dans une
-  // rubrique donnée (nouvelle entrée manuelle, ou candidat retenu de la
-  // moisson) : ajoutée en fin de la rubrique visée, jamais mélangée au
-  // milieu par surprise.
-  function prochainOrdreRubrique(rubrique){
-    return entrees.filter(function(x){ return x.rubrique === rubrique; })
-      .reduce(function(m, x){ return Math.max(m, (x.ordre || 0) + 1); }, 0);
+  // Prochaine valeur d'`ordre` libre pour une nouvelle entrée (nouvelle
+  // entrée manuelle, ou candidat retenu de la moisson) : ajoutée en fin de
+  // la liste à plat du numéro.
+  function prochainOrdre(){
+    return entrees.reduce(function(m, x){ return Math.max(m, (x.ordre || 0) + 1); }, 0);
   }
 
-  // Déplace une entrée d'un cran (sens -1 = monter, +1 = descendre) au sein
-  // de sa rubrique : réassigne 0..n-1 à TOUTES les entrées de cette
-  // rubrique plutôt que d'échanger deux valeurs — évite tout cas
-  // particulier avec des `ordre` par défaut à 0 ou déjà égaux.
+  // Déplace une entrée d'un cran (sens -1 = monter, +1 = descendre) dans la
+  // liste à plat du numéro entier (Lot 17 — auparavant au sein d'une seule
+  // rubrique, Lot 10bis) : réassigne 0..n-1 à TOUTES les entrées du numéro
+  // plutôt que d'échanger deux valeurs — évite tout cas particulier avec
+  // des `ordre` par défaut à 0 ou déjà égaux.
   function deplacerOrdreEntree(id, sens){
     var e = entrees.filter(function(x){ return x.id === id; })[0];
     if (!e) return;
-    var voisins = voisinsRubrique(e);
+    var voisins = entreesOrdonnees();
     var idx = voisins.indexOf(e);
     var idxCible = idx + sens;
     if (idxCible < 0 || idxCible >= voisins.length) return;
@@ -1405,6 +1607,135 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="champ"><label for="champ-' + name + '">' + label + '</label>' + tag + (aide ? '<span class="aide">' + aide + '</span>' : "") + '</div>';
   }
 
+  // Illustration d'une entrée (Lot 14) : un simple champ URL, remplissable
+  // à la main ou via le bouton « Récupérer l'illustration » (og:image de la
+  // page source, voir recupererIllustration() et la fonction Edge
+  // affut-illustration) — même champ quelle que soit son origine, le front
+  // ne distingue jamais les deux. Bouton + aperçu manipulés en DOM direct
+  // (voir l'écouteur data-action="recuperer-illustration"), jamais via
+  // render() : le formulaire n'est pas contrôlé (lu seulement à la
+  // soumission), un render() en cours de saisie effacerait toute frappe non
+  // enregistrée dans les autres champs (titre, résumé, chiffres...).
+  function renderChampIllustration(value){
+    var v = value || "";
+    return '<div class="champ champ-illustration">' +
+      '<label for="champ-imageUrl">Illustration (adresse d\'image, facultative)</label>' +
+      '<div class="illustration-ligne">' +
+        '<input id="champ-imageUrl" name="imageUrl" type="text" value="' + esc(v) + '">' +
+        '<button type="button" class="btn-ligne" data-action="recuperer-illustration">Récupérer l\'illustration</button>' +
+      '</div>' +
+      '<span class="aide" data-role="illustration-statut"></span>' +
+      '<img class="illustration-apercu"' + (v ? "" : ' hidden') + ' src="' + esc(v) + '" alt="">' +
+    '</div>';
+  }
+
+  // Illustration DU NUMÉRO (Lot 16) — distincte de celle d'une entrée :
+  // pilote uniquement la tuile Sommaire, jamais déduite automatiquement
+  // (voir renderNumeroCarte()). Champ manuel seulement, pas de bouton
+  // « Récupérer » : il n'y a pas de page unique associée à un numéro dont
+  // extraire une og:image, contrairement à une entrée qui a sa propre
+  // source. Pour reprendre l'image d'une entrée déjà illustrée, la copier
+  // depuis son propre champ (formulaire de l'entrée) et la coller ici.
+  function renderChampIllustrationNumero(){
+    var v = numero.imageUrl || "";
+    return '<div class="illustration-numero">' +
+      '<label for="champ-image-numero">Illustration du numéro (tuile Sommaire, facultative)</label>' +
+      '<div class="illustration-ligne">' +
+        '<input id="champ-image-numero" type="text" value="' + esc(v) + '" placeholder="Coller une adresse d\'image…">' +
+        (v ? '<img class="illustration-apercu-mini" src="' + esc(v) + '" alt="">' : "") +
+      '</div>' +
+    '</div>';
+  }
+
+  // Appel partagé à la fonction Edge (utilisé par le bouton individuel du
+  // formulaire et par le traitement en masse ci-dessous) : renvoie
+  // l'adresse d'image trouvée (ou null si aucune), lève une erreur au
+  // message déjà nettoyé sinon.
+  async function appellerFonctionIllustration(pageUrl){
+    // functions.invoke() n'attache pas toujours de façon fiable le jeton
+    // de la session en cours (constaté le 02/09/2026 : la fonction
+    // recevait la clé publique au lieu du jeton du rédacteur connecté,
+    // d'où un "Non authentifié" malgré une session active) — on le
+    // fournit nous-mêmes, explicitement.
+    var session = (await client().auth.getSession()).data.session;
+    var options = { body: { url: pageUrl } };
+    if (session) options.headers = { Authorization: "Bearer " + session.access_token };
+    var res = await client().functions.invoke("affut-illustration", options);
+    if (res.error) {
+      // supabase-js ne met que "Edge Function returned a non-2xx status
+      // code" dans err.message — le vrai détail ({error: "..."} renvoyé
+      // par affut-illustration) est dans err.context (la Response brute).
+      var detail = res.error.message || String(res.error);
+      if (res.error.context && typeof res.error.context.json === "function") {
+        try { var corps = await res.error.context.json(); if (corps && corps.error) detail = corps.error; } catch (e2) { /* corps non JSON, on garde le message d'origine */ }
+      }
+      throw new Error(detail);
+    }
+    return (res.data && res.data.image_url) || null;
+  }
+
+  async function recupererIllustration(btn){
+    var form = btn.closest("form");
+    var urlField = form.elements["url"];
+    var pageUrl = urlField ? urlField.value.trim() : "";
+    var statutEl = form.querySelector('[data-role="illustration-statut"]');
+    var imgField = form.elements["imageUrl"];
+    var apercuEl = form.querySelector(".illustration-apercu");
+    if (!pageUrl) { if (statutEl) statutEl.textContent = "Renseignez d'abord l'adresse de la source."; return; }
+
+    btn.disabled = true;
+    if (statutEl) statutEl.textContent = "Recherche de l'illustration…";
+    try {
+      var image = await appellerFonctionIllustration(pageUrl);
+      if (image) {
+        imgField.value = image;
+        apercuEl.src = image;
+        apercuEl.hidden = false;
+        if (statutEl) statutEl.textContent = "Illustration trouvée.";
+      } else if (statutEl) {
+        statutEl.textContent = "Aucune illustration trouvée sur cette page — vous pouvez en coller une manuellement.";
+      }
+    } catch (err) {
+      if (statutEl) statutEl.textContent = "Échec de la récupération : " + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Traitement en masse (demandé le 02/09/2026, en plus du bouton
+  // individuel plutôt qu'à sa place — celui-ci reste utile pour changer
+  // une adresse au cas par cas) : parcourt les entrées du numéro affiché
+  // sans illustration et sans lien mort, appelle la fonction Edge pour
+  // chacune, séquentiellement (pas en parallèle — évite de bombarder la
+  // fonction et reste lisible dans le texte du bouton pendant le
+  // traitement). Une entrée en échec n'interrompt pas les suivantes.
+  async function recupererIllustrationsManquantes(btn){
+    var cibles = entrees.filter(function(e){ return !e.imageUrl && e.url && e.url.trim() && !/^#/.test(e.url) && !e.lienMort; });
+    if (!cibles.length) { window.alert("Aucune entrée sans illustration à traiter dans ce numéro."); return; }
+
+    btn.disabled = true;
+    var texteInitial = btn.textContent;
+    var trouvees = 0, echecs = 0;
+    for (var i = 0; i < cibles.length; i++){
+      var e = cibles[i];
+      btn.textContent = "Récupération des illustrations… (" + (i + 1) + "/" + cibles.length + ")";
+      try {
+        var image = await appellerFonctionIllustration(e.url);
+        if (image) { e.imageUrl = image; ecrireEntree(e.id, { imageUrl: image }); trouvees++; }
+      } catch (err) {
+        echecs++;
+      }
+    }
+    btn.textContent = texteInitial;
+    btn.disabled = false;
+    render();
+    window.alert(
+      trouvees + " illustration" + (trouvees > 1 ? "s trouvées" : " trouvée") +
+      " sur " + cibles.length + " entrée" + (cibles.length > 1 ? "s" : "") + " sans illustration" +
+      (echecs ? " (" + echecs + " échec" + (echecs > 1 ? "s" : "") + ")" : "") + "."
+    );
+  }
+
   function renderModal(){
     if (!state.modal) return "";
     var editing = state.modal.mode === "edit";
@@ -1426,6 +1757,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             champ("Date", "date", e ? e.source.date : "", "ex. 14 août 2026") +
           '</div>' +
           champ("Titre de l'entrée", "titre", e ? e.titre : "") +
+          renderChampIllustration(e ? e.imageUrl : "") +
           champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "une valeur par ligne, « valeur | libellé », terminer par * pour la mettre en avant", true) +
           champ("Résumé factuel", "resume", e ? e.resume : "", "", true) +
           champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
@@ -1467,11 +1799,32 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var titresHtml = validees.map(function(e){
       return '<li><span class="nc-source-pastille">' + esc(e.source.nom) + '</span><span class="nc-titre-entree">' + esc(e.titre) + '</span></li>';
     }).join("");
-    return '<div class="numero-carte' + (dernier ? " dernier" : "") + '">' +
+    // Illustration de la tuile (Lot 14, champ dédié depuis le Lot 16) :
+    // choisie explicitement par l'enseignant (numero.imageUrl) — plus de
+    // déduction automatique depuis une entrée, jugée peu lisible (« je ne
+    // comprends pas bien comment l'illustration est sélectionnée »).
+    // Absente si le champ n'a jamais été renseigné, sans repli.
+    // Chargement EAGER, pas lazy (constaté 02/09/2026 : retour utilisateur
+    // « le cadre est plus grand que l'image, ce qui donne un espace vide
+    // sous l'image » — l'image du n° 2 restait indéfiniment `complete:
+    // false, naturalWidth: 0` malgré une image valide et rapide à charger
+    // en direct ; forcer `loading="eager"` en JS la charge instantanément).
+    // Sans rapport avec le CSS (`.nc-image{object-fit:cover}` + `stretch`
+    // dimensionnent la boîte correctement que l'image soit chargée ou non
+    // — vérifié). Cette tuile est de toute façon quasi toujours au-dessus
+    // de la ligne de flottaison (c'est LE visuel de tête du Sommaire) :
+    // le différer n'apporte rien, au prix de ce risque d'espace vide.
+    var image = n.imageUrl ? '<img class="nc-image" src="' + esc(n.imageUrl) + '" alt="">' : "";
+    // Tuile entièrement cliquable (Lot 16, retour d'usage : « on retire
+    // l'espace à droite avec le compteur d'actualités ») : un seul geste
+    // pour ouvrir le numéro, plus de bouton dédié séparé — <button> plutôt
+    // que <div> pour rester accessible au clavier (focus + Entrée), comme
+    // les autres déclencheurs de cette action (chip du Sommaire, etc.).
+    return '<button type="button" class="numero-carte' + (dernier ? " dernier" : "") + '" data-action="ouvrir-numero" data-numero="' + n.numero + '">' +
       '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
+      image +
       '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + '</ul></div>' +
-      '<div class="nc-droite"><div class="nc-compte"><span class="n tab-num">' + validees.length + '</span><span class="l">actualités publiées</span></div><button type="button" class="nc-ouvrir" data-action="ouvrir-numero" data-numero="' + n.numero + '"><span>Ouvrir le numéro</span><span class="fleche">→</span></button></div>' +
-    '</div>';
+    '</button>';
   }
 
   function renderSommaire(){
@@ -1493,7 +1846,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       }
       return tete + g.items.map(function(n){ return renderNumeroCarte(n, n.numero === dernierNumero); }).join("");
     }).join("");
-    return '<h1 class="sr-only">Sommaire</h1><div class="sommaire">' + html + '</div>';
+    // Seul point d'entrée vers la connexion en vue publique (retour d'usage
+    // 02/09/2026) : discret, en bas de la seule page Sommaire — pas dans le
+    // bandeau (visible sur tous les écrans, y compris à des élèves qui n'en
+    // ont pas l'usage). Glyphe-caractère plutôt qu'une icône dessinée, dans
+    // l'esprit du système (voir DESIGN.md, Navigation).
+    var connexionDiscrete = estRedacteurActif() ? "" :
+      '<button type="button" class="connexion-discrete" data-action="ouvrir-connexion" title="Espace réservé à l\'équipe pédagogique">⚿ Connexion</button>';
+    return '<h1 class="sr-only">Sommaire</h1><div class="sommaire">' + html + connexionDiscrete + '</div>';
   }
 
   function normalise(s){
@@ -1789,21 +2149,33 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       compterVueNumero(numero.numero);
     }
 
-    var visibles = entrees.filter(function(e){ return state.mode === "redaction" || e.valide; });
-    var groupes = groupByRubrique(visibles);
+    // Liste à plat (Lot 17) : plus de sections par rubrique à l'écran — la
+    // rubrique de chaque entrée est indiquée par une pastille sur l'entrée
+    // elle-même (renderEntree()/renderEntreeCarte()) plutôt que par un
+    // titre de groupe. entreesOrdonnees() donne l'ordre d'affichage complet
+    // du numéro (voir son commentaire pour la compatibilité avec l'ancien
+    // ordre par rubrique du Lot 10bis).
+    var visibles = entreesOrdonnees().filter(function(e){ return state.mode === "redaction" || e.valide; });
     var total = visibles.length;
-    var compte = 0;
 
     var alerte = state.mode === "redaction" ? renderMoissonAlerte() : null;
-    var corpsHtml = alerte !== null ? alerte : groupes.map(function(g){
-      var teteHtml = '<div class="rubrique-tete"><span class="nom">' + esc(g.rubrique) + '</span><span class="filet"></span>' +
-        (state.mode !== "redaction" ? '<span class="position">' + (compte + 1) + ' sur ' + total + '</span>' : "") + '</div>';
-      var itemsHtml = g.items.map(function(e, i){ compte++; return renderEntree(e, i === 0, i === g.items.length - 1); });
-      // Rubrique-tête + sa 1re entrée regroupées dans un même bloc : en
-      // impression (grille 2 colonnes), ça évite qu'un titre de rubrique
-      // se retrouve seul en bas d'une colonne, séparé de sa carte.
-      return '<div class="rubrique-groupe-tete">' + teteHtml + (itemsHtml[0] || "") + '</div>' + itemsHtml.slice(1).join("");
-    }).join("");
+    var corpsHtml;
+    if (alerte !== null) {
+      corpsHtml = alerte;
+    } else if (state.mode === "redaction") {
+      corpsHtml = visibles.map(function(e, i){ return renderEntree(e, i === 0, i === visibles.length - 1); }).join("");
+    } else {
+      // Vue publiée : deux rendus complets côte à côte — le « classique »
+      // (renderEntree(), grille 2 colonnes du Lot 4quater) réservé au
+      // repli d'impression navigateur (Ctrl+P ; le bouton « Imprimer ce
+      // numéro » utilise un chemin totalement séparé, jsPDF, qui ne lit
+      // jamais ce HTML), la « carte » (renderEntreeCarte(), grille
+      // responsive) réservée à l'écran — voir le commentaire en tête de
+      // renderEntreeCarte() et .mode-publiee .entree / .carte-grille en CSS.
+      var itemsClassique = visibles.map(function(e, i){ return renderEntree(e, i === 0, i === visibles.length - 1); }).join("");
+      var itemsCartes = '<div class="carte-grille">' + visibles.map(function(e){ return renderEntreeCarte(e); }).join("") + '</div>';
+      corpsHtml = itemsClassique + itemsCartes;
+    }
 
     var publieBadge = numero.statut === "publie" ? '<span class="etat-pastille ok">✓ publié</span>' : "";
     // Dépublier (demandé le 01/09/2026) : remet un numéro publié en
@@ -1816,7 +2188,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
-        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '</div>' +
+        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '</div>' +
+        renderChampIllustrationNumero() +
         '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
         devOutilsCollecte() +
       '</div>'
@@ -1954,6 +2327,70 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="sources">' + entete + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
   }
 
+  // ---- Bilan de fréquentation (Lot 13) : totaux seulement (vues par
+  // numéro, clics « Ouvrir la source » par entrée) — compteurs cumulés
+  // posés et branchés depuis le Lot 6, jamais encore affichés nulle part.
+  // Pas d'historique daté en base pour l'instant (voir AVANCEMENT.md) :
+  // pas de graphique temporel ici, seulement des totaux triés avec une
+  // barre de comparaison relative.
+  function renderBilanRowNumero(n, maxVues){
+    var vues = n.vues || 0;
+    var pct = maxVues ? Math.round((vues / maxVues) * 100) : 0;
+    return '<div class="source-row bilan-row bilan-row-2">' +
+      '<div class="source-nom"><span class="nom">n° ' + n.numero + (n.titre ? " · " + esc(n.titre) : "") + '</span><span class="adresse">' + esc(n.semaine || "") + '</span></div>' +
+      '<div class="bilan-mesure"><div class="bilan-barre"><div class="bilan-barre-remplie" style="width:' + pct + '%"></div></div><span class="n tab-num">' + vues + '</span></div>' +
+    '</div>';
+  }
+
+  function renderBilanRowEntree(e, n, maxClics){
+    var clics = e.clicsSource || 0;
+    var pct = maxClics ? Math.round((clics / maxClics) * 100) : 0;
+    return '<div class="source-row bilan-row">' +
+      '<div class="source-nom"><span class="nom">' + esc(e.titre || "(sans titre)") + '</span><span class="adresse">' + esc(e.rubrique || "") + '</span></div>' +
+      '<div class="source-rubrique">n° ' + n.numero + '</div>' +
+      '<div class="bilan-mesure"><div class="bilan-barre"><div class="bilan-barre-remplie" style="width:' + pct + '%"></div></div><span class="n tab-num">' + clics + '</span></div>' +
+    '</div>';
+  }
+
+  function renderBilanEcran(){
+    var numerosVus = numeros.filter(function(n){ return n.statut !== "brouillon"; });
+    var totalVues = numerosVus.reduce(function(s, n){ return s + (n.vues || 0); }, 0);
+
+    var toutesEntrees = [];
+    numeros.forEach(function(n){ (n.entrees || []).forEach(function(e){ toutesEntrees.push({ e: e, n: n }); }); });
+    var totalClics = toutesEntrees.reduce(function(s, x){ return s + (x.e.clicsSource || 0); }, 0);
+
+    var numeroTop = numerosVus.slice().sort(function(a, b){ return (b.vues || 0) - (a.vues || 0); })[0];
+
+    var entete = '<h1 class="sr-only">Bilan de fréquentation</h1><div class="sources-entete">' +
+      '<div class="sources-entete-principal"><span class="label">Vues cumulées</span><span class="total"><b class="tab-num">' + totalVues + '</b>sur ' + numerosVus.length + ' numéro' + (numerosVus.length > 1 ? "s" : "") + ' publié' + (numerosVus.length > 1 ? "s" : "") + '</span></div>' +
+      '<div class="sources-entete-principal"><span class="label">Clics « Ouvrir la source »</span><span class="total"><b class="tab-num">' + totalClics + '</b>sur ' + toutesEntrees.length + ' entrée' + (toutesEntrees.length > 1 ? "s" : "") + '</span></div>' +
+      (numeroTop && numeroTop.vues ? '<div class="sources-collecte"><span class="label">Numéro le plus consulté</span><span class="valeur">n° ' + numeroTop.numero + ' · ' + numeroTop.vues + ' vue' + (numeroTop.vues > 1 ? "s" : "") + '</span></div>' : "") +
+    '</div>';
+
+    var numerosTries = numerosVus.slice().sort(function(a, b){ return (b.vues || 0) - (a.vues || 0); });
+    var maxVues = numerosTries.reduce(function(m, n){ return Math.max(m, n.vues || 0); }, 0);
+    var colsNum = '<div class="sources-cols bilan-cols bilan-cols-2"><span>Numéro</span><span>Vues</span></div>';
+    var sectionNum = '<div class="groupe-titre"><span>Numéros — du plus au moins consulté</span></div>' +
+      colsNum + numerosTries.map(function(n){ return renderBilanRowNumero(n, maxVues); }).join("");
+
+    var entreesTriees = toutesEntrees.slice().sort(function(a, b){ return (b.e.clicsSource || 0) - (a.e.clicsSource || 0); });
+    var maxClics = entreesTriees.reduce(function(m, x){ return Math.max(m, x.e.clicsSource || 0); }, 0);
+    var seuil = 10;
+    var reste = entreesTriees.length - seuil;
+    var visibles = state.bilanEntreesDeplie ? entreesTriees : entreesTriees.slice(0, seuil);
+    var titreEnt = '<div class="groupe-titre"><span>Entrées — clics sur « Ouvrir la source » (' + entreesTriees.length + ')</span><span class="filet"></span>' +
+      (reste > 0 ? '<button type="button" class="deplier" data-action="deplier-bilan-entrees">' + (state.bilanEntreesDeplie ? "Replier" : "Déplier les " + reste + " autres") + '</button>' : "") +
+      '</div>';
+    var colsEnt = '<div class="sources-cols bilan-cols"><span>Entrée</span><span>Numéro</span><span>Clics</span></div>';
+    var sectionEnt = titreEnt + colsEnt + visibles.map(function(x){ return renderBilanRowEntree(x.e, x.n, maxClics); }).join("");
+
+    return '<div class="sources bilan">' + entete +
+      '<div class="sources-table">' + sectionNum + '</div>' +
+      '<div class="sources-table bilan-section">' + sectionEnt + '</div>' +
+    '</div>';
+  }
+
   function renderModalSource(){
     if (!state.modalSource) return "";
     var editing = state.modalSource.mode === "edit";
@@ -2014,6 +2451,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="modal-overlay" data-action="close-modal-auth-backdrop">' +
       '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Connexion rédaction">' +
         '<div class="modal-titre">Connexion — rédaction</div>' +
+        '<p class="aide"><strong>Espace réservé</strong> à l\'équipe pédagogique — rien à faire ici pour lire le carnet.</p>' +
         '<p class="aide">Adresse e-mail professionnelle. Le mot de passe est personnel : il est créé automatiquement à la première connexion.</p>' +
         '<form id="auth-form" novalidate>' +
           '<div class="champ"><label for="champ-auth-email">E-mail</label><input id="champ-auth-email" name="email" type="email" autocomplete="username" required></div>' +
@@ -2058,7 +2496,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function render(){
     bindCurrent();
     var app = document.getElementById("app");
-    app.className = "app" + (state.vue === "numero" ? " mode-" + state.mode : " mode-publiee");
+    // vue-sommaire (Lot 14) : un peu plus large que les autres vues
+    // publiques — demandé pour laisser sa pleine largeur à l'illustration
+    // de tuile (nc-image), sans élargir aussi la lecture d'un numéro ou la
+    // recherche, qui n'en ont pas besoin.
+    app.className = "app" + (state.vue === "numero" ? " mode-" + state.mode : state.vue === "sommaire" ? " mode-publiee vue-sommaire" : " mode-publiee");
 
     var redacActif = estRedacteurActif();
 
@@ -2076,6 +2518,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '<button type="button" data-action="vue" data-vue="sommaire" aria-pressed="' + (state.vue === "sommaire") + '">Sommaire</button>' +
           '<button type="button" data-action="vue" data-vue="recherche" aria-pressed="' + (state.vue === "recherche") + '">Rechercher</button>' +
           '<button type="button" data-action="vue" data-vue="sources" aria-pressed="' + (state.vue === "sources") + '">Sources</button>' +
+          '<button type="button" data-action="vue" data-vue="bilan" aria-pressed="' + (state.vue === "bilan") + '">Bilan</button>' +
           '<button type="button" data-action="aller-redaction" data-mode="redaction" aria-pressed="' + (state.vue === "numero" && state.mode === "redaction") + '">Rédaction</button>' +
           '<button type="button" data-action="aller-vue-publiee" aria-pressed="' + (state.vue === "numero" && state.mode === "publiee") + '">Vue publiée</button>' +
         '</div>'
@@ -2084,9 +2527,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '<button type="button" data-action="vue" data-vue="recherche"' + (state.vue === "recherche" ? ' aria-current="page"' : '') + '>Rechercher</button>' +
         '</div>';
 
+    // Plus de bouton « Se connecter » dans le bandeau public (retour
+    // d'usage 02/09/2026 : un espace réservé à l'équipe pédagogique n'a
+    // pas à s'afficher en permanence à tous les élèves) — déplacé en bas
+    // de page du Sommaire, en discret (voir renderSommaire()).
     var authHtml = redacActif
       ? '<span class="auth-statut">' + esc(state.auth.user.email) + '<button type="button" data-action="deconnexion">Déconnexion</button></span>'
-      : '<button type="button" data-action="ouvrir-connexion">Se connecter</button>';
+      : "";
 
     var bandeau =
       '<div class="bandeau">' +
@@ -2101,6 +2548,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       : state.vue === "sommaire" ? renderSommaire()
       : state.vue === "recherche" ? renderRecherche()
       : state.vue === "sources" && redacActif ? renderSourcesEcran()
+      : state.vue === "bilan" && redacActif ? renderBilanEcran()
       : renderNumeroPage();
 
     app.innerHTML =
@@ -2270,6 +2718,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.modal = null; render(); return;
     }
 
+    var illustrationBtn = ev.target.closest('[data-action="recuperer-illustration"]');
+    if (illustrationBtn) { recupererIllustration(illustrationBtn); return; }
+
+    var illustrationsMasseBtn = ev.target.closest('[data-action="recuperer-illustrations-manquantes"]');
+    if (illustrationsMasseBtn) { recupererIllustrationsManquantes(illustrationsMasseBtn); return; }
+
     // ---- lot 4 : impression ----
     if (ev.target.closest('[data-action="imprimer"]')) { numeroImprimer(); return; }
 
@@ -2288,7 +2742,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         numero.moisson = numero.moisson.filter(function(c){ return c.id !== cid; });
         var nouvelleEntree = {
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
-          ordre: prochainOrdreRubrique(cand.rubrique),
+          ordre: prochainOrdre(),
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
           titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
           blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
@@ -2434,6 +2888,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }
 
     if (ev.target.closest('[data-action="deplier-sources"]')) { state.sourcesDeplie = !state.sourcesDeplie; render(); return; }
+
+    if (ev.target.closest('[data-action="deplier-bilan-entrees"]')) { state.bilanEntreesDeplie = !state.bilanEntreesDeplie; render(); return; }
   });
 
   document.addEventListener("change", function(ev){
@@ -2492,6 +2948,31 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var host = "";
     try { host = new URL(ev.target.value).hostname.replace(/^www\./, ""); } catch (err) {}
     if (host) domaineField.value = host;
+  });
+
+  // Aperçu de l'illustration synchronisé en direct sur la saisie manuelle
+  // du champ (collage d'une adresse déjà connue) — le même <img> est aussi
+  // mis à jour par recupererIllustration() après un appel réussi.
+  document.addEventListener("input", function(ev){
+    if (!ev.target.form || ev.target.form.id !== "entree-form" || ev.target.name !== "imageUrl") return;
+    var apercuEl = ev.target.form.querySelector(".illustration-apercu");
+    if (!apercuEl) return;
+    var v = ev.target.value.trim();
+    apercuEl.src = v;
+    apercuEl.hidden = !v;
+  });
+
+  // Illustration du numéro (Lot 16) : champ hors formulaire, pas de
+  // soumission — enregistré au blur, comme les champs ed() du reste de la
+  // page (titre, chapo...), sans passer par ce mécanisme (ce n'est pas un
+  // span contenteditable mais un <input> classique).
+  document.addEventListener("focusout", function(ev){
+    if (ev.target.id !== "champ-image-numero") return;
+    var v = ev.target.value.trim();
+    if (v === (numero.imageUrl || "")) return;
+    numero.imageUrl = v || null;
+    ecrireNumero({ image_url: numero.imageUrl });
+    render();
   });
 
   document.addEventListener("focusout", function(ev){
@@ -2620,12 +3101,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       rubrique: rubriqueSaisie,
       valide: existing ? existing.valide : true,
       origine: existing ? existing.origine : "manuel",
-      // Conserve la place déjà occupée dans sa rubrique en modification ;
-      // une nouvelle entrée s'ajoute en fin de la rubrique visée (Lot 10bis).
-      ordre: existing ? existing.ordre : prochainOrdreRubrique(rubriqueSaisie),
+      // Conserve la place déjà occupée en modification ; une nouvelle
+      // entrée s'ajoute en fin du numéro (Lot 10bis, à plat depuis le Lot 17).
+      ordre: existing ? existing.ordre : prochainOrdre(),
       source: { nom: val("nom"), territoire: val("territoire"), domaine: val("domaine"), date: val("date") },
       url: val("url") || ("#" + id),
       titre: val("titre"),
+      imageUrl: val("imageUrl") || null,
       chiffres: chiffres,
       resume: val("resume"),
       usage: val("usage") || null,
@@ -2683,6 +3165,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       }
     });
   }
+
+  // Re-rendu au redimensionnement (Lot 20) : le franchissement du seuil
+  // mobile (mobileActif()) change le HTML émis en rédaction (titre-bouton
+  // vs édition en place) — sans ça, ce changement n'apparaîtrait qu'au
+  // prochain rendu déclenché par autre chose (rotation d'écran, DevTools
+  // redimensionnées…). Anti-rebond léger : un redimensionnement déclenche
+  // beaucoup d'événements pendant qu'on tire la fenêtre.
+  var minuteurResize = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(minuteurResize);
+    minuteurResize = setTimeout(render, 150);
+  });
 
   init();
 })();

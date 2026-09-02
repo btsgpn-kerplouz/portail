@@ -4,7 +4,109 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 01/09/2026 — reprendre ici
+## État au 02/09/2026 — reprendre ici
+
+**✅ Correctif Lot 19 appliqué et confirmé par l'utilisateur** (« ok c'est
+mieux ») — la migration a bien été jouée, les entrées s'affichent
+maintenant en vue publique. Voir aussi le **Lot 20** (connexion discrète +
+rédaction mobile) démarré dans la foulée, détail en fin de fichier.
+
+**🔴 Rappel du bug corrigé (Lot 19, 02/09/2026)** : aucune entrée ne s'est
+jamais affichée en
+vue publique/anonyme (élèves), sur aucun numéro, depuis l'origine de
+`affut_entrees_public` : la vue filtre `where valide = true` mais n'a
+jamais exposé la colonne `valide` elle-même, donc `depuisLigneEntree()`
+côté front lit `valide: undefined` pour chaque ligne, et tous les filtres
+d'affichage public (`e.valide`, ~10 usages) traitent `undefined` comme
+faux → toutes les entrées disparaissent silencieusement pour un visiteur
+non connecté, alors que la même donnée s'affiche normalement une fois
+connecté en rédaction (chemin de code différent, qui lit la vraie colonne).
+Jamais détecté avant car les vérifications précédentes se faisaient
+toujours en étant connecté. Diagnostic détaillé et correctif dans l'entrée
+« Lot 19 » en fin de fichier — **migration
+`supabase/010-fix-entrees-public-valide.sql` à appliquer par l'utilisateur
+au dashboard Supabase (SQL Editor) avant toute autre vérification**, puis
+retester déconnecté (bouton « Déconnexion ») qu'un numéro publié affiche
+bien ses entrées.
+
+**Lots 12 à 17 faits le 02/09/2026** — voir les entrées correspondantes en
+fin de fichier pour le détail. Le backlog du 01/09/2026 est maintenant
+**entièrement traité** (plus rien dans « Idées pour plus tard »), et
+largement dépassé par les Lots 15/17 (carte « réseaux sociaux », mise en
+page à plat), qui n'étaient pas prévus à l'origine. **Rien de
+committé/poussé** pour l'instant — attente explicite de l'utilisateur, à
+committer avec les prochains ajustements.
+
+**Correctif Lot 17bis (même jour, à la reprise) : l'ordre à plat des
+entrées ne fonctionnait pas réellement** — `entreesOrdonnees()` passait
+encore par `groupByRubrique()`, qui empêchait toute entrée de franchir sa
+frontière de rubrique à l'écran malgré des boutons Monter/Descendre
+fonctionnels en apparence. Corrigé (tri direct par `ordre`) + migration
+`009-ordre-entrees-plat.sql` **pas encore appliquée** (nécessaire pour les
+numéros déjà en base, pas pour les nouveaux) — voir l'entrée « Lot 17bis »
+en fin de fichier pour le détail et la vérification en conditions réelles.
+
+**Repère technique découvert en cours de route (important pour la suite) :**
+le bouton **« Imprimer ce numéro »** ne passe PAS par le CSS/DOM affiché à
+l'écran — il génère un PDF de façon entièrement programmatique via jsPDF
+(`numeroGenererPdfDoc()`/`pdfBuildBlocks()`/`pdfPreparerEntree()`, écran
+par écran en mm, Lot 4quater). Le bloc `@media print` du CSS (existant
+depuis longtemps) n'est donc qu'un **repli pour un Ctrl+P direct du
+navigateur**, jamais ce que déclenche ce bouton — les Lots 15 et 17
+n'avaient donc PAS besoin d'être vérifiés à l'impression pour valider le
+bouton lui-même (correction par rapport à une note précédente de ce
+fichier qui supposait le contraire) ; l'export PDF, lui, continue de
+grouper par rubrique (`groupByRubrique()`, inchangé, toujours appelé
+directement par `numeroGenererPdfDoc()`) — non retouché par le Lot 17, qui
+ne change que l'écran.
+
+**Migration SQL et fonction Edge du Lot 14 appliquées/déployées par
+l'utilisateur le 02/09/2026** — voir le détail (déploiement nettement plus
+accidenté que prévu, 4 problèmes distincts rencontrés côté Supabase) dans
+l'entrée « Lot 14 » en fin de fichier. Bouton individuel de récupération
+d'illustration confirmé fonctionnel en conditions réelles par l'utilisateur.
+
+**PROCHAINE REPRISE — reste à confirmer par l'utilisateur en conditions
+réelles avant de considérer les Lots 12 à 17 définitivement clos :**
+0. Migration `apps/affut/supabase/009-ordre-entrees-plat.sql` (correctif
+   Lot 17bis) — **pas encore appliquée**, à faire pour que le tri à plat par
+   `ordre` reproduise l'affichage actuel sur les numéros déjà en base (sans
+   elle, l'ordre affiché peut sembler mélangé sur ces numéros tant qu'on n'a
+   pas encore utilisé Monter/Descendre dessus).
+1. Migration `apps/affut/supabase/008-numero-image.sql` (illustration du
+   numéro, Lot 16) — **pas encore appliquée**, à faire avant de tester le
+   nouveau champ « Illustration du numéro » en rédaction.
+2. Les Lots 15 et 17 (carte « réseaux sociaux », mise en page à plat, grille
+   2-3 colonnes) — vérifiés avec de vraies données via la session déjà
+   ouverte dans le navigateur de cette session de travail (rendu correct :
+   grille, pastilles de rubrique, tuile Sommaire cliquable), mais jamais
+   testés par l'utilisateur lui-même.
+3. Le bouton **« Récupérer les illustrations manquantes »** (traitement en
+   masse, Lot 14) — jamais encore testé en conditions réelles, seulement
+   en isolation.
+4. Les Lots 12 et 13 (chiffres clés éditables en place, écran Bilan) —
+   toujours en attente d'une confirmation en conditions réelles de
+   rédaction (voir leurs entrées respectives).
+
+Aucun autre point de backlog planifié après ça — prochaine session à
+définir avec l'utilisateur.
+
+**Lot 18 (mobile, vue publique) démarré le 02/09/2026 — EN COURS, pas
+terminé.** Demande explicite de l'utilisateur : soigner la mise en page
+mobile des 3 écrans de consultation (Sommaire, lecture d'un numéro,
+Rechercher) — c'est l'usage principal réel de l'app (terrain, testé sur
+Samsung Galaxy XCover4s). Voir l'entrée « Lot 18 » en fin de fichier pour
+le détail : 2 correctifs faits et vérifiés en navigateur (page d'accueil
+qui atterrissait sur une page vide → Sommaire par défaut ; débordement
+horizontal de toute l'app sur l'en-tête de mois du Sommaire). L'audit du
+**rendu des cartes d'entrée sur mobile n'a pas pu être vérifié
+visuellement** : les 2 numéros publiés en base sont actuellement sans
+aucune entrée (dépôt de test/démarrage) — seule une revue de code du CSS
+existant a pu être faite pour cet écran. À la prochaine reprise : soit
+demander à l'utilisateur de regarder lui-même sur un numéro qui a de
+vraies entrées, soit repasser avec des données de test.
+
+## État au 01/09/2026
 
 **Fait :** Lots 1 à 7 complets. Lots 1-5 : page numéro, persistance,
 sommaire/recherche, sources suivies + impression PDF via jsPDF, audit RGAA.
@@ -1335,46 +1437,678 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       le révèle. Fonctionnellement complet et vérifié en place, juste mal
       étiqueté dans l'historique — à garder en tête si deux sessions
       tournent en parallèle sur ce dépôt.
+- [x] **Lot 12 — Chiffres clés éditables en place** (02/09/2026, backlog du
+      01/09/2026, item 1) : la valeur et le libellé de chaque chiffre clé
+      d'une entrée sont désormais éditables directement sur la ligne, en
+      rédaction — même geste que le titre ou le résumé (`ed()`,
+      `contenteditable`, écriture au blur).
+      *Écart assumé par rapport à la piste notée le 01/09/2026* (un bloc
+      `contenteditable` unique reprenant la syntaxe ligne à ligne « valeur |
+      libellé* » du formulaire) : implémenté à la place comme **deux spans
+      éditables par chiffre** (`eid.chiffres.i.v` / `eid.chiffres.i.l`),
+      plutôt qu'un bloc texte multi-ligne. Raison : le gestionnaire
+      générique `focusout` (`setEdValue`/`persisterEdValue`) collapse tout
+      le texte saisi sur une seule ligne (`replace(/\s+/g," ")`), ce qui
+      aurait cassé le parsing « une ligne par chiffre » sans un traitement
+      spécifique des sauts de ligne (`innerText`, gestion `<br>`/`<div>`
+      insérés par le navigateur) — la solution par champ évite ce problème
+      en réutilisant tel quel le mécanisme déjà éprouvé pour titre/résumé.
+      *Toujours réservé au formulaire modal (non traité ici, écart déjà
+      assumé pour le reste de l'entrée depuis le Lot 2)* : ajout/suppression
+      d'un chiffre, réordonnancement, bascule de l'accent (`*`) — seules la
+      valeur et le libellé d'un chiffre déjà présent s'éditent en place.
+      `setEdValue()` étendu pour un chemin à 4 segments
+      (`eid.chiffres.<index>.v|l`) ; `persisterEdValue()` n'a pas eu besoin
+      de changement (envoie déjà la colonne `chiffres` entière, générique).
+      *Validé le 02/09/2026* par test unitaire des fonctions modifiées
+      (`chiffreTexte`, `setEdValue`) exécuté dans un vrai navigateur (skill
+      `claude-in-chrome`, isolé de tout Supabase — pas de identifiants
+      utilisés) : rendu rédaction correct (span éditable par valeur/
+      libellé, y compris un chiffre à valeur vide), rendu public strictement
+      inchangé (comparé caractère à caractère à l'algorithme d'avant Lot
+      12), mutation `chiffres[i].v`/`chiffres[i].l` correcte. Application
+      réelle rechargée sur serveur statique local sans erreur console.
+      **Non revalidé en conditions réelles de rédaction** (connexion
+      rédacteur, clic dans un champ, blur, relecture après rechargement) —
+      l'accès rédaction nécessite des identifiants que cette session n'a
+      pas saisis (règle du produit : jamais de mot de passe entré à la
+      place de l'utilisateur) : **à confirmer par l'utilisateur** en
+      conditions réelles avant de considérer le lot définitivement clos.
+      *Confirmé fonctionnel par l'utilisateur le 02/09/2026*, en testant la
+      copie locale (même poste, serveur `python3 -m http.server`) — le
+      site déployé n'avait pas encore le Lot 12, d'où un premier essai
+      infructueux sur l'ancien déploiement avant ce constat.
+      *Suite demandée le 02/09/2026* : mise en avant (`*`) jugée pas assez
+      visible en simple texte gras coloré — remplacée par une **pastille
+      pleine grenat (`--af-accent`) + texte clair (`--af-sur-accent`)**,
+      même logique visuelle que le badge du numéro en en-tête (`n° 12`).
+      Correction de lisibilité associée : le span éditable imbriqué
+      (`[data-ed="true"]`) hérite sinon de la couleur claire de la pastille
+      et devient illisible en rédaction — forcé en encre normale
+      spécifiquement dans ce contexte
+      (`.mode-redaction .flat-chiffres b [data-ed="true"]`).
+
+- [x] **Lot 13 — Espace bilan/analyse (fréquentation)** (02/09/2026,
+      backlog du 01/09/2026 devenu item 1 du 02/09/2026 après le Lot 12) :
+      nouvel onglet **Bilan** dans la barre connectée (entre Sources et
+      Rédaction), pur écran de lecture — aucune nouvelle donnée à
+      collecter, les compteurs `vues`/`clics_source` étaient déjà réels et
+      branchés depuis le Lot 6.
+      *Contenu :* bandeau de totaux (vues cumulées sur les numéros
+      publiés, clics cumulés sur « Ouvrir la source », numéro le plus
+      consulté) ; tableau des numéros du plus au moins consulté (barre de
+      comparaison relative + nombre de vues) ; tableau des entrées triées
+      par clics décroissants, dépliable au-delà des 10 premières (même
+      geste « Déplier les N autres » que l'écran Sources).
+      *Portée assumée pour cette passe* (choix fait avec l'utilisateur,
+      02/09/2026) : **totaux seulement, pas de graphique temporel.** La
+      base ne stocke qu'un compteur cumulé (`vues integer`,
+      `clics_source integer`), pas d'historique daté — un graphique
+      d'évolution dans le temps demanderait une table de log horodatée
+      (nouvelle migration SQL à appliquer par l'utilisateur côté Supabase,
+      écriture supplémentaire à chaque vue/clic) : reporté à une passe
+      ultérieure si le besoin se confirme.
+      *Numéros brouillon exclus du tableau des numéros* (ils n'ont par
+      construction aucune vue, la vue publique ne servant que les numéros
+      `statut=publie`) — la colonne « Statut » envisagée un temps a été
+      retirée car toujours égale à « Publié » dans ce cas, donc sans
+      intérêt.
+      *Validé le 02/09/2026* par test unitaire des fonctions ajoutées
+      (`renderBilanEcran`, `renderBilanRowNumero`, `renderBilanRowEntree`)
+      exécuté dans un vrai navigateur (skill `claude-in-chrome`, isolé de
+      tout Supabase — pas d'identifiants utilisés) : totaux exacts,
+      numéros triés y compris à égalité de vues, seuil de dépliage (10)
+      correct, texte au singulier/pluriel correct, cas du titre vide géré
+      (« (sans titre) »), numéros brouillon bien exclus. Rendu vérifié
+      visuellement par injection isolée dans une page réelle (capture
+      d'écran) : cohérent avec la charte (mêmes classes que l'écran
+      Sources). Application réelle rechargée sur serveur statique local
+      sans erreur console.
+      **Non revalidé en conditions réelles de rédaction** (connexion
+      rédacteur, onglet Bilan sur les vraies données Supabase) — même
+      limite que pour le Lot 12, l'accès rédaction nécessite des
+      identifiants que cette session n'a pas saisis : **à confirmer par
+      l'utilisateur** avant de considérer le lot définitivement clos.
+
+- [x] **Lot 14 — Illustrations sur les entrées** (02/09/2026, fusionne les
+      3 derniers points du backlog du 01/09/2026 — demandé explicitement
+      comme un seul objectif : « rendre les numéros plus attractifs par
+      l'ajout d'illustrations, les solutions sobres sont les bienvenues »).
+      *Repère technique décisif (question de l'utilisateur, 02/09/2026)* :
+      la page ouverte par le lien d'une entrée peut effectivement servir de
+      miniature — la plupart des pages exposent une balise `og:image` (le
+      mécanisme standard des aperçus de lien sur les réseaux sociaux), et
+      les pages YouTube publient la leur (= la vignette de la vidéo), donc
+      un seul mécanisme générique couvre à la fois YouTube et les articles
+      classiques — les deux items distincts du backlog du 01/09/2026 se
+      sont fondus en un seul.
+      *Un seul champ, une seule origine possible côté front* :
+      `affut_entrees.image_url` (`text`, nullable), qu'il soit rempli
+      automatiquement ou collé à la main — le rendu ne distingue jamais
+      l'origine. Choix assumé avec l'utilisateur (02/09/2026, sobriété
+      demandée) : **lien direct (hotlink) vers l'image source, pas de
+      copie dans un espace de stockage Supabase** — donc pas de nouveau
+      bucket, pas de code d'upload de fichier. Contrepartie assumée : si
+      la page source change ou retire son image plus tard, la miniature
+      peut casser rétroactivement (jugé acceptable pour une veille
+      hebdomadaire).
+      *Nouvelle fonction Edge `affut-illustration`*
+      (`apps/affut/supabase/functions/affut-illustration/`) : lire le HTML
+      d'un site tiers depuis le navigateur est bloqué par CORS pour la
+      plupart des sources, donc la récupération de l'`og:image` doit se
+      faire côté serveur, sur le même principe que `affut-veille` (Lot 8).
+      À la différence de `affut-veille` (jeton dédié, appelée par une
+      routine cloud), celle-ci est appelée en direct par le navigateur du
+      rédacteur connecté : authentification par la session Supabase Auth
+      normale (JWT vérifié par la plateforme), plus une vérification
+      explicite côté fonction que l'appelant est un rédacteur actif
+      (`affut_redacteurs.actif`) — sans ce 2e contrôle, n'importe quel
+      compte authentifié du projet `portail` (partagé avec
+      organisation-cours) aurait pu s'en servir comme relais pour faire
+      requêter le serveur vers une adresse de son choix (SSRF). Pas de
+      `service_role` : la fonction n'écrit jamais en base, elle ne fait
+      que lire une page tierce et en extraire une adresse d'image.
+      Durcissement volontairement simple (usage bas volume, déclenché à la
+      main) : schéma http(s) uniquement, hôtes locaux/privés refusés,
+      délai (8 s) et taille de réponse (2 Mo de HTML) plafonnés.
+      *Écran* : dans le formulaire modal d'une entrée (pas d'édition en
+      place comme pour titre/résumé/chiffres — jugé inutile pour un champ
+      modifié rarement), un champ « Illustration (adresse d'image,
+      facultative) » avec un bouton **Récupérer l'illustration** (appelle
+      la fonction Edge avec l'URL de la source déjà saisie dans le même
+      formulaire) et un aperçu. Le bouton et l'aperçu sont manipulés en
+      DOM direct, jamais via `render()` : le formulaire n'est pas
+      contrôlé (lu seulement à la soumission), un `render()` en cours de
+      saisie effacerait toute frappe non enregistrée dans les autres
+      champs. Si aucune `og:image` n'est trouvée (site sans cette balise),
+      message explicite invitant à coller une adresse à la main — c'est le
+      filet de sécurité qui couvre le cas « je m'occuperai moi-même
+      d'insérer une illustration » évoqué par l'utilisateur, sans qu'il
+      soit nécessaire de construire un vrai formulaire d'upload de fichier
+      pour cette passe.
+      *Affichage* : petite vignette sobre (46×46) dans la ligne de
+      l'entrée (rédaction et vue publiée, même gabarit) si `imageUrl` est
+      renseigné, sinon rien (pas d'espace réservé). Tuile du Sommaire :
+      bande de 88 px de large reprenant l'illustration de la **1re entrée
+      validée** du numéro (jamais une entrée écartée/non retenue, même si
+      elle apparaît avant dans le tableau) — pas de montage/collage de
+      plusieurs images, conforme à la piste notée le 01/09/2026.
+      *Validé le 02/09/2026* par test unitaire des fonctions ajoutées/
+      modifiées (`renderChampIllustration`, `renderEntree`,
+      `renderNumeroCarte`) exécuté dans un vrai navigateur (skill
+      `claude-in-chrome`, isolé de tout Supabase — pas d'identifiants
+      utilisés, la fonction Edge elle-même n'a pas pu être testée en
+      conditions réelles depuis cet environnement) : champ et bouton
+      présents, aperçu masqué/affiché selon la valeur, vignette d'entrée
+      affichée seulement si `imageUrl` présent, tuile Sommaire reprend
+      bien l'image de la première entrée **validée** (et ignore une
+      entrée écartée placée avant). Rendu vérifié visuellement par
+      injection isolée dans une page réelle (capture d'écran) : cohérent
+      avec la charte, aucun débordement de mise en page. Application
+      réelle rechargée sur serveur statique local sans erreur console.
+      **Déployé et confirmé fonctionnel par l'utilisateur le 02/09/2026**,
+      après un déploiement Supabase nettement plus accidenté que prévu —
+      détail ci-dessous, à connaître pour toute prochaine Edge Function
+      appelée directement depuis le navigateur (différent du cas
+      `affut-veille`, appelée par une routine cloud) :
+      1. **Nom de fonction non pris en compte au dashboard** : le
+         formulaire « Deploy a new function » a déployé sous un nom
+         d'exemple pré-rempli (`super-responder`, puis `clever-worker` à
+         l'essai suivant) au lieu de `affut-illustration` malgré la
+         correction du champ — cause exacte non identifiée avec certitude
+         (dashboard Supabase), contournement : bien vérifier ensuite dans
+         la liste des Edge Functions que le nom voulu y figure.
+      2. **Désynchronisation du routage public** : une fois déployée sous
+         le bon nom, la fonction répondait correctement au testeur intégré
+         du dashboard mais 404 (« Requested function was not found ») sur
+         l'URL publique `functions/v1/affut-illustration` pendant plusieurs
+         minutes — résolu par un simple redéploiement (Deploy à nouveau,
+         sans changement de code), qui a forcé une resynchronisation.
+      3. **CORS — `x-client-info` manquant** : la librairie supabase-js
+         ajoute automatiquement cet en-tête à chaque appel ; l'en-tête
+         `access-control-allow-headers` de la fonction ne le listait pas
+         (seulement `authorization, content-type, apikey`), donc le
+         navigateur bloquait la vraie requête après un préflight pourtant
+         réussi — corrigé en l'ajoutant à `CORS_HEADERS` dans `index.ts`.
+      4. **`supabase.auth.getUser()` cassé pour cette clé de projet** :
+         une fois le routage et le CORS réglés, la fonction recevait bien
+         le jeton de session (vérifié : en-tête `authorization` present,
+         967 caractères, bien du rédacteur) mais `getUser()` échouait avec
+         une erreur de parsing JSON (« Unexpected token '<' » — une page
+         HTML renvoyée par le service d'auth au lieu d'un JSON), cause
+         précise non identifiée (probablement liée au nouveau format de
+         clé du projet, `sb_publishable_...`, mais pas confirmé). **Solution
+         retenue, plus simple et plus robuste que corriger `getUser()`** :
+         vérifier le rédacteur directement par une requête PostgREST sur
+         `affut_redacteurs` sous RLS (`auth.uid() = user_id`, policy déjà
+         en place) — le même en-tête `authorization` que le reste de
+         l'appli utilise déjà avec succès depuis les Lots 6/7, sans jamais
+         passer par `auth.getUser()`. Fonction Edge finale donc plus
+         simple que sa version d'origine, pas seulement corrigée.
+      *Ajustements visuels demandés après validation fonctionnelle
+      (02/09/2026)* :
+      - Vignette d'entrée déplacée du côté gauche de la ligne vers la
+        droite, **juste avant le bouton « Ouvrir la source »**, nettement
+        agrandie (46×46 → 118×88), avec une légère rotation (-2°) et une
+        ombre portée — écart assumé au « aucune ombre » du reste du
+        portail (`.entree-image`), dans la continuité des écarts déjà
+        actés pour affut (papier chaud, accent grenat) : rendu façon
+        photo glissée dans un carnet, jugé cohérent avec le registre
+        « carnet de veille naturaliste ». `.entree-row-droite` passé de
+        colonne à ligne ; bouton + actions regroupés dans un nouveau
+        `.entree-droite-colonne` pour garder leur empilement d'origine.
+      - Vignette de tuile Sommaire élargie (88px → 220px) et la vue
+        Sommaire elle-même élargie (1360px → 1560px, nouvelle classe
+        `.app.vue-sommaire`, appliquée seulement à cette vue — pas à la
+        lecture d'un numéro ni à la recherche, qui n'en ont pas besoin)
+        pour lui laisser plus de place, sans toucher au reste de la mise
+        en page publique.
+      - **Récupération en masse** : bouton « Récupérer les illustrations
+        manquantes » dans la barre d'actions du numéro (rédaction),
+        à côté de « + Ajouter une entrée » — traite séquentiellement
+        toutes les entrées du numéro affiché sans illustration, avec URL
+        exploitable et sans lien mort ; le champ/bouton individuel du
+        formulaire modal reste disponible pour changer une adresse au cas
+        par cas, comme demandé. `appellerFonctionIllustration()` extrait
+        en fonction partagée entre les deux chemins (individuel et en
+        masse) pour ne pas dupliquer la logique de jeton/erreur.
+      *Validé le 02/09/2026* : filtre de sélection des entrées à traiter
+      testé unitairement (exclut une entrée déjà illustrée, sans URL,
+      avec URL de repli `#...`, ou en lien mort), rendu de la vignette
+      d'entrée et de la tuile Sommaire élargie vérifiés visuellement par
+      injection isolée (capture d'écran). **Fonctionnement réel du bouton
+      individuel confirmé par l'utilisateur en conditions réelles** (seul
+      lot des trois du 02/09/2026 à l'être) — le bouton de récupération en
+      masse n'a en revanche pas encore été testé par l'utilisateur en
+      conditions réelles.
+      *Bug constaté ensuite (02/09/2026) sur une entrée YouTube* : « Aucune
+      illustration trouvée » alors que la page dispose bien d'une balise
+      `og:image`. Première hypothèse (interstitiel RGPD lié à la région EU
+      de la fonction Edge, cookie `CONSENT`/`SOCS` de contournement)
+      **infirmée** après redéploiement et retest par l'utilisateur — toujours
+      le même échec. Diagnostic ajouté temporairement à la fonction (renvoyé
+      dans la réponse JSON et affiché dans le message de statut du front)
+      pour voir ce que le serveur recevait réellement : `playabilityStatus`
+      valait `LOGIN_REQUIRED` (« Connectez-vous pour confirmer que vous
+      n'êtes pas un robot »), sans aucune balise `og:image`. **Cause réelle**
+      : blocage anti-robot de YouTube sur la réputation de l'IP du
+      datacenter Supabase — sans rapport avec le RGPD ni la région,
+      confirmé par les 3 tentatives réussies depuis un poste hors datacenter
+      pour la même vidéo. Scraper la page YouTube n'est donc pas fiable.
+      **Corrigé différemment** : la fonction ne scrape plus jamais YouTube.
+      `idVideoYoutube()` extrait l'identifiant de vidéo directement depuis
+      l'URL (formats `watch?v=`, `youtu.be/`, `shorts/`, `embed/`, `live/`,
+      `v/`), et `vignetteYoutube()` construit l'adresse de vignette statique
+      publique `img.youtube.com/vi/<id>/maxresdefault.jpg` (repli sur
+      `hqdefault.jpg`, toujours généré par YouTube — vérifié par un `HEAD`
+      qui renvoie une 404 propre si l'identifiant est invalide ou la vidéo
+      indisponible, pas de faux placeholder). Diagnostic temporaire retiré
+      une fois la cause confirmée. **Pas encore redéployé ni revérifié en
+      conditions réelles** — à faire au dashboard Supabase (Edge Functions
+      → `affut-illustration` → recoller `index.ts` → Deploy, voir le
+      `README.md` de la fonction) puis retester avec une entrée YouTube.
+
+- [x] **Lot 15 — Carte « réseaux sociaux » en vue publiée** (02/09/2026,
+      demande spontanée après le Lot 14, hors backlog prévu) : l'image
+      d'une entrée devient elle-même le lien vers la source (au lieu du
+      bouton « Ouvrir la source » à côté), et peut donc être bien plus
+      grande — remaniement complet de l'affichage à l'écran d'une entrée
+      en vue publiée, en carte façon fil Instagram/Twitter (image en haut,
+      texte en dessous), plutôt que la ligne compacte partagée jusqu'ici
+      avec la rédaction.
+      *Décision structurante :* **deux rendus distincts pour une entrée en
+      vue publiée**, générés côte à côte (`renderNumeroPage()`) — l'ancien
+      `renderEntree()` (ligne compacte) et le nouveau `renderEntreeCarte()`
+      (carte). Pourquoi ne pas avoir simplement remplacé l'un par l'autre :
+      l'impression (Lot 4quater, grille 2 colonnes déjà réglée après
+      plusieurs retours d'usage fin août) dépend entièrement de la
+      structure de `renderEntree()` (`.entree`, `.qr-impression`, découpe
+      en colonnes CSS) — la retoucher pour l'impression aurait remis en
+      cause un réglage déjà validé, pour un besoin (le format carte)
+      propre à l'écran. Résolu en CSS plutôt qu'en JS : `renderEntree()`
+      généré comme avant mais **masqué à l'écran** en vue publiée
+      (`.mode-publiee .entree{display:none}`) et **réaffiché à
+      l'impression** (`@media print{.mode-publiee .entree{display:block
+      !important}}`) ; `renderEntreeCarte()` fait l'inverse (visible à
+      l'écran, masqué à l'impression). Rédaction non concernée :
+      `renderEntreeCarte()` n'est jamais généré en rédaction (le choix se
+      fait au niveau de la boucle `state.mode === "redaction" ? ... : ...`
+      dans `renderNumeroPage()`), pas de carte à masquer pour cette vue.
+      *Accessibilité (déjà auditée RGAA au Lot 5, à respecter) :* jamais
+      l'image seule comme lien — le lien contient toujours aussi une
+      légende textuelle visible (« Ouvrir la source → domaine ») en
+      superposition basse sur l'image (dégradé sombre pour la lisibilité),
+      qui donne au lien son nom accessible malgré l'`alt=""` (décoratif)
+      de l'image ; entrée sans illustration : repli sur un bouton texte
+      seul (réutilise `.btn-source-compact`, même style que l'ancien
+      bouton en vue publiée).
+      *Largeur* : carte plafonnée à 560px, centrée (`margin:0 auto`) —
+      lecture en fil unique façon réseau social plutôt qu'une grille large,
+      choix qui la rend de fait déjà adaptée au mobile sans média requête
+      dédiée (confirmé par le retour de l'utilisateur : « ça sera
+      sans doute plus simple de passer en mode mobile »). Vue Sommaire
+      élargie au Lot 14 (`.app.vue-sommaire`, 1560px) non retouchée ici —
+      concerne une tuile de numéro, pas une entrée.
+      *Validé le 02/09/2026* : vérifié en conditions quasi réelles (la
+      session Supabase déjà ouverte par l'utilisateur dans le même
+      navigateur restait active dans les onglets ouverts par cette
+      session de travail, aucun identifiant saisi par elle) — rendu
+      correct sur les 8 entrées réelles du numéro 2 (avec et sans
+      illustration, y compris une « illustration » qui est en réalité une
+      capture d'écran d'un site cartographique, cas limite qui reste
+      lisible), légende et dégradé lisibles, chiffre clé mis en avant
+      toujours visible en carte. Largeur réduite testée via une `<iframe>`
+      de 384px (équivalent mobile) injectée dans la page : la carte se
+      redimensionne correctement, aucun débordement horizontal.
+      *Précision a posteriori (repère découvert plus tard dans la même
+      session)* : la note ci-dessus supposait que « Imprimer ce numéro »
+      dépendait du `@media print` du CSS — faux, ce bouton génère un PDF de
+      façon entièrement programmatique via jsPDF, sans jamais lire ce HTML
+      (voir la note en tête de fichier, section « reprendre ici »). Le
+      `@media print` reste correct et utile en repli pour un Ctrl+P direct
+      du navigateur, mais ne bloque pas la validation du bouton lui-même.
+
+- [x] **Lot 16 — Illustration du numéro (champ dédié)** (02/09/2026,
+      demande explicite après confusion sur le Lot 14 : « je ne comprends
+      pas bien comment l'illustration du numéro dans le sommaire est
+      sélectionnée, ça ne semble pas correspondre à la première entrée »).
+      *Cause du problème signalé* : la dérivation automatique (Lot 14)
+      prenait `n.entrees[0]` — l'ordre brut renvoyé par Supabase, jamais
+      trié par rubrique/`ordre` d'affichage réel — d'où un résultat
+      imprévisible pour l'utilisateur.
+      *Solution retenue, plus simple qu'une correction du tri* : un champ
+      dédié `affut_numeros.image_url` (migration
+      `apps/affut/supabase/008-numero-image.sql`, **pas encore
+      appliquée**), rempli à la main par l'enseignant dans un nouveau champ
+      « Illustration du numéro » en tête de l'écran de rédaction
+      (`renderChampIllustrationNumero()` — texte seul, pas de bouton
+      « Récupérer » comme pour une entrée : un numéro n'a pas de page
+      source unique dont extraire une og:image). **Plus de repli
+      automatique** : si le champ est vide, la tuile Sommaire n'affiche
+      simplement aucune illustration — fini la règle peu lisible. Pour
+      reprendre l'image d'une entrée déjà illustrée, la copier depuis son
+      propre champ et la coller ici (pas d'automatisation prévue pour ce
+      geste, jugé suffisamment rare).
+      **Non testé en conditions réelles** — la migration SQL n'est pas
+      encore appliquée (voir « reprendre ici » en tête de fichier).
+
+- [x] **Lot 17 — Simplification de l'écran du numéro (fin des blocs par
+      rubrique)** (02/09/2026, décidé en deux temps dans la même
+      conversation) :
+      1. D'abord demandé : pouvoir réordonner les rubriques dans un numéro
+         (boutons Monter/Descendre sur le titre de rubrique, ordre stocké
+         par numéro). **Implémenté puis entièrement retiré** dans la même
+         session, l'utilisateur ayant reconsidéré juste après : « on s'en
+         fiche d'ordonner les rubriques ». Rien n'en subsiste (ni en base —
+         la colonne envisagée n'a jamais été ajoutée à la migration
+         appliquée, ni dans le code).
+      2. Décidé à la place : **plus de sections par rubrique à l'écran du
+         tout** — remplacées par une **pastille de rubrique** sur chaque
+         entrée (`.pastille-rubrique`, en tête de `.flat-meta`, pleine
+         plutôt que contourée pour rester repérable malgré sa taille), en
+         rédaction comme en carte publiée. Ordre des entrées **à plat sur
+         tout le numéro** plutôt que par rubrique (Lot 10bis) :
+         `entreesOrdonnees()` remplace `voisinsRubrique()`,
+         `prochainOrdre()` remplace `prochainOrdreRubrique(rubrique)`. Pas
+         de migration de données nécessaire : `entreesOrdonnees()`
+         recalcule un ordre à plat stable à partir du regroupement par
+         rubrique existant (`groupByRubrique()`, conservé tel quel — deux
+         rubriques différentes pouvaient légitimement partager les mêmes
+         valeurs `ordre` avant ce lot, les trier globalement sans ce détour
+         les aurait mélangées au hasard) ; dès le premier déplacement
+         Monter/Descendre, `ordre` redevient unique sur tout le numéro.
+      3. Vue publiée à l'écran : une seule grille responsive
+         (`.carte-grille`, `auto-fit`/`minmax`, 1 colonne sur mobile, 2 à 3
+         selon la largeur réelle) pour tout le numéro, plus une par
+         rubrique — demandé explicitement (« grille 2 voire 3 colonnes »).
+         Repli d'impression navigateur direct (Ctrl+P, `renderEntree()`)
+         et export PDF (bouton dédié, jsPDF) inchangés dans leur principe,
+         voir le repère en tête de fichier — **le PDF continue de grouper
+         par rubrique**, seul l'écran est concerné par ce lot.
+      4. Tuile Sommaire (`renderNumeroCarte`) : simplifiée en même temps
+         (même conversation, retour d'usage direct) — **toute la tuile
+         devient cliquable** (`<button>` plutôt que `<div>`, reprend
+         `data-action="ouvrir-numero"` déjà géré par le handler existant),
+         **retrait du bloc de droite** (compteur d'actualités + bouton
+         « Ouvrir le numéro », jugé redondant). Mobile (`max-width:640px`)
+         : empilé plutôt que côte à côte, liste détaillée des actualités
+         masquée — ne restent que le numéro, l'image et le titre, comme
+         demandé (« simplement une suite de bandeau/carte avec
+         n°+illustration cliquable »).
+      *Validé le 02/09/2026* avec de vraies données, via la session déjà
+      ouverte dans le navigateur par l'utilisateur (aucun identifiant saisi
+      par cette session) : aucune erreur console ; en rédaction, 8 entrées
+      affichées à plat avec leur pastille de rubrique, plus aucune section ;
+      en vue publiée, une seule grille de 8 cartes confirmée sur 3 colonnes
+      actives à cette largeur (`gridTemplateColumns` inspecté directement),
+      chaque carte porte sa pastille ; tuile Sommaire testée en conditions
+      réelles — clic sur la tuile ouvre bien le numéro (a d'ailleurs
+      confirmé au passage, par un clic accidentel sur une image pendant la
+      vérification, que le lien-image d'une carte fonctionne bien en
+      conditions réelles, jusqu'au comptage du clic). **Non testé par
+      l'utilisateur lui-même.**
+
+- [x] **Lot 17bis — correctif : l'ordre à plat ne fonctionnait pas vraiment**
+      (02/09/2026, retour d'usage à la reprise : « je ne peux pas vraiment
+      ordonner les entrées comme je veux, seulement au sein d'une
+      rubrique »). Cause : `entreesOrdonnees()` (Lot 17) passait encore par
+      `groupByRubrique()` pour calculer l'ordre à plat — qui groupe
+      **d'abord** par rubrique (1re apparition) puis trie **seulement** à
+      l'intérieur de chaque groupe. Monter/Descendre modifiait donc bien
+      `ordre` en base, mais une entrée ne pouvait jamais visuellement
+      franchir sa frontière de rubrique : le Lot 17 n'avait donc pas
+      vraiment livré ce qui était demandé, malgré une vérification qui
+      n'avait testé qu'un déplacement à l'intérieur d'une même rubrique.
+      Corrigé : `entreesOrdonnees()` trie maintenant **directement** par
+      `ordre`, sans repasser par `groupByRubrique()` (qui reste utilisée
+      telle quelle, elle, uniquement par l'export PDF — voir le repère en
+      tête de fichier). Ce tri direct suppose `ordre` unique à plat sur tout
+      le numéro, ce qui n'est pas le cas des entrées déjà en base (`ordre`
+      attribué **par rubrique** depuis le Lot 10bis, deux rubriques pouvant
+      partager les mêmes valeurs 0,1,2…) : migration dédiée
+      `supabase/009-ordre-entrees-plat.sql`, qui renumérote `ordre` à plat
+      par numéro en reproduisant l'affichage actuel (groupé par rubrique,
+      approximée par la date de création la plus ancienne de chaque
+      rubrique, puis par `ordre` existant) — **pas encore appliquée par
+      l'utilisateur**, à faire avant de considérer ce correctif définitivement
+      opérationnel sur les numéros existants (les nouveaux numéros, sans
+      historique, ne sont pas concernés par la collision).
+      *Vérifié en conditions réelles* le 02/09/2026 (session déjà ouverte
+      dans le navigateur par l'utilisateur, aucun identifiant saisi) : ajout
+      de logs temporaires ayant confirmé le diagnostic (`idx`/`idxCible`
+      corrects, mais l'affichage ne changeait pas), puis, après correctif,
+      déplacement de l'entrée « L'INPN… » (rubrique Données & référentiels)
+      **avant** l'entrée « VivArmor Nature » (rubrique Positionnement) —
+      confirmé persistant après un rechargement complet de la page, y
+      compris en vue publiée — puis remis à sa position d'origine pour ne
+      pas perturber le jeu de données de démonstration.
+
+- [ ] **Lot 18 — Repasse mobile sur la vue publique** (démarré 02/09/2026,
+      EN COURS). Demande explicite : « il y a beaucoup de boulot de mise
+      en page sur la partie mobile ! » — priorité aux 3 écrans de
+      consultation (Sommaire, lecture d'un numéro, Rechercher), qui sont
+      l'usage principal réel de l'app (terrain, testé notamment sur
+      Samsung Galaxy XCover4s — 5", 720×1280, viewport CSS ~360×640).
+      *Méthode* : `node` indisponible sur ce poste (pas de gestionnaire de
+      version Node ni de droits `sudo` pour l'installer) → impossible de
+      lancer `context.mjs` du skill `impeccable`, PRODUCT.md/DESIGN.md et
+      `reference/adapt.md` relus à la main à la place. App servie en local
+      (`python3 -m http.server`) et inspectée dans Chrome via
+      claude-in-chrome ; `resize_window` ne redimensionne pas réellement
+      la fenêtre dans cet environnement (elle reste bloquée à sa taille
+      d'écran) — contournement : une page wrapper avec une `<iframe
+      width=360 height=640>` chargeant l'app, qui a son propre viewport
+      CSS indépendant de la fenêtre du navigateur.
+      **Corrigé et vérifié en navigateur (360×640)** :
+      1. **Page d'accueil vide.** `state.vue` valait `"numero"` par défaut
+         (`index.html`) : l'app atterrissait directement sur le dernier
+         numéro, y compris quand celui-ci n'a encore aucune entrée — page
+         qui semble cassée/vide au premier chargement, sur mobile comme
+         sur desktop (retour d'usage direct de l'utilisateur en cours de
+         session). **Corrigé** : `vue: "sommaire"` par défaut — le
+         Sommaire affiche toujours au moins la liste des numéros parus.
+         `numeroId` reste calculé normalement à l'init
+         (`numeroParDefaut()`) : ouvrir un numéro ou passer en Rédaction
+         retombe bien sur le bon numéro, aucune régression identifiée.
+      2. **Débordement horizontal de toute l'app sur le Sommaire.**
+         `.sommaire-mois` (en-tête de groupe mensuel : nom du mois + filet
+         décoratif + décompte + bouton « Déplier » pour les mois
+         repliables) n'avait pas de repli mobile — nom, décompte et bouton
+         sont tous incompressibles (`white-space:nowrap` ou largeur
+         minimale de contenu), et sans `flex-wrap` la somme dépassait la
+         largeur de l'écran, forçant une scrollbar horizontale sur **toute
+         l'app**, pas seulement cette ligne. Un mois replié (avec bouton)
+         déclenchait le bug, le premier mois (ouvert, sans bouton) non —
+         d'où un bug qui n'apparaissait qu'à partir du 2e mois du
+         Sommaire. **Corrigé** dans le bloc `@media(max-width:640px)`
+         existant : `.sommaire-mois{flex-wrap:wrap}`, filet décoratif
+         masqué sur mobile (`display:none` — n'apporte aucune information,
+         inutile de lui trouver une place), décompte poussé à droite du
+         nom (`margin-left:auto`), bouton Déplier libre de passer à la
+         ligne suivante si besoin.
+      **Pas encore vérifié** : le rendu des cartes d'entrée
+      (`.entree-row`/`.flat-titre`/`.flat-resume`/`.btn-source-compact`…)
+      sur les écrans Sommaire→lecture d'un numéro et Rechercher — CSS déjà
+      substantiel à `@media(max-width:640px)` pour ces classes (empilement,
+      cibles tactiles ≥44px sur `.btn-source-compact`), a priori issu du
+      Lot 10 (refonte Moisson), mais **aucune vérification visuelle
+      possible** : les numéros n°1 et n°2 actuellement publiés en base
+      n'ont aucune entrée (dépôt de test/démarrage — seule une illustration
+      de numéro est présente sur le n°2, via le Lot 16). Écran Rechercher
+      vérifié visuellement (barre de recherche, filtres, bouton) : pas de
+      débordement, mise en page correcte en l'absence de résultats.
+      **Reste à faire à la prochaine reprise** : soit tester avec un
+      numéro contenant de vraies entrées, soit repasser avec un jeu de
+      données de démonstration, pour auditer réellement l'écran le plus
+      consulté (liste des entrées d'un numéro).
+
+- [ ] **Lot 19 — Correctif : aucune entrée ne s'affichait en vue publique**
+      (trouvé 02/09/2026, EN COURS — migration pas encore appliquée par
+      l'utilisateur). Retour direct de l'utilisateur pendant le Lot 18 :
+      « pourquoi je ne peux pas accéder aux entrées en cliquant sur le
+      numéro publié ? […] je ne vois pas la liste des entrées s'afficher
+      dans la tuile du dernier numéro […] Il y a des bugs sévères là. »
+      *Diagnostic* (navigateur, `apps/affut/index.html` servi en local) :
+      1. Connecté en rédaction : Sommaire et « Vue publiée » affichent
+         correctement les 9 entrées du n°2 — aucun souci apparent.
+      2. Déconnecté (bouton Déconnexion) puis page rechargée à froid
+         (visiteur anonyme réel) : le même numéro affiche « 0 actualité »
+         partout, la tuile Sommaire et la lecture du numéro sont vides.
+      3. Éliminé un par un : requêtes réseau vers `affut_numeros_public` et
+         `affut_entrees_public` toutes deux 200 (vérifié via
+         `read_network_requests`) ; un `fetch()` direct de la même URL
+         depuis la page renvoie les 9 entrées complètes (11 343 octets) ;
+         une requête `curl` indépendante hors navigateur, avec la même clé
+         `sb_publishable_…`, renvoie aussi les 9 entrées ; un client
+         Supabase-JS flambant neuf créé à la console renvoie aussi
+         `count: 9`. **Donc ni le réseau, ni la clé anon, ni la RLS.**
+      4. Cause trouvée en lisant `affut_entrees_public` dans
+         `supabase/007-illustration-entree.sql` (et ses versions
+         précédentes, 002/006, identiques sur ce point) : la vue filtre
+         `where valide = true` mais n'a **jamais** inclus la colonne
+         `valide` dans son `select` — vrai depuis sa toute première
+         définition. Côté front, `depuisLigneEntree()` (index.html) fait
+         `valide: r.valide`, donc `undefined` pour chaque ligne de cette
+         vue. Or l'écran public filtre systématiquement par `e.valide`
+         (compteurs de mois du Sommaire, liste d'entrées d'un numéro,
+         Rechercher, impression — une dizaine d'usages de
+         `.filter(e => e.valide)` dans tout le fichier) : `undefined` y
+         est traité comme faux, donc **chaque entrée disparaît sans
+         erreur ni exception, sur tous les numéros**, dès qu'on n'est pas
+         connecté. La rédaction n'est jamais touchée : elle lit
+         `affut_entrees` en direct (`chargerDonneesRedaction()`), qui a la
+         vraie colonne `valide` — un chemin de code entièrement différent,
+         d'où un bug invisible à toute vérification faite connecté (tout
+         le travail des Lots 1 à 18 a été vérifié ainsi).
+      **Corrigé** : nouvelle migration
+      `supabase/010-fix-entrees-public-valide.sql` — recrée la vue en
+      ajoutant `true as valide` en dernière colonne (Postgres interdit
+      d'insérer une colonne ailleurs qu'en fin de liste sur un `CREATE OR
+      REPLACE VIEW` sans `DROP VIEW`, même contrainte que `image_url` au
+      Lot 14 ; `true` en dur plutôt que la vraie colonne — le `where valide
+      = true` de la vue garantit déjà que toute ligne renvoyée est valide,
+      pas besoin de la colonne réelle). **Pas encore appliquée par
+      l'utilisateur** (pas d'accès `service_role`/SQL direct depuis cette
+      session) — à faire au dashboard Supabase (SQL Editor, coller le
+      contenu du fichier, Run), puis revérifier déconnecté qu'un numéro
+      publié affiche bien ses entrées.
+      *Non couvert par ce correctif, à vérifier séparément si besoin* :
+      `affut_numeros_public` n'est pas concernée (pas de notion de
+      `valide` par entrée) ; aucune autre vue publique du projet ne suit ce
+      même motif `where X = true` sans exposer `X` — vérifié par lecture
+      des migrations, mais pas testé une par une en conditions réelles.
+
+- [x] **Lot 20 — Connexion discrète + rédaction mobile praticable**
+      (02/09/2026). Trois demandes explicites de l'utilisateur après
+      confirmation que le Lot 19 (correctif entrées publiques) fonctionne :
+      1. **Bouton « Se connecter » retiré du bandeau public**, déplacé en
+         bas de la seule page Sommaire, discret (glyphe `⚿`, mono, petit,
+         aligné à droite — `.connexion-discrete`) : plus jamais visible sur
+         les autres écrans publics ni pour un rédacteur déjà connecté.
+         Message « **Espace réservé** à l'équipe pédagogique » ajouté en
+         tête de la modale de connexion.
+      2. **Barre d'onglets rédacteur qui débordait sur mobile** (Sommaire/
+         Rechercher/Sources/Bilan/Rédaction/Vue publiée, 6 boutons, jamais
+         couverte par un repli mobile jusqu'ici) : rendue défilante
+         horizontalement dans son propre cadre (`.mode-toggle{overflow-x:
+         auto}`) plutôt que passée à la ligne (6 pastilles sur plusieurs
+         lignes aurait pris toute la hauteur d'écran) — motif de barre
+         d'onglets mobile courant, reste compact. Confirmé : plus de
+         défilement horizontal de la page entière (`document.body.
+         scrollWidth` vérifié < largeur d'écran après le correctif).
+      3. **Rédaction mobile peu praticable, "en vrac"** (retour direct :
+         « je suggère qu'en vue mobile rédaction il faut cliquer sur des
+         titres d'entrées pour ouvrir un menu avec les champs modifiables,
+         plutôt que de les avoir en vrac »). Constat : ce « menu » demandé
+         **existait déjà** — la modale « Modifier » (`renderModal()`,
+         bouton jusque-là secondaire) a tous les champs (rubrique, source,
+         territoire, URL, domaine, date, titre, illustration, chiffres,
+         résumé, usage). Il manquait juste le déclencheur adapté au mobile.
+         Corrigé dans `index.html` :
+         - Nouvelle fonction `mobileActif()` (`matchMedia(max-width:640px)`).
+         - `ed()` (les `<span contenteditable>` d'édition en place) ne
+           s'active plus sur mobile — au doigt, un span d'édition minuscule
+           au milieu d'une ligne dense est peu praticable, et les deux
+           modes de saisie en même temps prêtaient à confusion. Sur
+           desktop, l'édition en place reste inchangée.
+         - Le **titre de l'entrée devient un bouton** sur mobile
+           (`.flat-titre-bouton`, chevron `›`) qui ouvre directement la
+           modale « Modifier » — le bouton « Modifier » de la ligne
+           d'actions, devenu redondant, est masqué en CSS mobile
+           (`.entree-actions [data-action="edit-entree"]{display:none}`) ;
+           Déplacer/Supprimer/Monter/Descendre/case « retenue » restent
+           tels quels (pas couverts par la modale).
+         - Écouteur `resize` (anti-rebond 150 ms) ajouté en toute fin de
+           fichier : sans lui, franchir le seuil mobile (rotation d'écran,
+           redimensionnement DevTools) n'aurait changé le rendu qu'au
+           prochain clic — le HTML émis en rédaction dépend maintenant de
+           la largeur d'écran, pas seulement de l'état.
+      **Bug préexistant trouvé en testant ce lot (pas introduit par lui)** :
+      `.entree-droite-colonne` (bouton « Ouvrir la source » + Déplacer/
+      Supprimer, colonne de droite d'une entrée) était `flex:none` alors
+      que son contenu réclamait `width:100%` — sizing circulaire côté
+      navigateur, qui retombait sur la largeur naturelle du contenu et
+      dépassait l'écran, réservé à la rédaction mobile (jamais vu en vue
+      publiée, qui n'affiche pas `.entree-actions`). Corrigé au passage
+      (`flex:1;min-width:0`, aux côtés de l'illustration de l'entrée).
+      *Méthode de vérification* : `node` indisponible sur ce poste (voir
+      Lot 18) → pas de connexion réelle possible pour tester la rédaction
+      (pas d'identifiants dans cette session). Contournement ponctuel :
+      copie de `index.html` dans le répertoire de travail temporaire, avec
+      `estRedacteurActif()` forcé à `true` et `state.mode` forcé à
+      `"redaction"`, servie en local et inspectée en navigateur (iframe
+      360×900, même technique que le Lot 18) — copie et serveur de test
+      supprimés après vérification, **le fichier réel n'a jamais été
+      modifié pour ce test** (confirmé par `git status` après coup).
+      Chargement des données passé par `chargerDonneesPubliques()` (pas de
+      vraie session), donc `numero.candidates` affichait "undefined" dans
+      ce test uniquement — artefact du contournement, pas un bug, absent
+      avec une vraie session rédacteur.
+      **Non vérifié par l'utilisateur lui-même** — à confirmer à la
+      prochaine reprise, notamment le geste titre → modale sur un vrai
+      téléphone (au doigt, pas à la souris).
+
+- [x] **Lot 21 — Correctif : espace vide sous l'illustration du n° 2 au
+      Sommaire** (02/09/2026). Retour direct de l'utilisateur, en creusant
+      un point soulevé pendant le Lot 18 (mise en page mobile) sur le
+      traitement des illustrations (conteneur à format fixe + image
+      recadrée par `object-fit:cover`, partout dans l'app) : « Le cadre est
+      plus grand que l'image, ce qui donne un espace vide sous l'image »,
+      sur la tuile du n° 2 en page Sommaire.
+      *Diagnostic* : rien à voir avec le CSS/`object-fit` — vérifié en
+      navigateur, `.nc-image` (220×235px sur le rendu observé) est
+      correctement dimensionnée par `align-items:stretch`, que l'image soit
+      chargée ou non. La vraie cause : `<img loading="lazy">`
+      (`renderNumeroCarte()`) restait bloquée à `complete: false,
+      naturalWidth: 0` malgré une image valide et rapide (vérifié en curl
+      direct : 456 Ko, ~0,5 s) — forcer `img.loading = "eager"` en console
+      la charge instantanément (1200×800), qui confirme que seul
+      l'attribut `loading="lazy"` posait problème.
+      **Corrigé** : `loading="lazy"` retiré de l'image de tuile Sommaire
+      (`renderNumeroCarte()`) — cette tuile est quasi toujours au-dessus de
+      la ligne de flottaison (c'est LE visuel de tête du Sommaire, la
+      dernière rendue en premier), le différer n'apportait rien face au
+      risque d'espace vide. Les autres images de l'app (vignette d'entrée,
+      carte « réseaux sociaux », aperçus de formulaire) restent en l'état,
+      pas concernées par ce retour.
+      *Discussion adjacente, tranchée avec l'utilisateur* : le choix
+      « conteneur à format fixe, image recadrée » (plutôt que l'inverse)
+      reste approprié pour cet écran — chaque tuile de numéro occupe toute
+      la largeur et s'empile verticalement (pas une grille à plusieurs
+      colonnes), donc une hauteur d'image variable n'aurait pas d'impact
+      d'alignement ici, contrairement à la grille 2-3 colonnes des entrées
+      publiées (Lot 15/17) où ça compterait davantage.
+      *Vérifié en navigateur* (`img.complete`/`naturalWidth` avant/après,
+      capture d'écran) — **pas encore vérifié par l'utilisateur en
+      conditions réelles**.
 
 ## Idées pour plus tard (hors lots planifiés)
 
-**PROCHAINE REPRISE — backlog du 01/09/2026, ordre conseillé (avis Claude,
-pas encore arbitré par l'utilisateur — il a explicitement demandé de tout
-noter sans démarrer, avant un `/clear` de conversation) :**
-
-1. **Chiffres clés éditables en place** (confirmé le 01/09/2026 : édition
-   **en place** voulue, comme titre/résumé — pas seulement via le
-   formulaire modal, qui le permet déjà). Conseillé en premier : plus
-   petit chantier, aucune nouvelle dépendance (pas de Storage, pas de
-   changement de schéma), lève une vraie friction quotidienne côté
-   rédaction. Piste : un bloc `contenteditable` reprenant la même syntaxe
-   ligne à ligne « valeur | libellé[*] » que le textarea du formulaire
-   (`chiffresToText()`/`parseChiffres()` déjà là), parsé au blur comme les
-   autres champs `ed()`.
-2. **Espace bilan/analyse (vues + clics)** par entrée/numéro (demandé le
-   30/08/2026, reprécisé le 01/09/2026 : « un onglet supplémentaire » dans
-   la barre connectée, voir Lot 10quinquies). Conseillé en second : le
-   comptage est déjà réel (RPC `affut_incrementer_vue_numero`/
-   `affut_incrementer_clic_source` branchées au Lot 6, colonnes `vues`/
-   `clics_source` déjà lues côté rédaction) — pur travail d'écran, aucune
-   nouvelle donnée à collecter.
-3. **Miniature automatique pour une URL YouTube** sur une entrée :
-   faisable sans stockage ni clé API —
-   `https://img.youtube.com/vi/<ID>/hqdefault.jpg` à partir de l'ID
-   extrait de `entree.url` (fonctionne pour toute vidéo publique, aucune
-   authentification requise). Conseillé en troisième : gain visuel rapide,
-   zéro nouvelle infrastructure, réutilise le champ `url` déjà présent sur
-   chaque entrée.
-4. **Images/illustrations générales sur une entrée** (upload libre, pas
-   seulement YouTube) : chantier plus lourd — nouveau bucket Supabase
-   Storage, policies, UI d'upload, affichage dans l'entrée. Reste à
-   définir avec l'utilisateur : illustration obligatoire ou facultative,
-   formats acceptés, poids max.
-5. **Illustration dans les tuiles du Sommaire** : ne reprendre que
-   l'illustration de la **1re entrée** du numéro (pas de montage/collage)
-   — dépend directement du point 4 (une entrée doit d'abord pouvoir
-   porter une image), donc à faire juste après/avec lui plutôt qu'en
-   chantier séparé.
+**Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés
+éditables en place → Lot 12 ; espace bilan/analyse → Lot 13 ; miniature
+YouTube + images générales + illustration du Sommaire, fusionnés en un
+seul objectif → Lot 14). Rien en attente ici pour l'instant — prochaine
+idée à définir avec l'utilisateur.
 
 ## Points laissés ouverts par le brief (à trancher en cours de route)
 
