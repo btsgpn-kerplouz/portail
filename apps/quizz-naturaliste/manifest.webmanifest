@@ -1,7 +1,7 @@
 {
-  "name": "Coup d'œil — reconnaissance d'espèces",
-  "short_name": "Coup d'œil",
-  "description": "Entraînement à la reconnaissance visuelle d'espèces (oiseaux, insectes, mammifères, herpéto) pour le BTS GPN. Photos iNaturalist sous licence libre.",
+  "name": "Quizz naturaliste — BTS GPN",
+  "short_name": "Quizz nat.",
+  "description": "Quiz pour reconnaître des espèces sur photo (oiseaux, insectes, mammifères, herpéto). BTS GPN.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

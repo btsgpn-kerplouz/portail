@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "coup-doeil",
+      "name": "quizz-naturaliste",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "serve", "apps/quizz-naturaliste", "-l", "4178"],
       "port": 4178

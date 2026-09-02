@@ -1,7 +1,7 @@
-# Coup d'œil
+# Quizz naturaliste
 
-Entraînement à la **reconnaissance visuelle d'espèces** (oiseaux, insectes,
-mammifères, herpéto) pour le BTS GPN. QCM à partir de photos :
+Quiz pour **reconnaître des espèces sur photo** (oiseaux, insectes, mammifères,
+herpéto) — BTS GPN. QCM à partir de photos :
 
 > Le groupe **plantes** est présent dans les données mais **masqué**
 > (`HIDDEN_GROUPS` dans `index.html`) le temps d'être retravaillé.
@@ -27,7 +27,7 @@ App **purement statique + PWA coquille**, sur le modèle de
 | `index.html` | L'app entière (HTML/CSS/JS vanilla, sans build). Charte « papier technique froid », accent rouille sombre `#9c3d2e`. |
 | `quiz-data.js` | Les données : ~386 espèces / ~4600 photos (≤ 12 par espèce), définit `window.QUIZ_DATA`. |
 | `manifest.webmanifest` · `service-worker.js` · `icons/` · `fonts/` | Coquille PWA. |
-| `wrangler.jsonc` | Déploiement Cloudflare (worker `coup-doeil`). |
+| `wrangler.jsonc` | Déploiement Cloudflare (worker `quizz-naturaliste`). |
 
 ## Images
 
