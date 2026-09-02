@@ -88,6 +88,8 @@
     .tool-title{flex:1;min-width:0;font-family:var(--pt-serif);font-size:21px;font-weight:600;line-height:1.15}
     .tool-desc{margin:0;font-size:15px;line-height:1.6}
     .tool-foot{display:flex;justify-content:flex-end}
+    .tool-badge{font-family:var(--pt-mono);font-size:11px;letter-spacing:.04em;margin-right:auto;align-self:center}
+    .tool--active .tool-badge{color:var(--pt-sur-couleur)}
     .tool-arrow{display:inline-block;font-family:var(--pt-sans);font-size:16px;font-weight:700;opacity:.6;transition:opacity .15s ease,font-size .15s ease}
     .tool:hover .tool-arrow,.tool:focus-visible .tool-arrow{opacity:1;font-size:20px}
     .tool-picto{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center}
@@ -265,17 +267,19 @@
             </div>
           </article>
 
-          <a class="tool tool--wip" style="--acc:var(--pt-app-affut)" data-status="chantier" href="https://affut-veille-naturaliste.kerplouz.workers.dev" target="_blank" rel="noopener">
-            <div class="tool-lisere"></div>
+          <a class="tool tool--active" style="--acc:var(--pt-app-affut)" data-status="service" href="https://affut-veille-naturaliste.kerplouz.workers.dev" target="_blank" rel="noopener">
             <div class="tool-inner">
               <div class="tool-row">
                 <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="M3 6.5h10v14H3z"></path><path d="M3 10h10"></path><path d="M5.5 13.5h5M5.5 16.5h5"></path><path d="M14.5 9 21 2.5"></path><path d="M16 2.5h5v5"></path></svg></span>
                 <span class="tool-title">À l'affût</span>
-                <span class="tool-status">⌛ en chantier</span>
+                <span class="tool-status">✓ en service</span>
               </div>
-              <p class="tool-desc only-desktop">Carnet de veille naturaliste hebdomadaire : actualités, articles, infos, évènements, anecdotes… Premier numéro pas encore paru.</p>
-              <p class="tool-desc only-mobile">Carnet de veille naturaliste hebdomadaire. Premier numéro pas encore paru.</p>
-              <div class="tool-foot"><span class="tool-arrow" aria-hidden="true">→</span></div>
+              <p class="tool-desc only-desktop">Carnet de veille naturaliste hebdomadaire : actualités, articles, infos, évènements, anecdotes…</p>
+              <p class="tool-desc only-mobile">Carnet de veille naturaliste hebdomadaire.</p>
+              <div class="tool-foot">
+                <span class="tool-badge" id="affut-badge" hidden></span>
+                <span class="tool-arrow" aria-hidden="true">→</span>
+              </div>
             </div>
           </a>
         </div>
@@ -324,6 +328,28 @@
         '<div>' + total + ' outil' + (total > 1 ? 's' : '') + '</div>' +
         '<div>' + service + ' en service · ' + chantier + ' en chantier</div>';
     }
+  })();
+
+  // Badge « dernier numéro paru » sur la tuile À l'affût : lu directement
+  // dans Supabase (vue publique affut_numeros_public, clé anon — publique
+  // par nature, voir apps/affut/index.html) plutôt que codé en dur, pour
+  // s'incrémenter tout seul à chaque nouvelle publication côté rédaction.
+  (function () {
+    var badge = document.getElementById('affut-badge');
+    if (!badge) return;
+    var SUPABASE_URL = 'https://uoeuzxstotqnembcpofx.supabase.co';
+    var SUPABASE_ANON_KEY = 'sb_publishable_eW4e-uYvC8aHbTwESRdGJw_ceyhagM1';
+    fetch(SUPABASE_URL + '/rest/v1/affut_numeros_public?select=numero&order=numero.desc&limit=1', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (lignes) {
+        if (lignes && lignes[0] && lignes[0].numero != null) {
+          badge.textContent = 'n°' + lignes[0].numero + ' disponible';
+          badge.hidden = false;
+        }
+      })
+      .catch(function () {});
   })();
   </script>
 </body>

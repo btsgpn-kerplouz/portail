@@ -6,6 +6,16 @@
 
 ## État au 02/09/2026 — reprendre ici
 
+**✅ Lots 14 à 21 fusionnés dans `main` et déployés** (PR #70, commit
+`9911db2`, 02/09/2026 20:31 UTC) — vérifié en direct sur
+https://affut-veille-naturaliste.kerplouz.workers.dev juste après la
+fusion (marqueurs Lot 20/21 présents dans le HTML servi). **Lot 22 fait
+dans la foulée** : tuile « À l'affût » activée dans le portail général
+(`portail/index.html`, passée de « en chantier » à « en service ») avec un
+badge « n°X disponible » lu en direct sur Supabase — détail et piège
+rencontré (main local périmé) dans l'entrée « Lot 22 » en fin de fichier.
+Committé, poussé et fusionné dans `main` (PR #73).
+
 **✅ Correctif Lot 19 appliqué et confirmé par l'utilisateur** (« ok c'est
 mieux ») — la migration a bien été jouée, les entrées s'affichent
 maintenant en vue publique. Voir aussi le **Lot 20** (connexion discrète +
@@ -2101,6 +2111,41 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       *Vérifié en navigateur* (`img.complete`/`naturalWidth` avant/après,
       capture d'écran) — **pas encore vérifié par l'utilisateur en
       conditions réelles**.
+
+- [x] **Lot 22 — Tuile active dans le portail général + badge « dernier
+      numéro »** (02/09/2026, demandé juste après la fusion de la PR des
+      Lots 14-21). Deux changements dans `portail/index.html` :
+      1. La tuile « À l'affût » passe de `tool--wip`/`chantier` à
+         `tool--active`/`service` (même traitement visuel que PhytoScope,
+         Végétations, Zonation) — la mention « Premier numéro pas encore
+         paru » est retirée de la description, devenue fausse (2 numéros
+         publiés en base).
+      2. Badge dynamique (`#affut-badge`, dans `.tool-foot`, à gauche de la
+         flèche) qui affiche « n°X disponible » — X venant d'une requête
+         `fetch` en direct sur la vue publique Supabase
+         `affut_numeros_public` (`select=numero&order=numero.desc&limit=1`,
+         clé `anon` publique, même couple URL/clé que `apps/affut/index.html`).
+         Choix délibéré : pas de valeur codée en dur, pour que le badge
+         s'incrémente d'elle-même à chaque nouvelle publication côté
+         rédaction, sans retouche du portail. En échec réseau/silence de
+         l'API, le badge reste `hidden` (aucun texte cassé affiché).
+      *Piège rencontré et évité* : au moment de faire ce lot, le `main`
+      local était périmé de 6 commits par rapport à `origin/main` (la
+      fusion de la PR #70 avait réussi côté GitHub, mais la synchronisation
+      locale avait échoué à cause de fichiers non liés modifiés dans l'arbre
+      de travail — voir plus haut). `portail/index.html` avait entre-temps
+      reçu la tuile « Quizz naturaliste » sur `origin/main`, absente du
+      fichier local. Modifier le fichier local en l'état aurait fait
+      disparaître cette tuile au prochain merge. Corrigé en reconstruisant
+      `portail/index.html` (et `AVANCEMENT.md`) à partir du contenu de
+      `origin/main` avant d'y réappliquer ces changements — **le `main`
+      local reste périmé**, à mettre à jour un jour (fast-forward bloqué par
+      des modifications non commitées à `DESIGN.md` et
+      `apps/zonation/index.html`, sans rapport avec affut, non touchées).
+      *Vérifié* : rendu desktop et mobile (gabarit iframe local), badge
+      confirmé affichant « n°2 disponible » en conditions réelles (requête
+      Supabase live) — **pas encore vérifié par l'utilisateur en conditions
+      réelles**.
 
 ## Idées pour plus tard (hors lots planifiés)
 
