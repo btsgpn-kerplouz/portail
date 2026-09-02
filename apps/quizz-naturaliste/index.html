@@ -267,12 +267,22 @@
   .chrono.warn > i{background:var(--chantier)}
   .chrono.crit > i{background:var(--bad)}
 
-  /* ---------- Photo + crédit ---------- */
+  /* ---------- Stimulus : photo, ou son + sonagramme ---------- */
   .photo{
     width:100%;aspect-ratio:4/3;
     background:var(--fond-2) center/contain no-repeat;
     border:1px solid var(--filet);display:block;
   }
+  .photo.hidden,.sound.hidden,.sono.hidden{display:none}
+  .sound{border:1px solid var(--filet);background:var(--fond-2);padding:12px}
+  .sono{width:100%;display:block;background:#fff;border:1px solid var(--filet)}
+  .player{width:100%;display:block;margin-top:12px}
+  .sono + .player{margin-top:12px}
+
+  /* ---------- Média (écran de config) ---------- */
+  .mediapick{margin-bottom:16px}
+  .mediapick .label{margin-top:0}
+
   .credit{font-size:.76rem;line-height:1.5;color:var(--t3);margin:9px 2px 0}
   .credit a{color:var(--acc-d);text-decoration:underline;text-underline-offset:2px}
   .credit a:hover{color:var(--acc)}
@@ -427,6 +437,16 @@
   <!-- ---------- Ecran de configuration ---------- -->
   <section id="setup">
 
+    <!-- Média : photo ou son -->
+    <div class="mediapick">
+      <span class="label">Média</span>
+      <div class="seg seg--wrap" id="media">
+        <button type="button" data-v="photo" aria-pressed="true">Photo</button>
+        <button type="button" data-v="son">Au son</button>
+      </div>
+      <p class="hint" id="mediaHint"></p>
+    </div>
+
     <!-- Bloc filtres -->
     <section class="fcard">
       <div class="fcard-head">
@@ -523,6 +543,11 @@
     <div class="chrono hidden" id="chronoBar"><i></i></div>
 
     <div class="photo" id="photo" role="img" aria-label="Photo à identifier"></div>
+    <div class="sound hidden" id="soundBlock">
+      <img class="sono hidden" id="sono" alt="Sonagramme de l'extrait à identifier"
+           src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='340'/%3E">
+      <audio class="player" id="player" controls preload="none"></audio>
+    </div>
     <p class="credit" id="credit"></p>
 
     <div class="choices" id="choices"></div>
@@ -594,7 +619,13 @@
   var GROUPS = Object.keys(FACETS.groupes).sort()
     .filter(function(g){ return !HIDDEN_GROUPS[g]; });
 
-  var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0, secteur:"bzh" };
+  var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0, secteur:"bzh", media:"photo" };
+
+  var MEDIA_HINT = {
+    photo: "Identifier l'espèce sur une photo.",
+    son:   "Identifier au chant (oiseaux) ou à la stridulation (sauterelles, criquets, grillons) — extraits Xeno-canto, avec sonagramme. Les autres groupes n'ont pas de son."
+  };
+  function isSon(){ return cfg.media === "son"; }
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
@@ -635,6 +666,7 @@
   function scopedTaxa(){
     return DATA.taxa.filter(function(t){
       if(HIDDEN_GROUPS[t.groupe]) return false;
+      if(isSon() && !(t.sounds && t.sounds.length)) return false;
       return cfg.secteur === "bzh" ? t.bzh : true;
     });
   }
@@ -680,7 +712,8 @@
     box.innerHTML = "";
     var gc = groupCounts();
     var rows = [{ key:"tous", label:"Tous les groupes", count:scopedTaxa().length }].concat(
-      GROUPS.map(function(g){ return { key:g, label:titleCase(g), count:gc[g] || 0 }; }));
+      GROUPS.filter(function(g){ return !isSon() || (gc[g] || 0) > 0; })
+        .map(function(g){ return { key:g, label:titleCase(g), count:gc[g] || 0 }; }));
     rows.forEach(function(r){
       var b = document.createElement("button");
       b.type = "button";
@@ -783,6 +816,13 @@
   }
 
   // ----- init des contrôles -----
+  seg($("media"), function(v){
+    cfg.media = v; cfg.grp = "tous"; cfg.sous = {};
+    $("mediaHint").textContent = MEDIA_HINT[v];
+    renderFilters();
+  });
+  $("mediaHint").textContent = MEDIA_HINT[cfg.media];
+
   seg($("secteur"), function(v){
     cfg.secteur = v; cfg.grp = "tous"; cfg.sous = {};
     renderFilters();
@@ -836,7 +876,7 @@
     var total = cfg.count > 0 ? cfg.count : 9999;
     game = { i:0, answered:0, correct:0, total:total, unlimited: cfg.count===0,
              missed:[], pool:p, current:null, timer:null,
-             usedTaxa:{}, usedPhotos:{} };
+             usedTaxa:{}, usedPhotos:{}, usedSounds:{} };
     $("setup").classList.add("hidden");
     $("end").classList.add("hidden");
     $("quiz").classList.remove("hidden");
@@ -877,9 +917,16 @@
     var answ = pick(libres);
     game.usedTaxa[answ.id] = true;
 
-    var neuves = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
-    var photo = pick(neuves.length ? neuves : answ.photos);
-    game.usedPhotos[photo.id] = true;
+    var stim;   // photo ou extrait sonore, sans doublon sur la série
+    if(isSon()){
+      var sN = answ.sounds.filter(function(s){ return !game.usedSounds[s.id]; });
+      stim = pick(sN.length ? sN : answ.sounds);
+      game.usedSounds[stim.id] = true;
+    } else {
+      var pN = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
+      stim = pick(pN.length ? pN : answ.photos);
+      game.usedPhotos[stim.id] = true;
+    }
 
     var options = [];
     if(!isExpert()){
@@ -888,7 +935,7 @@
       options = shuffle([answ].concat(shuffle(base).slice(0, nOpt - 1)));
     }
 
-    game.current = { answer:answ, options:options, photo:photo, done:false };
+    game.current = { answer:answ, options:options, stim:stim, done:false };
     render();
   }
 
@@ -926,14 +973,30 @@
     $("score").textContent = "Score : " + game.correct;
     $("barFill").style.width = game.unlimited ? "0%" : ((game.i-1)/game.total*100) + "%";
 
-    $("photo").style.backgroundImage = 'url("' + c.photo.url.replace(/"/g, "%22") + '")';
-
-    var licLabel = LIC[c.photo.license_code] || c.photo.license_code;
-    var cred = c.photo.attribution && c.photo.attribution !== "no rights reserved"
-      ? c.photo.attribution
-      : "© " + (c.photo.observer_name || "auteur inconnu") + " — " + licLabel + " —";
-    $("credit").innerHTML = esc(cred) +
-      " <a href=\"" + esc(c.photo.observation_url) + "\" target=\"_blank\" rel=\"noopener\">voir l'observation (iNaturalist)</a>";
+    if(isSon()){
+      var s = c.stim;
+      $("photo").classList.add("hidden");
+      $("soundBlock").classList.remove("hidden");
+      var sono = $("sono");
+      sono.classList.toggle("hidden", !s.sono);
+      if(s.sono) sono.src = s.sono;
+      var pl = $("player");
+      pl.src = s.url; pl.load();
+      pl.play().catch(function(){});
+      var slic = LIC[s.license_code] || s.license_code;
+      $("credit").innerHTML = esc(s.attribution) + " — " + esc(slic) +
+        " — <a href=\"" + esc(s.page) + "\" target=\"_blank\" rel=\"noopener\">voir sur Xeno-canto</a>";
+    } else {
+      $("soundBlock").classList.add("hidden");
+      $("photo").classList.remove("hidden");
+      $("photo").style.backgroundImage = 'url("' + c.stim.url.replace(/"/g, "%22") + '")';
+      var licLabel = LIC[c.stim.license_code] || c.stim.license_code;
+      var cred = c.stim.attribution && c.stim.attribution !== "no rights reserved"
+        ? c.stim.attribution
+        : "© " + (c.stim.observer_name || "auteur inconnu") + " — " + licLabel + " —";
+      $("credit").innerHTML = esc(cred) +
+        " <a href=\"" + esc(c.stim.observation_url) + "\" target=\"_blank\" rel=\"noopener\">voir l'observation (iNaturalist)</a>";
+    }
 
     var box = $("choices");
     box.innerHTML = "";
@@ -1119,8 +1182,14 @@
     answer(null, null, "giveup");
   });
 
+  function stopSound(){
+    var p = $("player");
+    try { p.pause(); p.removeAttribute("src"); p.load(); } catch(e){}
+  }
+
   function finish(){
     clearTimer();
+    stopSound();
     $("chronoBar").classList.add("hidden");
     $("quiz").classList.add("hidden");
     $("end").classList.remove("hidden");
