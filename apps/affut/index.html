@@ -1543,6 +1543,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // obligé d'afficher les entrées par blocs de rubriques ») — voir
   // entreesOrdonnees() plus bas et la rubrique en pastille sur chaque
   // entrée (renderEntree()/renderEntreeCarte()) à la place des sections.
+  // Comparateur partagé par groupByRubrique(), entreesOrdonnees() et la
+  // tuile Sommaire (renderNumeroCarte()) — un seul et même ordre manuel
+  // (Monter/Descendre en rédaction) affiché partout où des entrées d'un
+  // numéro apparaissent, plutôt que l'ordre de lecture réseau (non garanti).
+  function parOrdre(a, b){ return (a.ordre || 0) - (b.ordre || 0); }
+
   function groupByRubrique(list){
     var order = [], map = {};
     list.forEach(function(e){
@@ -1550,7 +1556,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       map[e.rubrique].push(e);
     });
     return order.map(function(r){
-      var items = map[r].slice().sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+      var items = map[r].slice().sort(parOrdre);
       return { rubrique: r, items: items };
     });
   }
@@ -1569,7 +1575,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // elle, `ordre` était attribué PAR RUBRIQUE depuis le Lot 10bis, deux
   // rubriques pouvant partager les mêmes valeurs 0,1,2…).
   function entreesOrdonnees(){
-    return entrees.slice().sort(function(a, b){ return (a.ordre || 0) - (b.ordre || 0); });
+    return entrees.slice().sort(parOrdre);
   }
 
   // Prochaine valeur d'`ordre` libre pour une nouvelle entrée (nouvelle
@@ -1816,7 +1822,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // Sommaire — retour d'usage du 01/09/2026, remplace l'ancienne
   // troncature à 3 titres + « et N autres »).
   function renderNumeroCarte(n, dernier){
-    var validees = n.entrees.filter(function(e){ return e.valide; });
+    // Même ordre manuel que sur l'écran du numéro (Monter/Descendre) —
+    // demandé le 03/09/2026 : jusqu'ici n.entrees restait dans l'ordre de
+    // lecture réseau (non garanti), sans lien avec `ordre`.
+    var validees = n.entrees.slice().sort(parOrdre).filter(function(e){ return e.valide; });
     var titresHtml = validees.map(function(e){
       return '<li><span class="nc-source-pastille">' + esc(e.source.nom) + '</span><span class="nc-titre-entree">' + esc(e.titre) + '</span></li>';
     }).join("");
