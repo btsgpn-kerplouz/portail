@@ -5858,7 +5858,7 @@ function appliquerLectureSeuleDialogue(dialogSelector, lectureSeule, { idsExempt
     if (idsExemptes.includes(el.id)) return;
     el.disabled = lectureSeule;
   });
-  if (lectureSeule) idsAMasquer.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  idsAMasquer.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = lectureSeule; });
   let bandeau = dialog.querySelector('.readonly-dialog-banner');
   if (lectureSeule) {
     if (!bandeau) {
@@ -5928,7 +5928,6 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceDeliverables').value = sequence?.deliverables || '';
   $('#sequenceAdjustmentNotes').value = sequence?.adjustmentNotes || '';
   $('#sequenceNotes').value = sequence?.notes || '';
-  $('#deleteSequenceButton').hidden = isNew;
   $('#exportSequenceButton').hidden = isNew;
   $('#submitSequenceButton').textContent = isNew ? 'Créer la séquence' : 'Enregistrer';
   sequenceDialogLectureSeule = Boolean(sequence) && !contenuInteractifPourMoi(sequence);
@@ -5936,6 +5935,9 @@ function openSequenceModal(sequence = null, context = {}) {
     idsExemptes: ['closeSequenceModal', 'exportSequenceButton'],
     idsAMasquer: ['deleteSequenceButton', 'submitSequenceButton'],
   });
+  // Même raison qu'openSessionModal : appliquer isNew APRÈS le passage
+  // lecture seule, qui vient de réinitialiser .hidden pour ces boutons.
+  $('#deleteSequenceButton').hidden = isNew || sequenceDialogLectureSeule;
   $('#sequenceDialog').showModal();
   $('#sequenceDialog')._dirty = false;
 }
@@ -6050,18 +6052,21 @@ function openSessionModal(session = null, context = {}) {
   if ($('#sessionMaterielReserver')) $('#sessionMaterielReserver').checked = !!session?.materielAReserver;
   $('#sessionDifferentiation').value = session?.differentiation || '';
   $('#sessionNotes').value = session?.notes || '';
-  $('#deleteSessionButton').hidden = isNew;
-  const dupBtn = $('#duplicateSessionButton');
-  if (dupBtn) dupBtn.hidden = isNew;
   $('#submitSessionButton').textContent = isNew ? 'Créer la séance' : 'Enregistrer';
-  const chainBtn = $('#chainSessionButton');
-  if (chainBtn) chainBtn.hidden = !isNew;
   sessionChainRequested = false;
   sessionDialogLectureSeule = Boolean(session) && !contenuInteractifPourMoi(session);
   appliquerLectureSeuleDialogue('#sessionDialog', sessionDialogLectureSeule, {
     idsExemptes: ['closeSessionModal'],
     idsAMasquer: ['deleteSessionButton', 'submitSessionButton', 'duplicateSessionButton', 'chainSessionButton'],
   });
+  // Les règles liées à isNew doivent s'appliquer APRÈS le passage lecture
+  // seule ci-dessus (qui réinitialise .hidden pour ces 4 boutons) : sinon,
+  // sur une nouvelle séance, ce passage écraserait leur masquage.
+  $('#deleteSessionButton').hidden = isNew || sessionDialogLectureSeule;
+  const dupBtn = $('#duplicateSessionButton');
+  if (dupBtn) dupBtn.hidden = isNew || sessionDialogLectureSeule;
+  const chainBtn = $('#chainSessionButton');
+  if (chainBtn) chainBtn.hidden = !isNew || sessionDialogLectureSeule;
   $('#sessionDialog').showModal();
   $('#sessionDialog')._dirty = false;
 }
