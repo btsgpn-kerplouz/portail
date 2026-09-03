@@ -178,6 +178,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entete-num-badge{background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-weight:700;font-size:25px;letter-spacing:-.02em;padding:7px 15px;display:inline-flex;align-items:baseline;gap:7px}
 .mode-redaction .entete-num-badge{background:var(--af-redaction);color:var(--af-sur-redaction)}
 .entete-num-badge .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.lien-num-edit{font-size:15px;color:var(--af-encre-3);padding:2px 4px}
+.lien-num-edit:hover{color:var(--af-redaction)}
 .entete-semaine{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-2)}
 .entete-titre{margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.2;color:var(--af-encre)}
 .entete-chapo{font-size:13.5px;line-height:1.55;color:var(--af-encre-2)}
@@ -1084,6 +1086,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   async function deplacerEntreeDistante(id, numeroCible){
     var res = await client().from("affut_entrees").update({ numero_id: numeroCible }).eq("id", id);
     if (res.error) signalerErreurEcriture(res.error);
+  }
+  // Suppression d'un numéro entier (Lot 23, demandé le 03/09/2026 après un
+  // brouillon de test créé par erreur) : ses entrées partent avec lui
+  // (affut_entrees.numero_id est en `on delete cascade`, voir 001-schema.sql
+  // — rien à faire côté client pour elles).
+  async function supprimerNumeroDistant(n){
+    var res = await client().from("affut_numeros").delete().eq("numero", n);
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
+  }
+  // Renumérotation (Lot 23, même demande) : un simple UPDATE sur la clé
+  // primaire `numero` — ne fonctionne que grâce à la migration
+  // 011-renumeroter-cascade.sql (ON UPDATE CASCADE sur les FK qui pointent
+  // vers affut_numeros(numero)) ; sans elle, Postgres refuse ce changement
+  // dès qu'une entrée référence encore l'ancien numéro.
+  async function renommerNumeroDistant(ancien, nouveau){
+    var res = await client().from("affut_numeros").update({ numero: nouveau }).eq("numero", ancien);
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
   }
   // Déplacement d'une entrée déjà retenue vers un autre numéro (Lot 10) :
   // mutation locale immédiate dans les deux numéros (source et cible, tous
@@ -2188,7 +2209,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
-        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '</div>' +
+        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '<button class="btn-ligne danger" type="button" data-action="supprimer-numero">Supprimer ce numéro</button></div>' +
         renderChampIllustrationNumero() +
         '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
         devOutilsCollecte() +
@@ -2216,7 +2237,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return banniere +
       '<div class="numero-entete">' +
         '<div class="entete-principal">' +
-          '<div class="entete-num-ligne"><span class="entete-num-badge"><span class="lbl">N°</span>' + numero.numero + '</span><h1 class="entete-titre">' + ed(esc(numero.titre), "numero.titre") + '</h1></div>' +
+          '<div class="entete-num-ligne"><span class="entete-num-badge"><span class="lbl">N°</span>' + numero.numero + '</span>' +
+          (state.mode === "redaction" ? '<button type="button" class="lien-num-edit" data-action="renommer-numero" title="Changer le numéro de ce n°">✎</button>' : "") +
+          '<h1 class="entete-titre">' + ed(esc(numero.titre), "numero.titre") + '</h1></div>' +
           '<div class="entete-semaine">' + ed(esc(numero.semaine), "numero.semaine") + '</div>' +
           (state.mode === "redaction" ? '<p class="entete-chapo">' + ed(esc(numero.chapo), "numero.chapo") + '</p>' : "") +
         '</div>' +
@@ -2473,13 +2496,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function renderModalNumero(){
     if (!state.modalNumero) return "";
     var n = state.modalNumero;
+    // Renumérotation (Lot 23) : même modale/formulaire que la création d'un
+    // numéro, seul le champ Semaine disparaît (on ne change que l'identifiant
+    // `numero`, pas la semaine ni le reste) — voir renommerNumeroDistant().
+    var renommer = n.renommer != null;
+    var titreModal = renommer ? "Renuméroter le n° " + n.renommer : "Nouveau numéro";
     return '<div class="modal-overlay" data-action="close-modal-numero-backdrop">' +
-      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Nouveau numéro">' +
-        '<div class="modal-titre">Nouveau numéro</div>' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="' + esc(titreModal) + '">' +
+        '<div class="modal-titre">' + esc(titreModal) + '</div>' +
         '<form id="numero-form">' +
-          champ("Numéro", "numero", String(prochainNumero())) +
-          '<div class="champ"><label for="champ-numero-semaine">Semaine</label><input id="champ-numero-semaine" name="semaineIso" type="week" value="' + esc(isoSemaineActuelle()) + '" required></div>' +
-          '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-modal-numero">Annuler</button><button type="submit" class="btn-plein">Créer</button></div></div>' +
+          champ(renommer ? "Nouveau numéro" : "Numéro", "numero", String(renommer ? n.renommer : prochainNumero())) +
+          (renommer ? "" : '<div class="champ"><label for="champ-numero-semaine">Semaine</label><input id="champ-numero-semaine" name="semaineIso" type="week" value="' + esc(isoSemaineActuelle()) + '" required></div>') +
+          '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-texte" data-action="close-modal-numero">Annuler</button><button type="submit" class="btn-plein">' + (renommer ? "Renuméroter" : "Créer") + '</button></div></div>' +
           (n.erreur ? '<p class="erreur" role="alert">' + esc(n.erreur) + '</p>' : "") +
         '</form>' +
       '</div>' +
@@ -2666,6 +2694,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // ---- Lot 6 : « Nouveau numéro » ----
     if (ev.target.closest('[data-action="nouveau-numero"]')) { state.modalNumero = { erreur: null }; render(); return; }
 
+    if (ev.target.closest('[data-action="renommer-numero"]')) { state.modalNumero = { erreur: null, renommer: numero.numero }; render(); return; }
+
     if (ev.target.closest('[data-action="close-modal-numero"]') || ev.target === document.querySelector('[data-action="close-modal-numero-backdrop"]')) {
       state.modalNumero = null; render(); return;
     }
@@ -2822,6 +2852,28 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       if (window.confirm("Dépublier le n° " + numero.numero + " ? Il redevient un brouillon, invisible des élèves, jusqu'à sa republication.")) {
         numero.statut = "brouillon";
         ecrireNumero({ statut: "brouillon" });
+        render();
+      }
+      return;
+    }
+
+    // Suppression d'un numéro entier (Lot 23) : confirmation obligatoire,
+    // rappelle le nombre d'entrées emportées avec lui (supprimées en
+    // cascade côté base, voir supprimerNumeroDistant()). Après coup,
+    // retombe sur numeroParDefaut() comme au chargement initial — jamais
+    // sur un numéro qui vient de disparaître.
+    if (ev.target.closest('[data-action="supprimer-numero"]')) {
+      var numeroASupprimer = numero.numero;
+      var nbEntreesEmportees = entrees.length;
+      var messageSuppr = "Supprimer définitivement le n° " + numeroASupprimer + " ? " +
+        (nbEntreesEmportees ? "Ses " + nbEntreesEmportees + " entrée" + (nbEntreesEmportees > 1 ? "s" : "") + " seront supprimées avec lui. " : "") +
+        "Cette action est irréversible.";
+      if (window.confirm(messageSuppr)) {
+        var okSuppr = await supprimerNumeroDistant(numeroASupprimer);
+        if (okSuppr) {
+          numeros.splice(numeros.indexOf(numero), 1);
+          state.numeroId = numeroParDefaut();
+        }
         render();
       }
       return;
@@ -3057,6 +3109,26 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       ev.preventDefault();
       var nf = ev.target.elements;
       var num = parseInt(nf.numero.value, 10);
+      var renommerAncien = state.modalNumero.renommer;
+
+      // Renumérotation (Lot 23) : formulaire sans champ Semaine (voir
+      // renderModalNumero()), donc branché avant le reste — même contrôle
+      // d'unicité que la création, sauf qu'on s'autorise à retomber sur le
+      // numéro déjà en place (aucun changement, fermeture silencieuse).
+      if (renommerAncien != null) {
+        if (!num || numeros.some(function(n){ return n.numero === num && n.numero !== renommerAncien; })) {
+          state.modalNumero = { erreur: "Numéro invalide ou déjà utilisé.", renommer: renommerAncien }; render(); return;
+        }
+        if (num === renommerAncien) { state.modalNumero = null; render(); return; }
+        var okRenommer = await renommerNumeroDistant(renommerAncien, num);
+        if (!okRenommer) { render(); return; }
+        numero.numero = num;
+        if (state.numeroId === renommerAncien) state.numeroId = num;
+        state.modalNumero = null;
+        render();
+        return;
+      }
+
       if (!num || numeros.some(function(n){ return n.numero === num; })) {
         state.modalNumero = { erreur: "Numéro invalide ou déjà utilisé." }; render(); return;
       }
