@@ -20,6 +20,26 @@ répondent 200) :
 Voir les entrées correspondantes en fin de fichier. **Aucun lot planifié
 en attente.**
 
+**✅ Correctif — les compteurs de fréquentation (vues/clics) ne
+s'incrémentaient jamais, depuis leur création (Lot 6)** (trouvé le
+03/09/2026, l'utilisateur signalant l'écran Bilan visiblement à zéro après
+plusieurs consultations réelles). Pas un souci de mode rédaction/public
+(bien réel par ailleurs, voir Lot 6) : `compterVueNumero()` et
+`compterClicSource()` (`index.html`) appelaient `client().rpc(...)` sans
+jamais `await`/`.then()` dessus — les builders supabase-js sont des
+« thenables » paresseux qui ne déclenchent la requête HTTP réelle que si on
+appelle `.then()`/`await`, jamais sinon. Sans ça, la requête était
+construite mais **jamais envoyée**, silencieusement (pas d'erreur console).
+Confirmé en testant en direct sur le site en production, en navigation
+anonyme réelle : 0 requête réseau avant le correctif, requête bien envoyée
+après (`.then(function(){}, function(){})` ajouté aux deux fonctions —
+note : ces builders n'ont pas de `.catch()`, seulement `.then`).
+*Effet de bord des tests* : le compteur de vues du n°1 est passé à 3 en
+conditions réelles (diagnostic sur la prod, pas de service_role pour le
+corriger) — sans enjeu, remise à zéro possible via
+`update affut_numeros set vues = 0 where numero = 1;` dans le SQL Editor
+si souhaité.
+
 **✅ Migrations `011-renumeroter-cascade.sql` et `009-ordre-entrees-plat.sql`
 appliquées par l'utilisateur** (confirmé le 03/09/2026, « j'ai appliqué les
 deux migrations, tout est bon ») — la renumérotation d'un n° (Lot 23) et

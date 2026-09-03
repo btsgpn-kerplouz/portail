@@ -1218,8 +1218,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // Compteurs de fréquentation (RPC anon, voir 003-compteurs.sql) : simple
   // best-effort sans blocage ni garde contre l'échec réseau (repère
   // approximatif pour l'enseignant, pas un chiffre affiché publiquement).
-  function compterVueNumero(n){ client().rpc("affut_incrementer_vue_numero", { p_numero: n }); }
-  function compterClicSource(id){ client().rpc("affut_incrementer_clic_source", { p_entree_id: id }); }
+  // Le .then() n'est pas juste une sécurité : les builders supabase-js sont
+  // des "thenables" paresseux (pas de vraies Promise, pas de .catch()) — la
+  // requête HTTP n'est envoyée que si l'on appelle .then()/await, jamais
+  // sinon. Sans lui (bug trouvé le 03/09/2026), ces deux compteurs ne
+  // s'incrémentaient donc jamais, même sur une vraie visite anonyme.
+  function compterVueNumero(n){ client().rpc("affut_incrementer_vue_numero", { p_numero: n }).then(function(){}, function(){}); }
+  function compterClicSource(id){ client().rpc("affut_incrementer_clic_source", { p_entree_id: id }).then(function(){}, function(){}); }
 
   // ---- authentification (Lot 7, calquée sur organisation-cours/js/auth.js) ----
 
