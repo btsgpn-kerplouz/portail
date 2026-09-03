@@ -4,7 +4,13 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 02/09/2026 — reprendre ici
+## État au 03/09/2026 — reprendre ici
+
+**🔧 Lot 23 fait (03/09/2026), pas encore vérifié en conditions réelles** :
+supprimer un numéro entier + le renuméroter (voir entrée « Lot 23 » en fin
+de fichier). **Nécessite d'appliquer `supabase/011-renumeroter-cascade.sql`
+au dashboard Supabase avant de tester la renumérotation** (la suppression
+seule fonctionne sans cette migration). Pas encore committé/poussé.
 
 **✅ Lots 14 à 21 fusionnés dans `main` et déployés** (PR #70, commit
 `9911db2`, 02/09/2026 20:31 UTC) — vérifié en direct sur
@@ -2138,14 +2144,55 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       fichier local. Modifier le fichier local en l'état aurait fait
       disparaître cette tuile au prochain merge. Corrigé en reconstruisant
       `portail/index.html` (et `AVANCEMENT.md`) à partir du contenu de
-      `origin/main` avant d'y réappliquer ces changements — **le `main`
-      local reste périmé**, à mettre à jour un jour (fast-forward bloqué par
-      des modifications non commitées à `DESIGN.md` et
-      `apps/zonation/index.html`, sans rapport avec affut, non touchées).
+      `origin/main` avant d'y réappliquer ces changements. *Mise à jour
+      03/09/2026* : le `main` local a depuis été resynchronisé (421
+      fichiers n'avaient qu'un bit exécutable changé sans contenu réel,
+      restaurés ; `git merge --ff-only origin/main` propre ensuite) — ce
+      décalage n'est plus d'actualité.
       *Vérifié* : rendu desktop et mobile (gabarit iframe local), badge
       confirmé affichant « n°2 disponible » en conditions réelles (requête
       Supabase live) — **pas encore vérifié par l'utilisateur en conditions
       réelles**.
+
+- [x] **Lot 23 — Supprimer un numéro entier, le renuméroter** (03/09/2026,
+      demandé après un brouillon de test créé par erreur : n°1 vide à
+      supprimer, n°2 valide à renuméroter en n°1). Deux ajouts en
+      rédaction, sur l'écran d'un numéro :
+      1. **Bouton « Supprimer ce numéro »** (`entete-boutons`, style
+         danger) — confirmation `window.confirm()` (même pattern que
+         « Dépublier »/« Ne plus suivre cette source »), rappelant le
+         nombre d'entrées emportées avec lui. `supprimerNumeroDistant()` ne
+         fait qu'un `delete` sur `affut_numeros` : ses entrées partent
+         automatiquement (`affut_entrees.numero_id` est en `on delete
+         cascade` depuis 001-schema.sql, rien à faire côté client). Après
+         coup, retombe sur `numeroParDefaut()`, jamais sur le numéro qui
+         vient de disparaître — testé jusqu'au cas limite (suppression du
+         tout dernier numéro restant → écran « Aucun numéro pour
+         l'instant », sans erreur).
+      2. **Icône ✎ à côté du badge « N° »** (rédaction seule) — ouvre la
+         modale « Nouveau numéro » existante, adaptée en mode « Renuméroter
+         le n° X » (champ Semaine masqué, un seul champ Numéro,
+         `state.modalNumero.renommer` distingue les deux modes). Simple
+         `update affut_numeros set numero = ...` côté front
+         (`renommerNumeroDistant()`) — ne fonctionne que grâce à la
+         **migration `011-renumeroter-cascade.sql` (à appliquer par
+         l'utilisateur au dashboard Supabase, SQL Editor)** : elle ajoute
+         `on update cascade` aux 3 FK qui pointent vers
+         `affut_numeros(numero)` (`affut_entrees`, `affut_ingestion_log`,
+         `affut_candidats_ecartes`) — sans elle, Postgres refuse de
+         changer une clé primaire encore référencée. Recherche le nom réel
+         de chaque contrainte à la volée (`pg_constraint`) plutôt que de
+         supposer le nom par défaut, plus robuste. Même contrôle
+         d'unicité que la création d'un numéro (« Numéro invalide ou déjà
+         utilisé »).
+      *Vérifié* : gabarit de test local avec 2 numéros factices (état
+      client uniquement, `client()` neutralisé — pas d'identifiants
+      rédacteur disponibles pour tester le vrai réseau) — renumérotation
+      2→3 réussie, rejet correct d'un numéro déjà pris, suppression
+      jusqu'au dernier numéro sans erreur. **Pas testé en conditions
+      réelles contre Supabase** : nécessite que l'utilisateur applique
+      d'abord la migration 011, puis vérifie lui-même la suppression du
+      n°1 et la renumérotation du n°2 en n°1 dans l'app réelle.
 
 ## Idées pour plus tard (hors lots planifiés)
 
