@@ -18,11 +18,17 @@ répondent 200) :
   confirmé installable par l'utilisateur lui-même (menu ⋮ Chrome).
 
 Voir les entrées correspondantes en fin de fichier. **Aucun lot planifié
-en attente** — seuls points encore ouverts (voir détail plus bas) :
-migration `011-renumeroter-cascade.sql` (Lot 23, renumérotation) pas
-confirmée appliquée par l'utilisateur, et quelques vérifications en
-conditions réelles jamais bouclées (Lots 12/13/14bis, migration
-`009-ordre-entrees-plat.sql`).
+en attente.**
+
+**✅ Migrations `011-renumeroter-cascade.sql` et `009-ordre-entrees-plat.sql`
+appliquées par l'utilisateur** (confirmé le 03/09/2026, « j'ai appliqué les
+deux migrations, tout est bon ») — la renumérotation d'un n° (Lot 23) et
+l'ordre à plat des entrées pour les anciens numéros (Lot 17bis) sont donc
+opérationnels en conditions réelles. Seuls points encore ouverts, mineurs
+et non bloquants : quelques fonctionnalités plus anciennes jamais
+reconfirmées en conditions réelles par l'utilisateur (chiffres clés
+éditables, écran Bilan — Lots 12/13 —, bouton « Récupérer les
+illustrations manquantes » — Lot 14).
 
 **✅ Lot 23 fusionné dans `main` et déployé** (PR #81, commit `550537f`,
 03/09/2026 10:24 UTC) : supprimer un numéro entier + le renuméroter (voir
@@ -32,6 +38,7 @@ quelques minutes à se propager sur tous les nœuds edge après la fusion
 délai de propagation habituel, résolu de lui-même. **Nécessite d'avoir
 appliqué `supabase/011-renumeroter-cascade.sql` au dashboard Supabase pour
 que la renumérotation fonctionne** (la suppression seule marche sans).
+**Migration appliquée et confirmée par l'utilisateur le 03/09/2026.**
 
 **✅ Lots 14 à 21 fusionnés dans `main` et déployés** (PR #70, commit
 `9911db2`, 02/09/2026 20:31 UTC) — vérifié en direct sur
