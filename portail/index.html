@@ -90,6 +90,8 @@
     .tool-desc{margin:0;font-size:15px;line-height:1.6}
     .tool-foot{display:flex;justify-content:flex-end}
     .tool-badge{font-family:var(--pt-mono);font-size:11px;letter-spacing:.04em;margin-right:auto;align-self:center}
+    .tool-badge--mobile{display:inline-flex;align-items:center;gap:5px}
+    .tool-badge--mobile svg{flex:0 0 auto;margin-top:-1px}
     .tool--active .tool-badge{color:var(--pt-sur-couleur)}
     .tool-arrow{display:inline-block;font-family:var(--pt-sans);font-size:16px;font-weight:700;opacity:.6;transition:opacity .15s ease,font-size .15s ease}
     .tool:hover .tool-arrow,.tool:focus-visible .tool-arrow{opacity:1;font-size:20px}
@@ -238,7 +240,10 @@
               </div>
               <p class="tool-desc only-desktop">Relevés floristiques le long d'un transect, coefficients de Braun-Blanquet, identification de l'habitat — Petite Mer de Gâvres.</p>
               <p class="tool-desc only-mobile">Relevés et habitats des marais salés de Gâvres.</p>
-              <div class="tool-foot"><span class="tool-arrow" aria-hidden="true">→</span></div>
+              <div class="tool-foot">
+                <span class="tool-badge tool-badge--mobile"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.6"></rect><line x1="10.75" y1="18.5" x2="13.25" y2="18.5"></line></svg>Appli mobile</span>
+                <span class="tool-arrow" aria-hidden="true">→</span>
+              </div>
             </div>
           </a>
 
