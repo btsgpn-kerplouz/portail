@@ -6,13 +6,23 @@
 
 ## État au 03/09/2026 — reprendre ici
 
-**🔧 Lots 24 et 25 faits (03/09/2026), pas encore committés/poussés** :
+**✅ Lots 24 et 25 fusionnés dans `main` et déployés** (PR #87, commit
+`f0e58ad`/merge `686005a`, 03/09/2026 16:45 UTC+2) — vérifié en direct sur
+https://affut-veille-naturaliste.kerplouz.workers.dev (lien « ‹ Portail »
+présent dans le HTML servi, `manifest.webmanifest` et `service-worker.js`
+répondent 200) :
 - Lot 24 — la tuile Sommaire d'un numéro suit maintenant le même ordre
   manuel (Monter/Descendre) que l'écran du numéro.
 - Lot 25 — l'app est installable (PC et mobile, manifest + service
-  worker, coquille seule) + lien « ‹ Portail » dans le bandeau.
+  worker, coquille seule) + lien « ‹ Portail » dans le bandeau. Testé et
+  confirmé installable par l'utilisateur lui-même (menu ⋮ Chrome).
 
-Voir les entrées correspondantes en fin de fichier.
+Voir les entrées correspondantes en fin de fichier. **Aucun lot planifié
+en attente** — seuls points encore ouverts (voir détail plus bas) :
+migration `011-renumeroter-cascade.sql` (Lot 23, renumérotation) pas
+confirmée appliquée par l'utilisateur, et quelques vérifications en
+conditions réelles jamais bouclées (Lots 12/13/14bis, migration
+`009-ordre-entrees-plat.sql`).
 
 **✅ Lot 23 fusionné dans `main` et déployé** (PR #81, commit `550537f`,
 03/09/2026 10:24 UTC) : supprimer un numéro entier + le renuméroter (voir
