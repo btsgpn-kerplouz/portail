@@ -284,6 +284,7 @@
   .mediapick .label{margin-top:0}
 
   .credit{font-size:.76rem;line-height:1.5;color:var(--t3);margin:9px 2px 0}
+  .credit strong{color:var(--t2)}
   .credit a{color:var(--acc-d);text-decoration:underline;text-underline-offset:2px}
   .credit a:hover{color:var(--acc)}
 
@@ -443,6 +444,7 @@
       <div class="seg seg--wrap" id="media">
         <button type="button" data-v="photo" aria-pressed="true">Photo</button>
         <button type="button" data-v="son">Au son</button>
+        <button type="button" data-v="noct">Vol nocturne</button>
       </div>
       <p class="hint" id="mediaHint"></p>
     </div>
@@ -623,9 +625,21 @@
 
   var MEDIA_HINT = {
     photo: "Identifier l'espèce sur une photo.",
-    son:   "Identifier au chant (oiseaux) ou à la stridulation (sauterelles, criquets, grillons) — extraits Xeno-canto, avec sonagramme. Les autres groupes n'ont pas de son."
+    son:   "Identifier au chant ou au cri (oiseaux) ou à la stridulation (sauterelles, criquets, grillons) — extraits Xeno-canto, avec sonagramme.",
+    noct:  "Identifier des oiseaux à leur cri de vol nocturne (« nocmig ») — l'exercice le plus pointu. Extraits Xeno-canto, avec sonagramme."
   };
-  function isSon(){ return cfg.media === "son"; }
+  // Traduction des types de sons Xeno-canto pour le crédit.
+  var SND_TYPE = {
+    "song":"Chant", "calling song":"Chant", "subsong":"Chant discret", "dawn song":"Chant matinal",
+    "singing":"Chant", "courtship song":"Chant nuptial",
+    "call":"Cri", "contact call":"Cri de contact", "alarm call":"Cri d'alarme",
+    "flight call":"Cri de vol", "nocturnal flight call":"Cri de vol nocturne",
+    "begging call":"Cri de quémande", "drumming":"Tambourinage", "duet":"Duo"
+  };
+  function sndTypeLabel(t){ return SND_TYPE[(t || "").toLowerCase()] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : ""); }
+
+  function isSon(){ return cfg.media === "son" || cfg.media === "noct"; }
+  function soundsFor(t){ return cfg.media === "noct" ? t.soundsNoct : t.sounds; }
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
@@ -666,7 +680,7 @@
   function scopedTaxa(){
     return DATA.taxa.filter(function(t){
       if(HIDDEN_GROUPS[t.groupe]) return false;
-      if(isSon() && !(t.sounds && t.sounds.length)) return false;
+      if(isSon()){ var sl = soundsFor(t); if(!(sl && sl.length)) return false; }
       return cfg.secteur === "bzh" ? t.bzh : true;
     });
   }
@@ -919,8 +933,9 @@
 
     var stim;   // photo ou extrait sonore, sans doublon sur la série
     if(isSon()){
-      var sN = answ.sounds.filter(function(s){ return !game.usedSounds[s.id]; });
-      stim = pick(sN.length ? sN : answ.sounds);
+      var list = soundsFor(answ);
+      var sN = list.filter(function(s){ return !game.usedSounds[s.id]; });
+      stim = pick(sN.length ? sN : list);
       game.usedSounds[stim.id] = true;
     } else {
       var pN = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
@@ -984,7 +999,9 @@
       pl.src = s.url; pl.load();
       pl.play().catch(function(){});
       var slic = LIC[s.license_code] || s.license_code;
-      $("credit").innerHTML = esc(s.attribution) + " — " + esc(slic) +
+      var stl = sndTypeLabel(s.type);
+      $("credit").innerHTML = (stl ? "<strong>" + esc(stl) + "</strong> — " : "") +
+        esc(s.attribution) + " — " + esc(slic) +
         " — <a href=\"" + esc(s.page) + "\" target=\"_blank\" rel=\"noopener\">voir sur Xeno-canto</a>";
     } else {
       $("soundBlock").classList.add("hidden");
