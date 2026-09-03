@@ -38,7 +38,7 @@
     --filet-soft:#ece8db;
     --t2:#565a4e;
     --t3:#6b6a5e;
-    --t4:#8a958c;
+    --t4:#6b6f64;   /* assombri vs DESIGN.md #8a958c : le jeton documenté échoue WCAG AA */
 
     --acc:#9c3d2e;          /* rouille sombre — accent identitaire de l'app */
     --acc-d:#7f2f22;
@@ -285,6 +285,49 @@
 
   .credit{font-size:.76rem;line-height:1.5;color:var(--t3);margin:9px 2px 0}
   .credit strong{color:var(--t2)}
+
+  /* Échec de chargement du stimulus (réseau) */
+  .media-fail{
+    margin-top:12px;padding:12px 14px;font-size:.9rem;
+    border:1px solid var(--bad);background:color-mix(in srgb, var(--bad) 6%, #fff);
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .media-fail.hidden{display:none}
+  .media-fail span{margin-right:auto}
+  .media-fail .btn{padding:.45rem .9rem;min-height:40px}
+
+  /* Révélation de la bonne espèce après une erreur */
+  .reveal{
+    margin-top:12px;display:flex;gap:12px;align-items:flex-start;
+    border:1px solid var(--filet);background:var(--fond-2);padding:10px;
+  }
+  .reveal.hidden{display:none}
+  .reveal-img{
+    flex:0 0 104px;height:78px;background:#fff center/cover no-repeat;
+    border:1px solid var(--filet);
+  }
+  .reveal-txt{min-width:0;font-size:.92rem;line-height:1.4;color:var(--encre)}
+  .reveal-txt em{font-style:italic}
+  .reveal-meta{
+    display:block;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--t2);margin-top:4px;
+  }
+
+  /* Barre d'action collante sur l'écran de quiz (« Suivant » toujours accessible) */
+  #quiz .row{
+    position:sticky;bottom:0;background:var(--card);
+    margin:18px -20px -24px;padding:14px 20px;border-top:1px solid var(--filet);
+  }
+
+  /* Carnet des espèces à revoir */
+  .carnet{
+    display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+    border:1px solid var(--acc-d);background:color-mix(in srgb, var(--acc) 6%, #fff);
+    padding:11px 14px;margin-bottom:16px;font-size:.92rem;
+  }
+  .carnet.hidden{display:none}
+  .carnet #carnetLabel{margin-right:auto;font-weight:600;color:var(--acc-d)}
+  .carnet .btn{padding:.45rem .9rem;min-height:40px}
   .credit a{color:var(--acc-d);text-decoration:underline;text-underline-offset:2px}
   .credit a:hover{color:var(--acc)}
 
@@ -346,6 +389,9 @@
   .feedback em{font-style:italic;font-weight:600}
 
   .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
+  .end-actions{flex-wrap:wrap;justify-content:flex-start}
+  .end-actions .btn{flex:1 1 auto}
+  .end-actions #backSetup{margin-left:auto}
 
   /* ---------- Écran de fin ---------- */
   .end-kicker{
@@ -362,9 +408,18 @@
     text-transform:uppercase;color:var(--t3);margin-bottom:2px;
   }
   ul.recap{list-style:none;padding:0;margin:6px 0 0}
-  ul.recap li{padding:10px 0;border-top:1px solid var(--filet);font-size:.92rem}
+  ul.recap li{
+    display:flex;gap:11px;align-items:flex-start;
+    padding:10px 0;border-top:1px solid var(--filet);font-size:.92rem;
+  }
   ul.recap li:first-child{border-top:0}
   ul.recap em{font-style:italic}
+  .recap-img{
+    flex:0 0 56px;height:42px;background:var(--fond-2) center/cover no-repeat;
+    border:1px solid var(--filet);margin-top:1px;
+  }
+  .recap-txt{min-width:0}
+  .recap-meta{color:var(--t2)}
 
   /* ---------- Pied ---------- */
   .foot{
@@ -405,6 +460,8 @@
     .card{padding:16px 16px 20px}
     .big{font-size:2.3rem}
     .fcard-head,.chips{padding-left:13px;padding-right:13px}
+    #quiz .row{margin:16px -16px -20px;padding:12px 16px}
+    .reveal-img{flex-basis:88px;height:66px}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -438,13 +495,20 @@
   <!-- ---------- Ecran de configuration ---------- -->
   <section id="setup">
 
+    <!-- Carnet des espèces à revoir (persistant, localStorage) -->
+    <div class="carnet hidden" id="carnetStrip">
+      <span id="carnetLabel"></span>
+      <button type="button" class="btn ghost" id="carnetReview">Réviser</button>
+      <button type="button" class="link-clear" id="carnetClear">Vider</button>
+    </div>
+
     <!-- Média : photo ou son -->
     <div class="mediapick">
       <span class="label">Média</span>
       <div class="seg seg--wrap" id="media">
         <button type="button" data-v="photo" aria-pressed="true">Photo</button>
-        <button type="button" data-v="son">Au son</button>
-        <button type="button" data-v="noct">Vol nocturne</button>
+        <button type="button" data-v="son">Chants et cris</button>
+        <button type="button" data-v="noct">NocMig</button>
       </div>
       <p class="hint" id="mediaHint"></p>
     </div>
@@ -532,7 +596,7 @@
       <span class="launch-line" id="launchLine"></span>
       <button class="btn" id="start">Commencer</button>
     </div>
-    <p class="hint kb-hint">Clavier : <strong>1</strong>–<strong>9</strong> pour répondre au QCM (ou saisie du nom en mode Expert), <strong>Entrée</strong> pour valider / passer à la suite.</p>
+    <p class="hint kb-hint">Clavier : <strong>1</strong>–<strong>4</strong> pour répondre au QCM (ou saisie du nom en mode Expert), <strong>Entrée</strong> pour valider / passer à la suite.</p>
   </section>
 
   <!-- ---------- Ecran de quiz ---------- -->
@@ -552,6 +616,12 @@
     </div>
     <p class="credit" id="credit"></p>
 
+    <div class="media-fail hidden" id="mediaFail">
+      <span>Média non chargé — réseau ?</span>
+      <button type="button" class="btn ghost" id="mediaRetry">Réessayer</button>
+      <button type="button" class="btn ghost" id="mediaSkip">Passer (non comptée)</button>
+    </div>
+
     <div class="choices" id="choices"></div>
 
     <!-- Mode Expert : saisie libre du nom, avec autocomplétion -->
@@ -566,7 +636,12 @@
       <button type="button" class="link-clear giveup" id="answerGiveUp">Je ne sais pas — voir la réponse</button>
     </div>
 
-    <p class="feedback" id="feedback"></p>
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+
+    <div class="reveal hidden" id="reveal">
+      <span class="reveal-img" id="revealImg" role="img" aria-label="La bonne espèce"></span>
+      <span class="reveal-txt"><span id="revealName"></span><span class="reveal-meta" id="revealMeta"></span></span>
+    </div>
 
     <div class="row">
       <button class="btn ghost" id="quit">Arrêter</button>
@@ -583,7 +658,8 @@
       <strong>À revoir</strong>
       <ul class="recap" id="missed"></ul>
     </div>
-    <div class="row">
+    <div class="row end-actions">
+      <button class="btn ghost" id="replayMissed" hidden>Rejouer les ratées</button>
       <button class="btn ghost" id="replaySame">Rejouer</button>
       <button class="btn" id="backSetup">Nouvelle série</button>
     </div>
@@ -626,7 +702,7 @@
   var MEDIA_HINT = {
     photo: "Identifier l'espèce sur une photo.",
     son:   "Identifier au chant ou au cri (oiseaux) ou à la stridulation (sauterelles, criquets, grillons) — extraits Xeno-canto, avec sonagramme.",
-    noct:  "Identifier des oiseaux à leur cri de vol nocturne (« nocmig ») — l'exercice le plus pointu. Extraits Xeno-canto, avec sonagramme."
+    noct:  "Identifier des oiseaux à leur seul cri de vol nocturne (nocturnal migration) — l'exercice le plus pointu. Extraits Xeno-canto, avec sonagramme."
   };
   // Traduction des types de sons Xeno-canto pour le crédit.
   var SND_TYPE = {
@@ -884,12 +960,15 @@
   var game = null;
   var curSug = [], activeSug = -1;   // suggestions du champ Expert
 
-  function startGame(){
-    var p = pool();
+  var lastMissed = [];        // ratées de la dernière série (pour « Rejouer les ratées »)
+  var quitArmed = false, quitTimer = null;
+
+  function startGame(customPool, mode){
+    var p = (customPool && customPool.length) ? customPool.slice() : pool();
     if(p.length < 2) return;
     var total = cfg.count > 0 ? cfg.count : 9999;
     game = { i:0, answered:0, correct:0, total:total, unlimited: cfg.count===0,
-             missed:[], pool:p, current:null, timer:null,
+             missed:[], pool:p, current:null, nextQ:null, timer:null, reviewMode: mode || null,
              usedTaxa:{}, usedPhotos:{}, usedSounds:{} };
     $("setup").classList.add("hidden");
     $("end").classList.add("hidden");
@@ -919,19 +998,15 @@
     }, 100);
   }
 
-  function nextQuestion(){
-    clearTimer();
-    if(!game.unlimited && game.i >= game.total) return finish();
-    game.i++;
-
-    // Sur une série : on évite de retomber sur une espèce déjà tirée tant qu'il
-    // en reste des neuves, et jamais deux fois la même photo.
+  // Construit une question complète (réponse + distracteurs + stimulus), en
+  // évitant de retomber sur une espèce / une photo / un extrait déjà tirés.
+  function buildQuestion(){
     var libres = game.pool.filter(function(t){ return !game.usedTaxa[t.id]; });
-    if(!libres.length){ libres = game.pool; game.usedTaxa = {}; }
+    if(!libres.length){ libres = game.pool.slice(); game.usedTaxa = {}; }
     var answ = pick(libres);
     game.usedTaxa[answ.id] = true;
 
-    var stim;   // photo ou extrait sonore, sans doublon sur la série
+    var stim;
     if(isSon()){
       var list = soundsFor(answ);
       var sN = list.filter(function(s){ return !game.usedSounds[s.id]; });
@@ -949,9 +1024,28 @@
       var nOpt = Math.min(4, base.length + 1);
       options = shuffle([answ].concat(shuffle(base).slice(0, nOpt - 1)));
     }
+    return { answer:answ, options:options, stim:stim, done:false };
+  }
 
-    game.current = { answer:answ, options:options, stim:stim, done:false };
+  // Précharge le média de la question suivante (absorbe la latence réseau).
+  function preloadStim(q){
+    if(!q) return;
+    var src = isSon() ? q.stim.sono : q.stim.url;
+    if(src){ var i = new Image(); i.src = src; }
+  }
+
+  function nextQuestion(){
+    clearTimer();
+    if(!game.unlimited && game.i >= game.total) return finish();
+    game.i++;
+    game.current = game.nextQ || buildQuestion();
+    game.nextQ = (game.unlimited || game.i < game.total) ? buildQuestion() : null;
+    preloadStim(game.nextQ);
     render();
+  }
+
+  function onStimError(){
+    if(game && game.current && !game.current.done) $("mediaFail").classList.remove("hidden");
   }
 
   // Distracteurs tirés de tout le secteur en cours (Bretagne ou France) pour
@@ -988,6 +1082,10 @@
     $("score").textContent = "Score : " + game.correct;
     $("barFill").style.width = game.unlimited ? "0%" : ((game.i-1)/game.total*100) + "%";
 
+    $("mediaFail").classList.add("hidden");
+    $("reveal").classList.add("hidden");
+    $("quit").textContent = "Arrêter"; quitArmed = false; if(quitTimer) clearTimeout(quitTimer);
+
     if(isSon()){
       var s = c.stim;
       $("photo").classList.add("hidden");
@@ -996,6 +1094,7 @@
       sono.classList.toggle("hidden", !s.sono);
       if(s.sono) sono.src = s.sono;
       var pl = $("player");
+      pl.onerror = onStimError;
       pl.src = s.url; pl.load();
       pl.play().catch(function(){});
       var slic = LIC[s.license_code] || s.license_code;
@@ -1005,8 +1104,14 @@
         " — <a href=\"" + esc(s.page) + "\" target=\"_blank\" rel=\"noopener\">voir sur Xeno-canto</a>";
     } else {
       $("soundBlock").classList.add("hidden");
-      $("photo").classList.remove("hidden");
-      $("photo").style.backgroundImage = 'url("' + c.stim.url.replace(/"/g, "%22") + '")';
+      var ph = $("photo");
+      ph.classList.remove("hidden");
+      ph.style.backgroundImage = "none";
+      var purl = c.stim.url;
+      var probe = new Image();
+      probe.onload = function(){ if(game.current === c) ph.style.backgroundImage = 'url("' + purl.replace(/"/g, "%22") + '")'; };
+      probe.onerror = onStimError;
+      probe.src = purl;
       var licLabel = LIC[c.stim.license_code] || c.stim.license_code;
       var cred = c.stim.attribution && c.stim.attribution !== "no rights reserved"
         ? c.stim.attribution
@@ -1047,8 +1152,12 @@
     c.done = true;
     game.answered++;
     var good = chosen && chosen.id === c.answer.id;
-    if(good) game.correct++;
-    else game.missed.push(c.answer);
+    if(good){
+      game.correct++;
+      if(game.reviewMode === "carnet") carnetRemove(c.answer.id);
+    } else {
+      game.missed.push(c.answer);
+    }
 
     if(isExpert()){
       $("answerInput").disabled = true;
@@ -1075,9 +1184,51 @@
         : (reason === "giveup" ? "C'était " : "Temps écoulé — c'était ");
       fb.innerHTML = lead + fullName(c.answer);
       fb.className = "feedback ko";
+      showReveal(c.answer);
     }
     $("next").disabled = false;
     $("next").focus();
+  }
+
+  // Après une erreur : on montre la bonne espèce (vignette + nom + groupe) —
+  // en mode son, c'est le seul endroit où l'élève voit enfin la bête.
+  function showReveal(t){
+    var ph = t.photos && t.photos[0];
+    var img = $("revealImg");
+    if(ph){
+      img.style.backgroundImage = 'url("' + ph.url.replace(/"/g, "%22") + '")';
+      img.style.display = "";
+    } else { img.style.display = "none"; }
+    $("revealName").innerHTML = fullName(t);
+    $("revealMeta").textContent = titleCase(t.groupe) + " · " + t.sous_groupe;
+    $("reveal").classList.remove("hidden");
+  }
+
+  // ----- carnet des espèces à revoir (localStorage, best-effort) -----
+  function carnetGet(){
+    try { var a = JSON.parse(localStorage.getItem("qn_carnet") || "[]"); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function carnetSet(a){ try { localStorage.setItem("qn_carnet", JSON.stringify(a)); } catch(e){} }
+  function carnetAdd(ids){
+    var s = {};
+    carnetGet().forEach(function(x){ s[x] = 1; });
+    ids.forEach(function(x){ s[x] = 1; });
+    carnetSet(Object.keys(s).map(Number));
+    renderCarnet();
+  }
+  function carnetRemove(id){
+    carnetSet(carnetGet().filter(function(x){ return x !== id; }));
+  }
+  function carnetTaxa(){
+    var byId = {};
+    DATA.taxa.forEach(function(t){ if(!HIDDEN_GROUPS[t.groupe]) byId[t.id] = t; });
+    return carnetGet().map(function(id){ return byId[id]; }).filter(Boolean);
+  }
+  function renderCarnet(){
+    var n = carnetTaxa().length;
+    $("carnetStrip").classList.toggle("hidden", n < 2);
+    $("carnetLabel").textContent = n + (n > 1 ? " espèces à revoir dans ton carnet" : " espèce à revoir dans ton carnet");
   }
 
   // ----- mode Expert : champ de saisie + suggestions -----
@@ -1207,8 +1358,10 @@
   function finish(){
     clearTimer();
     stopSound();
+    if(quitTimer) clearTimeout(quitTimer);
     $("chronoBar").classList.add("hidden");
     $("quiz").classList.add("hidden");
+    if(!game){ $("setup").classList.remove("hidden"); return; }
     $("end").classList.remove("hidden");
     var asked = game.answered;
     var pct = asked ? Math.round(game.correct/asked*100) : 0;
@@ -1222,33 +1375,66 @@
     var uniq = {};
     game.missed.forEach(function(t){ uniq[t.id] = t; });
     var list = Object.keys(uniq).map(function(k){ return uniq[k]; });
+    lastMissed = list;
     if(list.length){
       missedWrap.classList.remove("hidden");
       list.forEach(function(t){
         var li = document.createElement("li");
-        li.innerHTML = fullName(t) + " <span style='color:var(--t4)'>— " +
-          esc(t.groupe) + " · " + esc(t.sous_groupe) + "</span>";
+        var ph = t.photos && t.photos[0];
+        li.innerHTML =
+          (ph ? '<span class="recap-img" aria-hidden="true" style=\'background-image:url("' + ph.url.replace(/"/g, "%22") + '")\'></span>' : '') +
+          '<span class="recap-txt">' + fullName(t) +
+          ' <span class="recap-meta">— ' + esc(titleCase(t.groupe)) + ' · ' + esc(t.sous_groupe) + '</span></span>';
         ul.appendChild(li);
       });
+      // seul le mode « révision du carnet » ne réalimente pas le carnet
+      if(game.reviewMode !== "carnet") carnetAdd(list.map(function(t){ return t.id; }));
     } else {
       missedWrap.classList.add("hidden");
     }
+    $("replayMissed").hidden = list.length < 2;
   }
 
   // ----- navigation -----
-  $("start").addEventListener("click", startGame);
+  $("start").addEventListener("click", function(){ startGame(); });
   $("next").addEventListener("click", function(){
     if(game.current && !game.current.done) return;
     nextQuestion();
   });
-  $("quit").addEventListener("click", finish);
-  $("replaySame").addEventListener("click", startGame);
+
+  // « Arrêter » : deux temps (le libellé passe en confirmation) pour éviter la
+  // perte accidentelle de la série à une main.
+  $("quit").addEventListener("click", function(){
+    if(quitArmed){ quitArmed = false; if(quitTimer) clearTimeout(quitTimer); finish(); return; }
+    quitArmed = true;
+    var asked = game.answered, pct = asked ? Math.round(game.correct / asked * 100) : 0;
+    $("quit").textContent = "Arrêter — " + pct + " % · confirmer";
+    quitTimer = setTimeout(function(){ quitArmed = false; $("quit").textContent = "Arrêter"; }, 3500);
+  });
+
+  $("mediaRetry").addEventListener("click", function(){ render(); });
+  $("mediaSkip").addEventListener("click", function(){
+    $("mediaFail").classList.add("hidden");
+    game.i--; nextQuestion();
+  });
+
+  $("replaySame").addEventListener("click", function(){ startGame(); });
+  $("replayMissed").addEventListener("click", function(){ startGame(lastMissed, "missed"); });
+  $("carnetReview").addEventListener("click", function(){
+    // le carnet mélange les médias au fil des sessions : révision toujours en photo
+    cfg.media = "photo";
+    [].forEach.call($("media").children, function(b){ b.setAttribute("aria-pressed", b.dataset.v === "photo"); });
+    startGame(carnetTaxa(), "carnet");
+  });
+  $("carnetClear").addEventListener("click", function(){ carnetSet([]); renderCarnet(); });
   $("backSetup").addEventListener("click", function(){
     $("end").classList.add("hidden");
     $("setup").classList.remove("hidden");
+    renderCarnet();
   });
+  renderCarnet();
 
-  // clavier : 1-9 pour répondre, Entrée/Espace pour continuer
+  // clavier : 1-4 pour répondre, Entrée/Espace pour continuer
   document.addEventListener("keydown", function(e){
     if($("quiz").classList.contains("hidden")) return;
     if(!isExpert() && e.key >= "1" && e.key <= "9"){
