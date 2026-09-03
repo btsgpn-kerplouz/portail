@@ -467,6 +467,77 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;animation:none !important}
   }
+
+  /* ======================================================================
+     « Établi » — écran de réglages sur une seule surface : rail persistant
+     à gauche, difficulté / groupes / sous-groupes au centre, vivier chiffré
+     en direct dans la barre du bas.
+  ====================================================================== */
+  .etabli{background:var(--card);border:1px solid var(--filet);margin-bottom:16px}
+  .etabli-grid{display:grid;grid-template-columns:212px minmax(0,1fr)}
+  .et-rail{background:var(--fond-2);border-right:1px solid var(--filet);padding:14px}
+  .et-rail .et-block + .et-block{margin-top:15px}
+  .et-rail .seg{flex-direction:column}
+  .et-rail .seg button{flex:1 1 auto;min-height:38px;font-size:.78rem}
+  .et-rail .hint{font-size:.72rem;margin-top:6px}
+  .et-main{padding:16px;min-width:0}
+  .et-main .et-block + .et-block{margin-top:20px}
+  .et-block > .label{margin-bottom:8px}
+
+  .et-diff-say{
+    margin-top:10px;border-top:2px solid var(--acc);background:var(--fond-2);
+    padding:10px 12px;font-size:.86rem;line-height:1.5;color:var(--t2);
+  }
+  .et-diff-say b{color:var(--encre);font-weight:600}
+  .et-scale{
+    display:flex;justify-content:space-between;gap:8px;margin-top:7px;
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--t3);
+  }
+
+  .et-groups{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:1px;background:var(--filet);border:1px solid var(--filet);
+  }
+  .et-groups .grpbtn{border:0;min-height:50px}
+  .et-groups .grpbtn:first-child{grid-column:1 / -1}
+
+  .et-sous-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .et-sous-head .label{margin-bottom:0}
+  .et-sous-head .link-clear{margin-left:auto}
+  .et-sous{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    border:1px solid var(--filet);border-bottom:0;
+  }
+  .et-sous .checkitem{border-bottom:1px solid var(--filet-soft)}
+
+  .vivier{
+    position:sticky;bottom:0;z-index:5;background:var(--encre);color:var(--fond);
+    padding:12px 16px;display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;
+  }
+  .vivier-fig{font-family:var(--mono);font-size:.78rem;letter-spacing:.02em;color:var(--fond)}
+  .vivier-fig b{font-weight:700}
+  .vivier-sub{
+    width:100%;order:3;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;
+    text-transform:uppercase;color:rgba(244,242,236,.58);
+  }
+  .vivier-bar{flex:1 1 90px;min-width:70px;height:6px;background:rgba(244,242,236,.16)}
+  .vivier-bar > i{display:block;height:100%;background:var(--acc);width:0;transition:width .25s ease}
+  .vivier .btn{margin-left:auto;order:2}
+  .vivier .btn:disabled{opacity:.45}
+
+  @media (max-width:760px){
+    .etabli-grid{grid-template-columns:1fr}
+    .et-rail{border-right:0;border-bottom:1px solid var(--filet)}
+    .et-rail .seg{flex-direction:row}
+    .et-rail .et-block{display:grid;grid-template-columns:1fr;gap:6px}
+  }
+  @media (max-width:640px){
+    .et-rail,.et-main{padding:13px}
+    .et-groups{grid-template-columns:1fr 1fr}
+    .et-groups .grpbtn:first-child{grid-column:1 / -1}
+    .et-sous{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -502,100 +573,97 @@
       <button type="button" class="link-clear" id="carnetClear">Vider</button>
     </div>
 
-    <!-- Média : photo ou son -->
-    <div class="mediapick">
-      <span class="label">Média</span>
-      <div class="seg seg--wrap" id="media">
-        <button type="button" data-v="photo" aria-pressed="true">Photo</button>
-        <button type="button" data-v="son">Chants et cris</button>
-        <button type="button" data-v="noct">NocMig</button>
-      </div>
-      <p class="hint" id="mediaHint"></p>
-    </div>
+    <!-- ============ ÉTABLI : réglages sur une seule surface ============ -->
+    <section class="etabli">
+      <div class="etabli-grid">
 
-    <!-- Bloc filtres -->
-    <section class="fcard">
-      <div class="fcard-head">
-        <span class="label">Filtres</span>
-        <div class="seg seg-sm" id="secteur">
-          <button type="button" data-v="bzh" aria-pressed="true">Bretagne</button>
-          <button type="button" data-v="national">France métropolitaine</button>
+        <!-- Rail gauche : réglages persistants -->
+        <div class="et-rail">
+          <div class="et-block">
+            <span class="label">Média</span>
+            <div class="seg" id="media">
+              <button type="button" data-v="photo" aria-pressed="true">Photo</button>
+              <button type="button" data-v="son">Chants et cris</button>
+              <button type="button" data-v="noct">NocMig</button>
+            </div>
+            <p class="hint" id="mediaHint"></p>
+          </div>
+          <div class="et-block">
+            <span class="label">Secteur</span>
+            <div class="seg" id="secteur">
+              <button type="button" data-v="bzh" aria-pressed="true">Bretagne</button>
+              <button type="button" data-v="national">France métropolitaine</button>
+            </div>
+          </div>
+          <div class="et-block">
+            <span class="label">Chrono</span>
+            <div class="seg" id="chrono">
+              <button data-v="0" aria-pressed="true">Sans</button>
+              <button data-v="20">20 s</button>
+              <button data-v="10">10 s</button>
+            </div>
+            <p class="hint">Temps écoulé = réponse fausse.</p>
+          </div>
+          <div class="et-block">
+            <span class="label">Questions</span>
+            <div class="seg" id="count">
+              <button data-v="10" aria-pressed="true">10</button>
+              <button data-v="20">20</button>
+              <button data-v="0">Illimité</button>
+            </div>
+          </div>
         </div>
-        <span class="fcard-sum" id="filterSum">aucun filtre</span>
-      </div>
-      <div class="chips" id="chips"></div>
-      <div class="fcols">
-        <div class="grpcol">
-          <span class="col-label">Groupe</span>
-          <div class="grplist" id="grpList"></div>
-        </div>
-        <div class="souscol">
-          <details class="sous-disc" id="sousDisc">
-            <summary class="souscol-head">
-              <span class="col-label" style="padding:0">Sous-groupes</span>
-              <span class="sous-sum" id="sousSum">tous</span>
-              <span class="sous-chev" aria-hidden="true">▾</span>
-            </summary>
-            <div class="souscol-actions">
+
+        <!-- Colonne principale : difficulté, groupes, sous-groupes -->
+        <div class="et-main">
+          <div class="et-block">
+            <span class="label">Difficulté — proximité des leurres</span>
+            <div class="seg seg--wrap" id="diff">
+              <button data-v="decouverte">Découverte</button>
+              <button data-v="entrainement" aria-pressed="true">Entraînement</button>
+              <button data-v="confirme">Confirmé</button>
+              <button data-v="expert">Expert</button>
+            </div>
+            <p class="et-diff-say" id="diffSay"></p>
+            <div class="et-scale"><span>leurres éloignés</span><span>espèces jumelles</span><span>saisie libre</span></div>
+          </div>
+
+          <div class="et-block">
+            <span class="label">Groupe</span>
+            <div class="et-groups" id="grpList"></div>
+          </div>
+
+          <div class="et-block">
+            <div class="et-sous-head">
+              <span class="label">Sous-groupes</span>
               <button type="button" class="link-clear" id="toggleAllSous">Tout cocher</button>
             </div>
-            <div class="sousgrid" id="sousGrid"></div>
+            <div class="et-sous" id="sousGrid"></div>
+          </div>
+
+          <details class="opts">
+            <summary>Options d'affichage ▾</summary>
+            <div class="opts-in">
+              <span class="label">Réponses proposées</span>
+              <div class="seg" id="labelmode">
+                <button data-v="fr" aria-pressed="true">Nom français</button>
+                <button data-v="sci">Nom scientifique</button>
+                <button data-v="both">Les deux</button>
+              </div>
+            </div>
           </details>
         </div>
       </div>
-    </section>
 
-    <!-- Réglages -->
-    <section class="card">
-      <div class="segrow">
-        <div class="segblock">
-          <span class="label">Difficulté</span>
-          <div class="seg seg--wrap" id="diff">
-            <button data-v="decouverte">Découverte</button>
-            <button data-v="entrainement" aria-pressed="true">Entraînement</button>
-            <button data-v="confirme">Confirmé</button>
-            <button data-v="expert">Expert</button>
-          </div>
-          <p class="hint" id="diffHint"></p>
-        </div>
-        <div class="segblock">
-          <span class="label">Chrono</span>
-          <div class="seg" id="chrono">
-            <button data-v="0" aria-pressed="true">Sans</button>
-            <button data-v="20">20 s</button>
-            <button data-v="10">10 s</button>
-          </div>
-          <p class="hint">Temps écoulé = réponse comptée fausse.</p>
-        </div>
-        <div class="segblock">
-          <span class="label">Questions</span>
-          <div class="seg" id="count">
-            <button data-v="10" aria-pressed="true">10</button>
-            <button data-v="20">20</button>
-            <button data-v="0">Illimité</button>
-          </div>
-          <p class="hint">Illimité : la série tourne jusqu'à « Arrêter ».</p>
-        </div>
+      <!-- Vivier : recalculé à chaque choix -->
+      <div class="vivier">
+        <span class="vivier-fig" id="vivFig"></span>
+        <div class="vivier-bar" aria-hidden="true"><i id="vivBar"></i></div>
+        <button class="btn" id="start">Lancer la série</button>
+        <span class="vivier-sub" id="vivSub"></span>
       </div>
-
-      <details class="opts">
-        <summary>Options d'affichage ▾</summary>
-        <div class="opts-in">
-          <span class="label">Réponses proposées</span>
-          <div class="seg" id="labelmode">
-            <button data-v="fr" aria-pressed="true">Nom français</button>
-            <button data-v="sci">Nom scientifique</button>
-            <button data-v="both">Les deux</button>
-          </div>
-        </div>
-      </details>
     </section>
 
-    <!-- Barre de lancement -->
-    <div class="launch">
-      <span class="launch-line" id="launchLine"></span>
-      <button class="btn" id="start">Commencer</button>
-    </div>
     <p class="hint kb-hint">Clavier : <strong>1</strong>–<strong>4</strong> pour répondre au QCM (ou saisie du nom en mode Expert), <strong>Entrée</strong> pour valider / passer à la suite.</p>
   </section>
 
@@ -719,10 +787,14 @@
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
-    decouverte:   { scope:"mixte",       name:"découverte",   label:"Propositions très différentes entre elles." },
-    entrainement: { scope:"sousgroupe",  name:"entraînement", label:"Propositions du même sous-groupe (passereaux, limicoles…), à bien regarder." },
-    confirme:     { scope:"genrefamille", name:"confirmé",    label:"Propositions du même genre si possible, sinon de la même famille — espèces jumelles." },
-    expert:       { scope:"saisie",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion." }
+    decouverte:   { scope:"mixte",       name:"découverte",   label:"Propositions très différentes entre elles.",
+      expect:"<b>4 propositions très contrastées</b>, souvent de groupes différents. Pour se faire l'œil sans se piéger." },
+    entrainement: { scope:"sousgroupe",  name:"entraînement", label:"Propositions du même sous-groupe (passereaux, limicoles…), à bien regarder.",
+      expect:"<b>4 propositions du même sous-groupe</b> (passereaux, limicoles…). Il faut regarder les critères." },
+    confirme:     { scope:"genrefamille", name:"confirmé",    label:"Propositions du même genre si possible, sinon de la même famille — espèces jumelles.",
+      expect:"<b>4 propositions du même genre ou de la même famille</b> — espèces jumelles, différences fines." },
+    expert:       { scope:"saisie",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion.",
+      expect:"<b>Aucune proposition</b> : tu écris le nom (français ou scientifique), l'autocomplétion aide à la saisie." }
   };
 
   // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
@@ -818,10 +890,6 @@
       b.addEventListener("click", function(){
         if(cfg.grp === r.key) return;
         cfg.grp = r.key; cfg.sous = {};
-        // Sur mobile : choisir un groupe précis déplie la liste (courte) des sous-groupes.
-        if(r.key !== "tous" && !(window.matchMedia && window.matchMedia("(min-width:701px)").matches)){
-          $("sousDisc").open = true;
-        }
         renderFilters();
       });
       box.appendChild(b);
@@ -890,18 +958,28 @@
   function renderFilters(){
     renderGroups();
     renderSous();
-    renderChips();
+    renderVivier();
+  }
 
-    var n = pool().length;
+  // Vivier : espèces retenues + médias disponibles, recalculés à chaque choix.
+  function renderVivier(){
+    var p = pool();
+    var n = p.length;
+    var media = 0;
+    if(isSon()){ p.forEach(function(t){ var s = soundsFor(t); media += s ? s.length : 0; }); }
+    else       { p.forEach(function(t){ media += t.photos.length; }); }
+    var scoped = scopedTaxa().length || 1;
     var sel = Object.keys(cfg.sous).length;
-    $("filterSum").textContent = sel
-      ? (sel + (sel > 1 ? " sous-groupes cochés" : " sous-groupe coché"))
-      : "aucun filtre";
-    $("sousSum").textContent = sel ? (sel + (sel > 1 ? " cochés" : " coché")) : "tous";
 
-    $("launchLine").textContent =
-      n + (n > 1 ? " espèces" : " espèce") + " dans le tirage · " +
-      (cfg.count > 0 ? cfg.count + " questions" : "série illimitée") + " · " + DIFF[cfg.diff].name;
+    $("vivFig").innerHTML =
+      "<b>" + n + "</b> " + (n > 1 ? "espèces" : "espèce") +
+      " · <b>" + media.toLocaleString("fr-FR") + "</b> " + (isSon() ? "extraits" : "photos") +
+      " · " + (sel ? sel + (sel > 1 ? " sous-groupes" : " sous-groupe") : "tous sous-groupes");
+    $("vivSub").textContent =
+      DIFF[cfg.diff].name +
+      (cfg.count > 0 ? " · " + cfg.count + " questions" : " · série illimitée") +
+      (cfg.chrono ? " · " + cfg.chrono + " s" : " · sans chrono");
+    $("vivBar").style.width = Math.round(n / scoped * 100) + "%";
     $("start").disabled = n < 2;
   }
 
@@ -919,12 +997,9 @@
   });
   seg($("count"),     function(v){ cfg.count = +v; renderFilters(); });
   seg($("labelmode"), function(v){ cfg.labelmode = v; });
-  seg($("chrono"),    function(v){ cfg.chrono = +v; });
-  seg($("diff"),      function(v){ cfg.diff = v; $("diffHint").textContent = DIFF[v].label; renderFilters(); });
-  $("diffHint").textContent = DIFF[cfg.diff].label;
-
-  // Sous-groupes : repliés d'emblée sur mobile (liste longue), dépliés sur bureau.
-  $("sousDisc").open = !(window.matchMedia && window.matchMedia("(max-width:700px)").matches);
+  seg($("chrono"),    function(v){ cfg.chrono = +v; renderVivier(); });
+  seg($("diff"),      function(v){ cfg.diff = v; $("diffSay").innerHTML = DIFF[v].expect; renderVivier(); });
+  $("diffSay").innerHTML = DIFF[cfg.diff].expect;
 
   renderFilters();
 
