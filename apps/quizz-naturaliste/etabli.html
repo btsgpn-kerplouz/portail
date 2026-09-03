@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="theme-color" content="#191b16">
+<meta name="description" content="Quiz pour reconnaître des espèces sur photo (oiseaux, insectes, mammifères, herpéto). BTS GPN.">
+<meta name="robots" content="noindex">
+<title>Quizz naturaliste — Établi (proto)</title>
+
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quizz naturaliste">
+
+<style>
+  /* Polices « papier technique froid » — copiées de portail/fonts/ (app déployée à part). */
+  @font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/ibm-plex-sans.woff2') format('woff2')}
+  @font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:600;font-display:swap;src:url('./fonts/ibm-plex-serif-bold.woff2') format('woff2')}
+  @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:100 900;font-display:swap;src:url('./fonts/jetbrains-mono.woff2') format('woff2')}
+
+  /* ---------------------------------------------------------------------------
+     Charte btsgpn-kerplouz — « Papier technique froid » (cf. DESIGN.md du dépôt).
+     Angle droit partout, aucune ombre (sauf halo de focus), bandeau encre plein +
+     filet de tête à l'accent de l'app. Accent « Quizz naturaliste » : rouille sombre.
+     Copie locale des jetons — shared/theme.css n'est pas encore à jour.
+  --------------------------------------------------------------------------- */
+  :root{
+    --fond:#f4f2ec;
+    --fond-2:#f7f5ee;
+    --card:#fffefb;
+    --encre:#191b16;
+    --filet:#d8d4c6;
+    --filet-soft:#ece8db;
+    --t2:#565a4e;
+    --t3:#6b6a5e;
+    --t4:#6b6f64;   /* assombri vs DESIGN.md #8a958c : le jeton documenté échoue WCAG AA */
+
+    --acc:#9c3d2e;          /* rouille sombre — accent identitaire de l'app */
+    --acc-d:#7f2f22;
+
+    --ok:#1f7a5c;           /* statut « bonne réponse » (sémantique, hors accent) */
+    --bad:#c0562b;          /* statut « raté / temps écoulé » */
+    --chantier:#8a5f17;     /* chrono : avertissement */
+
+    --serif:'IBM Plex Serif', Georgia, serif;
+    --sans:'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  *{box-sizing:border-box}
+  html,body{color-scheme:light}
+  body{
+    margin:0;background:var(--fond);color:var(--encre);
+    font-family:var(--sans);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  a{color:var(--acc-d)}
+  a:hover{color:var(--acc)}
+
+  /* ---------- Bandeau (aplat encre + filet de tête à l'accent) ---------- */
+  .banner{
+    background:var(--encre);color:var(--fond);
+    border-top:5px solid var(--acc);
+    padding:14px 20px 18px;
+  }
+  .banner-in{max-width:860px;margin:0 auto}
+  .banner-back{
+    display:inline-block;margin-bottom:12px;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+    color:rgba(244,242,236,.66);text-decoration:none;
+  }
+  .banner-back:hover{color:var(--fond)}
+  .banner-id{display:flex;align-items:center;gap:15px}
+  .banner-mark{
+    width:46px;height:46px;flex:0 0 auto;display:grid;place-items:center;
+    border:1.5px solid rgba(244,242,236,.5);
+  }
+  .banner-mark svg{width:26px;height:26px;display:block;color:var(--fond)}
+  .banner-text{min-width:0}
+  .banner-eyebrow{
+    display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;color:rgba(244,242,236,.66);
+  }
+  .banner h1{
+    margin:2px 0 0;font-family:var(--serif);font-weight:600;
+    font-size:1.7rem;line-height:1.1;letter-spacing:-.015em;color:var(--fond);
+  }
+  .banner p{margin:3px 0 0;font-size:.86rem;color:rgba(244,242,236,.66)}
+
+  /* ---------- Corps ---------- */
+  .wrap{max-width:860px;margin:0 auto;padding:22px 20px 40px}
+  .card{
+    background:var(--card);border:1px solid var(--filet);
+    padding:22px 20px 24px;margin-bottom:16px;
+  }
+
+  /* Étiquette de section — Mono, capitales (repère, pas du texte courant) */
+  .label{
+    display:block;font-family:var(--mono);font-size:.7rem;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--t3);
+  }
+  .hint{color:var(--t3);font-size:.8rem;margin:7px 0 0}
+  .kb-hint{margin:12px 2px 0}
+
+  /* ================= BLOC FILTRES ================= */
+  .fcard{background:var(--card);border:1px solid var(--filet);margin-bottom:16px}
+  .fcard-head{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:11px 16px;border-bottom:1px solid var(--filet);background:var(--fond-2);
+  }
+  .fcard-sum{
+    margin-left:auto;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--t3);
+  }
+  .seg-sm{flex:0 0 auto}
+  /* .seg.seg-sm : spécificité > .seg button (défini plus bas) pour garder les
+     boutons à la taille du texte (« France métropolitaine » ne doit pas déborder) */
+  .seg.seg-sm button{padding:5px 11px;min-height:30px;font-size:.74rem;flex:0 0 auto;white-space:nowrap}
+
+  /* puces de sélection */
+  .chips{
+    display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+    padding:12px 16px;border-bottom:1px solid var(--filet-soft);min-height:56px;
+  }
+  .chips-empty{font-size:.84rem;color:var(--t4)}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.82rem;
+    background:var(--acc);color:#fff;border:1px solid var(--acc);
+    padding:5px 9px 5px 11px;min-height:32px;cursor:pointer;transition:filter .12s ease;
+  }
+  .chip:hover{filter:brightness(.9)}
+  .chip .chip-n{font-family:var(--mono);font-size:.72rem;opacity:.72}
+  .chip .chip-x{font-family:var(--mono);font-size:.9rem;line-height:1;opacity:.85}
+  .link-clear{
+    font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+    background:none;border:0;color:var(--acc-d);cursor:pointer;padding:2px 0;
+    text-decoration:underline;text-underline-offset:3px;
+  }
+  .link-clear:hover{color:var(--acc)}
+  .chips .link-clear{margin-left:6px}
+
+  /* deux colonnes : groupe | sous-groupes */
+  .fcols{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);align-items:stretch}
+  .grpcol{border-right:1px solid var(--filet);background:var(--fond-2)}
+  .col-label{
+    display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--t3);padding:11px 14px 8px;
+  }
+  .grplist{display:flex;flex-direction:column}
+  .grpbtn{
+    display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;
+    font-size:.94rem;border:0;border-bottom:1px solid var(--filet-soft);
+    padding:9px 14px;min-height:52px;cursor:pointer;
+    background:transparent;color:var(--encre);transition:background .12s ease;
+  }
+  .grplist .grpbtn:last-child{border-bottom:0}
+  .grpbtn:hover{background:var(--fond)}
+  .grpbtn.active{background:var(--acc);color:#fff;font-weight:700}
+  .grp-ico{flex:0 0 28px;height:28px;display:grid;place-items:center;color:var(--t2)}
+  .grpbtn.active .grp-ico{color:#fff}
+  .grp-ico svg{width:24px;height:24px;display:block}
+  .grp-lbl{min-width:0;line-height:1.2}
+  .grp-count{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--t4)}
+  .grpbtn.active .grp-count{color:rgba(255,255,255,.82)}
+
+  .souscol{min-width:0}
+  .sous-disc > summary{list-style:none;cursor:pointer}
+  .sous-disc > summary::-webkit-details-marker{display:none}
+  .souscol-head{display:flex;align-items:center;gap:10px;padding:11px 14px 8px}
+  .sous-sum{margin-left:auto;font-family:var(--mono);font-size:.68rem;letter-spacing:.03em;color:var(--t3)}
+  .sous-chev{font-size:.7rem;color:var(--t3);transition:transform .15s ease}
+  .sous-disc[open] > summary .sous-chev{transform:rotate(180deg)}
+  .souscol-actions{display:flex;justify-content:flex-end;padding:0 14px 6px}
+  .sousgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr))}
+  /* repli explicite (ne pas dépendre du comportement natif de <details>) */
+  .sous-disc:not([open]) > .sousgrid,
+  .sous-disc:not([open]) > .souscol-actions{display:none}
+  /* Bureau : le bloc reste toujours déplié — la summary n'est qu'un entête. */
+  @media (min-width:701px){
+    .sous-disc > .souscol-actions{display:flex !important}
+    .sous-disc > .sousgrid{display:grid !important}
+    .sous-disc > summary{cursor:default}
+    .sous-chev{display:none}
+  }
+  .checkitem{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;
+    font-size:.88rem;color:var(--encre);background:var(--card);
+    border:0;border-top:1px solid var(--filet-soft);border-right:1px solid var(--filet-soft);
+    padding:10px 12px;min-height:46px;cursor:pointer;transition:background .12s ease;
+  }
+  .checkitem:hover{background:var(--fond)}
+  .checkitem[aria-checked="true"]{color:var(--acc-d);font-weight:600}
+  .checkitem .ci-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .checkitem .ci-count{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--t4)}
+  .checkitem[aria-checked="true"] .ci-count{color:var(--acc-d)}
+  .box{
+    flex:0 0 auto;width:18px;height:18px;border:1.5px solid var(--t4);background:#fff;
+    display:grid;place-items:center;font-size:12px;line-height:1;color:#fff;
+  }
+  .checkitem[aria-checked="true"] .box{background:var(--acc);border-color:var(--acc)}
+
+  /* ================= RÉGLAGES ================= */
+  .segrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px 22px}
+  .segblock{min-width:0}
+  .segblock .label{margin-bottom:8px}
+  .seg{display:flex;flex-wrap:nowrap;gap:1px;background:var(--filet);border:1px solid var(--filet)}
+  .seg button{
+    font:inherit;font-size:.8rem;line-height:1.15;color:var(--t2);background:var(--card);
+    border:0;padding:8px 5px;min-height:42px;cursor:pointer;flex:1 1 0;min-width:0;
+    text-align:center;hyphens:auto;overflow-wrap:break-word;
+    transition:background .12s ease,color .12s ease;
+  }
+  .seg button:hover{background:var(--fond)}
+  .seg button[aria-pressed="true"]{background:var(--acc);color:#fff;font-weight:700}
+  /* 4 options (Difficulté) : passe en 2×2 quand la ligne devient trop étroite */
+  @media (max-width:560px){
+    .seg--wrap{flex-wrap:wrap}
+    .seg--wrap button{flex:1 1 45%}
+  }
+
+  .opts{margin-top:20px;border-top:1px solid var(--filet-soft);padding-top:14px}
+  .opts > summary{
+    list-style:none;cursor:pointer;font-family:var(--mono);font-size:.68rem;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--t3);
+  }
+  .opts > summary::-webkit-details-marker{display:none}
+  .opts-in{margin-top:12px;max-width:360px}
+  .opts-in .label{margin-bottom:8px}
+
+  /* ================= BARRE DE LANCEMENT ================= */
+  .launch{
+    position:sticky;bottom:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--encre);color:var(--fond);padding:13px 16px;
+  }
+  .launch-line{
+    font-family:var(--mono);font-size:.76rem;letter-spacing:.04em;text-transform:uppercase;
+    color:rgba(244,242,236,.72);
+  }
+  .launch .btn{margin-left:auto}
+
+  /* ---------- Boutons ---------- */
+  .btn{
+    font:inherit;font-weight:700;cursor:pointer;border:1px solid var(--acc);
+    padding:.72rem 1.4rem;background:var(--acc);color:#fff;min-height:46px;
+    transition:filter .12s ease;
+  }
+  .btn:hover{filter:brightness(.9)}
+  .btn.ghost{background:#fff;color:var(--acc-d)}
+  .btn.ghost:hover{filter:none;background:var(--fond)}
+  .btn:disabled{opacity:.5;cursor:default;filter:none}
+
+  /* ---------- En-tête de partie ---------- */
+  .topbar{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--t2);margin-bottom:10px;
+  }
+  .bar{height:6px;background:var(--filet-soft);overflow:hidden;margin-bottom:14px}
+  .bar > i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s ease}
+
+  .chrono{height:8px;background:var(--filet-soft);overflow:hidden;margin:0 0 14px}
+  .chrono > i{display:block;height:100%;width:100%;background:var(--acc);transition:width .18s linear,background .3s ease}
+  .chrono.warn > i{background:var(--chantier)}
+  .chrono.crit > i{background:var(--bad)}
+
+  /* ---------- Stimulus : photo, ou son + sonagramme ---------- */
+  .photo{
+    width:100%;aspect-ratio:4/3;
+    background:var(--fond-2) center/contain no-repeat;
+    border:1px solid var(--filet);display:block;
+  }
+  .photo.hidden,.sound.hidden,.sono.hidden{display:none}
+  .sound{border:1px solid var(--filet);background:var(--fond-2);padding:12px}
+  .sono{width:100%;display:block;background:#fff;border:1px solid var(--filet)}
+  .player{width:100%;display:block;margin-top:12px}
+  .sono + .player{margin-top:12px}
+
+  /* ---------- Média (écran de config) ---------- */
+  .mediapick{margin-bottom:16px}
+  .mediapick .label{margin-top:0}
+
+  .credit{font-size:.76rem;line-height:1.5;color:var(--t3);margin:9px 2px 0}
+  .credit strong{color:var(--t2)}
+
+  /* Échec de chargement du stimulus (réseau) */
+  .media-fail{
+    margin-top:12px;padding:12px 14px;font-size:.9rem;
+    border:1px solid var(--bad);background:color-mix(in srgb, var(--bad) 6%, #fff);
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .media-fail.hidden{display:none}
+  .media-fail span{margin-right:auto}
+  .media-fail .btn{padding:.45rem .9rem;min-height:40px}
+
+  /* Révélation de la bonne espèce après une erreur */
+  .reveal{
+    margin-top:12px;display:flex;gap:12px;align-items:flex-start;
+    border:1px solid var(--filet);background:var(--fond-2);padding:10px;
+  }
+  .reveal.hidden{display:none}
+  .reveal-img{
+    flex:0 0 104px;height:78px;background:#fff center/cover no-repeat;
+    border:1px solid var(--filet);
+  }
+  .reveal-txt{min-width:0;font-size:.92rem;line-height:1.4;color:var(--encre)}
+  .reveal-txt em{font-style:italic}
+  .reveal-meta{
+    display:block;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--t2);margin-top:4px;
+  }
+
+  /* Barre d'action collante sur l'écran de quiz (« Suivant » toujours accessible) */
+  #quiz .row{
+    position:sticky;bottom:0;background:var(--card);
+    margin:18px -20px -24px;padding:14px 20px;border-top:1px solid var(--filet);
+  }
+
+  /* Carnet des espèces à revoir */
+  .carnet{
+    display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+    border:1px solid var(--acc-d);background:color-mix(in srgb, var(--acc) 6%, #fff);
+    padding:11px 14px;margin-bottom:16px;font-size:.92rem;
+  }
+  .carnet.hidden{display:none}
+  .carnet #carnetLabel{margin-right:auto;font-weight:600;color:var(--acc-d)}
+  .carnet .btn{padding:.45rem .9rem;min-height:40px}
+  .credit a{color:var(--acc-d);text-decoration:underline;text-underline-offset:2px}
+  .credit a:hover{color:var(--acc)}
+
+  /* ---------- Choix de réponse ---------- */
+  .choices{display:grid;gap:9px;margin-top:16px}
+  .choice{
+    display:flex;gap:12px;align-items:center;text-align:left;width:100%;
+    font:inherit;color:var(--encre);background:var(--card);
+    border:1px solid var(--filet);padding:12px 13px;min-height:48px;cursor:pointer;
+    transition:border-color .12s ease;
+  }
+  .choice:hover:not(:disabled){border-color:var(--encre)}
+  .choice .k{
+    flex:0 0 1.9em;height:1.9em;display:grid;place-items:center;
+    font-family:var(--mono);font-size:.8rem;font-weight:500;
+    background:var(--filet-soft);color:var(--t2);
+  }
+  .choice em{color:var(--t3);font-style:italic}
+  .choice.correct{border-color:var(--ok);background:color-mix(in srgb, var(--ok) 8%, #fff)}
+  .choice.correct .k{background:var(--ok);color:#fff}
+  .choice.wrong{border-color:var(--bad);background:color-mix(in srgb, var(--bad) 8%, #fff)}
+  .choice.wrong .k{background:var(--bad);color:#fff}
+  .choice:disabled{cursor:default}
+
+  /* ---------- Mode Expert : champ de saisie + autocomplétion ---------- */
+  .answerbox{margin-top:16px}
+  .suggest-wrap{position:relative}
+  .answer-input{
+    width:100%;font:inherit;font-size:1rem;color:var(--encre);background:#fff;
+    border:1px solid var(--filet);padding:12px 13px;min-height:48px;
+    transition:border-color .12s ease,box-shadow .12s ease;
+  }
+  .answer-input::placeholder{color:var(--t4)}
+  .answer-input:focus{
+    outline:none;border-color:var(--acc-d);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+  }
+  .answer-input:disabled{background:var(--fond-2);color:var(--t2)}
+  .suggestions{
+    list-style:none;margin:0;padding:0;position:absolute;left:0;right:0;top:calc(100% - 1px);
+    background:#fff;border:1px solid var(--acc-d);border-top:0;z-index:20;
+    max-height:280px;overflow:auto;display:none;
+  }
+  .suggestions.open{display:block}
+  .suggestion{
+    padding:9px 13px;cursor:pointer;border-top:1px solid var(--filet-soft);
+    font-size:.92rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+  }
+  .suggestion:first-child{border-top:0}
+  .suggestion:hover,.suggestion.active{background:color-mix(in srgb, var(--acc) 9%, #fff)}
+  .suggestion .s-sci{font-style:italic;color:var(--t3);font-size:.85rem}
+  .suggestions .s-none{padding:9px 13px;color:var(--t4);font-size:.86rem}
+  .giveup{margin-top:12px;display:inline-block}
+  .giveup:disabled{opacity:.4;cursor:default;text-decoration:none}
+
+  .feedback{margin-top:13px;font-weight:700;min-height:1.5em;font-size:.95rem}
+  .feedback.ok{color:var(--ok)}
+  .feedback.ko{color:var(--bad)}
+  .feedback em{font-style:italic;font-weight:600}
+
+  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
+  .end-actions{flex-wrap:wrap;justify-content:flex-start}
+  .end-actions .btn{flex:1 1 auto}
+  .end-actions #backSetup{margin-left:auto}
+
+  /* ---------- Écran de fin ---------- */
+  .end-kicker{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--t3);margin:0;
+  }
+  .big{
+    font-family:var(--mono);font-size:2.8rem;font-weight:700;
+    letter-spacing:-.02em;color:var(--acc-d);margin:.12em 0 .05em;
+  }
+  #missedWrap{margin-top:18px}
+  #missedWrap strong{
+    display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--t3);margin-bottom:2px;
+  }
+  ul.recap{list-style:none;padding:0;margin:6px 0 0}
+  ul.recap li{
+    display:flex;gap:11px;align-items:flex-start;
+    padding:10px 0;border-top:1px solid var(--filet);font-size:.92rem;
+  }
+  ul.recap li:first-child{border-top:0}
+  ul.recap em{font-style:italic}
+  .recap-img{
+    flex:0 0 56px;height:42px;background:var(--fond-2) center/cover no-repeat;
+    border:1px solid var(--filet);margin-top:1px;
+  }
+  .recap-txt{min-width:0}
+  .recap-meta{color:var(--t2)}
+
+  /* ---------- Pied ---------- */
+  .foot{
+    max-width:860px;margin:0 auto;padding:0 20px 32px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;line-height:1.7;
+    color:var(--t4);text-align:center;
+  }
+
+  .hidden{display:none}
+
+  /* ---------- Focus clavier — seule ombre tolérée par la charte ---------- */
+  :focus-visible{outline:2px solid var(--encre);outline-offset:2px}
+  .btn:focus-visible,.seg button:focus-visible,.choice:focus-visible,
+  .checkitem:focus-visible,.grpbtn:focus-visible,.chip:focus-visible,
+  .opts > summary:focus-visible,.link-clear:focus-visible{
+    outline:2px solid var(--acc-d);outline-offset:-2px;
+    box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--acc) 22%, transparent);
+  }
+
+  @media (max-width:700px){
+    .fcols{grid-template-columns:1fr}
+    .grpcol{border-right:0;border-bottom:1px solid var(--filet)}
+    /* Groupe : grille 2 colonnes (plus de défilement horizontal) ; « Tous » pleine largeur */
+    .grplist{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--filet)}
+    .grpbtn{border:0;min-height:50px;padding:9px 12px;gap:8px}
+    .grpbtn:first-child{grid-column:1 / -1}
+    .grp-lbl{font-size:.9rem}
+    .sousgrid{grid-template-columns:1fr}
+    .souscol-actions{padding-top:8px}
+    .fcard-sum{display:none}   /* doublon du résumé porté par le bloc dépliable */
+  }
+
+  @media (max-width:640px){
+    .banner{padding:12px 16px 15px}
+    .banner h1{font-size:1.4rem}
+    .banner-mark{width:42px;height:42px}
+    .wrap{padding:16px 16px 30px}
+    .card{padding:16px 16px 20px}
+    .big{font-size:2.3rem}
+    .fcard-head,.chips{padding-left:13px;padding-right:13px}
+    #quiz .row{margin:16px -16px -20px;padding:12px 16px}
+    .reveal-img{flex-basis:88px;height:66px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important}
+  }
+
+  /* ======================================================================
+     PROTOTYPE « Établi » — écran de réglages sur une seule surface, dense,
+     avec le vivier chiffré en direct. Ne touche ni index.html ni le quiz.
+  ====================================================================== */
+  .proto-note{
+    margin-top:10px;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;
+    color:rgba(244,242,236,.6);
+  }
+  .proto-note a{color:rgba(244,242,236,.82);text-underline-offset:2px}
+  .proto-note a:hover{color:var(--fond)}
+
+  .etabli{background:var(--card);border:1px solid var(--filet);margin-bottom:16px}
+  .etabli-grid{display:grid;grid-template-columns:212px minmax(0,1fr)}
+  .et-rail{background:var(--fond-2);border-right:1px solid var(--filet);padding:14px}
+  .et-rail .et-block + .et-block{margin-top:15px}
+  .et-rail .seg{flex-direction:column}
+  .et-rail .seg button{flex:1 1 auto;min-height:38px;font-size:.78rem}
+  .et-rail .hint{font-size:.72rem;margin-top:6px}
+  .et-main{padding:16px;min-width:0}
+  .et-main .et-block + .et-block{margin-top:20px}
+  .et-block > .label{margin-bottom:8px}
+
+  .et-diff-say{
+    margin-top:10px;border-top:2px solid var(--acc);background:var(--fond-2);
+    padding:10px 12px;font-size:.86rem;line-height:1.5;color:var(--t2);
+  }
+  .et-diff-say b{color:var(--encre);font-weight:600}
+  .et-scale{
+    display:flex;justify-content:space-between;gap:8px;margin-top:7px;
+    font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--t3);
+  }
+
+  .et-groups{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:1px;background:var(--filet);border:1px solid var(--filet);
+  }
+  .et-groups .grpbtn{border:0;min-height:50px}
+  .et-groups .grpbtn:first-child{grid-column:1 / -1}
+
+  .et-sous-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .et-sous-head .label{margin-bottom:0}
+  .et-sous-head .link-clear{margin-left:auto}
+  .et-sous{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    border:1px solid var(--filet);border-bottom:0;
+  }
+  .et-sous .checkitem{border-bottom:1px solid var(--filet-soft)}
+
+  .vivier{
+    position:sticky;bottom:0;z-index:5;background:var(--encre);color:var(--fond);
+    padding:12px 16px;display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;
+  }
+  .vivier-fig{font-family:var(--mono);font-size:.78rem;letter-spacing:.02em;color:var(--fond)}
+  .vivier-fig b{font-weight:700}
+  .vivier-sub{
+    width:100%;order:3;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;
+    text-transform:uppercase;color:rgba(244,242,236,.58);
+  }
+  .vivier-bar{flex:1 1 90px;min-width:70px;height:6px;background:rgba(244,242,236,.16)}
+  .vivier-bar > i{display:block;height:100%;background:var(--acc);width:0;transition:width .25s ease}
+  .vivier .btn{margin-left:auto;order:2}
+  .vivier .btn:disabled{opacity:.45}
+
+  @media (max-width:760px){
+    .etabli-grid{grid-template-columns:1fr}
+    .et-rail{border-right:0;border-bottom:1px solid var(--filet)}
+    .et-rail .seg{flex-direction:row}
+    .et-rail .et-block{display:grid;grid-template-columns:1fr;gap:6px}
+  }
+  @media (max-width:640px){
+    .et-rail,.et-main{padding:13px}
+    .et-groups{grid-template-columns:1fr 1fr}
+    .et-groups .grpbtn:first-child{grid-column:1 / -1}
+    .et-sous{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header class="banner">
+  <div class="banner-in">
+    <a class="banner-back" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
+    <div class="banner-id">
+      <span class="banner-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6Z" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="3.1" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <div class="banner-text">
+        <span class="banner-eyebrow">btsgpn — kerplouz · prototype</span>
+        <h1>Quizz naturaliste — Établi</h1>
+        <p>Écran de réglages « Établi » : tout sur une surface, vivier chiffré en direct</p>
+      </div>
+    </div>
+    <p class="proto-note">Prototype d'ergonomie — le quiz lui-même est identique. <a href="./">↩ Version standard</a></p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ---------- Ecran de configuration ---------- -->
+  <section id="setup">
+
+    <!-- Carnet des espèces à revoir (persistant, localStorage) -->
+    <div class="carnet hidden" id="carnetStrip">
+      <span id="carnetLabel"></span>
+      <button type="button" class="btn ghost" id="carnetReview">Réviser</button>
+      <button type="button" class="link-clear" id="carnetClear">Vider</button>
+    </div>
+
+    <!-- ============ ÉTABLI : réglages sur une seule surface ============ -->
+    <section class="etabli">
+      <div class="etabli-grid">
+
+        <!-- Rail gauche : réglages persistants -->
+        <div class="et-rail">
+          <div class="et-block">
+            <span class="label">Média</span>
+            <div class="seg" id="media">
+              <button type="button" data-v="photo" aria-pressed="true">Photo</button>
+              <button type="button" data-v="son">Chants et cris</button>
+              <button type="button" data-v="noct">NocMig</button>
+            </div>
+            <p class="hint" id="mediaHint"></p>
+          </div>
+          <div class="et-block">
+            <span class="label">Secteur</span>
+            <div class="seg" id="secteur">
+              <button type="button" data-v="bzh" aria-pressed="true">Bretagne</button>
+              <button type="button" data-v="national">France métropolitaine</button>
+            </div>
+          </div>
+          <div class="et-block">
+            <span class="label">Chrono</span>
+            <div class="seg" id="chrono">
+              <button data-v="0" aria-pressed="true">Sans</button>
+              <button data-v="20">20 s</button>
+              <button data-v="10">10 s</button>
+            </div>
+            <p class="hint">Temps écoulé = réponse fausse.</p>
+          </div>
+          <div class="et-block">
+            <span class="label">Questions</span>
+            <div class="seg" id="count">
+              <button data-v="10" aria-pressed="true">10</button>
+              <button data-v="20">20</button>
+              <button data-v="0">Illimité</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne principale : difficulté, groupes, sous-groupes -->
+        <div class="et-main">
+          <div class="et-block">
+            <span class="label">Difficulté — proximité des leurres</span>
+            <div class="seg seg--wrap" id="diff">
+              <button data-v="decouverte">Découverte</button>
+              <button data-v="entrainement" aria-pressed="true">Entraînement</button>
+              <button data-v="confirme">Confirmé</button>
+              <button data-v="expert">Expert</button>
+            </div>
+            <p class="et-diff-say" id="diffSay"></p>
+            <div class="et-scale"><span>leurres éloignés</span><span>espèces jumelles</span><span>saisie libre</span></div>
+          </div>
+
+          <div class="et-block">
+            <span class="label">Groupe</span>
+            <div class="et-groups" id="grpList"></div>
+          </div>
+
+          <div class="et-block">
+            <div class="et-sous-head">
+              <span class="label">Sous-groupes</span>
+              <button type="button" class="link-clear" id="toggleAllSous">Tout cocher</button>
+            </div>
+            <div class="et-sous" id="sousGrid"></div>
+          </div>
+
+          <details class="opts">
+            <summary>Options d'affichage ▾</summary>
+            <div class="opts-in">
+              <span class="label">Réponses proposées</span>
+              <div class="seg" id="labelmode">
+                <button data-v="fr" aria-pressed="true">Nom français</button>
+                <button data-v="sci">Nom scientifique</button>
+                <button data-v="both">Les deux</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Vivier : recalculé à chaque choix -->
+      <div class="vivier">
+        <span class="vivier-fig" id="vivFig"></span>
+        <div class="vivier-bar" aria-hidden="true"><i id="vivBar"></i></div>
+        <button class="btn" id="start">Lancer la série</button>
+        <span class="vivier-sub" id="vivSub"></span>
+      </div>
+    </section>
+
+    <p class="hint kb-hint">Clavier : <strong>1</strong>–<strong>4</strong> pour répondre au QCM (ou saisie du nom en mode Expert), <strong>Entrée</strong> pour valider / passer à la suite.</p>
+  </section>
+
+  <!-- ---------- Ecran de quiz ---------- -->
+  <section id="quiz" class="card hidden">
+    <div class="topbar">
+      <span id="progress">1 / 10</span>
+      <span id="score">Score : 0</span>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="chrono hidden" id="chronoBar"><i></i></div>
+
+    <div class="photo" id="photo" role="img" aria-label="Photo à identifier"></div>
+    <div class="sound hidden" id="soundBlock">
+      <img class="sono hidden" id="sono" alt="Sonagramme de l'extrait à identifier"
+           src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='340'/%3E">
+      <audio class="player" id="player" controls preload="none"></audio>
+    </div>
+    <p class="credit" id="credit"></p>
+
+    <div class="media-fail hidden" id="mediaFail">
+      <span>Média non chargé — réseau ?</span>
+      <button type="button" class="btn ghost" id="mediaRetry">Réessayer</button>
+      <button type="button" class="btn ghost" id="mediaSkip">Passer (non comptée)</button>
+    </div>
+
+    <div class="choices" id="choices"></div>
+
+    <!-- Mode Expert : saisie libre du nom, avec autocomplétion -->
+    <div class="answerbox hidden" id="answerBox">
+      <div class="suggest-wrap">
+        <input type="text" id="answerInput" class="answer-input" role="combobox"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               aria-autocomplete="list" aria-expanded="false" aria-controls="suggestions"
+               aria-label="Nom de l'espèce" placeholder="Tape le nom de l'espèce…">
+        <ul class="suggestions" id="suggestions" role="listbox"></ul>
+      </div>
+      <button type="button" class="link-clear giveup" id="answerGiveUp">Je ne sais pas — voir la réponse</button>
+    </div>
+
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+
+    <div class="reveal hidden" id="reveal">
+      <span class="reveal-img" id="revealImg" role="img" aria-label="La bonne espèce"></span>
+      <span class="reveal-txt"><span id="revealName"></span><span class="reveal-meta" id="revealMeta"></span></span>
+    </div>
+
+    <div class="row">
+      <button class="btn ghost" id="quit">Arrêter</button>
+      <button class="btn" id="next" disabled>Suivant</button>
+    </div>
+  </section>
+
+  <!-- ---------- Ecran de fin ---------- -->
+  <section id="end" class="card hidden">
+    <p class="end-kicker">Série terminée</p>
+    <p class="big" id="finalScore">0 %</p>
+    <p id="finalDetail" class="hint"></p>
+    <div id="missedWrap" class="hidden">
+      <strong>À revoir</strong>
+      <ul class="recap" id="missed"></ul>
+    </div>
+    <div class="row end-actions">
+      <button class="btn ghost" id="replayMissed" hidden>Rejouer les ratées</button>
+      <button class="btn ghost" id="replaySame">Rejouer</button>
+      <button class="btn" id="backSetup">Nouvelle série</button>
+    </div>
+  </section>
+
+</div>
+
+<p class="foot">
+  Photos : iNaturalist — licences CC0 / CC BY / CC BY-SA.<br>
+  Crédit, licence et lien vers l'observation affichés sous chaque image.
+</p>
+
+<script src="quiz-data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var DATA = window.QUIZ_DATA;
+  var $ = function(id){ return document.getElementById(id); };
+
+  if(!DATA || !DATA.taxa || !DATA.taxa.length){
+    $("setup").innerHTML = "<section class=\"card\"><strong>Données absentes.</strong><br>Lance d'abord " +
+      "<code>node export_quiz_data.mjs</code> pour générer <code>quiz-data.js</code>.</section>";
+    return;
+  }
+
+  var LIC = { "cc0":"CC0 (domaine public)", "cc-by":"CC BY", "cc-by-sa":"CC BY-SA",
+              "cc-by-nc":"CC BY-NC", "cc-by-nd":"CC BY-ND",
+              "cc-by-nc-sa":"CC BY-NC-SA", "cc-by-nc-nd":"CC BY-NC-ND" };
+  var FACETS = DATA.facets || { groupes:{}, sousGroupes:{} };
+
+  // Groupes masqués temporairement (les données restent dans quiz-data.js).
+  // « plantes » : à retravailler avant réintégration.
+  var HIDDEN_GROUPS = { "plantes": true };
+
+  var GROUPS = Object.keys(FACETS.groupes).sort()
+    .filter(function(g){ return !HIDDEN_GROUPS[g]; });
+
+  var cfg = { grp:"tous", count:10, labelmode:"fr", sous:{}, diff:"entrainement", chrono:0, secteur:"bzh", media:"photo" };
+
+  var MEDIA_HINT = {
+    photo: "Identifier l'espèce sur une photo.",
+    son:   "Identifier au chant ou au cri (oiseaux) ou à la stridulation (sauterelles, criquets, grillons) — extraits Xeno-canto, avec sonagramme.",
+    noct:  "Identifier des oiseaux à leur seul cri de vol nocturne (nocturnal migration) — l'exercice le plus pointu. Extraits Xeno-canto, avec sonagramme."
+  };
+  // Traduction des types de sons Xeno-canto pour le crédit.
+  var SND_TYPE = {
+    "song":"Chant", "calling song":"Chant", "subsong":"Chant discret", "dawn song":"Chant matinal",
+    "singing":"Chant", "courtship song":"Chant nuptial",
+    "call":"Cri", "contact call":"Cri de contact", "alarm call":"Cri d'alarme",
+    "flight call":"Cri de vol", "nocturnal flight call":"Cri de vol nocturne",
+    "begging call":"Cri de quémande", "drumming":"Tambourinage", "duet":"Duo"
+  };
+  function sndTypeLabel(t){ return SND_TYPE[(t || "").toLowerCase()] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : ""); }
+
+  function isSon(){ return cfg.media === "son" || cfg.media === "noct"; }
+  function soundsFor(t){ return cfg.media === "noct" ? t.soundsNoct : t.sounds; }
+
+  // Presets de difficulté — provenance des distracteurs du QCM.
+  var DIFF = {
+    decouverte:   { scope:"mixte",       name:"découverte",   label:"Propositions très différentes entre elles.",
+      expect:"<b>4 propositions très contrastées</b>, souvent de groupes différents. Pour se faire l'œil sans se piéger." },
+    entrainement: { scope:"sousgroupe",  name:"entraînement", label:"Propositions du même sous-groupe (passereaux, limicoles…), à bien regarder.",
+      expect:"<b>4 propositions du même sous-groupe</b> (passereaux, limicoles…). Il faut regarder les critères." },
+    confirme:     { scope:"genrefamille", name:"confirmé",    label:"Propositions du même genre si possible, sinon de la même famille — espèces jumelles.",
+      expect:"<b>4 propositions du même genre ou de la même famille</b> — espèces jumelles, différences fines." },
+    expert:       { scope:"saisie",      name:"expert",       label:"Pas de propositions : tu écris le nom (français ou scientifique), avec autocomplétion.",
+      expect:"<b>Aucune proposition</b> : tu écris le nom (français ou scientifique), l'autocomplétion aide à la saisie." }
+  };
+
+  // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
+  // fichiers PhyloPic (CC0 / CC BY) si l'on veut la vraie source + crédit.
+  var SIL = {
+    oiseaux:    "M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.75V21M7 18a6 6 0 0 0 3.84-10.61",
+    insectes:   "M8 2l1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4",
+    plantes:    "M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z",
+    mammifères: "M13 16a3 3 0 0 1 2.24 5M18 12h.01M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h-.9a2 2 0 0 0-2 2v.5M20 8.54V4a2 2 0 1 0-4 0v3M7.61 12.53a3 3 0 1 0-1.6 4.3",
+    "herpéto":  "M4.5 14c0-2 1-3.2 2.1-4C7.7 9.3 8 8.5 8 7.2 8 5.4 9.1 4.3 10.6 4.3c1 0 1.6.4 1.9 1.1.3-.7.9-1.1 1.9-1.1 1.5 0 2.6 1.1 2.6 2.9 0 1.3.3 2.1 1.4 2.8 1.1.8 2.1 2 2.1 4 0 2.8-2.3 5-5.2 5H9.7C6.8 19 4.5 16.8 4.5 14ZM9 7.4h.01M15 7.4h.01M9.6 11.8c1 1 3.8 1 4.8 0M7.6 19c-1.3.4-2 1.7-1.5 3M16.4 19c1.3.4 2 1.7 1.5 3"
+  };
+
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(ch){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]; }); }
+  function titleCase(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+  // ----- controle "segmented" (choix unique) -----
+  function seg(container, onpick){
+    container.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      [].forEach.call(container.children, function(c){ c.setAttribute("aria-pressed", c===b); });
+      onpick(b.dataset.v);
+    });
+  }
+
+  // ----- données de filtre -----
+  // Secteur d'abord (Bretagne = espèces avec assez d'observations research-grade
+  // en Bretagne sur iNaturalist ; France métro. = tout le référentiel), puis
+  // groupe / sous-groupe. Les compteurs sont donc recalculés à chaque rendu
+  // plutôt que lus depuis les facettes précalculées (nationales) de quiz-data.js.
+  function scopedTaxa(){
+    return DATA.taxa.filter(function(t){
+      if(HIDDEN_GROUPS[t.groupe]) return false;
+      if(isSon()){ var sl = soundsFor(t); if(!(sl && sl.length)) return false; }
+      return cfg.secteur === "bzh" ? t.bzh : true;
+    });
+  }
+  function pool(){
+    var sousSel = Object.keys(cfg.sous);
+    return scopedTaxa().filter(function(t){
+      if(cfg.grp !== "tous" && t.groupe !== cfg.grp) return false;
+      if(sousSel.length && !cfg.sous[t.sous_groupe]) return false;
+      return true;
+    });
+  }
+  function groupCounts(){
+    var m = {};
+    scopedTaxa().forEach(function(t){ m[t.groupe] = (m[t.groupe] || 0) + 1; });
+    return m;
+  }
+  // sous-groupes visibles (dans l'ordre des groupes) selon le groupe choisi
+  function visibleSous(){
+    var grps = cfg.grp === "tous" ? GROUPS : [cfg.grp];
+    var counts = {}, present = {};
+    scopedTaxa().forEach(function(t){
+      if(grps.indexOf(t.groupe) === -1) return;
+      counts[t.sous_groupe] = (counts[t.sous_groupe] || 0) + 1;
+      (present[t.groupe] || (present[t.groupe] = {}))[t.sous_groupe] = true;
+    });
+    var out = [];
+    grps.forEach(function(g){
+      Object.keys(present[g] || {}).sort().forEach(function(k){
+        out.push({ key:k, count:counts[k] || 0, groupe:g });
+      });
+    });
+    return out;
+  }
+  function sousCount(k){
+    var n = 0;
+    scopedTaxa().forEach(function(t){ if(t.sous_groupe === k) n++; });
+    return n;
+  }
+
+  // ----- rendu du bloc filtres -----
+  function renderGroups(){
+    var box = $("grpList");
+    box.innerHTML = "";
+    var gc = groupCounts();
+    var rows = [{ key:"tous", label:"Tous les groupes", count:scopedTaxa().length }].concat(
+      GROUPS.filter(function(g){ return !isSon() || (gc[g] || 0) > 0; })
+        .map(function(g){ return { key:g, label:titleCase(g), count:gc[g] || 0 }; }));
+    rows.forEach(function(r){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "grpbtn" + (cfg.grp === r.key ? " active" : "");
+      var path = SIL[r.key];
+      var ico = path
+        ? '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="'+path+'"></path></svg></span>'
+        : '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"></circle></svg></span>';
+      b.innerHTML = ico +
+        '<span class="grp-lbl">'+esc(r.label)+'</span>' +
+        '<span class="grp-count">'+r.count+'</span>';
+      b.addEventListener("click", function(){
+        if(cfg.grp === r.key) return;
+        cfg.grp = r.key; cfg.sous = {};
+        renderFilters();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function renderSous(){
+    var box = $("sousGrid");
+    box.innerHTML = "";
+    var vis = visibleSous();
+    vis.forEach(function(v){
+      var on = !!cfg.sous[v.key];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "checkitem";
+      b.setAttribute("role", "checkbox");
+      b.setAttribute("aria-checked", on);
+      b.innerHTML = '<span class="box" aria-hidden="true">'+(on ? "✓" : "")+'</span>' +
+        '<span class="ci-label">'+esc(v.key)+'</span>' +
+        '<span class="ci-count">'+v.count+'</span>';
+      b.addEventListener("click", function(){
+        if(cfg.sous[v.key]) delete cfg.sous[v.key]; else cfg.sous[v.key] = true;
+        renderFilters();
+      });
+      box.appendChild(b);
+    });
+    var allOn = vis.length > 0 && vis.every(function(v){ return cfg.sous[v.key]; });
+    var t = $("toggleAllSous");
+    t.textContent = allOn ? "Tout décocher" : "Tout cocher";
+    t.onclick = function(){
+      vis.forEach(function(v){ if(allOn) delete cfg.sous[v.key]; else cfg.sous[v.key] = true; });
+      renderFilters();
+    };
+  }
+
+  function renderChips(){
+    var box = $("chips");
+    box.innerHTML = "";
+    var keys = Object.keys(cfg.sous).sort();
+    if(!keys.length){
+      var span = document.createElement("span");
+      span.className = "chips-empty";
+      span.textContent = "Aucun filtre — les " + pool().length + " espèces sont dans le tirage.";
+      box.appendChild(span);
+      return;
+    }
+    keys.forEach(function(k){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.innerHTML = '<span>'+esc(k)+'</span>' +
+        '<span class="chip-n">'+sousCount(k)+'</span>' +
+        '<span class="chip-x" aria-hidden="true">×</span>';
+      b.setAttribute("aria-label", "Retirer le filtre " + k);
+      b.addEventListener("click", function(){ delete cfg.sous[k]; renderFilters(); });
+      box.appendChild(b);
+    });
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "link-clear";
+    clear.textContent = "Tout effacer";
+    clear.addEventListener("click", function(){ cfg.sous = {}; renderFilters(); });
+    box.appendChild(clear);
+  }
+
+  function renderFilters(){
+    renderGroups();
+    renderSous();
+    renderVivier();
+  }
+
+  // Vivier : espèces retenues + médias disponibles, recalculés à chaque choix.
+  function renderVivier(){
+    var p = pool();
+    var n = p.length;
+    var media = 0;
+    if(isSon()){ p.forEach(function(t){ var s = soundsFor(t); media += s ? s.length : 0; }); }
+    else       { p.forEach(function(t){ media += t.photos.length; }); }
+    var scoped = scopedTaxa().length || 1;
+    var sel = Object.keys(cfg.sous).length;
+
+    $("vivFig").innerHTML =
+      "<b>" + n + "</b> " + (n > 1 ? "espèces" : "espèce") +
+      " · <b>" + media.toLocaleString("fr-FR") + "</b> " + (isSon() ? "extraits" : "photos") +
+      " · " + (sel ? sel + (sel > 1 ? " sous-groupes" : " sous-groupe") : "tous sous-groupes");
+    $("vivSub").textContent =
+      DIFF[cfg.diff].name +
+      (cfg.count > 0 ? " · " + cfg.count + " questions" : " · série illimitée") +
+      (cfg.chrono ? " · " + cfg.chrono + " s" : " · sans chrono");
+    $("vivBar").style.width = Math.round(n / scoped * 100) + "%";
+    $("start").disabled = n < 2;
+  }
+
+  // ----- init des contrôles -----
+  seg($("media"), function(v){
+    cfg.media = v; cfg.grp = "tous"; cfg.sous = {};
+    $("mediaHint").textContent = MEDIA_HINT[v];
+    renderFilters();
+  });
+  $("mediaHint").textContent = MEDIA_HINT[cfg.media];
+
+  seg($("secteur"), function(v){
+    cfg.secteur = v; cfg.grp = "tous"; cfg.sous = {};
+    renderFilters();
+  });
+  seg($("count"),     function(v){ cfg.count = +v; renderFilters(); });
+  seg($("labelmode"), function(v){ cfg.labelmode = v; });
+  seg($("chrono"),    function(v){ cfg.chrono = +v; renderVivier(); });
+  seg($("diff"),      function(v){ cfg.diff = v; $("diffSay").innerHTML = DIFF[v].expect; renderVivier(); });
+  $("diffSay").innerHTML = DIFF[cfg.diff].expect;
+
+  renderFilters();
+
+  // ----- utilitaires de partie -----
+  function shuffle(a){ a = a.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.random()*(i+1)|0; var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a; }
+  function pick(a){ return a[Math.random()*a.length|0]; }
+  function hasFr(t){ return t.common_name_fr && t.common_name_fr !== t.scientific_name; }
+  function labelOf(t){
+    var fr = esc(t.common_name_fr), sci = "<em>" + esc(t.scientific_name) + "</em>";
+    if(cfg.labelmode === "sci") return sci;
+    if(cfg.labelmode === "both" && hasFr(t)) return fr + " " + sci;
+    if(cfg.labelmode === "both") return sci;
+    return hasFr(t) ? fr : sci;
+  }
+  function fullName(t){
+    return hasFr(t) ? esc(t.common_name_fr) + " (<em>" + esc(t.scientific_name) + "</em>)"
+                    : "<em>" + esc(t.scientific_name) + "</em>";
+  }
+
+  function isExpert(){ return cfg.diff === "expert"; }
+  // normalise pour la comparaison / recherche : minuscules, sans accents,
+  // ligatures développées, ponctuation et espaces multiples réduits.
+  function norm(s){
+    return String(s == null ? "" : s).toLowerCase()
+      .replace(/œ/g, "oe").replace(/æ/g, "ae")
+      .normalize("NFD").replace(/\p{Diacritic}/gu, "")
+      .replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  // ----- état de la partie -----
+  var game = null;
+  var curSug = [], activeSug = -1;   // suggestions du champ Expert
+
+  var lastMissed = [];        // ratées de la dernière série (pour « Rejouer les ratées »)
+  var quitArmed = false, quitTimer = null;
+
+  function startGame(customPool, mode){
+    var p = (customPool && customPool.length) ? customPool.slice() : pool();
+    if(p.length < 2) return;
+    var total = cfg.count > 0 ? cfg.count : 9999;
+    game = { i:0, answered:0, correct:0, total:total, unlimited: cfg.count===0,
+             missed:[], pool:p, current:null, nextQ:null, timer:null, reviewMode: mode || null,
+             usedTaxa:{}, usedPhotos:{}, usedSounds:{} };
+    $("setup").classList.add("hidden");
+    $("end").classList.add("hidden");
+    $("quiz").classList.remove("hidden");
+    nextQuestion();
+  }
+
+  function clearTimer(){
+    if(game && game.timer){ clearInterval(game.timer); game.timer = null; }
+  }
+
+  function startTimer(){
+    clearTimer();
+    var dur = cfg.chrono * 1000, start = Date.now();
+    var wrap = $("chronoBar"), bar = wrap.firstElementChild;
+    wrap.classList.remove("hidden", "warn", "crit");
+    bar.style.width = "100%";
+    game.timer = setInterval(function(){
+      var frac = Math.max(0, (dur - (Date.now() - start)) / dur);
+      bar.style.width = (frac * 100) + "%";
+      wrap.classList.toggle("warn", frac <= 0.5 && frac > 0.2);
+      wrap.classList.toggle("crit", frac <= 0.2);
+      if(frac <= 0){
+        clearTimer();
+        if(game.current && !game.current.done) answer(null, null);
+      }
+    }, 100);
+  }
+
+  // Construit une question complète (réponse + distracteurs + stimulus), en
+  // évitant de retomber sur une espèce / une photo / un extrait déjà tirés.
+  function buildQuestion(){
+    var libres = game.pool.filter(function(t){ return !game.usedTaxa[t.id]; });
+    if(!libres.length){ libres = game.pool.slice(); game.usedTaxa = {}; }
+    var answ = pick(libres);
+    game.usedTaxa[answ.id] = true;
+
+    var stim;
+    if(isSon()){
+      var list = soundsFor(answ);
+      var sN = list.filter(function(s){ return !game.usedSounds[s.id]; });
+      stim = pick(sN.length ? sN : list);
+      game.usedSounds[stim.id] = true;
+    } else {
+      var pN = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
+      stim = pick(pN.length ? pN : answ.photos);
+      game.usedPhotos[stim.id] = true;
+    }
+
+    var options = [];
+    if(!isExpert()){
+      var base = distractorBase(answ);
+      var nOpt = Math.min(4, base.length + 1);
+      options = shuffle([answ].concat(shuffle(base).slice(0, nOpt - 1)));
+    }
+    return { answer:answ, options:options, stim:stim, done:false };
+  }
+
+  // Précharge le média de la question suivante (absorbe la latence réseau).
+  function preloadStim(q){
+    if(!q) return;
+    var src = isSon() ? q.stim.sono : q.stim.url;
+    if(src){ var i = new Image(); i.src = src; }
+  }
+
+  function nextQuestion(){
+    clearTimer();
+    if(!game.unlimited && game.i >= game.total) return finish();
+    game.i++;
+    game.current = game.nextQ || buildQuestion();
+    game.nextQ = (game.unlimited || game.i < game.total) ? buildQuestion() : null;
+    preloadStim(game.nextQ);
+    render();
+  }
+
+  function onStimError(){
+    if(game && game.current && !game.current.done) $("mediaFail").classList.remove("hidden");
+  }
+
+  // Distracteurs tirés de tout le secteur en cours (Bretagne ou France) pour
+  // rester plausibles et cohérents avec le tirage ; on élargit si le vivier
+  // filtré est trop petit.
+  function distractorBase(answer){
+    var all = scopedTaxa().filter(function(t){ return t.id !== answer.id; });
+    var scope = DIFF[cfg.diff].scope;
+    var sameSous = all.filter(function(t){ return t.sous_groupe === answer.sous_groupe && t.groupe === answer.groupe; });
+    var sameGrp  = all.filter(function(t){ return t.groupe === answer.groupe; });
+
+    // « Confirmé » : d'abord le même genre (espèces jumelles) ; si le vivier de
+    // congénères est mince, on le complète avec la même famille taxo, puis avec
+    // le sous-groupe. On retombe sur le groupe seulement en dernier recours.
+    if(scope === "genrefamille"){
+      var sameGenre = all.filter(function(t){ return t.genre && t.genre === answer.genre; });
+      if(sameGenre.length >= 3) return sameGenre;
+      var proche = sameGenre.slice();
+      if(answer.famille) all.forEach(function(t){
+        if(t.famille === answer.famille && proche.indexOf(t) < 0) proche.push(t);
+      });
+      if(proche.length >= 3) return proche;
+      sameSous.forEach(function(t){ if(proche.indexOf(t) < 0) proche.push(t); });
+      if(proche.length >= 3) return proche;
+    }
+    if(scope !== "mixte" && sameSous.length >= 3) return sameSous;
+    if(scope !== "mixte" && sameGrp.length >= 3) return sameGrp;
+    return sameGrp.length >= 3 ? sameGrp : all;
+  }
+
+  function render(){
+    var c = game.current;
+    $("progress").textContent = game.unlimited ? ("Question " + game.i) : (game.i + " / " + game.total);
+    $("score").textContent = "Score : " + game.correct;
+    $("barFill").style.width = game.unlimited ? "0%" : ((game.i-1)/game.total*100) + "%";
+
+    $("mediaFail").classList.add("hidden");
+    $("reveal").classList.add("hidden");
+    $("quit").textContent = "Arrêter"; quitArmed = false; if(quitTimer) clearTimeout(quitTimer);
+
+    if(isSon()){
+      var s = c.stim;
+      $("photo").classList.add("hidden");
+      $("soundBlock").classList.remove("hidden");
+      var sono = $("sono");
+      sono.classList.toggle("hidden", !s.sono);
+      if(s.sono) sono.src = s.sono;
+      var pl = $("player");
+      pl.onerror = onStimError;
+      pl.src = s.url; pl.load();
+      pl.play().catch(function(){});
+      var slic = LIC[s.license_code] || s.license_code;
+      var stl = sndTypeLabel(s.type);
+      $("credit").innerHTML = (stl ? "<strong>" + esc(stl) + "</strong> — " : "") +
+        esc(s.attribution) + " — " + esc(slic) +
+        " — <a href=\"" + esc(s.page) + "\" target=\"_blank\" rel=\"noopener\">voir sur Xeno-canto</a>";
+    } else {
+      $("soundBlock").classList.add("hidden");
+      var ph = $("photo");
+      ph.classList.remove("hidden");
+      ph.style.backgroundImage = "none";
+      var purl = c.stim.url;
+      var probe = new Image();
+      probe.onload = function(){ if(game.current === c) ph.style.backgroundImage = 'url("' + purl.replace(/"/g, "%22") + '")'; };
+      probe.onerror = onStimError;
+      probe.src = purl;
+      var licLabel = LIC[c.stim.license_code] || c.stim.license_code;
+      var cred = c.stim.attribution && c.stim.attribution !== "no rights reserved"
+        ? c.stim.attribution
+        : "© " + (c.stim.observer_name || "auteur inconnu") + " — " + licLabel + " —";
+      $("credit").innerHTML = esc(cred) +
+        " <a href=\"" + esc(c.stim.observation_url) + "\" target=\"_blank\" rel=\"noopener\">voir l'observation (iNaturalist)</a>";
+    }
+
+    var box = $("choices");
+    box.innerHTML = "";
+    if(isExpert()){
+      box.classList.add("hidden");
+      $("answerBox").classList.remove("hidden");
+      resetAnswerField();
+    } else {
+      $("answerBox").classList.add("hidden");
+      box.classList.remove("hidden");
+      c.options.forEach(function(t, idx){
+        var b = document.createElement("button");
+        b.className = "choice";
+        b.innerHTML = '<span class="k">'+(idx+1)+'</span><span>'+labelOf(t)+'</span>';
+        b.addEventListener("click", function(){ answer(t, b); });
+        box.appendChild(b);
+      });
+    }
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+    $("next").disabled = true;
+
+    if(cfg.chrono > 0) startTimer();
+    else $("chronoBar").classList.add("hidden");
+  }
+
+  function answer(chosen, btn, reason){
+    var c = game.current;
+    if(c.done) return;
+    clearTimer();
+    c.done = true;
+    game.answered++;
+    var good = chosen && chosen.id === c.answer.id;
+    if(good){
+      game.correct++;
+      if(game.reviewMode === "carnet") carnetRemove(c.answer.id);
+    } else {
+      game.missed.push(c.answer);
+    }
+
+    if(isExpert()){
+      $("answerInput").disabled = true;
+      $("answerGiveUp").disabled = true;
+      $("suggestions").classList.remove("open");
+      if(chosen && !$("answerInput").value){
+        $("answerInput").value = hasFr(chosen) ? chosen.common_name_fr : chosen.scientific_name;
+      }
+    } else {
+      [].forEach.call($("choices").children, function(b, idx){
+        b.disabled = true;
+        var t = c.options[idx];
+        if(t.id === c.answer.id) b.classList.add("correct");
+        else if(b === btn) b.classList.add("wrong");
+      });
+    }
+
+    var fb = $("feedback");
+    if(good){
+      fb.innerHTML = isExpert() ? ("Correct ! — " + fullName(c.answer)) : "Correct !";
+      fb.className = "feedback ok";
+    } else {
+      var lead = chosen ? "Raté — c'était "
+        : (reason === "giveup" ? "C'était " : "Temps écoulé — c'était ");
+      fb.innerHTML = lead + fullName(c.answer);
+      fb.className = "feedback ko";
+      showReveal(c.answer);
+    }
+    $("next").disabled = false;
+    $("next").focus();
+  }
+
+  // Après une erreur : on montre la bonne espèce (vignette + nom + groupe) —
+  // en mode son, c'est le seul endroit où l'élève voit enfin la bête.
+  function showReveal(t){
+    var ph = t.photos && t.photos[0];
+    var img = $("revealImg");
+    if(ph){
+      img.style.backgroundImage = 'url("' + ph.url.replace(/"/g, "%22") + '")';
+      img.style.display = "";
+    } else { img.style.display = "none"; }
+    $("revealName").innerHTML = fullName(t);
+    $("revealMeta").textContent = titleCase(t.groupe) + " · " + t.sous_groupe;
+    $("reveal").classList.remove("hidden");
+  }
+
+  // ----- carnet des espèces à revoir (localStorage, best-effort) -----
+  function carnetGet(){
+    try { var a = JSON.parse(localStorage.getItem("qn_carnet") || "[]"); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function carnetSet(a){ try { localStorage.setItem("qn_carnet", JSON.stringify(a)); } catch(e){} }
+  function carnetAdd(ids){
+    var s = {};
+    carnetGet().forEach(function(x){ s[x] = 1; });
+    ids.forEach(function(x){ s[x] = 1; });
+    carnetSet(Object.keys(s).map(Number));
+    renderCarnet();
+  }
+  function carnetRemove(id){
+    carnetSet(carnetGet().filter(function(x){ return x !== id; }));
+  }
+  function carnetTaxa(){
+    var byId = {};
+    DATA.taxa.forEach(function(t){ if(!HIDDEN_GROUPS[t.groupe]) byId[t.id] = t; });
+    return carnetGet().map(function(id){ return byId[id]; }).filter(Boolean);
+  }
+  function renderCarnet(){
+    var n = carnetTaxa().length;
+    $("carnetStrip").classList.toggle("hidden", n < 2);
+    $("carnetLabel").textContent = n + (n > 1 ? " espèces à revoir dans ton carnet" : " espèce à revoir dans ton carnet");
+  }
+
+  // ----- mode Expert : champ de saisie + suggestions -----
+  // L'autocomplétion ne propose que des espèces du MÊME groupe taxo que la
+  // réponse (dans le secteur en cours) : on voit déjà sur la photo si c'est un
+  // oiseau, une plante… — ça n'aide donc pas, mais ça garde une liste lisible.
+  function answerScope(){
+    var grp = (game && game.current && game.current.answer) ? game.current.answer.groupe : null;
+    return scopedTaxa().filter(function(t){ return !grp || t.groupe === grp; });
+  }
+
+  function resetAnswerField(){
+    var input = $("answerInput");
+    input.value = ""; input.disabled = false;
+    input.setAttribute("aria-expanded", "false");
+    var grp = (game && game.current && game.current.answer) ? game.current.answer.groupe : null;
+    input.placeholder = grp ? ("Nom de l'espèce · " + titleCase(grp)) : "Tape le nom de l'espèce…";
+    $("suggestions").innerHTML = ""; $("suggestions").classList.remove("open");
+    curSug = []; activeSug = -1;
+    $("answerGiveUp").disabled = false;
+    setTimeout(function(){
+      if(isExpert() && game && game.current && !game.current.done) input.focus();
+    }, 0);
+  }
+
+  function highlightSug(){
+    [].forEach.call($("suggestions").querySelectorAll(".suggestion"), function(li, i){
+      li.classList.toggle("active", i === activeSug);
+      if(i === activeSug) li.scrollIntoView({ block:"nearest" });
+    });
+  }
+
+  // Recherche par fragments : chaque bout tapé doit être le début d'un mot du
+  // nom (français ou scientifique). « go arg » → Goéland argenté, « lar arg »
+  // → Larus argentatus, « mes cha » → Mésange charbonnière.
+  function buildSuggestions(){
+    var input = $("answerInput"), sug = $("suggestions");
+    var q = norm(input.value);
+    if(q.length < 2){
+      sug.classList.remove("open"); sug.innerHTML = "";
+      curSug = []; activeSug = -1; input.setAttribute("aria-expanded", "false");
+      return;
+    }
+    var toks = q.split(" ").filter(Boolean);
+    var scored = [];
+    answerScope().forEach(function(t){
+      var nf = norm(t.common_name_fr), ns = norm(t.scientific_name);
+      var bag = (nf + " " + ns).split(" ").filter(Boolean);
+      var allWordPrefix = toks.every(function(tk){
+        return bag.some(function(w){ return w.indexOf(tk) === 0; });
+      });
+      var score;
+      if(nf.indexOf(q) === 0 || ns.indexOf(q) === 0) score = 0;                 // le nom commence par la saisie
+      else if(allWordPrefix &&
+              (nf.split(" ")[0].indexOf(toks[0]) === 0 ||
+               ns.split(" ")[0].indexOf(toks[0]) === 0)) score = 1;            // 1er mot amorcé + tout le reste
+      else if(allWordPrefix) score = 2;                                        // chaque bout amorce un mot
+      else if(toks.every(function(tk){ return (nf + " " + ns).indexOf(tk) >= 0; })) score = 3; // bouts présents ailleurs
+      else return;
+      scored.push({ t:t, s:score });
+    });
+    scored.sort(function(a, b){ return a.s - b.s; });
+    curSug = scored.slice(0, 8).map(function(x){ return x.t; });
+    activeSug = -1;
+    sug.innerHTML = "";
+    if(!curSug.length){
+      var none = document.createElement("li");
+      none.className = "s-none"; none.textContent = "Aucune espèce ne correspond";
+      sug.appendChild(none);
+    } else {
+      curSug.forEach(function(t){
+        var li = document.createElement("li");
+        li.className = "suggestion"; li.setAttribute("role", "option");
+        li.innerHTML = '<span>' + esc(hasFr(t) ? t.common_name_fr : t.scientific_name) + '</span>' +
+          (hasFr(t) ? '<span class="s-sci">' + esc(t.scientific_name) + '</span>' : '');
+        li.addEventListener("mousedown", function(e){ e.preventDefault(); submitAnswer(t); });
+        sug.appendChild(li);
+      });
+    }
+    sug.classList.add("open");
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  function submitAnswer(t){
+    if(!game || !game.current || game.current.done) return;
+    answer(t, null);
+  }
+
+  $("answerInput").addEventListener("input", buildSuggestions);
+  $("answerInput").addEventListener("focus", function(){
+    if(curSug.length) $("suggestions").classList.add("open");
+  });
+  $("answerInput").addEventListener("blur", function(){
+    setTimeout(function(){ $("suggestions").classList.remove("open"); }, 120);
+  });
+  $("answerInput").addEventListener("keydown", function(e){
+    if(game && game.current && game.current.done) return;
+    if(e.key === "ArrowDown" && curSug.length){
+      e.preventDefault(); activeSug = (activeSug + 1) % curSug.length; highlightSug();
+    } else if(e.key === "ArrowUp" && curSug.length){
+      e.preventDefault(); activeSug = (activeSug - 1 + curSug.length) % curSug.length; highlightSug();
+    } else if(e.key === "Enter"){
+      e.preventDefault(); e.stopPropagation();
+      if(activeSug >= 0 && curSug[activeSug]){ submitAnswer(curSug[activeSug]); return; }
+      var q = norm(this.value);
+      if(q){
+        var exact = answerScope().filter(function(t){
+          return norm(t.common_name_fr) === q || norm(t.scientific_name) === q;
+        });
+        if(exact.length === 1) submitAnswer(exact[0]);
+        else if(curSug.length === 1) submitAnswer(curSug[0]);
+      }
+    } else if(e.key === "Escape"){
+      $("suggestions").classList.remove("open");
+    }
+  });
+  $("answerGiveUp").addEventListener("click", function(){
+    if(!game || !game.current || game.current.done) return;
+    answer(null, null, "giveup");
+  });
+
+  function stopSound(){
+    var p = $("player");
+    try { p.pause(); p.removeAttribute("src"); p.load(); } catch(e){}
+  }
+
+  function finish(){
+    clearTimer();
+    stopSound();
+    if(quitTimer) clearTimeout(quitTimer);
+    $("chronoBar").classList.add("hidden");
+    $("quiz").classList.add("hidden");
+    if(!game){ $("setup").classList.remove("hidden"); return; }
+    $("end").classList.remove("hidden");
+    var asked = game.answered;
+    var pct = asked ? Math.round(game.correct/asked*100) : 0;
+    $("finalScore").textContent = pct + " %";
+    $("finalDetail").textContent = asked
+      ? (game.correct + (game.correct > 1 ? " bonnes réponses" : " bonne réponse") + " sur " + asked)
+      : "Aucune question répondue.";
+
+    var missedWrap = $("missedWrap"), ul = $("missed");
+    ul.innerHTML = "";
+    var uniq = {};
+    game.missed.forEach(function(t){ uniq[t.id] = t; });
+    var list = Object.keys(uniq).map(function(k){ return uniq[k]; });
+    lastMissed = list;
+    if(list.length){
+      missedWrap.classList.remove("hidden");
+      list.forEach(function(t){
+        var li = document.createElement("li");
+        var ph = t.photos && t.photos[0];
+        li.innerHTML =
+          (ph ? '<span class="recap-img" aria-hidden="true" style=\'background-image:url("' + ph.url.replace(/"/g, "%22") + '")\'></span>' : '') +
+          '<span class="recap-txt">' + fullName(t) +
+          ' <span class="recap-meta">— ' + esc(titleCase(t.groupe)) + ' · ' + esc(t.sous_groupe) + '</span></span>';
+        ul.appendChild(li);
+      });
+      // seul le mode « révision du carnet » ne réalimente pas le carnet
+      if(game.reviewMode !== "carnet") carnetAdd(list.map(function(t){ return t.id; }));
+    } else {
+      missedWrap.classList.add("hidden");
+    }
+    $("replayMissed").hidden = list.length < 2;
+  }
+
+  // ----- navigation -----
+  $("start").addEventListener("click", function(){ startGame(); });
+  $("next").addEventListener("click", function(){
+    if(game.current && !game.current.done) return;
+    nextQuestion();
+  });
+
+  // « Arrêter » : deux temps (le libellé passe en confirmation) pour éviter la
+  // perte accidentelle de la série à une main.
+  $("quit").addEventListener("click", function(){
+    if(quitArmed){ quitArmed = false; if(quitTimer) clearTimeout(quitTimer); finish(); return; }
+    quitArmed = true;
+    var asked = game.answered, pct = asked ? Math.round(game.correct / asked * 100) : 0;
+    $("quit").textContent = "Arrêter — " + pct + " % · confirmer";
+    quitTimer = setTimeout(function(){ quitArmed = false; $("quit").textContent = "Arrêter"; }, 3500);
+  });
+
+  $("mediaRetry").addEventListener("click", function(){ render(); });
+  $("mediaSkip").addEventListener("click", function(){
+    $("mediaFail").classList.add("hidden");
+    game.i--; nextQuestion();
+  });
+
+  $("replaySame").addEventListener("click", function(){ startGame(); });
+  $("replayMissed").addEventListener("click", function(){ startGame(lastMissed, "missed"); });
+  $("carnetReview").addEventListener("click", function(){
+    // le carnet mélange les médias au fil des sessions : révision toujours en photo
+    cfg.media = "photo";
+    [].forEach.call($("media").children, function(b){ b.setAttribute("aria-pressed", b.dataset.v === "photo"); });
+    startGame(carnetTaxa(), "carnet");
+  });
+  $("carnetClear").addEventListener("click", function(){ carnetSet([]); renderCarnet(); });
+  $("backSetup").addEventListener("click", function(){
+    $("end").classList.add("hidden");
+    $("setup").classList.remove("hidden");
+    renderCarnet();
+  });
+  renderCarnet();
+
+  // clavier : 1-4 pour répondre, Entrée/Espace pour continuer
+  document.addEventListener("keydown", function(e){
+    if($("quiz").classList.contains("hidden")) return;
+    if(!isExpert() && e.key >= "1" && e.key <= "9"){
+      var b = $("choices").children[+e.key - 1];
+      if(b && !b.disabled) b.click();
+    } else if((e.key === "Enter" || e.key === " ") &&
+              game && game.current && game.current.done && !$("next").disabled){
+      e.preventDefault(); nextQuestion();
+    }
+  });
+})();
+</script>
+</body>
+</html>
