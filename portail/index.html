@@ -93,6 +93,17 @@
     .tool-badge--mobile{display:inline-flex;align-items:center;gap:5px}
     .tool-badge--mobile svg{flex:0 0 auto;margin-top:-1px}
     .tool--active .tool-badge{color:var(--pt-sur-couleur)}
+
+    /* Badge « n°X disponible » (affut) : chip inversé (fond clair sur tuile
+     * colorée) pour ressortir nettement plus qu'un simple texte discret —
+     * demandé le 03/09/2026 (« bien plus visible et attrayante »). Pas
+     * d'animation : suffit d'un fort contraste, cohérent avec la charte
+     * « papier technique froid » (angle droit, pas d'effet décoratif). */
+    .tool-badge--annonce{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;background:var(--pt-fond);font-weight:700;font-size:12.5px;letter-spacing:.02em;text-transform:none;padding:6px 12px;margin:0}
+    .tool-badge--annonce::before{content:"";width:7px;height:7px;flex:0 0 auto;background:var(--acc)}
+    /* Spécificité égale à « .tool--active .tool-badge » (qui met sinon le
+     * texte quasi blanc sur ce fond clair, illisible) : doit l'emporter. */
+    .tool--active .tool-badge--annonce{color:var(--acc)}
     .tool-arrow{display:inline-block;font-family:var(--pt-sans);font-size:16px;font-weight:700;opacity:.6;transition:opacity .15s ease,font-size .15s ease}
     .tool:hover .tool-arrow,.tool:focus-visible .tool-arrow{opacity:1;font-size:20px}
     .tool-picto{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center}
@@ -267,10 +278,10 @@
                 <span class="tool-title">À l'affût</span>
                 <span class="tool-status">✓ en service</span>
               </div>
+              <span class="tool-badge tool-badge--annonce" id="affut-badge" hidden></span>
               <p class="tool-desc only-desktop">Carnet de veille naturaliste hebdomadaire : actualités, articles, infos, évènements, anecdotes…</p>
               <p class="tool-desc only-mobile">Carnet de veille naturaliste hebdomadaire.</p>
               <div class="tool-foot">
-                <span class="tool-badge" id="affut-badge" hidden></span>
                 <span class="tool-arrow" aria-hidden="true">→</span>
               </div>
             </div>
@@ -351,7 +362,7 @@
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (lignes) {
         if (lignes && lignes[0] && lignes[0].numero != null) {
-          badge.textContent = 'n°' + lignes[0].numero + ' disponible';
+          badge.textContent = 'Nouveau numéro : n° ' + lignes[0].numero;
           badge.hidden = false;
         }
       })

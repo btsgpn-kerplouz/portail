@@ -6,11 +6,13 @@
 
 ## État au 03/09/2026 — reprendre ici
 
-**🔧 Lot 24 fait (03/09/2026), pas encore committé/poussé** : la tuile
-Sommaire d'un numéro suit maintenant le même ordre manuel
-(Monter/Descendre) que l'écran du numéro — jusqu'ici elle restait dans
-l'ordre de lecture réseau, sans lien avec `ordre`. Voir entrée « Lot 24 »
-en fin de fichier.
+**🔧 Lots 24 et 25 faits (03/09/2026), pas encore committés/poussés** :
+- Lot 24 — la tuile Sommaire d'un numéro suit maintenant le même ordre
+  manuel (Monter/Descendre) que l'écran du numéro.
+- Lot 25 — l'app est installable (PC et mobile, manifest + service
+  worker, coquille seule) + lien « ‹ Portail » dans le bandeau.
+
+Voir les entrées correspondantes en fin de fichier.
 
 **✅ Lot 23 fusionné dans `main` et déployé** (PR #81, commit `550537f`,
 03/09/2026 10:24 UTC) : supprimer un numéro entier + le renuméroter (voir
@@ -2162,6 +2164,15 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       confirmé affichant « n°2 disponible » en conditions réelles (requête
       Supabase live) — **pas encore vérifié par l'utilisateur en conditions
       réelles**.
+      *Correctif du 03/09/2026 (« rendre l'alerte … bien plus visible et
+      attrayante »)* : le badge, texte discret perdu dans le pied de tuile,
+      devient un chip inversé (fond clair sur la tuile grenat) juste sous
+      le titre, texte reformulé en « Nouveau numéro : n° X ». Bug trouvé
+      en le testant : `.tool--active .tool-badge` (règle générale,
+      spécificité à 2 classes) l'emportait sur `.tool-badge--annonce` (1
+      classe) malgré l'ordre des règles, donnant un texte quasi blanc sur
+      fond clair — invisible. Corrigé en portant l'override à la même
+      spécificité (`.tool--active .tool-badge--annonce`).
 
 - [x] **Lot 23 — Supprimer un numéro entier, le renuméroter** (03/09/2026,
       demandé après un brouillon de test créé par erreur : n°1 vide à
@@ -2223,6 +2234,36 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       *Vérifié* : gabarit de test local, 3 entrées volontairement poussées
       dans le désordre (ordre réseau C, A, B ; `ordre` réel A=0, B=1, C=2)
       — la tuile affiche bien A, B, C. Aucune erreur console.
+
+- [x] **Lot 25 — Installable (PC/mobile) + lien retour au portail**
+      (03/09/2026, deux demandes groupées). Même dispositif que PhytoScope
+      (modèle de référence, aussi sur Supabase) :
+      1. **Installable** : `manifest.webmanifest` (icônes 192/512 + SVG,
+         couleurs reprises de l'app — fond `#241d15`, papier `#fbf6ea`),
+         `service-worker.js` en coquille seule (HTML, manifest, icônes,
+         polices, `vendor/qrcode.js`) — **jamais les requêtes Supabase**,
+         toutes cross-origin (`uoeuzxstotqnembcpofx.supabase.co`), donc
+         écartées d'office par le test d'origine du gestionnaire `fetch`
+         du service worker, même mécanisme que PhytoScope. Ce n'est PAS
+         un mode hors-ligne des numéros — juste l'installabilité et une
+         coquille qui s'affiche vite ; l'app reste fondamentalement en
+         ligne (RLS/Auth Supabase).
+         Icônes (`icons/icon.svg`, `icon-192.png`, `icon-512.png`) : même
+         pictogramme que la tuile du portail (fond grenat `#8a2f39`,
+         trait crème `#fdf8ec`), générées en rendu navigateur → capture
+         d'écran de la zone exacte (pas d'outil de rasterisation SVG
+         disponible dans cet environnement — ni `rsvg-convert`, ni
+         ImageMagick, ni `cairosvg`/Pillow Python).
+      2. **Lien « ‹ Portail »** dans le bandeau (premier élément, avant le
+         logo) — même URL/texte que PhytoScope, Zonation, Quizz
+         naturaliste : `https://portail-gpn.kerplouz.workers.dev/`.
+      *Vérifié* : service worker enregistré et actif
+      (`navigator.serviceWorker.getRegistrations()`), manifest servi et
+      valide (`fetch('./manifest.webmanifest')`), aucune erreur console,
+      rendu desktop et mobile (gabarit iframe local) — lien Portail
+      visible sans débordement sur les deux. Testé contre les vraies
+      données Supabase (pas de gabarit factice cette fois) : les lectures
+      passent toujours normalement à travers le service worker.
 
 ## Idées pour plus tard (hors lots planifiés)
 
