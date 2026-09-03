@@ -79,6 +79,7 @@
     /* Corps + grille */
     .body{padding:26px 32px 30px;display:flex;flex-direction:column;gap:22px}
     .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    .tools .tool--wip{order:1}   /* « en chantier » toujours en fin de liste */
 
     /* Tuile — structure commune */
     .tool{display:flex;text-decoration:none;color:inherit}
@@ -254,18 +255,6 @@
             </div>
           </a>
 
-          <article class="tool tool--wip" style="--acc:var(--pt-app-landes)" data-status="chantier">
-            <div class="tool-lisere"></div>
-            <div class="tool-inner">
-              <div class="tool-row">
-                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18"></rect><rect x="6.5" y="6.5" width="11" height="11"></rect><rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none"></rect></svg></span>
-                <span class="tool-title">Habitats — Landes</span>
-                <span class="tool-status">⌛ en chantier</span>
-              </div>
-              <p class="tool-desc">Identification des habitats de landes intérieures et littorales.</p>
-            </div>
-          </article>
-
           <a class="tool tool--active" style="--acc:var(--pt-app-affut)" data-status="service" href="https://affut-veille-naturaliste.kerplouz.workers.dev" target="_blank" rel="noopener">
             <div class="tool-inner">
               <div class="tool-row">
@@ -281,6 +270,19 @@
               </div>
             </div>
           </a>
+
+          <!-- Tuiles « en chantier » : toujours en fin de liste (voir aussi .tool--wip{order:1}). -->
+          <article class="tool tool--wip" style="--acc:var(--pt-app-landes)" data-status="chantier">
+            <div class="tool-lisere"></div>
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18"></rect><rect x="6.5" y="6.5" width="11" height="11"></rect><rect x="10" y="10" width="4" height="4" fill="currentColor" stroke="none"></rect></svg></span>
+                <span class="tool-title">Habitats — Landes</span>
+                <span class="tool-status">⌛ en chantier</span>
+              </div>
+              <p class="tool-desc">Identification des habitats de landes intérieures et littorales.</p>
+            </div>
+          </article>
         </div>
 
         <div class="staff-sep">
