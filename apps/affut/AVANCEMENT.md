@@ -6,11 +6,20 @@
 
 ## État au 03/09/2026 — reprendre ici
 
-**🔧 Lot 23 fait (03/09/2026), pas encore vérifié en conditions réelles** :
-supprimer un numéro entier + le renuméroter (voir entrée « Lot 23 » en fin
-de fichier). **Nécessite d'appliquer `supabase/011-renumeroter-cascade.sql`
-au dashboard Supabase avant de tester la renumérotation** (la suppression
-seule fonctionne sans cette migration). Pas encore committé/poussé.
+**🔧 Lot 24 fait (03/09/2026), pas encore committé/poussé** : la tuile
+Sommaire d'un numéro suit maintenant le même ordre manuel
+(Monter/Descendre) que l'écran du numéro — jusqu'ici elle restait dans
+l'ordre de lecture réseau, sans lien avec `ordre`. Voir entrée « Lot 24 »
+en fin de fichier.
+
+**✅ Lot 23 fusionné dans `main` et déployé** (PR #81, commit `550537f`,
+03/09/2026 10:24 UTC) : supprimer un numéro entier + le renuméroter (voir
+entrée « Lot 23 » en fin de fichier). Un déploiement Cloudflare a mis
+quelques minutes à se propager sur tous les nœuds edge après la fusion
+(l'utilisateur a d'abord vu l'ancienne version) — pas un bug, juste le
+délai de propagation habituel, résolu de lui-même. **Nécessite d'avoir
+appliqué `supabase/011-renumeroter-cascade.sql` au dashboard Supabase pour
+que la renumérotation fonctionne** (la suppression seule marche sans).
 
 **✅ Lots 14 à 21 fusionnés dans `main` et déployés** (PR #70, commit
 `9911db2`, 02/09/2026 20:31 UTC) — vérifié en direct sur
@@ -2193,6 +2202,27 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       réelles contre Supabase** : nécessite que l'utilisateur applique
       d'abord la migration 011, puis vérifie lui-même la suppression du
       n°1 et la renumérotation du n°2 en n°1 dans l'app réelle.
+      *Suivi du déploiement* : le nouveau code a mis quelques minutes à se
+      propager sur tous les nœuds edge Cloudflare après la fusion de la PR
+      #81 (`cf-cache-status: HIT`, tailles de réponse différentes selon le
+      nœud interrogé pendant la transition) — l'utilisateur voyait encore
+      l'ancienne version juste après le merge, résolu de lui-même sans
+      action, à ne pas confondre avec un vrai échec de déploiement.
+
+- [x] **Lot 24 — La tuile Sommaire suit l'ordre manuel des entrées**
+      (03/09/2026, question directe de l'utilisateur : « l'ordre des
+      entrées affichées dans la tuile sommaire … peut-il suivre l'ordre
+      d'affichage … une fois que l'on ouvre le numéro ? »). Jusqu'ici
+      `renderNumeroCarte()` lisait `n.entrees` brut — l'ordre de lecture
+      réseau (PostgREST, jamais garanti, aucun `.order()` dans la requête),
+      sans lien avec la colonne `ordre` que Monter/Descendre met à jour
+      côté rédaction. Corrigé en triant `n.entrees` par `ordre` avant
+      filtrage — même comparateur que `groupByRubrique()` et
+      `entreesOrdonnees()`, désormais extrait en une fonction partagée
+      `parOrdre(a, b)` plutôt que dupliqué une 3e fois.
+      *Vérifié* : gabarit de test local, 3 entrées volontairement poussées
+      dans le désordre (ordre réseau C, A, B ; `ordre` réel A=0, B=1, C=2)
+      — la tuile affiche bien A, B, C. Aucune erreur console.
 
 ## Idées pour plus tard (hors lots planifiés)
 
