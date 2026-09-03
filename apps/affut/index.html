@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#241d15">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="À l'affût">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>À l'affût — carnet de veille naturaliste</title>
 
 <!--
@@ -150,6 +155,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .mode-banniere{background:var(--af-redaction);color:var(--af-sur-redaction);padding:6px 22px;font-family:var(--af-police-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center}
 
 .bandeau{background:var(--af-bandeau);padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.portail-lien{font-family:var(--af-police-mono);font-size:10.5px;letter-spacing:.04em;color:var(--af-sur-bandeau-3);text-decoration:none;white-space:nowrap}
+.portail-lien:hover{color:var(--af-sur-bandeau)}
 .brand{display:flex;align-items:center;gap:10px;text-align:left}
 .brand svg{flex:none}
 .brand-name{font-family:var(--af-police-mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-sur-bandeau)}
@@ -2574,6 +2581,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var bandeau =
       '<div class="bandeau">' +
+        '<a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>' +
         '<button type="button" class="brand" data-action="vue" data-vue="sommaire">' + PICTO + '<span class="brand-name">À l\'affût</span><span class="brand-sub">BTS GPN · Kerplouz</span></button>' +
         '<div class="bandeau-spacer"></div>' +
         navHtml +
@@ -3261,6 +3269,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
   init();
 })();
+</script>
+
+<!-- Installable (Lot 25, 03/09/2026) : coquille seule, jamais les données
+     Supabase — voir service-worker.js. Même pattern que PhytoScope. -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("./service-worker.js").catch(function(){});
+    });
+  }
 </script>
 </body>
 </html>
