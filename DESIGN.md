@@ -19,7 +19,7 @@ colors:
   acc-habitats-landes: "#6f4478"
   acc-organisation: "#23458c"
   acc-affut: "#8a2f39"
-  acc-quizz-naturaliste: "#9c3d2e"
+  acc-quizz-naturaliste: "#6d3a5d"
   status-chantier: "#8a5f17"
   status-valide: "#1f7a5c"
   status-invalide: "#c0562b"
@@ -124,8 +124,8 @@ jamais en fond dominant.
 ### Accent d'app (une couleur, un usage restreint)
 Roster actuel : PhytoScope vert `#1f6b45` · Végétations ocre `#b5651d` ·
 Habitats-Gâvres sarcelle `#0b5f7d` · Habitats-Landes mauve `#6f4478` · Organisation
-des cours bleu `#23458c` · À l'affût bordeaux `#8a2f39` · Quizz naturaliste rouille
-sombre `#9c3d2e`. Chaque app garde la liberté de nuances internes
+des cours bleu `#23458c` · À l'affût bordeaux `#8a2f39` · Quizz naturaliste prune
+sombre `#6d3a5d`. Chaque app garde la liberté de nuances internes
 supplémentaires (ex. couleurs de série de relevés en PhytoScope) tant qu'elles ne
 concurrencent pas l'accent identitaire.
 

@@ -24,7 +24,7 @@ App **purement statique + PWA coquille**, sur le modèle de
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | L'app entière (HTML/CSS/JS vanilla, sans build). Charte « papier technique froid », accent rouille sombre `#9c3d2e`. |
+| `index.html` | L'app entière (HTML/CSS/JS vanilla, sans build). Charte « papier technique froid », accent prune sombre `#6d3a5d`. |
 | `quiz-data.js` | Les données : ~386 espèces / ~4600 photos (≤ 12 par espèce), définit `window.QUIZ_DATA`. |
 | `manifest.webmanifest` · `service-worker.js` · `icons/` · `fonts/` | Coquille PWA. |
 | `wrangler.jsonc` | Déploiement Cloudflare (worker `quizz-naturaliste`). |
