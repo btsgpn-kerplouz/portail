@@ -502,14 +502,37 @@
   .et-groups .grpbtn{border:0;min-height:50px}
   .et-groups .grpbtn:first-child{grid-column:1 / -1}
 
-  .et-sous-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-  .et-sous-head .label{margin-bottom:0}
+  /* Sous-groupes : niveau facultatif, replié sous le choix de groupe.
+     L'état fermé (et l'imbrication) signale « tu peux t'arrêter là ». */
+  .et-refine{margin-top:10px;border:1px solid var(--filet);background:var(--fond-2)}
+  .et-refine > summary{
+    list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
+    padding:10px 12px;font-family:var(--mono);font-size:.66rem;font-weight:500;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--t3);
+  }
+  .et-refine > summary::-webkit-details-marker{display:none}
+  .et-refine > summary:hover{color:var(--t2)}
+  .et-refine-state{
+    margin-left:auto;text-transform:none;letter-spacing:.02em;color:var(--t2);
+  }
+  .et-refine-chev{font-size:.7rem;transition:transform .15s ease}
+  .et-refine[open] > summary{border-bottom:1px solid var(--filet);color:var(--encre)}
+  .et-refine[open] .et-refine-chev{transform:rotate(180deg)}
+  .et-sous-head{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:9px 12px;background:var(--card);border-bottom:1px solid var(--filet-soft);
+  }
+  .et-sous-head .hint{margin:0}
   .et-sous-head .link-clear{margin-left:auto}
   .et-sous{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
-    border:1px solid var(--filet);border-bottom:0;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));background:var(--card);
   }
   .et-sous .checkitem{border-bottom:1px solid var(--filet-soft)}
+  /* le groupe actif « appelle » le niveau d'affinage */
+  .et-groups.has-active + .et-refine:not([open]) > summary{
+    color:var(--acc-d);
+  }
+  .et-groups.has-active + .et-refine:not([open]) .et-refine-chev{color:var(--acc-d)}
 
   .vivier{
     position:sticky;bottom:0;z-index:5;background:var(--encre);color:var(--fond);
@@ -653,14 +676,19 @@
           <div class="et-block">
             <span class="label">Groupe</span>
             <div class="et-groups" id="grpList"></div>
-          </div>
 
-          <div class="et-block">
-            <div class="et-sous-head">
-              <span class="label">Sous-groupes</span>
-              <button type="button" class="link-clear" id="toggleAllSous">Tout cocher</button>
-            </div>
-            <div class="et-sous" id="sousGrid"></div>
+            <details class="et-refine" id="sousDisc">
+              <summary class="et-refine-sum">
+                <span>Affiner par sous-groupe</span>
+                <span class="et-refine-state" id="sousState">tous</span>
+                <span class="et-refine-chev" aria-hidden="true">▾</span>
+              </summary>
+              <div class="et-sous-head">
+                <span class="hint">Coche pour ne garder que certains sous-groupes. Aucun coché = tous.</span>
+                <button type="button" class="link-clear" id="toggleAllSous">Tout cocher</button>
+              </div>
+              <div class="et-sous" id="sousGrid"></div>
+            </details>
           </div>
 
           <details class="opts">
@@ -806,11 +834,19 @@
 
   function isSon(){ return cfg.media === "son" || cfg.media === "noct"; }
   function soundsFor(t){ return cfg.media === "noct" ? t.soundsNoct : t.sounds; }
+  // « Découverte » au son : on montre aussi une photo de l'espèce — l'exercice le
+  // plus accessible, on associe l'image, le chant et le nom.
+  function isSonDecouverte(){ return isSon() && cfg.diff === "decouverte"; }
+  function diffExpect(){
+    var d = DIFF[cfg.diff];
+    return (isSon() && d.expectSon) ? d.expectSon : d.expect;
+  }
 
   // Presets de difficulté — provenance des distracteurs du QCM.
   var DIFF = {
     decouverte:   { scope:"mixte",       name:"découverte",   label:"Propositions très différentes entre elles.",
-      expect:"<b>4 propositions très contrastées</b>, souvent de groupes différents. Pour se faire l'œil sans se piéger." },
+      expect:"<b>4 propositions très contrastées</b>, souvent de groupes différents. Pour se faire l'œil sans se piéger.",
+      expectSon:"<b>La photo de l'espèce est montrée</b> pendant que son chant tourne — on relie l'image, le son et le nom. 4 propositions contrastées." },
     entrainement: { scope:"sousgroupe",  name:"entraînement", label:"Propositions du même sous-groupe (passereaux, limicoles…), à bien regarder.",
       expect:"<b>4 propositions du même sous-groupe</b> (passereaux, limicoles…). Il faut regarder les critères." },
     confirme:     { scope:"genrefamille", name:"confirmé",    label:"Propositions du même genre si possible, sinon de la même famille — espèces jumelles.",
@@ -821,12 +857,13 @@
 
   // Silhouettes de groupe — tracés Lucide (stroke), substituts provisoires à des
   // fichiers PhyloPic (CC0 / CC BY) si l'on veut la vraie source + crédit.
+  // Markup interne du SVG (viewBox -1 -1 26 26, tracés Lucide « stroke »).
   var SIL = {
-    oiseaux:    "M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.75V21M7 18a6 6 0 0 0 3.84-10.61",
-    insectes:   "M8 2l1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4",
-    plantes:    "M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z",
-    mammifères: "M13 16a3 3 0 0 1 2.24 5M18 12h.01M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h-.9a2 2 0 0 0-2 2v.5M20 8.54V4a2 2 0 1 0-4 0v3M7.61 12.53a3 3 0 1 0-1.6 4.3",
-    "herpéto":  "M4.5 14c0-2 1-3.2 2.1-4C7.7 9.3 8 8.5 8 7.2 8 5.4 9.1 4.3 10.6 4.3c1 0 1.6.4 1.9 1.1.3-.7.9-1.1 1.9-1.1 1.5 0 2.6 1.1 2.6 2.9 0 1.3.3 2.1 1.4 2.8 1.1.8 2.1 2 2.1 4 0 2.8-2.3 5-5.2 5H9.7C6.8 19 4.5 16.8 4.5 14ZM9 7.4h.01M15 7.4h.01M9.6 11.8c1 1 3.8 1 4.8 0M7.6 19c-1.3.4-2 1.7-1.5 3M16.4 19c1.3.4 2 1.7 1.5 3"
+    oiseaux:    '<path d="M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.75V21M7 18a6 6 0 0 0 3.84-10.61"/>',
+    insectes:   '<path d="M8 2l1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
+    plantes:    '<path d="M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+    mammifères: '<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>',
+    "herpéto":  '<path d="M4.5 14c0-2 1-3.2 2.1-4C7.7 9.3 8 8.5 8 7.2 8 5.4 9.1 4.3 10.6 4.3c1 0 1.6.4 1.9 1.1.3-.7.9-1.1 1.9-1.1 1.5 0 2.6 1.1 2.6 2.9 0 1.3.3 2.1 1.4 2.8 1.1.8 2.1 2 2.1 4 0 2.8-2.3 5-5.2 5H9.7C6.8 19 4.5 16.8 4.5 14ZM9 7.4h.01M15 7.4h.01M9.6 11.8c1 1 3.8 1 4.8 0M7.6 19c-1.3.4-2 1.7-1.5 3M16.4 19c1.3.4 2 1.7 1.5 3"/>'
   };
 
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(ch){
@@ -884,11 +921,6 @@
     });
     return out;
   }
-  function sousCount(k){
-    var n = 0;
-    scopedTaxa().forEach(function(t){ if(t.sous_groupe === k) n++; });
-    return n;
-  }
 
   // ----- rendu du bloc filtres -----
   function renderGroups(){
@@ -902,20 +934,21 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "grpbtn" + (cfg.grp === r.key ? " active" : "");
-      var path = SIL[r.key];
-      var ico = path
-        ? '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="'+path+'"></path></svg></span>'
-        : '<span class="grp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"></circle></svg></span>';
+      var sil = SIL[r.key] || '<circle cx="12" cy="12" r="9"></circle>';
+      var ico = '<span class="grp-ico" aria-hidden="true"><svg viewBox="-1 -1 26 26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">'+sil+'</svg></span>';
       b.innerHTML = ico +
         '<span class="grp-lbl">'+esc(r.label)+'</span>' +
         '<span class="grp-count">'+r.count+'</span>';
       b.addEventListener("click", function(){
         if(cfg.grp === r.key) return;
         cfg.grp = r.key; cfg.sous = {};
+        // Choisir un groupe précis ouvre le niveau d'affinage ; « Tous » le referme.
+        if($("sousDisc")) $("sousDisc").open = (r.key !== "tous");
         renderFilters();
       });
       box.appendChild(b);
     });
+    box.classList.toggle("has-active", cfg.grp !== "tous");
   }
 
   function renderSous(){
@@ -947,36 +980,6 @@
     };
   }
 
-  function renderChips(){
-    var box = $("chips");
-    box.innerHTML = "";
-    var keys = Object.keys(cfg.sous).sort();
-    if(!keys.length){
-      var span = document.createElement("span");
-      span.className = "chips-empty";
-      span.textContent = "Aucun filtre — les " + pool().length + " espèces sont dans le tirage.";
-      box.appendChild(span);
-      return;
-    }
-    keys.forEach(function(k){
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "chip";
-      b.innerHTML = '<span>'+esc(k)+'</span>' +
-        '<span class="chip-n">'+sousCount(k)+'</span>' +
-        '<span class="chip-x" aria-hidden="true">×</span>';
-      b.setAttribute("aria-label", "Retirer le filtre " + k);
-      b.addEventListener("click", function(){ delete cfg.sous[k]; renderFilters(); });
-      box.appendChild(b);
-    });
-    var clear = document.createElement("button");
-    clear.type = "button";
-    clear.className = "link-clear";
-    clear.textContent = "Tout effacer";
-    clear.addEventListener("click", function(){ cfg.sous = {}; renderFilters(); });
-    box.appendChild(clear);
-  }
-
   function renderFilters(){
     renderGroups();
     renderSous();
@@ -1006,6 +1009,10 @@
       (cfg.chrono ? " · " + cfg.chrono + " s" : " · sans chrono");
     $("vivBar").style.width = Math.round(n / scoped * 100) + "%";
     $("start").disabled = n < 2;
+    $("diffSay").innerHTML = diffExpect();
+    $("sousState").textContent = sel
+      ? sel + (sel > 1 ? " sous-groupes" : " sous-groupe")
+      : "tous";
   }
 
   // ----- init des contrôles -----
@@ -1023,8 +1030,7 @@
   seg($("count"),     function(v){ cfg.count = +v; renderFilters(); });
   seg($("labelmode"), function(v){ cfg.labelmode = v; });
   seg($("chrono"),    function(v){ cfg.chrono = +v; renderVivier(); });
-  seg($("diff"),      function(v){ cfg.diff = v; $("diffSay").innerHTML = DIFF[v].expect; renderVivier(); });
-  $("diffSay").innerHTML = DIFF[cfg.diff].expect;
+  seg($("diff"),      function(v){ cfg.diff = v; renderVivier(); });
 
   renderFilters();
 
@@ -1112,6 +1118,11 @@
       var sN = list.filter(function(s){ return !game.usedSounds[s.id]; });
       stim = pick(sN.length ? sN : list);
       game.usedSounds[stim.id] = true;
+      // Découverte : on adjoint une photo de l'espèce (copie du stim pour ne pas
+      // polluer les données partagées entre questions).
+      if(isSonDecouverte() && answ.photos && answ.photos.length){
+        stim = Object.assign({}, stim, { photo: pick(answ.photos) });
+      }
     } else {
       var pN = answ.photos.filter(function(p){ return !game.usedPhotos[p.id]; });
       stim = pick(pN.length ? pN : answ.photos);
@@ -1132,6 +1143,7 @@
     if(!q) return;
     var src = isSon() ? q.stim.sono : q.stim.url;
     if(src){ var i = new Image(); i.src = src; }
+    if(q.stim.photo){ var j = new Image(); j.src = q.stim.photo.url; }
   }
 
   function nextQuestion(){
@@ -1188,7 +1200,18 @@
 
     if(isSon()){
       var s = c.stim;
-      $("photo").classList.add("hidden");
+      // Découverte : photo de l'espèce affichée au-dessus du son.
+      var phS = $("photo");
+      phS.classList.toggle("hidden", !s.photo);
+      if(s.photo){
+        phS.style.backgroundImage = "none";
+        (function(url){
+          var probe = new Image();
+          probe.onload = function(){ if(game.current === c) phS.style.backgroundImage = 'url("' + url.replace(/"/g, "%22") + '")'; };
+          probe.onerror = onStimError;
+          probe.src = url;
+        })(s.photo.url);
+      }
       $("soundBlock").classList.remove("hidden");
       var sono = $("sono");
       sono.classList.toggle("hidden", !s.sono);
@@ -1199,9 +1222,18 @@
       pl.play().catch(function(){});
       var slic = LIC[s.license_code] || s.license_code;
       var stl = sndTypeLabel(s.type);
-      $("credit").innerHTML = (stl ? "<strong>" + esc(stl) + "</strong> — " : "") +
+      var sCred = (stl ? "<strong>" + esc(stl) + "</strong> — " : "") +
         esc(s.attribution) + " — " + esc(slic) +
         " — <a href=\"" + esc(s.page) + "\" target=\"_blank\" rel=\"noopener\">voir sur Xeno-canto</a>";
+      if(s.photo){
+        var pLic = LIC[s.photo.license_code] || s.photo.license_code;
+        var pCred = s.photo.attribution && s.photo.attribution !== "no rights reserved"
+          ? s.photo.attribution
+          : "© " + (s.photo.observer_name || "auteur inconnu") + " — " + pLic;
+        sCred = "Son : " + sCred + "<br>Photo : " + esc(pCred) +
+          " — <a href=\"" + esc(s.photo.observation_url) + "\" target=\"_blank\" rel=\"noopener\">voir l'observation (iNaturalist)</a>";
+      }
+      $("credit").innerHTML = sCred;
     } else {
       $("soundBlock").classList.add("hidden");
       var ph = $("photo");
