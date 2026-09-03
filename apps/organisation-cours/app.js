@@ -35,6 +35,11 @@ const DEPLACEMENT_STATUSES = ['Demande à faire', 'En cours', 'Terminée'];
 const DEFAULT_TAUX = 0.55;
 const ROOM_TO_BOOK_LABELS = { info: 'Salle informatique', amphi: 'Amphithéâtre', atelier: 'Atelier' };
 const VEHICULE_LABEL = 'Véhicule de l’établissement';
+// Retours 02/09/2026 — plusieurs véhicules établissement peuvent être
+// nécessaires pour une même séance/réunion (ex. 2 enseignants, chacun le
+// sien) : ces libellés servent à distinguer chaque ligne d'Urgences par
+// modèle plutôt qu'une seule ligne générique qui referme tout d'un coup.
+const VEHICULE_MODELE_LABELS = { traffic: 'Traffic', lodgy: 'Lodgy', jogger: 'Jogger' };
 const MATERIEL_LABEL = 'Matériel à réserver';
 const ROOM_ALERT_DAYS = 15;
 const DAY_LANES = [
@@ -256,17 +261,96 @@ function normalizePlacementStatus(value) {
    nouveaux champs tombent dans `contenu` jsonb → aucune migration. */
 const DEPLACEMENT_MODES = ['', 'etablissement', 'personnel'];
 
+// Retours 02/09/2026 — scénario « mixte » (2 enseignants, l'un en véhicule de
+// l'établissement, l'autre en personnel) : `deplacement` reste le mode PAR
+// DÉFAUT de la séance/réunion, `deplacementModes` ne porte qu'une EXCEPTION
+// par enseignant (initiales → mode qui lui est propre). Un ancien
+// enregistrement (ou une entité à 1 seul enseignant) n'a jamais cette clé :
+// deplacementModeFor retombe alors sur le mode par défaut, comportement
+// inchangé. Tombe dans `contenu` jsonb comme deplacementConducteurs → aucune
+// migration.
+function deplacementModeFor(entity, initiales) {
+  const clean = String(initiales || '').toUpperCase();
+  const overrides = entity?.deplacementModes;
+  if (clean && overrides && typeof overrides === 'object' && DEPLACEMENT_MODES.includes(overrides[clean]) && overrides[clean]) {
+    return overrides[clean];
+  }
+  return entity?.deplacement || '';
+}
+// Ensemble des modes réellement en jeu sur l'entité, tous enseignants
+// confondus — un mode mixte fait apparaître 'etablissement' ET 'personnel'
+// en même temps (les deux démarches, réservation ET ordre de mission, sont
+// alors actives simultanément).
+function deplacementModesPresents(entity) {
+  const set = new Set();
+  const tokens = teacherTokens(entity?.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  if (!tokens.length) {
+    if (entity?.deplacement) set.add(entity.deplacement);
+    return set;
+  }
+  tokens.forEach(t => { const m = deplacementModeFor(entity, t); if (m) set.add(m); });
+  return set;
+}
+// Ne garde que les exceptions qui font encore sens : enseignant toujours sur
+// l'entité, valeur reconnue. Évite qu'un enseignant retiré de la séance
+// laisse une exception fantôme dans `contenu` jsonb.
+function normalizeDeplacementModes(modes, teacherRaw) {
+  if (!modes || typeof modes !== 'object') return {};
+  const tokens = new Set(teacherTokens(teacherRaw || '').map(teacherInitialsOf).filter(Boolean));
+  const clean = {};
+  Object.keys(modes).forEach(k => {
+    if (tokens.has(k) && DEPLACEMENT_MODES.includes(modes[k]) && modes[k]) clean[k] = modes[k];
+  });
+  return clean;
+}
+
 function normalizeDeplacementFields(entity) {
   const mode = DEPLACEMENT_MODES.includes(entity?.deplacement)
     ? entity.deplacement
     : (entity?.personalVehicle ? 'personnel' : '');
+  const deplacementModes = normalizeDeplacementModes(entity?.deplacementModes, entity?.teacher);
+  const modesPresents = deplacementModesPresents({ deplacement: mode, deplacementModes, teacher: entity?.teacher });
   return {
     deplacement: mode,
     personalVehicle: mode === 'personnel',
-    // Ces deux-là n'ont de sens que dans leur branche : les y borner évite
-    // qu'un ancien « réservé » ressorte si le mode change plus tard.
-    vehicleBooked: mode === 'etablissement' && !!entity?.vehicleBooked,
-    ordreMission: mode === 'personnel' && !!entity?.ordreMission
+    deplacementModes,
+    // Ces deux-là n'ont de sens que dans leur(s) branche(s) : les y borner
+    // évite qu'un ancien « réservé » ressorte si le mode change plus tard.
+    // En mode mixte, les deux peuvent être présentes à la fois.
+    vehicleBooked: modesPresents.has('etablissement') && !!entity?.vehicleBooked,
+    ordreMission: modesPresents.has('personnel') && !!entity?.ordreMission
+  };
+}
+
+// Retours 02/09/2026 (reprise 2) — le déplacement se gère désormais dans une
+// fenêtre indépendante (#deplacementGestionDialog, voir plus bas), avec son
+// propre enregistrement direct sur l'entité. Le formulaire de conception
+// (séance/réunion) ne fait plus QUE reconduire tel quel ce qui existait déjà
+// à l'enregistrement — jamais l'écraser avec des champs qu'il ne porte plus.
+function deplacementFieldsPassthrough(existing) {
+  return {
+    deplacement: existing?.deplacement || '',
+    personalVehicle: existing?.deplacement === 'personnel',
+    deplacementModes: (existing?.deplacementModes && typeof existing.deplacementModes === 'object') ? existing.deplacementModes : {},
+    vehicleBooked: !!existing?.vehicleBooked,
+    ordreMission: !!existing?.ordreMission,
+    vehiculeModeles: Array.isArray(existing?.vehiculeModeles) ? existing.vehiculeModeles : [],
+    vehiculeModeleAutre: existing?.vehiculeModeleAutre || '',
+    vehiculeReserves: (existing?.vehiculeReserves && typeof existing.vehiculeReserves === 'object') ? existing.vehiculeReserves : {},
+    deplacementConducteurs: Array.isArray(existing?.deplacementConducteurs) ? existing.deplacementConducteurs : [],
+    deplacementVehiculesIndividuels: Array.isArray(existing?.deplacementVehiculesIndividuels) ? existing.deplacementVehiculesIndividuels : [],
+    vehiculeModeleParEnseignant: (existing?.vehiculeModeleParEnseignant && typeof existing.vehiculeModeleParEnseignant === 'object') ? existing.vehiculeModeleParEnseignant : {},
+    vehiculeReserveParEnseignant: (existing?.vehiculeReserveParEnseignant && typeof existing.vehiculeReserveParEnseignant === 'object') ? existing.vehiculeReserveParEnseignant : {},
+    // Retours 03/09/2026 — ODM par conducteur (2 véhicules personnels
+    // indépendants) : mêmes conventions que les 2 lignes ci-dessus.
+    ordreMissionParEnseignant: (existing?.ordreMissionParEnseignant && typeof existing.ordreMissionParEnseignant === 'object') ? existing.ordreMissionParEnseignant : {},
+    missionDetailParEnseignant: (existing?.missionDetailParEnseignant && typeof existing.missionDetailParEnseignant === 'object') ? existing.missionDetailParEnseignant : {},
+    // Retours 03/09/2026 (reprise 5) — « Déplacement nécessaire » coché mais
+    // aucun picto encore choisi (un clic = choisi ET réservé désormais, plus
+    // d'étape intermédiaire) : sans ce champ, l'entité retombait à « aucun
+    // déplacement » dès que personne n'avait encore cliqué, et la pastille
+    // disparaissait au lieu de rester visible en « à décider ».
+    deplacementActif: !!existing?.deplacementActif
   };
 }
 
@@ -333,6 +417,9 @@ function normalizeData(data) {
     // format, texte libre) reste lu en migration juste en dessous.
     devNotes: typeof data.devNotes === 'string' ? data.devNotes : '',
     devNotesItems: Array.isArray(data.devNotesItems) ? data.devNotesItems.map(normalizeTodoItem).filter(Boolean) : [],
+    // « À faire (commun) » (retours 02/09/2026) : même liste à cocher que
+    // « À faire », partagée entre comptes — même mécanique que devNotesItems.
+    todoPartageItems: Array.isArray(data.todoPartageItems) ? data.todoPartageItems.map(normalizeTodoItem).filter(Boolean) : [],
     rubanOverrides: (data.rubanOverrides && typeof data.rubanOverrides === 'object') ? data.rubanOverrides : {},
     rubanUeCaps: (data.rubanUeCaps && typeof data.rubanUeCaps === 'object' && !Array.isArray(data.rubanUeCaps)) ? data.rubanUeCaps : {},
     weekTemplates: Array.isArray(data.weekTemplates) ? data.weekTemplates.map(normalizeTemplateSlot).filter(Boolean) : [],
@@ -478,6 +565,7 @@ function normalizeData(data) {
   }
   normalized.todoItems = purgerTachesFaites(normalized.todoItems);
   normalized.devNotesItems = purgerTachesFaites(normalized.devNotesItems);
+  normalized.todoPartageItems = purgerTachesFaites(normalized.todoPartageItems);
 
   return normalized;
 }
@@ -683,6 +771,34 @@ function weekStripPeriodOf(week) {
   if (n >= 36) return 'autumn';
   if (n >= 22) return 'summer';
   return 'spring';
+}
+// Retour Martin (02/09/2026) — même bug que weeksForSemester (ticket « 7 cases
+// en janvier-mai », voir son commentaire plus bas dans le fichier) mais pour
+// la frise du Planning hebdo cette fois : la fenêtre glissante de
+// state.weeks peut repasser deux fois sur la même plage de numéros
+// (« Janv. – mai » montrait le reliquat de printemps de l'année scolaire
+// précédente PUIS celui de l'année en cours, semaines qui semblaient
+// « repartir en arrière » S21→S01 au milieu de la bande). On regroupe les
+// semaines d'une période en tronçons CONTIGUS et on élimine ceux entièrement
+// passés — Martin veut l'année scolaire À VENIR, jamais un reliquat déjà
+// terminé. S'il ne reste qu'un tronçon (cas normal), rien ne change.
+function tronconWeekStripPeriod(periode) {
+  const candidats = state.weeks.map((w, i) => ({ w, i })).filter(({ w }) => weekStripPeriodOf(w) === periode);
+  if (!candidats.length) return [];
+  const runs = [[candidats[0]]];
+  candidats.slice(1).forEach(m => {
+    const lastRun = runs[runs.length - 1];
+    if (m.i === lastRun[lastRun.length - 1].i + 1) lastRun.push(m);
+    else runs.push([m]);
+  });
+  if (runs.length === 1) return runs[0].map(m => m.w);
+  const todayIndex = state.weeks.findIndex(w => w.id === currentWeekId());
+  const aVenir = runs.filter(run => run[run.length - 1].i >= todayIndex);
+  const choix = aVenir.length ? aVenir : [runs[runs.length - 1]]; // tout passé (cas limite) : le plus récent
+  return choix.reduce((best, run) => {
+    const dist = Math.min(...run.map(m => Math.abs(m.i - todayIndex)));
+    return !best || dist < best.dist ? { run, dist } : best;
+  }, null).run.map(m => m.w);
 }
 function templateSlotsFor(semester) { return (state?.weekTemplates || []).filter(t => t.semester === semester); }
 function findTemplateSlot(id) { return state?.weekTemplates?.find(t => t.id === id); }
@@ -893,14 +1009,54 @@ function sessionIsoDate(session) {
    mission » continuait même de s'afficher. Les frais et l'ordre de mission sont
    deux étapes du MÊME déplacement : supprimer les frais, c'est dire qu'il n'y a
    pas eu de déplacement en véhicule personnel. On repose donc la relation au
-   lieu de colmater l'affichage. */
+   lieu de colmater l'affichage.
+
+   Retours 02/09/2026 — mode mixte : `state.deplacements` est personnel à
+   chaque compte (CLES_PERSO), donc cette suppression ne concerne QUE le
+   compte en train de la faire (moiInitiales). S'il reste un·e autre
+   enseignant·e conducteur·rice sur l'entité, on ne referme que sa part à
+   lui/elle (retiré des conducteurs) ; le reste de la séance/réunion ne
+   bouge pas. Seul le dernier conducteur qui se retire fait retomber le mode
+   à zéro — et seulement s'il ne reste plus aucun mode en jeu (mixte compris). */
 function clearDeplacementSource(dep) {
   if (!dep || !state) return null;
   const source = dep.sessionId
     ? (state.sessions || []).find(s => s.id === dep.sessionId)
     : (dep.reunionId ? (state.reunions || []).find(r => r.id === dep.reunionId) : null);
-  if (!source || source.deplacement !== 'personnel') return null;
-  Object.assign(source, normalizeDeplacementFields({ deplacement: '' }));
+  if (!source) return null;
+  const clean = String(moiInitiales || '').toUpperCase();
+  const conducteursActuels = deplacementConducteurs(source);
+  if (!clean || !conducteursActuels.includes(clean)) return null;
+  const restants = conducteursActuels.filter(t => t !== clean);
+  if (restants.length) {
+    // un·e autre enseignant·e reste conducteur·rice en véhicule personnel :
+    // seule sa part à lui/elle referme, le reste de l'entité ne bouge pas.
+    source.deplacementConducteurs = restants;
+    // Retours 03/09/2026 — son ODM propre (2 conducteurs indépendants,
+    // désormais réduits à 1) n'a plus de sens : on l'enlève plutôt que de le
+    // laisser orphelin dans contenu jsonb.
+    if (source.ordreMissionParEnseignant) delete source.ordreMissionParEnseignant[clean];
+    if (source.missionDetailParEnseignant) delete source.missionDetailParEnseignant[clean];
+    return source;
+  }
+  // Dernier (ou seul) conducteur : sa part personnelle referme. Si son mode
+  // venait d'une exception « mixte », la retirer suffit — l'autre
+  // enseignant, lui, garde la sienne. Sinon c'est le mode de base lui-même
+  // qui le portait : il referme (comportement d'avant, single-teacher,
+  // inchangé) — en préservant l'exception de l'AUTRE enseignant si elle
+  // existe (mode mixte : il continue sa propre démarche).
+  const viaException = source.deplacementModes && source.deplacementModes[clean];
+  if (viaException) {
+    delete source.deplacementModes[clean];
+  } else {
+    Object.assign(source, normalizeDeplacementFields({
+      deplacement: '',
+      teacher: source.teacher,
+      deplacementModes: source.deplacementModes,
+      vehicleBooked: source.vehicleBooked,
+      ordreMission: source.ordreMission
+    }));
+  }
   return source;
 }
 
@@ -975,11 +1131,37 @@ function roomBookingDaysUntil(date) {
    véhicule) : ce sont deux démarches distinctes auprès de deux personnes. */
 function reservationRows() {
   const rows = [];
-  const pousser = (kind, source, entity, label, booked, date, titre, detail) => {
+  const pousser = (kind, source, entity, label, booked, date, titre, detail, modele = '', vpeTeacher = '') => {
     rows.push({
-      kind, source, entity, label, booked,
+      kind, source, entity, label, booked, modele, vpeTeacher,
       id: entity.id, titre, detail,
       date, daysUntil: roomBookingDaysUntil(date)
+    });
+  };
+  // Retours 03/09/2026 (reprise 5) — Martin : 2 lignes par enseignant
+  // (établissement individuel) faisaient doublon dans Urgences une fois le
+  // bouton d'action homogénéisé (même badge « Déplacement (x/y réglé) » sur
+  // les deux). Fusionnées en UNE ligne par entité, comme la pastille de
+  // carte (deplacementEtatEtablissement) — le détail par enseignant reste
+  // dans le libellé, l'action ouvre #deplacementGestionDialog dans tous les
+  // cas (plus de case à cocher directement ici, cf. gererDeplacementMarkup).
+  const pousserVehicule = (source, entity, date, titre, detail) => {
+    const etatEtab = deplacementEtatEtablissement(entity);
+    if (!etatEtab) return;
+    const individuels = deplacementVehiculesIndividuels(entity);
+    if (individuels.length === 2 && !entity.vehicleBooked && !(entity.vehiculeModeles && entity.vehiculeModeles.length) && !entity.vehiculeModeleAutre) {
+      const label = individuels.map(t => vehiculeIndividuelLabel(entity, t)).join(' · ');
+      pousser('vehicule', source, entity, label, etatEtab.faites === etatEtab.total, date, titre, detail);
+      return;
+    }
+    const modeles = Array.isArray(entity.vehiculeModeles) ? entity.vehiculeModeles : [];
+    if (!modeles.length) {
+      pousser('vehicule', source, entity, VEHICULE_LABEL, !!entity.vehicleBooked, date, titre, detail);
+      return;
+    }
+    modeles.forEach(m => {
+      const nomModele = m === 'autre' ? (entity.vehiculeModeleAutre || 'Autre') : (VEHICULE_MODELE_LABELS[m] || m);
+      pousser('vehicule', source, entity, `${VEHICULE_LABEL} (${nomModele})`, vehiculeModeleReserve(entity, m), date, titre, detail, m);
     });
   };
 
@@ -990,10 +1172,7 @@ function reservationRows() {
       pousser('salle', 'session', s, ROOM_TO_BOOK_LABELS[salle] || salle, !!s.roomBooked,
         date, s.title || 'Séance sans titre', s.promotion || '');
     }
-    if (s.deplacement === 'etablissement') {
-      pousser('vehicule', 'session', s, VEHICULE_LABEL, !!s.vehicleBooked,
-        date, s.title || 'Séance sans titre', s.promotion || '');
-    }
+    pousserVehicule('session', s, date, s.title || 'Séance sans titre', s.promotion || '');
     // Retours #3 (18-19/08/2026) — case « matériel à réserver » à côté du champ
     // Matériel : même mécanique que salle/véhicule (reprend la même date de
     // référence que la séance).
@@ -1004,9 +1183,7 @@ function reservationRows() {
   });
 
   (state.reunions || []).forEach(r => {
-    if (r.deplacement !== 'etablissement') return;
-    pousser('vehicule', 'reunion', r, VEHICULE_LABEL, !!r.vehicleBooked,
-      parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
+    pousserVehicule('reunion', r, parseIsoDate(r.date), r.sujets ? truncate(r.sujets, 48) : 'Réunion', r.lieu || '');
   });
 
   return rows.sort((a, b) => {
@@ -1034,8 +1211,20 @@ function doneRoomBookingRows() {
   return reservationRows().filter(r => r.booked);
 }
 
-const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission' };
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission', reunion: 'Réunion' };
 const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
+// Retour Martin (02/09/2026) : sur desktop, le type de ligne (colonne
+// .urgence-type) passe du texte au pictogramme — reprend exactement les
+// pictos déjà utilisés ailleurs pour la même nature (mobileIconMarkup/
+// ICON_PNG_NOMS, ex. picto « document » déjà utilisé pour la tuile « Ordre de
+// mission »). Mobile garde le texte, inchangé (voir styles.css).
+const URGENCE_KIND_PICTOS = { salle: 'salle', vehicule: 'voiture', materiel: 'pelle', mission: 'document', reunion: 'reunion' };
+function urgenceTypeMarkup(kind) {
+  const label = URGENCE_LABELS[kind] || kind;
+  const picto = URGENCE_KIND_PICTOS[kind]
+    ? `<span class="urgence-type-picto" aria-hidden="true">${mobileIconMarkup(URGENCE_KIND_PICTOS[kind])}</span>` : '';
+  return `<span class="urgence-type" title="${escapeAttr(label)}">${picto}<span class="urgence-type-texte">${escapeHtml(label)}</span></span>`;
+}
 // Retour de Martin (21/08/2026) : une règle commune à tout type d'urgence
 // n'apparaît dans le tableau que si elle a moins de URGENCE_FENETRE_JOURS
 // jours (au-delà, ça encombre sans être actionnable). Une ligne sans date du
@@ -1044,14 +1233,16 @@ const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', mat
 const URGENCE_FENETRE_JOURS = 45;
 
 /* Pile unique « Urgences » (REGLES.md #25) : salles et véhicules à réserver
-   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire),
-   fusionnés et triés par échéance seule — jamais groupés par UE, promotion ou
-   type. La nature n'est qu'une étiquette de colonne, pas un panneau séparé.
-   Une réunion elle-même n'y figure PAS (retour de Martin 23/08/2026 : elle
-   apparaît déjà dans les créneaux de la semaine — la remettre ici double
-   l'info sans rien d'actionnable). Seules ses démarches associées restent
-   visibles ici, via les deux piles ci-dessus (véhicule à réserver, ordre de
-   mission à établir) puisqu'elles sont, elles, de vraies actions à faire. */
+   (reservationRows) + ordres de mission à établir (ordresDeMissionAFaire) +
+   réunions à venir, fusionnés et triés par échéance seule — jamais groupés
+   par UE, promotion ou type. La nature n'est qu'une étiquette de colonne, pas
+   un panneau séparé.
+   Retour Martin (02/09/2026) : les réunions À VENIR (pas celles déjà tenues,
+   qui restent un compte-rendu consultable dans leur propre journal) rejoignent
+   la pile, avec un filtre dédié côté mobile — revient sur le choix du
+   23/08/2026 (qui les excluait, jugées déjà visibles dans « Ma semaine » et
+   sans action associée) : les avoir aussi dans Urgences donne une seule liste
+   consolidée de ce qui arrive. */
 function urgenceRows() {
   const out = [];
   activeRoomBookingRows().forEach(r => {
@@ -1067,7 +1258,7 @@ function urgenceRows() {
       kind: r.kind, titre: r.titre,
       detail: [r.label, r.detail, horaire].filter(Boolean).join(' · '),
       date: r.date, daysUntil: r.daysUntil,
-      source: r.source, id: r.id, fait: r.booked,
+      source: r.source, id: r.id, modele: r.modele || '', vpeTeacher: r.vpeTeacher || '', fait: r.booked,
       teacher: r.entity?.teacher || ''
     });
   });
@@ -1077,8 +1268,23 @@ function urgenceRows() {
       kind: 'mission', titre: o.titre,
       detail: o.detail || '',
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
-      source: o.source, id: o.id, fait: false,
+      source: o.source, id: o.id, fait: false, missionTeacher: o.missionTeacher || '',
       teacher: entity?.teacher || ''
+    });
+  });
+  // Réunions à venir (retour Martin 02/09/2026) — mêmes comptes que le
+  // journal (estVisiblePourMoi, cf. ordresDeMissionAFaire ci-dessus) ; celles
+  // déjà passées n'ont plus rien d'« à venir » et restent dans leur journal.
+  (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
+    const date = r.date ? parseIsoDate(r.date) : null;
+    const daysUntil = date ? dashJoursEntre(date) : null;
+    if (daysUntil !== null && daysUntil < 0) return;
+    out.push({
+      kind: 'reunion', titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion',
+      detail: [r.lieu, r.participants].filter(Boolean).join(' · '),
+      date, daysUntil,
+      source: 'reunion', id: r.id, fait: false,
+      teacher: r.teacher || ''
     });
   });
   return out
@@ -1105,7 +1311,7 @@ function urgenceRowsFaites() {
       kind: r.kind, titre: r.titre,
       detail: [r.label, r.detail, horaire].filter(Boolean).join(' · '),
       date: r.date, daysUntil: r.daysUntil,
-      source: r.source, id: r.id, fait: true,
+      source: r.source, id: r.id, modele: r.modele || '', vpeTeacher: r.vpeTeacher || '', fait: true,
       teacher: r.entity?.teacher || ''
     });
   });
@@ -1115,7 +1321,7 @@ function urgenceRowsFaites() {
       kind: 'mission', titre: o.titre,
       detail: o.detail || '',
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
-      source: o.source, id: o.id, fait: true,
+      source: o.source, id: o.id, fait: true, missionTeacher: o.missionTeacher || '',
       teacher: entity?.teacher || ''
     });
   });
@@ -1134,25 +1340,47 @@ function urgenceRowsFaites() {
 // aucun nouveau JS de comportement à écrire côté mobile, seule la mise en
 // page qui les entoure change. N'affiche que des lignes actives (jamais
 // « fait » — voir urgenceFaiteRowMarkup pour le menu « Faites »).
+// Retours 02/09/2026 (reprise 2) — Martin : « gérer depuis tous les espaces
+// d'infos ». Un seul déclencheur partout (carte, Urgences, réunion,
+// formulaire) : ouvre #deplacementGestionDialog (mode par enseignant,
+// modèle, réservé, covoiturage) — remplace les anciens boutons de bascule
+// dédiés à un seul geste (Non dispo → perso, Perso → établissement).
+// Retours 03/09/2026 (reprise 3) — Martin : « Gérer » devrait plutôt
+// s'appeler « Déplacement (x/y réglé) », pour homogénéiser avec la pastille
+// des cartes séance (dashEtiquettes). Même texte, même calcul
+// (deplacementEtatCarte), partout où ce bouton apparaît (Urgences actives et
+// Faites).
+function gererDeplacementMarkup(source, id, cssClass) {
+  const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+  const etat = entity ? deplacementEtatCarte(entity) : null;
+  const texte = etat ? deplacementBadgeTexte(etat) : 'Déplacement';
+  return `<button type="button" class="${cssClass}" data-open-deplacement="${escapeAttr(source)}:${escapeAttr(id)}">${escapeHtml(texte)}</button>`;
+}
+
 function urgenceRowMarkup(r) {
   const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
   const delaiLabel = r.daysUntil === null ? '' : (r.daysUntil <= 0 ? 'J' : `J–${r.daysUntil}`);
   const urgent = r.daysUntil !== null && r.daysUntil <= ROOM_ALERT_DAYS;
-  // Retours 17/08/2026 — bascule rapide depuis la ligne, quand le véhicule
-  // de l'établissement s'avère indisponible : plus besoin de rouvrir la
-  // fiche pour changer le menu Déplacement, ça bascule direct en
-  // personnel (l'ordre de mission remplace la réservation à la ligne suivante).
-  const basculeBtn = r.kind === 'vehicule'
-    ? `<button type="button" class="urgence-bascule" data-bascule-vehicule="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Véhicule de l’établissement non disponible : passer en véhicule personnel (déclenche l’ordre de mission)">Non dispo → perso</button>`
-    : '';
-  // Retours #3 (18-19/08/2026) : bascule inverse, pour revenir en arrière
-  // facilement après un clic "Non dispo → perso" fait par erreur.
-  const basculeRetourBtn = r.kind === 'mission'
-    ? `<button type="button" class="urgence-bascule" data-bascule-vehicule-retour="${escapeAttr(r.source)}:${escapeAttr(r.id)}" title="Revenir à un déplacement en véhicule de l’établissement">Perso → établissement</button>`
-    : '';
+  const basculeRetourBtn = r.kind === 'mission' ? gererDeplacementMarkup(r.source, r.id, 'urgence-bascule') : '';
+  // Une réunion n'a pas d'état « réservée »/« fait » : même verbe « Éditer »
+  // que l'ordre de mission, mais data-edit-reunion (déjà branché sur les
+  // délégués globaux qui ouvrent la fiche réunion, cf. editAttr ci-dessous).
+  // Retours 03/09/2026 — 3e segment optionnel : quel conducteur, quand
+  // l'entité a 2 ODM indépendants (r.missionTeacher, posé par urgenceRows).
+  const missionAttr = `${escapeAttr(r.source)}:${escapeAttr(r.id)}${r.missionTeacher ? ':' + escapeAttr(r.missionTeacher) : ''}`;
+  // Retours 03/09/2026 (reprise 3) — Martin : la case « Réserver » directe
+  // marquait la démarche faite sans jamais faire préciser le modèle —
+  // remplacée par le même bouton « Déplacement (x/y réglé) » que la carte
+  // séance, qui ouvre toujours #deplacementGestionDialog (modèle + réservé
+  // s'y précisent ensemble). Salle/matériel gardent la case directe,
+  // inchangée (pas de sous-détail à préciser pour elles).
   const verbe = r.kind === 'mission'
-    ? `<span class="urgence-verbe" data-open-mission="${escapeAttr(r.source)}:${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
-    : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>${basculeBtn}`;
+    ? `<span class="urgence-verbe" data-open-mission="${missionAttr}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
+    : r.kind === 'reunion'
+    ? `<span class="urgence-verbe" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>`
+    : r.kind === 'vehicule'
+    ? gererDeplacementMarkup(r.source, r.id, 'urgence-verbe urgence-bascule')
+    : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}" data-reservation-modele="${escapeAttr(r.modele || '')}" data-reservation-vpe-teacher="${escapeAttr(r.vpeTeacher || '')}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>`;
   // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
   // « Ma semaine »/« Prochainement ») — la case et le lien Éditer gardent
   // leur propre action (guard dans le gestionnaire de clic).
@@ -1175,7 +1403,7 @@ function urgenceRowMarkup(r) {
       <span class="urgence-delai${urgent ? ' est-urgent' : ''}">${escapeHtml(delaiLabel)}</span>
     </div>
     <div class="urgence-bloc-corps">
-      <span class="urgence-ligne1"><span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span> <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
+      <span class="urgence-ligne1">${urgenceTypeMarkup(r.kind)} <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
       <span class="urgence-ligne2">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
       ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
     </div>
@@ -1183,25 +1411,39 @@ function urgenceRowMarkup(r) {
   </div>`;
 }
 
-/* Menu « Faites » : mêmes lignes, un seul verbe (case cochée « Fait », à
-   décocher pour revenir dans la pile active) — pas de bascule véhicule ni
-   d'« Éditer », qui n'ont de sens que pour une ligne encore à traiter. */
+/* Menu « Faites » : mêmes lignes, un seul verbe principal (case cochée
+   « Fait », à décocher pour revenir dans la pile active) — pas de lien
+   « Éditer » séparé (pas de sens sur une ligne déjà traitée), mais le
+   bouton Gérer reste là (retours 03/09/2026) pour ajuster un modèle ou
+   basculer en covoiturage sans repasser par la case. */
 function urgenceFaiteRowMarkup(r) {
   const quand = r.date ? r.date.toLocaleDateString('fr-FR') : 'Date à préciser';
+  const missionAttr = `${escapeAttr(r.source)}:${escapeAttr(r.id)}${r.missionTeacher ? ':' + escapeAttr(r.missionTeacher) : ''}`;
+  // Retours 03/09/2026 (reprise 5) — 'vehicule' n'a plus de case à décocher
+  // ici : depuis la fusion des lignes établissement individuelles en une
+  // seule (deplacementEtatEtablissement), une case unique ne saurait plus
+  // dire quel enseignant décocher — tout repasse par Gérer (pictos), où
+  // décocher UN enseignant reste possible et net.
   const faitCheckbox = r.kind === 'mission'
-    ? `<input type="checkbox" checked data-mission-toggle="${escapeAttr(r.source)}:${escapeAttr(r.id)}">`
-    : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}">`;
+    ? `<input type="checkbox" checked data-mission-toggle="${missionAttr}">`
+    : r.kind === 'vehicule' ? '' : `<input type="checkbox" checked data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}" data-reservation-modele="${escapeAttr(r.modele || '')}" data-reservation-vpe-teacher="${escapeAttr(r.vpeTeacher || '')}">`;
+  // Retours 03/09/2026 — bouton Gérer aussi sur une ligne déjà « Faite »
+  // (absent jusqu'ici) : rouvrir pour ajuster un modèle/covoiturage sans
+  // devoir d'abord décocher.
+  const bascule = (r.kind === 'vehicule' || r.kind === 'mission') ? gererDeplacementMarkup(r.source, r.id, 'urgence-bascule') : '';
   const editAttr = r.source === 'reunion' ? `data-edit-reunion="${escapeAttr(r.id)}"` : `data-edit-session="${escapeAttr(r.id)}"`;
   const teachers = teacherPillsMarkup(r.teacher);
   return `<div class="urgence-row est-fait" ${editAttr} tabindex="0" role="button">
     <div class="urgence-bloc-delai"></div>
     <div class="urgence-bloc-corps">
-      <span class="urgence-ligne1"><span class="urgence-type">${escapeHtml(URGENCE_LABELS[r.kind] || r.kind)}</span> <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
+      <span class="urgence-ligne1">${urgenceTypeMarkup(r.kind)} <strong class="urgence-titre">${escapeHtml(r.titre)}</strong></span>
       <span class="urgence-ligne2">${escapeHtml([quand, r.detail].filter(Boolean).join(' · '))}</span>
       ${teachers ? `<span class="design-ue-pills urgence-teachers">${teachers}</span>` : ''}
     </div>
     <div class="urgence-bloc-action">
-      <label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>
+      ${r.kind === 'vehicule'
+        ? `<span class="urgence-verbe est-fait">Réglé</span>`
+        : `<label class="urgence-verbe room-booked-check est-fait" title="Décocher pour remettre à faire">${faitCheckbox}<span>Fait</span></label>`}${bascule}
     </div>
   </div>`;
 }
@@ -1237,7 +1479,10 @@ const MOBILE_URGENCE_FILTRES = {
   tout: () => true,
   salle: r => r.kind === 'salle',
   materiel: r => r.kind === 'materiel',
-  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission'
+  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission',
+  // Puce dédiée (retour Martin 02/09/2026), séparée de Déplacements : une
+  // réunion à venir n'est pas un trajet.
+  reunion: r => r.kind === 'reunion'
 };
 let mobileUrgenceFiltre = 'tout';
 
@@ -1255,14 +1500,17 @@ let mobileUrgenceFiltre = 'tout';
 // monnaie) — mobileIconMarkup() choisit entre les deux rendus.
 const ICON_SVG_PATHS = {
   tout: '<rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/>',
-  monnaie: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/>'
+  monnaie: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/>',
+  // Retours 03/09/2026 (reprise 6) — symbole « avec attelage » (picto
+  // véhicule établissement, Gérer) : une boule d'attelage sur sa potence.
+  attelage: '<circle cx="12" cy="7.5" r="2.8"/><path d="M12 10.3v4.2M8 18.5h8"/>'
 };
 const ICON_PNG_NOMS = new Set(['salle', 'loupe', 'pelle', 'voiture', 'reunion', 'calendrier', 'alerte', 'checklist', 'document']);
 function mobileIconMarkup(name) {
   if (ICON_PNG_NOMS.has(name)) return `<span class="mobile-icon-png picto-${name}" aria-hidden="true"></span>`;
   return `<svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_SVG_PATHS[name] || ''}</svg>`;
 }
-const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'pelle', deplacement: 'voiture' };
+const MOBILE_URGENCE_PICTOS = { tout: 'tout', salle: 'salle', materiel: 'pelle', deplacement: 'voiture', reunion: 'reunion' };
 
 function renderMobileAValider() {
   const host = $('#mobileAValider');
@@ -1284,6 +1532,7 @@ function renderMobileAValider() {
       ${chip('salle', 'Salles')}
       ${chip('materiel', 'Matériel')}
       ${chip('deplacement', 'Déplacements')}
+      ${chip('reunion', 'Réunions')}
     </div>
     ${rows.length ? (groupe('Cette semaine', cetteSemaine, true) + groupe('Plus tard', plusTard, false)) : '<p class="empty-hint">Rien à valider pour le moment.</p>'}
     <button type="button" class="lien mobile-voir-faites" data-mobile-goto="mobileFaites">Voir les faites${nbFaites ? ` (${nbFaites})` : ''} →</button>`;
@@ -1312,7 +1561,13 @@ function renderMobileFaites() {
    le vrai PDF de l'établissement (retours/, jamais commité — voir mémoire
    Claude Code organisation-cours-refonte-papier-technique-froid).
    ============================================================ */
-let missionViewTarget = null; // { kind: 'session' | 'reunion', id }
+// Retours 03/09/2026 — teacher (optionnel) cible l'ODM d'UN conducteur
+// précis quand l'entité en a 2 indépendants (missionEntiteADeuxOdm) ; vide
+// partout ailleurs (comportement historique, un seul document).
+let missionViewTarget = null; // { kind: 'session' | 'reunion' | 'standalone', id, teacher }
+function missionTeacherCible() {
+  return missionViewTarget?.teacher || '';
+}
 
 function missionEntity() {
   if (!missionViewTarget) return null;
@@ -1361,6 +1616,23 @@ function heureVersHHMM(str) {
   const m = /(\d{1,2})h(\d{2})?/.exec(str || '');
   return m ? `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2] || '00'}` : (str || '');
 }
+// Retours 02/09/2026 — sur une entité à 2 enseignants où un seul conduit
+// (covoiturage), le collègue qui n'est PAS conducteur est déjà connu :
+// proposé d'office en accompagnant plutôt qu'une ligne vide à remplir.
+function missionAccompagnantsParDefaut(entity) {
+  if (!entity || !entity.teacher) return [];
+  const tokens = teacherTokens(entity.teacher).map(teacherInitialsOf).filter(Boolean);
+  // Retours 02/09/2026 (mode mixte) — l'accompagnement ne veut dire quelque
+  // chose que si les 2 enseignants partagent le MÊME véhicule personnel : en
+  // mode mixte (l'un établissement, l'autre perso) chacun fait sa propre
+  // démarche, il n'y a pas de « collègue qui monte avec ».
+  const enPersonnel = tokens.filter(t => deplacementModeFor(entity, t) === 'personnel');
+  if (enPersonnel.length !== 2) return [];
+  const conducteurs = deplacementConducteurs(entity);
+  if (conducteurs.length !== 1) return [];
+  const autre = enPersonnel.find(t => !conducteurs.includes(t));
+  return autre ? [{ nom: autre, fonction: 'Enseignant·e accompagnant·e' }] : [];
+}
 function defaultMissionDetail(entity) {
   const dep = missionDeplacementLie(entity);
   const iso = missionViewTarget.kind === 'reunion' ? (entity.date || '')
@@ -1373,7 +1645,7 @@ function defaultMissionDetail(entity) {
     dateMission: iso || '',
     heureDebut: heureDebut || '', heureFin: heureFin || '',
     description: missionViewTarget.kind === 'standalone' ? '' : missionTitreEntite(entity),
-    accompagnants: [],
+    accompagnants: missionViewTarget.kind === 'standalone' ? [] : missionAccompagnantsParDefaut(entity),
     transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
     faitLe: new Date().toISOString().slice(0, 10),
     destinataires: missionDestinatairesMemorises(),
@@ -1387,14 +1659,21 @@ function defaultMissionDetail(entity) {
 // plus ancienne) — trouvé en testant la tuile « Ordre de mission » du
 // tableau de bord (Lot C-bis, 23/08/2026) : ça faisait planter l'ouverture.
 function ensureMissionDetail(entity) {
+  // Retours 03/09/2026 — routé via missionDetailBrut/setMissionDetailBrut :
+  // document PROPRE à missionTeacherCible() si l'entité a 2 conducteurs
+  // indépendants, sinon entity.missionDetail comme avant (comportement
+  // inchangé pour tous les autres appelants de cette fonction, qui n'ont
+  // pas besoin de savoir laquelle des deux situations s'applique).
+  const teacher = missionTeacherCible();
+  const existing = missionDetailBrut(entity, teacher);
   const defauts = defaultMissionDetail(entity);
-  const detail = Object.assign({}, defauts, entity.missionDetail || {});
-  detail.commandePar = Object.assign({}, defauts.commandePar, entity.missionDetail?.commandePar || {});
-  detail.transport = Object.assign({}, defauts.transport, entity.missionDetail?.transport || {});
+  const detail = Object.assign({}, defauts, existing || {});
+  detail.commandePar = Object.assign({}, defauts.commandePar, existing?.commandePar || {});
+  detail.transport = Object.assign({}, defauts.transport, existing?.transport || {});
   // Toujours au moins une ligne réelle en état : le champ affiché doit pouvoir
   // s'écrire (accompagnants.0.nom) même avant tout clic sur « + Ajouter ».
   if (!Array.isArray(detail.accompagnants) || !detail.accompagnants.length) detail.accompagnants = [{ nom: '', fonction: '' }];
-  entity.missionDetail = detail;
+  setMissionDetailBrut(entity, teacher, detail);
   return detail;
 }
 
@@ -1406,9 +1685,9 @@ function ensureMissionDetail(entity) {
 // toujours l'onglet desktop « Tableau de bord », invisible en CSS sous
 // 780px, laissant l'écran mobile vide (aucune .view mobile active-view).
 let missionViewReturnTo = 'dashboard';
-function openMissionView(kind, id) {
+function openMissionView(kind, id, teacher = '') {
   if (!kind || !id) return;
-  missionViewTarget = { kind, id };
+  missionViewTarget = { kind, id, teacher: String(teacher || '').toUpperCase() };
   const entity = missionEntity();
   if (!entity) { missionViewTarget = null; return; }
   ensureMissionDetail(entity);
@@ -1471,7 +1750,9 @@ function renderMissionView() {
   const titre = missionTitreEntite(entity);
 
   const titleEl = $('#missionTitle');
-  if (titleEl) titleEl.textContent = `Ordre de mission — ${titre}`;
+  // Retours 03/09/2026 — précise DE QUI est cet ODM quand l'entité a 2
+  // conducteurs indépendants (2 documents distincts sur la même séance).
+  if (titleEl) titleEl.textContent = `Ordre de mission — ${titre}${missionTeacherCible() ? ` · ${missionTeacherCible()}` : ''}`;
   const statusEl = $('#missionStatus');
   if (statusEl) statusEl.textContent = missionStatutLabel(entity, detail);
 
@@ -1600,9 +1881,9 @@ function renderMobileMission() {
   const mesMissions = (state.missions || []).slice()
     .sort((a, b) => (b.missionDetail?.dateMission || '').localeCompare(a.missionDetail?.dateMission || ''));
   const statutPill = (label, ok) => `<span class="mobile-om-statut${ok ? ' est-fait' : ''}">${escapeHtml(label)}</span>`;
-  const ligneAFaire = o => `<div class="mobile-om-tile" data-open-mission="${escapeAttr(o.source)}:${escapeAttr(o.id)}" tabindex="0" role="button">
+  const ligneAFaire = o => `<div class="mobile-om-tile" data-open-mission="${escapeAttr(o.source)}:${escapeAttr(o.id)}${o.missionTeacher ? ':' + escapeAttr(o.missionTeacher) : ''}" tabindex="0" role="button">
     <div class="mobile-om-tile-tete">
-      <strong class="mobile-om-titre">${escapeHtml(o.titre)}</strong>
+      <strong class="mobile-om-titre">${escapeHtml(o.titre)}${o.missionTeacher ? ` · ${escapeHtml(o.missionTeacher)}` : ''}</strong>
       ${statutPill('Sans ordre', false)}
     </div>
     <span class="mobile-om-detail">${escapeHtml([o.date ? o.date.toLocaleDateString('fr-FR') : 'Date à préciser', o.detail].filter(Boolean).join(' · '))}</span>
@@ -1849,7 +2130,7 @@ async function missionSendMail() {
   const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
   window.location.href = href;
   detail.envoyeAt = new Date().toISOString();
-  entity.ordreMission = true;
+  setOrdreMissionEnvoye(entity, missionTeacherCible(), true);
   saveData('Ordre de mission marqué envoyé');
 }
 
@@ -2396,7 +2677,7 @@ function renderReunions() {
   const list = [...(state.reunions || [])].sort((a, b) =>
     (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
   if (!list.length) {
-    wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, sujets abordés).</p>`;
+    wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, ordre du jour).</p>`;
     return;
   }
   // Retours 17/08/2026 — tableau plutôt que des cartes : plus dense, plus
@@ -2405,7 +2686,12 @@ function renderReunions() {
   // suivre) ; le van d'établissement a sa propre étiquette de réservation
   // ailleurs (Urgences), pas besoin de la dupliquer ici.
   const rows = list.map(r => {
-    const vehiculeTitre = r.ordreMission
+    // Retours 03/09/2026 — à 2 conducteurs indépendants, l'icône ne passe
+    // « demandé » que si LES DEUX ODM sont envoyés (un seul ne suffit plus,
+    // cf. ordreMissionEnvoye).
+    const conducteurs = deplacementConducteurs(r);
+    const odmComplet = conducteurs.length === 2 ? conducteurs.every(t => ordreMissionEnvoye(r, t)) : !!r.ordreMission;
+    const vehiculeTitre = odmComplet
       ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)'
       : 'Véhicule personnel — ordre de mission à demander';
     return `<tr data-edit-reunion="${escapeAttr(r.id)}">
@@ -2413,11 +2699,11 @@ function renderReunions() {
       <td>${escapeHtml(r.lieu || '—')}</td>
       <td title="${escapeAttr(r.participants || '')}">${escapeHtml(r.participants ? truncate(r.participants, 40) : '—')}</td>
       <td title="${escapeAttr(r.sujets || '')}">${escapeHtml(r.sujets ? truncate(r.sujets, 60) : '—')}</td>
-      <td>${r.deplacement === 'personnel' ? `<span title="${escapeAttr(vehiculeTitre)}">🚗</span>` : ''}</td>
+      <td>${deplacementModesPresents(r).has('personnel') ? `<span title="${escapeAttr(vehiculeTitre)}">🚗</span>` : ''}</td>
     </tr>`;
   }).join('');
   wrap.innerHTML = `<table class="frais-table"><thead><tr>
-      <th>Date</th><th>Lieu</th><th>Participants</th><th>Sujet</th><th>Véhicule perso</th>
+      <th>Date</th><th>Lieu</th><th>Participants</th><th>Ordre du jour</th><th>Véhicule perso</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -2430,12 +2716,13 @@ function openReunionModal(reunion = null) {
   $('#reunionParticipants').value = reunion?.participants || '';
   $('#reunionSujets').value = reunion?.sujets || '';
   $('#reunionTeacher').value = reunion?.teacher || '';
-  if ($('#reunionDeplacement')) {
-    $('#reunionDeplacement').value = reunion?.deplacement || '';
-    if ($('#reunionVehicleBooked')) $('#reunionVehicleBooked').checked = !!reunion?.vehicleBooked;
-    if ($('#reunionOrdreMission')) $('#reunionOrdreMission').checked = !!reunion?.ordreMission;
-    syncDeplacementFields('reunion');
+  $('#reunionDeplacementResume').textContent = `Déplacement : ${deplacementResumeTexte(reunion)}`;
+  const reunionDepActif = $('#reunionDeplacementActifCheckbox');
+  if (reunionDepActif) {
+    reunionDepActif.checked = reunion ? (reunion.deplacementActif || !!deplacementModesPresents(reunion).size) : false;
+    reunionDepActif.disabled = !reunion?.id;
   }
+  $('#reunionDeplacementGererButton').disabled = !reunion?.id || !reunionDepActif?.checked;
   const dep = reunion ? reunionDeplacement(reunion) : null;
   $('#reunionFraisHint').hidden = !dep;
   $('#deleteReunionButton').hidden = isNew;
@@ -3238,18 +3525,14 @@ function dashActionsDeSeance(s, date) {
       ? { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} réservée`, fait: true }
       : { cle: 'salle', texte: `${ROOM_TO_BOOK_LABELS[salle] || 'Salle'} à réserver`, urgent: j !== null && j <= ROOM_ALERT_DAYS });
   }
-  // Lot B — les deux étiquettes du déplacement. Un véhicule de l'établissement
-  // se réserve (même urgence qu'une salle) ; un véhicule personnel demande un
-  // ordre de mission AVANT le départ — c'est donc aussi une échéance.
-  if (s.deplacement === 'etablissement') {
-    out.push(s.vehicleBooked
-      ? { cle: 'vehicule', texte: 'Véhicule réservé', fait: true }
-      : { cle: 'vehicule', texte: 'Véhicule à réserver', urgent: j !== null && j <= ROOM_ALERT_DAYS });
-  }
-  if (s.deplacement === 'personnel') {
-    out.push(s.ordreMission
-      ? { cle: 'mission', texte: 'Ordre de mission envoyé', fait: true }
-      : { cle: 'mission', texte: 'Ordre de mission', urgent: j !== null && j <= ROOM_ALERT_DAYS });
+  // Retours 03/09/2026 — remplace les étiquettes une-par-démarche (véhicule
+  // par enseignant + ODM), qui débordaient des tuiles à 2 enseignants, par
+  // UN indicateur agrégé (deplacementEtatCarte) : « à décider » / « en
+  // attente » / « réglé ». Le détail par démarche reste consultable dans la
+  // fenêtre Gérer (data-open-deplacement) et dans la pile Urgences.
+  const depEtat = deplacementEtatCarte(s);
+  if (depEtat) {
+    out.push({ cle: 'deplacement', texte: deplacementBadgeTexte(depEtat), fait: depEtat.etat === 'regle', urgent: depEtat.etat !== 'regle' && j !== null && j <= ROOM_ALERT_DAYS });
   }
   // Retours #3 (18-19/08/2026) — même mécanique que salle/véhicule ci-dessus.
   if (s.materielAReserver) {
@@ -3270,35 +3553,26 @@ function dashActionsDeSeance(s, date) {
 // document.body les enregistre — cf. bindModalActions) ; "mission"/"placer"/
 // "rattacher"/"reunion"/"periode" restent du texte, leur clic ouvre déjà la
 // fiche complète (ordre de mission, édition...), pas une simple case.
-const ACTIONS_RESERVABLES = new Set(['salle', 'vehicule', 'materiel']);
-// Retour Martin (23/08/2026) : l'ordre de mission devient lui aussi cliquable
-// depuis la carte — mais ce n'est pas une case à cocher (envoyer un ordre de
-// mission est un vrai geste, pas un booléen à inverser), donc un bouton qui
-// ouvre la même vue que le lien « Éditer » de la pile Urgences
-// (data-open-mission, déjà géré par bindEvents), pas une case cachée.
+// Retours 03/09/2026 — 'vehicule' retiré : le déplacement (véhicule ET ODM)
+// n'est plus une case à cocher directement sur la carte, il passe entier par
+// la fenêtre Gérer (voir cle 'deplacement' ci-dessous). Salle/matériel
+// restent de simples cases, inchangées.
+const ACTIONS_RESERVABLES = new Set(['salle', 'materiel']);
 function dashEtiquettes(actions, sessionId) {
   return actions.map(a => {
     if (sessionId && ACTIONS_RESERVABLES.has(a.cle)) {
-      // Retour Martin (23/08/2026) : bascule « véhicule de l'établissement
-      // indisponible → personnel » (déjà dans la pile Urgences,
-      // data-bascule-vehicule, exclu du clic-carte dans les 3 zones
-      // concernées depuis le début) accessible aussi depuis la carte, tant
-      // que ce n'est pas déjà réservé.
-      const bascule = (a.cle === 'vehicule' && !a.fait)
-        ? `<button type="button" class="act-bascule" data-bascule-vehicule="session:${escapeAttr(sessionId)}" title="Véhicule de l'établissement non disponible : passer en véhicule personnel (déclenche l'ordre de mission)">→ perso</button>`
-        : '';
       return `<label class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''} act-toggle" title="Cliquer pour ${a.fait ? 'annuler' : 'confirmer'} la réservation">
         <input type="checkbox" class="visually-hidden" data-reservation-kind="${a.cle}" data-reservation-source="session" data-reservation-id="${escapeAttr(sessionId)}" ${a.fait ? 'checked' : ''}>
         <span>${escapeHtml(a.texte)}</span>
-      </label>${bascule}`;
+      </label>`;
     }
-    if (sessionId && a.cle === 'mission') {
-      // Bascule inverse, tant que l'ordre de mission n'est pas déjà envoyé
-      // (même garde-fou que dans Urgences).
-      const bascule = !a.fait
-        ? `<button type="button" class="act-bascule" data-bascule-vehicule-retour="session:${escapeAttr(sessionId)}" title="Revenir à un déplacement en véhicule de l'établissement">→ établissement</button>`
-        : '';
-      return `<button type="button" class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''} act-toggle" data-open-mission="session:${escapeAttr(sessionId)}" title="Ouvrir l'ordre de mission">${escapeHtml(a.texte)}</button>${bascule}`;
+    // Retours 03/09/2026 — UN indicateur cliquable, toujours actif (avant
+    // comme après réglé, ce qui corrige un trou : le bouton Gérer
+    // disparaissait autrefois dès qu'une démarche passait à « fait »),
+    // qui ouvre directement la fenêtre Gérer (même attribut que
+    // gererDeplacementMarkup, même délégué global déjà en place).
+    if (sessionId && a.cle === 'deplacement') {
+      return `<button type="button" class="act act-deplacement${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''} act-toggle" data-open-deplacement="session:${escapeAttr(sessionId)}" title="Gérer le déplacement">${escapeHtml(a.texte)}</button>`;
     }
     return `<span class="act act-${a.cle}${a.urgent ? ' act-urgent' : ''}${a.fait ? ' act-fait' : ''}">${escapeHtml(a.texte)}</span>`;
   }).join('');
@@ -3427,11 +3701,17 @@ function dashCarteReunion(r) {
   // retours #3, dashCarteReunion l'avait oubliée — pourtant tout aussi utile
   // ici pour savoir d'un coup d'œil quelle réunion concerne quel compte.
   const teachers = teacherPillsMarkup(r.teacher);
+  // L'ordre du jour rejoint les participants sur la même ligne meta (retour
+  // Martin) : .carte-meta reste la version mobile, .carte-ligne2 sa reprise
+  // visible sur desktop (même mécanique que dashCarteSeance ci-dessus).
+  const metaTexte = [r.participants || 'participants à préciser', r.sujets ? truncate(r.sujets, 70) : '']
+    .filter(Boolean).join(' · ');
   return `<li class="carte est-reunion" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">
     <div class="carte-corps">
       <span class="carte-heure">—</span>
       <span class="carte-titre">${escapeHtml(r.lieu ? 'Réunion — ' + r.lieu : 'Réunion')}</span>
-      <span class="carte-meta">${escapeHtml(r.participants || 'participants à préciser')}</span>
+      <span class="carte-meta">${escapeHtml(metaTexte)}</span>
+      <span class="carte-ligne2">${escapeHtml(metaTexte)}</span>
       <span class="carte-actions"><span class="act act-reunion">Réunion</span></span>
     </div>
     ${teachers ? `<div class="carte-pastilles"><span class="design-ue-pills carte-teachers">${teachers}</span></div>` : ''}
@@ -3552,19 +3832,33 @@ function renderDashBacklogBadges(nb) {
    date, les plus proches en tête. */
 function ordresDeMissionAFaire() {
   const out = [];
-  const pousser = (source, id, titre, date, detail, fait) => {
+  const pousser = (source, id, titre, date, detail, fait, missionTeacher) => {
     if (fait) return;
     if (date && dashJoursEntre(date) < 0) return;
-    out.push({ source, id, titre, date, detail, fait: false });
+    out.push({ source, id, titre, date, detail, fait: false, missionTeacher });
   };
+  // Retours 03/09/2026 (reprise 3) — Martin : l'ODM à faire n'est pas
+  // forcément à attribuer à un compte en particulier ; on veut juste savoir
+  // s'il y en a UN (covoiturage/démarche partagée) ou DEUX (véhicules
+  // personnels indépendants), sans présumer qui conduit avant que quiconque
+  // ait rempli le document. Remplace l'ancien filtre estConducteurDeplacement
+  // (retours 02/09/2026, qui masquait l'ODM à l'« accompagnant·e » par
+  // défaut) par un filtre sur le MODE seul : tout enseignant en personnel
+  // sur l'entité voit la tâche. Démarche partagée (missionEntiteADeuxOdm
+  // faux) → missionTeacher vide, la même ligne pour les deux comptes,
+  // document unique modifiable par l'un ou l'autre (ordreMissionEnvoye/
+  // ensureMissionDetail retombent déjà sur entity.ordreMission/missionDetail
+  // singuliers dans ce cas). Démarche à 2 conducteurs indépendants
+  // (missionEntiteADeuxOdm vrai) → missionTeacher = moiInitiales, chaque
+  // compte voit et suit SON propre document, comportement inchangé.
   (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
-    if (s.deplacement !== 'personnel') return;
+    if (deplacementModeFor(s, moiInitiales) !== 'personnel') return;
     const iso = sessionIsoDate(s);
-    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
+    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', ordreMissionEnvoye(s, moiInitiales), missionEntiteADeuxOdm(s) ? moiInitiales : '');
   });
   (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    if (r.deplacement !== 'personnel') return;
-    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
+    if (deplacementModeFor(r, moiInitiales) !== 'personnel') return;
+    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', ordreMissionEnvoye(r, moiInitiales), missionEntiteADeuxOdm(r) ? moiInitiales : '');
   });
   return out.sort((a, b) => {
     if (!a.date && !b.date) return 0;
@@ -3577,18 +3871,18 @@ function ordresDeMissionAFaire() {
 /* Symétrique : les ordres de mission déjà faits, pour le menu « Faites ». */
 function ordresDeMissionFaits() {
   const out = [];
-  const pousser = (source, id, titre, date, detail, fait) => {
+  const pousser = (source, id, titre, date, detail, fait, missionTeacher) => {
     if (!fait) return;
-    out.push({ source, id, titre, date, detail, fait: true });
+    out.push({ source, id, titre, date, detail, fait: true, missionTeacher });
   };
   (state.sessions || []).filter(estVisiblePourMoi).forEach(s => {
-    if (s.deplacement !== 'personnel') return;
+    if (deplacementModeFor(s, moiInitiales) !== 'personnel') return;
     const iso = sessionIsoDate(s);
-    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', !!s.ordreMission);
+    pousser('session', s.id, s.title || 'Séance sans titre', iso ? parseIsoDate(iso) : null, s.promotion || '', ordreMissionEnvoye(s, moiInitiales), missionEntiteADeuxOdm(s) ? moiInitiales : '');
   });
   (state.reunions || []).filter(estVisiblePourMoi).forEach(r => {
-    if (r.deplacement !== 'personnel') return;
-    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', !!r.ordreMission);
+    if (deplacementModeFor(r, moiInitiales) !== 'personnel') return;
+    pousser('reunion', r.id, r.sujets ? truncate(r.sujets, 48) : 'Réunion', parseIsoDate(r.date), r.lieu || '', ordreMissionEnvoye(r, moiInitiales), missionEntiteADeuxOdm(r) ? moiInitiales : '');
   });
   return out.sort((a, b) => {
     if (!a.date && !b.date) return 0;
@@ -3639,6 +3933,7 @@ function renderDashboard() {
   renderChecklist('todo');
   renderChecklist('devnotes');
   renderChecklist('mobiletodo');
+  renderChecklist('todoshared');
 }
 
 /* Écrans mobile (14-21 du handoff), fondation. Accueil (écran 14) : sur
@@ -3979,11 +4274,11 @@ function renderMobileFrais() {
    historique consultable (⌄ Tâches faites) purgé au-delà de 30 jours
    (purgerTachesFaites, appliqué au chargement). */
 const CHECKLISTS = {
-  todo: { list: '#todoList', input: '#todoNewInput', panel: '#todoPriorityPanel', history: '#todoHistoryList', historyCount: '#todoHistoryCount', idPrefix: 'todo', field: 'todoItems' },
+  // todo/todoshared partagent #todoPriorityPanel (espaces Personnel/Commun) ;
+  // ajout via wireSharedTodoInput, pas d'`input` propre. moveTo/moveLabel = bouton ⇄.
+  todo: { list: '#todoList', history: '#todoHistoryList', historyCount: '#todoHistoryCount', idPrefix: 'todo', field: 'todoItems', moveTo: 'todoshared', moveLabel: 'Déplacer vers Commun' },
   devnotes: { list: '#devNotesList', input: '#devNotesNewInput', panel: '#devNotesTuile', history: '#devNotesHistoryList', historyCount: '#devNotesHistoryCount', idPrefix: 'devnote', badge: '#devNotesBadge', field: 'devNotesItems' },
-  // Écran d'accueil mobile (ajustements #5, 22/08/2026) — même tâches que le
-  // panneau desktop « À faire » (state.todoItems), juste un second jeu d'id
-  // DOM pour l'écran mobile dédié : même moteur, même donnée, deux vues.
+  todoshared: { list: '#todoSharedList', history: '#todoSharedHistoryList', historyCount: '#todoSharedHistoryCount', idPrefix: 'todoshared', field: 'todoPartageItems', moveTo: 'todo', moveLabel: 'Déplacer vers Personnel' },
   mobiletodo: { list: '#mobileAFaireList', input: '#mobileAFaireInput', panel: '#mobileAFaire', history: '#mobileAFaireHistoryList', historyCount: '#mobileAFaireHistoryCount', idPrefix: 'todo', field: 'todoItems' }
 };
 function checklistItems(key) {
@@ -3991,6 +4286,15 @@ function checklistItems(key) {
   state[field] = state[field] || [];
   return state[field];
 }
+function updateTodoPriorityPending() {
+  const pending = checklistItems('todo').some(t => !t.done) || checklistItems('todoshared').some(t => !t.done);
+  $('#todoPriorityPanel')?.classList.toggle('has-pending', pending);
+}
+// Édition en place (retours 02/09/2026) : un seul item en édition à la fois
+// par liste — mobiletodo partage son `field` avec todo (même donnée, deux
+// vues) mais garde son propre id DOM, d'où une clé par entrée de CHECKLISTS
+// plutôt que par `field`.
+const checklistEditingId = {};
 function renderChecklist(key) {
   const cfg = CHECKLISTS[key];
   const host = $(cfg.list);
@@ -3999,14 +4303,27 @@ function renderChecklist(key) {
   const items = checklistItems(key);
   const visibles = items.filter(t => !t.done || t.doneAt === today);
   const faites = items.filter(t => t.done && t.doneAt !== today).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || ''));
+  const editingId = checklistEditingId[key];
   host.innerHTML = visibles.length
-    ? visibles.map(t => `<label class="todo-row${t.done ? ' is-done' : ''}">
+    ? visibles.map(t => editingId === t.id
+        ? `<div class="todo-row-editing">
+            <textarea class="todo-row-edit-input" data-checklist-edit-input="${escapeAttr(t.id)}" rows="2">${escapeHtml(t.text)}</textarea>
+          </div>`
+        : `<label class="todo-row${t.done ? ' is-done' : ''}">
         <input type="checkbox" data-checklist-check="${escapeAttr(t.id)}" ${t.done ? 'checked' : ''} />
         <span class="todo-row-text">${escapeHtml(t.text)}</span>
+        ${cfg.moveTo ? `<button type="button" class="todo-row-move" data-checklist-move="${escapeAttr(t.id)}" title="${escapeAttr(cfg.moveLabel)}" aria-label="${escapeAttr(cfg.moveLabel)}">⇄</button>` : ''}
+        <button type="button" class="todo-row-edit" data-checklist-edit="${escapeAttr(t.id)}" title="Modifier" aria-label="Modifier « ${escapeAttr(t.text)} »">✎</button>
         <button type="button" class="todo-row-remove" data-checklist-remove="${escapeAttr(t.id)}" title="Supprimer" aria-label="Supprimer « ${escapeAttr(t.text)} »">✕</button>
       </label>`).join('')
     : '<p class="meta tight">Aucune tâche en attente.</p>';
-  $(cfg.panel)?.classList.toggle('has-pending', items.some(t => !t.done));
+  if (editingId) {
+    const input = host.querySelector('[data-checklist-edit-input]');
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+  // todo/todoshared partagent un seul panel : has-pending reflète les 2 espaces.
+  if (key === 'todo' || key === 'todoshared') updateTodoPriorityPending();
+  else $(cfg.panel)?.classList.toggle('has-pending', items.some(t => !t.done));
   if (cfg.badge) {
     const nb = visibles.filter(t => !t.done).length;
     const badge = $(cfg.badge);
@@ -4024,10 +4341,8 @@ function renderChecklist(key) {
 }
 function wireChecklist(key) {
   const cfg = CHECKLISTS[key];
-  // Retours #4 (18/08/2026) — champ passé en <textarea> pour laisser plus de
-  // place à la rédaction ; Entrée valide toujours, Maj+Entrée insère un saut
-  // de ligne (sinon impossible d'écrire une note sur plusieurs lignes).
-  $(cfg.input)?.addEventListener('keydown', async (event) => {
+  // todo/todoshared n'ont pas de champ propre (voir wireSharedTodoInput).
+  if (cfg.input) $(cfg.input)?.addEventListener('keydown', async (event) => {
     if (event.key !== 'Enter' || event.shiftKey) return;
     event.preventDefault();
     const input = event.target;
@@ -4050,14 +4365,87 @@ function wireChecklist(key) {
   });
   $(cfg.list)?.addEventListener('click', async (event) => {
     const del = event.target.closest('[data-checklist-remove]');
-    if (!del) return;
-    const arr = checklistItems(key);
-    const idx = arr.findIndex(t => t.id === del.dataset.checklistRemove);
-    if (idx < 0) return;
-    arr.splice(idx, 1);
-    renderChecklist(key);
-    await saveData('Tâche supprimée', { rerender: false });
+    if (del) {
+      const arr = checklistItems(key);
+      const idx = arr.findIndex(t => t.id === del.dataset.checklistRemove);
+      if (idx < 0) return;
+      arr.splice(idx, 1);
+      renderChecklist(key);
+      await saveData('Tâche supprimée', { rerender: false });
+      return;
+    }
+    const edit = event.target.closest('[data-checklist-edit]');
+    if (edit) {
+      checklistEditingId[key] = edit.dataset.checklistEdit;
+      renderChecklist(key);
+      return;
+    }
+    // Bouton ⇄ : change une tâche d'espace (Personnel ↔ Commun) après coup.
+    const move = event.target.closest('[data-checklist-move]');
+    if (move && cfg.moveTo) {
+      const arr = checklistItems(key);
+      const idx = arr.findIndex(t => t.id === move.dataset.checklistMove);
+      if (idx < 0) return;
+      const [item] = arr.splice(idx, 1);
+      checklistItems(cfg.moveTo).push(item);
+      renderChecklist(key);
+      renderChecklist(cfg.moveTo);
+      await saveData('Tâche déplacée', { rerender: false });
+    }
   });
+  // Édition en place : Entrée valide (Maj+Entrée = saut de ligne, comme le
+  // champ d'ajout), Échap annule sans enregistrer, la perte de focus valide
+  // (convention édition en place déjà utilisée ailleurs dans l'app).
+  $(cfg.list)?.addEventListener('keydown', async (event) => {
+    const input = event.target.closest('[data-checklist-edit-input]');
+    if (!input) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      checklistEditingId[key] = null;
+      renderChecklist(key);
+      return;
+    }
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      input.blur();
+    }
+  });
+  $(cfg.list)?.addEventListener('focusout', async (event) => {
+    const input = event.target.closest('[data-checklist-edit-input]');
+    if (!input) return;
+    const id = input.dataset.checklistEditInput;
+    if (checklistEditingId[key] !== id) return; // déjà validé/annulé (Échap)
+    const text = input.value.trim();
+    checklistEditingId[key] = null;
+    const item = checklistItems(key).find(t => t.id === id);
+    if (item && text && text !== item.text) {
+      item.text = text;
+      renderChecklist(key);
+      await saveData('Tâche modifiée', { rerender: false });
+      return;
+    }
+    renderChecklist(key);
+  });
+}
+
+/* Champ d'ajout unique de l'encart « À faire » fusionné : un textarea, 2
+   boutons (« Personnel » / « Commun ») qui rangent la tâche dans l'espace
+   choisi. Entrée insère juste une ligne, comme un textarea normal. */
+function wireSharedTodoInput() {
+  const input = $('#todoNewInput');
+  if (!input) return;
+  const ajouter = async (key) => {
+    const text = input.value.trim();
+    if (!text) return;
+    const cfg = CHECKLISTS[key];
+    checklistItems(key).push({ id: uid(cfg.idPrefix), text, done: false, doneAt: '' });
+    input.value = '';
+    renderChecklist(key);
+    await saveData('Tâche ajoutée', { rerender: false });
+    input.focus();
+  };
+  $('#todoAddPersoButton')?.addEventListener('click', () => ajouter('todo'));
+  $('#todoAddCommunButton')?.addEventListener('click', () => ajouter('todoshared'));
 }
 
 /* Bouton ⧉ de l'encart « Améliorations de l'appli » : copie la liste (en
@@ -5308,7 +5696,10 @@ function renderWeekStrip() {
 
   // 17/08 — le texte "Septembre-décembre S36→S53 · cliquer une semaine" (ex-#weekStripLabel)
   // doublonnait les boutons Sept./Janv. ci-dessus : retiré, les boutons suffisent seuls.
-  const weeks = state.weeks.filter(w => weekStripPeriodOf(w) === weekStripPeriod);
+  // Retour Martin (02/09/2026) — un simple filtre par numéro de semaine peut
+  // ramener deux tronçons (reliquat de l'année scolaire précédente + année en
+  // cours, cf. tronconWeekStripPeriod) : un seul tronçon, jamais mélangés.
+  const weeks = tronconWeekStripPeriod(weekStripPeriod);
 
   const strip = $('#weekStrip');
   if (!strip) return;
@@ -5942,30 +6333,513 @@ function openSequenceModal(sequence = null, context = {}) {
   $('#sequenceDialog')._dirty = false;
 }
 
-/* Séance : simple coche depuis Ajustements #2 (18/08/2026) — le mode réel
-   ('etablissement'/'personnel') est gardé sur dataset.mode plutôt que redemandé
-   à la saisie, pour ne pas écraser une bascule « personnel » déjà faite depuis
-   le tableau de bord (data-bascule-vehicule) quand on rouvre la fiche. Cochée
-   sans mode connu (nouvelle séance) → établissement, la priorité voulue. */
-function deplacementModeOf(prefixe) {
-  if (prefixe === 'reunion') return $('#reunionDeplacement')?.value || '';
-  const cb = $('#sessionDeplacement');
-  return cb?.checked ? (cb.dataset.mode || 'etablissement') : '';
+// Retours 02/09/2026 (reprise 2) — Martin : « beaucoup trop de coches, mal
+// organisées », « gérer depuis tous les espaces d'infos sans ouvrir le menu
+// de conception ». Toutes les anciennes coches du formulaire (mode mixte,
+// qui conduit, modèles, réservé…) sont retirées d'ici — remplacées par UNE
+// fenêtre (#deplacementGestionDialog, plus bas) ouvrable depuis n'importe
+// quelle surface (carte séance, Urgences, mobile, et le résumé ci-dessous
+// dans le formulaire) via ouvrirDeplacementGestion(source, id). Un compte
+// peut y gérer le déplacement de l'AUTRE enseignant (retour Martin) : rien
+// n'y est filtré par compte.
+// Statut réservé d'UN modèle précis. Se rabat sur `vehicleBooked` (la case
+// générique unique d'avant) si aucun modèle n'a été précisé — rétro-
+// compatible avec toute séance/réunion qui n'a jamais touché à ce champ.
+function vehiculeModeleReserve(entity, modele) {
+  const reserves = entity?.vehiculeReserves;
+  if (modele && reserves && typeof reserves === 'object' && modele in reserves) return !!reserves[modele];
+  return !!entity?.vehicleBooked;
+}
+// Séance/réunion à PLUSIEURS enseignants, en véhicule personnel (retours
+// 02/09/2026, scénarios covoiturage / 2 véhicules perso séparés) : qui
+// conduit réellement, parmi les enseignants de l'entité. Un seul enseignant
+// → toujours lui (rétro-compatible, comportement inchangé). Deux
+// enseignants sans choix explicite (donnée d'avant cette fonctionnalité,
+// ou jamais touché) → les deux par défaut, comme le comportement actuel
+// (chacun des deux comptes voit l'ODM). Cocher/décocher dans le formulaire
+// (n'importe lequel des deux comptes peut le faire, cf. discussion Martin
+// 02/09/2026) affine ensuite qui a vraiment l'ODM/les frais à son nom — les
+// autres deviennent des accompagnants (missionDetail.accompagnants,
+// cf. defaultMissionDetail), sans ODM ni frais à leur nom (REGLES.md #28/#29).
+function deplacementConducteurs(entity) {
+  const tokens = teacherTokens(entity?.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  // Retours 02/09/2026 (mode mixte) — ne considère que le sous-ensemble
+  // effectivement en véhicule personnel (deplacementModeFor tient compte de
+  // l'exception éventuelle du 2e enseignant). Un seul dans ce sous-ensemble
+  // → toujours lui, rien à départager (mode mixte comme avant, single-teacher).
+  const enPersonnel = tokens.filter(t => deplacementModeFor(entity, t) === 'personnel');
+  if (enPersonnel.length <= 1) return enPersonnel;
+  const choisis = Array.isArray(entity?.deplacementConducteurs)
+    ? entity.deplacementConducteurs.filter(t => enPersonnel.includes(t)) : [];
+  return choisis.length ? choisis : enPersonnel;
+}
+function estConducteurDeplacement(entity, initiales) {
+  const clean = String(initiales || '').toUpperCase();
+  return !!clean && deplacementConducteurs(entity).includes(clean);
+}
+// Retours 02/09/2026 (reprise, retour Martin : « pas fonctionnel ») —
+// symétrique de deplacementConducteurs, côté ÉTABLISSEMENT : à 2
+// enseignants tous deux en établissement, l'hypothèse de DÉPART est qu'il
+// faut 2 véhicules (un chacun), pas 1 qui referme toute la démarche dès
+// qu'il est réservé. Rien coché explicitement → LES DEUX par défaut (même
+// logique que deplacementConducteurs pour le perso). Décocher l'un des deux
+// dans le formulaire vaut « covoiturage » : on retombe sur la démarche
+// UNIQUE et partagée déjà en place (vehiculeModeles/vehicleBooked/
+// vehiculeReserves), exactement comme pour un seul enseignant. Ne s'applique
+// QUE si les 2 enseignants sont dans le MÊME mode établissement — en mode
+// mixte, chacun a de toute façon sa propre démarche (l'un étab, l'autre
+// perso), pas de question de covoiturage à poser ici.
+function deplacementVehiculesIndividuels(entity) {
+  const tokens = teacherTokens(entity?.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  if (tokens.length !== 2) return [];
+  const modes = tokens.map(t => deplacementModeFor(entity, t));
+  if (modes[0] !== 'etablissement' || modes[1] !== 'etablissement') return [];
+  const choisis = Array.isArray(entity?.deplacementVehiculesIndividuels)
+    ? entity.deplacementVehiculesIndividuels.filter(t => tokens.includes(t)) : [];
+  return choisis.length ? choisis : tokens;
+}
+// Statut réservé du véhicule PROPRE à un enseignant (cas des 2 démarches
+// individuelles ci-dessus) — distinct de vehiculeModeleReserve, qui porte
+// sur la démarche UNIQUE partagée.
+function vehiculeReserveEnseignant(entity, initiales) {
+  const reserves = entity?.vehiculeReserveParEnseignant;
+  const clean = String(initiales || '').toUpperCase();
+  return !!(reserves && typeof reserves === 'object' && reserves[clean]);
+}
+// Retours 02/09/2026 (reprise 2) — Martin : « on ne peut pas toujours
+// renseigner le type de véhicule ». Modèle propre à un enseignant (cas des
+// 2 démarches individuelles) : optionnel, stocke soit une clé connue
+// (traffic/lodgy/jogger), soit un texte libre tapé pour « autre » — les deux
+// se distinguent juste par VEHICULE_MODELE_LABELS[val] (connu) ou val
+// lui-même (texte libre) à l'affichage, pas de champ « autre » séparé à gérer.
+function vehiculeModeleEnseignant(entity, initiales) {
+  const modeles = entity?.vehiculeModeleParEnseignant;
+  const clean = String(initiales || '').toUpperCase();
+  return (modeles && typeof modeles === 'object' && modeles[clean]) || '';
+}
+function vehiculeIndividuelLabel(entity, initiales) {
+  const modele = vehiculeModeleEnseignant(entity, initiales);
+  const nomModele = modele ? (VEHICULE_MODELE_LABELS[modele] || modele) : '';
+  return nomModele ? `${VEHICULE_LABEL} (${initiales} — ${nomModele})` : `${VEHICULE_LABEL} (${initiales})`;
+}
+const VEHICULE_MODELES_CONNUS = Object.keys(VEHICULE_MODELE_LABELS);
+
+// Retours 03/09/2026 — Martin : « un ODM couvre un seul conducteur ». À 2
+// enseignants tous deux en véhicule personnel SANS covoiturage
+// (deplacementConducteurs renvoie les 2), il faut 2 ordres de mission
+// indépendants, pas un document partagé qui se marquerait « envoyé » pour
+// les deux à la fois dès que l'un l'envoie. Dans tous les autres cas (1 seul
+// enseignant, ou covoiturage personnel réduit à 1 conducteur), le
+// comportement historique — un seul entity.ordreMission/missionDetail — ne
+// change pas : ces accesseurs ne font que router vers le bon endroit.
+function missionEntiteADeuxOdm(entity) {
+  return deplacementConducteurs(entity).length === 2;
+}
+function ordreMissionEnvoye(entity, teacher = '') {
+  const clean = String(teacher || '').toUpperCase();
+  if (clean && missionEntiteADeuxOdm(entity)) {
+    const map = entity?.ordreMissionParEnseignant;
+    return !!(map && typeof map === 'object' && map[clean]);
+  }
+  return !!entity?.ordreMission;
+}
+function setOrdreMissionEnvoye(entity, teacher, val) {
+  const clean = String(teacher || '').toUpperCase();
+  if (clean && missionEntiteADeuxOdm(entity)) {
+    if (!entity.ordreMissionParEnseignant || typeof entity.ordreMissionParEnseignant !== 'object') entity.ordreMissionParEnseignant = {};
+    entity.ordreMissionParEnseignant[clean] = val;
+  } else {
+    entity.ordreMission = val;
+  }
+}
+// Lecture/écriture BRUTE du document (sans les valeurs par défaut — voir
+// defaultMissionDetail/ensureMissionDetail), même routage que ci-dessus.
+function missionDetailBrut(entity, teacher = '') {
+  const clean = String(teacher || '').toUpperCase();
+  if (clean && missionEntiteADeuxOdm(entity)) {
+    return (entity?.missionDetailParEnseignant && entity.missionDetailParEnseignant[clean]) || null;
+  }
+  return entity?.missionDetail || null;
+}
+function setMissionDetailBrut(entity, teacher, detail) {
+  const clean = String(teacher || '').toUpperCase();
+  if (clean && missionEntiteADeuxOdm(entity)) {
+    if (!entity.missionDetailParEnseignant || typeof entity.missionDetailParEnseignant !== 'object') entity.missionDetailParEnseignant = {};
+    entity.missionDetailParEnseignant[clean] = detail;
+  } else {
+    entity.missionDetail = detail;
+  }
 }
 
-/* N'affiche que la suite qui correspond au mode choisi : une réservation de
-   véhicule pour l'établissement, un ordre de mission pour le véhicule personnel.
-   Même fonction pour les deux modales — les identifiants ne diffèrent que par le
-   préfixe. */
-function syncDeplacementFields(prefixe) {
-  const p = prefixe === 'reunion' ? 'reunion' : 'session';
-  const mode = deplacementModeOf(prefixe);
-  const suite = $('#sessionDeplacementSuite');
-  const vehicule = $(`#${p}VehicleBookedField`);
-  const mission = $(`#${p}OrdreMissionField`);
-  if (vehicule) vehicule.hidden = mode !== 'etablissement';
-  if (mission) mission.hidden = mode !== 'personnel';
-  if (p === 'session' && suite) suite.hidden = !mode;
+// Résumé en 1 ligne pour le formulaire de conception (lecture seule) — le
+// détail se gère désormais dans #deplacementGestionDialog.
+function deplacementResumeTexte(entity) {
+  const tokens = teacherTokens(entity?.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  if (!deplacementModesPresents(entity).size) return 'aucun';
+  if (tokens.length <= 1) {
+    const mode = entity?.deplacement || '';
+    return mode === 'etablissement'
+      ? `établissement — ${entity.vehicleBooked ? 'réservé' : 'à réserver'}`
+      : `personnel — ${entity.ordreMission ? 'ODM demandé' : 'ODM à faire'}`;
+  }
+  return tokens.map(t => {
+    const mode = deplacementModeFor(entity, t);
+    if (!mode) return `${t} : aucun`;
+    if (mode === 'etablissement') {
+      const reserve = deplacementVehiculesIndividuels(entity).includes(t)
+        ? vehiculeReserveEnseignant(entity, t)
+        : !!entity.vehicleBooked;
+      return `${t} : établissement (${reserve ? 'réservé' : 'à réserver'})`;
+    }
+    return `${t} : personnel (${estConducteurDeplacement(entity, t) ? (ordreMissionEnvoye(entity, t) ? 'ODM envoyé' : 'ODM à faire') : 'accompagnant·e'})`;
+  }).join(' · ');
+}
+
+// Retours 03/09/2026 — indicateur UNIQUE par carte séance (desktop + mobile,
+// dashEtiquettes est déjà partagé entre les deux) : remplace la pile
+// d'étiquettes une-par-démarche (qui débordait des tuiles à 2 enseignants)
+// par un seul état agrégé. Générique (séance ou réunion) — total = nombre de
+// démarches nécessaires (véhicule(s) + ODM(s)), faites = déjà réglées.
+// etat dérivé, jamais stocké : rien à « confirmer », on peut toujours
+// revenir en arrière en rouvrant Gérer.
+// total/faites du côté établissement seul (véhicule(s)) — factorisé pour
+// être réutilisé tel quel par la ligne Urgences véhicule (retours 03/09/2026,
+// reprise 5 : fusionner ses 2 lignes par enseignant en une seule, comme la
+// pastille de carte, pour ne plus faire doublon dans la pile).
+function deplacementEtatEtablissement(entity) {
+  if (!deplacementModesPresents(entity).has('etablissement')) return null;
+  let total = 0, faites = 0;
+  // Démarche PARTAGÉE (covoiturage, ou 1 seul enseignant) : signalée par les
+  // champs partagés renseignés — jamais par deplacementVehiculesIndividuels
+  // seul, qui renvoie « les deux » par défaut tant que rien n'a été choisi
+  // explicitement, y compris pour une démarche déjà réglée en covoiturage
+  // (même bug que deplacementGestionChoixInitial, corrigé là aussi).
+  const partagee = !!(entity.vehicleBooked || (entity.vehiculeModeles && entity.vehiculeModeles.length) || entity.vehiculeModeleAutre);
+  const individuels = partagee ? [] : deplacementVehiculesIndividuels(entity);
+  if (individuels.length === 2) {
+    individuels.forEach(t => { total++; if (vehiculeReserveEnseignant(entity, t)) faites++; });
+  } else {
+    const modeles = Array.isArray(entity.vehiculeModeles) ? entity.vehiculeModeles : [];
+    if (!modeles.length) { total++; if (entity.vehicleBooked) faites++; }
+    else modeles.forEach(m => { total++; if (vehiculeModeleReserve(entity, m)) faites++; });
+  }
+  return { total, faites };
+}
+// Symétrique côté personnel (ODM(s)).
+function deplacementEtatPersonnel(entity) {
+  if (!deplacementModesPresents(entity).has('personnel')) return null;
+  let total = 0, faites = 0;
+  const conducteurs = deplacementConducteurs(entity);
+  if (conducteurs.length === 2) {
+    conducteurs.forEach(t => { total++; if (ordreMissionEnvoye(entity, t)) faites++; });
+  } else {
+    total++; if (entity.ordreMission) faites++;
+  }
+  return { total, faites };
+}
+function deplacementEtatCarte(entity) {
+  const modesPresents = deplacementModesPresents(entity);
+  // Retours 03/09/2026 (reprise 5) — « Déplacement nécessaire » coché mais
+  // aucun picto encore choisi (deplacementActif, cf. deplacementFieldsPassthrough) :
+  // garde la pastille visible en « à décider » plutôt que la faire
+  // disparaître — sinon impossible de revenir à cet état une fois tout
+  // désélectionné (il fallait rouvrir Gérer à l'aveugle).
+  if (!modesPresents.size) return entity.deplacementActif ? { etat: 'a-decider', total: 0, faites: 0, nature: '' } : null;
+  let total = 0, faites = 0;
+  const etab = deplacementEtatEtablissement(entity);
+  if (etab) { total += etab.total; faites += etab.faites; }
+  const perso = deplacementEtatPersonnel(entity);
+  if (perso) { total += perso.total; faites += perso.faites; }
+  if (!total) return null;
+  const etat = faites === 0 ? 'a-decider' : (faites === total ? 'regle' : 'en-attente');
+  // Retours 03/09/2026 (reprise 4) — Martin : la pastille « Déplacement
+  // (0/2 réglé) » ne dit pas s'il s'agit d'un véhicule à réserver ou d'un
+  // ODM à éditer. nature dit ce qui reste à faire (mixte seulement quand
+  // les 2 natures cohabitent — mode mixte étab/perso sur une même entité).
+  const nature = modesPresents.size === 2 ? 'mixte' : modesPresents.has('personnel') ? 'personnel' : 'etablissement';
+  return { etat, total, faites, nature, etab, perso };
+}
+// Texte de la pastille/du bouton, réutilisé par dashEtiquettes (cartes) et
+// gererDeplacementMarkup (Urgences) — même calcul partout.
+function deplacementBadgeTexteSimple(nature, faites, total) {
+  const nom = nature === 'personnel' ? 'ODM' : nature === 'etablissement' ? 'Véhicule' : 'Déplacement';
+  const verbeFait = nature === 'etablissement' ? 'réservé' : nature === 'personnel' ? 'envoyé' : 'réglé';
+  const verbeAFaire = nature === 'etablissement' ? 'à réserver' : nature === 'personnel' ? 'à faire' : 'à régler';
+  const s = total > 1 ? 's' : '';
+  // total===0 (rien encore décidé, cf. l'état « à décider » de
+  // deplacementEtatCarte) : 0 === 0 se lisait à tort comme « tout réglé »
+  // (retours 03/09/2026, reprise 6 — pastille rouge « Déplacement réglé »
+  // après désélection de tous les pictos). Doit tomber dans le cas « à faire ».
+  if (total > 0 && faites === total) return `${nom} ${verbeFait}${s}`;
+  if (total > 1) return `${nom} (${faites}/${total} ${verbeFait}${s})`;
+  return `${nom} ${verbeAFaire}`;
+}
+// Retours 03/09/2026 (reprise 6) — Martin : « établissement réservé + perso
+// avec ODM à faire » affichait juste « Déplacement (1/2 réglé) », sans dire
+// QUOI reste à faire. En mode mixte (étab + perso sur la même entité), dit
+// précisément ce qui manque plutôt que le total agrégé.
+function deplacementBadgeTexte(etat) {
+  if (etat.nature === 'mixte' && etat.etab && etat.perso) {
+    const etabDone = etat.etab.faites === etat.etab.total;
+    const persoDone = etat.perso.faites === etat.perso.total;
+    if (etabDone && !persoDone) return deplacementBadgeTexteSimple('personnel', etat.perso.faites, etat.perso.total);
+    if (persoDone && !etabDone) return deplacementBadgeTexteSimple('etablissement', etat.etab.faites, etat.etab.total);
+    if (etabDone && persoDone) return 'Déplacement réglé';
+    return 'Véhicule et ODM à faire';
+  }
+  return deplacementBadgeTexteSimple(etat.nature, etat.faites, etat.total);
+}
+
+// ---- Fenêtre unique « Déplacement » (retours 02/09/2026, reprise 2) -------
+// Ouvrable depuis n'importe quelle surface (carte séance, Urgences, mobile,
+// résumé du formulaire) via ouvrirDeplacementGestion(source, id). Toujours
+// une ligne PAR enseignant.
+// Retours 03/09/2026 (reprise 4) — Martin : trop d'étapes pour réserver un
+// véhicule établissement (choisir le mode, choisir le modèle, cocher
+// Réservé). Remplacé par UN picto par véhicule potentiel, par enseignant :
+// cliquer choisit ET réserve en un seul geste. Un seul champ cache par
+// enseignant (data-dg-choix) porte tout l'état :
+//   ''                     → rien décidé (à décider)
+//   'etablissement:MODELE' → ce véhicule d'établissement, réservé
+//   'personnel'            → véhicule personnel, ODM à sa charge
+//   'covoiturage'          → partage la démarche de l'AUTRE enseignant
+// Le picto « Covoiturage avec X » n'apparaît que si X a déjà un choix
+// concret (établissement ou personnel) — pas de covoiturage avec quelqu'un
+// qui n'a lui-même rien décidé.
+const DG_VEHICULES = [
+  { v: 'traffic', label: 'Traffic', places: 9, attelage: true },
+  { v: 'lodgy', label: 'Lodgy', places: 7, attelage: true },
+  { v: 'jogger', label: 'Jogger', places: 7, attelage: false },
+  { v: 'autre', label: 'Autre…', places: 0, attelage: false }
+];
+let deplacementGestionCible = { source: '', id: '' };
+function deplacementGestionEntite() {
+  return deplacementGestionCible.source === 'reunion'
+    ? (state.reunions || []).find(r => r.id === deplacementGestionCible.id)
+    : findSession(deplacementGestionCible.id);
+}
+function ouvrirDeplacementGestion(source, id) {
+  const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+  if (!entity) return;
+  deplacementGestionCible = { source, id };
+  $('#deplacementGestionTarget').value = `${source}:${id}`;
+  $('#deplacementGestionTitle').textContent = `Déplacement — ${entity.title || entity.sujets || (source === 'reunion' ? 'Réunion' : 'Séance')}`;
+  // Retours 03/09/2026 (reprise 5) — deplacementActif est la source de
+  // vérité (peut être coché sans qu'aucun picto n'ait encore été choisi) ;
+  // repli sur deplacementModesPresents pour une entité enregistrée avant
+  // l'ajout de ce champ (déjà un mode concret, donc forcément « active »).
+  $('#deplacementGestionActif').checked = entity.deplacementActif || !!deplacementModesPresents(entity).size;
+  renderDeplacementGestionRows(entity);
+  $('#deplacementGestionDialog').showModal();
+}
+function deplacementGestionLireChoix(teacher) {
+  return document.querySelector(`[data-dg-choix="${CSS.escape(teacher)}"]`)?.value || '';
+}
+function deplacementGestionEcrireChoix(teacher, valeur) {
+  const input = document.querySelector(`[data-dg-choix="${CSS.escape(teacher)}"]`);
+  if (input) input.value = valeur;
+}
+// Retours 03/09/2026 (reprise 6) — Martin : des pictogrammes plutôt que du
+// texte seul (icône « voiture » déjà utilisée ailleurs dans l'appli, cf.
+// mobileIconMarkup/URGENCE_KIND_PICTOS — même vocabulaire visuel, pas de
+// nouvel astre à charge graphique) + un chiffre de places (établissement
+// seulement) + un symbole attelage explicite sur les véhicules qui en ont
+// un. Les noms restent affichés (juste demandé), l'icône vient en plus.
+function deplacementGestionPictosMarkup(teacher, choix, autreConcret, choixAutre) {
+  const boutonEtab = v => {
+    const valeur = `etablissement:${v.v}`;
+    const actif = choix === valeur;
+    // Retours 03/09/2026 (reprise 6) — Martin : un seul Traffic/Lodgy/Jogger
+    // au garage, pas 2 réservations simultanées du même véhicule sur la
+    // même séance/réunion — grisé si l'autre enseignant l'a déjà pris.
+    // Ne s'applique ni à « Autre… » (texte libre, pas forcément le même
+    // véhicule) ni au personnel (chacun le sien).
+    const prisParAutre = v.v !== 'autre' && choixAutre === valeur;
+    const detail = prisParAutre ? `Déjà réservé par ${escapeAttr(autreConcret)}` : [v.places ? `${v.places} places` : '', v.attelage ? 'avec attelage' : ''].filter(Boolean).join(' + ');
+    return `<button type="button" class="dg-picto${actif ? ' est-actif' : ''}" data-dg-picto="${escapeAttr(teacher)}" data-dg-picto-valeur="${valeur}" aria-pressed="${actif}" ${prisParAutre ? 'disabled' : ''} title="${escapeAttr(detail || v.label)}">
+      ${mobileIconMarkup('voiture')}<span class="dg-picto-label">${escapeHtml(v.label)}</span>
+      ${v.places ? `<span class="dg-picto-places" title="${v.places} places">${v.places}</span>` : ''}
+      ${v.attelage ? `<span class="dg-picto-attelage" title="Avec attelage">${mobileIconMarkup('attelage')}</span>` : ''}
+    </button>`;
+  };
+  const boutonPerso = `<button type="button" class="dg-picto${choix === 'personnel' ? ' est-actif' : ''}" data-dg-picto="${escapeAttr(teacher)}" data-dg-picto-valeur="personnel" aria-pressed="${choix === 'personnel'}" title="Véhicule personnel — un ordre de mission à faire">${mobileIconMarkup('voiture')}<span class="dg-picto-label">Véhicule personnel</span></button>`;
+  const boutonCovoit = autreConcret ? `<button type="button" class="dg-picto${choix === 'covoiturage' ? ' est-actif' : ''}" data-dg-picto="${escapeAttr(teacher)}" data-dg-picto-valeur="covoiturage" aria-pressed="${choix === 'covoiturage'}" title="Partage la démarche de ${escapeAttr(autreConcret)}"><span class="dg-picto-label">Covoiturage avec ${escapeHtml(autreConcret)}</span></button>` : '';
+  return `<div class="deplacement-gestion-pictos" data-dg-pictos="${escapeAttr(teacher)}" role="group" aria-label="Véhicule — ${escapeAttr(teacher)}">${DG_VEHICULES.map(boutonEtab).join('')}${boutonPerso}${boutonCovoit}</div>`;
+}
+// Statut ODM vivant dans la fenêtre Gérer (au lieu du renvoi statique vers
+// d'autres tuiles) : lu depuis le formulaire en cours d'édition (2 ODM
+// indépendants seulement si l'AUTRE enseignant est, lui aussi, en
+// 'personnel' — jamais en 'covoiturage'), pas depuis l'entité enregistrée
+// (encore sur son ancien état tant que « Enregistrer » n'a pas été cliqué).
+function deplacementGestionOdmEnvoyeLive(teacher, entity, tokens) {
+  if (tokens.length < 2) return !!entity.ordreMission;
+  const autre = tokens.find(t => t !== teacher);
+  const deuxOdm = deplacementGestionLireChoix(autre) === 'personnel';
+  return deuxOdm
+    ? !!(entity.ordreMissionParEnseignant && entity.ordreMissionParEnseignant[teacher])
+    : !!entity.ordreMission;
+}
+function odmBlocMarkup(teacher, entity, tokens) {
+  const envoye = deplacementGestionOdmEnvoyeLive(teacher, entity, tokens);
+  const missionAttr = `${escapeAttr(deplacementGestionCible.source)}:${escapeAttr(deplacementGestionCible.id)}:${escapeAttr(teacher)}`;
+  return `<span class="deplacement-gestion-odm-statut${envoye ? ' est-envoye' : ''}">${envoye ? 'ODM envoyé' : 'ODM à faire'}</span>
+    <button type="button" class="small secondary" data-open-mission="${missionAttr}">Ouvrir l'ODM →</button>`;
+}
+function deplacementGestionRowMarkup(teacher, choix, autreTeacher, choixAutre, autreTexteInitial, entity, tokens) {
+  const autreConcret = choixAutre && choixAutre !== 'covoiturage' ? autreTeacher : '';
+  const modeleActuel = choix.startsWith('etablissement:') ? choix.slice('etablissement:'.length) : '';
+  return `<div class="deplacement-gestion-row" data-dg-row="${escapeAttr(teacher)}">
+    <div class="deplacement-gestion-row-head"><strong>${escapeHtml(teacher)}</strong></div>
+    <input type="hidden" data-dg-choix="${escapeAttr(teacher)}" value="${escapeAttr(choix)}" />
+    ${deplacementGestionPictosMarkup(teacher, choix, autreConcret, choixAutre)}
+    <input type="text" class="dg-autre-texte" data-dg-autre-texte="${escapeAttr(teacher)}" placeholder="Préciser le véhicule" value="${escapeAttr(autreTexteInitial)}" ${modeleActuel === 'autre' ? '' : 'hidden'} />
+    <div class="deplacement-gestion-row-odm" ${choix === 'personnel' ? '' : 'hidden'}>${choix === 'personnel' ? odmBlocMarkup(teacher, entity, tokens) : ''}</div>
+  </div>`;
+}
+// Choix initial d'un enseignant, déduit de l'entité ENREGISTRÉE (au premier
+// rendu du dialogue seulement — ensuite tout part du formulaire, cf.
+// deplacementGestionRafraichirTout). Un ancien enregistrement « établissement
+// réservé, sans modèle précisé » (avant ce picto) redevient « à décider » :
+// il n'y a plus de picto générique sans modèle, il faut en repicker un.
+function deplacementGestionChoixInitial(entity, teacher, tokens) {
+  const mode = deplacementModeFor(entity, teacher) || '';
+  if (mode === 'personnel') return estConducteurDeplacement(entity, teacher) ? 'personnel' : 'covoiturage';
+  if (mode !== 'etablissement') return '';
+  const versChoix = raw => {
+    if (!raw) return '';
+    const key = VEHICULE_MODELES_CONNUS.includes(raw) ? raw : 'autre';
+    return `etablissement:${key}`;
+  };
+  // Démarche PARTAGÉE (covoiturage établissement, ou 1 seul enseignant) :
+  // signalée par les champs partagés renseignés (vehicleBooked/
+  // vehiculeModeles/vehiculeModeleAutre) — jamais par
+  // deplacementVehiculesIndividuels seul, qui renvoie « les deux » par
+  // défaut tant que rien n'a été choisi explicitement, y compris pour une
+  // démarche déjà réglée en covoiturage (deplacementGestionEnregistrer ne
+  // touche jamais ce champ dans ce cas).
+  const partagee = !!(entity.vehicleBooked || (entity.vehiculeModeles && entity.vehiculeModeles.length) || entity.vehiculeModeleAutre);
+  if (partagee) {
+    if (tokens.length === 2 && teacher !== tokens[0]) return 'covoiturage';
+    return versChoix((entity.vehiculeModeles && entity.vehiculeModeles[0]) || (entity.vehiculeModeleAutre ? 'autre' : ''));
+  }
+  if (tokens.length === 2 && !deplacementVehiculesIndividuels(entity).includes(teacher)) return '';
+  return vehiculeReserveEnseignant(entity, teacher) ? versChoix(vehiculeModeleEnseignant(entity, teacher)) : '';
+}
+function renderDeplacementGestionRows(entity) {
+  const host = $('#deplacementGestionRows');
+  if (!host) return;
+  const tokens = teacherTokens(entity?.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  if (!$('#deplacementGestionActif')?.checked || !tokens.length) { host.innerHTML = ''; return; }
+  const choix = {}, autreTexte = {};
+  tokens.forEach(t => {
+    choix[t] = deplacementGestionChoixInitial(entity, t, tokens);
+    const individuel = tokens.length === 2 && deplacementVehiculesIndividuels(entity).includes(t);
+    autreTexte[t] = choix[t] === 'etablissement:autre'
+      ? (individuel ? (vehiculeModeleEnseignant(entity, t) || '') : (entity.vehiculeModeleAutre || ''))
+      : '';
+  });
+  host.innerHTML = tokens.map(t => {
+    const autre = tokens.find(x => x !== t) || '';
+    return deplacementGestionRowMarkup(t, choix[t], autre, choix[autre] || '', autreTexte[t], entity, tokens);
+  }).join('');
+}
+// Régénère entièrement les lignes depuis les choix en cours dans le
+// formulaire (pas l'entité enregistrée) — plus simple et plus sûr qu'un
+// rafraîchissement ligne par ligne vu les dépendances croisées (le picto
+// Covoiturage d'une ligne dépend du choix de l'autre, l'ODM à 2 aussi).
+function deplacementGestionRafraichirTout() {
+  const entity = deplacementGestionEntite();
+  const host = $('#deplacementGestionRows');
+  if (!entity || !host) return;
+  const tokens = teacherTokens(entity.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  // Un covoiturage dont la cible n'est plus concrète (l'autre a changé
+  // d'avis ou s'est désélectionné) redevient « à décider », plutôt que de
+  // rester figé sur un choix devenu invisible/orphelin.
+  tokens.forEach(t => {
+    if (deplacementGestionLireChoix(t) !== 'covoiturage') return;
+    const autre = tokens.find(x => x !== t);
+    const choixAutre = deplacementGestionLireChoix(autre);
+    if (!choixAutre || choixAutre === 'covoiturage') deplacementGestionEcrireChoix(t, '');
+  });
+  const choix = {}, autreTexte = {};
+  tokens.forEach(t => {
+    choix[t] = deplacementGestionLireChoix(t);
+    autreTexte[t] = document.querySelector(`[data-dg-autre-texte="${CSS.escape(t)}"]`)?.value || '';
+  });
+  host.innerHTML = tokens.map(t => {
+    const autre = tokens.find(x => x !== t) || '';
+    return deplacementGestionRowMarkup(t, choix[t], autre, choix[autre] || '', autreTexte[t], entity, tokens);
+  }).join('');
+}
+// Lit l'état COMPLET du formulaire au moment d'enregistrer, puis répartit
+// entre démarche(s) partagée(s) (covoiturage) ou individuelle(s).
+function deplacementGestionEnregistrer(entity) {
+  const tokens = teacherTokens(entity.teacher || '').map(teacherInitialsOf).filter(Boolean);
+  const vide = {
+    deplacement: '', deplacementModes: {}, vehicleBooked: false, ordreMission: entity.ordreMission,
+    vehiculeModeles: [], vehiculeModeleAutre: '', deplacementConducteurs: [], deplacementVehiculesIndividuels: [],
+    vehiculeModeleParEnseignant: {}, vehiculeReserveParEnseignant: {}, deplacementActif: false
+  };
+  if (!$('#deplacementGestionActif')?.checked || !tokens.length) return vide;
+  const choixDe = t => deplacementGestionLireChoix(t);
+  const natureDe = t => { const c = choixDe(t); return c.startsWith('etablissement:') ? 'etablissement' : c === 'personnel' ? 'personnel' : ''; };
+  const modeleDe = t => {
+    const c = choixDe(t);
+    if (!c.startsWith('etablissement:')) return '';
+    const m = c.slice('etablissement:'.length);
+    if (m !== 'autre') return m;
+    return document.querySelector(`[data-dg-autre-texte="${CSS.escape(t)}"]`)?.value.trim() || '';
+  };
+  const modeleVersChamps = m => ({
+    vehiculeModeles: m ? [VEHICULE_MODELES_CONNUS.includes(m) ? m : 'autre'] : [],
+    vehiculeModeleAutre: m && !VEHICULE_MODELES_CONNUS.includes(m) ? m : ''
+  });
+
+  // Retours 03/09/2026 (reprise 5) — deplacementActif:true dès que la case
+  // « Déplacement nécessaire » est cochée, MÊME si personne n'a encore
+  // cliqué de picto (sinon l'entité retombait à « aucun déplacement » et la
+  // pastille disparaissait — impossible de revenir à un état « à décider »
+  // visible). Un seul point de sortie pour ne l'oublier sur aucune branche.
+  let out;
+  if (tokens.length === 1) {
+    const c = choixDe(tokens[0]);
+    if (c.startsWith('etablissement:')) out = { ...vide, deplacement: 'etablissement', ...modeleVersChamps(modeleDe(tokens[0])), vehicleBooked: true };
+    else if (c === 'personnel') out = { ...vide, deplacement: 'personnel' };
+    else out = { ...vide };
+  } else {
+    const c0 = choixDe(tokens[0]), c1 = choixDe(tokens[1]);
+    let porteur = '';
+    if (c1 === 'covoiturage' && (c0.startsWith('etablissement:') || c0 === 'personnel')) porteur = tokens[0];
+    else if (c0 === 'covoiturage' && (c1.startsWith('etablissement:') || c1 === 'personnel')) porteur = tokens[1];
+
+    if (porteur) {
+      // Démarche unique, partagée — portée par celui/celle qui a un choix concret.
+      const c = choixDe(porteur);
+      out = { ...vide, deplacement: c.startsWith('etablissement:') ? 'etablissement' : 'personnel' };
+      if (c.startsWith('etablissement:')) { Object.assign(out, modeleVersChamps(modeleDe(porteur))); out.vehicleBooked = true; }
+      else out.deplacementConducteurs = [porteur];
+    } else {
+      // Pas de covoiturage : chaque ligne compte pour elle-même (nature peut
+      // être '' — à décider — pour l'une, l'autre, ou les deux).
+      const n0 = natureDe(tokens[0]), n1 = natureDe(tokens[1]);
+      out = { ...vide, deplacement: n0 };
+      if (n1 !== n0) out.deplacementModes = { [tokens[1]]: n1 };
+      if (n0 === 'etablissement' && n1 === 'etablissement') {
+        out.deplacementVehiculesIndividuels = tokens.slice();
+        tokens.forEach(t => { const m = modeleDe(t); if (m) out.vehiculeModeleParEnseignant[t] = m; out.vehiculeReserveParEnseignant[t] = true; });
+      } else if (n0 === 'personnel' && n1 === 'personnel') {
+        out.deplacementConducteurs = tokens.slice();
+      } else {
+        tokens.forEach(t => {
+          const n = natureDe(t);
+          if (n === 'etablissement') { Object.assign(out, modeleVersChamps(modeleDe(t))); out.vehicleBooked = true; }
+          else if (n === 'personnel') out.deplacementConducteurs.push(t);
+        });
+      }
+    }
+  }
+  out.deplacementActif = true;
+  return out;
 }
 
 function openSessionModal(session = null, context = {}) {
@@ -6033,13 +6907,21 @@ function openSessionModal(session = null, context = {}) {
     syncColorSwatchActive('#sessionColorSwatches', '#sessionColorInput');
   }
   renderSessionSlotPicker();
-  if ($('#sessionDeplacement')) {
-    $('#sessionDeplacement').checked = !!session?.deplacement;
-    $('#sessionDeplacement').dataset.mode = session?.deplacement || '';
-    if ($('#sessionVehicleBooked')) $('#sessionVehicleBooked').checked = !!session?.vehicleBooked;
-    if ($('#sessionOrdreMission')) $('#sessionOrdreMission').checked = !!session?.ordreMission;
-    syncDeplacementFields('session');
+  // Retours 02/09/2026 (reprise 2) — le détail se gère dans
+  // #deplacementGestionDialog (ouvrirDeplacementGestion), pas ici : juste le
+  // résumé en lecture. Bouton « Gérer » désactivé pour une NOUVELLE séance
+  // (pas encore d'id à cibler ; l'onglet reste utilisable une fois créée).
+  // Retours 03/09/2026 (reprise 6) — case « Déplacement à prévoir » : reflète
+  // deplacementActif (repli sur deplacementModesPresents pour une séance
+  // déjà réglée avant l'ajout de ce champ) ; désactive aussi Gérer tant
+  // qu'elle n'est pas cochée.
+  $('#sessionDeplacementResume').textContent = `Déplacement : ${deplacementResumeTexte(session)}`;
+  const sessionDepActif = $('#sessionDeplacementActifCheckbox');
+  if (sessionDepActif) {
+    sessionDepActif.checked = session ? (session.deplacementActif || !!deplacementModesPresents(session).size) : false;
+    sessionDepActif.disabled = !session?.id;
   }
+  $('#sessionDeplacementGererButton').disabled = !session?.id || !sessionDepActif?.checked;
   if ($('#sessionCapacityResetHint')) $('#sessionCapacityResetHint').hidden = true;
   capacitesParUe = {}; // mémoire propre à chaque ouverture de la modale
   ueCapacitesPrecedente = $('#sessionUe')?.value || '';
@@ -6375,9 +7257,27 @@ async function duplicateSession(source) {
   copy.capacityCodes = Array.isArray(source.capacityCodes) ? [...source.capacityCodes] : [];
   // Lot B — une copie n'hérite d'aucune démarche déjà engagée : ni frais liés,
   // ni ordre de mission, ni réservation (de salle comme de véhicule). Le MODE de
-  // déplacement, lui, est une caractéristique de la séance et se recopie.
-  Object.assign(copy, normalizeDeplacementFields({ deplacement: source.deplacement || '' }));
+  // déplacement, lui, est une caractéristique de la séance et se recopie —
+  // l'éventuelle exception « mode mixte » (deplacementModes) aussi, retours
+  // 02/09/2026, même logique.
+  Object.assign(copy, normalizeDeplacementFields({
+    deplacement: source.deplacement || '',
+    teacher: source.teacher || '',
+    deplacementModes: source.deplacementModes
+  }));
   copy.roomBooked = false;
+  // Retours 02/09/2026 — quel(s) véhicule(s) sont nécessaires se recopie
+  // (caractéristique de la séance, comme le mode), mais PAS le statut
+  // réservé de chacun (démarche déjà engagée, cf. commentaire ci-dessus).
+  // Retours 02/09/2026 (reprise) — même logique pour la case « qui a son
+  // propre véhicule » (deplacementVehiculesIndividuels) : elle se recopie
+  // (caractéristique), mais pas le statut réservé individuel.
+  copy.vehiculeReserves = {};
+  copy.vehiculeReserveParEnseignant = {};
+  // Retours 03/09/2026 — même règle pour l'ODM par conducteur : une copie
+  // n'a hérité d'aucun ordre de mission déjà envoyé.
+  copy.ordreMissionParEnseignant = {};
+  copy.missionDetailParEnseignant = {};
   copy.placementStatus = 'fictif';
   copy.weekId = '';
   copy.day = null;
@@ -8289,7 +9189,7 @@ function bindEvents() {
     const zone = $(sel);
     if (!zone) return;
     zone.addEventListener('click', (event) => {
-      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour], [data-mobile-filtre-urgence], [data-mobile-goto]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-open-deplacement], [data-mobile-filtre-urgence], [data-mobile-goto]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
       if (nav) { dashChangerSemaine(Number(nav.dataset.dashWeekNav)); return; }
       const seance = event.target.closest('[data-edit-session]');
@@ -8459,30 +9359,63 @@ function bindEvents() {
   document.body.addEventListener('click', (event) => {
     const open = event.target.closest('[data-open-mission]');
     if (!open) return;
-    const [kind, id] = open.dataset.openMission.split(':');
-    openMissionView(kind, id);
+    // 3e segment optionnel (retours 03/09/2026) : quel conducteur, quand
+    // l'entité a 2 ODM indépendants (voir missionEntiteADeuxOdm).
+    const [kind, id, teacher] = open.dataset.openMission.split(':');
+    // « Ouvrir l'ODM → » vit maintenant aussi DANS #deplacementGestionDialog
+    // (retours 03/09/2026) : openMissionView bascule la vue en dessous, sans
+    // jamais fermer un <dialog> ouvert — sans ça, Gérer restait flottant
+    // au-dessus de l'écran Ordre de mission.
+    if (open.closest('#deplacementGestionDialog')) $('#deplacementGestionDialog')?.close();
+    openMissionView(kind, id, teacher || '');
   });
-  // Bascule rapide « véhicule établissement indisponible → personnel »
-  // (retours 17/08/2026) : évite de rouvrir toute la fiche pour changer le
-  // menu Déplacement quand la réservation échoue.
+  // Retours 02/09/2026 (reprise 2) — Martin : « gérer depuis tous les
+  // espaces d'infos ». Un seul déclencheur, data-open-deplacement, posé sur
+  // la carte séance, les lignes Urgences (actives et mission), le tableau
+  // réunions, ET le résumé du formulaire de conception — ouvre toujours la
+  // même fenêtre (remplace les anciens boutons de bascule épars).
   document.body.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-bascule-vehicule]');
-    if (!btn) return;
-    const [source, id] = btn.dataset.basculeVehicule.split(':');
-    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
-    if (!entity) return;
-    entity.deplacement = 'personnel';
-    entity.vehicleBooked = false;
-    saveData('Basculé en véhicule personnel');
+    const open = event.target.closest('[data-open-deplacement]');
+    if (!open) return;
+    const [source, id] = open.dataset.openDeplacement.split(':');
+    ouvrirDeplacementGestion(source, id);
   });
-  document.body.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-bascule-vehicule-retour]');
-    if (!btn) return;
-    const [source, id] = btn.dataset.basculeVehiculeRetour.split(':');
+  $('#closeDeplacementGestionModal')?.addEventListener('click', () => $('#deplacementGestionDialog').close());
+  $('#cancelDeplacementGestionButton')?.addEventListener('click', () => $('#deplacementGestionDialog').close());
+  $('#deplacementGestionActif')?.addEventListener('change', () => {
+    const { source, id } = deplacementGestionCible;
     const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
-    if (!entity) return;
-    entity.deplacement = 'etablissement';
-    saveData('Repassé en véhicule de l’établissement');
+    renderDeplacementGestionRows(entity);
+  });
+  // Retours 03/09/2026 (reprise 4) — Martin : un picto par véhicule
+  // possible (au lieu de mode + modèle + case Réservé séparés) ; cliquer un
+  // picto CHOISIT et RÉSERVE en un seul geste. Réécrit tout le bloc au clic
+  // (deplacementGestionRafraichirTout) — plus simple et plus sûr qu'un
+  // rafraîchissement ligne par ligne vu les dépendances croisées (le picto
+  // Covoiturage d'une ligne dépend du choix de l'autre).
+  $('#deplacementGestionRows')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-dg-picto]');
+    if (!btn) return;
+    const teacher = btn.dataset.dgPicto;
+    const valeur = btn.dataset.dgPictoValeur;
+    const actuel = deplacementGestionLireChoix(teacher);
+    deplacementGestionEcrireChoix(teacher, actuel === valeur ? '' : valeur);
+    deplacementGestionRafraichirTout();
+  });
+  $('#deplacementGestionForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const { source, id } = deplacementGestionCible;
+    const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
+    if (!entity) { $('#deplacementGestionDialog').close(); return; }
+    Object.assign(entity, deplacementGestionEnregistrer(entity));
+    // Retours 02/09/2026 — même logique qu'avant : seul·e le/la conducteur·rice
+    // (véhicule personnel) reçoit un déplacement/frais à son nom, sur SON
+    // compte — ignoré si ce n'est pas moi qui édite.
+    if (estConducteurDeplacement(entity, moiInitiales)) {
+      source === 'reunion' ? ensureDeplacementForReunion(entity) : ensureDeplacementForSession(entity);
+    }
+    $('#deplacementGestionDialog').close();
+    await saveData('Déplacement mis à jour');
   });
   $('#missionBackButton')?.addEventListener('click', closeMissionView);
   // Un seul écouteur « change » (pas blur) pour tous les champs du document :
@@ -8786,6 +9719,8 @@ function bindEvents() {
   wireChecklist('todo');
   wireChecklist('devnotes');
   wireChecklist('mobiletodo');
+  wireChecklist('todoshared');
+  wireSharedTodoInput();
 
   $('#weekBacklogScope')?.addEventListener('change', e => { weekBacklogScope = e.target.value; renderWeekBacklog(); });
   $('#weekBacklogUeFilter')?.addEventListener('change', e => { weekBacklogUeFilter = e.target.value; renderWeekBacklog(); });
@@ -8892,7 +9827,7 @@ function bindEvents() {
       // toute sa largeur (clic = ouvrir la fiche) ; la case « Fait »/case de
       // réservation, le lien « Éditer » (ordre de mission) et le × gardent
       // chacun leur propre action et ne doivent pas AUSSI ouvrir la fiche.
-      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-open-deplacement]')) return;
       const nav = event.target.closest('[data-dash-week-nav]');
       if (nav) { dashChangerSemaine(Number(nav.dataset.dashWeekNav)); return; }
       const ouvrir = event.target.closest('[data-ouvrir]');
@@ -8923,7 +9858,7 @@ function bindEvents() {
     /* Même geste au clavier : les cartes sont focusables (tabindex + role). */
     zone.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-bascule-vehicule], [data-bascule-vehicule-retour]')) return;
+      if (event.target.closest('.room-booked-check, .act-toggle, [data-open-mission], [data-open-deplacement]')) return;
       const carte = event.target.closest('.carte, .retard-liste li, .om-row, .urgence-row, .urgence-verbe[data-edit-session], .urgence-verbe[data-edit-reunion], .col-vide-lien, .bloc-lien');
       if (!carte) return;
       event.preventDefault();
@@ -9532,6 +10467,7 @@ function bindModalActions() {
     // l'édition (même motif que roomBooked/status ci-dessus) ; une NOUVELLE
     // séance sans date reçoit juste un `order` (tri par date de création),
     // le reste retombe sur les replis déjà gérés en aval (« à préciser »).
+    const sessionTeacherValue = $('#sessionTeacher').value.trim();
     const session = {
       id,
       title: $('#sessionTitle').value.trim(),
@@ -9557,7 +10493,7 @@ function bindModalActions() {
       color: getSessionColorFieldValue(),
       demiGroupe: sessionDemiGroupe, // Lot V — '' | 'A' | 'B'
       group: sessionDemiGroupe === 'A' ? 'Groupe A' : sessionDemiGroupe === 'B' ? 'Groupe B' : 'Classe entière', // dérivé (exports)
-      teacher: $('#sessionTeacher').value.trim(),
+      teacher: sessionTeacherValue,
       room: $('#sessionRoom').value.trim(),
       roomToBook: $('#sessionRoomToBook')?.value || '',
       roomBooked: existingRoomBooked,
@@ -9574,13 +10510,11 @@ function bindModalActions() {
       homework: existingSession?.homework || '',
       differentiation: $('#sessionDifferentiation').value.trim(),
       notes: $('#sessionNotes').value.trim(),
-      // Lot B — normalizeDeplacementFields borne les deux cases à leur branche et
-      // tient `personalVehicle` à jour pour la compatibilité.
-      ...normalizeDeplacementFields({
-        deplacement: deplacementModeOf('session'),
-        vehicleBooked: $('#sessionVehicleBooked')?.checked || false,
-        ordreMission: $('#sessionOrdreMission')?.checked || false
-      })
+      // Retours 02/09/2026 (reprise 2) — le déplacement (mode, véhicule,
+      // covoiturage…) se gère désormais dans #deplacementGestionDialog, une
+      // fenêtre indépendante avec son propre enregistrement — ce formulaire
+      // n'y touche plus, il reconduit tel quel ce qui existait déjà.
+      ...deplacementFieldsPassthrough(existingSession),
     };
     // Lot 3.2 — rejouer les mêmes contrôles que le glisser-déposer quand la
     // séance est enregistrée « Placée à l'emploi du temps » depuis le formulaire : jusqu'ici
@@ -9600,7 +10534,9 @@ function bindModalActions() {
     if (session.weekId) selectedWeek = session.weekId;
     // Seul le véhicule PERSONNEL ouvre des frais. Le véhicule de l'établissement
     // se réserve et s'arrête là : ni ordre de mission, ni remboursement.
-    if (session.deplacement === 'personnel') ensureDeplacementForSession(session);
+    // Retours 02/09/2026 — à 2 enseignants, seul celui marqué conducteur (et
+    // pas le simple accompagnant) reçoit un déplacement à son nom.
+    if (estConducteurDeplacement(session, moiInitiales)) ensureDeplacementForSession(session);
     // Écran 12 — « Créer et enchaîner » : rouvre un formulaire de création
     // vierge (nom + créneau) en gardant séquence/type/enseignants/promotion.
     if (sessionChainRequested) {
@@ -9640,9 +10576,48 @@ function bindModalActions() {
     sessionChainRequested = true;
     $('#sessionForm').requestSubmit();
   });
-  // Cocher/décocher Déplacement change la suite à afficher (établissement/personnel).
-  $('#sessionDeplacement')?.addEventListener('change', () => syncDeplacementFields('session'));
-  $('#reunionDeplacement')?.addEventListener('change', () => syncDeplacementFields('reunion'));
+  // Retours 02/09/2026 (reprise 2) — le bouton « Gérer » du résumé
+  // déplacement (formulaire de conception) ouvre la même fenêtre que partout
+  // ailleurs, ciblée sur l'id déjà en cours d'édition.
+  $('#sessionDeplacementGererButton')?.addEventListener('click', () => {
+    const id = $('#sessionId')?.value;
+    if (id) ouvrirDeplacementGestion('session', id);
+  });
+  $('#reunionDeplacementGererButton')?.addEventListener('click', () => {
+    const id = $('#reunionId')?.value;
+    if (id) ouvrirDeplacementGestion('reunion', id);
+  });
+  // Retours 03/09/2026 (reprise 6) — case « Déplacement à prévoir » du
+  // formulaire de conception : écrit directement deplacementActif (et
+  // efface tout le reste si décochée, pour ne pas laisser une démarche
+  // fantôme) — active/désactive juste, le détail (quel véhicule…) reste le
+  // rôle de Gérer.
+  $('#sessionDeplacementActifCheckbox')?.addEventListener('change', async (event) => {
+    const session = findSession($('#sessionId')?.value);
+    if (!session) return;
+    if (event.target.checked) session.deplacementActif = true;
+    else Object.assign(session, {
+      deplacement: '', deplacementModes: {}, vehicleBooked: false,
+      vehiculeModeles: [], vehiculeModeleAutre: '', deplacementConducteurs: [], deplacementVehiculesIndividuels: [],
+      vehiculeModeleParEnseignant: {}, vehiculeReserveParEnseignant: {}, deplacementActif: false
+    });
+    $('#sessionDeplacementGererButton').disabled = !session.id || !event.target.checked;
+    $('#sessionDeplacementResume').textContent = `Déplacement : ${deplacementResumeTexte(session)}`;
+    await saveData(event.target.checked ? 'Déplacement à prévoir' : 'Déplacement retiré');
+  });
+  $('#reunionDeplacementActifCheckbox')?.addEventListener('change', async (event) => {
+    const reunion = (state.reunions || []).find(r => r.id === $('#reunionId')?.value);
+    if (!reunion) return;
+    if (event.target.checked) reunion.deplacementActif = true;
+    else Object.assign(reunion, {
+      deplacement: '', deplacementModes: {}, vehicleBooked: false,
+      vehiculeModeles: [], vehiculeModeleAutre: '', deplacementConducteurs: [], deplacementVehiculesIndividuels: [],
+      vehiculeModeleParEnseignant: {}, vehiculeReserveParEnseignant: {}, deplacementActif: false
+    });
+    $('#reunionDeplacementGererButton').disabled = !reunion.id || !event.target.checked;
+    $('#reunionDeplacementResume').textContent = `Déplacement : ${deplacementResumeTexte(reunion)}`;
+    await saveData(event.target.checked ? 'Déplacement à prévoir' : 'Déplacement retiré');
+  });
 
   // Lot L — couleur propre d'une séance : modification manuelle = couleur choisie ;
   // Auto = couleur héritée (séquence si rattachée, sinon UE).
@@ -9689,12 +10664,26 @@ function bindModalActions() {
   document.body.addEventListener('change', (event) => {
     const cb = event.target.closest('[data-reservation-id]');
     if (cb) {
-      const { reservationKind, reservationSource, reservationId } = cb.dataset;
+      const { reservationKind, reservationSource, reservationId, reservationModele, reservationVpeTeacher } = cb.dataset;
       const entity = reservationSource === 'reunion'
         ? (state.reunions || []).find(r => r.id === reservationId)
         : findSession(reservationId);
       if (!entity) return;
-      if (reservationKind === 'vehicule') entity.vehicleBooked = cb.checked;
+      // Retours 02/09/2026 (reprise 2) — coche directe, plus de fenêtre
+      // « quel(s) véhicule(s) » intermédiaire (retirée : le modèle se
+      // précise, si besoin, dans #deplacementGestionDialog — « Gérer » sur
+      // cette même ligne).
+      if (reservationKind === 'vehicule') {
+        if (reservationVpeTeacher) {
+          if (!entity.vehiculeReserveParEnseignant || typeof entity.vehiculeReserveParEnseignant !== 'object') entity.vehiculeReserveParEnseignant = {};
+          entity.vehiculeReserveParEnseignant[reservationVpeTeacher] = cb.checked;
+        } else if (reservationModele) {
+          if (!entity.vehiculeReserves || typeof entity.vehiculeReserves !== 'object') entity.vehiculeReserves = {};
+          entity.vehiculeReserves[reservationModele] = cb.checked;
+        } else {
+          entity.vehicleBooked = cb.checked;
+        }
+      }
       else if (reservationKind === 'materiel') entity.materielReserve = cb.checked;
       else entity.roomBooked = cb.checked;
       const quoi = reservationKind === 'vehicule' ? 'Véhicule' : reservationKind === 'materiel' ? 'Matériel' : 'Salle';
@@ -9706,11 +10695,14 @@ function bindModalActions() {
     // ci-dessus), sans passer par la case du formulaire de la séance/réunion.
     const mb = event.target.closest('[data-mission-toggle]');
     if (mb) {
-      const [source, id] = mb.dataset.missionToggle.split(':');
+      // 3e segment optionnel (retours 03/09/2026) : même routage par
+      // conducteur que data-open-mission ci-dessus.
+      const [source, id, teacher] = mb.dataset.missionToggle.split(':');
       const entity = source === 'reunion' ? (state.reunions || []).find(r => r.id === id) : findSession(id);
       if (!entity) return;
-      entity.ordreMission = mb.checked;
-      if (!mb.checked && entity.missionDetail) entity.missionDetail.envoyeAt = null;
+      setOrdreMissionEnvoye(entity, teacher || '', mb.checked);
+      const detail = missionDetailBrut(entity, teacher || '');
+      if (!mb.checked && detail) detail.envoyeAt = null;
       saveData(mb.checked ? 'Ordre de mission marqué fait' : 'Ordre de mission remis à faire');
       return;
     }
@@ -9926,24 +10918,26 @@ function bindModalActions() {
   $('#reunionForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = $('#reunionId').value || uid('reunion');
+    const existingReunion = (state.reunions || []).find(r => r.id === id);
+    const reunionTeacherValue = $('#reunionTeacher').value.trim();
     const reunion = {
       id,
       date: $('#reunionDate').value || '',
       lieu: $('#reunionLieu').value.trim(),
       participants: $('#reunionParticipants').value.trim(),
       sujets: $('#reunionSujets').value.trim(),
-      teacher: $('#reunionTeacher').value.trim(),
-      ...normalizeDeplacementFields({
-        deplacement: $('#reunionDeplacement')?.value || '',
-        vehicleBooked: $('#reunionVehicleBooked')?.checked || false,
-        ordreMission: $('#reunionOrdreMission')?.checked || false
-      })
+      teacher: reunionTeacherValue,
+      // Retours 02/09/2026 (reprise 2) — voir commentaire équivalent côté
+      // séance : le déplacement se gère dans #deplacementGestionDialog.
+      ...deplacementFieldsPassthrough(existingReunion),
     };
     const idx = state.reunions.findIndex(r => r.id === id);
     if (idx >= 0) state.reunions[idx] = reunion; else state.reunions.push(reunion);
     // Véhicule personnel → garantit une ligne dans Frais (jamais supprimée si le
     // mode change ensuite ; c'est la suppression de la ligne qui remonte, [15]).
-    if (reunion.deplacement === 'personnel') ensureDeplacementForReunion(reunion);
+    // Retours 02/09/2026 — à 2 enseignants, seul le conducteur (pas le simple
+    // accompagnant) reçoit un déplacement à son nom.
+    if (estConducteurDeplacement(reunion, moiInitiales)) ensureDeplacementForReunion(reunion);
     $('#reunionDialog').close();
     await saveData('Réunion enregistrée');
   });

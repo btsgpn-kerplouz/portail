@@ -46,7 +46,7 @@ dans `shared/theme.css` reste une option pour plus tard, pas une décision prise
   d'hébergement) : **`btsgpn-kerplouz`**.
 - Alternative **VPS écartée** : on ne veut pas devenir administrateur système.
 
-## Les 4 applications
+## Les 5 applications
 
 | App | Nature | Données | État | Charte visuelle |
 |---|---|---|---|---|
@@ -54,6 +54,7 @@ dans `shared/theme.css` reste une option pour plus tard, pas une décision prise
 | **phytoscope** | saisie · multi-utilisateur | Supabase ✓ | **Modèle de référence** (déjà éprouvé). | Papier technique froid — très largement migrée, rien commité. |
 | **vegetations-armoricaines** | consultation seule | aucune | « Végétations du massif armoricain ». **Purement statique** (PWA) : pas de Supabase, pas d'auth. | **Atlas naturaliste (ancienne charte)** — pas encore migrée. À ne pas prendre pour référence visuelle. |
 | **zonation** | saisie | `localStorage` (Supabase prévu) | « Zonation » — identification des habitats de la Petite Mer de Gâvres. Front fonctionnel, données encore en local ; bascule Supabase à venir sur le modèle Phytoscope. | Papier technique froid — dès la première version, rien commité. |
+| **affut** | rédaction (enseignant) + consultation publique (élèves) | Supabase prévu (RLS stricte, `usage_en_cours` jamais exposé) | « À l'affût » — carnet de veille naturaliste **hebdomadaire** : numéros triés/édités par l'enseignant, publiés pour les élèves avec accès direct aux sources. Cadrage complet déposé dans `apps/affut/documents/` (37 règles, jetons, 13 écrans maquettés). Lots 1 à 3 faits (page « Numéro », persistance `localStorage` multi-numéros, formulaire d'ajout/édition/suppression, Sommaire par mois, Recherche transversale, voir `apps/affut/AVANCEMENT.md`) ; pas encore de Supabase ni de tuile en service. | **Écarts assumés** (voir `apps/affut/AVANCEMENT.md`) : papier chaud crème + accent grenat `#8a2f39`, pas le papier froid des autres apps ; gabarit d'entrée retravaillé (ligne aplatie sans repli) par rapport au dossier de passation. |
 
 ## Structure du dépôt
 

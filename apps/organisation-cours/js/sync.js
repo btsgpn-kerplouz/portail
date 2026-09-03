@@ -53,7 +53,7 @@ import * as enseignants from "./enseignants.js";
 // tâches ajoutées survivaient en mémoire mais disparaissaient à la
 // fermeture/au rechargement).
 const CLES_PERSO = ["todoNotes", "todoItems", "deplacements"];
-const CLES_PARTAGEES = ["devNotes", "devNotesItems", "weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
+const CLES_PARTAGEES = ["devNotes", "devNotesItems", "todoPartageItems", "weekTemplates", "rubanOverrides", "rubanUeCaps", "promotions", "schoolYear", "weekNotes"];
 
 // Bug trouvé le 27/07/2026 (import d'un gros volume, ~150 écritures dans le
 // même enregistrer()) : envoyées TOUTES en une seule fois via Promise.all,
@@ -282,6 +282,7 @@ window.OC_SYNC = {
       todoItems: blocsPersoParCle.get("todoItems"),
       devNotes: blocsPartagesParCle.get("devNotes"),
       devNotesItems: blocsPartagesParCle.get("devNotesItems"),
+      todoPartageItems: blocsPartagesParCle.get("todoPartageItems"),
       deplacements: blocsPersoParCle.get("deplacements"),
       weekTemplates: blocsPartagesParCle.get("weekTemplates"),
       rubanOverrides: blocsPartagesParCle.get("rubanOverrides"),

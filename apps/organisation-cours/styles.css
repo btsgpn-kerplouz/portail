@@ -3094,6 +3094,49 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 .session-inline-row > label { flex: 0 1 auto; margin: 0; }
 .session-inline-row > label:first-child { flex: 1 1 12rem; }
 .session-inline-row .checkbox-inline { flex: 1 1 13rem; padding-bottom: .4rem; }
+/* Retours 02/09/2026 (reprise 2) — fenêtre unique #deplacementGestionDialog :
+   une ligne par enseignant. */
+.deplacement-gestion-rows { display: flex; flex-direction: column; gap: var(--sp-3); margin: var(--sp-2) 0; }
+.deplacement-gestion-row { border: 1px solid var(--line); padding: var(--sp-2) var(--sp-3); }
+.deplacement-gestion-row-head { display: flex; align-items: center; gap: var(--sp-2); justify-content: space-between; flex-wrap: wrap; }
+/* Retours 03/09/2026 (reprise 4) — un picto par véhicule potentiel : cliquer
+   choisit ET réserve en un seul geste (plus de menu modèle + case Réservé
+   séparés). */
+.deplacement-gestion-pictos { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+.dg-picto {
+  font-family: inherit; font-size: .78rem; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-strong); padding: .4rem .6rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.dg-picto:hover { background: var(--surface-alt); }
+.dg-picto.est-actif { background: var(--ink); color: #fff; border-color: var(--ink); }
+/* Retours 03/09/2026 (reprise 6) — un seul Traffic/Lodgy/Jogger au garage :
+   grisé côté enseignant·e quand l'autre l'a déjà choisi. */
+.dg-picto[disabled] { color: var(--muted); background: var(--surface-alt); border-color: var(--line); cursor: not-allowed; }
+.dg-picto[disabled]:hover { background: var(--surface-alt); }
+.dg-picto .mobile-icon-png, .dg-picto .mobile-icon-svg { width: 16px; height: 16px; }
+/* Retours 03/09/2026 (reprise 6) — chiffre de places (établissement
+   seulement) et symbole attelage, en petit, à côté du nom du véhicule. */
+.dg-picto-places {
+  font-family: var(--font-mono); font-size: .65rem; font-weight: 700;
+  border: 1px solid currentColor; width: 1.15rem; height: 1.15rem;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+}
+.dg-picto-attelage { display: inline-flex; }
+.dg-picto-attelage .mobile-icon-svg { width: 13px; height: 13px; }
+.dg-autre-texte { display: block; flex: 1 1 12rem; margin-top: var(--sp-2); }
+.dg-autre-texte[hidden] { display: none; }
+/* Retours 03/09/2026 — statut ODM par enseignant dans la fenêtre Gérer,
+   même esprit que .mobile-om-statut (pastille discrète, verte une fois
+   envoyé). */
+.deplacement-gestion-row-odm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.deplacement-gestion-row-odm[hidden] { display: none; }
+.deplacement-gestion-odm-statut {
+  font-family: var(--font-mono); font-size: .6875rem; text-transform: uppercase;
+  letter-spacing: .03em; color: var(--muted); border: 1px solid var(--line-strong); padding: .14rem .5rem; white-space: nowrap;
+}
+.deplacement-gestion-odm-statut.est-envoye { color: var(--success); border-color: var(--moss-line); }
+
 .page-title-actions { display: flex; align-items: center; gap: var(--sp-2); }
 .empty-hint { color: var(--muted); font-style: italic; padding: var(--sp-4); text-align: center; }
 
@@ -3483,6 +3526,20 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .dash-grille { display: grid; grid-template-columns: 1fr 330px; gap: var(--sp-4); align-items: start; }
 #dashboard .dash-col-gauche, #dashboard .dash-col-droite { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
 @media (max-width: 1000px) { #dashboard .dash-grille { grid-template-columns: 1fr; } }
+
+/* Retour Martin (02/09/2026), révisé (03/09/2026) : la grille à 2 colonnes de
+   tuiles faisait déborder les libellés/pastilles (ex. « À rattacher ») et
+   décalait les badges — retour à 1 seule colonne (comme la grille mobile,
+   .dash-tuiles-grille de base) mais dans une colonne étroite à largeur fixe,
+   pour qu'Urgences récupère tout l'espace ainsi libéré (flex-grow: 1, seule
+   à grandir). */
+#dashboard .dash-urgences-tuiles-row { display: flex; gap: var(--sp-4); align-items: flex-start; }
+#dashboard .dash-urgences-tuiles-row #urgencesPanel { flex: 1 1 68%; min-width: 0; }
+#dashboard .dash-urgences-tuiles-row .dash-tuiles-grille { flex: 0 1 300px; max-width: 300px; }
+@media (max-width: 1300px) {
+  #dashboard .dash-urgences-tuiles-row { flex-direction: column; }
+  #dashboard .dash-urgences-tuiles-row .dash-tuiles-grille { width: 100%; max-width: none; }
+}
 
 /* ---- Bloc = une vraie carte (fond blanc, filet, en-tête sable) ---- */
 #dashboard .bande-bloc, #dashboard .backlog-panel, #dashboard .urgences-panel {
@@ -3911,6 +3968,14 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   flex: 0 0 96px; font-family: var(--font-mono); font-size: .58rem; font-weight: 600;
   letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
 }
+/* Retour Martin (02/09/2026) : desktop passe du libellé texte au pictogramme
+   (mêmes pictos que les puces de filtre mobile, cf. URGENCE_KIND_PICTOS/
+   urgenceTypeMarkup dans app.js) — mobile garde le texte, inchangé. */
+#dashboard .urgence-type { flex-basis: 22px; display: flex; align-items: center; }
+#dashboard .urgence-type-texte { display: none; }
+#dashboard .urgence-type-picto { display: inline-flex; }
+#dashboard .urgence-type-picto .mobile-icon-png, #dashboard .urgence-type-picto .mobile-icon-svg { width: 16px; height: 16px; }
+:is(#mobileAValider, #mobileFaites) .urgence-type-picto { display: none; }
 :is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-delai { flex: 0 0 34px; font-family: var(--font-mono); font-size: .6875rem; font-weight: 700; color: var(--muted); }
 :is(#dashboard, #mobileAValider, #mobileFaites) .urgence-delai.est-urgent { color: var(--danger); }
 :is(#dashboard, #mobileAValider, #mobileFaites, #mobileFrais) .urgence-titre { font-size: .8125rem; font-weight: 600; color: var(--ink); }
@@ -4021,9 +4086,24 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
    « application mobile ») : mêmes wrappers .urgence-bloc-*/.urgence-ligne1/2
    dans le DOM (urgenceRowMarkup est partagé), mais aplatis (display:contents,
    technique déjà utilisée pour .carte-corps/.carte-pastilles) pour rejouer
-   la ligne plate desktop d'origine via `order`. */
-#dashboard .urgence-bloc-delai, #dashboard .urgence-bloc-corps,
-#dashboard .urgence-bloc-action, #dashboard .urgence-ligne1 { display: contents; }
+   la ligne plate desktop d'origine via `order`.
+   Retour Martin (02/09/2026) — investigation en direct (Chrome, javascript_tool) :
+   à CET endroit précis du fichier, la PREMIÈRE règle qui suit immédiatement
+   ce commentaire est silencieusement ignorée par le parseur CSS (constaté à
+   la main : renommer, réordonner ou fusionner les 4 sélecteurs ne change
+   rien — c'est la position, pas le contenu, qui est en cause ; cause exacte
+   non identifiée, correctif vérifié empiriquement). D'où la règle « paratonnerre »
+   ci-dessous, qui n'affecte rien (sélecteur inexistant dans le DOM) et
+   absorbe seule cette perte — les 4 vraies règles, séparées plutôt que
+   fusionnées en une liste à virgules pour rester chacune une position de
+   repli si ce bug se déplaçait, s'appliquent alors normalement. Ne pas
+   supprimer sans re-tester (ligne des pictogrammes Urgences qui repartait
+   sur sa propre ligne). */
+#dashboard .urgence-paratonnerre-css-parser-bug { display: none; }
+#dashboard .urgence-bloc-delai { display: contents; }
+#dashboard .urgence-bloc-corps { display: contents; }
+#dashboard .urgence-bloc-action { display: contents; }
+#dashboard .urgence-ligne1 { display: contents; }
 #dashboard .urgence-type { order: 0; }
 #dashboard .urgence-delai { order: 1; }
 #dashboard .urgence-titre { order: 2; }
@@ -4226,10 +4306,6 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 #dashboard .frais-badge.has-pending { background: var(--niv-proche); color: #fff; padding: .1rem .55rem; }
 #dashboard .row-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); }
 #dashboard .row-item:hover { background: var(--surface-alt); border-color: var(--line); }
-#dashboard .meta-etiquette {
-  margin-left: auto; font-family: var(--font-mono); font-size: .6875rem; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted-2);
-}
 
 /* « À faire » : carte blanche, liseré encre à gauche. Retour Martin
    (23/08/2026) : bandeau titre plein violet (--plum), même couleur que la
@@ -4251,7 +4327,6 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   padding: .5rem var(--sp-4); background: var(--plum);
 }
 #dashboard .priority-panel h3 { font-size: .85rem; color: #fff; }
-#dashboard .priority-panel .meta-etiquette { color: rgba(255, 255, 255, .75); }
 
 /* Liste à cocher « À faire » (refonte écran 1, 16/08/2026 — mockup) : une
    tâche cochée reste barrée le temps de la décocher par erreur (voir
@@ -4271,6 +4346,23 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
   padding: 0 .2rem; font-size: .8rem; opacity: 0; transition: opacity .12s ease;
 }
 .todo-row-remove:hover { color: var(--danger); }
+/* Édition en place (retours 02/09/2026) : même discrétion que ✕, ✎ à côté. */
+.todo-row-edit {
+  flex: 0 0 auto; border: 0; background: none; color: var(--muted); cursor: pointer;
+  padding: 0 .2rem; font-size: .8rem; opacity: 0; transition: opacity .12s ease;
+}
+.todo-row:hover .todo-row-edit { opacity: 1; }
+.todo-row-edit:hover { color: var(--acc); }
+.todo-row-editing {
+  display: flex; align-items: flex-start; gap: .5rem; padding: .5rem .8rem;
+  border-bottom: 1px solid var(--line);
+}
+.todo-row-edit-input {
+  flex: 1 1 auto; border: 1px solid var(--acc); background: var(--surface);
+  padding: .3rem .5rem; font-size: .84rem; font-family: inherit; line-height: 1.35;
+  resize: vertical; min-height: 2.2rem;
+}
+.todo-row-edit-input:focus { outline: none; box-shadow: var(--halo-focus); }
 .todo-add-input {
   margin: .5rem .8rem; width: calc(100% - 1.6rem); border: 1px dashed var(--line-strong);
   background: transparent; padding: .5rem .6rem; font-size: .82rem;
@@ -4278,6 +4370,28 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 .todo-add-input:focus { border-style: solid; border-color: var(--acc); box-shadow: var(--halo-focus); }
 .todo-footnote { padding: 0 .8rem .7rem; margin: 0; line-height: 1.4; }
+
+/* Encart « À faire » : espaces Personnel/Commun séparés par un simple filet. */
+.todo-space + .todo-space { border-top: 1px solid var(--line); margin-top: .6rem; padding-top: .2rem; }
+.todo-space-heading {
+  margin: 0; padding: 0 .8rem .3rem; font-family: var(--font-mono); font-size: .7rem;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2);
+}
+.todo-row-move {
+  flex: 0 0 auto; border: 0; background: none; color: var(--muted); cursor: pointer;
+  padding: 0 .2rem; font-size: .8rem; opacity: 0; transition: opacity .12s ease;
+}
+.todo-row:hover .todo-row-move { opacity: 1; }
+.todo-row-move:hover { color: var(--acc); }
+.todo-add-row { display: flex; align-items: flex-end; gap: .5rem; margin: .5rem .8rem 0; }
+.todo-add-row .todo-add-input { margin: 0; width: auto; flex: 1 1 auto; }
+.todo-add-buttons { display: flex; flex-direction: column; gap: .3rem; flex: 0 0 auto; }
+.todo-add-btn {
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .03em; text-transform: uppercase;
+  padding: .4rem .6rem; cursor: pointer; white-space: nowrap;
+}
+.todo-add-btn:hover { border-color: var(--acc); color: var(--acc); }
 
 /* Historique « Tâches faites » (retours 17/08/2026) — repli sobre, purgé au-delà
    de 30 jours (purgerTachesFaites) : pas la peine d'en faire un vrai panneau. */
