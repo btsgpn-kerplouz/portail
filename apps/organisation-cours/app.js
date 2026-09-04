@@ -881,6 +881,38 @@ async function loadData() {
   setSaveStatus('Données chargées');
 }
 
+// Rechargement automatique en tâche de fond (05/09/2026, retour Martin) —
+// l'app n'a pas de synchronisation temps réel (voir OC_APP.recharger) : sans
+// ça, le travail d'un·e collègue (nouvelle séance, modif sur une ligne qu'on
+// ne touche pas soi-même...) ne remonte qu'au clic manuel sur ⟳. Se déclenche
+// seulement quand rien n'est en cours d'édition, pour ne jamais couper une
+// frappe en train de partir — les 2 champs en autosave direct (#weekNotes,
+// #mobileSeanceNotes) flushent déjà de façon synchrone au blur, le seul
+// instant risqué est tant qu'ils ont le focus, couvert par ce garde-fou.
+function editionEnCours() {
+  if (document.querySelector('dialog[open]')) return true;
+  const actif = document.activeElement;
+  if (!actif) return false;
+  const tag = actif.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || actif.isContentEditable;
+}
+function tenterRechargementAuto() {
+  if (!state || editionEnCours()) return;
+  loadData().catch(error => {
+    // Silencieux (pas d'alert) : une erreur ponctuelle sur un rechargement
+    // que personne n'a demandé ne doit pas interrompre l'utilisateur — le
+    // prochain tic (ou le prochain retour d'onglet) réessaiera de lui-même.
+    console.error('[organisation-cours] rechargement automatique :', error);
+    setSaveStatus('Erreur de rechargement automatique');
+  });
+}
+function demarrerRechargementAuto() {
+  setInterval(tenterRechargementAuto, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tenterRechargementAuto();
+  });
+}
+
 async function saveData(message = 'Enregistré', { rerender = true, forcer = false } = {}) {
   // Rendu optimiste : l'état local fait foi immédiatement, l'enregistrement
   // réseau (Supabase) arrive ensuite — sinon chaque action figerait l'écran
@@ -4199,8 +4231,8 @@ function renderMobileSeance() {
     </div>
     ${actions.length ? `<div class="carte-actions mobile-seance-actions">${dashEtiquettes(actions, s.id)}</div>` : ''}
     ${s.activities ? `<section class="mobile-seance-bloc"><h3>Déroulé</h3><p>${escapeHtml(s.activities)}</p></section>` : ''}
-    ${s.objectives ? `<section class="mobile-seance-bloc"><h3>Objectifs</h3><p>${escapeHtml(s.objectives)}</p></section>` : ''}
-    ${s.keywords ? `<section class="mobile-seance-bloc"><h3>Mots-clés</h3><p>${escapeHtml(s.keywords)}</p></section>` : ''}
+    ${s.materials ? `<section class="mobile-seance-bloc"><h3>Matériel</h3><p>${escapeHtml(s.materials)}</p></section>` : ''}
+    ${s.differentiation ? `<section class="mobile-seance-bloc"><h3>Points de vigilance</h3><p>${escapeHtml(s.differentiation)}</p></section>` : ''}
     <section class="mobile-seance-bloc">
       <h3>Notes internes / bilan <small>— s’écrit après la séance</small></h3>
       <textarea id="mobileSeanceNotes" rows="5">${escapeHtml(s.notes || '')}</textarea>
@@ -5439,13 +5471,23 @@ function timelineSessionCard(session) {
 }
 
 /* Renvoie un libellé d'heures lisible pour une séance, quelle que soit la
-   façon dont la durée a été saisie (champ texte libre ou créneaux EDT). */
+   façon dont la durée a été saisie (champ texte libre ou créneaux EDT).
+   05/09/2026 — bug remonté (pastille de durée, onglet Progression, pas en
+   adéquation avec la durée réelle) : `expectedDuration` est une estimation
+   libre saisie AVANT placement (écran 12 ne l'édite plus depuis longtemps,
+   voir commentaire plus bas sur `existingSession?.expectedDuration`) — une
+   fois la séance réellement placée (créneaux EDT connus), sa vraie durée doit
+   prévaloir sur cette estimation figée, sinon la pastille reste bloquée sur
+   une valeur périmée après un déplacement/redimensionnement. `expectedDuration`
+   ne sert donc plus que de repli pour une séance PAS ENCORE placée (backlog).
+   `formatSlotDuration` (créneaux réels × 55 min) remplace aussi l'ancien
+   `${slots}h`, qui affichait par ex. « 4h » pour une séance de 3h40 réelles. */
 function sessionHoursLabel(session) {
-  if (session.expectedDuration && String(session.expectedDuration).trim()) return String(session.expectedDuration).trim();
   if (isDefinitiveSession(session)) {
     const slots = sessionDurationSlots(session);
-    if (Number.isFinite(slots) && slots > 0) return `${slots}h`;
+    if (Number.isFinite(slots) && slots > 0) return formatSlotDuration(slots * 55);
   }
+  if (session.expectedDuration && String(session.expectedDuration).trim()) return String(session.expectedDuration).trim();
   return '';
 }
 
@@ -5873,7 +5915,10 @@ function sessionTooltip(session) {
   return [
     sequenceLabel(session.sequenceId),
     session.type || '',
-    session.expectedDuration || durationFromSlots(session),
+    // 05/09/2026 — une séance affichée ici est par définition déjà placée
+    // (créneaux EDT réels) : sa vraie durée prévaut toujours sur une éventuelle
+    // estimation figée (`expectedDuration`, voir sessionHoursLabel).
+    durationFromSlots(session),
     session.keywords ? `Mots-clés : ${session.keywords}` : ''
   ].filter(Boolean).join(' · ');
 }
@@ -6174,20 +6219,31 @@ function blockEndSlot(slot) {
   if (slot <= 6) return 6;
   return SLOTS.length - 1;
 }
-/* 18/08 — borne DURE du sélecteur de créneau de la modale séance : une séance ne doit
-   jamais enjamber le Repas (index 4), contrairement à `blockEndSlot` ci-dessus qui borne
-   à la petite pause suivante (pour le rendu en segments visuels, une séance PEUT
-   enjamber une récréation). Matin = 0-3, après-midi = 5-8 — mêmes demi-journées que le
-   tableau local `blocks` d'`autoSlotStart` ci-dessous. */
-function halfDayEndSlot(slot) {
-  return Number(slot) < 4 ? 3 : SLOTS.length - 1;
+/* 05/09/2026 — le sélecteur de créneau de la modale séance peut désormais enjamber
+   le Repas (index 4, ex-borne dure `halfDayEndSlot` : « jamais au-delà du Repas »,
+   retour Martin — sortie terrain toute la journée). Le Repas n'est jamais un vrai
+   créneau de cours : ces deux fonctions comptent/atteignent seulement les créneaux
+   RÉELS d'une plage day/startSlot/endSlot, en l'ignorant. */
+function realSlotCount(startSlot, endSlot) {
+  let n = 0;
+  for (let i = Number(startSlot); i <= Number(endSlot); i += 1) if (i !== 4) n += 1;
+  return n;
+}
+function endSlotForRealCount(startSlot, n) {
+  let count = 0, slot = Number(startSlot);
+  for (; slot <= SLOTS.length - 1; slot += 1) {
+    if (slot !== 4) count += 1;
+    if (count >= n) break;
+  }
+  return Math.min(slot, SLOTS.length - 1);
 }
 /* Un segment de la séance `s` commence-t-il au créneau `slot` ? (vrai début, ou
-   reprise juste après une récréation enjambée). */
+   reprise juste après une récréation ou le Repas enjambé). */
 function segmentStartsAt(s, slot) {
   const a = Number(s.startSlot), b = Number(s.endSlot);
   if (a === slot) return true;
   if (slot === 2 && a <= 1 && b >= 2) return true; // reprise après la pause du matin
+  if (slot === 5 && a <= 3 && b >= 5) return true; // reprise après le Repas (05/09/2026 — séance à cheval sur la pause déjeuner)
   if (slot === 7 && a <= 6 && b >= 7) return true; // reprise après la pause de l'aprem
   return false;
 }
@@ -7142,8 +7198,9 @@ function syncColorSwatchActive(gridSelector, hiddenInputId) {
    `sessionSlotChoice` sont l'état UI (déclarés en haut du fichier) ; le submit du
    formulaire séance les traduit en day/startSlot/endSlot/weekId/placementStatus. Un clic
    simple pose 1 créneau (cas courant, inchangé en nombre de clics) ; un 2e clic sur le
-   même jour étend la plage (`applySlotClick`), plafonnée à la demi-journée
-   (`blockEndSlot`, jamais au-delà du Repas). */
+   même jour étend la plage (`applySlotClick`), jusqu'en fin de journée — la plage peut
+   enjamber le Repas (05/09/2026, retour Martin — sortie terrain toute la journée),
+   rendu en un seul bloc continu par `renderPromotionTable`/`segmentStartsAt`. */
 function renderSessionSlotPicker() {
   const weekId = sessionSlotPickerWeekId || selectedWeek;
   sessionSlotPickerWeekId = weekId;
@@ -7158,7 +7215,7 @@ function renderSessionSlotPicker() {
     const header = `<span class="slot-grid-corner" aria-hidden="true"></span>${DAYS.map(d => `<span class="slot-grid-day">${escapeHtml(d.slice(0, 3))}</span>`).join('')}`;
     const rows = SLOTS.map((slotLabel, slotIndex) => {
       if (slotIndex === 4) {
-        return `<span class="slot-grid-time slot-grid-lunch">Repas</span>${DAYS.map(() => '<span class="slot-cell-lunch" aria-hidden="true"></span>').join('')}`;
+        return `<span class="slot-grid-time slot-grid-lunch">Repas</span>${DAYS.map((_, day) => `<span class="slot-cell-lunch" data-slot-day="${day}" aria-hidden="true"></span>`).join('')}`;
       }
       const time = `<span class="slot-grid-time">${escapeHtml(slotLabel.split(' – ')[0])}</span>`;
       const cells = DAYS.map((_, day) => {
@@ -7190,11 +7247,11 @@ function renderSessionSlotSummary() {
   if (!el) return;
   if (sessionSlotChoice?.type !== 'range') { el.innerHTML = ''; return; }
   const { day, startSlot, endSlot } = sessionSlotChoice;
-  const count = endSlot - startSlot + 1;
+  const count = realSlotCount(startSlot, endSlot);
   const startLabel = SLOTS[startSlot].split(' – ')[0];
   const endLabel = SLOTS[endSlot].split(' – ')[1];
   const duree = formatSlotDuration(count * 55);
-  const maxSlots = halfDayEndSlot(startSlot) - startSlot + 1;
+  const maxSlots = realSlotCount(startSlot, SLOTS.length - 1);
   const quickButtons = [];
   for (let n = 1; n <= maxSlots; n += 1) {
     const durLabel = formatSlotDuration(n * 55);
@@ -7206,25 +7263,25 @@ function renderSessionSlotSummary() {
 /* Logique d'interaction de la grille : pas de sélection sur ce jour (ou sélection sur un
    autre jour), ou plage déjà complète (2e clic déjà fait), ou clic avant le départ actuel
    → redémarre une plage à 1 créneau sur le slot cliqué. Sélection à 1 créneau sur ce même
-   jour et clic postérieur → étend la fin (plafonnée à la demi-journée). Jamais plus de
-   2 clics pour une plage complète. */
+   jour et clic postérieur → étend la fin. Jamais plus de 2 clics pour une plage complète.
+   05/09/2026 — la plage peut désormais enjamber le Repas (index 4, jamais cliquable
+   lui-même) jusqu'en fin de journée, pour une séance à cheval sur la pause déjeuner. */
 function applySlotClick(day, slotIndex) {
   const cur = sessionSlotChoice?.type === 'range' ? sessionSlotChoice : null;
   const canExtend = cur && cur.day === day && cur.startSlot === cur.endSlot && slotIndex > cur.startSlot;
   if (canExtend) {
-    const maxEnd = halfDayEndSlot(cur.startSlot);
-    sessionSlotChoice = { type: 'range', day, startSlot: cur.startSlot, endSlot: Math.min(slotIndex, maxEnd) };
+    sessionSlotChoice = { type: 'range', day, startSlot: cur.startSlot, endSlot: Math.min(slotIndex, SLOTS.length - 1) };
   } else {
     sessionSlotChoice = { type: 'range', day, startSlot: slotIndex, endSlot: slotIndex };
   }
 }
 
 /* Bouton de durée rapide : pose la fin depuis le début déjà choisi, sans second clic sur
-   la grille — plafonnée à la demi-journée comme applySlotClick. */
+   la grille — `slots` compte des créneaux RÉELS (le Repas, s'il est traversé, ne compte
+   pas), voir endSlotForRealCount. */
 function applyQuickDuration(slots) {
   if (sessionSlotChoice?.type !== 'range') return;
-  const maxEnd = halfDayEndSlot(sessionSlotChoice.startSlot);
-  sessionSlotChoice = { ...sessionSlotChoice, endSlot: Math.min(sessionSlotChoice.startSlot + slots - 1, maxEnd) };
+  sessionSlotChoice = { ...sessionSlotChoice, endSlot: endSlotForRealCount(sessionSlotChoice.startSlot, slots) };
 }
 
 function syncSessionSlotPickerActive() {
@@ -7236,6 +7293,12 @@ function syncSessionSlotPickerActive() {
     btn.classList.toggle('is-range-start', inRange && idx === cur.startSlot);
     btn.classList.toggle('is-range-end', inRange && idx === cur.endSlot);
     btn.classList.toggle('is-in-range', inRange && idx !== cur.startSlot && idx !== cur.endSlot);
+  });
+  // 05/09/2026 — cellule Repas de ce jour : simple indice visuel « traversé » quand
+  // la plage choisie enjambe la pause déjeuner (startSlot avant, endSlot après).
+  $$('#sessionSlotGrid .slot-cell-lunch').forEach(span => {
+    const day = Number(span.dataset.slotDay);
+    span.classList.toggle('is-in-range', !!cur && day === cur.day && cur.startSlot <= 3 && cur.endSlot >= 5);
   });
   $('.slot-option-other')?.classList.toggle('active', sessionSlotChoice?.type === 'other');
   $('.slot-option-none')?.classList.toggle('active', sessionSlotChoice?.type === 'none');
@@ -8627,10 +8690,13 @@ function dossierUeSessions(ue) {
   return state.sessions.filter(s => s.ueId === ue.id);
 }
 
+// 05/09/2026 — même correctif que sessionHoursLabel : une fois la séance
+// placée, sa vraie durée (créneaux EDT réels) prévaut sur l'estimation
+// `expectedDuration`, qui ne sert plus que de repli avant placement.
 function dossierSessionMinutes(session) {
+  if (isDefinitiveSession(session)) return sessionDurationSlots(session) * 55;
   const fromText = String(session.expectedDuration || '').match(/(\d+)\s*h(?:\s*(\d+))?/i);
   if (fromText) return Number(fromText[1]) * 60 + Number(fromText[2] || 0);
-  if (isDefinitiveSession(session)) return sessionDurationSlots(session) * 55;
   return 0;
 }
 function dossierHoursLabel(minutes) {
@@ -11371,7 +11437,10 @@ function areComplementaryHalves(a, b) {
 function demiGroupeBadge(session) {
   return session.demiGroupe ? `<span class="demi-badge demi-${session.demiGroupe.toLowerCase()}" title="Demi-groupe ${session.demiGroupe}">½${session.demiGroupe}</span>` : '';
 }
-function sessionDurationSlots(session) { return Math.max(1, Number(session.endSlot) - Number(session.startSlot) + 1); }
+// 05/09/2026 — compte les créneaux RÉELS (le Repas n'en est pas un, une séance
+// peut désormais l'enjamber, voir realSlotCount) plutôt que la différence brute
+// d'indices, qui surcomptait d'un créneau une séance à cheval sur le repas.
+function sessionDurationSlots(session) { return Math.max(1, realSlotCount(Number(session.startSlot), Number(session.endSlot))); }
 function slotLabel(index) { return SLOTS[Number(index)] || ''; }
 function weekLabel(id) { return state.weeks.find(w => w.id === id)?.label || id || 'Semaine ?'; }
 function findUe(id) { return state?.ues?.find(ue => ue.id === id); }
@@ -11729,6 +11798,7 @@ window.OC_APP = {
     if (!ocAppDemarre) {
       ocAppDemarre = true;
       bindEvents();
+      demarrerRechargementAuto();
     }
     return loadData().catch(error => {
       console.error(error);
