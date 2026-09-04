@@ -89,6 +89,13 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     compte enseignant actif, plus seulement au créateur — l'écran ne
     distingue pas les périodes des collègues comme lecture seule, la RLS ne
     doit donc plus les bloquer.
+21. `018-oc-ues-edition-partagee.sql` — **à appliquer** : même correctif que
+    `017`, appliqué cette fois aux 11 UE du référentiel (`oc_ues` +
+    sa jointure `oc_ue_enseignants`) — plus seulement le créateur/les
+    co-enseignant·e·s déjà en jointure, tout compte enseignant actif peut les
+    modifier/supprimer et gérer leurs affectations. `oc_sequences`/
+    `oc_sessions`/`oc_reunions` et leurs jointures restent, elles, inchangées
+    (contenu personnel d'un·e enseignant·e, pas un planning d'équipe).
 
 ## Réglage obligatoire côté Auth
 
