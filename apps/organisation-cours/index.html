@@ -82,18 +82,64 @@
           <div class="dash-col-gauche">
             <section class="panel bande-bloc" id="dashSemaine"></section>
             <section class="panel bande-bloc" id="dashProchainement"></section>
-            <section class="panel urgences-panel" id="urgencesPanel" hidden>
-              <div class="panel-heading-inline urgences-tete">
-                <h3>Urgences</h3>
-                <span id="urgencesBadge" class="urgence-compte"></span>
-                <span class="urgences-sous">salles, matériel, véhicules, ordres de mission — par échéance</span>
+            <!-- Retour Martin (02/09/2026) : Urgences rétrécit pour laisser
+                 la place, à sa droite, aux 6 tuiles Frais/Périodes/Réunions/
+                 Améliorations/Matériel/Ordre de mission (déplacées ici depuis
+                 .dash-col-droite, cf. retour du 23/08/2026 ci-dessous
+                 remplacé). -->
+            <div class="dash-urgences-tuiles-row">
+              <section class="panel urgences-panel" id="urgencesPanel" hidden>
+                <div class="panel-heading-inline urgences-tete">
+                  <h3>Urgences</h3>
+                  <span id="urgencesBadge" class="urgence-compte"></span>
+                  <span class="urgences-sous">salles, matériel, véhicules, ordres de mission — par échéance</span>
+                </div>
+                <div id="urgencesList" class="urgence-liste"></div>
+                <details class="urgences-faites-detail" id="urgencesFaitesDetail" hidden>
+                  <summary>Faites (<span id="urgencesFaitesCompte">0</span>)</summary>
+                  <div id="urgencesFaitesList" class="urgence-liste"></div>
+                </details>
+              </section>
+              <!-- data-tile-key + poignée .tile-drag-handle (retour Martin, 23/08/2026) :
+                   réordonnancement des tuiles, voir activerReordonnancementTuiles() (app.js). -->
+              <div class="dash-tuiles-grille">
+                <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais" data-tile-key="frais">
+                  <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
+                  <span class="dash-tuile-label">Frais de déplacements</span>
+                  <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
+                <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes" data-tile-key="periodes">
+                  <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-calendrier"></span></span>
+                  <span class="dash-tuile-label">Périodes particulières</span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
+                <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions" data-tile-key="reunions">
+                  <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-reunion"></span></span>
+                  <span class="dash-tuile-label">Réunions</span>
+                  <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
+                <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes" data-tile-key="devnotes">
+                  <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-checklist"></span></span>
+                  <span class="dash-tuile-label">Améliorations de l'appli</span>
+                  <span id="devNotesBadge" class="dash-tuile-badge"></span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
+                <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel" data-tile-key="materiel">
+                  <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-loupe"></span></span>
+                  <span class="dash-tuile-label">Emprunts matériels</span>
+                  <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
+                <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission" data-tile-key="mission">
+                  <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-document"></span></span>
+                  <span class="dash-tuile-label">Ordre de mission</span>
+                  <span id="missionListBadge" class="dash-tuile-badge"></span>
+                  <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
+                </button>
               </div>
-              <div id="urgencesList" class="urgence-liste"></div>
-              <details class="urgences-faites-detail" id="urgencesFaitesDetail" hidden>
-                <summary>Faites (<span id="urgencesFaitesCompte">0</span>)</summary>
-                <div id="urgencesFaitesList" class="urgence-liste"></div>
-              </details>
-            </section>
+            </div>
           </div>
           <div class="dash-col-droite">
             <section class="panel backlog-panel" id="backlogPanel">
@@ -104,72 +150,36 @@
               <div id="dashboardBacklog" class="session-card-grid"></div>
               <span class="bloc-lien backlog-panel-link" data-goto-view="week" tabindex="0" role="button">Les placer dans le planning →</span>
             </section>
+            <!-- « À faire » : espaces Personnel/Commun fusionnés (app.js: CHECKLISTS). -->
             <section class="panel todo-panel priority-panel" id="todoPriorityPanel">
               <div class="panel-heading-inline">
                 <h3>À faire</h3>
-                <span class="meta-etiquette">privé</span>
               </div>
-              <div id="todoList" class="todo-list"></div>
-              <textarea id="todoNewInput" class="todo-add-input" placeholder="+ ajouter une note (Entrée pour valider, Maj+Entrée pour une nouvelle ligne)" maxlength="500" rows="2"></textarea>
-              <p class="todo-footnote meta">Une tâche cochée reste barrée jusqu’à la fin de la journée — le temps de la décocher si c’était une erreur — puis rejoint l’historique ci-dessous.</p>
-              <details class="todo-history">
-                <summary id="todoHistoryCount">Tâches faites</summary>
-                <ul id="todoHistoryList" class="todo-history-list"></ul>
-              </details>
+              <div class="todo-space">
+                <p class="todo-space-heading">Personnel</p>
+                <div id="todoList" class="todo-list"></div>
+                <details class="todo-history">
+                  <summary id="todoHistoryCount">Tâches faites</summary>
+                  <ul id="todoHistoryList" class="todo-history-list"></ul>
+                </details>
+              </div>
+              <div class="todo-space">
+                <p class="todo-space-heading">Commun</p>
+                <div id="todoSharedList" class="todo-list"></div>
+                <details class="todo-history">
+                  <summary id="todoSharedHistoryCount">Tâches faites</summary>
+                  <ul id="todoSharedHistoryList" class="todo-history-list"></ul>
+                </details>
+              </div>
+              <div class="todo-add-row">
+                <textarea id="todoNewInput" class="todo-add-input" placeholder="+ écrire une tâche, puis choisir où la ranger" maxlength="500" rows="2"></textarea>
+                <div class="todo-add-buttons">
+                  <button type="button" id="todoAddPersoButton" class="todo-add-btn">Personnel</button>
+                  <button type="button" id="todoAddCommunButton" class="todo-add-btn">Commun</button>
+                </div>
+              </div>
+              <p class="todo-footnote meta">« Commun » : visible et modifiable par tous les comptes. Une tâche cochée reste barrée jusqu’à la fin de la journée puis rejoint l’historique de son espace.</p>
             </section>
-            <!-- Retour Martin (23/08/2026, 4e retour) : les tuiles rejoignent
-                 la colonne de droite, sous « À faire » — donc à droite
-                 d'Urgences, là où il y a de la place. Placées ici (dernier
-                 enfant de .dash-col-droite, qui suit déjà .dash-col-gauche
-                 dans le DOM), elles s'affichent aussi EN DERNIER quand
-                 .dash-grille repasse à 1 colonne sous les 1000px (grand écran
-                 partagé en deux) : aucune règle d'ordre supplémentaire
-                 nécessaire, le flux naturel du DOM suffit. Frais/Périodes/
-                 Réunions/Améliorations/Matériel ne sont plus des <details>
-                 repliés en place — trop de contenu (table, filtres) pour
-                 tenir dans une tuile carrée façon accueil mobile. La tuile
-                 est un point d'entrée pur (icône + libellé + pastille de
-                 compteur), le contenu complet s'ouvre dans une modale (voir
-                 #fraisDialog etc. et bindDashTuiles() dans app.js). -->
-            <!-- data-tile-key + poignée .tile-drag-handle (retour Martin, 23/08/2026) :
-                 réordonnancement des tuiles, voir activerReordonnancementTuiles() (app.js). -->
-            <div class="dash-tuiles-grille">
-              <button type="button" class="dash-tuile dash-tuile-frais" id="fraisTuile" data-dash-tuile="frais" data-tile-key="frais">
-                <span class="dash-tuile-icon" aria-hidden="true"><svg class="mobile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.7-1.9-1-3-1-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5c1.1 0 2.2-.3 3-1"/><line x1="6.5" y1="10.5" x2="12.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="12.5" y2="13.5"/></svg></span>
-                <span class="dash-tuile-label">Frais de déplacements</span>
-                <span id="fraisSummaryBadge" class="dash-tuile-badge"></span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-              <button type="button" class="dash-tuile dash-tuile-periodes" id="periodesTuile" data-dash-tuile="periodes" data-tile-key="periodes">
-                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-calendrier"></span></span>
-                <span class="dash-tuile-label">Périodes particulières</span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-              <button type="button" class="dash-tuile dash-tuile-reunions" id="reunionsTuile" data-dash-tuile="reunions" data-tile-key="reunions">
-                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-reunion"></span></span>
-                <span class="dash-tuile-label">Réunions</span>
-                <span id="reunionsSummaryBadge" class="dash-tuile-badge"></span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-              <button type="button" class="dash-tuile dash-tuile-devnotes" id="devNotesTuile" data-dash-tuile="devnotes" data-tile-key="devnotes">
-                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-checklist"></span></span>
-                <span class="dash-tuile-label">Améliorations de l'appli</span>
-                <span id="devNotesBadge" class="dash-tuile-badge"></span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-              <button type="button" class="dash-tuile dash-tuile-materiel" id="materielTuile" data-dash-tuile="materiel" data-tile-key="materiel">
-                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-loupe"></span></span>
-                <span class="dash-tuile-label">Emprunts matériels</span>
-                <span id="materielEmpruntsBadge" class="dash-tuile-badge"></span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-              <button type="button" class="dash-tuile dash-tuile-mission" id="missionTuile" data-dash-tuile="mission" data-tile-key="mission">
-                <span class="dash-tuile-icon" aria-hidden="true"><span class="mobile-icon-png picto-document"></span></span>
-                <span class="dash-tuile-label">Ordre de mission</span>
-                <span id="missionListBadge" class="dash-tuile-badge"></span>
-                <span class="tile-drag-handle" data-tile-handle aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="6" r="1.6" fill="currentColor"/><circle cx="8" cy="12" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="18" r="1.6" fill="currentColor"/><circle cx="16" cy="18" r="1.6" fill="currentColor"/></svg></span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -1121,25 +1131,26 @@
               <option value="atelier">Atelier</option>
             </select>
           </label>
-          <!-- Ajustements #2 (18/08/2026) : une simple coche remplace le menu à
-               3 états — cocher déclenche en priorité la recherche d'un véhicule
-               de l'établissement (réservation, encart Urgences). Bascule vers
-               véhicule personnel/ordre de mission si indisponible : bouton dédié
-               sur la ligne Urgences (retour 17/08/2026), pas ici. -->
-          <label class="checkbox-inline">
-            <input type="checkbox" id="sessionDeplacement" />
-            <span>Déplacement <small>→ véhicule de l'établissement en priorité</small></span>
-          </label>
         </div>
-        <div class="span-full session-inline-row" id="sessionDeplacementSuite" hidden>
-          <label class="checkbox-inline checkbox-discreet" id="sessionVehicleBookedField" hidden>
-            <input type="checkbox" id="sessionVehicleBooked" />
-            <span>Véhicule réservé <small>→ sinon il reste dans « À réserver », alerte à 15 jours</small></span>
+        <!-- Retours 02/09/2026 (reprise 2) — toutes les coches déplacement/
+             véhicule/ordre de mission ont déménagé dans une fenêtre dédiée
+             (#deplacementGestionDialog), ouvrable de partout (carte séance,
+             Urgences, mobile) sans passer par ce formulaire. Ici, un résumé
+             en lecture + le même bouton « Gérer » (data-open-deplacement,
+             même délégué global que les autres surfaces). Contenu du résumé
+             généré par deplacementResumeTexte (app.js).
+             Retours 03/09/2026 (reprise 6) — Martin : remettre ici la case
+             « Déplacement à prévoir » (active Gérer + les pastilles carte/
+             Urgences), plutôt que devoir d'abord ouvrir Gérer pour la
+             cocher. Écrit directement deplacementActif sur l'entité (pas de
+             recalcul de mode/véhicule ici, ça reste le rôle de Gérer). -->
+        <div class="span-full session-inline-row">
+          <label class="checkbox-inline">
+            <input type="checkbox" id="sessionDeplacementActifCheckbox" />
+            <span>Déplacement à prévoir</span>
           </label>
-          <label class="checkbox-inline checkbox-discreet" id="sessionOrdreMissionField" hidden>
-            <input type="checkbox" id="sessionOrdreMission" />
-            <span>Ordre de mission demandé <small>→ à faire avant le départ ; les frais se déclarent après</small></span>
-          </label>
+          <span class="form-help tight" id="sessionDeplacementResume">Déplacement : aucun</span>
+          <button type="button" class="small secondary" id="sessionDeplacementGererButton">Gérer →</button>
         </div>
       </fieldset>
 
@@ -1312,6 +1323,36 @@
     </form>
   </dialog>
 
+  <!-- Retours 02/09/2026 (reprise 2) — Martin : « gérer les réservations à
+       partir de tous les espaces d'infos, sans ouvrir le menu de conception »,
+       « beaucoup trop de coches, mal organisées ». Remplace toutes les coches
+       éparpillées dans les formulaires séance/réunion (mode mixte, qui
+       conduit, modèles, réservé…) par UNE SEULE fenêtre compacte, ouverte
+       depuis n'importe où (carte séance, ligne Urgences, tuile mobile, ET le
+       formulaire lui-même via son résumé) — jamais besoin d'ouvrir toute la
+       fiche juste pour le déplacement. Un enseignant peut gérer le
+       déplacement de l'autre (retour Martin) : rien ici n'est filtré par
+       compte. Contenu généré par renderDeplacementGestion (app.js). -->
+  <dialog id="deplacementGestionDialog" class="modal">
+    <form method="dialog" id="deplacementGestionForm">
+      <header class="modal-header">
+        <h3 id="deplacementGestionTitle">Déplacement</h3>
+        <button type="button" class="icon-button" id="closeDeplacementGestionModal">×</button>
+      </header>
+      <input type="hidden" id="deplacementGestionTarget" />
+      <label class="checkbox-inline">
+        <input type="checkbox" id="deplacementGestionActif" />
+        <span>Déplacement nécessaire</span>
+      </label>
+      <div id="deplacementGestionRows" class="deplacement-gestion-rows"></div>
+      <footer class="modal-footer">
+        <span class="spacer"></span>
+        <button type="button" class="secondary" id="cancelDeplacementGestionButton">Annuler</button>
+        <button type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
   <dialog id="materielEmpruntDialog" class="modal">
     <form method="dialog" id="materielEmpruntForm">
       <header class="modal-header">
@@ -1379,24 +1420,21 @@
         <input type="hidden" id="reunionTeacher" />
         <input id="reunionTeacherResidu" placeholder="Autres (pas encore de compte) : initiales séparées par des virgules" />
       </div>
-      <label class="field-block">Sujets abordés
-        <textarea id="reunionSujets" rows="4" placeholder="Ordre du jour, points évoqués, décisions prises…"></textarea>
+      <label class="field-block">Ordre du jour
+        <textarea id="reunionSujets" rows="4" placeholder="Points évoqués, décisions prises…"></textarea>
       </label>
-      <label>Déplacement
-        <select id="reunionDeplacement">
-          <option value="">Aucun (sur place)</option>
-          <option value="etablissement">Véhicule de l'établissement</option>
-          <option value="personnel">Véhicule personnel</option>
-        </select>
-      </label>
-      <label class="checkbox-inline" id="reunionVehicleBookedField" hidden>
-        <input type="checkbox" id="reunionVehicleBooked" />
-        <span>Véhicule réservé (sinon il reste dans « À réserver », alerte à 15 jours)</span>
-      </label>
-      <label class="checkbox-inline" id="reunionOrdreMissionField" hidden>
-        <input type="checkbox" id="reunionOrdreMission" />
-        <span>Ordre de mission demandé (à faire avant le départ ; les frais se déclarent après)</span>
-      </label>
+      <!-- Retours 02/09/2026 (reprise 2), complété 03/09/2026 (reprise 6) —
+           voir équivalent séance : le détail se gère dans
+           #deplacementGestionDialog, ouvrable de partout ; ici la case
+           « Déplacement à prévoir » + un résumé + le bouton « Gérer ». -->
+      <div class="span-full session-inline-row">
+        <label class="checkbox-inline">
+          <input type="checkbox" id="reunionDeplacementActifCheckbox" />
+          <span>Déplacement à prévoir</span>
+        </label>
+        <span class="form-help tight" id="reunionDeplacementResume">Déplacement : aucun</span>
+        <button type="button" class="small secondary" id="reunionDeplacementGererButton">Gérer →</button>
+      </div>
       <p class="form-help tight" id="reunionFraisHint" hidden>Un déplacement lié à cette réunion existe dans « Frais de déplacement » : complétez-y km, taux et statut.</p>
       <footer class="modal-footer">
         <button type="button" id="deleteReunionButton" class="danger">Supprimer</button>
@@ -1492,7 +1530,7 @@
         <button type="button" class="icon-button" id="closeReunionsDialog">×</button>
       </header>
       <div class="reunions-toolbar">
-        <span class="meta">Garder trace des réunions réalisées (qui / où / quand / sujets).</span>
+        <span class="meta">Garder trace des réunions réalisées (qui / où / quand / ordre du jour).</span>
       </div>
       <div id="reunionsList" class="frais-table-wrap"></div>
     </form>
