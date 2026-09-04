@@ -130,6 +130,24 @@ function creerSnapshotVide() {
     // (voir ecrireBlocs) pour détecter qu'un collègue a modifié la même clé
     // entre-temps, plutôt que d'écraser silencieusement (cf. 002-blobs.sql).
     blocsPartagesUpdatedAt: new Map(),
+    // Bug remonté par un collègue le 04/09/2026 : conflit d'édition
+    // concurrente sur une checklist partagée ("Améliorations de l'appli"),
+    // fréquent et facile à ne pas remarquer (il faut penser à cliquer ⟳).
+    // Valeur BRUTE de chaque clé partagée telle que lue au dernier
+    // chargement/écriture réussi — sert de "base" à la fusion automatique
+    // tentée par ecrireBlocs en cas de conflit (voir fusionnerValeur).
+    blocsPartagesValeur: new Map(),
+    // Même bug, sur les tables relationnelles (UE/séquences/séances/réunions/
+    // périodes particulières) : contrairement à oc_blocs_partages, aucun
+    // filtre optimiste n'existait ici — une ligne entière réécrite à chaque
+    // enregistrement pouvait écraser en silence un champ modifié entre-temps
+    // par un·e collègue (ex. « Déroulé » d'une séance co-enseignée). Même
+    // principe qu'au-dessus, par type d'entité (voir ecrireEntites) :
+    //   - entitesUpdatedAt : `updated_at` connu de chaque id.
+    //   - entitesValeur : colonnes (hors id/cree_par/updated_at) connues de
+    //     chaque id — base de la fusion à 3 (voir fusionnerObjet).
+    entitesUpdatedAt: { ues: new Map(), sequences: new Map(), sessions: new Map(), constraints: new Map(), reunions: new Map() },
+    entitesValeur: { ues: new Map(), sequences: new Map(), sessions: new Map(), constraints: new Map(), reunions: new Map() },
     // id d'entité -> Set(user_id) déjà en jointure, tel que lu au chargement.
     teacherUes: new Map(), teacherSequences: new Map(), teacherSessions: new Map(), teacherReunions: new Map(),
   };
@@ -260,9 +278,17 @@ window.OC_SYNC = {
     idsExistants.constraints = new Set(constraints.map((r) => r.id));
     idsExistants.reunions = new Set(reunions.map((r) => r.id));
 
+    // Base du filtre optimiste + de la fusion de conflit (voir ecrireEntites,
+    // bug du 04/09/2026) : toujours sur les lignes BRUTES, même raison qu'idsExistants.
+    for (const [t, lignes] of [["ues", ues], ["sequences", sequences], ["sessions", sessions], ["constraints", constraints], ["reunions", reunions]]) {
+      snapshot.entitesUpdatedAt[t] = new Map(lignes.map((r) => [r.id, r.updated_at]));
+      snapshot.entitesValeur[t] = new Map(lignes.map((r) => [r.id, sansColonnesSysteme(r)]));
+    }
+
     const blocsPersoParCle = new Map(blocsPerso.map((r) => [r.cle, r.contenu]));
     const blocsPartagesParCle = new Map(blocsPartages.map((r) => [r.cle, r.contenu]));
     snapshot.blocsPartagesUpdatedAt = new Map(blocsPartages.map((r) => [r.cle, r.updated_at]));
+    snapshot.blocsPartagesValeur = new Map(blocsPartagesParCle);
 
     // Jointures telles que lues en base : servent à la fois à reconstruire
     // `teacher` ci-dessous ET de snapshot de départ pour enregistrer().
@@ -340,11 +366,17 @@ window.OC_SYNC = {
       erreurs.push("Liste des enseignants indisponible : " + (e.message || "erreur réseau."));
     }
 
-    await ecrireEntites(s, uid, "constraints", "oc_constraints", SPEC_CONSTRAINTS, state.constraints, erreurs, forcer);
-    await ecrireEntites(s, uid, "ues", "oc_ues", SPEC_UES, state.ues, erreurs, forcer);
-    await ecrireEntites(s, uid, "sequences", "oc_sequences", SPEC_SEQUENCES, state.sequences, erreurs, forcer);
-    await ecrireEntites(s, uid, "sessions", "oc_sessions", SPEC_SESSIONS, state.sessions, erreurs, forcer);
-    await ecrireEntites(s, uid, "reunions", "oc_reunions", SPEC_REUNIONS, state.reunions, erreurs, forcer);
+    // `fusionnees` : ids/clés dont le contenu vient d'être modifié EN PLACE
+    // (dans state.ues/state.sessions/... ou state[cle] pour les blocs
+    // partagés) par une fusion automatique de conflit — voir ecrireEntites /
+    // ecrireBlocs et fusionnerValeur. saveData() doit re-rendre même si
+    // aucune erreur n'est remontée, sinon l'écran affiché reste périmé.
+    const fusionnees = [];
+    await ecrireEntites(s, uid, "constraints", "oc_constraints", SPEC_CONSTRAINTS, state.constraints, erreurs, forcer, fusionnees);
+    await ecrireEntites(s, uid, "ues", "oc_ues", SPEC_UES, state.ues, erreurs, forcer, fusionnees);
+    await ecrireEntites(s, uid, "sequences", "oc_sequences", SPEC_SEQUENCES, state.sequences, erreurs, forcer, fusionnees);
+    await ecrireEntites(s, uid, "sessions", "oc_sessions", SPEC_SESSIONS, state.sessions, erreurs, forcer, fusionnees);
+    await ecrireEntites(s, uid, "reunions", "oc_reunions", SPEC_REUNIONS, state.reunions, erreurs, forcer, fusionnees);
 
     // Jointures `teacher` : indépendant du diff des lignes ci-dessus (cf.
     // en-tête du fichier) — tourne à chaque enregistrement, pas seulement
@@ -368,16 +400,18 @@ window.OC_SYNC = {
     // par construction (jamais touché que par son propre compte).
     await ecrireBlocs(s, "oc_blocs_partages", CLES_PARTAGEES, snapshot.blocsPartages, state,
       (cle, valeur) => ({ cle, contenu: valeur ?? null, updated_par: uid, updated_at: new Date().toISOString() }),
-      erreurs, forcer, snapshot.blocsPartagesUpdatedAt);
+      erreurs, forcer, snapshot.blocsPartagesUpdatedAt, snapshot.blocsPartagesValeur, fusionnees);
 
     // En cas d'échec (même partiel), on ne fait pas croire à une sauvegarde
     // fraîche : l'horodatage affiché reste celui du dernier succès réel.
-    return { lastSavedAt: erreurs.length ? state.lastSavedAt : new Date().toISOString(), erreurs };
+    return { lastSavedAt: erreurs.length ? state.lastSavedAt : new Date().toISOString(), erreurs, fusionnees };
   },
 };
 
-async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer = false) {
+async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer = false, fusionnees = null) {
   const snap = snapshot[type];
+  const updatedAtSnap = snapshot.entitesUpdatedAt[type];
+  const valeurSnap = snapshot.entitesValeur[type];
   const avecTeacher = Boolean(JOINTURES_TEACHER[type]);
   const aEcrire = [];
   for (const entite of entites || []) {
@@ -389,7 +423,11 @@ async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer
     const fp = empreinte(entite);
     if (forcer || snap.get(entite.id) !== fp) {
       const source = avecTeacher ? separerTeacher(entite).entite : entite;
-      aEcrire.push({ id: entite.id, fp, estNouveau: !idsExistants[type].has(entite.id), colonnes: versLigne(spec, source) });
+      // `entite` (référence vers l'objet vivant dans state.ues/state.sessions/...)
+      // est conservée : en cas de fusion de conflit, on la complète EN PLACE
+      // avec ce qu'un·e collègue a écrit entre-temps (voir plus bas), sinon
+      // `state` resterait avec une version tronquée par rapport à la base.
+      aEcrire.push({ id: entite.id, entite, estNouveau: !idsExistants[type].has(entite.id), colonnes: versLigne(spec, source) });
     }
   }
   if (!aEcrire.length) return;
@@ -406,17 +444,49 @@ async function ecrireEntites(s, uid, type, table, spec, entites, erreurs, forcer
       // ligne, cree_par envoyé) et update (ligne existante, cree_par jamais
       // touché) lève l'ambiguïté : chacun n'est jugé que par sa propre
       // policy.
-      // .select('id') est ce qui permet de distinguer un succès d'un refus
-      // SILENCIEUX de la RLS : sans lui, une écriture filtrée par la policy
-      // ne renvoie pas d'erreur (comme un WHERE qui ne matche rien), donc
-      // "pas d'erreur" ne veut pas dire "écrit".
-      const requete = item.estNouveau
-        ? s.from(table).insert({ id: item.id, ...item.colonnes, cree_par: uid }).select("id")
-        : s.from(table).update(item.colonnes).eq("id", item.id).select("id");
-      const { data, error } = await requete;
+      // .select('id, updated_at') est ce qui permet de distinguer un succès
+      // d'un refus SILENCIEUX de la RLS : sans lui, une écriture filtrée par
+      // la policy ne renvoie pas d'erreur (comme un WHERE qui ne matche
+      // rien), donc "pas d'erreur" ne veut pas dire "écrit" — `updated_at`
+      // sert en plus de base au filtre optimiste du prochain enregistrement.
+      let colonnesEcrites = item.colonnes;
+      let data, error;
+      if (item.estNouveau) {
+        ({ data, error } = await s.from(table).insert({ id: item.id, ...colonnesEcrites, cree_par: uid }).select("id, updated_at"));
+      } else {
+        const connu = updatedAtSnap.get(item.id);
+        let requete = s.from(table).update(colonnesEcrites).eq("id", item.id);
+        if (connu) requete = requete.eq("updated_at", connu);
+        ({ data, error } = await requete.select("id, updated_at"));
+        if (connu && !error && !data?.length) {
+          // Conflit : un·e collègue a modifié cette ligne entre-temps. Bug
+          // remonté le 04/09/2026 (texte de « Déroulé » disparu sur une séance
+          // co-enseignée) : sans ce garde-fou, chaque enregistrement réécrit
+          // TOUTE la ligne et écrase silencieusement les champs modifiés par
+          // ce·tte collègue depuis. Tentative de fusion champ par champ
+          // (jusque dans `contenu`, voir fusionnerValeur) avant d'abandonner.
+          const { data: fraiche, error: erreurLecture } = await s.from(table).select("*").eq("id", item.id).maybeSingle();
+          if (!erreurLecture && fraiche) {
+            const base = valeurSnap.get(item.id) ?? {};
+            colonnesEcrites = fusionnerObjet(base, item.colonnes, sansColonnesSysteme(fraiche));
+            ({ data, error } = await s.from(table).update(colonnesEcrites).eq("id", item.id).eq("updated_at", fraiche.updated_at).select("id, updated_at"));
+          }
+        }
+      }
       if (error) erreurs.push(`${table} #${item.id} : ${error.message}`);
       else if (!data?.length) erreurs.push(`${table} #${item.id} : modification refusée (droits insuffisants ?).`);
-      else { snap.set(item.id, item.fp); idsExistants[type].add(item.id); }
+      else {
+        if (colonnesEcrites !== item.colonnes) {
+          // Fusion appliquée : recharge l'entité locale avec le résultat, sinon
+          // `state` garde une version amputée des champs du/de la collègue.
+          Object.assign(item.entite, depuisLigne(spec, { id: item.id, ...colonnesEcrites }));
+          fusionnees?.push(item.id);
+        }
+        snap.set(item.id, empreinte(item.entite));
+        valeurSnap.set(item.id, colonnesEcrites);
+        updatedAtSnap.set(item.id, data[0].updated_at);
+        idsExistants[type].add(item.id);
+      }
     } catch (e) {
       erreurs.push(`${table} #${item.id} : ${e.message || "erreur réseau."}`);
     }
@@ -508,24 +578,124 @@ async function synchroniserEnseignants(s, table, colonne, snap, entites, erreurs
 // matche plus ce filtre : 0 ligne modifiée, on le détecte et on prévient au
 // lieu d'écraser silencieusement son écriture (dernier écrivain "bloqué",
 // pas "gagnant").
-async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs, forcer = false, updatedAtSnap = null) {
+// Fusion générique à 3 (base commune / local / distant), réutilisée pour les
+// clés partagées (oc_blocs_partages, une valeur JSON quelconque) ET pour les
+// lignes des tables relationnelles (oc_ues/oc_sequences/oc_sessions/
+// oc_reunions/oc_constraints, colonne par colonne — voir ecrireEntites, bug
+// du 04/09/2026 : une ligne entière réécrite à chaque enregistrement pouvait
+// écraser silencieusement un champ modifié entre-temps par un·e collègue,
+// sans passer par ce garde-fou puisqu'aucun `updated_at` n'y était vérifié).
+// Descend récursivement dans les objets simples (donc dans `contenu`, sans
+// avoir à connaître son contenu) et fusionne élément par élément les listes
+// dont chaque entrée a un id stable (checklists, trames...) ; tout le reste
+// (texte libre, réglages ponctuels, tableaux de valeurs simples) tranche par
+// "priorité locale sur conflit" — une fusion plus fine n'aurait pas de sens.
+function estObjetSimple(valeur) {
+  return Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur);
+}
+function estListeAvecId(valeur) {
+  return Array.isArray(valeur) && valeur.every((v) => v && typeof v === "object" && typeof v.id !== "undefined");
+}
+
+// Fusion à 3 (base commune / local / distant), par id :
+//   - présent seulement en local (absent de la base) -> ajout local, conservé.
+//   - présent dans la base mais absent en local -> supprimé localement, retiré.
+//   - présent dans la base mais absent côté distant -> supprimé par un·e
+//     collègue entre-temps, retiré (une suppression l'emporte toujours sur
+//     une modification concurrente du même élément, plutôt que le ressusciter).
+//   - modifié seulement en local (différent de la base) -> version locale.
+//   - sinon -> version distante (own passage inchangé, ou modifié par un·e
+//     collègue qu'on n'a pas touché nous-même).
+function fusionnerListeItems(base, local, distante) {
+  const baseParId = new Map(base.map((it) => [it.id, it]));
+  const localParId = new Map(local.map((it) => [it.id, it]));
+  const resultat = [];
+  const vus = new Set();
+  for (const item of distante) {
+    vus.add(item.id);
+    if (baseParId.has(item.id) && !localParId.has(item.id)) continue; // supprimé localement
+    const localItem = localParId.get(item.id);
+    const modifieLocalement = localItem && empreinte(localItem) !== empreinte(baseParId.get(item.id) ?? null);
+    resultat.push(modifieLocalement ? localItem : item);
+  }
+  for (const item of local) {
+    if (vus.has(item.id) || baseParId.has(item.id)) continue; // déjà traité, ou supprimé côté distant
+    resultat.push(item); // ajout local, absent côté distant
+  }
+  return resultat;
+}
+
+function fusionnerValeur(base, local, distante) {
+  if (empreinte(local ?? null) === empreinte(distante ?? null)) return local; // rien à trancher
+  const localAChange = empreinte(local ?? null) !== empreinte(base ?? null);
+  const distantAChange = empreinte(distante ?? null) !== empreinte(base ?? null);
+  if (localAChange && distantAChange) {
+    if (estListeAvecId(local) || estListeAvecId(distante)) {
+      return fusionnerListeItems(estListeAvecId(base) ? base : [], estListeAvecId(local) ? local : [], estListeAvecId(distante) ? distante : []);
+    }
+    if (estObjetSimple(base) || estObjetSimple(local) || estObjetSimple(distante)) {
+      return fusionnerObjet(base, local, distante);
+    }
+  }
+  return localAChange ? local : distante; // priorité locale, sinon la version distante (inchangée ou modifiée seulement par un·e collègue)
+}
+
+function fusionnerObjet(base, local, distante) {
+  const b = estObjetSimple(base) ? base : {};
+  const l = estObjetSimple(local) ? local : {};
+  const d = estObjetSimple(distante) ? distante : {};
+  const cles = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(d)]);
+  const resultat = {};
+  for (const cle of cles) resultat[cle] = fusionnerValeur(b[cle], l[cle], d[cle]);
+  return resultat;
+}
+
+// Copie d'une ligne oc_* sans les colonnes système (jamais soumises à la
+// fusion : `cree_par` ne change qu'à la création, `updated_at`/`id` sont
+// gérés à part).
+function sansColonnesSysteme(ligne) {
+  const { id, cree_par, updated_at, ...reste } = ligne;
+  return reste;
+}
+
+async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs, forcer = false, updatedAtSnap = null, valeurSnap = null, fusionnees = null) {
   const aEcrire = [];
   for (const cle of cles) {
     const valeur = state[cle];
     const fp = empreinte(valeur ?? null);
-    if (forcer || snap.get(cle) !== fp) aEcrire.push({ cle, valeur, fp });
+    if (forcer || snap.get(cle) !== fp) aEcrire.push({ cle, valeur });
   }
   if (!aEcrire.length) return;
-  await executerAvecLimite(aEcrire, async ({ cle, valeur, fp }) => {
+  await executerAvecLimite(aEcrire, async ({ cle, valeur }) => {
     try {
-      const ligne = construireLigne(cle, valeur);
+      let valeurEcrite = valeur;
+      let ligne = construireLigne(cle, valeurEcrite);
       const connu = updatedAtSnap?.get(cle);
       let data, error;
       if (updatedAtSnap && connu) {
         ({ data, error } = await s.from(table).update(ligne).eq("cle", cle).eq("updated_at", connu).select());
         if (!error && !data?.length) {
-          erreurs.push(`${table} « ${cle} » : quelqu'un d'autre a modifié cette donnée entre-temps — rechargez (⟳) avant de réessayer.`);
-          return;
+          // Conflit : un·e collègue a réenregistré cette clé entre-temps.
+          // Bug remonté le 04/09/2026 : fréquent sur les checklists partagées
+          // (« Améliorations de l'appli »...), et l'utilisateur ne pense pas
+          // systématiquement à recharger (⟳) — tentative de fusion automatique
+          // avant d'abandonner sur le message manuel ci-dessous.
+          if (valeurSnap) {
+            const { data: fraiche, error: erreurLecture } = await s.from(table).select("cle, contenu, updated_at").eq("cle", cle).maybeSingle();
+            if (!erreurLecture && fraiche) {
+              valeurEcrite = fusionnerValeur(valeurSnap.get(cle) ?? null, valeur, fraiche.contenu);
+              ligne = construireLigne(cle, valeurEcrite);
+              ({ data, error } = await s.from(table).update(ligne).eq("cle", cle).eq("updated_at", fraiche.updated_at).select());
+              if (!error && data?.length) {
+                state[cle] = valeurEcrite;
+                fusionnees?.push(cle);
+              }
+            }
+          }
+          if (!error && !data?.length) {
+            erreurs.push(`${table} « ${cle} » : quelqu'un d'autre a modifié cette donnée entre-temps — rechargez (⟳) avant de réessayer.`);
+            return;
+          }
         }
       } else {
         ({ data, error } = await s.from(table).upsert(ligne).select());
@@ -533,7 +703,8 @@ async function ecrireBlocs(s, table, cles, snap, state, construireLigne, erreurs
       if (error) erreurs.push(`${table} « ${cle} » : ${error.message}`);
       else if (!data?.length) erreurs.push(`${table} « ${cle} » : modification refusée (droits insuffisants ?).`);
       else {
-        snap.set(cle, fp);
+        snap.set(cle, empreinte(valeurEcrite ?? null));
+        valeurSnap?.set(cle, valeurEcrite);
         if (updatedAtSnap) updatedAtSnap.set(cle, data[0].updated_at);
       }
     } catch (e) {
