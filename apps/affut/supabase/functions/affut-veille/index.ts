@@ -72,22 +72,26 @@ function estAutorise(req: Request): boolean {
   return req.headers.get("x-veille-token") === VEILLE_TOKEN;
 }
 
-// Semaine ISO courante -> { mois: "août 2026", semaine: "semaine 34 · 17 → 23 août 2026" }
+// Semaine de PUBLICATION (Lot 26), pas semaine de collecte : la moisson tourne
+// le samedi (`0 6 * * 6` UTC) mais le numéro ne sort que le lundi suivant, et
+// peut mélanger des entrées manuelles publiées hors semaine de veille — voir
+// discussion du 04/09/2026. On ancre donc le calcul sur le prochain lundi
+// (jamais sur « aujourd'hui »), qui devient aussi `date_publication`.
+// -> { mois: "août 2026", semaine: "semaine 34 · 17 → 23 août 2026", datePublication: "2026-08-17" }
 // Même calcul que formaterSemaineIso()/isoSemaineActuelle() dans apps/affut/index.html
-// (Lot 6) — à garder synchronisé si cette logique évolue côté front.
-function semaineIsoActuelle(): { mois: string; semaine: string } {
+// (Lot 6, Lot 26) — à garder synchronisé si cette logique évolue côté front.
+function semaineIsoActuelle(): { mois: string; semaine: string; datePublication: string } {
   const auj = new Date();
-  const jour = auj.getUTCDay() || 7;
-  const jeudi = new Date(auj);
-  jeudi.setUTCDate(auj.getUTCDate() + 4 - jour);
+  const jourAuj = auj.getUTCDay() || 7;
+  const lundi = new Date(auj);
+  if (jourAuj !== 1) lundi.setUTCDate(auj.getUTCDate() + (8 - jourAuj));
+
+  const jeudi = new Date(lundi);
+  jeudi.setUTCDate(lundi.getUTCDate() + 3); // jeudi de cette semaine ISO (fixe l'année ISO)
   const anneeIso = jeudi.getUTCFullYear();
   const jan1 = new Date(Date.UTC(anneeIso, 0, 1));
   const numSemaine = Math.ceil((((jeudi.getTime() - jan1.getTime()) / 86400000) + 1) / 7);
 
-  const jan4 = new Date(Date.UTC(anneeIso, 0, 4));
-  const jourJan4 = jan4.getUTCDay() || 7;
-  const lundi = new Date(jan4);
-  lundi.setUTCDate(jan4.getUTCDate() - jourJan4 + 1 + (numSemaine - 1) * 7);
   const dimanche = new Date(lundi);
   dimanche.setUTCDate(lundi.getUTCDate() + 6);
 
@@ -97,7 +101,11 @@ function semaineIsoActuelle(): { mois: string; semaine: string } {
     ? `${lundi.getUTCDate()} → ${dimanche.getUTCDate()} ${moisDim} ${anneeDim}`
     : `${lundi.getUTCDate()} ${moisLundi}${anneeLundi !== anneeDim ? " " + anneeLundi : ""} → ${dimanche.getUTCDate()} ${moisDim} ${anneeDim}`;
 
-  return { mois: `${moisLundi} ${anneeLundi}`, semaine: `semaine ${numSemaine} · ${plage}` };
+  return {
+    mois: `${moisLundi} ${anneeLundi}`,
+    semaine: `semaine ${numSemaine} · ${plage}`,
+    datePublication: lundi.toISOString().slice(0, 10),
+  };
 }
 
 async function handleContext(): Promise<Response> {
@@ -293,12 +301,13 @@ async function handleIngest(req: Request): Promise<Response> {
       .eq("numero", numeroCible);
     if (errUpdate) return json({ error: errUpdate.message }, 500);
   } else {
-    const { mois, semaine } = semaineIsoActuelle();
+    const { mois, semaine, datePublication } = semaineIsoActuelle();
     const { error: errCreate } = await supabase.from("affut_numeros").insert({
       numero: numeroCible,
       statut: "brouillon",
       mois,
       semaine,
+      date_publication: datePublication,
       titre: "",
       chapo: "",
       candidates: nouveaux.length,

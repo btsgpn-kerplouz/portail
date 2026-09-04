@@ -989,14 +989,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return {
       numero: n.numero, statut: n.statut, mois: n.mois, semaine: n.semaine, titre: n.titre,
       chapo: n.chapo, candidates: n.candidates, collecte: n.collecte || null, moisson: n.moisson || null,
-      image_url: n.imageUrl || null
+      image_url: n.imageUrl || null, date_publication: n.datePublication || null
     };
   }
   function depuisLigneNumero(r, entreesDuNumero){
     return {
       numero: r.numero, statut: r.statut, mois: r.mois, semaine: r.semaine, titre: r.titre,
       chapo: r.chapo, candidates: r.candidates, collecte: r.collecte, moisson: r.moisson,
-      vues: r.vues, entrees: entreesDuNumero, imageUrl: r.image_url
+      vues: r.vues, entrees: entreesDuNumero, imageUrl: r.image_url, datePublication: r.date_publication
     };
   }
   function versLigneSource(s){
@@ -1160,10 +1160,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // semaine sont calculés, jamais saisis à la main.
   var MOIS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 
+  // Semaine de PUBLICATION, pas semaine de collecte (Lot 26) : la moisson
+  // automatique tourne le samedi, mais le numéro ne sort que le lundi
+  // suivant — et peut mélanger des entrées manuelles publiées à d'autres
+  // dates, hors semaine de veille (voir discussion du 04/09/2026). Le champ
+  // Semaine identifie donc désormais la semaine du lundi de PUBLICATION, pas
+  // la semaine dans laquelle tombe le samedi de moisson : on ancre le calcul
+  // sur le prochain lundi (ou aujourd'hui même si on est déjà lundi), jamais
+  // sur « aujourd'hui » brut.
+  function prochainLundi(date){
+    var d = new Date(date);
+    var jour = d.getDay() || 7; // lundi=1 .. dimanche=7
+    if (jour !== 1) d.setDate(d.getDate() + (8 - jour));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
   function isoSemaineActuelle(){
-    var d = new Date();
-    var jour = d.getDay() || 7;
-    d.setDate(d.getDate() + 4 - jour); // jeudi de la semaine ISO courante
+    var d = prochainLundi(new Date());
+    d.setDate(d.getDate() + 3); // jeudi de cette semaine ISO (fixe l'année ISO)
     var anneeIso = d.getFullYear();
     var jan1 = new Date(anneeIso, 0, 1);
     var semaine = Math.ceil((((d - jan1) / 86400000) + 1) / 7);
@@ -1178,7 +1193,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return lundi;
   }
 
-  // "2026-W34" -> { mois: "août 2026", semaine: "semaine 34 · 17 → 23 août 2026" }
+  // "2026-W34" -> { mois: "août 2026", semaine: "semaine 34 · 17 → 23 août 2026",
+  //                 datePublication: "2026-08-17" }
+  // Le lundi de la semaine ISO EST la date de publication (Lot 26) : le champ
+  // Semaine ne décrit plus « quand les actualités sont parues » mais « quelle
+  // semaine porte ce numéro », or ce numéro paraît justement ce lundi-là.
   function formaterSemaineIso(valeurWeek){
     var m = /^(\d{4})-W(\d{2})$/.exec(valeurWeek || "");
     if (!m) return null;
@@ -1190,7 +1209,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var plage = (moisLundi === moisDim && anneeLundi === anneeDim)
       ? lundi.getUTCDate() + " → " + dimanche.getUTCDate() + " " + moisDim + " " + anneeDim
       : lundi.getUTCDate() + " " + moisLundi + (anneeLundi !== anneeDim ? " " + anneeLundi : "") + " → " + dimanche.getUTCDate() + " " + moisDim + " " + anneeDim;
-    return { mois: moisLundi + " " + anneeLundi, semaine: "semaine " + semaine + " · " + plage };
+    return {
+      mois: moisLundi + " " + anneeLundi,
+      semaine: "semaine " + semaine + " · " + plage,
+      datePublication: lundi.toISOString().slice(0, 10)
+    };
   }
   async function creerNumeroDistant(n){
     var res = await client().from("affut_numeros").insert(versLigneNumero(n)).select().single();
@@ -3160,7 +3183,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       }
       var nouveauNumero = {
         numero: num, statut: "brouillon", mois: semaineInfo.mois,
-        semaine: semaineInfo.semaine, titre: "", chapo: "", candidates: 0,
+        semaine: semaineInfo.semaine, datePublication: semaineInfo.datePublication,
+        titre: "", chapo: "", candidates: 0,
         collecte: null, moisson: null, vues: 0, entrees: []
       };
       var ok = await creerNumeroDistant(nouveauNumero);

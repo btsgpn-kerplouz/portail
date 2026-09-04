@@ -4,7 +4,44 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 03/09/2026 — reprendre ici
+## État au 04/09/2026 — reprendre ici
+
+**✅ Lot 26 (date de publication distincte de la semaine de collecte) fait,
+migration SQL appliquée (04/09/2026).** Jusqu'ici `semaine`/`mois` étaient
+calculés à partir du jour de collecte (le samedi de la moisson automatique),
+laissant penser qu'un numéro n'est composé que d'actualités de « la semaine
+du samedi » — faux dès qu'une entrée manuelle publiée à une autre date s'y
+ajoute (usage prévu par l'utilisateur). Changement :
+- `semaine`/`mois` sont désormais calculés à partir du **lundi de
+  publication** (le lundi suivant le samedi de moisson, ou le jour même si
+  on est déjà lundi), plus jamais depuis « aujourd'hui » brut —
+  `isoSemaineActuelle()`/`formaterSemaineIso()` dans `index.html` et
+  `semaineIsoActuelle()` dans `supabase/functions/affut-veille/index.ts`
+  (gardées synchronisées, comme avant). Effet concret : un numéro dont la
+  moisson tombe le samedi 31 janvier se voit maintenant rangé en « février »
+  (mois du lundi 2 février), pas en « janvier ».
+- Nouveau champ **`date_publication`** (date ISO du lundi) sur
+  `affut_numeros`, propagé côté JS (`datePublication` ↔ `date_publication`,
+  `versLigneNumero`/`depuisLigneNumero`), rempli à la création (modale
+  « Nouveau numéro » et création automatique par le Worker de veille), et
+  exposé dans `affut_numeros_public` (pas sensible, autant l'exposer tout de
+  suite pour un futur affichage public).
+- **Migration `supabase/012-date-publication.sql` appliquée par
+  l'utilisateur au dashboard Supabase (SQL Editor)** : ajoute la colonne,
+  recrée `affut_numeros_public` avec la colonne en plus, et **rétrofit les
+  numéros déjà publiés** (`date_publication = collecte.date + 2 jours`) —
+  seuls les numéros publiés sans `collecte` (créés à la main) resteront à
+  `null`, à renseigner manuellement si besoin. A demandé 2 allers-retours :
+  `create or replace view` refuse de changer la position/le nom d'une
+  colonne existante (erreur 42P16), donc `date_publication` doit être
+  ajoutée en toute dernière position — après `image_url` (déjà en dernière
+  position depuis le Lot 16), pas entre `semaine` et `titre` comme dans la
+  1re version du script.
+- Pas de nouvel affichage public ajouté (l'utilisateur a validé que stocker
+  la donnée suffisait pour l'instant) — à revoir si un « Publié le … »
+  visible devient utile.
+
+## État au 03/09/2026
 
 **✅ Lots 24 et 25 fusionnés dans `main` et déployés** (PR #87, commit
 `f0e58ad`/merge `686005a`, 03/09/2026 16:45 UTC+2) — vérifié en direct sur
