@@ -3321,6 +3321,10 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 }
 .slot-grid-time.slot-grid-lunch { color: var(--ink-soft); font-weight: 650; }
 .slot-cell-lunch { background: var(--line); }
+/* 05/09/2026 — la plage choisie peut enjamber le Repas (séance à cheval sur la
+   pause déjeuner) : teinte plus légère que .slot-cell.is-in-range, ce n'est pas
+   un vrai créneau de cours, juste un repère visuel de continuité. */
+.slot-cell-lunch.is-in-range { background: color-mix(in srgb, var(--acc) 30%, var(--line)); }
 .slot-cell {
   min-height: 2.1rem; padding: .2rem .35rem; border: 1px solid var(--line);
   background: var(--surface-alt); font-family: var(--font-mono); font-size: .68rem;
