@@ -890,6 +890,11 @@ async function saveData(message = 'Enregistré', { rerender = true, forcer = fal
   state.version = '5.0.0';
   const resultat = await window.OC_SYNC.enregistrer(state, { forcer });
   state.lastSavedAt = resultat.lastSavedAt;
+  // Une fusion automatique de conflit (voir sync.js, tenterFusionConflit) a pu
+  // modifier state EN PLACE (ex. ajout d'un·e collègue sur une checklist
+  // partagée pendant qu'on enregistrait la nôtre) : re-rendre même si
+  // `rerender` valait false, sinon l'écran affiché reste périmé.
+  if (resultat.fusionnees?.length) renderAll(false);
   // Étape 4 — indicateur persistant : un échec (réseau coupé, droits refusés…)
   // ne doit pas s'effacer après 2,4s comme un message de succès normal, sinon
   // il passe inaperçu. window.OC_SYNC réessaiera de lui-même au prochain

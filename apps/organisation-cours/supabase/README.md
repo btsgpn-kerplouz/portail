@@ -96,6 +96,12 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     modifier/supprimer et gérer leurs affectations. `oc_sequences`/
     `oc_sessions`/`oc_reunions` et leurs jointures restent, elles, inchangées
     (contenu personnel d'un·e enseignant·e, pas un planning d'équipe).
+22. `019-conflit-fusion-entites.sql` — **à appliquer** : `updated_at` de
+    `oc_ues`/`oc_sequences`/`oc_sessions`/`oc_reunions`/`oc_constraints` est
+    désormais mis à jour automatiquement (trigger) à chaque UPDATE — sans lui
+    le nouveau filtre optimiste + fusion de conflit côté `js/sync.js` (bug du
+    04/09/2026 : un « Déroulé » de séance co-enseignée écrasé en silence par
+    l'enregistrement d'un·e collègue) ne détecterait jamais rien.
 
 ## Réglage obligatoire côté Auth
 
