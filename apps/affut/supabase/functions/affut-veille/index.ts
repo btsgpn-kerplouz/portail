@@ -154,10 +154,28 @@ async function handleContext(): Promise<Response> {
     .order("ecarte_le", { ascending: false })
     .limit(15);
 
-  const { data: toutesEntrees } = await supabase.from("affut_entrees").select("url");
+  const { data: toutesEntrees } = await supabase.from("affut_entrees").select("url, rubrique");
   const urlsDejaUtilisees = Array.from(
     new Set((toutesEntrees ?? []).map((e) => e.url).filter(Boolean)),
   );
+
+  // Rubriques connues (05/09/2026) : le champ `rubrique` n'est plus limité aux
+  // 4 catégories de base côté écran de rédaction (liste déroulante qui se
+  // complète elle-même, voir apps/affut/index.html `rubriquesConnues()`) —
+  // même logique ici pour que l'agent de veille propose en priorité une
+  // rubrique déjà en usage plutôt que d'en réinventer une proche à chaque
+  // exécution. Les 4 de base restent toujours en tête même si aucune entrée
+  // ne les utilise actuellement.
+  const RUBRIQUES_CANONIQUES = ["Gestion", "Science & protocoles", "Données & référentiels", "En bonus"];
+  const rubriquesUtilisees = new Set(
+    (toutesEntrees ?? [])
+      .map((e) => e.rubrique)
+      .filter((r): r is string => Boolean(r && r.trim())),
+  );
+  const rubriquesExtra = Array.from(rubriquesUtilisees)
+    .filter((r) => !RUBRIQUES_CANONIQUES.includes(r))
+    .sort((a, b) => a.localeCompare(b, "fr"));
+  const rubriquesConnues = [...RUBRIQUES_CANONIQUES, ...rubriquesExtra];
 
   // Sources suivies (écran « Sources », lot 4) : liste compilée à la main par
   // l'enseignant — voir brief-veille.md, section « Sources à moissonner en
@@ -176,6 +194,7 @@ async function handleContext(): Promise<Response> {
     candidats_ecartes_recents: ecartesRecents ?? [],
     urls_deja_utilisees: urlsDejaUtilisees,
     sources_a_moissonner: sourcesSuivies ?? [],
+    rubriques_connues: rubriquesConnues,
   });
 }
 
