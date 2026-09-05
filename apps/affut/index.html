@@ -198,6 +198,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .entete-compteur .n{font-family:var(--af-police-mono);font-size:19px;font-weight:700;color:var(--af-valide)}
 .entete-compteur .l{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-3)}
 .entete-boutons{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.entete-boutons-groupe{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.entete-boutons-groupe + .entete-boutons-groupe{border-left:1px solid var(--af-filet-moyen);padding-left:10px}
 .btn-ligne{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;border:1px solid var(--af-redaction);color:var(--af-redaction)}
 .btn-ligne.danger{border-color:var(--af-mort);color:var(--af-mort)}
 .btn-ligne.danger:hover{background:var(--af-mort);color:var(--af-sur-accent)}
@@ -341,9 +343,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .champs-ligne{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .champ{display:flex;flex-direction:column;gap:4px}
 .champ label{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
-.champ input,.champ textarea{font-family:var(--af-police);font-size:13px;padding:7px 9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
+.champ input,.champ select,.champ textarea{font-family:var(--af-police);font-size:13px;padding:7px 9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
 .champ textarea{resize:vertical;min-height:56px;font-family:var(--af-police-mono);font-size:11.5px;line-height:1.5}
-.champ input:focus,.champ textarea:focus{outline:1px solid var(--af-redaction);box-shadow:0 0 0 3px rgba(138,95,23,.18)}
+.champ input:focus,.champ select:focus,.champ textarea:focus{outline:1px solid var(--af-redaction);box-shadow:0 0 0 3px rgba(138,95,23,.18)}
 .champ .aide{font-size:9.5px;color:var(--af-encre-3);font-family:var(--af-police-mono)}
 .illustration-ligne{display:flex;gap:8px;align-items:stretch}
 .illustration-ligne input{flex:1;min-width:0}
@@ -532,12 +534,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .refus-item b{color:var(--af-encre)}
 .glyphe-alerte{font-family:var(--af-police-mono);font-size:22px;color:var(--af-mort);display:block}
 
-/* ---- outils de développement (lot 4) : aperçu des états limites ---- */
-.dev-outils{border-top:1px dashed var(--af-filet-fort);margin-top:8px;padding-top:8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
-.dev-outils .dev-label{font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-redaction)}
-.dev-outils select{font:inherit;font-family:var(--af-police-mono);font-size:10px;padding:3px 6px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant)}
-.dev-outils .lien-action{font-size:10px}
-
 /* ---- impression (lot 4, écran 4c) : masqué à l'écran ---- */
 .qr-impression{display:none}
 .btn-imprimer{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--af-encre-2);border:1px solid var(--af-filet-fort);padding:8px 13px}
@@ -548,7 +544,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   body{background:var(--af-print-papier)}
   .page{padding:0;display:block}
   .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
-  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.dev-outils,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
   /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
   .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
   .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
@@ -613,6 +609,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .select-numero-wrap{justify-content:space-between}
   .select-numero{flex:1}
   .entete-boutons{justify-content:space-between}
+  .entete-boutons-groupe + .entete-boutons-groupe{border-left:0;padding-left:0}
   .entree-row{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
   .entree-row-gauche{padding:9px 12px}
   .entree-row-droite{width:100%}
@@ -1327,7 +1324,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     sommaireDeplie: {},
     sourcesDeplie: false,
     bilanEntreesDeplie: false,
-    previewEtat: null,
     publicationRefusee: null,
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
     deplacerOuvert: null, // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
@@ -1669,6 +1665,42 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="champ"><label for="champ-' + name + '">' + label + '</label>' + tag + (aide ? '<span class="aide">' + aide + '</span>' : "") + '</div>';
   }
 
+  var RUBRIQUES_CANONIQUES = ["Gestion", "Science & protocoles", "Données & référentiels", "En bonus"];
+
+  // Rubriques en liste déroulante plutôt qu'en texte libre (demandé le
+  // 05/09/2026 : le champ texte laissait dériver des libellés jamais revus,
+  // ex. « Loup », « Suivis espèces », créés une fois puis oubliés). La liste
+  // se complète elle-même avec tout ce qui a déjà été utilisé (n'importe
+  // quel numéro), pas seulement les 4 de base — aucune purge nécessaire des
+  // rubriques déjà en place, qui deviennent simplement des choix normaux.
+  function rubriquesConnues(){
+    var trouvees = {};
+    numeros.forEach(function(n){
+      (n.entrees || []).forEach(function(e){
+        if (e.rubrique && e.rubrique.trim()) trouvees[e.rubrique] = true;
+      });
+    });
+    var extra = Object.keys(trouvees)
+      .filter(function(r){ return RUBRIQUES_CANONIQUES.indexOf(r) === -1; })
+      .sort(function(a, b){ return a.localeCompare(b, "fr"); });
+    return RUBRIQUES_CANONIQUES.concat(extra);
+  }
+
+  function champRubrique(valeurActuelle){
+    var val = valeurActuelle || "";
+    var connues = rubriquesConnues();
+    var options = (val ? "" : '<option value="">— Choisir —</option>') +
+      connues.map(function(r){
+        return '<option value="' + esc(r) + '"' + (r === val ? " selected" : "") + '>' + esc(r) + '</option>';
+      }).join("") +
+      '<option value="__autre__">+ Nouvelle rubrique…</option>';
+    return '<div class="champ">' +
+      '<label for="champ-rubrique-select">Rubrique</label>' +
+      '<select id="champ-rubrique-select" name="rubrique" data-action="rubrique-select">' + options + '</select>' +
+      '<input id="champ-rubrique-nouvelle" type="text" placeholder="Nom de la nouvelle rubrique" hidden>' +
+      '</div>';
+  }
+
   // Illustration d'une entrée (Lot 14) : un simple champ URL, remplissable
   // à la main ou via le bouton « Récupérer l'illustration » (og:image de la
   // page source, voir recupererIllustration() et la fonction Edge
@@ -1808,7 +1840,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="' + (editing ? "Modifier l’entrée" : "Ajouter une entrée") + '">' +
         '<div class="modal-titre">' + (editing ? "Modifier l’entrée" : "Ajouter une entrée") + '</div>' +
         '<form id="entree-form">' +
-          champ("Rubrique", "rubrique", e ? e.rubrique : "") +
+          champRubrique(e ? e.rubrique : "") +
           '<div class="champs-ligne">' +
             champ("Source", "nom", e ? e.source.nom : "") +
             champ("Territoire", "territoire", e ? e.source.territoire : "", "ex. Bas-Rhin, national") +
@@ -1818,10 +1850,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             champ("Domaine affiché", "domaine", e ? e.source.domaine : "", "se remplit depuis l'URL — modifiable") +
             champ("Date", "date", e ? e.source.date : "", "ex. 14 août 2026") +
           '</div>' +
-          champ("Titre de l'entrée", "titre", e ? e.titre : "") +
+          champ("Titre de l'entrée", "titre", e ? e.titre : "", "reprendre le titre de la source tel quel, pas une reformulation") +
           renderChampIllustration(e ? e.imageUrl : "") +
           champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "une valeur par ligne, « valeur | libellé », terminer par * pour la mettre en avant", true) +
-          champ("Résumé factuel", "resume", e ? e.resume : "", "", true) +
+          champ("Résumé factuel", "resume", e ? e.resume : "", "citation tronquée des 1res phrases de la source, terminée par « [...] » — pas une paraphrase", true) +
           champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
           '<div class="modal-boutons">' +
             '<span></span>' +
@@ -2185,13 +2217,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     '</div>';
   }
 
-  function devOutilsCollecte(){
-    if (numero.moisson == null) return "";
-    function opt(v, l){ return '<option value="' + v + '"' + (numero.collecte.statut === v ? " selected" : "") + '>' + l + '</option>'; }
-    return '<div class="dev-outils"><span class="dev-label">Dev</span><span>Simuler la collecte du ' + esc(numero.collecte.date) + '</span>' +
-      '<select data-action="collecte-statut">' + opt("rapporte", "rapportée (normale)") + opt("rien", "rien de neuf") + opt("echec", "échec partiel") + '</select></div>';
-  }
-
   function renderSelecteurNumero(){
     var tries = numeros.slice().sort(function(a, b){ return b.numero - a.numero; });
     var options = tries.map(function(n){
@@ -2203,9 +2228,14 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   function renderNumeroPage(){
-    if (state.mode === "publiee" && numero.statut === "brouillon") {
-      return '<div class="etat-limite"><span class="glyphe">◇</span><h1>Ce numéro n\'est pas encore publié</h1><p>Il est en cours de préparation en rédaction et n\'existe pas encore pour les étudiants.</p></div>';
-    }
+    // Le bouton « Vue publiée » sert aussi de sas de relecture avant
+    // publication (demandé le 05/09/2026) : un numéro brouillon s'y affiche
+    // désormais avec le rendu réel qu'auront les élèves, au lieu d'un écran
+    // de blocage — sans risque, ce mode n'est proposé qu'au rédacteur
+    // connecté (jamais aux élèves, qui ne chargent de toute façon que les
+    // numéros déjà publiés) et le filtre `e.valide` ci-dessous garantit déjà
+    // que seules les entrées retenues apparaissent, comme en publication
+    // réelle.
 
     // Compteur de fréquentation (Lot 6) : une fois par ouverture d'un numéro
     // publié en vue publiée, pas à chaque re-rendu (state.vuesComptees).
@@ -2253,10 +2283,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
-        '<div class="entete-boutons"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '<button class="btn-ligne danger" type="button" data-action="supprimer-numero">Supprimer ce numéro</button></div>' +
+        // Rangés par portée (demandé le 05/09/2026) : à gauche, les actions
+        // qui portent sur les entrées de ce numéro (en ajouter une, ou
+        // récupérer leurs illustrations en masse) ; à droite, séparées par
+        // un filet, celles qui portent sur le numéro entier (navigation,
+        // impression, publication, suppression) — pour ne plus confondre au
+        // coup d'œil la portée d'un bouton, notamment pour les gestes les
+        // plus engageants (publier/dépublier, supprimer).
+        '<div class="entete-boutons">' +
+          '<div class="entete-boutons-groupe" aria-label="Actions sur les entrées"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button></div>' +
+          '<div class="entete-boutons-groupe" aria-label="Actions sur le numéro"><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '<button class="btn-ligne danger" type="button" data-action="supprimer-numero">Supprimer ce numéro</button></div>' +
+        '</div>' +
         renderChampIllustrationNumero() +
-        '<button type="button" class="lien-action" data-action="preview-premier">Aperçu : tout premier lancement (dev)</button>' +
-        devOutilsCollecte() +
       '</div>'
       : "";
 
@@ -2266,7 +2304,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // en rédaction et en vue publiée.
     var corpsWrap = '<div class="corps"><div class="colonne">' + corpsHtml + (state.mode === "redaction" ? renderMoissonSection() : "") + '</div></div>';
 
-    var banniere = state.mode === "redaction" ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>' : "";
+    var banniere = state.mode === "redaction"
+      ? '<div class="mode-banniere">Mode rédaction — non visible des élèves tant que le numéro n\'est pas publié</div>'
+      : (state.mode === "publiee" && numero.statut === "brouillon"
+        ? '<div class="mode-banniere">Aperçu de la vue publiée — ce numéro n\'est pas encore publié, les élèves ne le voient pas encore</div>'
+        : "");
 
     var printEntete = '<div class="print-entete">' +
       '<div class="print-ligne1">Carnet de veille naturaliste · BTS Gestion et protection de la nature · Kerplouz</div>' +
@@ -2292,21 +2334,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       printEntete +
       corpsWrap +
       printPied;
-  }
-
-  // État limite ① (REGLES.md, écran 4b) : « OÙ · à la place du numéro, sur
-  // l'adresse du carnet, tant qu'aucun numéro n'est publié. » Comme aucun
-  // vrai premier lancement n'est reproductible avec le jeu de démonstration
-  // (8 numéros déjà publiés), il se déclenche par le lien dev de la barre
-  // d'actions en rédaction plutôt que par un état réel — voir AVANCEMENT.md.
-  function renderEtatPremierLancement(){
-    return '<div class="etat-limite">' +
-      '<span class="glyphe">◇</span>' +
-      '<h1>Le premier numéro paraîtra vendredi</h1>' +
-      '<p>Le carnet est une veille hebdomadaire : chaque vendredi, l\'équipe pédagogique publie les actualités naturalistes de la semaine, avec leurs documents d\'origine.</p>' +
-      '<div class="rien-a-faire">Rien à faire — revenir vendredi.</div>' +
-      '<div class="actions"><button type="button" class="lien-action" data-action="preview-normal">‹ Revenir à l\'aperçu normal (dev)</button></div>' +
-    '</div>';
   }
 
   function validerPublication(){
@@ -2617,7 +2644,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       '</div>';
 
     var corps = !numeros.length ? renderAucunNumero()
-      : state.previewEtat === "premier" ? renderEtatPremierLancement()
       : state.vue === "sommaire" ? renderSommaire()
       : state.vue === "recherche" ? renderRecherche()
       : state.vue === "sources" && redacActif ? renderSourcesEcran()
@@ -2802,12 +2828,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // ---- lot 4 : impression ----
     if (ev.target.closest('[data-action="imprimer"]')) { numeroImprimer(); return; }
 
-    // ---- lot 4 : aperçu dev de l'état limite ① ----
-    if (ev.target.closest('[data-action="preview-premier"]')) {
-      state.previewEtat = "premier"; state.vue = "numero"; state.mode = "publiee"; render(); return;
-    }
-    if (ev.target.closest('[data-action="preview-normal"]')) { state.previewEtat = null; render(); return; }
-
     // ---- lot 10 : moisson intégrée à l'écran du numéro (états ②③④) ----
     var retenirBtn = ev.target.closest('[data-action="retenir-candidat"]');
     if (retenirBtn) {
@@ -2990,6 +3010,29 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   });
 
   document.addEventListener("change", function(ev){
+    // Bascule du <select> de rubrique vers un champ texte libre quand
+    // « + Nouvelle rubrique… » est choisi (et retour en arrière si on
+    // reselectionne une rubrique existante) — un seul des deux éléments
+    // porte `name="rubrique"` à la fois, pour que val("rubrique") (lecture
+    // du formulaire à la soumission) retombe toujours sur une valeur simple
+    // plutôt que sur une RadioNodeList si les deux portaient ce nom.
+    var rubriqueSelect = ev.target.closest('[data-action="rubrique-select"]');
+    if (rubriqueSelect) {
+      var champNouvelle = document.getElementById("champ-rubrique-nouvelle");
+      if (rubriqueSelect.value === "__autre__") {
+        rubriqueSelect.removeAttribute("name");
+        champNouvelle.hidden = false;
+        champNouvelle.name = "rubrique";
+        champNouvelle.value = "";
+        champNouvelle.focus();
+      } else {
+        champNouvelle.hidden = true;
+        champNouvelle.removeAttribute("name");
+        rubriqueSelect.name = "rubrique";
+      }
+      return;
+    }
+
     var toggleValide = ev.target.closest('[data-action="toggle-valide"]');
     if (toggleValide) {
       var id = toggleValide.getAttribute("data-id");
@@ -3006,9 +3049,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       render();
       return;
     }
-
-    var collecteSel = ev.target.closest('[data-action="collecte-statut"]');
-    if (collecteSel) { numero.collecte.statut = collecteSel.value; ecrireNumero({ collecte: numero.collecte }); render(); }
 
     var numeroSel = ev.target.closest('[data-action="changer-numero"]');
     if (numeroSel) {
