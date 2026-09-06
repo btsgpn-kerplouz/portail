@@ -1579,6 +1579,8 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
 .progression-ue-card-title { font-weight: 700; font-size: .84rem; color: var(--ink); display: flex; align-items: baseline; gap: .35rem; }
 .progression-ue-card-sub { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--ink-soft); }
 .progression-stack-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
+.progression-density-toggle { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; white-space: nowrap; padding-top: .3rem; }
+.progression-density-toggle select { font: inherit; }
 
 /* Ajustements #2 [D2.3] (18/08/2026) — un seul niveau de cadre par bande, au
    lieu de deux (la carte `.panel` générique — fond blanc, bordure, padding —
@@ -1619,6 +1621,14 @@ main { padding: var(--sp-5) var(--sp-6) var(--sp-8); max-width: 1900px; margin: 
      somme des minimums de pistes (label + N × --timeline-week-min) quand ça
      ne tient pas, et .timeline-scroll prend le relais avec un défilement —
      c'est précisément le comportement voulu. */
+}
+/* Densité de la frise (toggle #ganttDensity) — « compact » ci-dessus reste le
+   réglage par défaut inchangé ; « confort » agrandit colonnes/lignes pour des
+   titres de séquence plus lisibles, au prix de moins de semaines visibles
+   sans défiler. */
+.timeline-grid.is-comfort {
+  --timeline-week-min: 130px;
+  --timeline-row-min: 46px;
 }
 /* Étiquettes de ligne + coins : collés à gauche. */
 .timeline-row-label, .timeline-corner {
