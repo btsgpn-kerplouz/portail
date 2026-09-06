@@ -169,6 +169,7 @@ let ganttPromo = null;
 let ganttSemester = null;
 let ganttSelectedUeId = '';
 let ganttStacked = false;
+let ganttDensity = 'compact';
 // Mémoire de la dernière frise rendue, pour recalculer « hors fenêtre » et
 // recadrer sur la semaine en cours à l'activation de l'onglet (panneau alors
 // caché → clientWidth invalide au moment du rendu programmé par renderAll()).
@@ -5158,6 +5159,7 @@ function renderGanttSequencesPanel(ues, weeks) {
   const promotion = ganttPromo;
   grid.style.cssText = `grid-template-columns: var(--timeline-label-col) repeat(${weeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${weeks.length};`;
 
+  grid.classList.toggle('is-comfort', ganttDensity === 'comfort');
   const weekRow = renderGanttWeekHeaderRow(weeks, promotion, 'UE');
 
   const constraintBands = timelineConstraintBands(promotion, weeks);
@@ -5271,6 +5273,7 @@ function renderGanttSessionsPanel(ues, weeks) {
   if (!grid) return;
   const promotion = ganttPromo;
   grid.style.cssText = `grid-template-columns: var(--timeline-label-col) repeat(${weeks.length}, minmax(var(--timeline-week-min), 1fr)); --timeline-week-count: ${weeks.length};`;
+  grid.classList.toggle('is-comfort', ganttDensity === 'comfort');
 
   // Retours #3 (18-19/08/2026) — Cas 1 : les séances d'une UE que je n'enseigne
   // pas ne remontent pas dans cette grille jour par jour (même règle que le
@@ -9835,6 +9838,7 @@ function bindEvents() {
     renderGantt();
   });
   $('#ganttStackedToggle')?.addEventListener('change', (event) => { ganttStacked = event.target.checked; renderGantt(); });
+  $('#ganttDensity')?.addEventListener('change', (event) => { ganttDensity = event.target.value; renderGantt(); });
   // Retours #4 (18/08/2026) — le texte « hors fenêtre » ne se recalculait
   // qu'au clic sur l'onglet Progression (scrollGanttToCurrentWeek) : un
   // défilement manuel de la frise (barre de défilement, molette, flèches)
