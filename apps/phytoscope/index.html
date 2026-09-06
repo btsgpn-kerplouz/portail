@@ -75,6 +75,11 @@
     .suggestWrap{position:relative}.suggestions{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:0;box-shadow:none;z-index:20;max-height:340px;overflow:auto;display:none}.suggestions.open{display:block}.suggestion{padding:10px 12px;border-bottom:1px solid #eef2eb;cursor:pointer}.suggestion:hover,.suggestion.active{background:#f0f7ec}.suggestion .suggName{display:block;font-size:.96rem}.suggestion span{font-size:.82rem;color:var(--muted)}.suggestionFooter{padding:8px 12px;font-family:var(--mono);font-size:.7rem;color:var(--faint);text-align:center}
     .summary{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));gap:10px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:0;padding:11px 12px}.metric .label{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em}.metric .value{font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--brandDark);margin-top:4px;letter-spacing:-.01em}
     .gradientGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.gradientCard{background:#fff;border:1px solid var(--line);border-radius:0;padding:12px}.gradientHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:6px}.gradientHead strong{font-size:.96rem}.svgBox{width:100%;overflow:hidden}.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;color:var(--muted);font-size:.84rem}.key{display:inline-flex;align-items:center;gap:6px}.selectorPanel{border:1px solid var(--line);background:#fbfcf9;border-radius:0;padding:10px;margin:8px 0 10px}.selectorPanelHeader{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}.selectorActions{display:flex;gap:6px;flex-wrap:wrap}.miniBtn{padding:6px 9px;font-size:.78rem}.compareToolSelect{padding:6px 9px;font-size:.78rem;line-height:1.2}.checkList{display:flex;gap:8px;flex-wrap:wrap}.checkItem{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:0;padding:5px 9px;font-size:.84rem;cursor:pointer}.checkItem input[type=checkbox]{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:16px;height:16px;min-width:auto;border:2px solid var(--line);background:var(--panel);border-radius:0;cursor:pointer;flex:0 0 auto;margin:0}.checkItem input[type=checkbox]:checked{background:var(--brand);border-color:var(--brand)}.colorDot{width:12px;height:12px;border-radius:2px;display:inline-block;vertical-align:middle;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px rgba(0,0,0,.06)}.chartLegend{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 8px;color:var(--muted);font-size:.84rem}.legendHelp{border:0;background:none;padding:0 0 14px}.lineLegend{width:24px;height:0;border-top:3px solid currentColor;display:inline-block}.lineLegend.dashed{border-top-style:dashed;border-top-width:2px}.bandLegend{width:26px;height:12px;border-radius:0;background:currentColor;opacity:.18;display:inline-block}.pointLegend{width:12px;height:12px;border-radius:50%;background:currentColor;display:inline-block;box-shadow:0 0 0 1px #fff inset}.chartTooltip{position:fixed;display:none;z-index:1000;max-width:340px;padding:9px 11px;border-radius:0;background:#172015;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,.22);font-size:.86rem;line-height:1.35;pointer-events:none}.tipPoint{cursor:help}.tipPoint:focus{outline:none}.switch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:0;padding:7px 10px;color:var(--ink)}.switch input[type=checkbox]{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:16px;height:16px;min-width:auto;border:2px solid var(--line);background:var(--panel);border-radius:0;cursor:pointer;margin:0}.switch input[type=checkbox]:checked{background:var(--brand);border-color:var(--brand)}
+    /* Mode « relevés en abscisse » des gradients (grande sélection) : fenêtre indépendante
+       par encart, avec défilement horizontal propre — l'axe visualisé garde sa taille réelle
+       (pas de compression par le redimensionnement en largeur:100% des autres SVG). */
+    .svgBox.svgBoxScroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+    .svgBox.svgBoxScroll svg{flex:0 0 auto}
     .empty{padding:24px;border:1px dashed #c6d2c2;border-radius:0;text-align:center;color:var(--muted);background:#fbfcf9}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar>*{flex:0 0 auto}.toolbar .grow{flex:1 1 260px}
     .split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}.miniList{display:grid;gap:8px}.miniItem{border:1px solid var(--line);border-radius:0;padding:9px;background:#fbfcf9}.miniItem strong{display:block}
 
@@ -1311,6 +1316,16 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <label class="psBulkColor" title="Recolorer la sélection en cours">
               <input type="color" id="homeInstantColorInput" aria-label="Recolorer la sélection en cours" value="#1f6b45">
             </label>
+            <label class="psBulkColor" title="Appliquer un dégradé de couleurs à la sélection, dans l’ordre de sélection">
+              <select id="homeGradientSelect" class="compareToolSelect" aria-label="Appliquer un dégradé de couleurs à la sélection">
+                <option value="">Dégradé…</option>
+                <option value="vert">Vert clair → soutenu</option>
+                <option value="bleu">Bleu clair → soutenu</option>
+                <option value="chaud">Jaune → grenat</option>
+                <option value="spectre">Spectre bleu → rouge</option>
+                <option value="gris">Niveaux de gris</option>
+              </select>
+            </label>
             <button class="psLinkBtn" type="button" data-select-action="none" data-kind="home">Vider</button>
           </div>
           <div class="psSelChips" id="homeSelChips"></div>
@@ -1404,7 +1419,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
       <aside class="psEntrySide noPrint">
         <div class="psEntrySheetHead"><span>Identité du relevé</span><button type="button" id="entrySheetClose" aria-label="Fermer">✕</button></div>
         <div class="psEntryMetaLabel">Identité du relevé</div>
-        <div class="field"><label>Nom du relevé</label><input id="relName" placeholder="Ex. Prairie humide 01"></div>
+        <div class="field"><label>Nom du relevé</label><input id="relName" placeholder="Ex. Prairie humide 01"><p class="small muted" style="margin:.35rem 0 0">Privilégier un nom court : au-delà, il est tronqué dans les puces, tableaux et graphiques.</p></div>
         <div class="field"><label>Code projet</label><input id="relProjet" list="relProjetList" autocomplete="off" placeholder="Ex. TP terrain mars 2026"><datalist id="relProjetList"></datalist></div>
         <div class="field"><label>Site</label><input id="relSite" placeholder="Ex. Vallon de Kerloc'h, parcelle A3"></div>
         <div class="field"><label>Localisation (Commune)</label><input id="relLocation" placeholder="Commune, coordonnées, précision géographique"></div>
@@ -1529,6 +1544,9 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
               <div class="psDrawer" id="gradientsDisplayDrawer">
                 <div class="axisControlRow"><label class="small muted">Strate<select id="analysisStratum"></select></label></div>
                 <label class="switch compactSwitch small" style="margin-top:10px"><input type="checkbox" id="gradientShortLabels">Noms abrégés</label>
+                <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="gradientInvertAxes">Relevés en abscisse</label>
+                <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="gradientShowSpecies" checked>Espèces</label>
+                <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="gradientShowSD" checked>Écarts-types</label>
                 <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" class="colorBlindToggle">Daltoniens</label>
               </div>
             </div>
@@ -1754,19 +1772,39 @@ let TAXA = [];
 const BARE_SOIL_TAXON={id:-1,n:"Sol nu",s:"Sans végétation",v:Array(10).fill(null)};
 const WETLAND_ZH_IDS = [13,36,37,38,42,51,52,53,56,57,58,65,71,73,74,75,76,97,119,120,121,129,135,143,144,145,146,147,179,189,213,234,235,236,237,244,261,284,287,294,295,296,297,298,300,302,303,310,313,369,370,371,381,383,385,399,444,445,446,447,449,450,451,508,509,510,525,526,527,529,530,531,552,566,567,568,606,657,658,659,660,672,673,674,682,683,690,691,749,784,787,788,854,896,913,920,922,923,928,933,934,942,944,945,951,952,953,955,957,958,959,960,986,987,989,993,1009,1079,1080,1142,1143,1151,1152,1157,1158,1169,1176,1206,1210,1271,1272,1273,1274,1279,1280,1286,1289,1290,1324,1330,1331,1333,1337,1338,1339,1340,1343,1345,1346,1349,1350,1352,1354,1357,1361,1363,1365,1366,1367,1369,1370,1372,1374,1375,1376,1377,1386,1387,1388,1395,1396,1398,1400,1402,1403,1404,1405,1409,1414,1415,1416,1417,1419,1420,1425,1437,1438,1439,1440,1441,1442,1443,1448,1449,1450,1451,1453,1455,1456,1463,1467,1468,1472,1473,1474,1497,1499,1521,1562,1570,1571,1572,1578,1579,1580,1581,1609,1613,1661,1663,1664,1693,1707,1722,1723,1724,1732,1733,1734,1736,1740,1742,1744,1748,1751,1753,1754,1755,1756,1759,1760,1763,1771,1782,1796,1797,1799,1800,1801,1807,1813,1873,1874,1897,1901,1904,1921,1926,1930,1940,1959,1960,1961,1982,1996,2014,2015,2016,2017,2018,2020,2021,2022,2023,2024,2025,2027,2028,2034,2039,2065,2067,2068,2069,2071,2072,2073,2074,2075,2076,2077,2078,2079,2080,2081,2082,2083,2084,2087,2089,2090,2091,2096,2099,2134,2136,2145,2146,2147,2148,2149,2154,2155,2230,2235,2246,2265,2266,2267,2272,2280,2281,2282,2283,2336,2337,2338,2339,2340,2341,2342,2343,2344,2345,2346,2347,2348,2349,2350,2351,2352,2353,2354,2362,2363,2386,2395,2404,2405,2408,2409,2410,2411,2417,2436,2444,2445,2446,2448,2449,2450,2468,2469,2497,2498,2499,2500,2536,2543,2563,2564,2565,2614,2664,2712,2760,2761,2764,2775,2776,2777,2786,2792,2794,2795,2804,2805,2808,2810,2811,2817,2822,2894,2909,2930,2970,2987,2991,2992,3007,3019,3042,3051,3056,3069,3070,3071,3072,3073,3075,3076,3077,3080,3084,3108,3109,3116,3175,3211,3471,3472,3479,3499,3515,3526,3527,3528,3529,3530,3531,3541,3546,3552,3555,3570,3571,3573,3574,3575,3610,3612,3613,3614,3616,3618,3621,3622,3625,3644,3646,3651,3656,3657,3659,3660,3661,3662,3664,3665,3686,3687,3688,3689,3690,3691,3692,3693,3694,3695,3696,3697,3698,3699,3700,3701,3702,3703,3704,3705,3707,3708,3709,3710,3711,3712,3713,3714,3715,3717,3718,3719,3720,3724,3725,3726,3727,3728,3729,3730,3736,3747,3748,3749,3768,3781,3832,3834,3835,3837,3838,3867,3884,3902,3922,3953,3983,3993,4008,4010,4020,4030,4050,4052,4075,4076,4089,4104,4105,4106,4107,4108,4114,4116,4117,4149,4166,4167,4168,4169,4170,4171,4200,4201,4214,4215,4223,4229,4230,4232,4233,4235,4236,4237,4238,4239,4240,4241,4242,4243,4268,4269,4272,4354,4355,4356,4357,4358,4359,4360,4361,4362,4363,4364,4365,4366,4367,4368,4395,4396,4440,4441,4442,4443,4444,4454,4455,4458,4486,4487,4488,4491,4497,4498,4499,4500,4501,4506,4508,4509,4541,4542,4543,4544,4549,4550,4551,4552,4553,4554,4572,4617,4618,4619,4620,4622,4623,4624,4625,4627,4656,4712,4713,4714,4782,4783,4786,4787,4873,4949,4955,4966,4982,4985,4986,4987,4994,4995,4997,5003,5004,5005,5006,5007,5027,5032,5043,5044,5045,5046,5047,5061,5075,5076,5077,5129,5130,5139,5140,5141,5144,5145,5146,5148,5149,5151,5152,5153,5154,5155,5156,5180,5192,5195,5202,5205,5206,5207,5251,5256,5262,5263,5285,5298,5299,5300,5306,5307,5309,5310,5313,5317,5318,5320,5327,5328,5329,5335,5336,5338,5339,5340,5372,5375,5376,5393,5409,5419,5431,5432,5435,5451,5463,5464,5465,5478,5491,5492,5493,5494,5495,5496,5498,5499,5500,5501,5503,5505,5506,5556,5558,5564,5570,5574,5582,5583,5584,5585,5598,5599,5601,5605,5608,5609,5610,5611,5630,5632,5633,5634,5635,5637,5638,5648,5703,5704,5706,5708,5726,5728,5729,5731,5733,5736,5790,5977,5985,5989,5993,5996,6001,6006,6007,6015,6016,6025,6034,6041,6042,6043,6044,6045,6047,6048,6049,6050,6051,6052,6053,6054,6055,6056,6057,6058,6060,6061,6062,6064,6066,6067,6070,6071,6073,6074,6076,6077,6078,6079,6080,6081,6082,6083,6084,6085,6089,6090,6094,6118,6123,6139,6140,6141,6142,6150,6151,6152,6160,6184,6203,6216,6246,6249,6250,6262,6264,6265,6266,6267,6268,6270,6271,6272,6273,6274,6275,6276,6277,6278,6279,6280,6281,6283,6284,6285,6286,6312,6315,6320,6321,6338,6344,6345,6346,6347,6348,6389,6390,6391,6396,6397,6409,6410,6415,6416,6419,6450,6480,6520,6541,6542,6543,6620,6621,6622,6638,6639,6640,6648,6649,6655,6668,6669,6670,6671,6686,6687,6689,6699,6700,6701,6702,6703,6704,6705,6706,6707,6708,6709,6710,6712,6713,6714,6724,6725,6726,6734,6759,6766,6767,6768,6775,6776,6777,6779,6802,6803,6805,6806,6807,6808,6809,6810,6812,6817,6818,6819,6858,6901,6949,6974,6988,6989,6997,6998,7070,7071,7072,7091,7149,7154,7159,7164,7183,7185,7197,7198,7200,7202,7203,7236,7237,7261,7262,7263,7264,7265,7266,7278,7295,7296,7297,7298,7302,7304,7307,7312,7313,7317,7318,7320,7371,7372,7373,7378,7379,7380,7382,7383,7403,7408,7488,7494,7504,7518,7520,7523,7542,7558,7565,7602,7603,7604,8022,8023,8105,8106,8107,8113,8185,8189,8193,8252];
 const WETLAND_ZH_SET = new Set(WETLAND_ZH_IDS);
-const GRADIENTS = [{"key":"lumiere","label":"Lumière","short":"L","min":1,"max":9,"low":"hypersciaphile","high":"hyperhéliophile"},{"key":"temperature","label":"Température","short":"T","min":1,"max":9,"low":"alpin à nival","high":"thermo-méditerranéen"},{"key":"continentalite","label":"Continentalité","short":"C","min":1,"max":9,"low":"maritime","high":"hypercontinental"},{"key":"humidite_atmospherique","label":"Humidité atmosphérique","short":"HA","min":1,"max":9,"low":"xéro-atmosphérique","high":"aérohydrophile"},{"key":"humidite_edaphique","label":"Humidité édaphique","short":"HE","min":1,"max":12,"low":"hyperxérophile","high":"aquatique profonde"},{"key":"reaction_sol_ph","label":"Réaction du sol (pH)","short":"pH","min":1,"max":9,"low":"hyperacidophile","high":"hyperbasophile"},{"key":"niveau_trophique","label":"Niveau trophique","short":"N","min":1,"max":9,"low":"hyperoligotrophe","high":"hypereutrophe"},{"key":"salinite","label":"Salinité","short":"S","min":0,"max":9,"low":"non halophile","high":"hyperhaline"},{"key":"texture","label":"Texture","short":"Tx","min":1,"max":9,"low":"argile","high":"fissures pariétales"},{"key":"matiere_organique","label":"Matière organique","short":"MO","min":1,"max":9,"low":"lithosol / régosol","high":"tourbe"}];
+const GRADIENTS = [{"key":"lumiere","label":"Lumière","short":"L","min":1,"max":9,"low":"hypersciaphile","high":"hyperhéliophile"},{"key":"temperature","label":"Température","short":"T","min":1,"max":9,"low":"alpin à nival, altiméditerranéen","high":"thermoméditerranéen à subdésertique"},{"key":"continentalite","label":"Continentalité","short":"C","min":1,"max":9,"low":"marin à maritime","high":"hypercontinental"},{"key":"humidite_atmospherique","label":"Humidité atmosphérique","short":"HA","min":1,"max":9,"low":"aéroxérophile","high":"aérohydrophile"},{"key":"humidite_edaphique","label":"Humidité édaphique","short":"HE","min":1,"max":12,"low":"hyperxérophile","high":"aquatique profonde"},{"key":"reaction_sol_ph","label":"Réaction du sol (pH)","short":"pH","min":1,"max":9,"low":"hyperacidophile","high":"hyperbasophile"},{"key":"niveau_trophique","label":"Niveau trophique","short":"N","min":1,"max":9,"low":"hyperoligotrophe","high":"hypereutrophe"},{"key":"salinite","label":"Salinité","short":"S","min":0,"max":9,"low":"ne supporte pas le sel","high":"hyperhaline"},{"key":"texture","label":"Texture","short":"Tx","min":1,"max":9,"low":"argile","high":"fissures verticales des parois"},{"key":"matiere_organique","label":"Matière organique","short":"MO","min":1,"max":9,"low":"lithosol, peyrosol, régosol","high":"tourbe"}];
 const INDEX_CATEGORIES={climatiques:["lumiere","temperature","continentalite","humidite_atmospherique"],edaphiques:["humidite_edaphique","reaction_sol_ph","niveau_trophique","salinite","texture","matiere_organique"]};
+/* Échelle complète des indices écologiques Julve/Baseflor (programme Catminat), reprise du
+   référentiel eFlore (Tela Botanica) — un terme qualitatif exact par valeur entière de chaque
+   indice, pas seulement un échantillon. Sert de source unique aux étiquettes toujours visibles
+   (GRADIENT_TERMS, échantillonnées ci-dessous) et aux infobulles au survol des valeurs sans
+   étiquette dédiée (voir termLabelForValue). */
+const GRADIENT_TERMS_FULL = {
+  lumiere: {1:"hypersciaphile",2:"persciaphile",3:"sciaphile",4:"hémisciaphile",5:"hélioclin à sciaclin",6:"hémihéliophile",7:"héliophile",8:"perhéliophile",9:"hyperhéliophile"},
+  temperature: {1:"alpin à nival, altiméditerranéen",2:"subalpin, oroméditerranéen",3:"montagnard",4:"collinéen, planitiaire psychrophile",5:"planitiaire à montagnard",6:"planitiaire thermophile, sub- à supraméditerranéen",7:"euryméditerranéen, méditerranéo-atlantique",8:"mésoméditerranéen",9:"thermoméditerranéen à subdésertique"},
+  continentalite: {1:"marin à maritime",2:"hyperocéanique",3:"océanique",4:"subocéanique",5:"intermédiaire",6:"précontinental",7:"subcontinental",8:"continental",9:"hypercontinental"},
+  humidite_atmospherique: {1:"aéroxérophile",2:"intermédiaire",3:"aéromésoxérophile",4:"intermédiaire",5:"aéromésohydrique",6:"intermédiaire",7:"aéromésohygrophile",8:"intermédiaire",9:"aérohydrophile"},
+  humidite_edaphique: {1:"hyperxérophile",2:"perxérophile",3:"xérophile",4:"mésoxérophile",5:"mésohydrique",6:"mésohygrocline, mésohygrophile",7:"hygrophile",8:"hydrophile",9:"amphibie saisonnière",10:"amphibie permanente",11:"aquatique superficielle",12:"aquatique profonde"},
+  reaction_sol_ph: {1:"hyperacidophile",2:"peracidophile",3:"acidophile",4:"acidocline",5:"neutrocline",6:"basocline",7:"basophile",8:"perbasophile",9:"hyperbasophile"},
+  niveau_trophique: {1:"hyperoligotrophe",2:"peroligotrophe",3:"oligotrophe",4:"méso-oligotrophe",5:"mésotrophe",6:"méso-eutrophe",7:"eutrophe",8:"pereutrophe",9:"hypereutrophe"},
+  salinite: {0:"ne supporte pas le sel",1:"hyperoligohaline",2:"peroligohaline",3:"oligohaline",4:"méso-oligohaline",5:"mésohaline",6:"méso-euhaline",7:"euhaline",8:"polyhaline",9:"hyperhaline"},
+  texture: {1:"argile",2:"intermédiaire",3:"limon",4:"sable fin",5:"sable grossier",6:"graviers",7:"galets, rocailles",8:"blocs, dalles, replats rocheux",9:"fissures verticales des parois"},
+  matiere_organique: {1:"lithosol, peyrosol, régosol",2:"mull carbonaté",3:"mull actif",4:"mull acide",5:"moder",6:"mor, hydromor, xéromor",7:"ranker, tangel",8:"anmoor, gyttja",9:"tourbe"}
+};
+function pickGradientTerms(key,positions){const full=GRADIENT_TERMS_FULL[key]||{}; return positions.filter(v=>full[v]!=null).map(v=>({v,t:full[v]}));}
+/* Échantillon de 5 valeurs par indice, affiché en toutes lettres à côté des graduations —
+   les autres valeurs restent accessibles via l'infobulle (termLabelForValue). */
 const GRADIENT_TERMS = {
-  lumiere: [{v:1,t:"hypersciaphile"},{v:3,t:"sciaphile"},{v:5,t:"hémisciaphile"},{v:7,t:"héliophile"},{v:9,t:"hyperhéliophile"}],
-  temperature: [{v:1,t:"alpin à nival"},{v:3,t:"montagnard"},{v:5,t:"planitiaire à montagnard"},{v:7,t:"euryméditerranéen"},{v:9,t:"thermo-méditerranéen"}],
-  continentalite: [{v:1,t:"maritime"},{v:3,t:"océanique"},{v:5,t:"intermédiaire"},{v:7,t:"continental"},{v:9,t:"hypercontinental"}],
-  humidite_atmospherique: [{v:1,t:"xéroxérophile"},{v:3,t:"aéromésoxérophile"},{v:5,t:"aéromésohydrique"},{v:7,t:"aéromésohygrophile"},{v:9,t:"aérohydrophile"}],
-  humidite_edaphique: [{v:1,t:"hyperxérophile"},{v:3,t:"xérophile"},{v:5,t:"mésophile"},{v:8,t:"hydrophile"},{v:12,t:"aquatique profonde"}],
-  reaction_sol_ph: [{v:1,t:"hyperacidophile"},{v:3,t:"acidophile"},{v:5,t:"neutrocline"},{v:7,t:"basophile"},{v:9,t:"hyperbasophile"}],
-  niveau_trophique: [{v:1,t:"hyperoligotrophe"},{v:3,t:"oligotrophe"},{v:5,t:"mésotrophe"},{v:7,t:"eutrophe"},{v:9,t:"hypereutrophe"}],
-  salinite: [{v:0,t:"ne supporte pas le sel"},{v:2,t:"peroligohaline"},{v:4,t:"méso-oligohaline"},{v:6,t:"méso-euhaline"},{v:9,t:"hyperhaline"}],
-  texture: [{v:1,t:"argile"},{v:3,t:"limon"},{v:5,t:"sable grossier"},{v:7,t:"galets, rocailles"},{v:9,t:"fissures pariétales"}],
-  matiere_organique: [{v:1,t:"lithosol / régosol"},{v:3,t:"mull actif"},{v:5,t:"moder"},{v:7,t:"ranker / tangel"},{v:9,t:"tourbe"}]
+  lumiere: pickGradientTerms("lumiere",[1,3,5,7,9]),
+  temperature: pickGradientTerms("temperature",[1,3,5,7,9]),
+  continentalite: pickGradientTerms("continentalite",[1,3,5,7,9]),
+  humidite_atmospherique: pickGradientTerms("humidite_atmospherique",[1,3,5,7,9]),
+  humidite_edaphique: pickGradientTerms("humidite_edaphique",[1,3,5,8,12]),
+  reaction_sol_ph: pickGradientTerms("reaction_sol_ph",[1,3,5,7,9]),
+  niveau_trophique: pickGradientTerms("niveau_trophique",[1,3,5,7,9]),
+  salinite: pickGradientTerms("salinite",[0,2,4,6,9]),
+  texture: pickGradientTerms("texture",[1,3,5,7,9]),
+  matiere_organique: pickGradientTerms("matiere_organique",[1,3,5,7,9])
 };
 const STRATA = ["Toutes strates","Herbacée","Arbustive","Arborée","Bryo-lichénique","Sans végétation","Autre"];
 /* Filtre Strate des 4 onglets d'Analyse : uniquement les strates réellement saisissables via les
@@ -2001,6 +2039,21 @@ function renderReleveSelect(){const sel=document.getElementById("releveSelect");
 const RELEVE_PALETTE=["#1f77b4","#d62728","#2ca02c","#9467bd","#ff7f0e","#17becf","#8c564b","#e377c2","#4c78a8","#b279a2","#59a14f","#f28e2b"];
 const RELEVE_PALETTE_CB=["#0072B2","#D55E00","#009E73","#CC79A7","#E69F00","#56B4E9","#F0E442","#000000","#7F3C8D","#11A579","#3969AC","#F2B701"];
 function activePalette(){return state.colorBlind?RELEVE_PALETTE_CB:RELEVE_PALETTE;}
+const SELECTION_RAMPS={
+  vert:["#c9e4c5","#1f6b45","#0f3320"],
+  bleu:["#cfe3f5","#2f6fb0","#123a63"],
+  chaud:["#f4dd8a","#d97a3a","#8a2f39"],
+  spectre:["#2f6fb0","#57b357","#ead24c","#d24a48"],
+  gris:["#e4e4de","#8b8b7f","#232620"]
+};
+function applySelectionGradient(rampKey){
+  const stops=SELECTION_RAMPS[rampKey]; if(!stops)return;
+  const ids=state.selectedIds||[];
+  if(!ids.length){toast("Sélectionnez au moins un relevé avant d’appliquer un dégradé."); return;}
+  state.releveColors=state.releveColors||{};
+  ids.forEach((id,idx)=>{const t=ids.length>1?idx/(ids.length-1):0; state.releveColors[id]=rampColorAt(stops,t);});
+  save(); renderAll();
+}
 function releveIndex(rel){const i=state.releves.findIndex(r=>r.id===rel.id); return i<0?0:i;}
 function colorFor(i){const pal=activePalette(); return pal[((i%pal.length)+pal.length)%pal.length];}
 function releveColor(rel){return (state.releveColors&&state.releveColors[rel.id]) || colorFor(releveIndex(rel));}
@@ -2345,10 +2398,10 @@ function renderSummary(){const summaryEl=document.getElementById("summary"); if(
   ].map(([l,v])=>`<div class="metric"><div class="label">${esc(l)}</div><div class="value">${esc(v)}</div></div>`).join("");
 }
 
-function renderGradientCharts(){const filter=document.getElementById("analysisStratum").value||"Toutes strates"; const labelMode=document.getElementById("gradientShortLabels")?.checked?"short":"hover"; const selected=selectedReleves("gradient"); const groups=selected.map(rel=>({rel,idx:releveIndex(rel),rows:rowsWithTaxa(rel,filter),stats:stats(rel,filter)})).filter(g=>g.rows.length);
+function renderGradientCharts(){const filter=document.getElementById("analysisStratum").value||"Toutes strates"; const labelMode=document.getElementById("gradientShortLabels")?.checked?"short":"hover"; const invertAxes=!!document.getElementById("gradientInvertAxes")?.checked; const showSpecies=document.getElementById("gradientShowSpecies")?document.getElementById("gradientShowSpecies").checked:true; const showSD=document.getElementById("gradientShowSD")?document.getElementById("gradientShowSD").checked:true; const selected=selectedReleves("gradient"); const groups=selected.map(rel=>({rel,idx:releveIndex(rel),rows:rowsWithTaxa(rel,filter),stats:stats(rel,filter)})).filter(g=>g.rows.length);
  const legend=document.getElementById("gradientLegend"); if(legend)legend.innerHTML=legendFor(groups);
  const box=document.getElementById("gradientCharts"); if(!groups.length){box.innerHTML=`<div class="empty full">Aucune donnée pour la strate et les relevés sélectionnés.</div>`;return;}
- const indices=GRADIENTS.map((g,i)=>i); box.innerHTML=indices.map(i=>gradientCard(i,groups,labelMode)).join("") || `<div class="empty full">Aucun gradient disponible.</div>`;
+ const opts={invert:invertAxes,showSpecies,showSD}; const indices=GRADIENTS.map((g,i)=>i); box.innerHTML=indices.map(i=>gradientCard(i,groups,labelMode,opts)).join("") || `<div class="empty full">Aucun gradient disponible.</div>`;
 }
 function scale(v,g,w=560,pad=42){return pad+(v-g.min)/(g.max-g.min)*(w-2*pad)}
 function gradientTerms(g){return (GRADIENT_TERMS[g.key]||[{v:g.min,t:g.low},{v:g.max,t:g.high}]).slice(0,5)}
@@ -2364,7 +2417,7 @@ const FACTOR_RAMP={
  texture:["#8d6e63","#a98d6f","#b9a99a","#95a5a6"],
  matiere_organique:["#b0a99f","#8a7d63","#6b5640","#4e342e"]
 };
-function rampLerp(a,b,t){const A=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];const B=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];return "rgb("+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(",")+")";}
+function rampLerp(a,b,t){const A=[parseInt(a.slice(1,3),16),parseInt(a.slice(3,5),16),parseInt(a.slice(5,7),16)];const B=[parseInt(b.slice(1,3),16),parseInt(b.slice(3,5),16),parseInt(b.slice(5,7),16)];return "#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,"0")).join("");}
 function rampColorAt(stops,f){if(stops.length<2)return stops[0]; const seg=f*(stops.length-1); let i=Math.floor(seg); if(i>stops.length-2)i=stops.length-2; if(i<0)i=0; return rampLerp(stops[i],stops[i+1],seg-i);}
 function factorRampSvg(g,x1,x2,y){const stops=FACTOR_RAMP[g.key]||["#cfd8cc","#9fb39a"]; const n=g.max-g.min; let beads=""; for(let t=g.min;t<=g.max;t++){const f=n>0?(t-g.min)/n:0; const cx=(x1+f*(x2-x1)).toFixed(1); beads+=`<circle cx="${cx}" cy="${y+7}" r="5" fill="${rampColorAt(stops,f)}" stroke="#ffffff" stroke-width="1.5"/>`;} return `<line x1="${x1}" y1="${y+7}" x2="${x2}" y2="${y+7}" stroke="#e3e9df" stroke-width="3" stroke-linecap="round"/>${beads}`;}
 function shortTerm(txt,limit=22){txt=(txt||"").replace(/\s+/g," ").trim(); return txt.length>limit?txt.slice(0,limit-1)+"…":txt;}
@@ -2382,7 +2435,23 @@ function releveCode(rel){
 function rowCoverPct(row){return row.mode==="pct"?(parseFloat(row.cover)||0):(BB[row.cover]||0);}
 function releveCoverPct(rel){return (rel.rows||[]).reduce((s,row)=>s+rowCoverPct(row),0);}
 function fmtDateShort(d){if(!d)return "—"; const parts=String(d).slice(0,10).split("-"); return parts.length===3?`${parts[2]}/${parts[1]}`:d;}
-function axisValueLabels(g,scaleFn,yNum,yLab,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); const yAxis=yNum-15; let out=`<line x1="${scaleFn(g.min)}" y1="${yAxis}" x2="${scaleFn(g.max)}" y2="${yAxis}" stroke="#aebaac" stroke-width="1.2"></line>`; for(let t=g.min;t<=g.max;t++){const x=scaleFn(t), labeled=mobile||allowed.has(String(t))||(t-g.min)%2===0; out+=`<line x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis+(labeled?7:4)}" stroke="#8b988c" stroke-width="1"></line>`; if(!labeled)continue; out+=`<text x="${x}" y="${yNum}" text-anchor="middle" font-size="13" font-weight="600" fill="#4c5a4e">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="12" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
+function axisValueLabels(g,scaleFn,yNum,yLab,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); const yAxis=yNum-15; let out=`<line x1="${scaleFn(g.min)}" y1="${yAxis}" x2="${scaleFn(g.max)}" y2="${yAxis}" stroke="#aebaac" stroke-width="1.2"></line>`; for(let t=g.min;t<=g.max;t++){const x=scaleFn(t); out+=`<line x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis+7}" stroke="#8b988c" stroke-width="1"></line>`; const isTerm=allowed.has(String(t)); const tip=isTerm?"":termLabelForValue(g,t); out+=`<text ${tip?tipAttr(tip):""} x="${x}" y="${yNum}" text-anchor="middle" font-size="13" font-weight="600" fill="#4c5a4e">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${scaleFn(o.v)}" y="${yLab}" text-anchor="middle" font-size="12" fill="#3f4a40">${esc(shortTerm(o.t,18))}</text>`).join(""); return out;}
+/* Variante verticale de axisValueLabels (mode « relevés en abscisse ») : l'axe des indices
+   devient l'ordonnée, ticks et libellés partent vers la gauche depuis xNum. */
+/* Filet de sécurité si une valeur manquait dans GRADIENT_TERMS_FULL : encadre la valeur
+   entre les deux termes voisins connus plutôt que de ne rien afficher. */
+function nearestTermsLabel(g,t){
+  const terms=gradientTerms(g).slice().sort((a,b)=>a.v-b.v);
+  if(!terms.length)return "";
+  let lo=null, hi=null;
+  terms.forEach(term=>{ if(term.v<=t)lo=term; if(term.v>=t && !hi)hi=term; });
+  if(lo && hi && lo.v!==hi.v)return `entre ${lo.t} (${lo.v}) et ${hi.t} (${hi.v})`;
+  return (lo||hi)?.t || "";
+}
+/* Terme qualitatif exact d'une valeur (référentiel Julve/Baseflor complet), utilisé pour
+   l'infobulle des graduations qui n'ont pas leur propre étiquette toujours visible. */
+function termLabelForValue(g,t){const full=GRADIENT_TERMS_FULL[g.key]; const exact=full&&full[t]; return exact!=null?exact:nearestTermsLabel(g,t);}
+function axisValueLabelsVertical(g,scaleFn,xNum,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=`<line x1="${xNum}" y1="${scaleFn(g.min)}" x2="${xNum}" y2="${scaleFn(g.max)}" stroke="#aebaac" stroke-width="1.2"></line>`; for(let t=g.min;t<=g.max;t++){const y=scaleFn(t); out+=`<line x1="${xNum-7}" y1="${y}" x2="${xNum}" y2="${y}" stroke="#8b988c" stroke-width="1"></line>`; const isTerm=allowed.has(String(t)); const tip=isTerm?"":termLabelForValue(g,t); out+=`<text ${tip?tipAttr(tip):""} x="${xNum-12}" y="${y+4}" text-anchor="end" font-size="13" font-weight="600" fill="#4c5a4e">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${xNum-32}" y="${scaleFn(o.v)+4}" text-anchor="end" font-size="12" fill="#3f4a40">${esc(shortTerm(o.t,16))}</text>`).join(""); return out;}
 function gradientSpreadPositions(items, sx, baseY){
   const groups=new Map();
   items.forEach((it,idx)=>{const key=String(it.v); if(!groups.has(key))groups.set(key,[]); groups.get(key).push({...it,idx});});
@@ -2400,15 +2469,37 @@ function gradientSpreadPositions(items, sx, baseY){
   });
   return out.sort((a,b)=>a.idx-b.idx);
 }
-function gradientCard(i, groups, labelMode){const g=GRADIENTS[i], mobile=window.matchMedia("(max-width:760px)").matches, W=mobile?360:1400,
- /* Marge de l'échelle réduite sur mobile (retour Martin 21/08/2026, ajustements#3 puis #4 :
-    « l'axe de 1 à 9 peut être élargi jusqu'au bord droit de l'encart ») : marges désormais
-    asymétriques — pl garde la place nécessaire au code de relevé (colonne de gauche), pr est
-    réduit au minimum pour que la dernière graduation vienne presque toucher le bord droit. */
- pl=mobile?54:112, pr=mobile?14:112, rowGap=42, rowTop=40, H=Math.max(150,rowTop+groups.length*rowGap+38); const sx=v=>pl+(v-g.min)/(g.max-g.min)*(W-pl-pr); let sdBands=[], meanLines=[], species=[], labels=[], groupNames=[];
- groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, rawCode=releveLabel(grp.rel), codeLabel=mobile?(rawCode.length>6?rawCode.slice(0,6)+"…":rawCode):rawCode, avail=pl-20, lenAttr=(!mobile && codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`); meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-pr+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});});
- const ticks=axisValueLabels(g,sx,H-30,H-14,mobile); const title=groups.length>1?`${groups.length} relevés sélectionnés`:`n=${groups[0].stats[i].n} · m=${fmt(groups[0].stats[i].mean)} · mp=${fmt(groups[0].stats[i].wmean)} · σp=${fmt(groups[0].stats[i].wsd)}`;
- return `<details class="gradientCard" open data-gradient-key="${esc(g.key)}"><summary><strong>${esc(g.short)} · ${esc(g.label)}</strong><span class="gradientActions"><span class="small muted">${esc(title)}</span><button class="secondary iconBtn gradExportBtn noPrint" type="button" data-export-gradient="${esc(g.key)}" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></span></summary><div class="gradientCardBody"><div class="svgBox"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gradient ${esc(g.label)}" font-family="'IBM Plex Sans',system-ui,sans-serif"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/>${ticks}${groupNames.join("")}${sdBands.join("")}${meanLines.join("")}${species.join("")}${labels.join("")}</svg></div></div></details>`;
+function gradientCard(i, groups, labelMode, opts){
+ opts=opts||{}; const invert=!!opts.invert, showSpecies=opts.showSpecies!==false, showSD=opts.showSD!==false;
+ const g=GRADIENTS[i], mobile=window.matchMedia("(max-width:760px)").matches;
+ let W,H,ticks,groupNames=[],sdBands=[],meanLines=[],species=[],labels=[];
+ if(!invert){
+  /* Mise en page historique : un relevé par ligne, indice écologique en abscisse.
+     Marge de l'échelle réduite sur mobile (retour Martin 21/08/2026, ajustements#3 puis #4 :
+     « l'axe de 1 à 9 peut être élargi jusqu'au bord droit de l'encart ») : marges désormais
+     asymétriques — pl garde la place nécessaire au code de relevé (colonne de gauche), pr est
+     réduit au minimum pour que la dernière graduation vienne presque toucher le bord droit. */
+  const pl=mobile?54:112, pr=mobile?14:112, rowGap=42, rowTop=40;
+  W=mobile?360:1400; H=Math.max(150,rowTop+groups.length*rowGap+38);
+  const sx=v=>pl+(v-g.min)/(g.max-g.min)*(W-pl-pr);
+  groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), y=rowTop+gi*rowGap, rawCode=releveLabel(grp.rel), codeLabel=mobile?(rawCode.length>6?rawCode.slice(0,6)+"…":rawCode):rawCode, avail=pl-20, lenAttr=(!mobile && codeLabel.length*7.4>avail)?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="14" y="${y+5}" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(showSD && st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${sx(a)}" y="${y-11}" width="${Math.max(1,sx(b)-sx(a))}" height="22" rx="7" fill="${color}" opacity=".16"></rect>`);} if(st.wmean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${sx(st.wmean)}" y1="${y-15}" x2="${sx(st.wmean)}" y2="${y+15}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${sx(st.mean)}" y1="${y-15}" x2="${sx(st.mean)}" y2="${y+15}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} if(showSpecies){const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sx,y).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; species.push(`<circle ${tipAttr(tip)} cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=Math.min(W-pr+18,o.cx+o.r+5), ly=o.cy-5; labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});}});
+  ticks=axisValueLabels(g,sx,H-30,H-14,mobile);
+ } else {
+  /* Mise en page inversée : un relevé par colonne, indice écologique en ordonnée. */
+  /* Encarts agrandis par défaut (retour Martin) pour mieux lire l'ordonnée — l'axe garde sa
+     taille réelle en pixels (voir svgBoxScroll) donc l'agrandir n'écrase pas les colonnes. */
+  const axisLeft=mobile?40:160, colGap=mobile?72:150, pr=20, pt=24, pb=40, vh=mobile?300:460;
+  W=axisLeft+groups.length*colGap+pr; H=pt+vh+pb;
+  const sy=v=>pt+(g.max-v)/(g.max-g.min)*vh, colX=gi=>axisLeft+colGap*(gi+0.5);
+  groups.forEach((grp,gi)=>{const st=grp.stats[i], color=releveColor(grp.rel), x=colX(gi), rawCode=releveLabel(grp.rel), avail=colGap-14, codeLabel=rawCode.length*7.4>avail?rawCode.slice(0,Math.max(3,Math.floor(avail/7.4)))+"…":rawCode, lenAttr=codeLabel.length*7.4>avail?` textLength="${avail}" lengthAdjust="spacingAndGlyphs"`:""; groupNames.push(`<text x="${x}" y="${H-14}" text-anchor="middle" font-size="${mobile?11:13}" font-weight="700" fill="${color}"${lenAttr}>${esc(codeLabel)}</text>`); if(showSD && st.wmean!=null){const a=Math.max(g.min,st.wmean-(st.wsd||0)), b=Math.min(g.max,st.wmean+(st.wsd||0)); sdBands.push(`<rect ${tipAttr(`${codeLabel} — écart-type pondéré [${fmt(a,2)} – ${fmt(b,2)}]`)} x="${x-11}" y="${sy(b)}" width="22" height="${Math.max(1,sy(a)-sy(b))}" rx="7" fill="${color}" opacity=".16"></rect>`);} if(st.wmean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne pondérée ${fmt(st.wmean,2)}`)} x1="${x-15}" y1="${sy(st.wmean)}" x2="${x+15}" y2="${sy(st.wmean)}" stroke="${color}" stroke-width="3.4" opacity=".96"></line>`);} if(st.mean!=null){meanLines.push(`<line ${tipAttr(`${codeLabel} — moyenne simple ${fmt(st.mean,2)}`)} x1="${x-15}" y1="${sy(st.mean)}" x2="${x+15}" y2="${sy(st.mean)}" stroke="${color}" stroke-width="1.8" stroke-dasharray="4 4" opacity=".62"></line>`);} if(showSpecies){const autoMode=(labelMode==="short" && grp.rows.length>24)?"initials":labelMode; const drawable=[]; grp.rows.forEach(({row,t},k)=>{const v=t.v[i]; if(v==null)return; drawable.push({row,t,k,v,r:Math.max(2.8,Math.min(7.5,Math.sqrt(pct(row))))});}); gradientSpreadPositions(drawable,sy,x).forEach(o=>{const tip=`${o.t.n} — recouvrement ${fmt(pct(o.row),2)} %`; const px=o.cy, py=o.cx; species.push(`<circle ${tipAttr(tip)} cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${o.r}" fill="${color}" opacity=".6"></circle>`); if(autoMode!=="none" && autoMode!=="hover"){const lx=px+o.r+5, ly=Math.max(pt+10,py-5); labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9.5" fill="#28352a" opacity=".86" font-style="italic">${esc(taxonLabel(o.t.n,autoMode))}</text>`);}});}});
+  ticks=axisValueLabelsVertical(g,sy,axisLeft,mobile);
+ }
+ const title=groups.length>1?`${groups.length} relevés sélectionnés`:`n=${groups[0].stats[i].n} · m=${fmt(groups[0].stats[i].mean)} · mp=${fmt(groups[0].stats[i].wmean)} · σp=${fmt(groups[0].stats[i].wsd)}`;
+ /* En mode inversé, le SVG garde sa taille réelle (pas de mise à l'échelle sur 100% du
+    conteneur) et l'encart devient sa propre fenêtre de défilement horizontal — utile dès
+    qu'une grande sélection de relevés dépasse la largeur disponible. */
+ const boxClass=invert?"svgBox svgBoxScroll":"svgBox", svgStyle=invert?` style="width:${W}px;max-width:none;height:auto;display:block"`:"";
+ return `<details class="gradientCard" open data-gradient-key="${esc(g.key)}"><summary><strong>${esc(g.short)} · ${esc(g.label)}</strong><span class="gradientActions"><span class="small muted">${esc(title)}</span><button class="secondary iconBtn gradExportBtn noPrint" type="button" data-export-gradient="${esc(g.key)}" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></span></summary><div class="gradientCardBody"><div class="${boxClass}"><svg viewBox="0 0 ${W} ${H}"${svgStyle} role="img" aria-label="Gradient ${esc(g.label)}" font-family="'IBM Plex Sans',system-ui,sans-serif"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/>${ticks}${groupNames.join("")}${sdBands.join("")}${meanLines.join("")}${species.join("")}${labels.join("")}</svg></div></div></details>`;
 }
 
 function scatterAxisTicks(g,scaleFn,orientation,W,H,m,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; if(orientation==="x"){for(let t=g.min;t<=g.max;t++){const x=scaleFn(t); out+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${H-m.b}" stroke="#edf2ea"/>`; if(mobile || allowed.has(String(t))||(t-g.min)%2===0){const anchor=t===g.min?"start":(t===g.max?"end":"middle"); out+=`<text x="${x}" y="${H-m.b+18}" text-anchor="${anchor}" font-size="14" fill="#647166">${t}</text>`;}} if(!mobile)out+=terms.map(o=>{const x=scaleFn(o.v), anchor=o.v===g.min?"start":(o.v===g.max?"end":"middle"); return `<text ${tipAttr(o.t)} transform="rotate(-16 ${x} ${H-m.b+38})" x="${x}" y="${H-m.b+38}" text-anchor="${anchor}" font-size="13" fill="#3f4a40">${esc(shortTerm(o.t,26))}</text>`;}).join("");}
@@ -2939,6 +3030,12 @@ function bind(){
    state.selectedIds.forEach(id=>{state.releveColors[id]=e.target.value;});
    save(); renderAll();
  });
+ const homeGradientSelect=document.getElementById("homeGradientSelect");
+ if(homeGradientSelect)homeGradientSelect.addEventListener("change",e=>{
+   const rampKey=e.target.value; e.target.value="";
+   if(!rampKey)return;
+   applySelectionGradient(rampKey);
+ });
  document.addEventListener("input",e=>{
    if(!e.target.matches?.("[data-lot-color]"))return;
    const lot=(state.lots||[]).find(l=>l.id===e.target.dataset.lotColor); if(!lot)return;
@@ -3041,7 +3138,7 @@ function bind(){
    if(e.key==="ArrowUp"){e.preventDefault(); idx=idx<=0?items.length-1:idx-1; items.forEach(x=>x.classList.remove("active")); items[idx].classList.add("active"); items[idx].scrollIntoView({block:"nearest"}); return;}
    if(e.key==="Enter"){e.preventDefault(); const target=items[idx>=0?idx:0]; if(target)selectTaxon(target.dataset.id); return;}
  });
- [analysisStratum,gradientShortLabels,xGrad,yGrad,scatterStratum,scatterShortLabelsReleves,scatterShortLabelsSpecies,compareStratum,wetlandStratum].filter(Boolean).forEach(el=>el.addEventListener("change",renderAll));
+ [analysisStratum,gradientShortLabels,gradientInvertAxes,gradientShowSpecies,gradientShowSD,xGrad,yGrad,scatterStratum,scatterShortLabelsReleves,scatterShortLabelsSpecies,compareStratum,wetlandStratum].filter(Boolean).forEach(el=>el.addEventListener("change",renderAll));
  document.addEventListener("change",e=>{if(e.target.classList?.contains("releveCheck")){const set=new Set(state.selectedIds||[]); if(e.target.checked)set.add(e.target.value); else set.delete(e.target.value); state.selectedIds=[...set]; save(); renderAll();}});
  document.addEventListener("change",e=>{if(e.target.classList?.contains("psAnalyseExcludeCheck")){const view=e.target.dataset.aview, id=e.target.dataset.id; const set=new Set(analysisExcluded(view)); if(e.target.checked)set.delete(id); else set.add(id); state.analysisExcluded[view]=[...set]; save(); renderAll();}});
  document.addEventListener("change",e=>{if(e.target.classList?.contains("compareIndicatorCheck")){const set=new Set(compareIndicators()); if(e.target.checked)set.add(e.target.value); else set.delete(e.target.value); state.compareIndicators=[...set]; save(); renderAll();}});
