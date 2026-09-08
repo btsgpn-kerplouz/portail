@@ -322,6 +322,34 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
 .puce-espece.freq{background:var(--acc-soft);color:var(--acc-dark);}
 .puce-espece.manque{background:#f6ece4;color:var(--status-invalide);border-color:var(--status-invalide);}
 .avertissement{background:#f7efdc;color:var(--status-reserve);border:1px solid var(--status-reserve);border-radius:var(--rayon);padding:.6em .8em;font-size:.85rem;margin-bottom:1em;}
+/* Carte espèce de l'écran Mini-flore : priorité totale aux illustrations
+   (usage mobile en premier lieu, PC en second) — en-tête compact pour
+   identifier l'espèce, puis TOUTES ses photos en grille (2 colonnes ; la
+   dernière d'un nombre impair prend toute la largeur), aucune cachée
+   derrière un carrousel. Clic sur une photo → lightbox plein écran (voir
+   .lightbox). La grille sort de la marge de <main> (négatif = largeur de
+   son padding) pour occuper la largeur réelle de l'écran sur mobile ; sur
+   PC, elle reste bornée par le max-width de <main>. */
+.mini-espece-carte{padding:1em 0;border-bottom:1px solid var(--line-soft);}
+.mini-espece-carte:last-child{border-bottom:none;}
+.mini-espece-entete{margin-bottom:.5em;}
+.mini-espece-entete .fr{font-weight:700;}
+.mini-espece-entete .sci{color:var(--text-2);}
+.mini-espece-galerie{display:grid;grid-template-columns:repeat(2,1fr);gap:.4em;margin:0 -1em;}
+.mini-espece-galerie img,.mini-espece-galerie .mini-espece-photo-vide{
+  display:block;width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;background:var(--page-chantier);
+}
+.mini-espece-galerie img{cursor:zoom-in;}
+.mini-espece-photo-vide{display:flex;align-items:center;justify-content:center;text-align:center;padding:.4em;font-size:.8rem;color:var(--text-2);}
+/* Agrandissement plein écran d'une photo au clic (délégué depuis .mini-espece-galerie img). */
+.lightbox{position:fixed;inset:0;background:rgba(25,27,22,.94);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1.2em;}
+.lightbox[hidden]{display:none;}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;}
+.lightbox-fermer{
+  position:absolute;top:.8em;right:.8em;width:2.4em;height:2.4em;border-radius:50%;
+  background:rgba(244,242,236,.15);color:var(--page);border:1px solid rgba(244,242,236,.4);
+  font-size:1.1rem;line-height:1;cursor:pointer;
+}
 /* La barre de couleur de zone sort de la carte : posée à gauche, en colonne
    continue, elle laisse voir d'un coup d'œil la progression slikke → dune en
    faisant défiler la liste (la carte, elle, garde ses angles arrondis). */
@@ -453,6 +481,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
     </button>
+    <button class="accueil-bouton secondaire2" onclick="ouvrirMiniFloreGlobale()">
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 6c8 3 13 9 13 14 0 5-5 11-13 14-8-3-13-9-13-14 0-5 5-11 13-14z"></path><line x1="20" y1="34" x2="20" y2="16"></line><line x1="20" y1="24" x2="27" y2="17"></line><line x1="20" y1="24" x2="13" y2="17"></line></svg></span>
+      <span class="txt"><b>Mini-flore</b><span>Photographies des principales espèces végétales du site</span></span>
+    </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
       <span id="btn-installer-txt">Installer l'application sur cet appareil</span>
@@ -565,7 +597,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
       <h2>La zonation, de la vasière à la dune</h2>
-      <svg class="zonation-diagram" id="svg-zonation" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"></svg>
+      <svg class="zonation-diagram" id="svg-zonation" viewBox="0 0 600 224" xmlns="http://www.w3.org/2000/svg"></svg>
       <p style="font-size:.8rem;color:var(--text-2);">D'après les profils de végétation relevés sur le site (Fig. 6, COLASSE 2019). L'ordre réel varie localement selon la topographie.</p>
     </div>
     <div class="filtre-groupe" id="filtre-zonation"></div>
@@ -576,6 +608,18 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran" id="ecran-detail-fiche">
     <a class="retour-lien" id="lien-retour-fiche">← Fiches habitats</a>
     <div id="contenu-detail-fiche"></div>
+  </section>
+
+  <!-- ECRAN MINI-FLORE D'UNE FICHE -->
+  <section class="ecran" id="ecran-mini-flore-fiche">
+    <a class="retour-lien" onclick="allerA('detail-fiche')">← Fiche habitat</a>
+    <div id="contenu-mini-flore-fiche"></div>
+  </section>
+
+  <!-- ECRAN MINI-FLORE DU SITE (4e onglet d'accueil) -->
+  <section class="ecran" id="ecran-mini-flore-globale">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div id="contenu-mini-flore-globale"></div>
   </section>
 
   <!-- ECRAN HISTORIQUE -->
@@ -600,7 +644,15 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
 </main>
 
+<!-- LIGHTBOX PHOTO (mini-flore) : agrandissement au clic d'une photo, tap
+     n'importe où pour refermer. Un seul élément partagé, rempli au clic. -->
+<div class="lightbox" id="lightbox-photo" hidden onclick="fermerLightboxPhoto()">
+  <button class="lightbox-fermer" onclick="fermerLightboxPhoto()" aria-label="Fermer la photo">✕</button>
+  <img id="lightbox-photo-img" src="" alt="">
+</div>
+
 <script src="data.js"></script>
+<script src="mini-flore-data.js"></script>
 <script>
 /* Etat de l'application */
 let etat = {
@@ -685,7 +737,8 @@ function allerA(nom){
   document.getElementById('ecran-'+nom).classList.add('actif');
   const titres = {
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
-    fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat"
+    fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
+    'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site"
   };
   document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Zonation";
   if(nom==='identite') majEcranIdentite();
@@ -1104,6 +1157,16 @@ const GRANDS_ENSEMBLES = [
   { nom:'Contact dune', debut:6, fin:7, couleur:'#6b4f82' }
 ];
 
+/* Chemin du sol (trait redistribué à 7 largeurs égales, Fig. 6 COLASSE 2019),
+   copié tel quel du handoff de design documents/Profil de marais salés/ —
+   repère source 1600×300 (voir son README). Sert de clip-path pour les aplats
+   de couleur ; la végétation, elle, est la vraie illustration d'origine
+   (documents/profil-vasiere-dune.png, PNG transparent), pas des symboles
+   réinventés — voir construireProfilSVG. Reste à l'échelle (voir la
+   transformation ci-dessous) : ne pas retoucher ces coordonnées isolément si
+   le tracé doit changer, régénérer depuis la source du handoff. */
+const PROFIL_SOL_D = "M 0 269.7 L 20 269.7 L 40 268.3 L 60 264.2 L 80 259.2 L 100 256.4 L 120 253.8 L 140 252.7 L 160 250.7 L 180 250.0 L 200 247.9 L 220 244.8 L 240 242.7 L 260 242.0 L 280 239.9 L 300 237.9 L 320 235.6 L 340 233.6 L 360 229.9 L 380 227.3 L 400 224.9 L 420 221.7 L 440 219.6 L 460 215.7 L 480 210.1 L 500 203.5 L 520 197.8 L 540 195.8 L 560 197.6 L 580 193.3 L 600 190.8 L 620 189.4 L 640 188.9 L 660 189.2 L 680 189.7 L 700 189.8 L 720 189.6 L 740 188.7 L 760 186.5 L 780 185.6 L 800 184.3 L 820 181.7 L 840 180.9 L 860 180.8 L 880 181.2 L 900 182.0 L 920 181.7 L 940 181.7 L 960 180.8 L 980 180.4 L 1000 178.7 L 1020 177.9 L 1040 177.7 L 1060 176.5 L 1080 177.0 L 1100 175.6 L 1120 174.5 L 1140 174.6 L 1160 170.8 L 1180 169.3 L 1200 166.4 L 1220 164.7 L 1240 162.4 L 1260 156.8 L 1280 154.1 L 1300 150.8 L 1320 149.1 L 1340 148.5 L 1360 146.7 L 1380 146.2 L 1400 146.1 L 1420 145.7 L 1440 145.7 L 1460 143.7 L 1480 142.5 L 1500 141.2 L 1520 139.6 L 1540 137.7 L 1560 135.3 L 1580 133.7 L 1600 131.4 L 1600 300 L 0 300 Z";
+
 function construireProfilSVG(svgId, opts){
   opts = opts || {};
   const svg = document.getElementById(svgId);
@@ -1120,29 +1183,59 @@ function construireProfilSVG(svgId, opts){
       <text x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.3" font-weight="700" letter-spacing="0.04em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
-  // Séparateurs verticaux entre grands ensembles
+
+  // Profil dessiné du terrain : repère source 1600×212 (viewBox du handoff)
+  // remis à l'échelle vers notre bande 600×86 — translate(0,-88) ramène l'origine
+  // en haut du viewBox source, scale() l'ajuste à nos dimensions, translate(0,22)
+  // la replace sous le bandeau des grands ensembles. pointer-events:none pour que
+  // les clics traversent jusqu'aux cases habitat (voir plus bas).
+  // Même opacité que les cases du bas (0.7 / 0.95 si sélectionnée) : sans ça, le
+  // profil (opaque) et les cases (semi-transparentes sur le fond de carte) affichent
+  // la même couleur de base sous deux nuances différentes.
+  const zoneWSrc = 1600/n;
+  const zoneRectsProfil = PROFIL_ZONATION.map((z,i)=>`<rect x="${i*zoneWSrc}" y="0" width="${zoneWSrc}" height="300" fill="${ZONES_LINES_COULEURS[i]}" opacity="${opts.zoneSelectionnee===i?0.95:0.7}"/>`).join('');
+  html += `<g style="pointer-events:none" transform="translate(0,22) scale(0.375,0.40566037736) translate(0,-88)">
+    <defs><clipPath id="soil7-${svgId}"><path d="${PROFIL_SOL_D}"/></clipPath></defs>
+    <rect x="0" y="174.5" width="1148" height="126" fill="#cfe1ec" opacity="0.6"/>
+    <path d="M0 174.5 H1148" stroke="#8fb4ca" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9"/>
+    <g clip-path="url(#soil7-${svgId})">${zoneRectsProfil}</g>
+    <image href="documents/profil-vasiere-dune.png" x="0" y="43.2" width="1600" height="239.01" preserveAspectRatio="none"/>
+  </g>`;
+
+  // Séparateurs verticaux entre grands ensembles, sur toute la hauteur profil + cases
   GRANDS_ENSEMBLES.slice(1).forEach(g=>{
-    html += `<line x1="${g.debut*w}" y1="20" x2="${g.debut*w}" y2="178" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
+    html += `<line x1="${g.debut*w}" y1="20" x2="${g.debut*w}" y2="208" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
+
+  // Cases cliquables, sous le profil — une par zone. La zone de clic (invisible)
+  // couvre aussi le profil dessiné au-dessus, pour rester cliquable "par habitat"
+  // sur toute la colonne, pas seulement sur la case du bas.
+  // Largeur pleine (pas de "-2" comme avant) : la couleur de la case doit finir
+  // exactement là où finit sa bande dans le profil au-dessus, sans quoi les deux
+  // paraissent légèrement décalés horizontalement. La séparation visuelle entre
+  // cases vient d'un simple filet clair superposé, pas d'un rétrécissement.
   PROFIL_ZONATION.forEach((z,i)=>{
     const fichesAffiches = z.fiches;
     const lignes = decouperEnLignes(z.zone, 9);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:10.5}">${l}</tspan>`).join('');
     const selectionnee = opts.zoneSelectionnee === i;
     html += `<g class="zone-colonne" tabindex="0" role="button" aria-label="${z.zone} — voir uniquement les habitats de cette zone" onclick="selectionnerZoneFiches(${i})" style="cursor:pointer;">
-      <rect x="${i*w}" y="20" width="${w-2}" height="158" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.05:0.01}"/>
-      <rect x="${i*w}" y="42" width="${w-2}" height="100" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.9:0.55}"/>
-      ${selectionnee ? `<rect x="${i*w+1}" y="43" width="${w-4}" height="98" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
-      <text x="${i*w+w/2}" y="161" text-anchor="middle" font-size="9.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
+      <rect x="${i*w}" y="20" width="${w}" height="188" fill="${ZONES_LINES_COULEURS[i]}" opacity="0.01"/>
+      <rect x="${i*w}" y="110" width="${w}" height="98" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.95:0.7}"/>
+      ${selectionnee ? `<rect x="${i*w+1}" y="111" width="${w-2}" height="96" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
+      <text x="${i*w+w/2}" y="192" text-anchor="middle" font-size="9.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
     fichesAffiches.forEach((fid, k)=>{
       const cx = i*w + 13 + (k%4)*16;
-      const cy = 56 + Math.floor(k/4)*16;
+      const cy = 124 + Math.floor(k/4)*16;
       html += `<circle cx="${cx}" cy="${cy}" r="7.5" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
         <text x="${cx}" y="${cy+2.8}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
     });
     html += `</g>`;
+    if(i>0){
+      html += `<line x1="${i*w}" y1="110" x2="${i*w}" y2="208" stroke="#f4f2ec" stroke-width="1.5" opacity="0.6" style="pointer-events:none"/>`;
+    }
   });
-  svg.innerHTML = html + `<text x="10" y="192" font-size="9.8" fill="#565a4e">slikke (mer) →</text><text x="590" y="192" font-size="9.8" fill="#565a4e" text-anchor="end">← dune</text>`;
+  svg.innerHTML = html + `<text x="10" y="219" font-size="9.8" fill="#565a4e">slikke (mer) →</text><text x="590" y="219" font-size="9.8" fill="#565a4e" text-anchor="end">← dune</text>`;
 }
 
 /* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
@@ -1238,6 +1331,7 @@ function allerVoirFiche(id, origine){
   }
   const cont = document.getElementById('contenu-detail-fiche');
   const especesParStatut = s => h.especes.filter(e=>e.statut===s).map(e=>`${e.fr} <i>(${e.latin})</i>`).join(', ') || '—';
+  const especesMiniFlore = h.especes.filter(e=>e.statut==='car'||e.statut==='freq');
   const idxZone = PROFIL_ZONATION.findIndex(z => z.fiches.includes(h.id));
   const couleurZone = idxZone>=0 ? ZONES_LINES_COULEURS[idxZone] : 'var(--line)';
   cont.innerHTML = `
@@ -1251,11 +1345,165 @@ function allerVoirFiche(id, origine){
       <div class="detail-bloc"><h3>Écologie</h3><p>${h.ecologie||'—'}</p></div>
       <div class="detail-bloc"><h3>Espèces caractéristiques</h3><p>${especesParStatut('car')}</p></div>
       <div class="detail-bloc"><h3>Espèces fréquentes</h3><p>${especesParStatut('freq')}</p></div>
+      ${especesMiniFlore.length ? `<div class="detail-bloc"><button class="secondaire" onclick="ouvrirMiniFloreFiche(${idAttr(h.id)})">🌿 Mini-flore de cet habitat (${especesMiniFlore.length} espèce${especesMiniFlore.length>1?'s':''})</button></div>` : ''}
       <div class="detail-bloc"><h3>Confusions possibles</h3><p>${h.confusions||'—'}</p></div>
       <div class="detail-bloc"><h3>Dynamique et contacts</h3><p>${h.dynamique||'—'}</p></div>
     </div>
   `;
   allerA('detail-fiche');
+}
+
+/* ---------- Mini-flore d'une fiche habitat ----------
+   Uniquement des photos (MINI_FLORE, mini-flore-data.js généré par
+   documents/mini-flore/build_app_data.py à partir du CSV) : priorité aux
+   illustrations, pas de texte. Clé = nom latin, identique à `e.latin`. */
+/* Une tuile cassée (hors connexion, image retirée côté Tela Botanica...) est
+   remplacée par un placeholder de même gabarit (même empan de grille), plutôt
+   que par une icône d'image cassée. */
+const ONERROR_PHOTO_MINI_FLORE = "const d=document.createElement('div');d.className='mini-espece-photo-vide';d.textContent='Photo indisponible';d.setAttribute('aria-hidden','true');d.style.cssText=this.style.cssText;this.replaceWith(d);";
+/* Les URLs Tela Botanica encodent une taille en suffixe (ex. .../img:000051142L.jpg
+   — S/M/L/XL/O, plus CRS = carré basse résolution) ; toutes les tailles existent
+   systématiquement pour un même identifiant, donc on peut fabriquer l'URL de la
+   taille voulue à la volée, quelle que soit celle stockée dans le CSV : M (léger,
+   ~40-55 Ko) pour la grille où plusieurs photos sont chargées d'un coup, XL
+   (~100-150 Ko, nettement plus net que M sans le poids de O qui peut peser
+   plusieurs Mo) pour la version agrandie en lightbox. */
+function urlPhotoTaille(url, taille){
+  return url.replace(/(img:\d+)[A-Z]+(\.\w+)$/, `$1${taille}$2`);
+}
+function construireGaleriePhotosHtml(info, nomFr){
+  const photos = (info && info.photos) || [];
+  if(!photos.length) return `<div class="mini-espece-photo-vide" style="grid-column:1/-1;aspect-ratio:4/3" aria-hidden="true">Pas encore de photo pour cette espèce</div>`;
+  // Nombre impair de photos (dont 1 seule) : la dernière prend toute la largeur plutôt que de rester seule dans sa colonne.
+  return photos.map((url, i) => {
+    const pleineLargeur = photos.length%2===1 && i===photos.length-1;
+    const style = pleineLargeur ? ' style="grid-column:1/-1;aspect-ratio:4/3"' : '';
+    return `<img src="${urlPhotoTaille(url,'M')}" data-full="${urlPhotoTaille(url,'XL')}" alt="${nomFr} — photo ${i+1}/${photos.length}" loading="lazy"${style} onerror="${ONERROR_PHOTO_MINI_FLORE}">`;
+  }).join('');
+}
+function nomAfficheEspece(e){ return (MINI_FLORE[e.latin] && MINI_FLORE[e.latin].nomFr) || e.fr; }
+function construireCarteEspeceMiniFlore(e){
+  const info = MINI_FLORE[e.latin];
+  const statutLabel = e.statut==='car' ? 'Caractéristique' : 'Fréquente';
+  const nomFr = nomAfficheEspece(e);
+  return `
+    <div class="mini-espece-carte">
+      <div class="mini-espece-entete"><span class="fr">${nomFr}</span> <i class="sci">${e.latin}</i> <span class="tag">${statutLabel}</span></div>
+      <div class="mini-espece-galerie">${construireGaleriePhotosHtml(info, nomFr)}</div>
+    </div>`;
+}
+/* Carte espèce sans pastille de statut, pour la mini-flore globale du site
+   (le statut caractéristique/fréquente est relatif à une fiche habitat, pas
+   à l'espèce elle-même). */
+function construireCarteEspeceGlobale(e){
+  const info = MINI_FLORE[e.latin];
+  const nomFr = nomAfficheEspece(e);
+  return `
+    <div class="mini-espece-carte">
+      <div class="mini-espece-entete"><span class="fr">${nomFr}</span> <i class="sci">${e.latin}</i></div>
+      <div class="mini-espece-galerie">${construireGaleriePhotosHtml(info, nomFr)}</div>
+    </div>`;
+}
+const FAMILLE_NON_DETERMINEE = 'Famille non déterminée';
+/* Regroupe une liste d'espèces par famille botanique (MINI_FLORE), triée par
+   nom de famille puis par nom d'espèce, et construit les blocs HTML. Partagé
+   entre la mini-flore d'une fiche et celle du site entier. */
+function construireBlocsParFamille(especes, construireCarte){
+  const parFamille = new Map();
+  especes.forEach(e=>{
+    const famille = (MINI_FLORE[e.latin] && MINI_FLORE[e.latin].famille) || FAMILLE_NON_DETERMINEE;
+    if(!parFamille.has(famille)) parFamille.set(famille, []);
+    parFamille.get(famille).push(e);
+  });
+  return [...parFamille.keys()].sort((a,b)=>a.localeCompare(b,'fr')).map(famille => {
+    const especesTriees = parFamille.get(famille).slice().sort((a,b)=>nomAfficheEspece(a).localeCompare(nomAfficheEspece(b),'fr'));
+    return `<div class="detail-bloc"><h3>${famille}</h3>${especesTriees.map(construireCarte).join('')}</div>`;
+  }).join('');
+}
+/* Délégation : toute photo de la mini-flore ouvre la lightbox plein écran au clic,
+   avec la version XL (data-full) plutôt que la vignette M affichée dans la grille. */
+document.addEventListener('click', e=>{
+  const img = e.target.closest('.mini-espece-galerie img');
+  if(!img) return;
+  document.getElementById('lightbox-photo-img').src = img.dataset.full || img.src;
+  document.getElementById('lightbox-photo-img').alt = img.alt;
+  document.getElementById('lightbox-photo').hidden = false;
+});
+function fermerLightboxPhoto(){
+  document.getElementById('lightbox-photo').hidden = true;
+  document.getElementById('lightbox-photo-img').src = '';
+}
+function ouvrirMiniFloreFiche(id){
+  const h = HABITATS.find(x=>x.id===id);
+  if(!h) return;
+  const especes = h.especes.filter(e=>e.statut==='car'||e.statut==='freq');
+  // Classement par famille botanique plutôt que par statut car/freq — le statut
+  // reste visible via la pastille sur chaque carte (construireCarteEspeceMiniFlore).
+  const blocsFamille = construireBlocsParFamille(especes, construireCarteEspeceMiniFlore);
+  const cont = document.getElementById('contenu-mini-flore-fiche');
+  cont.innerHTML = `
+    <div class="carte">
+      <span class="tag">Fiche ${h.id}</span>
+      <h2>Mini-flore — ${h.nomFr}</h2>
+      <p style="font-size:.8rem;color:var(--text-2);">Photos des espèces de cette fiche (source : Tela Botanica), classées par famille botanique. Faites glisser une photo pour voir les suivantes. Nécessite une connexion.</p>
+    </div>
+    ${blocsFamille || '<div class="detail-bloc"><p>—</p></div>'}
+  `;
+  allerA('mini-flore-fiche');
+}
+/* Mini-flore du site entier (4ᵉ onglet d'accueil) : toutes les espèces
+   caractéristiques/fréquentes de toutes les fiches habitats, dédupliquées,
+   classées par famille — même présentation que la mini-flore d'une fiche,
+   mais sans pastille de statut (non pertinente hors contexte d'une fiche). */
+function especesDuSite(){
+  const vues = new Map();
+  HABITATS.forEach(h=>{
+    h.especes.filter(e=>e.statut==='car'||e.statut==='freq').forEach(e=>{
+      if(!vues.has(e.latin)) vues.set(e.latin, {latin:e.latin, fr:e.fr});
+    });
+  });
+  return [...vues.values()];
+}
+/* Habitats dans l'ordre canonique du profil de zonation (slikke → dune),
+   même convention que l'écran Fiches habitats (ORDRE_TRANSECT). */
+function especesParHabitatOrdonne(){
+  return ORDRE_TRANSECT.map(id => HABITATS.find(h=>h.id===id)).filter(Boolean)
+    .map(h => ({h, especes: h.especes.filter(e=>e.statut==='car'||e.statut==='freq')}))
+    .filter(g => g.especes.length);
+}
+function construireBlocsParHabitat(){
+  return especesParHabitatOrdonne().map(({h, especes}) => {
+    const especesTriees = especes.slice().sort((a,b)=>nomAfficheEspece(a).localeCompare(nomAfficheEspece(b),'fr'));
+    // Ici la pastille caractéristique/fréquente a un sens (contexte d'une fiche précise) :
+    // on réutilise donc la carte "avec pastille", contrairement au classement par famille.
+    return `<div class="detail-bloc"><h3>Fiche ${h.id} — ${h.nomFr}</h3>${especesTriees.map(construireCarteEspeceMiniFlore).join('')}</div>`;
+  }).join('');
+}
+let modeMiniFloreGlobale = 'famille';
+function definirModeMiniFloreGlobale(mode){
+  modeMiniFloreGlobale = mode;
+  construireEcranMiniFloreGlobale();
+}
+function construireEcranMiniFloreGlobale(){
+  const blocs = modeMiniFloreGlobale === 'habitat'
+    ? construireBlocsParHabitat()
+    : construireBlocsParFamille(especesDuSite(), construireCarteEspeceGlobale);
+  const cont = document.getElementById('contenu-mini-flore-globale');
+  cont.innerHTML = `
+    <div class="carte">
+      <h2>Mini-flore du site</h2>
+      <p style="font-size:.8rem;color:var(--text-2);">Photographies des principales espèces végétales de la Petite Mer de Gâvres (source : Tela Botanica). Faites glisser une photo pour voir les suivantes. Nécessite une connexion.</p>
+      <div class="filtre-groupe">
+        <span class="filtre-chip${modeMiniFloreGlobale==='famille'?' actif':''}" onclick="definirModeMiniFloreGlobale('famille')">Par famille</span>
+        <span class="filtre-chip${modeMiniFloreGlobale==='habitat'?' actif':''}" onclick="definirModeMiniFloreGlobale('habitat')">Par habitat</span>
+      </div>
+    </div>
+    ${blocs || '<div class="detail-bloc"><p>—</p></div>'}
+  `;
+}
+function ouvrirMiniFloreGlobale(){
+  construireEcranMiniFloreGlobale();
+  allerA('mini-flore-globale');
 }
 
 /* ---------- Historique / localStorage ---------- */

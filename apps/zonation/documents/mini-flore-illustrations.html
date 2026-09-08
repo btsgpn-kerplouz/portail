@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Mini flore — Illustrations — Zonation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #191b16; --ink-66: rgba(25,27,22,.66); --ink-40: rgba(25,27,22,.40);
+    --ink-14: rgba(25,27,22,.14); --page: #ffffff; --car: #5a6b3f; --freq: #6b6455;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e9e7e0; color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+  .sheet { width: 210mm; min-height: 297mm; margin: 8mm auto; background: var(--page); padding: 12mm 12mm 14mm; }
+  header.doc-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5pt solid var(--ink); padding-bottom: 3mm; margin-bottom: 5mm; }
+  header.doc-head h1 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 600; font-size: 15pt; margin: 0; letter-spacing: -0.01em; }
+  header.doc-head .sub { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 7.5pt; color: var(--ink-66); text-align: right; line-height: 1.5; }
+  .legend { display: flex; gap: 5mm; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 6.8pt; color: var(--ink-66); margin-bottom: 4mm; }
+  .legend .dot { display: inline-block; width: 2mm; height: 2mm; border-radius: 50%; margin-right: 1mm; vertical-align: middle; position: relative; top: -0.3mm; }
+  .dot.car { background: var(--car); } .dot.freq { background: var(--freq); }
+
+  .famille { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8pt; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--page); background: var(--ink); margin: 5mm 0 2.5mm; padding: 1.6mm 3mm; break-after: avoid; page-break-after: avoid; }
+  .famille:first-child { margin-top: 0; }
+
+  .card { padding: 2.6mm 0; border-bottom: 0.5pt solid var(--ink-14); break-inside: avoid; page-break-inside: avoid; }
+  .card-head { display: flex; align-items: baseline; gap: 2.5mm; margin-bottom: 1.6mm; }
+  .card-head .fr { font-weight: 700; font-size: 11pt; line-height: 1.1; }
+  .card-head .sci { font-family: "IBM Plex Serif", Georgia, serif; font-style: italic; font-size: 9pt; color: var(--ink-66); line-height: 1.1; }
+  .card-head .statut { margin-left: auto; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; }
+  .statut.car { color: var(--car); } .statut.freq { color: var(--freq); } .statut.car-freq { color: var(--car); }
+
+  .photo-row { display: flex; gap: 3mm; margin-bottom: 3mm; }
+  .photo-row:last-child { margin-bottom: 0; }
+  .photo-row img { display: block; object-fit: cover; border: 0.5pt solid var(--ink-14); }
+
+  .missing-page { margin-top: 8mm; padding-top: 4mm; border-top: 1.5pt solid var(--ink); break-before: page; }
+  .missing-page h2 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 600; font-size: 12pt; margin: 0 0 1mm; }
+  .missing-page .note { font-size: 8pt; color: var(--ink-66); margin-bottom: 4mm; }
+  .missing-page ul { columns: 2; column-gap: 8mm; margin: 0; padding: 0; list-style: none; font-size: 8.3pt; line-height: 1.9; }
+  .missing-page li { break-inside: avoid; }
+  .missing-page li.famille-heading { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 7pt; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-66); margin-top: 2mm; }
+  .missing-page .sci { font-family: "IBM Plex Serif", Georgia, serif; font-style: italic; color: var(--ink-66); }
+  .missing-page .sources { margin-top: 6mm; padding-top: 3mm; border-top: 0.5pt solid var(--ink-14); font-size: 6.8pt; color: var(--ink-40); line-height: 1.6; }
+
+  @media print { html, body { background: var(--page); } .sheet { margin: 0; width: auto; min-height: auto; box-shadow: none; } @page { size: A4; margin: 12mm; } }
+  @media screen { .sheet { box-shadow: 0 1px 4px rgba(0,0,0,.15); } }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="doc-head">
+      <h1>Mini flore — Illustrations</h1>
+      <div class="sub">Petite Mer de Gâvres<br>47 espèces illustrées</div>
+    </header>
+    <div class="legend">
+      <span><span class="dot car"></span>Caractéristique</span>
+      <span><span class="dot freq"></span>Fréquente</span>
+    </div>
+    <h2 class="famille">Amaranthaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Arroche laciniée</span>
+        <span class="sci">Atriplex laciniata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000096683L.jpg" alt="Arroche laciniée" style="width:63.0mm;height:41.7mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000860603L.jpg" alt="Arroche laciniée" style="width:26.1mm;height:41.7mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000016224L.jpg" alt="Arroche laciniée" style="width:62.4mm;height:41.7mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000860605L.jpg" alt="Arroche laciniée" style="width:27.7mm;height:41.7mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Arroche des grèves</span>
+        <span class="sci">Atriplex littoralis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:001960457O.jpg" alt="Arroche des grèves" style="width:52.4mm;height:39.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002318989O.jpg" alt="Arroche des grèves" style="width:52.4mm;height:39.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002462563O.jpg" alt="Arroche des grèves" style="width:76.8mm;height:39.3mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Arroche couchée</span>
+        <span class="sci">Atriplex prostrata</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000192670L.jpg" alt="Arroche couchée" style="width:34.0mm;height:51.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000039846L.jpg" alt="Arroche couchée" style="width:68.6mm;height:51.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000051839L.jpg" alt="Arroche couchée" style="width:77.8mm;height:51.4mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Betterave maritime</span>
+        <span class="sci">Beta vulgaris subsp. maritima</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000114717L.jpg" alt="Betterave maritime" style="width:68.7mm;height:51.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000054431L.jpg" alt="Betterave maritime" style="width:54.3mm;height:51.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000017343L.jpg" alt="Betterave maritime" style="width:57.4mm;height:51.5mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Obione faux-pourpier</span>
+        <span class="sci">Halimione portulacoides</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000020989L.jpg" alt="Obione faux-pourpier" style="width:67.0mm;height:50.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000065222L.jpg" alt="Obione faux-pourpier" style="width:67.0mm;height:50.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002448377L.jpg" alt="Obione faux-pourpier" style="width:46.5mm;height:50.3mm;" loading="lazy"></div>
+    </article><h2 class="famille">Apiaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Céleri sauvage</span>
+        <span class="sci">Apium graveolens</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000339650L.jpg" alt="Céleri sauvage" style="width:54.5mm;height:62.9mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000339641L.jpg" alt="Céleri sauvage" style="width:128.0mm;height:62.9mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Criste marine</span>
+        <span class="sci">Crithmum maritimum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000049636L.jpg" alt="Criste marine" style="width:37.7mm;height:50.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000007164L.jpg" alt="Criste marine" style="width:75.8mm;height:50.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009087L.jpg" alt="Criste marine" style="width:67.0mm;height:50.3mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Carotte sauvage</span>
+        <span class="sci">Daucus carota subsp. carota</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000181076L.jpg" alt="Carotte sauvage" style="width:81.7mm;height:49.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000068931L.jpg" alt="Carotte sauvage" style="width:32.8mm;height:49.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000017390L.jpg" alt="Carotte sauvage" style="width:66.2mm;height:49.1mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Oenanthe de Lachenal</span>
+        <span class="sci">Oenanthe lachenalii</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000058158L.jpg" alt="Oenanthe de Lachenal" style="width:58.0mm;height:43.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000058161L.jpg" alt="Oenanthe de Lachenal" style="width:58.0mm;height:43.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000669384L.jpg" alt="Oenanthe de Lachenal" style="width:65.3mm;height:43.5mm;" loading="lazy"></div>
+    </article><h2 class="famille">Asteraceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Aster maritime</span>
+        <span class="sci">Aster tripolium</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000204409L.jpg" alt="Aster maritime" style="width:85.0mm;height:75.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000091267L.jpg" alt="Aster maritime" style="width:56.4mm;height:75.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002448676L.jpg" alt="Aster maritime" style="width:36.5mm;height:75.2mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Baccharis à feuilles d&#x27;arroche</span>
+        <span class="sci">Baccharis halimifolia</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000167772L.jpg" alt="Baccharis à feuilles d&#x27;arroche" style="width:73.3mm;height:55.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000044820L.jpg" alt="Baccharis à feuilles d&#x27;arroche" style="width:33.4mm;height:55.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000015460L.jpg" alt="Baccharis à feuilles d&#x27;arroche" style="width:73.3mm;height:55.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Eupatoire chanvrine</span>
+        <span class="sci">Eupatorium cannabinum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000043171L.jpg" alt="Eupatoire chanvrine" style="width:68.3mm;height:51.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000043173L.jpg" alt="Eupatoire chanvrine" style="width:38.4mm;height:51.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000084562L.jpg" alt="Eupatoire chanvrine" style="width:73.7mm;height:51.2mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Inule faux-crithme</span>
+        <span class="sci">Inula crithmoides</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000185284L.jpg" alt="Inule faux-crithme" style="width:86.7mm;height:65.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000044215L.jpg" alt="Inule faux-crithme" style="width:43.4mm;height:65.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000048417L.jpg" alt="Inule faux-crithme" style="width:48.8mm;height:65.1mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Matricaire maritime</span>
+        <span class="sci">Matricaria maritima subsp. maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000019499L.jpg" alt="Matricaire maritime" style="width:69.3mm;height:52.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000790639L.jpg" alt="Matricaire maritime" style="width:41.7mm;height:52.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000019656L.jpg" alt="Matricaire maritime" style="width:69.3mm;height:52.0mm;" loading="lazy"></div>
+    </article><h2 class="famille">Brassicaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Cochléaire anglaise</span>
+        <span class="sci">Cochlearia anglica</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000314473L.jpg" alt="Cochléaire anglaise" style="width:120.6mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Cochléaire du Danemark</span>
+        <span class="sci">Cochlearia danica</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000078372L.jpg" alt="Cochléaire du Danemark" style="width:96.5mm;height:64.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000279855L.jpg" alt="Cochléaire du Danemark" style="width:86.0mm;height:64.5mm;" loading="lazy"></div>
+    </article><h2 class="famille">Caryophyllaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Sabline à feuilles de serpolet</span>
+        <span class="sci">Arenaria serpyllifolia subsp. serpyllifolia</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000133004L.jpg" alt="Sabline à feuilles de serpolet" style="width:34.5mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000250999L.jpg" alt="Sabline à feuilles de serpolet" style="width:56.1mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002412854L.jpg" alt="Sabline à feuilles de serpolet" style="width:51.3mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Herniaire ciliée</span>
+        <span class="sci">Herniaria ciliolata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:002308838L.jpg" alt="Herniaire ciliée" style="width:58.9mm;height:38.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002308839L.jpg" alt="Herniaire ciliée" style="width:58.3mm;height:38.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002564608L.jpg" alt="Herniaire ciliée" style="width:64.7mm;height:38.2mm;" loading="lazy"></div>
+    </article><h2 class="famille">Convolvulaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Liseron des haies</span>
+        <span class="sci">Calystegia sepium</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000188608L.jpg" alt="Liseron des haies" style="width:44.6mm;height:48.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000180214L.jpg" alt="Liseron des haies" style="width:64.1mm;height:48.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002228938O.jpg" alt="Liseron des haies" style="width:72.1mm;height:48.1mm;" loading="lazy"></div>
+    </article><h2 class="famille">Cyperaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Laîche distante</span>
+        <span class="sci">Carex distans</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000080153L.jpg" alt="Laîche distante" style="width:36.2mm;height:54.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000057308L.jpg" alt="Laîche distante" style="width:72.0mm;height:54.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000021282O.jpg" alt="Laîche distante" style="width:72.0mm;height:54.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Laîche étirée</span>
+        <span class="sci">Carex extensa</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000015481L.jpg" alt="Laîche étirée" style="width:41.0mm;height:61.6mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000016202L.jpg" alt="Laîche étirée" style="width:92.1mm;height:61.6mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000045790L.jpg" alt="Laîche étirée" style="width:46.2mm;height:61.6mm;" loading="lazy"></div>
+    </article><h2 class="famille">Fabaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Mélilot blanc</span>
+        <span class="sci">Melilotus albus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000045946O.jpg" alt="Mélilot blanc" style="width:56.7mm;height:75.6mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000195603L.jpg" alt="Mélilot blanc" style="width:64.4mm;height:75.6mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000045944L.jpg" alt="Mélilot blanc" style="width:56.7mm;height:75.6mm;" loading="lazy"></div>
+    </article><h2 class="famille">Frankeniaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Frankénie lisse</span>
+        <span class="sci">Frankenia laevis</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000089379L.jpg" alt="Frankénie lisse" style="width:68.5mm;height:55.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000089413L.jpg" alt="Frankénie lisse" style="width:55.9mm;height:55.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000077773L.jpg" alt="Frankénie lisse" style="width:55.6mm;height:55.5mm;" loading="lazy"></div>
+    </article><h2 class="famille">Juncaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Jonc ambigu</span>
+        <span class="sci">Juncus ambiguus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:001797056L.jpg" alt="Jonc ambigu" style="width:47.2mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:003135232L.jpg" alt="Jonc ambigu" style="width:60.0mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:003135233O.jpg" alt="Jonc ambigu" style="width:60.0mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Jonc des crapauds</span>
+        <span class="sci">Juncus bufonius subsp. minutulus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000009961L.jpg" alt="Jonc des crapauds" style="width:85.7mm;height:64.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000085154L.jpg" alt="Jonc des crapauds" style="width:45.1mm;height:64.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000092338L.jpg" alt="Jonc des crapauds" style="width:48.2mm;height:64.3mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Jonc de Gérard</span>
+        <span class="sci">Juncus gerardi</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000332153L.jpg" alt="Jonc de Gérard" style="width:54.5mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000073865L.jpg" alt="Jonc de Gérard" style="width:44.9mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Jonc maritime</span>
+        <span class="sci">Juncus maritimus</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000009973L.jpg" alt="Jonc maritime" style="width:57.9mm;height:43.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000260081O.jpg" alt="Jonc maritime" style="width:65.4mm;height:43.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009973L.jpg" alt="Jonc maritime" style="width:57.9mm;height:43.4mm;" loading="lazy"></div>
+    </article><h2 class="famille">Lamiaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Lycope d&#x27;Europe</span>
+        <span class="sci">Lycopus europaeus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:002243248L.jpg" alt="Lycope d&#x27;Europe" style="width:36.0mm;height:48.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000052620L.jpg" alt="Lycope d&#x27;Europe" style="width:72.6mm;height:48.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000074118L.jpg" alt="Lycope d&#x27;Europe" style="width:72.2mm;height:48.0mm;" loading="lazy"></div>
+    </article><h2 class="famille">Plantaginaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Linaire des sables</span>
+        <span class="sci">Linaria arenaria</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000025128L.jpg" alt="Linaire des sables" style="width:106.7mm;height:80.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000332081L.jpg" alt="Linaire des sables" style="width:33.7mm;height:80.0mm;" loading="lazy"></div>
+    </article><h2 class="famille">Plumbaginaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Armérie maritime</span>
+        <span class="sci">Armeria maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000080167L.jpg" alt="Armérie maritime" style="width:106.2mm;height:71.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002460504L.jpg" alt="Armérie maritime" style="width:75.9mm;height:71.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Statice oreille d&#x27;ours</span>
+        <span class="sci">Limonium auriculae-ursifolium</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000790556L.jpg" alt="Statice oreille d&#x27;ours" style="width:71.9mm;height:46.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000790548O.jpg" alt="Statice oreille d&#x27;ours" style="width:40.0mm;height:46.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000054106O.jpg" alt="Statice oreille d&#x27;ours" style="width:69.1mm;height:46.2mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Statice de Dodart</span>
+        <span class="sci">Limonium dodartii</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000331083L.jpg" alt="Statice de Dodart" style="width:66.3mm;height:47.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000331085L.jpg" alt="Statice de Dodart" style="width:51.1mm;height:47.5mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002240934O.jpg" alt="Statice de Dodart" style="width:63.4mm;height:47.5mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Statice à feuilles ovales</span>
+        <span class="sci">Limonium ovalifolium</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000332975L.jpg" alt="Statice à feuilles ovales" style="width:68.9mm;height:60.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000332977L.jpg" alt="Statice à feuilles ovales" style="width:53.8mm;height:60.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000332973L.jpg" alt="Statice à feuilles ovales" style="width:56.8mm;height:60.4mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Lavande de mer</span>
+        <span class="sci">Limonium vulgare</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000009481L.jpg" alt="Lavande de mer" style="width:60.4mm;height:45.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000012516L.jpg" alt="Lavande de mer" style="width:60.4mm;height:45.3mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000012522L.jpg" alt="Lavande de mer" style="width:60.4mm;height:45.3mm;" loading="lazy"></div>
+    </article><h2 class="famille">Poaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Agrostide maritime</span>
+        <span class="sci">Agrostis stolonifera var. pseudopungens</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000788612L.jpg" alt="Agrostide maritime" style="width:31.2mm;height:55.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009487L.jpg" alt="Agrostide maritime" style="width:73.6mm;height:55.2mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000039274L.jpg" alt="Agrostide maritime" style="width:75.1mm;height:55.2mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Catapode marin</span>
+        <span class="sci">Catapodium marinum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000272321L.jpg" alt="Catapode marin" style="width:70.3mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000116225L.jpg" alt="Catapode marin" style="width:70.3mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002433528L.jpg" alt="Catapode marin" style="width:39.6mm;height:52.8mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Catapode rigide</span>
+        <span class="sci">Catapodium rigidum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000185536L.jpg" alt="Catapode rigide" style="width:56.6mm;height:65.9mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009531L.jpg" alt="Catapode rigide" style="width:87.9mm;height:65.9mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000032653L.jpg" alt="Catapode rigide" style="width:34.4mm;height:65.9mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Chiendent pied-de-poule</span>
+        <span class="sci">Cynodon dactylon</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000192578L.jpg" alt="Chiendent pied-de-poule" style="width:67.9mm;height:48.9mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000222366L.jpg" alt="Chiendent pied-de-poule" style="width:65.2mm;height:48.9mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000036786L.jpg" alt="Chiendent pied-de-poule" style="width:47.5mm;height:48.9mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Dactyle aggloméré</span>
+        <span class="sci">Dactylis glomerata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000009516L.jpg" alt="Dactyle aggloméré" style="width:37.5mm;height:50.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000076736L.jpg" alt="Dactyle aggloméré" style="width:76.9mm;height:50.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000308214L.jpg" alt="Dactyle aggloméré" style="width:66.1mm;height:50.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Chiendent du littoral</span>
+        <span class="sci">Elymus pycnanthus</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000790413L.jpg" alt="Chiendent du littoral" style="width:27.5mm;height:75.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009532L.jpg" alt="Chiendent du littoral" style="width:100.0mm;height:75.0mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000207844L.jpg" alt="Chiendent du littoral" style="width:50.3mm;height:75.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Fétuque rouge (gr.)</span>
+        <span class="sci">Festuca rubra gr.</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000179987L.jpg" alt="Fétuque rouge (gr.)" style="width:97.4mm;height:59.1mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000148897L.jpg" alt="Fétuque rouge (gr.)" style="width:85.4mm;height:59.1mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Fétuque littorale</span>
+        <span class="sci">Festuca rubra subsp. litoralis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000790543L.jpg" alt="Fétuque littorale" style="width:61.5mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Houlque laineuse</span>
+        <span class="sci">Holcus lanatus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000009520L.jpg" alt="Houlque laineuse" style="width:70.3mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000009550L.jpg" alt="Houlque laineuse" style="width:39.6mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000155758L.jpg" alt="Houlque laineuse" style="width:70.3mm;height:52.8mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Lepture droit</span>
+        <span class="sci">Parapholis strigosa</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000790601L.jpg" alt="Lepture droit" style="width:57.2mm;height:80.0mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Roseau commun</span>
+        <span class="sci">Phragmites australis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000110866L.jpg" alt="Roseau commun" style="width:70.3mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000023656L.jpg" alt="Roseau commun" style="width:70.3mm;height:52.8mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:002452038L.jpg" alt="Roseau commun" style="width:39.6mm;height:52.8mm;" loading="lazy"></div>
+    </article><h2 class="famille">Primulaceae</h2>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Mouron rouge</span>
+        <span class="sci">Anagallis arvensis subsp. arvensis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000036189L.jpg" alt="Mouron rouge" style="width:31.8mm;height:42.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000234203L.jpg" alt="Mouron rouge" style="width:92.9mm;height:42.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000234154L.jpg" alt="Mouron rouge" style="width:56.7mm;height:42.4mm;" loading="lazy"></div>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <span class="fr">Glaux maritime</span>
+        <span class="sci">Glaux maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <div class="photo-row"><img src="https://api.tela-botanica.org/img:000080205L.jpg" alt="Glaux maritime" style="width:74.3mm;height:42.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000333776L.jpg" alt="Glaux maritime" style="width:50.5mm;height:42.4mm;" loading="lazy"><img src="https://api.tela-botanica.org/img:000079669L.jpg" alt="Glaux maritime" style="width:56.5mm;height:42.4mm;" loading="lazy"></div>
+    </article>
+
+    <div class="missing-page">
+      <h2>Espèces restant à illustrer</h2>
+      <p class="note">28 espèces de la liste ne disposent pas encore d'illustration compilée.</p>
+      <ul><li class="famille-heading">Amaranthaceae</li><li><span class="sci">Salicornia europaea s.l.</span> — Salicorne, groupe europaea</li><li><span class="sci">Salicornia perennis</span> — Salicorne vivace</li><li><span class="sci">Salicornia procumbens s.l.</span> — Salicorne, groupe procumbens</li><li><span class="sci">Salicornia pruinosa</span> — Salicorne ligneuse</li><li><span class="sci">Salicornia sp.</span> — Salicorne indéterminée</li><li><span class="sci">Suaeda maritima</span> — Soude maritime</li><li><span class="sci">Suaeda vera</span> — Soude ligneuse</li><li class="famille-heading">Asteraceae</li><li><span class="sci">Pulicaria dysenterica</span> — Pulicaire dysentérique</li><li><span class="sci">Sonchus oleraceus</span> — Laiteron potager</li><li class="famille-heading">Caryophyllaceae</li><li><span class="sci">Sagina maritima</span> — Sagine maritime</li><li><span class="sci">Silene vulgaris subsp. maritima</span> — Silène maritime</li><li><span class="sci">Spergularia marina</span> — Spergulaire marine</li><li><span class="sci">Spergularia media</span> — Spergulaire intermédiaire</li><li class="famille-heading">Crassulaceae</li><li><span class="sci">Sedum anglicum</span> — Orpin d&#x27;Angleterre</li><li class="famille-heading">Cyperaceae</li><li><span class="sci">Schoenus nigricans</span> — Choin noirâtre</li><li><span class="sci">Scirpus maritimus</span> — Scirpe maritime</li><li class="famille-heading">Juncaginaceae</li><li><span class="sci">Triglochin bulbosum subsp. barrelieri</span> — Troscart bulbeux</li><li><span class="sci">Triglochin maritima</span> — Troscart maritime</li><li class="famille-heading">Plantaginaceae</li><li><span class="sci">Plantago coronopus</span> — Plantain corne-de-cerf</li><li><span class="sci">Plantago maritima</span> — Plantain maritime</li><li class="famille-heading">Poaceae</li><li><span class="sci">Agrostis x murbeckii</span> — Agrostide hybride</li><li><span class="sci">Polypogon monspeliensis</span> — Polypogon de Montpellier</li><li><span class="sci">Puccinellia maritima</span> — Puccinellie maritime</li><li><span class="sci">Spartina maritima</span> — Spartine maritime</li><li><span class="sci">Spartina x townsendii var. anglica</span> — Spartine d&#x27;Angleterre</li><li class="famille-heading">Primulaceae</li><li><span class="sci">Samolus valerandi</span> — Samole de Valerand</li><li class="famille-heading">Thelypteridaceae</li><li><span class="sci">Thelypteris palustris</span> — Théliptéris des marais</li><li class="famille-heading">Zosteraceae</li><li><span class="sci">Zostera noltii</span> — Zostère naine</li></ul>
+      <p class="sources">Photographies : Tela Botanica (eflore.tela-botanica.org), crédits variables selon auteur.<br>
+      Voir le document compagnon « Mini flore — Descriptions » pour les textes descriptifs.</p>
+    </div>
+  </div>
+</body>
+</html>

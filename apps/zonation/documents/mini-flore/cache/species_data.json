@@ -1,0 +1,1581 @@
+{
+  "Agrostis stolonifera var. pseudopungens": {
+    "nom_sci": "Agrostis stolonifera var. pseudopungens",
+    "nom_fr": "Agrostide maritime",
+    "num_nom": "1945",
+    "famille": "Poaceae"
+  },
+  "Agrostis x murbeckii": {
+    "nom_sci": "Agrostis x murbeckii",
+    "nom_fr": "Agrostide hybride",
+    "num_nom": "1770",
+    "famille": "Poaceae"
+  },
+  "Anagallis arvensis subsp. arvensis": {
+    "nom_sci": "Anagallis arvensis subsp. arvensis",
+    "nom_fr": "Mouron rouge",
+    "num_nom": "101469",
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "racème simple",
+      "Fruit": "pyxide",
+      "Couleur de la fleur": "rose",
+      "Floraison": "de mai à novembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Primulaceae"
+  },
+  "Apium graveolens": {
+    "nom_sci": "Apium graveolens",
+    "nom_fr": "Céleri sauvage",
+    "num_nom": "5641",
+    "coste": {
+      "ecologie": "Marais salins des côtes de la Manche, de l'Océan, de la Méditerranée, et sources salines de l'intérieur.",
+      "repartition": "Europe ; Asie occidentale ; Afrique ; Amérique. – La variété cultivée partout.",
+      "floraison": "Juillet-septembre.",
+      "description": "Plante bisannuelle de 30-80 cm, glabre, luisante, aromatique, à souche courte munie de fibres un peu charnues  - tige creuse, sillonnée-anguleuse, très rameuse  - feuilles un peu épaisses, les inférieures pennatiséquées, à segments ovales en coin, incisés-lobés, les supérieures à 3 segments plus petites et plus étroits  - fleurs blanchâtres, en ombelles courtement pédonculées ou subsessiles, à 6-12 rayons inégaux  - involucre et involucelle nuls  - calice à limbe nul  - pétales suborbiculaires en coeur, plans, entiers, à pointe un peu enroulée  - stylopode déprimé  - fruit petit, subglobuleux, presque didyme, comprimé par le côté, glabre  - méricarpes à 5 côtes filiformes, égales, blanchâtres  - vallécules à 1 bandelette. Varie à racine charnue (A. DULCE Mill., Céleri)."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " eurasiatique",
+      "Inflorescence": "ombelle d'ombellules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Apiaceae"
+  },
+  "Arenaria serpyllifolia subsp. serpyllifolia": {
+    "nom_sci": "Arenaria serpyllifolia subsp. serpyllifolia",
+    "nom_fr": "Sabline à feuilles de serpolet",
+    "num_nom": "6292",
+    "coste": {
+      "ecologie": "Lieux sablonneux ou pierreux, dans toute la France et en Corse.",
+      "repartition": "Toute l'Europe ; Asie ; Afrique ; Amérique du Nord.",
+      "floraison": "Mai-juillet.",
+      "description": "Plante annuelle, pubérulente, à racine grêle  - tiges de 5-25 cm, étalées-ascendantes  - feuilles sessiles, ovales-aiguës, à 1 nervure  - fleurs petites, en cymes dichotomes feuillées et lâches  - pédicelles environ 2 fois plus longs que le calice, à la fin étalés  - sépales lancéolés-acuminés, à 3 nervures  - pétales bien plus courts que les sépales  - capsule ovale, ventrue, coriace, égalant ou dépassant un peu le calice, à 6 dents dressées, égales  - graines chagrinées.\nVarie à panicule courte et serrée à pédicelles égalant à peine la capsule (A. lloydii Jord.)  - à capsule très mince, oblongue-conique, non ventrue, plante très grêle (A. leptoclados Guss.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux , Hémicryptophytes (< 1m) bisannuels",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "cyme bipare",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de mai à juillet",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Armeria maritima": {
+    "nom_sci": "Armeria maritima",
+    "nom_fr": "Armérie maritime",
+    "num_nom": "6546",
+    "coste": {
+      "ecologie": "Pelouses et falaises du littoral de l'Océan et de la Manche.",
+      "repartition": "Europe occidentale et boréale ; Asie boréale.",
+      "floraison": "Mai-juin, automne. .",
+      "description": ". Plante vivace de 5-30 cm, gazonnante, à feuilles glabres ou pubescentes, linéaires-obtuses, planes, molles, à 1 nervure  - hampes mollement pubescentes  - gaîne de 8-14 mm, plus courte que le capitule ou l'égalant, celui-ci dense et large de 12-18 mm  - fleurs rosées, rarement blanches  - involucre vert ferrugineux, à folioles sur 3-4 rangs, les extérieures ovales, acuminées ou mucronées, herbacées sur le dos, scarieuses aux bords  - calice à tube égalant le pédicelle, à côtes aussi larges que les sillons, à lobes ovales, atténués en arête beaucoup plus courte qu'eux."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "cyme capituliforme",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "rose",
+      "Floraison": "de mai à juin",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Plumbaginaceae"
+  },
+  "Aster tripolium": {
+    "nom_sci": "Aster tripolium",
+    "nom_fr": "Aster maritime",
+    "num_nom": "69583",
+    "coste": {
+      "ecologie": "Prés maritimes, marais salés : littoral de la Méditerranée, de l'Océan, de la Manche ; Corse ; marais salants de la Lorraine.",
+      "repartition": "Tout le littoral européen, Afrique septentrionale.",
+      "floraison": "Juillet-octobre.",
+      "description": "Plante bisannuelle de 2-6 dm, à tige simple ou rameuse dés la base, dressée ou ascendante, glabre  - feuilles charnues, très glabres, les radicales oblongues-obovales, longuement pétiolées, les caulinaires oblongues-lancéolées, ou lancéolées-linéaires  - involucre à folioles glabres, ciliolées au sommet  - soies de l'aigrette blanches  - capitules de 2 cm environ de diamètre en panicule corymbiforme, à pédicelles pourvus de quelques bractéoles  - ligules {manquant parfois par avortement) violettes, blanches ou d'un blanc-lilas, fleurs du centre tubuleuses, jaunes."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) bisannuels , Thérophytes (< 1m) estivaux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen méridional",
+      "Inflorescence": "corymbe de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "bleu, jaune",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Atriplex laciniata": {
+    "nom_sci": "Atriplex laciniata",
+    "nom_fr": "Arroche laciniée",
+    "num_nom": "8399",
+    "coste": {
+      "ecologie": "Lieux sablonneux et décombres, çà et là dans le Midi, jusque dans les Hautes-Alpes et l'Aveyron ; Corse.",
+      "repartition": "Europe : Asie ; . Afrique septentrionale.",
+      "floraison": "Juillet-octobre.",
+      "description": "Plante annuelle de 30 cm à 1 m., blanchâtre ou grisâtre, à tiges dressées ou étalées-ascendantes  - feuilles alternes, plus longues que larges, oblongues-deltoïdes, hastées à la base, profondément sinuées-dentées ou incisées, parfois presque entières, blanchâtres sur les 2 faces ou vertes en dessus, à nervures saillantes  - glomérules rapprochés en épis nus ou un peu feuilles et interrompus à la base  - valves fructifères blanchâtres, plus hautes que larges, rhomboïdales-subtrilobées, hastées, souvent lisses et terminées en languette verte  - graine brune, terne."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juillet à octobre",
+      "sexualité": "monoïque",
+      "Pollinisation": "autogame, entomogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Atriplex littoralis": {
+    "nom_sci": "Atriplex littoralis",
+    "nom_fr": "Arroche des grèves",
+    "num_nom": "8404",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de ta Méditerranée ; Corse.",
+      "repartition": "Europe ; Asie occidentale., centrale et boréale. Amérique septentrionale.",
+      "floraison": "Juillet-septembre.",
+      "description": "Voisin du précédent. Plante annuelle de 30 cm à 1 mètre, verte, plus ou moins farineuse, à tige dressée, à rameaux tous dressés et alternes  - feuilles toutes étroites, linéaires ou linéaires-lancéolées, entières ou les inférieures un peu dentées, atténuées et non dilatées au-dessus du pétiole  - glomérules multiflores, en épis terminaux, effilés, nus et interrompus  - valves fructifères triangulaires ou ovales-rhomboïdales, pointues au sommet, fortement muriquées sur les faces."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "monoïque",
+      "Pollinisation": "autogame, entomogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Atriplex prostrata": {
+    "nom_sci": "Atriplex prostrata",
+    "nom_fr": "Arroche couchée",
+    "num_nom": "8444",
+    "coste": {
+      "ecologie": "Lieux cultivés et incultes, dans toute la France et en Corse.",
+      "repartition": "Europe ; Asie occidentale et boréale ; Afrique et Amérique septentrionales. .",
+      "floraison": "Juillet-octobre.",
+      "description": "Plante annuelle de 20 cm à 1 mètre, verte et peu farineuse, à tige dressée ou ascendante, striée de blanc et de vert, à rameaux inférieurs très étalés  - feuilles alternes ou opposées, les caulinaires larges, hastées et tronquées à la base, à pétiole égalant souvent la moitié du limbe, les florales lancéolées-linéaires  - fleurs verdâtres, en panicule terminale lâche  - valves fructifères soudées à la base, herbacées, triangulaires à base tronquée ou un peu en coeur, lisses ou muriquées-tuberculeuses.\nVarie sur le littoral à feuilles blanchâtres-farineuses épaisses, fruits petites (var. salina Wallr.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Baccharis halimifolia": {
+    "nom_sci": "Baccharis halimifolia",
+    "nom_fr": "Baccharis à feuilles d'arroche",
+    "num_nom": "9062",
+    "baseflor": {
+      "Type Biologique": "Nanophanérophytes (2 à 4m) ()",
+      "Formation végétale": "nanophanérophytaie",
+      "Chorologie": " introduit (Amér. du nord)",
+      "Inflorescence": "racème de capitules",
+      "Fruit": "akène",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Beta vulgaris subsp. maritima": {
+    "nom_sci": "Beta vulgaris subsp. maritima",
+    "nom_fr": "Betterave maritime",
+    "num_nom": "9517",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de la Méditerranée ; Corse.",
+      "repartition": "Europe occidentale et méridionale ; Asie occidentale jusqu'à l'Inde ; Afrique septentrionale.",
+      "floraison": "Juin-septembre.",
+      "description": "Plante vivace ou bisannuelle de 30-80 cm, glabre ou un peu poilue, à racine dure et peu épaisse  - tiges faibles, le plus souvent couchées-étalées, sillonnées-anguleuses, à rameaux souvent flexueux  - feuilles inférieures ovales ou rhomboïdales, brusquement rétrécies en pétiole, un peu charnues, à nervures peu épaisses  - les caulinaires ovales ou lancéolées, aiguës  - stigmates 2, lancéolés  - périanthe à lobes appliqués sur le fruit assez gros."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (>= 1m) bisannuels , Thérophytes (>=1m) estivaux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "glomérules",
+      "Fruit": "pyxide",
+      "Couleur de la fleur": "vert, rose",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Calystegia sepium": {
+    "nom_sci": "Calystegia sepium",
+    "nom_fr": "Liseron des haies",
+    "num_nom": "18805",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (>= 1m) stolonifères () , Géophytes (>= 1m) à rhizome ()",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "racème simple",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Convolvulaceae"
+  },
+  "Carex distans": {
+    "nom_sci": "Carex distans",
+    "nom_fr": "Laîche distante",
+    "num_nom": "13660",
+    "coste": {
+      "ecologie": "Prés humides et marécages, dans toute la France et la Corse.",
+      "repartition": "Europe ; Asie occidentale ; Afrique et Amérique boréales.",
+      "floraison": "Mai-juillet.",
+      "description": "Plante vivace de 30-70 cm, glabre, à souche gazonnante  - tige trigone, lisse  - feuilles glaucescentes, larges de 2-5 mm rudes, à ligule oblongue  - épi mâle solitaire, cylindracé, brun fauve  - 2-4 épis femelles tous écartés, oblongs-cylindriques (2-3 cm), denses, dressés, courtement pédoncules  - bractées engainantes, foliacées, plus courtes que la tige  - écailles brun rougeâtre, ovales-mucronulées  - 3 stigmates  - utricules verdâtres ponctués de brun, dressés, ovales-trigones (4-5 mm), à 3-4 nervures sur chaque face latérale, à bec scabre cilié bifide, dépassant l'écaille  - akène à bec arqué."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à juillet",
+      "sexualité": "monoïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Cyperaceae"
+  },
+  "Carex extensa": {
+    "nom_sci": "Carex extensa",
+    "nom_fr": "Laîche étirée",
+    "num_nom": "13733",
+    "coste": {
+      "ecologie": "Marécages des côtes de la Manche, de l'Océan, de la Méditerranée.",
+      "repartition": "Littoral de la Méditerranée et de l'Océan, de Syrie en Amérique.",
+      "floraison": "Avril-juillet.",
+      "description": "Plante vivace de 20-60 cm, glabre, à souche gazonnante  - tige subtrigone, très lisse  - feuilles d'un vert pâle, raides, longues, étroites (1-2 mm), enroulées-canaliculées, rudes au sommet  - 1-2 épis mâles, en fuseau, fauves  - 2-4 épis femelles rapprochés, ovoïdes-oblongs (8-15 mm), denses, dressés, subsessiles, l'inférieur souvent écarté  - bractée inférieure engainante, toutes filiformes dépassant beaucoup la tige  - écailles fauves, ovales-mucronées  - utricules verdâtres, ascendants, elliptiques-trigones (3 12 mm), nervés, à bec court bidenté lisse, dépassant l'écaille."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de avril à juillet",
+      "sexualité": "monoïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Cyperaceae"
+  },
+  "Catapodium marinum": {
+    "nom_sci": "Catapodium marinum",
+    "nom_fr": "Catapode marin",
+    "num_nom": "14801",
+    "coste": {
+      "ecologie": "Sables et rochers du littoral de la Manche, de l'Océan, de la Méditerranée ; Corse.",
+      "repartition": "Europe centrale et méridionale ; région méditerranéenne. – Mai-juillet.",
+      "description": "Plante annuelle de 5-15 cm, glabre, à racine fibreuse  - tiges couchées ou ascendantes, raides, épaisses, lisses  - feuilles courtes, planes  - ligule ovale, déchirée  - panicule spiciforme très étroite, assez dense, simple ou un peu rameuse à la base  - épillets distiques, dressés-appliques, subsessiles dans les excavations de l'axe, oblongs, à 5-11 fleurs persistantes, serrées, longues de 2 12 mm  - glumelle obtuse, mutique, obscurément carénée, à nervures latérales faibles  - caryopse un peu canaliculé en dedans."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à juillet",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Catapodium rigidum": {
+    "nom_sci": "Catapodium rigidum",
+    "nom_fr": "Catapode rigide",
+    "num_nom": "14806",
+    "coste": {
+      "ecologie": "Lieux secs et arides, dans presque toute la France et en Corse.",
+      "repartition": "Europe méridionale et centrale ; Asie occidentale ; Afrique Septentrionale.",
+      "floraison": "Mai-juillet.",
+      "description": "Plante annuelle de 5-30 cm, glabre, à racine fibreuse  - tiges genouillées-ascendantes ou dressées, raides, lisses  - feuilles planes ou à la fin enroulées, rudes  - ligule oblongue, déchirée  - panicule étroite, oblongue-lancéolée, assez serrée, à rameaux tous garnis d'épillets presque jusqu'à la base  - épillets étalés-dressés, brièvement pédicellés, linéaires-oblongs, à 5-11 fleurs persistantes, assez lâches, longues de 1 12-2 mm  - glumelle subobtuse, obscurément carénée, à nervures latérales peu visibles  - caryopse un peu déprimé en dedans."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à juillet",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Cochlearia anglica": {
+    "nom_sci": "Cochlearia anglica",
+    "nom_fr": "Cochléaire anglaise",
+    "num_nom": "18397",
+    "coste": {
+      "ecologie": "Vases salées, sur les côtes de la Manche et de l'Océan, do la Somme au Morbihan, dans la Charente-Inférieure et la Gironde.",
+      "repartition": "Littoral do l'Europe boréale et occidentale.",
+      "floraison": "Avril-juin.",
+      "description": "Plante bisannuelle  - tiges de 10-30 cm, ascendantes  - feuilles radicales largement ovales à base subtronquée ou décurrente sur le pétiole, presque entières, les supérieures ovales-oblongues, embrassantes-auriculées, entières ou à 1-2 grosses dents de chaque côté  - fleurs grandes, d'un blanc pur, odorantes - pétales 2-3 fois plus longs que les sépales  - grappe fructifère assez courte, à pédicelles épais, égalant les silicules  - silicules grandes-elliptiques, vésiculeuses, à cloison étroite et longue  - graines grosses, tuberculeuses."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique septentrional",
+      "Inflorescence": "racème simple",
+      "Fruit": "silique",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de avril à juin",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Brassicaceae"
+  },
+  "Cochlearia danica": {
+    "nom_sci": "Cochlearia danica",
+    "nom_fr": "Cochléaire du Danemark",
+    "num_nom": "18408",
+    "coste": {
+      "ecologie": "Lieux humides, murs, pelouses, sur les côtes de la Manche et de l'Océan.",
+      "repartition": "Littoral de l'Europe boréale et occidentale.",
+      "floraison": "Février-mai.",
+      "description": "Plante annuelle  - tiges de 5-25 cm, ascendantes ou diffuses  - feuilles toutes pétiolées, les radicales en rein, entières, les caulinaires deltoïdes, à 3-5 angles ou lobes  - fleurs petites, blanches ou rosées  - pétales 1 fois plus longs que les sépales  - grappe fructifère courte, à pédicelles filiformes  - silicules ovoïdes, non vésiculeuses, à cloison large  - graines petites, tuberculeuses."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " atlantique septentrional",
+      "Inflorescence": "racème simple",
+      "Fruit": "silique",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de février à mai",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "homogame",
+      "Pollinisation": "autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Brassicaceae"
+  },
+  "Crithmum maritimum": {
+    "nom_sci": "Crithmum maritimum",
+    "nom_fr": "Criste marine",
+    "num_nom": "19832",
+    "coste": {
+      "ecologie": "Rochers et sables du littoral de la Manche, de l'Océan et de la Méditerranée.",
+      "repartition": "Europe littorale occidentale et méridionale ; Asie occidentale ; Afrique septentrionale.",
+      "floraison": "Juillet-octobre. .",
+      "description": ". Plante vivace de 20-50 cm, un peu charnue, glabre, glaucescente, à souche rampante  - tige striée, dressée ou ascendante, flexueuse en zigzag  - feuilles bi-tripennatiséquées, à segments linéaires-lancéolés, aigus, étalés  - fleurs d'un blanc verdâtre, en ombelles brièvement pédonculées, à 10-20 rayons épais  - involucre et involucelle à folioles nombreuses, lancéolées, réfléchies  - calice à limbe nul  - pétales suborbiculaires, entiers, enroulés en dedans  - styles dressés, plus courts que le stylopode  - fruit ovoïde, spongieux, à bords contigus, à côtes égales, carénées, tranchantes, les marginales un peu plus larges, munies de nombreuses bandelettes."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "ombelle d'ombellules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juillet à octobre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Apiaceae"
+  },
+  "Cynodon dactylon": {
+    "nom_sci": "Cynodon dactylon",
+    "nom_fr": "Chiendent pied-de-poule",
+    "num_nom": "20551",
+    "coste": {
+      "ecologie": "Lieux sablonneux arides, dans toute la France et la Corse.",
+      "repartition": "Presque tout le globe.",
+      "floraison": "Juillet-septembre.",
+      "description": "Plante vivace de 10-40 cm, poilue sur les feuilles, à rhizomes longuement traçants  - tiges couchées-genouillées et ascendantes, rameuses  - feuilles distiques, glauques, courtes, planes, à ligule poilue  - panicule digitée, à 4-7 épis unilatéraux, grêles, linéaires, étalés, souvent violacés  - épillets comprimés par le côté, uniflores avec un rudiment stérile, petites (2 mm), solitaires, subsessiles et distiques sur la face extérieure de l'axe aplani  - glumes presque égales, un peu étalées, aiguës, scabres sur la carène, plus courtes que la fleur, uninervées  - glumelles mutiques, pliées-carénées, l'inférieure plus large trinervée  - 3 étamines  - stigmates terminaux, libres  - caryopse glabre, oblong, comprimé par le côté."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (< 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite(thermo)",
+      "Inflorescence": "ombelle simple d'épis",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "rose",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Dactylis glomerata": {
+    "nom_sci": "Dactylis glomerata",
+    "nom_fr": "Dactyle aggloméré",
+    "num_nom": "21111",
+    "coste": {
+      "ecologie": "Prés, bois, pâturages, dans toute la France et en Corse.",
+      "repartition": "Europe ; Asie tempérée ; Afrique et Amérique boréales.",
+      "floraison": "Avril-septembre.",
+      "description": "Plante vivace de 20 cm à 1 mètre et plus, glabre, à souche fibreuse gazonnante  - tiges dressées ou arquées à la base, longuement nues au sommet  - feuilles vertes, écartées, non distiques, planes ou canaliculées  - gaines comprimées  - ligule oblongue, déchirée  - panicule rameuse, lobée, à rameaux inférieurs souvent longuement nus et étalés  - épillets longs de 5-6 mm à 3-6 fleurs  - glumes et glumelles à carène ciliée  - stigmates latéraux - caryopse oblong, à face interne canaliculée. \nVarie à feuilles glauques, panicule spiciforme dense, glumelle échancrée en deux lobes arrondis (D. hispanica Roth)."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (>= 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " eurasiatique méridional",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de avril à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Daucus carota subsp. carota": {
+    "nom_sci": "Daucus carota subsp. carota",
+    "nom_fr": "Carotte sauvage",
+    "num_nom": "21676",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) bisannuels",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "ombelle d'ombellules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de mai à octobre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Apiaceae"
+  },
+  "Elymus pycnanthus": {
+    "nom_sci": "Elymus pycnanthus",
+    "nom_fr": "Chiendent du littoral",
+    "num_nom": "23874",
+    "coste": {
+      "ecologie": "Terrains sablonneux ou fermes du littoral de la Manche, de l'Océan, de la Méditerranée ; Corse.",
+      "repartition": "Europe occidentale et région méditerranéenne.",
+      "floraison": "Mai-août.",
+      "description": "Plante vivace de 40 cm à 1 mètre, glabre, à souche longuement traçante  - tiges dressées, raides, fasciculées  - feuilles d'un vert glauque, enroulées en alêne, fermes, scabres et à nervures saillantes en dessus  - épi long ou assez court, presque tétragone, dense, à axe non fragile  - épillets imbriqués, environ 3 fois plus longs que les entrenoeuds, ovales, comprimés, à 5-7 fleurs mutiques  - glumes obtuses ou obtusément mucronées, à 5-7 nervures, égalant la moitié ou les 23 de l'épillet  - glumelle obtuse ou tronquée, mucronulée."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Eupatorium cannabinum": {
+    "nom_sci": "Eupatorium cannabinum",
+    "nom_fr": "Eupatoire chanvrine",
+    "num_nom": "25746",
+    "coste": {
+      "ecologie": "Bois et lieux humides, bords des eaux, marais dans toute la France, Corse.",
+      "repartition": "Europe, Asie Mineure, Afrique septentrionale.",
+      "floraison": "Juillet-août.",
+      "description": ". Plante vivace de 6-12 dm à tige dressée, simple ou rameuse, souvent rougeâtre, pubescente  - feuilles opposées à 3-5 segments pétiolulés, lancéolés, dentés {quelquefois les supérieures simples), glanduleuses en dessous  - involucre à folioles intérieures scarieuses, oblongues-linéaires, très obtuses, les extérieures ovales  - capitules purpurins, en corymbe rameux, terminal, compact.\nVarie (en Corse) à segments des feuilles plus courts, à dents obtuses, à capitules plus petites, à aigrette à peine plus longue que l'akène (E. corsicum Req.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (>= 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " eurasiatique méridional",
+      "Inflorescence": "racème de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "rose",
+      "Floraison": "de juillet à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Festuca rubra gr.": {
+    "nom_sci": "Festuca rubra gr.",
+    "nom_fr": "Fétuque rouge (gr.)",
+    "num_nom": "27521",
+    "coste": {
+      "ecologie": "Pâturages et lieux incultes, dans presque toute la France.",
+      "repartition": "Europe ; Asie occidentale et boréale ; Afrique et Amérique septentrionales.",
+      "floraison": "Mai-juillet.",
+      "description": "Plante vivace de 30-80 cm, glabre, à souche longuement traçante  - tiges assez robustes  - feuilles vertes, les radicales pliées-enroulées, lisses, les supérieures planes ou canaliculées  - ligule courte, à 2 oreillettes latérales  - panicule verdâtre, rougeâtre ou violacée-noirâtre, oblongue, subunilatérale, à rameaux inférieurs géminés  - épillets oblongs (7-12 mm), à 4-8 fleurs aristées  - glumes très inégales, la supérieure de moitié plus longue, mucronée  - glumelle inférieure ciliée aux bords supérieurs, étroitement scarieuse, à arête de 1-2 mm  - ovaire glabre."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (< 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " holarctique",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert, rose",
+      "Floraison": "de mai à juillet",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Festuca rubra subsp. litoralis": {
+    "nom_sci": "Festuca rubra subsp. litoralis",
+    "nom_fr": "Fétuque littorale",
+    "num_nom": "27543",
+    "baseflor": {
+      "Type Biologique": "Géophytes (< 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert, rose",
+      "Floraison": "de mai à juillet",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Frankenia laevis": {
+    "nom_sci": "Frankenia laevis",
+    "nom_fr": "Frankénie lisse",
+    "num_nom": "75138",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "fleur solitaire latérale",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "bleu, blanc, rose",
+      "Floraison": "de juin à août",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Frankeniaceae"
+  },
+  "Glaux maritima": {
+    "nom_sci": "Glaux maritima",
+    "nom_fr": "Glaux maritime",
+    "num_nom": "101407",
+    "coste": {
+      "ecologie": "Lieux humides salés du littoral et de l'intérieur des terres : Côtes de l'Océan et de la Manche ; Puy-de-Dôme et Allier.",
+      "repartition": "Europe ; Asie occidentale et boréale, jusqu'au Japon ; Amérique boréale.",
+      "floraison": "Mai-septembre.",
+      "description": "Plante de 5-25 cm, un peu charnue, glabre et glauque, à souche rougeâtre, longuement rampante-stolonifère  - tiges décombantes, rameuses, très feuillées  - feuilles opposées, sessiles, oblongues, entières, dépassant les entrenoeuds  - fleurs d'un blanc rosé, petites, axillaires, solitaires, sessiles, formant de longs épis feuilles  - calice pétaloïde, en cloche, à 5 lobes ovales-obtus  - corolle nulle  - 5 étamines, insérées au fond du calice et alternes avec ses lobes  - style filiforme, stigmate en tête  - capsule ovoïde-aiguë, à 5 valves et à environ 5 graines trigones."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de mai à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Primulaceae"
+  },
+  "Halimione portulacoides": {
+    "nom_sci": "Halimione portulacoides",
+    "nom_fr": "Obione faux-pourpier",
+    "num_nom": "30815",
+    "coste": {
+      "ecologie": "Littoral de la Méditerranée, de l'Océan, de la Manche ; Corse.",
+      "repartition": "Europe ; Asie occidentale ; Afrique et Amérique septentrionales.",
+      "floraison": "Juillet-octobre.",
+      "description": "Sous-arbrisseau de 20-50 cm, tout blanc argenté, à tiges couchées-radicantes et à rameaux redressés  - feuilles opposées, obovales ou oblongues, atténuées en pétiole, entières, uninervées  - fleurs jaunâtres, en épis grêles formant au sommet des rameaux une petite panicule non feuillée  - calice fructifère subsessile, en triangle renversé, offrant au sommet 3 lobes obtus égaux ou inégaux, muriqué ou lisse sur les faces  - graine rousse."
+    },
+    "baseflor": {
+      "Type Biologique": "Chaméphytes (< 1m) frutescents ()",
+      "Formation végétale": "chaméphytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "jaune",
+      "Floraison": "de juillet à octobre",
+      "sexualité": "monoïque",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Herniaria ciliolata": {
+    "nom_sci": "Herniaria ciliolata",
+    "nom_fr": "Herniaire ciliée",
+    "num_nom": "31785",
+    "coste": {
+      "ecologie": "Sables maritimes et côteaux rocailleux des bords de l'Océan : littoral de la Bretagne, de la Vendée, de la Charente-Inférieure, de la Gironde.",
+      "repartition": "Portugal, Espagne, Angleterre, Ile Guernesey, Belgique, Hollande, Allemagne boréale, Basse-Autriche littorale.",
+      "floraison": "Juin-août.",
+      "description": "Plante vivace de 8-15 cm, peu poilue, d'un vert sombre, à racine grêle  - épaisses, couchées-rampantes, à rameaux pubescents sur toute leur surface  - feuilles épaisses, glabres, ciliées, larges  - elliptiques ou ovales, non atténuées à la base, presque toutes opposées  - stipules larges, blanches, longuement ciliées  - fleurs petites, subsessiles, en glomérules peu fournis, arrondis, disposés à l'aisselle des feuilles  - sépales oblongs, glabres, verts, étroitement marginés-blanchâtres."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juin à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "homogame",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Holcus lanatus": {
+    "nom_sci": "Holcus lanatus",
+    "nom_fr": "Houlque laineuse",
+    "num_nom": "34724",
+    "coste": {
+      "ecologie": "Près. chemins, bois, dans toute la France et en Corse.",
+      "repartition": "Europe; Asie tempérée; Afrique et Amérique boréales.",
+      "floraison": "Mai-Aout.",
+      "description": "Plante vivace de 40-80 cm., mollement velue sur les feuilles, les graines et autour des noeuds, à souche courte tronquée ou un peu rampante - feuilles d'un vert blanchatre, planes, molles - ligule assez courte, tronquée et déchirées - panicule longue de 10-20 cm., ovale-oblongue, pubescente, rougeatre ou d'un blanc rosé - épillets longs de 4-5 mm., ovales, à axe glabrescent, non barbu sous la fleur supérieure - glumes subobtuses, la supérieure mucronée - glumelle de la fleur supérieure munie vers le quart supérieur d'une arête à la fin courbée en crochet et incluse."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "rose",
+      "Floraison": "de mai à août",
+      "sexualité": "androdioïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "myrmécochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Inula crithmoides": {
+    "nom_sci": "Inula crithmoides",
+    "nom_fr": "Inule faux-crithme",
+    "num_nom": "38989",
+    "coste": {
+      "ecologie": "Marais des terrains salés : rives de la Méditerranée, de l'Océan, de la Manche jusqu'au Calvados.",
+      "repartition": "Angleterre, Italie, Afrique septentrionale.",
+      "floraison": "Août-septembre.",
+      "description": "Plante vivace de 5-8 dm sous-frutescente à la base, dressée ou ascendante, simple ou rameuse, glabre  - feuilles charnues, sessiles, étroites, linéaires, obtuses, entières ou terminées au sommet par 3 dents, émettant à leur aisselle des faisceaux de feuilles  - involucre à folioles dressées, appliquées, linéaires et acuminées  - akènes velus, aigrette roussâtre  - capitules portés par dés pédoncules bractéoles, en corymbe très lâche  - fleurs jaunes à ligules longuement rayonnantes."
+    },
+    "baseflor": {
+      "Type Biologique": "Chaméphytes (< 1m) suffrutescents",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "corymbe de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "jaune",
+      "Floraison": "de août à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Juncus ambiguus": {
+    "nom_sci": "Juncus ambiguus",
+    "nom_fr": "Jonc ambigu",
+    "num_nom": "36549",
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "cyme de glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Juncaceae"
+  },
+  "Juncus bufonius subsp. minutulus": {
+    "nom_sci": "Juncus bufonius subsp. minutulus",
+    "nom_fr": "Jonc des crapauds",
+    "num_nom": "36441",
+    "coste": {
+      "ecologie": "Lieux humides, dans toute la France et en Corse.",
+      "repartition": "Régions tempérées de tout le globe.",
+      "floraison": "Mai-septembre.",
+      "description": "Plante annuelle de 5-35 cm, glabre, à racine fibreuse  - tiges grêles, dressées ou diffuses, portant 2-3 feuilles  - feuilles radicales plus courtes que les tiges, toutes linéaires-canaliculées, non noueuses, à gaîne non auriculée  - fleurs d'un vert pâle, solitaires, espacées le long des rameaux disposées en cyme très lâche  - bractées foliacées, plus courtes que l'inflorescence  - périanthe long de 5 mm, à divisions inégales, lancéolées en alêne  - 6 étamines  - capsule oblongue, obtuse, mucronulée, plus courte que le périanthe. \nVarie à fleurs fasciculées, à rameaux courts et trapus (J. fasciculatus Bert.  - J. hybrydus Brot.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "cyme de glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame, autogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Juncaceae"
+  },
+  "Juncus gerardi": {
+    "nom_sci": "Juncus gerardi",
+    "nom_fr": "Jonc de Gérard",
+    "num_nom": "75195",
+    "baseflor": {
+      "Type Biologique": "Géophytes (< 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " holarctique",
+      "Inflorescence": "cyme de glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "marron",
+      "Floraison": "de mai à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Juncaceae"
+  },
+  "Juncus maritimus": {
+    "nom_sci": "Juncus maritimus",
+    "nom_fr": "Jonc maritime",
+    "num_nom": "36591",
+    "coste": {
+      "ecologie": "Côtes marécageuses de la Manche, de l'Océan, de la Méditerranée, en France et en Corse.",
+      "repartition": "Europe ; Asie ; Afrique ; Amérique.",
+      "floraison": "Juin-septembre.",
+      "description": "Plante vivace atteignant 1 mètre, glabre, à rhizomes traçants  - tiges raides, en touffe, nues, pleines, les stériles piquantes  - feuilles toutes radicales, peu nombreuses, égalant presque les tiges, dressées, cylindriques, piquantes  - fleurs d'un vert pâle, en panicule fournie, lâche-décomposée, un peu latérale, souvent dépassée par une bractée piquante  - périanthe à divisions toutes lancéolées-aiguës  - 6 étamines  - capsule petite, elliptique-oblongue, mucronée, fauve, égalant le périanthe  - graines appendiculées."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "cyme de glomérules",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Juncaceae"
+  },
+  "Limonium auriculae-ursifolium": {
+    "nom_sci": "Limonium auriculae-ursifolium",
+    "nom_fr": "Statice oreille d'ours",
+    "num_nom": "77806",
+    "famille": "Plumbaginaceae"
+  },
+  "Limonium dodartii": {
+    "nom_sci": "Limonium dodartii",
+    "nom_fr": "Statice de Dodart",
+    "num_nom": "75220",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "bleu",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Plumbaginaceae"
+  },
+  "Limonium ovalifolium": {
+    "nom_sci": "Limonium ovalifolium",
+    "nom_fr": "Statice à feuilles ovales",
+    "num_nom": "39113",
+    "coste": {
+      "ecologie": "Littoral de l'Océan et de la Manche.",
+      "repartition": "Espagne et Portugal ; Maroc, Madère, Canaries.",
+      "floraison": "Juin-septembre. -.",
+      "description": "Plante vivace de 1040 cm, glabre, à souche épaisse  - feuilles en rosette, glauques et souvent visqueuses, grandes, repliées, ovales, acuminées-mucronées, à pétiole large et concave, à 3-5 nervures  - hampes fortes, à rameaux grêles, tous fertiles  - épillets petites (4 mm), étroitement imbriqués en épis courts (6-10 mm), ovales, très serrés, dressés, rapprochés en petites corymbes  - bractée extérieure ne dépassant pas la moyenne et 4 fois plus courte que l'intérieure arrondie sur le dos  - calice à tube peu poilu, à dents obtuses  - corolle violacée."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "bleu",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Plumbaginaceae"
+  },
+  "Limonium vulgare": {
+    "nom_sci": "Limonium vulgare",
+    "nom_fr": "Lavande de mer",
+    "num_nom": "39139",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de la Méditerranée ; Corse.",
+      "repartition": "Europe ; Asie occidentale ; Afrique septentrionale.",
+      "floraison": "Juillet-octobre.",
+      "description": ". Plante vivace de 10-80 cm, glabre, à souche épaisse  - feuilles grandes, obovales, oblongues ou lancéolées, pennatinervées, vertes  - hampes robustes, arrondies, rameuses dans le haut  - épillets à 1-3 fleurs, droits, nombreux, rapprochés et souvent imbriqués, en épis assez courts, denses ou un peu lâches, étalés et à la fin arqués réfléchis  - rameaux peu allongés, longuement nus à la base  - bractée intérieure 3 fois plus longue que l'extérieure  - calice inséré obliquement, à limbe lilacé, à 5-10 dents triangulaires-aiguës  - corolle violacée, à pétales concaves et arrondis.\nVarie à rameaux longs et étalés, épillets plus petites (S. angustifolia Tausch., S. serotina Reich.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "bleu",
+      "Floraison": "de juillet à octobre",
+      "sexualité": "gynodioïque",
+      "Pollinisation": "entomogame, anémogame, autogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Plumbaginaceae"
+  },
+  "Linaria arenaria": {
+    "nom_sci": "Linaria arenaria",
+    "nom_fr": "Linaire des sables",
+    "num_nom": "39188",
+    "coste": {
+      "ecologie": "Sables maritimes du littoral de l'Océan et de la Manche, de la Gironde à Dunkerque. Espèce spéciale à la France occidentale. = Mai-septembre.",
+      "description": "Plante annuelle de 5-15 cm, toute pubescente-visqueuse, d'un vert jaunâtre, à tiges dressées, rameuses en buisson, feuillées  - feuilles inférieurs verticillées par 3-4, les autres éparses, lancéolées, atténuées en court pétiole  - fleurs jaunes avec l'éperon souvent violacé, très petites, en grappes raides, courtes, à la fin lâches  - pédoncules plus courts que le calice  - calice poilu-glanduleux, à lobes lancéolés-linéaires  - corolle de 4-6 mm, à éperon grêle un peu plus court quelle  - capsule obovale, égalant le calice  - graines noires, lisses, étroitement ailées."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "racème simple",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "jaune",
+      "Macule": "bleu",
+      "Floraison": "de mai à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Plantaginaceae"
+  },
+  "Lycopus europaeus": {
+    "nom_sci": "Lycopus europaeus",
+    "nom_fr": "Lycope d'Europe",
+    "num_nom": "40533",
+    "coste": {
+      "ecologie": "Lieux humides, dans toute la France et la Corse.",
+      "repartition": "Europe ; Asie occidentale et boréale ; Afrique septentrionale.",
+      "floraison": "Juillet-septembre.",
+      "description": ". Plante vivace de 30 cm à 1 mètre, glabrescente ou pubescente, inodore, à souche rampante  - tige dressée, sillonnée  - feuilles grandes, courtement pétiolées, ovales-lancéolées, dentées-incisées et souvent pennatifides à la base  - fleurs blanches ponctuées de rouge, petites, en verticilles axillaires sessiles, écartés, très denses  - calice en cloche, pubescent, à 10 nervures peu saillantes, à 5 dents égales, lancéolées en alêne, à pointe rigide  - corolle en entonnoir, à tube inclus, à 4 lobes presque égaux, le supérieur un peu échancré  - 2 étamines fertiles divergentes, les 2 supérieures rudimentaires  - anthères à loges divergentes  - carpelles lisses, tétraédriques, tronqués-bordés au sommet."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "glomérules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "Macule": "rose",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "gynodioïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Lamiaceae"
+  },
+  "Matricaria maritima subsp. maritima": {
+    "nom_sci": "Matricaria maritima subsp. maritima",
+    "nom_fr": "Matricaire maritime",
+    "num_nom": "69570",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) bisannuels , Hémicryptophytes (< 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "racème de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc, jaune",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Melilotus albus": {
+    "nom_sci": "Melilotus albus",
+    "nom_fr": "Mélilot blanc",
+    "num_nom": "121087",
+    "coste": {
+      "ecologie": "Bords des rivières, champs sablonneux, dans presque toute la France.",
+      "repartition": "Europe ; Asie occidentale et boréale jusqu'en Chine.",
+      "floraison": "Juin-septembre. .",
+      "description": "Plante bisannuelle, dressée, presque glabre, haute d'environ 1 mètre  - folioles oblongues, dentées  - stipules sétacées, entières  - fleurs blanches, inodores, en grappes très allongées et serrées, plus longues que la, feuille  - pédoncules brièvement aristés - pédicelles égalant le tube du calice à 5 nervures et non rompu par la gousse  - étendard plus long que les ailes et la carène égales  - gousse d'environ 4 mm, pendante, glabre, à la fin noire, ovale, à sommet obtus ou à peine atténué, mucronulée, à bord supérieur non caréné, à faces ridées-réticulées  - 1-2 graines, arrondies, à peine échancrées, lisses."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (>= 1m) bisannuels , Thérophytes (>=1m) estivaux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " eurasiatique",
+      "Inflorescence": "racème simple",
+      "Fruit": "gousse",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juin à septembre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Fabaceae"
+  },
+  "Oenanthe lachenalii": {
+    "nom_sci": "Oenanthe lachenalii",
+    "nom_fr": "Oenanthe de Lachenal",
+    "num_nom": "44450",
+    "coste": {
+      "ecologie": "Prairies et lieux humides, çà et là dans une grande partie de la France et en Corse.",
+      "repartition": "Europe centrale et méridionale ; région Caspienne.",
+      "floraison": "Juillet-septembre.",
+      "description": "Plante vivace de 50-80 cm, glauque, à fibres radicales charnues, filiformes ou renflées à l'extrémité en massue allongée  - tige assez grêle, dure, pleine ou un peu creuse supérieurement, faiblement sillonnée  - feuilles bipennatiséquées, les inférieures à segments obovales ou oblongs en coin, les caulinaires à lobes linéaires  - fleurs blanches, les extérieures à peine rayonnantes à pétales arrondis à la base, fendus jusqu'au milieu  - ombelles petites à 7-12 rayons toujours grêles  - involucre nul ou à 1-5 folioles caduques  - ombellules fructifères convexes - styles égalant la moitié du fruit  - fruit oblong, atténué et sans anneau à la base."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique(eury)",
+      "Inflorescence": "ombelle d'ombellules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "androdioïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Apiaceae"
+  },
+  "Parapholis strigosa": {
+    "nom_sci": "Parapholis strigosa",
+    "nom_fr": "Lepture droit",
+    "num_nom": "47909",
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " européen occidental",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Phragmites australis": {
+    "nom_sci": "Phragmites australis",
+    "nom_fr": "Roseau commun",
+    "num_nom": "49047",
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "bleu",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Plantago coronopus": {
+    "nom_sci": "Plantago coronopus",
+    "nom_fr": "Plantain corne-de-cerf",
+    "num_nom": "50111",
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen(eury)",
+      "Inflorescence": "épi simple",
+      "Fruit": "akène",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Plantaginaceae"
+  },
+  "Plantago maritima": {
+    "nom_sci": "Plantago maritima",
+    "nom_fr": "Plantain maritime",
+    "num_nom": "49993",
+    "coste": {
+      "ecologie": "Bords de la Manche, l'Océan et la Méditerranée ; marais salés de l'Auvergne.",
+      "repartition": "Europe ; Asie occidentale ; Afrique septentrionale.",
+      "floraison": "Mai-septembre.",
+      "description": "Plante vivace de 10-40 cm, pubescente, lâchement gazonnante, à souche souterraine charnue, écailleuse - hampes dressées, dépassant à peine ou longuement les feuilles - feuilles linéaires, élargies ou étroites, creusées en gouttière ou presque planes, charnues, glauques - épi cylindrique, peu serré - bractées vertes, ovales-lancéolées, carénées, 2-3 fois plus longues que larges, égalant le calice - sépales obtus, à carène tranchante ciliolée - corolle blanchâtre, à tube velu, à lobes acuminés - capsule ovale-conique aiguë, à 2 graines planes à la face interne."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "épi simple",
+      "Fruit": "akène",
+      "Couleur de la fleur": "blanc",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Plantaginaceae"
+  },
+  "Polypogon monspeliensis": {
+    "nom_sci": "Polypogon monspeliensis",
+    "nom_fr": "Polypogon de Montpellier",
+    "num_nom": "51868",
+    "coste": {
+      "ecologie": "Lieux sablonneux humides des bords de la mer, et çà et là dans l'intérieur, jusque dans le Rhône, l'Aveyron, la Lozère, le Puy-de-Dôme, la Vienne ; Corse.",
+      "repartition": "Europe ; Asie ; Afrique ; Amérique ; Tasmanie.",
+      "floraison": "Mai-août. .",
+      "description": "Plante annuelle de 10-80 cm, glabre sauf la panicule, à racine fibreuse  - tiges dressées ou genouillées-ascendantes  - feuilles assez longues, larges de 2 à 9 mm la supérieure éloignée ou rapprochée de la panicule  - celle-ci longue de 1-12 cm, spiciforme, dense ou lobulée, blanchâtre puis roussâtre  - épillets de 2 mm à pédicellés articulés, l'article supérieur aussi large que long et bien plus court que l'inférieur  - glumes pubescentes-ciliées, entières ou faiblement échancrées, aristées près du sommet  - glumelle inférieure de moitié plus courte que les glumes."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " subtropical(paléo)",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de mai à août",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Puccinellia maritima": {
+    "nom_sci": "Puccinellia maritima",
+    "nom_fr": "Puccinellie maritime",
+    "num_nom": "53926",
+    "coste": {
+      "ecologie": "Vases salées et marécages du littoral de l'Océan et de la Manche.",
+      "repartition": "Europe occidentale ; Maroc ; Asie et Amérique boréales.",
+      "floraison": "Juin-août.",
+      "description": "Plante vivace de 10-50 cm, glabre, à souche fibreuse, souvent rampante en apparence, émettant des rejets couchés-radicants stoloniformes  - tiges genouillées-ascendantes ou dressées, à parois minces  - feuilles vertes ou glauques, étroites, pliées ou enroulées  - ligule courte, obtuse  - panicule longue, effilée, lâche, raide, à rameaux étalés puis appliqués, les plus longs nus à la base et les inférieurs géminés  - épillets de 6-10 mm pédicellés, à 4-8 fleurs de 3 mm  - glumes très inégales, l'inférieure de moitié plus courte  - glumelle inférieure subtrilobée, à 5 nervures faibles."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique(eury)",
+      "Inflorescence": "panicule d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juin à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Pulicaria dysenterica": {
+    "nom_sci": "Pulicaria dysenterica",
+    "nom_fr": "Pulicaire dysentérique",
+    "num_nom": "53964",
+    "coste": {
+      "ecologie": "Fossés, marais, bords des eaux : toute la France, Corse.",
+      "repartition": "Presque toute l'Europe, Asie Mineure, Afrique septentrionale.",
+      "floraison": "Juillet-septembre.",
+      "description": ". Plante vivace à tiges de 3-6 dm dressées, pubescentes-laineuses ou tomenteuses, à rameaux étalés-dressés ou divergents  - feuilles pubescentes, blanchâtres, laineuses ou tomenteuses en dessous, ondulées, lâchement denticulées, ovales-lancéolées, fortement embrassantes et à oreillettes très prononcées, les supérieures comme sagittées  - involucre laineux, à folioles linéaires-subulées  - akènes velus, aigrette rousse  - capitules portés par des pédoncules grêles, en corymbe  - fleurs jaunes, celles de la circonférence rayonnantes."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) érigé",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen méridional",
+      "Inflorescence": "racème de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "jaune",
+      "Floraison": "de juillet à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Sagina maritima": {
+    "nom_sci": "Sagina maritima",
+    "nom_fr": "Sagine maritime",
+    "num_nom": "59091",
+    "coste": {
+      "ecologie": "Bords humides de la Manche, de l'Océan, de la Méditerranée, en France et en Corse.",
+      "repartition": "Europe occidentale et méridionale ; Afrique septentrionale.",
+      "floraison": "Mai-août.",
+      "description": "Plante annuelle, glabre - tiges de 3-8 cm, étalées-redressées, naissant à l'aisselle des feuilles d'une rosette centrale  - feuilles linéaires, obtuses ou brièvement mucronées  - fleurs blanches  - pédoncules allongés, droits, glabres  - 4 sépales, ovales, obtus, écartés de la capsule mûre  - 4 pétales, lancéolés, égalant presque les sépales  - 4 étamines  - 4 styles  - capsule à 4 valves, dressée ou peu inclinée.\nVarie à rosette centrale nulle, tiges dressées, sépales presque aigus (S. stricta Fries)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " européen méridional",
+      "Inflorescence": "cyme bipare",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de mai à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "homogame",
+      "Pollinisation": "autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Salicornia europaea s.l.": {
+    "nom_sci": "Salicornia europaea s.l.",
+    "nom_fr": "Salicorne, groupe europaea",
+    "num_nom": "59194",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de la Méditerranée ; Corse.",
+      "repartition": "Europe et une grande partie du globe.",
+      "floraison": "Août-octobre.",
+      "description": "Plante annuelle ou bisannuelle de 10-40 cm, herbacée, verte ou rougeâtre, à racine grêle  - tige ordinairement dressée, raide, rameuse en pyramide, à rameaux inférieurs très étalés  - articles bien plus longs que larges  - épis courts, subobtus ou atténués au sommet  - glomérules à fleurs laissant dans l'axe après leur chute 3 logettes en triangle, les 2 fleurs latérales se touchant au-dessous de la médiane  - périanthe de la fleur médiane obovale-subrhomboïde au sommet  - graine pubescente.\nVarie à rameaux dressés, épis longs (S. stricta Dum., S. emerici Duv.-J.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de août à octobre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Salicornia perennis": {
+    "nom_sci": "Salicornia perennis",
+    "nom_fr": "Salicorne vivace",
+    "num_nom": "60426",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de la Méditerranée.",
+      "repartition": "Angleterre, Espagne.",
+      "floraison": "Juillet-août ; Fructification \nseptembre-octobre",
+      "description": "Plante vivace, d'un vert foncé ou rougeâtre, à racines grêles  - tiges ligneuses à la base, sarmenteuses, couchées-radicantes, à rameaux étalés-ascendants, formant de larges plaques  - articles bien plus longs que larges  - épis larges de 3-5 mm, courts, obtus, terminaux et latéraux  - glomérules à fleurs laissant dans l'axe après leur chute 3 logettes collatérales, la fleur médiane plus grande séparant complètement les latérales  - écusson floral atteignant presque la marge des bractées supraposées  - graine pubescente."
+    },
+    "baseflor": {
+      "Type Biologique": "Chaméphytes (< 1m) suffrutescents",
+      "Formation végétale": "chaméphytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juillet à août",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Salicornia procumbens s.l.": {
+    "nom_sci": "Salicornia procumbens s.l.",
+    "nom_fr": "Salicorne, groupe procumbens",
+    "num_nom": "59222",
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Salicornia pruinosa": {
+    "nom_sci": "Salicornia pruinosa",
+    "nom_fr": "Salicorne ligneuse",
+    "num_nom": "85256",
+    "famille": "Amaranthaceae"
+  },
+  "Salicornia sp.": {
+    "nom_sci": "Salicornia sp.",
+    "nom_fr": "Salicorne indéterminée",
+    "num_nom": "85256",
+    "famille": "Amaranthaceae"
+  },
+  "Samolus valerandi": {
+    "nom_sci": "Samolus valerandi",
+    "nom_fr": "Samole de Valerand",
+    "num_nom": "60266",
+    "coste": {
+      "ecologie": "Lieux humides ou tourbeux, surtout salés et calcaires, dans presque toute la France et en Corse.",
+      "repartition": "Europe ; régions tempérées de tout le globe.",
+      "floraison": "Juin-août. .",
+      "description": "Plante vivace de 20-00 cm, glabre, à souche courte et fibreuse  - tiges dressées, cylindriques, creuses, peu rameuses  - feuilles radicales en rosette, les caulinaires alternes, toutes obovales, atténuées en pétiole, entières, d'un vert pâle  - fleurs blanches, petites (3 mm de diam.), en grappes terminales formant une panicule longue et étroite  - pédoncules coudés et munis d'une bractéole un peu au-dessus du milieu  - calice à tube subglobuleux soudé avec l'ovaire, à 5 dents triangulaires  - corolle en coupe, à tube. court, à gorge munie de 5 écailles alternant avec 5 lobes dépassant un peu le calice  - capsule globuleuse, incluse, s'ouvrant au sommet par 5 valves  - graines nombreuses."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) rosettés",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "racème simple",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "Floraison": "de juin à août",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "homogame",
+      "Pollinisation": "autogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Primulaceae"
+  },
+  "Schoenus nigricans": {
+    "nom_sci": "Schoenus nigricans",
+    "nom_fr": "Choin noirâtre",
+    "num_nom": "61436",
+    "coste": {
+      "ecologie": "Marais des bords de la mer et de l'intérieur çà et là dans presque toute la France et en Corse.",
+      "repartition": "Europe ; Asie occidentale ; Afrique septentrionale.",
+      "floraison": "Avril-juillet.",
+      "description": "Plante vivace de 20-80 cm, glabre, à souche courte fibreuse gazonnante  - tiges nombreuses, raides, cylindracées, lisses, nues, munies à la base de 2-3 feuilles à gaines noires luisantes  - feuilles raides, filiformes-canaliculées (à peine 1 mm de large), allongées, dépassant le milieu de la tige  - épillets 5-12, lancéolés, réunis en tête ovale, dense, brun noirâtre, dépassée par la bractée inférieure obliquement dressée  - écailles lancéolées mucronées  - akène blanc, ovoïde-subtrigone, mucroné, à soies très petites ou nulles."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) cespiteux",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "racème d'épis",
+      "Fruit": "akène",
+      "Couleur de la fleur": "noir",
+      "Floraison": "de avril à juillet",
+      "sexualité": "monoïque",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Cyperaceae"
+  },
+  "Scirpus maritimus": {
+    "nom_sci": "Scirpus maritimus",
+    "nom_fr": "Scirpe maritime",
+    "num_nom": "9931",
+    "coste": {
+      "ecologie": "Marais et rivières, au bord de la mer et dans l'intérieur, en France et en Corse.",
+      "repartition": "Régions tempérées et subtropicales de tout le globe.",
+      "floraison": "Juin-août.",
+      "description": "Plante vivace de 50 cm à 1 mètre, glabre, à souche rampante et renflée-noueuse çà et là  - tiges fasciculées, triquètres à faces planes, lisses, feuillées  - feuilles longues, larges de 3-8 mm, planes, rudes aux bords et à la carène  - épillets roussâtres, oblongs (12-40 mm de long), épais, multiflores, sessiles, fascicules, en ombelle simple ou en glomérule longuement dépassé par 2-3 bractées  - écailles bifides avec une arête au milieu  - 3 ou 2 stigmates  - 6 soies scabres plus courtes que l'akène trigone mucroné."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " européen",
+      "Inflorescence": "ombelle simple d'épis",
+      "Fruit": "akène",
+      "Couleur de la fleur": "marron",
+      "Floraison": "de juin à août",
+      "sexualité": "monoïque",
+      "Pollinisation": "anémogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Cyperaceae"
+  },
+  "Sedum anglicum": {
+    "nom_sci": "Sedum anglicum",
+    "nom_fr": "Orpin d'Angleterre",
+    "num_nom": "62156",
+    "coste": {
+      "ecologie": "Rochers, murs, côteaux siliceux, dans tout l'Ouest, jusqu'au Calvados, à la Haute-Vienne, à la Creuse ; Cévennes de l'Aveyron, de l'Hérault et du Tarn ; Corbières et Pyrénées.",
+      "repartition": "Espagne et Portugal, Grande-Bretagne, Suède et Norvège.",
+      "floraison": "Juin-aoùt.",
+      "description": "Plante vivace de 5-10 cm, glabre, rougeâtre, gazonnante, à souche grêle émettant des rejets stériles couchés à feuilles imbriquées  - tiges nombreuses, diffuses-ascendantes, feuillées  - feuilles éparses, courtes, ovoïdes, gibbeuses sur le dos, obtuses, prolongées à la base en un court appendice, glabres, très rapprochées  - fleurs d'un blanc rosé, subsessiles, en corymbes  - sépales ovales, prolongés à la base  - pétales lancéolés-aigus, 2-3 fois plus longs que le calice  - carpelles étalés-dressés, acuminés."
+    },
+    "baseflor": {
+      "Type Biologique": "Chaméphytes (< 1m) en coussinets ()",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "cyme multipare",
+      "Fruit": "follicule",
+      "Couleur de la fleur": "blanc",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame, autogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Crassulaceae"
+  },
+  "Silene vulgaris subsp. maritima": {
+    "nom_sci": "Silene vulgaris subsp. maritima",
+    "nom_fr": "Silène maritime",
+    "num_nom": "77465",
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "cyme bipare",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "blanc",
+      "sexualité": "hermaphrodite, monoïque, dioïque",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Sonchus oleraceus": {
+    "nom_sci": "Sonchus oleraceus",
+    "nom_fr": "Laiteron potager",
+    "num_nom": "65205",
+    "coste": {
+      "ecologie": "Lieux cultivés dans toute l'Europe et les deux hémisphères. = Juin-octobre.",
+      "description": "Plante annuelle à tige de 3-8 dm, dressée, peu rameuse, lisse ou un peu glanduleuse au sommet  - feuilles glabres, roncinées-pennatifides ou pennatipartites, à lobes dentés, rétrécis de la base au sommet, le terminal triangulaire plus grand, les caulinaires embrassantes, à oreillettes acuminées, étalées, les inférieures à pétiole largement ailé  - involucre glabre parfois floconneux à la base  - akènes brunâtres obovales-oblongs, fortement rugueux, striés transversalement  - fleurs jaunes.\nVarie à feuilles plus étroitement découpées  - à lobe terminal plus grand que les latéraux (S. lacerus Willd.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux , Hémicryptophytes (< 1m) bisannuels",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "racème de capitules",
+      "Fruit": "akène",
+      "Couleur de la fleur": "jaune",
+      "Floraison": "de juin à octobre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "entomogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Asteraceae"
+  },
+  "Spartina maritima": {
+    "nom_sci": "Spartina maritima",
+    "nom_fr": "Spartine maritime",
+    "num_nom": "65449",
+    "coste": {
+      "ecologie": "Vases salées des bords de l'Océan et de la Manche.",
+      "repartition": "Belgique, Hollande, Angleterre, Espagne et Portugal, Vénétie et Frioul ; Amérique boréale.",
+      "floraison": "Août-octobre.",
+      "description": "Plante vivace de 2050 cm, glabre, à souche longuement rampante  - tige raide, dressée  - feuilles assez courtes, enroulées-junciformes, la supérieure plus courte que la panicule  - ligule très courte, denticulée-ciliée  - épis 2, rarement 3-4, longs de 8-12 cm dressés-appliques, sessiles ou brièvement pédoncules  - épillets distiques, alternes, lâchement rapprochés, longs de 10-15 mm linéaires-lancéolés, pubescents  - glume supérieure d'un tiers plus longue, obtuse ou échancrée-mucronée, à 1 nervure faible de chaque côté de la carène."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (< 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de août à octobre",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Spartina x townsendii var. anglica": {
+    "nom_sci": "Spartina x townsendii var. anglica",
+    "nom_fr": "Spartine d'Angleterre",
+    "num_nom": "65442",
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " atlantique",
+      "Inflorescence": "épi d'épillets",
+      "Fruit": "caryopse",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de juillet à octobre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "anémogame",
+      "Dissémination": "barochore"
+    },
+    "famille": "Poaceae"
+  },
+  "Spergularia marina": {
+    "nom_sci": "Spergularia marina",
+    "nom_fr": "Spergulaire marine",
+    "num_nom": "65556",
+    "coste": {
+      "ecologie": "Bords de la Manche, de l'Océan, de la Méditerranée ; sources minérales de l'Alsace-Lorraine, du Jura, de l'Auvergne.",
+      "repartition": "Répandu dans presque tout le globe.",
+      "floraison": "Mai-août.",
+      "description": "Plante annuelle, bisannuelle ou pérennante, pubescente-glanduleuse dans le haut, sans souche vivace  - tiges couchées, feuillées, à 2 angles  - feuilles linéaires, un peu épaisses  - stipules courtes, ovales-aiguës  - fleurs rosées, en grappes longues, lâches, feuillées - pédicelles inférieurs 1-2 fois plus longs que la capsule  - pétales plus courts que les sépales elliptiques  - 3-5 étamines  - capsule dépassant un peu le calice  - graines la plupart sans ailes, les inférieures seules ailées. \nVarie à feuilles et pédicelles ténus et fleurs petites (S. salina Presl.)  - à petites fleurs rapprochées en grappes courtes et denses à pédicelles plus courts que la capsule (S. urbica Nym.)."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux , Hémicryptophytes (< 1m) bisannuels",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "cyme bipare",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "rose",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "autogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Spergularia media": {
+    "nom_sci": "Spergularia media",
+    "nom_fr": "Spergulaire intermédiaire",
+    "num_nom": "65561",
+    "coste": {
+      "ecologie": "Sables maritimes, dans les Bouches-du-Rhône à Saint-Chamas, et dans l'Hérault à Cette.",
+      "repartition": "Espagne occidentale ; Roumanie ; Daghestan et Asie Mineure ; Egypte, Açores, Cap de Bonne-Espérance.",
+      "floraison": "Mai-juillet.",
+      "description": "Plante vivace, à souche épaisse  - tiges nettement comprimées à 2 tranchants  - feuilles linéaires, épaisses, un peu charnues  - stipules très courtes, élargies en rein, plus ou moins acuminées  - fleurs lilacées, grandes, en cymes à branches souvent divariquées  - pédicelles égalant à peu près la capsule  - pétales égalant les sépales ovales  - 10 étamines  - capsule subglobuleuse, égalant ou dépassant peu le calice  - graines toutes comprimées-ailées."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) bisannuels",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " cosmopolite",
+      "Inflorescence": "cyme bipare",
+      "Fruit": "capsule",
+      "Couleur de la fleur": "rose",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protandre",
+      "Pollinisation": "entomogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Caryophyllaceae"
+  },
+  "Suaeda maritima": {
+    "nom_sci": "Suaeda maritima",
+    "nom_fr": "Soude maritime",
+    "num_nom": "75399",
+    "coste": {
+      "ecologie": "Littoral de la Manche, de l'Océan, de la Méditerranée.",
+      "repartition": "Presque tout le globe.",
+      "floraison": "Juillet-octobre.",
+      "description": "Plante annuelle de 10-50 cm, glabre, d'un vert glauque ou rougeâtre, à tiges herbacées, dures à la base, dressées ou étalées-diffuses  - feuilles nombreuses, les caulinaires allongées (1-3 cm), linéaires-demicylindriques, obtuses ou aiguës, élargies à la base, opaques, glaucescentes  - les florales plus petites dépassant les glomérules à 2-3 fleurs  - périanthe fructifère globuleux-déprimé, à lobes ovales-obtus, obscurément carénés sur le dos  - graine ordinairement horizontale, luisante, un peu ponctuée."
+    },
+    "baseflor": {
+      "Type Biologique": "Thérophytes (< 1m) estivaux",
+      "Formation végétale": "thérophytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "sexualité": "gynodioïque",
+      "Pollinisation": "anémogame, autogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Suaeda vera": {
+    "nom_sci": "Suaeda vera",
+    "nom_fr": "Soude ligneuse",
+    "num_nom": "75400",
+    "baseflor": {
+      "Type Biologique": "Chaméphytes (>= 1m) frutescents ()",
+      "Formation végétale": "chaméphytaie",
+      "Chorologie": " méditerranéen-atlantique",
+      "Inflorescence": "épi de cymes triflores",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "sexualité": "hermaphrodite",
+      "Pollinisation": "anémogame",
+      "Dissémination": "hydrochore"
+    },
+    "famille": "Amaranthaceae"
+  },
+  "Thelypteris palustris": {
+    "nom_sci": "Thelypteris palustris",
+    "nom_fr": "Théliptéris des marais",
+    "num_nom": "67779",
+    "coste": {
+      "ecologie": "Marais, prés et bois humides, dans presque toute la France ; Corse.",
+      "repartition": "Europe ; Asie ; Afrique ; Amérique boréale ; Nouvelle-Zélande.",
+      "floraison": "Juin-septembre.",
+      "description": "Plante vivace de 40-80 cm, glabre, à souche grêle, traçante, noirâtre  - feuilles longuement pétiolées, à pétiole et rachis nus, oblongues-lancéolées, peu atténuées à la base, bipennatiséquées, non glanduleuses en dessous  - segments étroitement lancéolés, pennatipartites, à lobes confluents à la base, triangulaires-lancéolés, aigus ou subobtus, entiers ou denticulés au sommet, à bords un peu roulés en dessous  - sores petites, à la fin confluents, sur 2 lignes rapprochées des bords des lobes  - indusie caduque."
+    },
+    "baseflor": {
+      "Type Biologique": "Géophytes (>= 1m) à rhizome",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " circumboréal",
+      "Floraison": "de juin à septembre",
+      "sexualité": "monoïque",
+      "Pollinisation": "hydrogame",
+      "Dissémination": "anémochore"
+    },
+    "famille": "Thelypteridaceae"
+  },
+  "Triglochin bulbosum subsp. barrelieri": {
+    "nom_sci": "Triglochin bulbosum subsp. barrelieri",
+    "nom_fr": "Troscart bulbeux",
+    "num_nom": "87347",
+    "famille": "Juncaginaceae"
+  },
+  "Triglochin maritima": {
+    "nom_sci": "Triglochin maritima",
+    "nom_fr": "Troscart maritime",
+    "num_nom": "69493",
+    "coste": {
+      "ecologie": "Marais saumâtres du littoral de la Manche, de l'Océan, de la Méditerranée ; marais salés de la Lorraine et de l'Auvergne.",
+      "repartition": "Europe ; Asie occidentale et boréale ; Afrique et Amérique boréales.",
+      "floraison": "Mai-septembre.",
+      "description": "Plante vivace de 15-50 cm, glabre, à souche grosse, oblique, à rejets courts, garnie de gaines blanchâtres  - hampe assez robuste, dépassant les feuilles un peu charnues, demi-cylindriques, canaliculées en dessus  - 6 stigmates  - grappe fructifère allongée, très fournie, dense, à pédoncules étalés-dressés plus courts que le fruit  - fruit mûr écarté de l'axe, long de 4 mm sur 2-3, ovale, contracté au sommet, à 6 angles, formé de 6 carpelles elliptiques, triquètres."
+    },
+    "baseflor": {
+      "Type Biologique": "Hémicryptophytes (< 1m) stolonifères",
+      "Formation végétale": "hémicryptophytaie",
+      "Chorologie": " circumboréal",
+      "Inflorescence": "racème simple",
+      "Fruit": "akène",
+      "Couleur de la fleur": "vert",
+      "Floraison": "de mai à septembre",
+      "sexualité": "hermaphrodite",
+      "Ordre de maturation": "protogyne",
+      "Pollinisation": "anémogame",
+      "Dissémination": "épizoochore"
+    },
+    "famille": "Juncaginaceae"
+  },
+  "Zostera noltii": {
+    "nom_sci": "Zostera noltii",
+    "nom_fr": "Zostère naine",
+    "num_nom": "87492",
+    "famille": "Zosteraceae"
+  }
+}

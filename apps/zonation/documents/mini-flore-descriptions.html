@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Mini flore — Descriptions — Zonation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #191b16; --ink-66: rgba(25,27,22,.66); --ink-40: rgba(25,27,22,.40);
+    --ink-14: rgba(25,27,22,.14); --page: #ffffff; --car: #5a6b3f; --freq: #6b6455;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e9e7e0; color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+  .sheet { width: 210mm; min-height: 297mm; margin: 8mm auto; background: var(--page); padding: 12mm 12mm 14mm; }
+  header.doc-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5pt solid var(--ink); padding-bottom: 3mm; margin-bottom: 5mm; }
+  header.doc-head h1 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 600; font-size: 15pt; margin: 0; letter-spacing: -0.01em; }
+  header.doc-head .sub { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 7.5pt; color: var(--ink-66); text-align: right; line-height: 1.5; }
+  .legend { display: flex; gap: 5mm; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 6.8pt; color: var(--ink-66); margin-bottom: 4mm; }
+  .legend .dot { display: inline-block; width: 2mm; height: 2mm; border-radius: 50%; margin-right: 1mm; vertical-align: middle; position: relative; top: -0.3mm; }
+  .dot.car { background: var(--car); } .dot.freq { background: var(--freq); }
+
+  .columns { columns: 2; column-gap: 8mm; }
+  .famille { column-span: all; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8pt; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--page); background: var(--ink); margin: 4mm 0 2mm; padding: 1.4mm 3mm; break-after: avoid; }
+  .famille:first-child { margin-top: 0; }
+  .entry { break-inside: avoid; -webkit-column-break-inside: avoid; padding: 2.4mm 0; border-bottom: 0.5pt solid var(--ink-14); margin-bottom: 2mm; }
+  .entry-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 2mm; margin-bottom: 1.2mm; }
+  .entry-head .fr { font-weight: 700; font-size: 9pt; line-height: 1.2; }
+  .entry-head .sci { font-family: "IBM Plex Serif", Georgia, serif; font-style: italic; font-size: 7.6pt; color: var(--ink-66); line-height: 1.2; }
+  .entry-head .statut { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 5.8pt; text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; }
+  .statut.car { color: var(--car); } .statut.freq { color: var(--freq); } .statut.car-freq { color: var(--car); }
+
+  .desc-text { margin: 0; font-size: 7.6pt; line-height: 1.35; }
+  .desc-footer { margin: 1mm 0 0; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 6.2pt; color: var(--ink-66); }
+  .desc-footer-only { margin-top: 0; }
+  .desc-missing { margin: 0; font-size: 7.4pt; font-style: italic; color: var(--ink-40); }
+
+  .sources { columns: 1; margin-top: 6mm; padding-top: 3mm; border-top: 0.5pt solid var(--ink-14); font-size: 6.8pt; color: var(--ink-40); line-height: 1.6; }
+
+  @media print { html, body { background: var(--page); } .sheet { margin: 0; width: auto; min-height: auto; box-shadow: none; } @page { size: A4; margin: 12mm; } }
+  @media screen { .sheet { box-shadow: 0 1px 4px rgba(0,0,0,.15); } }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <header class="doc-head">
+      <h1>Mini flore — Descriptions</h1>
+      <div class="sub">Petite Mer de Gâvres<br>47 espèces</div>
+    </header>
+    <div class="legend">
+      <span><span class="dot car"></span>Caractéristique</span>
+      <span><span class="dot freq"></span>Fréquente</span>
+    </div>
+    <div class="columns">
+      <h2 class="famille">Amaranthaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Arroche laciniée</span>
+        <span class="sci">Atriplex laciniata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 30 cm à 1 m., blanchâtre ou grisâtre, à tiges dressées ou étalées-ascendantes  - feuilles alternes, plus longues que larges, oblongues-deltoïdes, hastées à la base, profondément sinuées-dentées ou incisées, parfois presque entières, blanchâtres sur les 2 faces ou vertes en dessus, à nervures saillantes  - glomérules rapprochés en épis nus ou un peu feuilles et interrompus à la base  - valves fructifères blanchâtres, plus hautes que larges, rhomboïdales-subtrilobées, hastées, souvent lisses et terminées en languette verte  - graine brune, terne.</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Lieux sablonneux et décombres, çà et là dans le Midi, jusque dans les Hautes-Alpes et l&#x27;Aveyron ; Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Arroche des grèves</span>
+        <span class="sci">Atriplex littoralis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Voisin du précédent. Plante annuelle de 30 cm à 1 mètre, verte, plus ou moins farineuse, à tige dressée, à rameaux tous dressés et alternes  - feuilles toutes étroites, linéaires ou linéaires-lancéolées, entières ou les inférieures un peu dentées, atténuées et non dilatées au-dessus du pétiole  - glomérules multiflores, en épis terminaux, effilés, nus et interrompus  - valves fructifères triangulaires ou ovales-rhomboïdales, pointues au sommet, fortement muriquées sur les faces.</p><p class="desc-footer">Floraison : Juillet-septembre · Écologie : Littoral de la Manche, de l&#x27;Océan, de ta Méditerranée ; Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Arroche couchée</span>
+        <span class="sci">Atriplex prostrata</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 20 cm à 1 mètre, verte et peu farineuse, à tige dressée ou ascendante, striée de blanc et de vert, à rameaux inférieurs très étalés  - feuilles alternes ou opposées, les caulinaires larges, hastées et tronquées à la base, à pétiole égalant souvent la moitié du limbe, les florales lancéolées-linéaires  - fleurs verdâtres, en panicule terminale lâche  - valves fructifères soudées à la base, herbacées, triangulaires à base tronquée ou un peu en coeur, lisses ou muriquées-tuberculeuses.
+Varie sur le littoral à feuilles blanchâtres-farineuses épaisses, fruits petites (var. salina Wallr.).</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Lieux cultivés et incultes, dans toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Betterave maritime</span>
+        <span class="sci">Beta vulgaris subsp. maritima</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-text">Plante vivace ou bisannuelle de 30-80 cm, glabre ou un peu poilue, à racine dure et peu épaisse  - tiges faibles, le plus souvent couchées-étalées, sillonnées-anguleuses, à rameaux souvent flexueux  - feuilles inférieures ovales ou rhomboïdales, brusquement rétrécies en pétiole, un peu charnues, à nervures peu épaisses  - les caulinaires ovales ou lancéolées, aiguës  - stigmates 2, lancéolés  - périanthe à lobes appliqués sur le fruit assez gros.</p><p class="desc-footer">Floraison : Juin-septembre · Écologie : Littoral de la Manche, de l&#x27;Océan, de la Méditerranée ; Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Obione faux-pourpier</span>
+        <span class="sci">Halimione portulacoides</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Sous-arbrisseau de 20-50 cm, tout blanc argenté, à tiges couchées-radicantes et à rameaux redressés  - feuilles opposées, obovales ou oblongues, atténuées en pétiole, entières, uninervées  - fleurs jaunâtres, en épis grêles formant au sommet des rameaux une petite panicule non feuillée  - calice fructifère subsessile, en triangle renversé, offrant au sommet 3 lobes obtus égaux ou inégaux, muriqué ou lisse sur les faces  - graine rousse.</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Littoral de la Méditerranée, de l&#x27;Océan, de la Manche ; Corse</p>
+    </article><h2 class="famille">Apiaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Céleri sauvage</span>
+        <span class="sci">Apium graveolens</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante bisannuelle de 30-80 cm, glabre, luisante, aromatique, à souche courte munie de fibres un peu charnues  - tige creuse, sillonnée-anguleuse, très rameuse  - feuilles un peu épaisses, les inférieures pennatiséquées, à segments ovales en coin, incisés-lobés, les supérieures à 3 segments plus petites et plus étroits  - fleurs blanchâtres, en ombelles courtement pédonculées ou subsessiles, à 6-12 rayons inégaux  - involucre et involucelle nuls  - calice à limbe nul  - pétales suborbiculaires en coeur, plans, entiers, à pointe un peu enroulée  - stylopode déprimé  - fruit petit, subglobuleux, presque didyme, comprimé par le côté, glabre  - méricarpes à 5 côtes filiformes, égales, blanchâtres  - vallécules à 1 bandelette. Varie à racine charnue (A. DULCE Mill., Céleri).</p><p class="desc-footer">Floraison : Juillet-septembre · Écologie : Marais salins des côtes de la Manche, de l&#x27;Océan, de la Méditerranée, et sources salines de l&#x27;intérieur</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Criste marine</span>
+        <span class="sci">Crithmum maritimum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">. Plante vivace de 20-50 cm, un peu charnue, glabre, glaucescente, à souche rampante  - tige striée, dressée ou ascendante, flexueuse en zigzag  - feuilles bi-tripennatiséquées, à segments linéaires-lancéolés, aigus, étalés  - fleurs d&#x27;un blanc verdâtre, en ombelles brièvement pédonculées, à 10-20 rayons épais  - involucre et involucelle à folioles nombreuses, lancéolées, réfléchies  - calice à limbe nul  - pétales suborbiculaires, entiers, enroulés en dedans  - styles dressés, plus courts que le stylopode  - fruit ovoïde, spongieux, à bords contigus, à côtes égales, carénées, tranchantes, les marginales un peu plus larges, munies de nombreuses bandelettes.</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Rochers et sables du littoral de la Manche, de l&#x27;Océan et de la Méditerranée</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Carotte sauvage</span>
+        <span class="sci">Daucus carota subsp. carota</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Hémicryptophytes (&lt; 1m) bisannuels · Floraison : de mai à octobre · Couleur de la fleur : blanc · Chorologie : européen</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Oenanthe de Lachenal</span>
+        <span class="sci">Oenanthe lachenalii</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-text">Plante vivace de 50-80 cm, glauque, à fibres radicales charnues, filiformes ou renflées à l&#x27;extrémité en massue allongée  - tige assez grêle, dure, pleine ou un peu creuse supérieurement, faiblement sillonnée  - feuilles bipennatiséquées, les inférieures à segments obovales ou oblongs en coin, les caulinaires à lobes linéaires  - fleurs blanches, les extérieures à peine rayonnantes à pétales arrondis à la base, fendus jusqu&#x27;au milieu  - ombelles petites à 7-12 rayons toujours grêles  - involucre nul ou à 1-5 folioles caduques  - ombellules fructifères convexes - styles égalant la moitié du fruit  - fruit oblong, atténué et sans anneau à la base.</p><p class="desc-footer">Floraison : Juillet-septembre · Écologie : Prairies et lieux humides, çà et là dans une grande partie de la France et en Corse</p>
+    </article><h2 class="famille">Asteraceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Aster maritime</span>
+        <span class="sci">Aster tripolium</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante bisannuelle de 2-6 dm, à tige simple ou rameuse dés la base, dressée ou ascendante, glabre  - feuilles charnues, très glabres, les radicales oblongues-obovales, longuement pétiolées, les caulinaires oblongues-lancéolées, ou lancéolées-linéaires  - involucre à folioles glabres, ciliolées au sommet  - soies de l&#x27;aigrette blanches  - capitules de 2 cm environ de diamètre en panicule corymbiforme, à pédicelles pourvus de quelques bractéoles  - ligules {manquant parfois par avortement) violettes, blanches ou d&#x27;un blanc-lilas, fleurs du centre tubuleuses, jaunes.</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Prés maritimes, marais salés : littoral de la Méditerranée, de l&#x27;Océan, de la Manche ; Corse ; marais salants de la Lorraine</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Baccharis à feuilles d&#x27;arroche</span>
+        <span class="sci">Baccharis halimifolia</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Nanophanérophytes (2 à 4m) () · Chorologie : introduit (Amér. du nord)</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Eupatoire chanvrine</span>
+        <span class="sci">Eupatorium cannabinum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">. Plante vivace de 6-12 dm à tige dressée, simple ou rameuse, souvent rougeâtre, pubescente  - feuilles opposées à 3-5 segments pétiolulés, lancéolés, dentés {quelquefois les supérieures simples), glanduleuses en dessous  - involucre à folioles intérieures scarieuses, oblongues-linéaires, très obtuses, les extérieures ovales  - capitules purpurins, en corymbe rameux, terminal, compact.
+Varie (en Corse) à segments des feuilles plus courts, à dents obtuses, à capitules plus petites, à aigrette à peine plus longue que l&#x27;akène (E. corsicum Req.).</p><p class="desc-footer">Floraison : Juillet-août · Écologie : Bois et lieux humides, bords des eaux, marais dans toute la France, Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Inule faux-crithme</span>
+        <span class="sci">Inula crithmoides</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Plante vivace de 5-8 dm sous-frutescente à la base, dressée ou ascendante, simple ou rameuse, glabre  - feuilles charnues, sessiles, étroites, linéaires, obtuses, entières ou terminées au sommet par 3 dents, émettant à leur aisselle des faisceaux de feuilles  - involucre à folioles dressées, appliquées, linéaires et acuminées  - akènes velus, aigrette roussâtre  - capitules portés par dés pédoncules bractéoles, en corymbe très lâche  - fleurs jaunes à ligules longuement rayonnantes.</p><p class="desc-footer">Floraison : Août-septembre · Écologie : Marais des terrains salés : rives de la Méditerranée, de l&#x27;Océan, de la Manche jusqu&#x27;au Calvados</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Matricaire maritime</span>
+        <span class="sci">Matricaria maritima subsp. maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Hémicryptophytes (&lt; 1m) bisannuels , Hémicryptophytes (&lt; 1m) érigé · Couleur de la fleur : blanc, jaune · Chorologie : atlantique</p>
+    </article><h2 class="famille">Brassicaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Cochléaire anglaise</span>
+        <span class="sci">Cochlearia anglica</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante bisannuelle  - tiges de 10-30 cm, ascendantes  - feuilles radicales largement ovales à base subtronquée ou décurrente sur le pétiole, presque entières, les supérieures ovales-oblongues, embrassantes-auriculées, entières ou à 1-2 grosses dents de chaque côté  - fleurs grandes, d&#x27;un blanc pur, odorantes - pétales 2-3 fois plus longs que les sépales  - grappe fructifère assez courte, à pédicelles épais, égalant les silicules  - silicules grandes-elliptiques, vésiculeuses, à cloison étroite et longue  - graines grosses, tuberculeuses.</p><p class="desc-footer">Floraison : Avril-juin · Écologie : Vases salées, sur les côtes de la Manche et de l&#x27;Océan, do la Somme au Morbihan, dans la Charente-Inférieure et la Gironde</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Cochléaire du Danemark</span>
+        <span class="sci">Cochlearia danica</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle  - tiges de 5-25 cm, ascendantes ou diffuses  - feuilles toutes pétiolées, les radicales en rein, entières, les caulinaires deltoïdes, à 3-5 angles ou lobes  - fleurs petites, blanches ou rosées  - pétales 1 fois plus longs que les sépales  - grappe fructifère courte, à pédicelles filiformes  - silicules ovoïdes, non vésiculeuses, à cloison large  - graines petites, tuberculeuses.</p><p class="desc-footer">Floraison : Février-mai · Écologie : Lieux humides, murs, pelouses, sur les côtes de la Manche et de l&#x27;Océan</p>
+    </article><h2 class="famille">Caryophyllaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Sabline à feuilles de serpolet</span>
+        <span class="sci">Arenaria serpyllifolia subsp. serpyllifolia</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle, pubérulente, à racine grêle  - tiges de 5-25 cm, étalées-ascendantes  - feuilles sessiles, ovales-aiguës, à 1 nervure  - fleurs petites, en cymes dichotomes feuillées et lâches  - pédicelles environ 2 fois plus longs que le calice, à la fin étalés  - sépales lancéolés-acuminés, à 3 nervures  - pétales bien plus courts que les sépales  - capsule ovale, ventrue, coriace, égalant ou dépassant un peu le calice, à 6 dents dressées, égales  - graines chagrinées.
+Varie à panicule courte et serrée à pédicelles égalant à peine la capsule (A. lloydii Jord.)  - à capsule très mince, oblongue-conique, non ventrue, plante très grêle (A. leptoclados Guss.).</p><p class="desc-footer">Floraison : Mai-juillet · Écologie : Lieux sablonneux ou pierreux, dans toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Herniaire ciliée</span>
+        <span class="sci">Herniaria ciliolata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante vivace de 8-15 cm, peu poilue, d&#x27;un vert sombre, à racine grêle  - épaisses, couchées-rampantes, à rameaux pubescents sur toute leur surface  - feuilles épaisses, glabres, ciliées, larges  - elliptiques ou ovales, non atténuées à la base, presque toutes opposées  - stipules larges, blanches, longuement ciliées  - fleurs petites, subsessiles, en glomérules peu fournis, arrondis, disposés à l&#x27;aisselle des feuilles  - sépales oblongs, glabres, verts, étroitement marginés-blanchâtres.</p><p class="desc-footer">Floraison : Juin-août · Écologie : Sables maritimes et côteaux rocailleux des bords de l&#x27;Océan : littoral de la Bretagne, de la Vendée, de la Charente-Inférieure, de la Gironde</p>
+    </article><h2 class="famille">Convolvulaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Liseron des haies</span>
+        <span class="sci">Calystegia sepium</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Hémicryptophytes (&gt;= 1m) stolonifères () , Géophytes (&gt;= 1m) à rhizome () · Floraison : de juin à septembre · Couleur de la fleur : blanc · Chorologie : cosmopolite</p>
+    </article><h2 class="famille">Cyperaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Laîche distante</span>
+        <span class="sci">Carex distans</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-text">Plante vivace de 30-70 cm, glabre, à souche gazonnante  - tige trigone, lisse  - feuilles glaucescentes, larges de 2-5 mm rudes, à ligule oblongue  - épi mâle solitaire, cylindracé, brun fauve  - 2-4 épis femelles tous écartés, oblongs-cylindriques (2-3 cm), denses, dressés, courtement pédoncules  - bractées engainantes, foliacées, plus courtes que la tige  - écailles brun rougeâtre, ovales-mucronulées  - 3 stigmates  - utricules verdâtres ponctués de brun, dressés, ovales-trigones (4-5 mm), à 3-4 nervures sur chaque face latérale, à bec scabre cilié bifide, dépassant l&#x27;écaille  - akène à bec arqué.</p><p class="desc-footer">Floraison : Mai-juillet · Écologie : Prés humides et marécages, dans toute la France et la Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Laîche étirée</span>
+        <span class="sci">Carex extensa</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-text">Plante vivace de 20-60 cm, glabre, à souche gazonnante  - tige subtrigone, très lisse  - feuilles d&#x27;un vert pâle, raides, longues, étroites (1-2 mm), enroulées-canaliculées, rudes au sommet  - 1-2 épis mâles, en fuseau, fauves  - 2-4 épis femelles rapprochés, ovoïdes-oblongs (8-15 mm), denses, dressés, subsessiles, l&#x27;inférieur souvent écarté  - bractée inférieure engainante, toutes filiformes dépassant beaucoup la tige  - écailles fauves, ovales-mucronées  - utricules verdâtres, ascendants, elliptiques-trigones (3 12 mm), nervés, à bec court bidenté lisse, dépassant l&#x27;écaille.</p><p class="desc-footer">Floraison : Avril-juillet · Écologie : Marécages des côtes de la Manche, de l&#x27;Océan, de la Méditerranée</p>
+    </article><h2 class="famille">Fabaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Mélilot blanc</span>
+        <span class="sci">Melilotus albus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante bisannuelle, dressée, presque glabre, haute d&#x27;environ 1 mètre  - folioles oblongues, dentées  - stipules sétacées, entières  - fleurs blanches, inodores, en grappes très allongées et serrées, plus longues que la, feuille  - pédoncules brièvement aristés - pédicelles égalant le tube du calice à 5 nervures et non rompu par la gousse  - étendard plus long que les ailes et la carène égales  - gousse d&#x27;environ 4 mm, pendante, glabre, à la fin noire, ovale, à sommet obtus ou à peine atténué, mucronulée, à bord supérieur non caréné, à faces ridées-réticulées  - 1-2 graines, arrondies, à peine échancrées, lisses.</p><p class="desc-footer">Floraison : Juin-septembre · Écologie : Bords des rivières, champs sablonneux, dans presque toute la France</p>
+    </article><h2 class="famille">Frankeniaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Frankénie lisse</span>
+        <span class="sci">Frankenia laevis</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Hémicryptophytes (&lt; 1m) stolonifères · Floraison : de juin à août · Couleur de la fleur : bleu, blanc, rose · Chorologie : méditerranéen-atlantique</p>
+    </article><h2 class="famille">Juncaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Jonc ambigu</span>
+        <span class="sci">Juncus ambiguus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Thérophytes (&lt; 1m) estivaux · Floraison : de mai à septembre · Couleur de la fleur : vert · Chorologie : méditerranéen-atlantique</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Jonc des crapauds</span>
+        <span class="sci">Juncus bufonius subsp. minutulus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 5-35 cm, glabre, à racine fibreuse  - tiges grêles, dressées ou diffuses, portant 2-3 feuilles  - feuilles radicales plus courtes que les tiges, toutes linéaires-canaliculées, non noueuses, à gaîne non auriculée  - fleurs d&#x27;un vert pâle, solitaires, espacées le long des rameaux disposées en cyme très lâche  - bractées foliacées, plus courtes que l&#x27;inflorescence  - périanthe long de 5 mm, à divisions inégales, lancéolées en alêne  - 6 étamines  - capsule oblongue, obtuse, mucronulée, plus courte que le périanthe. 
+Varie à fleurs fasciculées, à rameaux courts et trapus (J. fasciculatus Bert.  - J. hybrydus Brot.).</p><p class="desc-footer">Floraison : Mai-septembre · Écologie : Lieux humides, dans toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Jonc de Gérard</span>
+        <span class="sci">Juncus gerardi</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Géophytes (&lt; 1m) à rhizome · Floraison : de mai à août · Couleur de la fleur : marron · Chorologie : holarctique</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Jonc maritime</span>
+        <span class="sci">Juncus maritimus</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Plante vivace atteignant 1 mètre, glabre, à rhizomes traçants  - tiges raides, en touffe, nues, pleines, les stériles piquantes  - feuilles toutes radicales, peu nombreuses, égalant presque les tiges, dressées, cylindriques, piquantes  - fleurs d&#x27;un vert pâle, en panicule fournie, lâche-décomposée, un peu latérale, souvent dépassée par une bractée piquante  - périanthe à divisions toutes lancéolées-aiguës  - 6 étamines  - capsule petite, elliptique-oblongue, mucronée, fauve, égalant le périanthe  - graines appendiculées.</p><p class="desc-footer">Floraison : Juin-septembre · Écologie : Côtes marécageuses de la Manche, de l&#x27;Océan, de la Méditerranée, en France et en Corse</p>
+    </article><h2 class="famille">Lamiaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Lycope d&#x27;Europe</span>
+        <span class="sci">Lycopus europaeus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">. Plante vivace de 30 cm à 1 mètre, glabrescente ou pubescente, inodore, à souche rampante  - tige dressée, sillonnée  - feuilles grandes, courtement pétiolées, ovales-lancéolées, dentées-incisées et souvent pennatifides à la base  - fleurs blanches ponctuées de rouge, petites, en verticilles axillaires sessiles, écartés, très denses  - calice en cloche, pubescent, à 10 nervures peu saillantes, à 5 dents égales, lancéolées en alêne, à pointe rigide  - corolle en entonnoir, à tube inclus, à 4 lobes presque égaux, le supérieur un peu échancré  - 2 étamines fertiles divergentes, les 2 supérieures rudimentaires  - anthères à loges divergentes  - carpelles lisses, tétraédriques, tronqués-bordés au sommet.</p><p class="desc-footer">Floraison : Juillet-septembre · Écologie : Lieux humides, dans toute la France et la Corse</p>
+    </article><h2 class="famille">Plantaginaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Linaire des sables</span>
+        <span class="sci">Linaria arenaria</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 5-15 cm, toute pubescente-visqueuse, d&#x27;un vert jaunâtre, à tiges dressées, rameuses en buisson, feuillées  - feuilles inférieurs verticillées par 3-4, les autres éparses, lancéolées, atténuées en court pétiole  - fleurs jaunes avec l&#x27;éperon souvent violacé, très petites, en grappes raides, courtes, à la fin lâches  - pédoncules plus courts que le calice  - calice poilu-glanduleux, à lobes lancéolés-linéaires  - corolle de 4-6 mm, à éperon grêle un peu plus court quelle  - capsule obovale, égalant le calice  - graines noires, lisses, étroitement ailées.</p><p class="desc-footer">Écologie : Sables maritimes du littoral de l&#x27;Océan et de la Manche, de la Gironde à Dunkerque. Espèce spéciale à la France occidentale. = Mai-septembre</p>
+    </article><h2 class="famille">Plumbaginaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Armérie maritime</span>
+        <span class="sci">Armeria maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">. Plante vivace de 5-30 cm, gazonnante, à feuilles glabres ou pubescentes, linéaires-obtuses, planes, molles, à 1 nervure  - hampes mollement pubescentes  - gaîne de 8-14 mm, plus courte que le capitule ou l&#x27;égalant, celui-ci dense et large de 12-18 mm  - fleurs rosées, rarement blanches  - involucre vert ferrugineux, à folioles sur 3-4 rangs, les extérieures ovales, acuminées ou mucronées, herbacées sur le dos, scarieuses aux bords  - calice à tube égalant le pédicelle, à côtes aussi larges que les sillons, à lobes ovales, atténués en arête beaucoup plus courte qu&#x27;eux.</p><p class="desc-footer">Floraison : Mai-juin, automne · Écologie : Pelouses et falaises du littoral de l&#x27;Océan et de la Manche</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Statice oreille d&#x27;ours</span>
+        <span class="sci">Limonium auriculae-ursifolium</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-missing">Aucune description disponible pour le moment.</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Statice de Dodart</span>
+        <span class="sci">Limonium dodartii</span>
+        <span class="statut car">Caractéristique</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Hémicryptophytes (&lt; 1m) rosettés · Floraison : de juin à septembre · Couleur de la fleur : bleu · Chorologie : atlantique</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Statice à feuilles ovales</span>
+        <span class="sci">Limonium ovalifolium</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Plante vivace de 1040 cm, glabre, à souche épaisse  - feuilles en rosette, glauques et souvent visqueuses, grandes, repliées, ovales, acuminées-mucronées, à pétiole large et concave, à 3-5 nervures  - hampes fortes, à rameaux grêles, tous fertiles  - épillets petites (4 mm), étroitement imbriqués en épis courts (6-10 mm), ovales, très serrés, dressés, rapprochés en petites corymbes  - bractée extérieure ne dépassant pas la moyenne et 4 fois plus courte que l&#x27;intérieure arrondie sur le dos  - calice à tube peu poilu, à dents obtuses  - corolle violacée.</p><p class="desc-footer">Floraison : Juin-septembre. - · Écologie : Littoral de l&#x27;Océan et de la Manche</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Lavande de mer</span>
+        <span class="sci">Limonium vulgare</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">. Plante vivace de 10-80 cm, glabre, à souche épaisse  - feuilles grandes, obovales, oblongues ou lancéolées, pennatinervées, vertes  - hampes robustes, arrondies, rameuses dans le haut  - épillets à 1-3 fleurs, droits, nombreux, rapprochés et souvent imbriqués, en épis assez courts, denses ou un peu lâches, étalés et à la fin arqués réfléchis  - rameaux peu allongés, longuement nus à la base  - bractée intérieure 3 fois plus longue que l&#x27;extérieure  - calice inséré obliquement, à limbe lilacé, à 5-10 dents triangulaires-aiguës  - corolle violacée, à pétales concaves et arrondis.
+Varie à rameaux longs et étalés, épillets plus petites (S. angustifolia Tausch., S. serotina Reich.).</p><p class="desc-footer">Floraison : Juillet-octobre · Écologie : Littoral de la Manche, de l&#x27;Océan, de la Méditerranée ; Corse</p>
+    </article><h2 class="famille">Poaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Agrostide maritime</span>
+        <span class="sci">Agrostis stolonifera var. pseudopungens</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-missing">Aucune description disponible pour le moment.</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Catapode marin</span>
+        <span class="sci">Catapodium marinum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 5-15 cm, glabre, à racine fibreuse  - tiges couchées ou ascendantes, raides, épaisses, lisses  - feuilles courtes, planes  - ligule ovale, déchirée  - panicule spiciforme très étroite, assez dense, simple ou un peu rameuse à la base  - épillets distiques, dressés-appliques, subsessiles dans les excavations de l&#x27;axe, oblongs, à 5-11 fleurs persistantes, serrées, longues de 2 12 mm  - glumelle obtuse, mutique, obscurément carénée, à nervures latérales faibles  - caryopse un peu canaliculé en dedans.</p><p class="desc-footer">Écologie : Sables et rochers du littoral de la Manche, de l&#x27;Océan, de la Méditerranée ; Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Catapode rigide</span>
+        <span class="sci">Catapodium rigidum</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante annuelle de 5-30 cm, glabre, à racine fibreuse  - tiges genouillées-ascendantes ou dressées, raides, lisses  - feuilles planes ou à la fin enroulées, rudes  - ligule oblongue, déchirée  - panicule étroite, oblongue-lancéolée, assez serrée, à rameaux tous garnis d&#x27;épillets presque jusqu&#x27;à la base  - épillets étalés-dressés, brièvement pédicellés, linéaires-oblongs, à 5-11 fleurs persistantes, assez lâches, longues de 1 12-2 mm  - glumelle subobtuse, obscurément carénée, à nervures latérales peu visibles  - caryopse un peu déprimé en dedans.</p><p class="desc-footer">Floraison : Mai-juillet · Écologie : Lieux secs et arides, dans presque toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Chiendent pied-de-poule</span>
+        <span class="sci">Cynodon dactylon</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante vivace de 10-40 cm, poilue sur les feuilles, à rhizomes longuement traçants  - tiges couchées-genouillées et ascendantes, rameuses  - feuilles distiques, glauques, courtes, planes, à ligule poilue  - panicule digitée, à 4-7 épis unilatéraux, grêles, linéaires, étalés, souvent violacés  - épillets comprimés par le côté, uniflores avec un rudiment stérile, petites (2 mm), solitaires, subsessiles et distiques sur la face extérieure de l&#x27;axe aplani  - glumes presque égales, un peu étalées, aiguës, scabres sur la carène, plus courtes que la fleur, uninervées  - glumelles mutiques, pliées-carénées, l&#x27;inférieure plus large trinervée  - 3 étamines  - stigmates terminaux, libres  - caryopse glabre, oblong, comprimé par le côté.</p><p class="desc-footer">Floraison : Juillet-septembre · Écologie : Lieux sablonneux arides, dans toute la France et la Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Dactyle aggloméré</span>
+        <span class="sci">Dactylis glomerata</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante vivace de 20 cm à 1 mètre et plus, glabre, à souche fibreuse gazonnante  - tiges dressées ou arquées à la base, longuement nues au sommet  - feuilles vertes, écartées, non distiques, planes ou canaliculées  - gaines comprimées  - ligule oblongue, déchirée  - panicule rameuse, lobée, à rameaux inférieurs souvent longuement nus et étalés  - épillets longs de 5-6 mm à 3-6 fleurs  - glumes et glumelles à carène ciliée  - stigmates latéraux - caryopse oblong, à face interne canaliculée. 
+Varie à feuilles glauques, panicule spiciforme dense, glumelle échancrée en deux lobes arrondis (D. hispanica Roth).</p><p class="desc-footer">Floraison : Avril-septembre · Écologie : Prés, bois, pâturages, dans toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Chiendent du littoral</span>
+        <span class="sci">Elymus pycnanthus</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-text">Plante vivace de 40 cm à 1 mètre, glabre, à souche longuement traçante  - tiges dressées, raides, fasciculées  - feuilles d&#x27;un vert glauque, enroulées en alêne, fermes, scabres et à nervures saillantes en dessus  - épi long ou assez court, presque tétragone, dense, à axe non fragile  - épillets imbriqués, environ 3 fois plus longs que les entrenoeuds, ovales, comprimés, à 5-7 fleurs mutiques  - glumes obtuses ou obtusément mucronées, à 5-7 nervures, égalant la moitié ou les 23 de l&#x27;épillet  - glumelle obtuse ou tronquée, mucronulée.</p><p class="desc-footer">Floraison : Mai-août · Écologie : Terrains sablonneux ou fermes du littoral de la Manche, de l&#x27;Océan, de la Méditerranée ; Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Fétuque rouge (gr.)</span>
+        <span class="sci">Festuca rubra gr.</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante vivace de 30-80 cm, glabre, à souche longuement traçante  - tiges assez robustes  - feuilles vertes, les radicales pliées-enroulées, lisses, les supérieures planes ou canaliculées  - ligule courte, à 2 oreillettes latérales  - panicule verdâtre, rougeâtre ou violacée-noirâtre, oblongue, subunilatérale, à rameaux inférieurs géminés  - épillets oblongs (7-12 mm), à 4-8 fleurs aristées  - glumes très inégales, la supérieure de moitié plus longue, mucronée  - glumelle inférieure ciliée aux bords supérieurs, étroitement scarieuse, à arête de 1-2 mm  - ovaire glabre.</p><p class="desc-footer">Floraison : Mai-juillet · Écologie : Pâturages et lieux incultes, dans presque toute la France</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Fétuque littorale</span>
+        <span class="sci">Festuca rubra subsp. litoralis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Géophytes (&lt; 1m) à rhizome · Floraison : de mai à juillet · Couleur de la fleur : vert, rose · Chorologie : atlantique</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Houlque laineuse</span>
+        <span class="sci">Holcus lanatus</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante vivace de 40-80 cm., mollement velue sur les feuilles, les graines et autour des noeuds, à souche courte tronquée ou un peu rampante - feuilles d&#x27;un vert blanchatre, planes, molles - ligule assez courte, tronquée et déchirées - panicule longue de 10-20 cm., ovale-oblongue, pubescente, rougeatre ou d&#x27;un blanc rosé - épillets longs de 4-5 mm., ovales, à axe glabrescent, non barbu sous la fleur supérieure - glumes subobtuses, la supérieure mucronée - glumelle de la fleur supérieure munie vers le quart supérieur d&#x27;une arête à la fin courbée en crochet et incluse.</p><p class="desc-footer">Floraison : Mai-Aout · Écologie : Près. chemins, bois, dans toute la France et en Corse</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Lepture droit</span>
+        <span class="sci">Parapholis strigosa</span>
+        <span class="statut car-freq">Caract. + fréq.</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Thérophytes (&lt; 1m) estivaux · Couleur de la fleur : vert · Chorologie : européen occidental</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Roseau commun</span>
+        <span class="sci">Phragmites australis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Géophytes (&gt;= 1m) à rhizome · Couleur de la fleur : bleu · Chorologie : cosmopolite</p>
+    </article><h2 class="famille">Primulaceae</h2>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Mouron rouge</span>
+        <span class="sci">Anagallis arvensis subsp. arvensis</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-footer desc-footer-only">Thérophytes (&lt; 1m) estivaux · Floraison : de mai à novembre · Couleur de la fleur : rose · Chorologie : cosmopolite</p>
+    </article>
+    <article class="entry">
+      <div class="entry-head">
+        <span class="fr">Glaux maritime</span>
+        <span class="sci">Glaux maritima</span>
+        <span class="statut freq">Fréquente</span>
+      </div>
+      <p class="desc-text">Plante de 5-25 cm, un peu charnue, glabre et glauque, à souche rougeâtre, longuement rampante-stolonifère  - tiges décombantes, rameuses, très feuillées  - feuilles opposées, sessiles, oblongues, entières, dépassant les entrenoeuds  - fleurs d&#x27;un blanc rosé, petites, axillaires, solitaires, sessiles, formant de longs épis feuilles  - calice pétaloïde, en cloche, à 5 lobes ovales-obtus  - corolle nulle  - 5 étamines, insérées au fond du calice et alternes avec ses lobes  - style filiforme, stigmate en tête  - capsule ovoïde-aiguë, à 5 valves et à environ 5 graines trigones.</p><p class="desc-footer">Floraison : Mai-septembre · Écologie : Lieux humides salés du littoral et de l&#x27;intérieur des terres : Côtes de l&#x27;Océan et de la Manche ; Puy-de-Dôme et Allier</p>
+    </article>
+    </div>
+    <p class="sources">Descriptions : Abbé H. Coste, <em>Flore descriptive et illustrée de la France</em> (1901&#8211;1906, domaine public), numérisation Tela Botanica.<br>
+    Traits écologiques : Julve, Ph. — Baseflor, réseau Tela Botanica.<br>
+    Voir le document compagnon « Mini flore — Illustrations » pour les photos.</p>
+  </div>
+</body>
+</html>
