@@ -7,7 +7,7 @@
    Même stratégie que PhytoScope : réseau d'abord pour la page (afin de recevoir
    les mises à jour), cache d'abord pour les ressources, qui ne changent qu'avec
    une nouvelle version du cache. */
-const CACHE_NAME = "zonation-pwa-v1-0-0";
+const CACHE_NAME = "zonation-pwa-v1-2-0";
 
 const VIGNETTES_BB = ["i", "r", "+", "1", "2", "3", "4", "5"];
 const DISPOSITIONS = ["agregee", "eclatee", "mixte"];
@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./data.js",
+  "./mini-flore-data.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",
@@ -31,6 +32,7 @@ const APP_SHELL = [
   "./fonts/ibm-plex-serif-bold.woff2",
   "./fonts/jetbrains-mono.woff2",
   "./documents/couverture.jpg",
+  "./documents/profil-vasiere-dune.png",
   ...VIGNETTES_BB.flatMap(c => DISPOSITIONS.map(
     d => "./documents/bb-taches/BB_" + c + "_" + d + "_" + PCT_VIGNETTE[c] + ".png"))
 ];

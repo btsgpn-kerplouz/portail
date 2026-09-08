@@ -1,0 +1,518 @@
+{
+  "https://api.tela-botanica.org/img:000007164L.jpg": {
+    "w": 600,
+    "h": 398
+  },
+  "https://api.tela-botanica.org/img:000009087L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009481L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009487L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009516L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000009520L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009531L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009532L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009550L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000009961L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000009973L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000012516L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000012522L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000015460L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000015481L.jpg": {
+    "w": 399,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000016202L.jpg": {
+    "w": 600,
+    "h": 401
+  },
+  "https://api.tela-botanica.org/img:000016224L.jpg": {
+    "w": 600,
+    "h": 401
+  },
+  "https://api.tela-botanica.org/img:000017343L.jpg": {
+    "w": 600,
+    "h": 539
+  },
+  "https://api.tela-botanica.org/img:000017390L.jpg": {
+    "w": 600,
+    "h": 445
+  },
+  "https://api.tela-botanica.org/img:000019499L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000019656L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000020989L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000021282O.jpg": {
+    "w": 800,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000023656L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000025128L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000032653L.jpg": {
+    "w": 313,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000036189L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000036786L.jpg": {
+    "w": 583,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000039274L.jpg": {
+    "w": 600,
+    "h": 441
+  },
+  "https://api.tela-botanica.org/img:000039846L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000043171L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000043173L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000044215L.jpg": {
+    "w": 400,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000044820L.jpg": {
+    "w": 365,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000045790L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000045944L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000045946O.jpg": {
+    "w": 1200,
+    "h": 1600
+  },
+  "https://api.tela-botanica.org/img:000048417L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000049636L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000051839L.jpg": {
+    "w": 600,
+    "h": 397
+  },
+  "https://api.tela-botanica.org/img:000052620L.jpg": {
+    "w": 600,
+    "h": 397
+  },
+  "https://api.tela-botanica.org/img:000054106O.jpg": {
+    "w": 1000,
+    "h": 669
+  },
+  "https://api.tela-botanica.org/img:000054431L.jpg": {
+    "w": 600,
+    "h": 569
+  },
+  "https://api.tela-botanica.org/img:000057308L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000058158L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000058161L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000065222L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000068931L.jpg": {
+    "w": 400,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000073865L.jpg": {
+    "w": 337,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000074118L.jpg": {
+    "w": 600,
+    "h": 399
+  },
+  "https://api.tela-botanica.org/img:000076736L.jpg": {
+    "w": 600,
+    "h": 390
+  },
+  "https://api.tela-botanica.org/img:000077773L.jpg": {
+    "w": 600,
+    "h": 599
+  },
+  "https://api.tela-botanica.org/img:000078372L.jpg": {
+    "w": 600,
+    "h": 401
+  },
+  "https://api.tela-botanica.org/img:000079669L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000080153L.jpg": {
+    "w": 402,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000080167L.jpg": {
+    "w": 600,
+    "h": 401
+  },
+  "https://api.tela-botanica.org/img:000080205L.jpg": {
+    "w": 600,
+    "h": 342
+  },
+  "https://api.tela-botanica.org/img:000084562L.jpg": {
+    "w": 600,
+    "h": 417
+  },
+  "https://api.tela-botanica.org/img:000085154L.jpg": {
+    "w": 421,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000089379L.jpg": {
+    "w": 600,
+    "h": 486
+  },
+  "https://api.tela-botanica.org/img:000089413L.jpg": {
+    "w": 600,
+    "h": 596
+  },
+  "https://api.tela-botanica.org/img:000091267L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000092338L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000096683L.jpg": {
+    "w": 600,
+    "h": 397
+  },
+  "https://api.tela-botanica.org/img:000110866L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000114717L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000116225L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000133004L.jpg": {
+    "w": 259,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000148897L.jpg": {
+    "w": 600,
+    "h": 415
+  },
+  "https://api.tela-botanica.org/img:000155758L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000167772L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000179987L.jpg": {
+    "w": 600,
+    "h": 364
+  },
+  "https://api.tela-botanica.org/img:000180214L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000181076L.jpg": {
+    "w": 600,
+    "h": 361
+  },
+  "https://api.tela-botanica.org/img:000185284L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000185536L.jpg": {
+    "w": 515,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000188608L.jpg": {
+    "w": 556,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000192578L.jpg": {
+    "w": 600,
+    "h": 432
+  },
+  "https://api.tela-botanica.org/img:000192670L.jpg": {
+    "w": 397,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000195603L.jpg": {
+    "w": 511,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000204409L.jpg": {
+    "w": 600,
+    "h": 531
+  },
+  "https://api.tela-botanica.org/img:000207844L.jpg": {
+    "w": 402,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000222366L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000234154L.jpg": {
+    "w": 600,
+    "h": 449
+  },
+  "https://api.tela-botanica.org/img:000234203L.jpg": {
+    "w": 600,
+    "h": 274
+  },
+  "https://api.tela-botanica.org/img:000250999L.jpg": {
+    "w": 421,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000260081O.jpg": {
+    "w": 4288,
+    "h": 2848
+  },
+  "https://api.tela-botanica.org/img:000272321L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000279855L.jpg": {
+    "w": 600,
+    "h": 450
+  },
+  "https://api.tela-botanica.org/img:000308214L.jpg": {
+    "w": 600,
+    "h": 454
+  },
+  "https://api.tela-botanica.org/img:000314473L.jpg": {
+    "w": 600,
+    "h": 398
+  },
+  "https://api.tela-botanica.org/img:000331083L.jpg": {
+    "w": 600,
+    "h": 430
+  },
+  "https://api.tela-botanica.org/img:000331085L.jpg": {
+    "w": 600,
+    "h": 558
+  },
+  "https://api.tela-botanica.org/img:000332081L.jpg": {
+    "w": 253,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000332153L.jpg": {
+    "w": 409,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000332973L.jpg": {
+    "w": 564,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000332975L.jpg": {
+    "w": 600,
+    "h": 526
+  },
+  "https://api.tela-botanica.org/img:000332977L.jpg": {
+    "w": 534,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000333776L.jpg": {
+    "w": 600,
+    "h": 503
+  },
+  "https://api.tela-botanica.org/img:000339641L.jpg": {
+    "w": 600,
+    "h": 295
+  },
+  "https://api.tela-botanica.org/img:000339650L.jpg": {
+    "w": 520,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000669384L.jpg": {
+    "w": 600,
+    "h": 400
+  },
+  "https://api.tela-botanica.org/img:000788612L.jpg": {
+    "w": 339,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000790413L.jpg": {
+    "w": 220,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000790543L.jpg": {
+    "w": 461,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000790548O.jpg": {
+    "w": 1471,
+    "h": 1700
+  },
+  "https://api.tela-botanica.org/img:000790556L.jpg": {
+    "w": 600,
+    "h": 386
+  },
+  "https://api.tela-botanica.org/img:000790601L.jpg": {
+    "w": 429,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000790639L.jpg": {
+    "w": 481,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000860603L.jpg": {
+    "w": 376,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:000860605L.jpg": {
+    "w": 399,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:001797056L.jpg": {
+    "w": 354,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:001960457O.jpg": {
+    "w": 4744,
+    "h": 3558
+  },
+  "https://api.tela-botanica.org/img:002228938O.jpg": {
+    "w": 3508,
+    "h": 2339
+  },
+  "https://api.tela-botanica.org/img:002240934O.jpg": {
+    "w": 4608,
+    "h": 3456
+  },
+  "https://api.tela-botanica.org/img:002243248L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002308838L.jpg": {
+    "w": 600,
+    "h": 389
+  },
+  "https://api.tela-botanica.org/img:002308839L.jpg": {
+    "w": 600,
+    "h": 393
+  },
+  "https://api.tela-botanica.org/img:002318989O.jpg": {
+    "w": 3200,
+    "h": 2400
+  },
+  "https://api.tela-botanica.org/img:002412854L.jpg": {
+    "w": 385,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002433528L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002448377L.jpg": {
+    "w": 555,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002448676L.jpg": {
+    "w": 291,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002452038L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:002460504L.jpg": {
+    "w": 600,
+    "h": 561
+  },
+  "https://api.tela-botanica.org/img:002462563O.jpg": {
+    "w": 1500,
+    "h": 768
+  },
+  "https://api.tela-botanica.org/img:002564608L.jpg": {
+    "w": 600,
+    "h": 354
+  },
+  "https://api.tela-botanica.org/img:003135232L.jpg": {
+    "w": 450,
+    "h": 600
+  },
+  "https://api.tela-botanica.org/img:003135233O.jpg": {
+    "w": 2000,
+    "h": 2667
+  }
+}
