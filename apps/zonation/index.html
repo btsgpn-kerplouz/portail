@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" id="meta-viewport" content="width=device-width, initial-scale=1">
 <title>Zonation — Petite Mer de Gâvres</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#191b16">
@@ -314,6 +314,26 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
 .barre-score{height:6px;background:var(--line-soft);border-radius:999px;overflow:hidden;margin:.5em 0;}
 .barre-score>div{height:100%;background:var(--acc);}
 .syntaxon{font-style:italic;color:var(--text-2);font-size:.85rem;margin-bottom:.4em;}
+/* Bouton d'accès à la mini-flore d'une fiche habitat : doit sauter aux yeux
+   dès l'ouverture de la fiche (accent plein, pleine largeur, aperçu photo),
+   à l'opposé du bouton .secondaire discret qu'il remplace ici. */
+.bouton-mini-flore-fiche{
+  display:flex;align-items:center;gap:.7em;width:100%;
+  background:var(--acc);color:#fff;border:1px solid var(--acc);
+  border-radius:var(--rayon);padding:.5em .75em;margin:.7em 0 1.1em;
+  text-align:left;box-shadow:0 0 0 2px var(--acc-soft);
+}
+.bouton-mini-flore-fiche:hover{filter:brightness(.93);}
+.bouton-mini-flore-fiche .apercu-photos{display:flex;flex-shrink:0;padding-left:.45em;}
+.bouton-mini-flore-fiche .apercu-photos img{
+  width:2.1rem;height:2.1rem;object-fit:cover;border-radius:999px;
+  border:2px solid var(--acc);background:var(--card);margin-left:-.75em;display:block;
+}
+.bouton-mini-flore-fiche .apercu-photos:empty{padding-left:0;}
+.bouton-mini-flore-fiche .texte{display:flex;flex-direction:column;flex:1;gap:.05em;}
+.bouton-mini-flore-fiche .texte b{font-size:.92rem;font-family:var(--serif);}
+.bouton-mini-flore-fiche .texte span{font-size:.72rem;opacity:.9;font-weight:400;}
+.bouton-mini-flore-fiche .fleche{font-size:1.2rem;flex-shrink:0;}
 .tag{display:inline-block;background:var(--acc-soft);color:var(--acc-dark);border:1px solid var(--line);border-radius:999px;padding:.1em .5em;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.03em;margin-right:.3em;}
 .detail-bloc{margin-top:.6em;font-size:.9rem;}
 .liste-especes-resultat{display:flex;flex-wrap:wrap;gap:.3em;margin:.3em 0;}
@@ -368,6 +388,22 @@ table.cortege button.retirer{background:transparent;border:none;color:var(--stat
 .retour-lien{margin-bottom:.7em;display:inline-block;color:var(--acc);font-family:var(--mono);font-size:.78rem;text-decoration:none;}
 .retour-lien:hover{text-decoration:underline;}
 .zonation-diagram{width:100%;height:auto;margin-bottom:.6em;}
+/* Texte du schéma de zonation (grands ensembles + labels de zone), en px SVG
+   donc à taille fixe relative à la largeur réelle du diagramme : sur mobile
+   ce dernier est bien plus étroit (pas de max-width de <main> qui joue), donc
+   le texte y paraît nettement plus petit qu'en desktop à valeur de police
+   égale — d'où une police mobile plus grande que la base ci-dessous.
+   dy des tspans en em (voir construireProfilSVG/MiniProfilSVG) : l'interligne
+   suit ainsi la police quelle que soit la règle qui s'applique. */
+.txt-ge,.txt-ge-mini{font-size:10.6px;letter-spacing:0.03em;}
+.txt-zone,.txt-zone-mini{font-size:10.3px;}
+@media (max-width:640px){
+  /* "CONTACT DUNE" tient dans une seule colonne (85.7 unités) en monospace :
+     c'est ce mot le plus contraint qui plafonne la taille ci-dessous, pas les
+     labels de zone (sans-serif, plus étroit à taille égale). */
+  .txt-ge,.txt-ge-mini{font-size:11.5px;letter-spacing:0.01em;}
+  .txt-zone,.txt-zone-mini{font-size:13px;}
+}
 table.historique{width:100%;border-collapse:collapse;font-size:.85rem;}
 table.historique th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);}
 table.historique th,table.historique td{border-bottom:1px solid var(--line);padding:.4em .3em;text-align:left;}
@@ -480,10 +516,6 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <button class="accueil-bouton secondaire2" onclick="allerA('historique')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
-    </button>
-    <button class="accueil-bouton secondaire2" onclick="ouvrirMiniFloreGlobale()">
-      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 6c8 3 13 9 13 14 0 5-5 11-13 14-8-3-13-9-13-14 0-5 5-11 13-14z"></path><line x1="20" y1="34" x2="20" y2="16"></line><line x1="20" y1="24" x2="27" y2="17"></line><line x1="20" y1="24" x2="13" y2="17"></line></svg></span>
-      <span class="txt"><b>Mini-flore</b><span>Photographies des principales espèces végétales du site</span></span>
     </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
@@ -732,9 +764,20 @@ function especesMaitresses(){
 }
 
 /* ---------- Navigation ---------- */
+// Écrans de saisie : zoom tactile verrouillé pour ne pas gêner la
+// manipulation des contrôles (curseurs, boutons +/-, clavier). Partout
+// ailleurs (consultation), le zoom pincé reste disponible.
+const ECRANS_SAISIE = ['identite','releve'];
+function majZoomViewport(nom){
+  document.getElementById('meta-viewport').setAttribute('content',
+    ECRANS_SAISIE.includes(nom)
+      ? 'width=device-width, initial-scale=1, maximum-scale=1'
+      : 'width=device-width, initial-scale=1');
+}
 function allerA(nom){
   document.querySelectorAll('.ecran').forEach(e=>e.classList.remove('actif'));
   document.getElementById('ecran-'+nom).classList.add('actif');
+  majZoomViewport(nom);
   const titres = {
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
@@ -1180,7 +1223,7 @@ function construireProfilSVG(svgId, opts){
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="17" fill="${g.couleur}" opacity="0.13"/>
       <rect x="${x0}" y="15" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
-      <text x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.3" font-weight="700" letter-spacing="0.04em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+      <text class="txt-ge" x="${(x0+x1)/2}" y="12" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="700" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
 
@@ -1217,13 +1260,13 @@ function construireProfilSVG(svgId, opts){
   PROFIL_ZONATION.forEach((z,i)=>{
     const fichesAffiches = z.fiches;
     const lignes = decouperEnLignes(z.zone, 9);
-    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:10.5}">${l}</tspan>`).join('');
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
     const selectionnee = opts.zoneSelectionnee === i;
     html += `<g class="zone-colonne" tabindex="0" role="button" aria-label="${z.zone} — voir uniquement les habitats de cette zone" onclick="selectionnerZoneFiches(${i})" style="cursor:pointer;">
       <rect x="${i*w}" y="20" width="${w}" height="188" fill="${ZONES_LINES_COULEURS[i]}" opacity="0.01"/>
       <rect x="${i*w}" y="110" width="${w}" height="98" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.95:0.7}"/>
       ${selectionnee ? `<rect x="${i*w+1}" y="111" width="${w-2}" height="96" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
-      <text x="${i*w+w/2}" y="192" text-anchor="middle" font-size="9.3" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
+      <text class="txt-zone" x="${i*w+w/2}" y="190" text-anchor="middle" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
     fichesAffiches.forEach((fid, k)=>{
       const cx = i*w + 13 + (k%4)*16;
       const cy = 124 + Math.floor(k/4)*16;
@@ -1249,7 +1292,7 @@ function construireMiniProfilSVG(idxZone){
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="14" fill="${g.couleur}" opacity="0.13"/>
       <rect x="${x0}" y="12" width="${x1-x0-2}" height="3" fill="${g.couleur}"/>
-      <text x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.3" font-weight="700" letter-spacing="0.03em" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
+      <text class="txt-ge-mini" x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="700" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
   GRANDS_ENSEMBLES.slice(1).forEach(g=>{
@@ -1257,10 +1300,10 @@ function construireMiniProfilSVG(idxZone){
   });
   PROFIL_ZONATION.forEach((z,i)=>{
     const lignes = decouperEnLignes(z.zone, 9);
-    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?0:10}">${l}</tspan>`).join('');
+    const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
     html += `<g>
       <rect x="${i*w}" y="24" width="${w-2}" height="30" fill="${ZONES_LINES_COULEURS[i]}" opacity="${i===idxZone?0.9:0.4}"/>
-      <text x="${i*w+w/2}" y="66" text-anchor="middle" font-size="8.3" fill="#191b16">${tspans}</text>
+      <text class="txt-zone-mini" x="${i*w+w/2}" y="65" text-anchor="middle" fill="#191b16">${tspans}</text>
     </g>`;
     if(i===idxZone){
       html += `<circle cx="${i*w+w/2}" cy="39" r="6.5" fill="#c0562b" stroke="#fff" stroke-width="1.6"/>`;
@@ -1339,13 +1382,21 @@ function allerVoirFiche(id, origine){
       <span class="tag">Fiche ${h.id}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${PROFIL_ZONATION[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
       <h2>${h.nomFr}</h2>
       <div class="syntaxon">${h.syntaxon}</div>
+      ${especesMiniFlore.length ? `
+      <button class="bouton-mini-flore-fiche" onclick="ouvrirMiniFloreFiche(${idAttr(h.id)})">
+        <span class="apercu-photos">${construireApercuPhotosMiniFlore(especesMiniFlore, 3)}</span>
+        <span class="texte">
+          <b>🌿 Voir la mini-flore de cet habitat</b>
+          <span>${especesMiniFlore.length} espèce${especesMiniFlore.length>1?'s':''} en photo</span>
+        </span>
+        <span class="fleche" aria-hidden="true">→</span>
+      </button>` : ''}
       ${idxZone>=0 ? `<p class="abondance-label" style="margin:.9em 0 .2em;">Position sur le profil de zonation</p>${construireMiniProfilSVG(idxZone)}` : ''}
       <p style="font-size:.8rem;color:var(--text-2);">EUNIS ${h.codes.eunis} · CORINE ${h.codes.corine} · EUR28 ${h.codes.eur28} · Cahiers d'habitats ${h.codes.cahiers}</p>
       <div class="detail-bloc"><h3>Physionomie</h3><p>${h.physionomie||'—'}</p></div>
       <div class="detail-bloc"><h3>Écologie</h3><p>${h.ecologie||'—'}</p></div>
       <div class="detail-bloc"><h3>Espèces caractéristiques</h3><p>${especesParStatut('car')}</p></div>
       <div class="detail-bloc"><h3>Espèces fréquentes</h3><p>${especesParStatut('freq')}</p></div>
-      ${especesMiniFlore.length ? `<div class="detail-bloc"><button class="secondaire" onclick="ouvrirMiniFloreFiche(${idAttr(h.id)})">🌿 Mini-flore de cet habitat (${especesMiniFlore.length} espèce${especesMiniFlore.length>1?'s':''})</button></div>` : ''}
       <div class="detail-bloc"><h3>Confusions possibles</h3><p>${h.confusions||'—'}</p></div>
       <div class="detail-bloc"><h3>Dynamique et contacts</h3><p>${h.dynamique||'—'}</p></div>
     </div>
@@ -1382,6 +1433,18 @@ function construireGaleriePhotosHtml(info, nomFr){
   }).join('');
 }
 function nomAfficheEspece(e){ return (MINI_FLORE[e.latin] && MINI_FLORE[e.latin].nomFr) || e.fr; }
+/* Aperçu (jusqu'à `max` vignettes) affiché dans le gros bouton d'accès à la
+   mini-flore d'une fiche, pour donner envie de cliquer avant même d'y être :
+   une photo par espèce (la première trouvée), tailles M. */
+function construireApercuPhotosMiniFlore(especes, max){
+  const urls = [];
+  for(const e of especes){
+    const info = MINI_FLORE[e.latin];
+    if(info && info.photos && info.photos.length) urls.push(urlPhotoTaille(info.photos[0], 'M'));
+    if(urls.length >= max) break;
+  }
+  return urls.map(u=>`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`).join('');
+}
 function construireCarteEspeceMiniFlore(e){
   const info = MINI_FLORE[e.latin];
   const statutLabel = e.statut==='car' ? 'Caractéristique' : 'Fréquente';
