@@ -1842,21 +1842,43 @@ function viderHistorique(){
     majCompteurHistorique();
   }
 }
+/* Un champ CSV entre guillemets, les guillemets internes doublés (RFC 4180).
+   Sans cela, un ';' ou un retour à la ligne dans une remarque décalerait toutes
+   les colonnes suivantes. */
+function champCSV(v){ return `"${(v ?? '').toString().replace(/"/g, '""')}"`; }
+
+/* Déclenche le téléchargement d'un contenu texte.
+   Le lien doit être dans le document (Firefox ignore un click() sur un élément
+   détaché) et l'URL ne peut être révoquée qu'après le début du téléchargement,
+   sinon un gros fichier arrive tronqué. */
+function telechargerTexte(contenu, nomFichier){
+  /* BOM UTF-8 : sans lui, Excel lit le fichier dans l'encodage de la machine et
+     affiche « GÃ¢vres » au lieu de « Gâvres ». */
+  const url = URL.createObjectURL(new Blob(['﻿' + contenu], {type:'text/csv;charset=utf-8;'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = nomFichier; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+}
+
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const lignes = [['Transect','N°','Date','Observateur','Site','Commune','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Enregistré le'].join(';')];
+  const entetes = ['Transect','N°','Date','Observateur','Site','Commune','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Enregistré le'];
+  const lignes = [entetes];
   liste.forEach(r=>{
-    const especesAvecAbond = (r.cortege||[]).map(e => `${e.fr}${e.latin?' ('+e.latin+')':' [non référencée]'}:${libelleCouverture(e.mode, e.cover)}`).join(', ');
-    const remarque = (r.observation||'').replace(/[\r\n;]+/g,' ').trim();
-    lignes.push([r.transect||'', r.numero||'', r.dateReleve||(r.date||'').slice(0,10), r.observateur||'', r.site||'', r.commune||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond, remarque, r.date].join(';'));
+    /* Séparateur ' | ' et non ', ' : les noms français comportent des virgules
+       (« Salicorne, groupe europaea »), qui rendaient la colonne illisible — on
+       ne distinguait plus une espèce d'une autre. */
+    const especesAvecAbond = (r.cortege||[]).map(e =>
+      `${e.fr}${e.latin ? ' ('+e.latin+')' : ' [non référencée]'} : ${libelleCouverture(e.mode, e.cover)}`).join(' | ');
+    lignes.push([r.transect||'', r.numero||'', r.dateReleve||(r.date||'').slice(0,10), r.observateur||'',
+      r.site||'', r.commune||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond,
+      (r.observation||'').trim(), r.date]);
   });
-  const blob = new Blob([lignes.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'releves_petite_mer_de_gavres.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
+    'releves_petite_mer_de_gavres.csv');
 }
 
 /* ---------- Export compatible Phytoscope ----------
@@ -1899,13 +1921,8 @@ function exporterPourPhytoscopeCSV(){
       ]);
     });
   });
-  const csv = lignes.map(l => l.map(v => `"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
+    'releves_petite_mer_de_gavres_phytoscope.csv');
   if(omises.size || libres.size){
     const bloc = [];
     if(omises.size) bloc.push('Sans équivalent dans le référentiel de Phytoscope :\n'
