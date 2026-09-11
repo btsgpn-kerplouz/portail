@@ -1862,20 +1862,34 @@ function telechargerTexte(contenu, nomFichier){
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
 }
 
+/* Format long : une ligne = une espèce dans un relevé. L'ancien format mettait
+   tout le cortège dans une seule cellule, ce qui interdisait tri, filtre et
+   tableau croisé — et devenait illisible depuis que des noms français
+   comportent une virgule (« Salicorne, groupe europaea »). L'en-tête du
+   bordereau et le résultat de l'analyse sont répétés sur chaque ligne, pour
+   qu'elle se suffise à elle-même. */
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const entetes = ['Transect','N°','Date','Observateur','Site','Commune','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Enregistré le'];
+  const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
+    'Espèce','Nom scientifique','Coefficient',
+    'Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
   const lignes = [entetes];
   liste.forEach(r=>{
-    /* Séparateur ' | ' et non ', ' : les noms français comportent des virgules
-       (« Salicorne, groupe europaea »), qui rendaient la colonne illisible — on
-       ne distinguait plus une espèce d'une autre. */
-    const especesAvecAbond = (r.cortege||[]).map(e =>
-      `${e.fr}${e.latin ? ' ('+e.latin+')' : ' [non référencée]'} : ${libelleCouverture(e.mode, e.cover)}`).join(' | ');
-    lignes.push([r.transect||'', r.numero||'', r.dateReleve||(r.date||'').slice(0,10), r.observateur||'',
-      r.site||'', r.commune||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond,
-      (r.observation||'').trim(), r.date]);
+    const bordereau = [r.transect||'', r.numero||'', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
+      r.observateur||'', r.site||'', r.commune||''];
+    const analyse = [r.top||'', r.carMatch||'', r.score ?? '', (r.observation||'').trim(), r.date||''];
+    const cortege = r.cortege || [];
+    if(!cortege.length){
+      // relevé sans espèce : on garde la ligne, sinon le relevé disparaîtrait du fichier
+      lignes.push([...bordereau, '', '', '', ...analyse]);
+      return;
+    }
+    cortege.forEach(e=>{
+      lignes.push([...bordereau,
+        e.fr || '', e.latin || 'non référencée', libelleCouverture(e.mode, e.cover),
+        ...analyse]);
+    });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
     'releves_petite_mer_de_gavres.csv');
