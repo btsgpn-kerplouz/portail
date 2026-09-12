@@ -216,7 +216,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .rubrique-tete .position{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 
 /* ---- entrée : ligne aplatie ---- */
-.entree{border-bottom:1px solid var(--af-filet)}
+.entree{border-bottom:1px solid var(--af-filet);transition:transform .12s ease}
 .mode-publiee .entree:last-child{border-bottom:0}
 
 .entree-row{display:flex;align-items:center;min-height:64px}
@@ -224,11 +224,18 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .mode-publiee .entree-row{align-items:stretch}
 .valide-case{flex:none;margin-top:0}
 
-/* ---- ordre des entrées au sein d'une rubrique (lot 10bis) ---- */
-.reorder-btns{flex:none;display:flex;flex-direction:column;gap:2px}
-.btn-reorder{width:20px;height:18px;padding:0;line-height:1;font-size:9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-2)}
-.btn-reorder:hover:not(:disabled){background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
-.btn-reorder:disabled{opacity:.3}
+/* ---- ordre des entrées (Lot 28, 12/09/2026) : glisser-déposer via une
+   poignée, remplace les boutons Monter/Descendre cran par cran (retour
+   d'usage — trop lent pour réordonner une liste retenue de plusieurs
+   entrées). Voir dragEntree*() plus bas : déplacement en survol calculé par
+   transform, DOM réordonné seulement au relâchement. touch-action:none
+   indispensable pour que le geste tactile ne scrolle pas la page pendant le
+   glissé. */
+.reorder-btns{flex:none;display:flex;align-items:center}
+.drag-handle{width:24px;height:36px;padding:0;line-height:1;font-size:15px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-2);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.drag-handle:hover{background:var(--af-redaction);color:var(--af-sur-redaction);border-color:var(--af-redaction)}
+.entree-en-glisse{transition:none;position:relative;z-index:5;opacity:.85}
+.entree-en-glisse .drag-handle,.drag-handle:active{cursor:grabbing}
 
 
 .etat-pastille{flex:none;font-family:var(--af-police-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3);white-space:nowrap}
@@ -1430,18 +1437,17 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="usage"><div class="usage-lisere"><span>Privé</span></div><div class="usage-corps"><div class="usage-titre">Usage en cours — jamais publié</div><p class="usage-texte">' + ed(esc(e.usage), e.id + ".usage") + '</p></div></div>';
   }
 
-  function renderEntree(e, estPremier, estDernier){
+  function renderEntree(e){
     var redac = state.mode === "redaction";
     var btn = '<a class="btn-source-compact" href="' + esc(e.url || ("#" + e.id)) + '"' + (redac ? "" : ' data-action="clic-source" data-id="' + e.id + '"') + '><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(e.source.domaine) + '</span></a>';
     var actions = redac
       ? '<div class="entree-actions"><button type="button" class="btn-mini" data-action="edit-entree" data-id="' + e.id + '">Modifier</button><button type="button" class="btn-mini" data-action="toggle-deplacer" data-id="' + e.id + '">Déplacer</button><button type="button" class="btn-mini danger" data-action="ecarter-entree" data-id="' + e.id + '">Supprimer</button></div>'
       : "";
     // Ordre d'affichage du numéro (Lot 10bis, à plat sur tout le numéro
-    // depuis le Lot 17) : boutons compacts Monter/Descendre, désactivés en
-    // butée de liste plutôt que masqués (repère visuel stable, pas de saut
-    // de mise en page).
+    // depuis le Lot 17) : poignée de glisser-déposer depuis le Lot 28
+    // (remplace Monter/Descendre — voir dragEntreeDemarrer() plus bas).
     var reorder = redac
-      ? '<div class="reorder-btns"><button type="button" class="btn-reorder" data-action="monter-entree" data-id="' + e.id + '" title="Monter"' + (estPremier ? " disabled" : "") + '>▲</button><button type="button" class="btn-reorder" data-action="descendre-entree" data-id="' + e.id + '" title="Descendre"' + (estDernier ? " disabled" : "") + '>▼</button></div>'
+      ? '<div class="reorder-btns"><button type="button" class="drag-handle" data-action="drag-entree" data-id="' + e.id + '" title="Glisser pour réordonner (ou flèches ↑ ↓ au clavier)" aria-label="Réordonner l’entrée ' + esc(e.titre) + ' — glisser, ou flèches haut/bas au clavier">⠿</button></div>'
       : "";
 
     var row =
@@ -1619,25 +1625,133 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return entrees.reduce(function(m, x){ return Math.max(m, (x.ordre || 0) + 1); }, 0);
   }
 
-  // Déplace une entrée d'un cran (sens -1 = monter, +1 = descendre) dans la
-  // liste à plat du numéro entier (Lot 17 — auparavant au sein d'une seule
-  // rubrique, Lot 10bis) : réassigne 0..n-1 à TOUTES les entrées du numéro
-  // plutôt que d'échanger deux valeurs — évite tout cas particulier avec
-  // des `ordre` par défaut à 0 ou déjà égaux.
-  function deplacerOrdreEntree(id, sens){
-    var e = entrees.filter(function(x){ return x.id === id; })[0];
-    if (!e) return;
-    var voisins = entreesOrdonnees();
-    var idx = voisins.indexOf(e);
-    var idxCible = idx + sens;
-    if (idxCible < 0 || idxCible >= voisins.length) return;
-    voisins.splice(idx, 1);
-    voisins.splice(idxCible, 0, e);
-    voisins.forEach(function(x, i){
-      if (x.ordre !== i) { x.ordre = i; ecrireEntree(x.id, { ordre: i }); }
+  // Réassigne 0..n-1 à TOUTES les entrées du numéro dans l'ordre `idsEnOrdre`
+  // donné (liste à plat, Lot 17) plutôt que d'échanger deux valeurs — évite
+  // tout cas particulier avec des `ordre` par défaut à 0 ou déjà égaux.
+  // Partagée par le glisser-déposer (dragEntreeTerminer()) — avant le Lot 28
+  // c'était Monter/Descendre cran par cran qui appelait directement cette
+  // logique.
+  function appliquerOrdreEntrees(idsEnOrdre){
+    idsEnOrdre.forEach(function(id, i){
+      var e = entrees.filter(function(x){ return x.id === id; })[0];
+      if (e && e.ordre !== i) { e.ordre = i; ecrireEntree(e.id, { ordre: i }); }
     });
     render();
   }
+
+  // Glisser-déposer d'une entrée dans la liste à plat du numéro (Lot 28,
+  // 12/09/2026 — remplace Monter/Descendre cran par cran, retour d'usage :
+  // trop lent pour réordonner plusieurs entrées retenues). Repose sur
+  // Pointer Events (pas l'API HTML5 Drag and Drop, dont le support tactile
+  // est peu fiable) : pendant le glissé, seul l'élément saisi bouge
+  // réellement (transform translateY suivant le pointeur) et les autres
+  // sont juste décalés en aperçu du même montant (sa hauteur à lui, pas la
+  // leur : c'est le vide qu'il laisse/comble qui compte) ; le DOM n'est
+  // réordonné qu'au relâchement, via render().
+  var dragEntree = null;
+
+  function entreesElementsDeLaColonne(el){
+    return Array.prototype.slice.call(el.parentElement.children).filter(function(c){
+      return c.classList.contains("entree");
+    });
+  }
+
+  function dragEntreeDemarrer(ev, handle){
+    if (state.mode !== "redaction") return;
+    var el = handle.closest(".entree");
+    if (!el) return;
+    var items = entreesElementsDeLaColonne(el);
+    var idx = items.indexOf(el);
+    if (idx === -1) return;
+    var rects = items.map(function(it){ return it.getBoundingClientRect(); });
+    dragEntree = {
+      pointerId: ev.pointerId,
+      el: el,
+      items: items,
+      startIndex: idx,
+      startY: ev.clientY,
+      height: rects[idx].height,
+      centres: rects.map(function(r){ return r.top + r.height / 2; })
+    };
+    try { handle.setPointerCapture(ev.pointerId); } catch (err) {}
+    el.classList.add("entree-en-glisse");
+    ev.preventDefault();
+  }
+
+  // Index où l'entrée saisie atterrirait si on relâchait maintenant : compte
+  // combien de voisins ont déjà été « doublés » par son centre courant.
+  function dragEntreeIndexCible(d, centreCourant){
+    var audessus = 0, endessous = 0;
+    d.items.forEach(function(item, i){
+      if (item === d.el) return;
+      if (i > d.startIndex && centreCourant > d.centres[i]) endessous++;
+      else if (i < d.startIndex && centreCourant < d.centres[i]) audessus++;
+    });
+    return d.startIndex + endessous - audessus;
+  }
+
+  function dragEntreeDeplacer(ev){
+    var d = dragEntree;
+    if (!d || ev.pointerId !== d.pointerId) return;
+    var dy = ev.clientY - d.startY;
+    d.el.style.transform = "translateY(" + dy + "px)";
+    var centreCourant = d.centres[d.startIndex] + dy;
+    d.items.forEach(function(item, i){
+      if (item === d.el) return;
+      var decalage = 0;
+      if (i > d.startIndex && centreCourant > d.centres[i]) decalage = -d.height;
+      else if (i < d.startIndex && centreCourant < d.centres[i]) decalage = d.height;
+      item.style.transform = decalage ? "translateY(" + decalage + "px)" : "";
+    });
+  }
+
+  function dragEntreeTerminer(ev, annule){
+    var d = dragEntree;
+    if (!d || ev.pointerId !== d.pointerId) return;
+    dragEntree = null;
+    var centreCourant = d.centres[d.startIndex] + (ev.clientY - d.startY);
+    var indexCible = annule ? d.startIndex : dragEntreeIndexCible(d, centreCourant);
+    d.items.forEach(function(item){ item.style.transform = ""; });
+    d.el.classList.remove("entree-en-glisse");
+    if (indexCible === d.startIndex) return;
+    var ordonnes = d.items.slice();
+    ordonnes.splice(d.startIndex, 1);
+    ordonnes.splice(indexCible, 0, d.el);
+    appliquerOrdreEntrees(ordonnes.map(function(it){ return it.getAttribute("data-entree"); }));
+  }
+
+  document.addEventListener("pointerdown", function(ev){
+    var handle = ev.target.closest('[data-action="drag-entree"]');
+    if (handle) dragEntreeDemarrer(ev, handle);
+  });
+  document.addEventListener("pointermove", function(ev){ dragEntreeDeplacer(ev); });
+  document.addEventListener("pointerup", function(ev){ dragEntreeTerminer(ev, false); });
+  document.addEventListener("pointercancel", function(ev){ dragEntreeTerminer(ev, true); });
+
+  // Repli clavier (audit RGAA) : le glisser-déposer seul rendrait la poignée
+  // inutilisable au clavier — ↑/↓ quand elle a le focus déplacent l'entrée
+  // d'un cran, comme les anciens boutons Monter/Descendre, en reposant sur
+  // la même fonction que le glisser (appliquerOrdreEntrees). Le focus est
+  // restitué sur la poignée de l'entrée déplacée après le re-rendu complet
+  // (render() reconstruit tout le DOM, l'ancien élément n'existe plus).
+  document.addEventListener("keydown", function(ev){
+    if (ev.key !== "ArrowUp" && ev.key !== "ArrowDown") return;
+    var handle = ev.target.closest && ev.target.closest('[data-action="drag-entree"]');
+    if (!handle) return;
+    var el = handle.closest(".entree");
+    if (!el) return;
+    var items = entreesElementsDeLaColonne(el);
+    var idx = items.indexOf(el);
+    var idxCible = idx + (ev.key === "ArrowUp" ? -1 : 1);
+    if (idxCible < 0 || idxCible >= items.length) return;
+    ev.preventDefault();
+    items.splice(idx, 1);
+    items.splice(idxCible, 0, el);
+    var id = handle.getAttribute("data-id");
+    appliquerOrdreEntrees(items.map(function(it){ return it.getAttribute("data-entree"); }));
+    var nouvelleHandle = document.querySelector('[data-action="drag-entree"][data-id="' + id + '"]');
+    if (nouvelleHandle) nouvelleHandle.focus();
+  });
 
   // Une ligne "valeur | libellé" (le "*" final marque l'accent) -> {v,l[,accent]}.
   // Partagée entre le textarea de saisie manuelle (parseChiffres) et les
@@ -2261,7 +2375,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (alerte !== null) {
       corpsHtml = alerte;
     } else if (state.mode === "redaction") {
-      corpsHtml = visibles.map(function(e, i){ return renderEntree(e, i === 0, i === visibles.length - 1); }).join("");
+      corpsHtml = visibles.map(function(e){ return renderEntree(e); }).join("");
     } else {
       // Vue publiée : deux rendus complets côte à côte — le « classique »
       // (renderEntree(), grille 2 colonnes du Lot 4quater) réservé au
@@ -2270,7 +2384,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       // jamais ce HTML), la « carte » (renderEntreeCarte(), grille
       // responsive) réservée à l'écran — voir le commentaire en tête de
       // renderEntreeCarte() et .mode-publiee .entree / .carte-grille en CSS.
-      var itemsClassique = visibles.map(function(e, i){ return renderEntree(e, i === 0, i === visibles.length - 1); }).join("");
+      var itemsClassique = visibles.map(function(e){ return renderEntree(e); }).join("");
       var itemsCartes = '<div class="carte-grille">' + visibles.map(function(e){ return renderEntreeCarte(e); }).join("") + '</div>';
       corpsHtml = itemsClassique + itemsCartes;
     }
@@ -2913,13 +3027,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       render();
       return;
     }
-
-    // Ordre d'affichage au sein d'une rubrique (Lot 10bis).
-    var monterBtn = ev.target.closest('[data-action="monter-entree"]');
-    if (monterBtn) { deplacerOrdreEntree(monterBtn.getAttribute("data-id"), -1); return; }
-
-    var descendreBtn = ev.target.closest('[data-action="descendre-entree"]');
-    if (descendreBtn) { deplacerOrdreEntree(descendreBtn.getAttribute("data-id"), 1); return; }
 
     // ---- lot 4 : publication (état ⑥) ----
     if (ev.target.closest('[data-action="publier-numero"]')) {
