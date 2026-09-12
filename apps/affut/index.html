@@ -999,13 +999,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function versLigneSource(s){
     return {
       id: s.id, nom: s.nom, adresse: s.adresse, type: s.type, echelle: s.echelle, territoire: s.territoire,
-      rubrique_defaut: s.rubriqueDefaut, derniere_moisson: s.derniereMoisson, compteurs: s.compteurs
+      rubrique_defaut: s.rubriqueDefaut, derniere_moisson: s.derniereMoisson, compteurs: s.compteurs,
+      periodicite: s.periodicite || "hebdomadaire", notes: s.notes || ""
     };
   }
   function depuisLigneSource(r){
     return {
       id: r.id, nom: r.nom, adresse: r.adresse, type: r.type, echelle: r.echelle, territoire: r.territoire,
-      rubriqueDefaut: r.rubrique_defaut, derniereMoisson: r.derniere_moisson || {}, compteurs: r.compteurs || {}
+      rubriqueDefaut: r.rubrique_defaut, derniereMoisson: r.derniere_moisson || {}, compteurs: r.compteurs || {},
+      periodicite: r.periodicite || "hebdomadaire", notes: r.notes || ""
     };
   }
 
@@ -1323,6 +1325,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     recherche: { q: "", champ: "tout", rubrique: "toutes" },
     sommaireDeplie: {},
     sourcesDeplie: false,
+    sourcesFiltre: "toutes", // "toutes" | "hebdomadaire" | "mensuelle" — filtre de l'écran Sources
     bilanEntreesDeplie: false,
     publicationRefusee: null,
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
@@ -2374,7 +2377,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="source-row">' +
       '<div class="source-nom">' +
         '<span class="nom">' + esc(s.nom) + '</span>' +
-        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + '</span>' +
+        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + ' · ' + (s.periodicite === "mensuelle" ? "mensuelle" : "hebdomadaire") + '</span>' +
         (s.derniereMoisson.statut === "echec" ? '<span class="echec-note">× ' + esc(s.derniereMoisson.detail) + (s.derniereMoisson.note ? " · " + esc(s.derniereMoisson.note) : "") + '</span>' : "") +
       '</div>' +
       '<div class="source-rubrique">' + esc(s.rubriqueDefaut) + '</div>' +
@@ -2385,19 +2388,32 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   function renderSourcesEcran(){
-    var totalEchec = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut === "echec"; }).length;
+    var nbHebdo = sourcesSuivies.filter(function(s){ return s.periodicite !== "mensuelle"; }).length;
+    var nbMensuelle = sourcesSuivies.length - nbHebdo;
+    var sourcesFiltrees = sourcesSuivies.filter(function(s){
+      if (state.sourcesFiltre === "hebdomadaire") return s.periodicite !== "mensuelle";
+      if (state.sourcesFiltre === "mensuelle") return s.periodicite === "mensuelle";
+      return true;
+    });
+    var totalEchec = sourcesFiltrees.filter(function(s){ return s.derniereMoisson.statut === "echec"; }).length;
     var derniereDate = sourcesSuivies.length ? sourcesSuivies[0].derniereMoisson.date : "";
 
     var entete = '<h1 class="sr-only">Sources suivies</h1><div class="sources-entete">' +
-      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>interrogées chaque samedi à 6 h</span></div>' +
+      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>dont ' + nbHebdo + ' visitées chaque samedi et ' + nbMensuelle + ' une fois par mois</span></div>' +
       '<div class="sources-collecte"><span class="label">Dernière collecte</span><span class="valeur">' + esc(derniereDate) + (totalEchec ? ' · <span class="echec">' + totalEchec + ' en échec</span>' : "") + '</span></div>' +
       '<div class="sources-entete-actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-plein" data-action="source-add">+ Suivre une source</button></div>' +
     '</div>';
 
+    var filtres = '<div class="recherche-filtres"><div class="filtre-groupe"><span class="lbl">Périodicité</span><div class="filtre-toggle">' +
+      '<button type="button" data-action="sources-filtre" data-filtre="toutes" aria-pressed="' + (state.sourcesFiltre === "toutes") + '">toutes (' + sourcesSuivies.length + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="hebdomadaire" aria-pressed="' + (state.sourcesFiltre === "hebdomadaire") + '">hebdomadaires (' + nbHebdo + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="mensuelle" aria-pressed="' + (state.sourcesFiltre === "mensuelle") + '">mensuelles (' + nbMensuelle + ')</button>' +
+    '</div></div></div>';
+
     var cols = '<div class="sources-cols"><span>Source</span><span>Rubrique par défaut</span><span>Dernière moisson</span><span>Ce qu\'elle a rapporté</span><span></span></div>';
 
-    var echec = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut === "echec"; });
-    var reste = sourcesSuivies.filter(function(s){ return s.derniereMoisson.statut !== "echec"; });
+    var echec = sourcesFiltrees.filter(function(s){ return s.derniereMoisson.statut === "echec"; });
+    var reste = sourcesFiltrees.filter(function(s){ return s.derniereMoisson.statut !== "echec"; });
     var attention = reste.filter(function(s){ return s.compteurs.rapportees && (s.compteurs.retenues / s.compteurs.rapportees) < 0.05; });
     var autres = reste.filter(function(s){ return attention.indexOf(s) === -1; });
 
@@ -2418,7 +2434,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       visiblesAutres.map(function(s){ return renderSourceRow(s, false); }).join("") +
       (masquees.length ? '<div class="sources-replie"><span class="chip">' + masquees.map(function(s){ return esc(s.nom); }).join(" · ") + '</span></div>' : "");
 
-    return '<div class="sources">' + entete + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
+    return '<div class="sources">' + entete + filtres + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
   }
 
   // ---- Bilan de fréquentation (Lot 13) : totaux seulement (vues par
@@ -2504,7 +2520,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             champ("Échelle", "echelle", s ? s.echelle : "", "ex. national, régional") +
             champ("Territoire", "territoire", s ? s.territoire : "") +
           '</div>' +
-          champ("Rubrique par défaut", "rubriqueDefaut", s ? s.rubriqueDefaut : "") +
+          '<div class="champs-ligne">' +
+            champ("Rubrique par défaut", "rubriqueDefaut", s ? s.rubriqueDefaut : "") +
+            '<div class="champ"><label for="champ-periodicite">Périodicité</label>' +
+              '<select id="champ-periodicite" name="periodicite">' +
+                '<option value="hebdomadaire"' + (!s || s.periodicite !== "mensuelle" ? " selected" : "") + '>hebdomadaire — visitée à chaque veille</option>' +
+                '<option value="mensuelle"' + (s && s.periodicite === "mensuelle" ? " selected" : "") + '>mensuelle — revues/bulletins peu fréquents</option>' +
+              '</select></div>' +
+          '</div>' +
+          champ("Notes (éditeur, thématique, accès…)", "notes", s ? s.notes : "", "informatif, jamais lu par la routine", true) +
           '<div class="modal-boutons">' +
             (editing ? '<button type="button" class="lien-action danger" data-action="source-remove" data-id="' + s.id + '">Ne plus suivre cette source</button>' : '<span></span>') +
             '<div class="modal-boutons-droite">' +
@@ -3006,6 +3030,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     if (ev.target.closest('[data-action="deplier-sources"]')) { state.sourcesDeplie = !state.sourcesDeplie; render(); return; }
 
+    var sourcesFiltreBtn = ev.target.closest('[data-action="sources-filtre"]');
+    if (sourcesFiltreBtn) { state.sourcesFiltre = sourcesFiltreBtn.getAttribute("data-filtre"); state.sourcesDeplie = false; render(); return; }
+
     if (ev.target.closest('[data-action="deplier-bilan-entrees"]')) { state.bilanEntreesDeplie = !state.bilanEntreesDeplie; render(); return; }
   });
 
@@ -3156,6 +3183,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         id: sid,
         nom: sval("nom"), adresse: sval("adresse"), type: sval("type") || "flux RSS",
         echelle: sval("echelle"), territoire: sval("territoire"), rubriqueDefaut: sval("rubriqueDefaut"),
+        periodicite: sval("periodicite") || "hebdomadaire", notes: sval("notes"),
         derniereMoisson: existingS ? existingS.derniereMoisson : { date: dateImpression(), statut: "ok", entrees: 0 },
         compteurs: existingS ? existingS.compteurs : { retenues: 0, rapportees: 0 }
       };

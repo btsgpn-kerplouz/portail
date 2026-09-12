@@ -68,8 +68,27 @@ Le brief demande désormais 15 à 20 candidats par exécution, voire davantage
 **découper en plusieurs `POST` de 20 maximum** sur le même numéro. Avec 10
 appels par heure autorisés, cela laisse de la marge.
 
-⚠️ Le `GET` renvoie au plus **50** sources suivies (`.limit(50)` sur
-`affut_sources_suivies`, sans tri par pertinence). Tant que l'écran Sources
-en compte moins, aucun effet ; au-delà, les sources les plus récemment
-créées disparaîtraient du contexte **sans aucun message d'erreur**. À relever
-si la liste s'étoffe.
+⚠️ Le `GET` renvoie au plus **200** sources suivies (`.limit(200)` sur
+`affut_sources_suivies`, relevé de 50 le 12/09/2026 après la fusion avec
+l'ancien catalogue de revues — voir plus bas). Tant que la table en compte
+moins, aucun effet ; au-delà, les sources les plus récemment créées
+disparaîtraient du contexte **sans aucun message d'erreur**. À relever si la
+liste s'étoffe encore.
+
+## Périodicité des sources suivies (12/09/2026)
+
+`affut_sources_suivies` porte une colonne `periodicite` (`hebdomadaire` par
+défaut, ou `mensuelle`) — voir migration
+`supabase/013-sources-suivies-periodicite.sql`. Le `GET` ne renvoie dans
+`sources_a_moissonner` que :
+- les sources `hebdomadaire`, à chaque exécution ;
+- les sources `mensuelle`, uniquement quand la collecte tombe dans les 7
+  premiers jours du mois (`new Date().getUTCDate() <= 7`, proxy déterministe
+  de « premier samedi du mois » vu la cadence hebdomadaire fixe).
+
+Avant cette date, il existait une seconde liste — un catalogue statique de
+137 revues/bulletins dans `documents/brief-veille.md`, visité une fois par
+mois par une logique côté agent plutôt que côté serveur. Elle a été
+migrée dans cette même table (`periodicite = 'mensuelle'`) pour qu'il n'y
+ait plus qu'une seule liste d'adresses à consulter, éditable depuis l'écran
+« Sources » de l'app plutôt que dans un fichier markdown.

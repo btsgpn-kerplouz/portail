@@ -185,23 +185,43 @@ async function handleContext(): Promise<Response> {
     .sort((a, b) => a.localeCompare(b, "fr"));
   const rubriquesConnues = [...RUBRIQUES_CANONIQUES, ...rubriquesExtra];
 
-  // Sources suivies (écran « Sources », lot 4) : liste compilée à la main par
-  // l'enseignant — voir brief-veille.md, section « Sources à moissonner en
-  // priorité ». Contrairement à `entrees_retenues_recentes`/`candidats_ecartes_recents`
-  // (de l'historique), cette liste est une consigne : chaque source doit être
-  // effectivement visitée à chaque exécution, pas seulement lue comme contexte.
-  const { data: sourcesSuivies } = await supabase
+  // Sources suivies (écran « Sources », lot 4 ; périodicité ajoutée le
+  // 12/09/2026) : liste compilée à la main par l'enseignant — voir
+  // brief-veille.md, section « Sources à moissonner en priorité ». Seule
+  // liste d'adresses à visiter (fusion avec l'ancien catalogue statique de
+  // revues du brief, qui faisait doublon et prêtait à confusion — voir
+  // AVANCEMENT.md). Contrairement à `entrees_retenues_recentes`/
+  // `candidats_ecartes_recents` (de l'historique), cette liste est une
+  // consigne : chaque source renvoyée doit être effectivement visitée à
+  // cette exécution, pas seulement lue comme contexte.
+  //
+  // `periodicite` distingue deux cadences plutôt que deux listes séparées :
+  // - 'hebdomadaire' (défaut) : renvoyée à chaque exécution ;
+  // - 'mensuelle' (revues/bulletins qui paraissent au trimestre ou à
+  //   l'année) : renvoyée seulement quand la collecte tombe dans les 7
+  //   premiers jours du mois, une approximation déterministe de « la
+  //   première exécution hebdomadaire du mois » (la routine tourne chaque
+  //   samedi, donc au plus un samedi sur les 7 premiers jours).
+  // limit(200) plutôt que 50 : la fusion avec le catalogue de revues porte
+  // le total à ~150 lignes, quasiment tout renvoyé les semaines où
+  // `estSemaineMensuelle` est vrai (silencieusement tronqué au-delà, comme
+  // avant — mais avec de la marge cette fois).
+  const estSemaineMensuelle = new Date().getUTCDate() <= 7;
+  const { data: sourcesSuiviesBrutes } = await supabase
     .from("affut_sources_suivies")
-    .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut")
+    .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut, periodicite")
     .order("cree_le", { ascending: true })
-    .limit(50);
+    .limit(200);
+  const sourcesAMoissonner = (sourcesSuiviesBrutes ?? [])
+    .filter((s) => s.periodicite !== "mensuelle" || estSemaineMensuelle)
+    .map(({ periodicite: _periodicite, ...reste }) => reste);
 
   return json({
     cible,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
     urls_deja_utilisees: urlsDejaUtilisees,
-    sources_a_moissonner: sourcesSuivies ?? [],
+    sources_a_moissonner: sourcesAMoissonner,
     rubriques_connues: rubriquesConnues,
   });
 }
