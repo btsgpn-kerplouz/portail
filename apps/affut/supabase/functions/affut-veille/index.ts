@@ -115,15 +115,23 @@ async function handleContext(): Promise<Response> {
     .order("numero", { ascending: false });
   if (errNumeros) return json({ error: errNumeros.message }, 500);
 
-  const brouillonAvecMoisson = (numeros ?? []).find(
-    (n) => n.statut === "brouillon" && Array.isArray(n.moisson) && n.moisson.length > 0,
-  );
+  // Le brouillon « en cours » est le numéro pas encore publié, qu'il ait ou
+  // non des candidats en attente de tri dans sa moisson : un brouillon dont
+  // la moisson a déjà été entièrement triée (candidats validés en entrées,
+  // ou écartés) reste le numéro à alimenter — il ne faut PAS en fabriquer un
+  // suivant tant que celui-ci n'est pas publié (bug constaté le 12/09/2026 :
+  // la routine avait créé un n°4 alors que le n°3, brouillon avec moisson
+  // vide car déjà triée, était toujours en préparation).
+  const brouillons = (numeros ?? []).filter((n) => n.statut === "brouillon");
+  const brouillonActuel = brouillons.length
+    ? brouillons.reduce((plusAncien, n) => (n.numero < plusAncien.numero ? n : plusAncien))
+    : null;
 
-  const cible = brouillonAvecMoisson
+  const cible = brouillonActuel
     ? {
-      numero: brouillonAvecMoisson.numero,
+      numero: brouillonActuel.numero,
       existe: true,
-      moisson_actuelle: brouillonAvecMoisson.moisson,
+      moisson_actuelle: brouillonActuel.moisson ?? [],
     }
     : {
       numero: (numeros ?? []).reduce((m, n) => Math.max(m, n.numero), 0) + 1,
@@ -177,23 +185,64 @@ async function handleContext(): Promise<Response> {
     .sort((a, b) => a.localeCompare(b, "fr"));
   const rubriquesConnues = [...RUBRIQUES_CANONIQUES, ...rubriquesExtra];
 
-  // Sources suivies (écran « Sources », lot 4) : liste compilée à la main par
-  // l'enseignant — voir brief-veille.md, section « Sources à moissonner en
-  // priorité ». Contrairement à `entrees_retenues_recentes`/`candidats_ecartes_recents`
-  // (de l'historique), cette liste est une consigne : chaque source doit être
-  // effectivement visitée à chaque exécution, pas seulement lue comme contexte.
-  const { data: sourcesSuivies } = await supabase
+  // Sources suivies (écran « Sources », lot 4 ; périodicité ajoutée le
+  // 12/09/2026) : liste compilée à la main par l'enseignant — voir
+  // brief-veille.md, section « Sources à moissonner en priorité ». Seule
+  // liste d'adresses à visiter (fusion avec l'ancien catalogue statique de
+  // revues du brief, qui faisait doublon et prêtait à confusion — voir
+  // AVANCEMENT.md). Contrairement à `entrees_retenues_recentes`/
+  // `candidats_ecartes_recents` (de l'historique), cette liste est une
+  // consigne : chaque source renvoyée doit être effectivement visitée à
+  // cette exécution, pas seulement lue comme contexte.
+  //
+  // `periodicite` distingue deux cadences plutôt que deux listes séparées :
+  // - 'hebdomadaire' (défaut) : renvoyée à chaque exécution ;
+  // - 'mensuelle' (revues/bulletins qui paraissent au trimestre ou à
+  //   l'année, ~137 lignes) : renvoyée par **rotation d'un tiers par
+  //   semaine** plutôt qu'en bloc une fois par mois (révisé le 12/09/2026,
+  //   demande explicite de l'utilisateur après la fusion des deux listes :
+  //   visiter 151 adresses en une seule exécution, une semaine sur quatre,
+  //   coûtait trop cher en temps/crédits par rapport à un rythme régulier).
+  //   Chaque source `mensuelle` est assignée à l'un de 3 groupes par un
+  //   hash déterministe de son `id` (`groupeRotation()`) — pas stocké en
+  //   base, recalculé à chaque appel, donc aucune migration à refaire si le
+  //   nombre de sources change. Le groupe actif tourne avec le numéro de
+  //   semaine ISO (`groupeSemaine = numeroSemaineIso() % 3`), donc chaque
+  //   source mensuelle est visitée une semaine sur trois (~toutes les 3
+  //   semaines, un peu plus fréquent qu'avant mais réparti) plutôt qu'un pic
+  //   de 151 sources le même jour.
+  // limit(200) plutôt que 50 : la fusion avec le catalogue de revues porte
+  // le total à ~150 lignes (silencieusement tronqué au-delà, comme avant —
+  // mais avec de la marge cette fois).
+  const numeroSemaineIso = (d: Date): number => {
+    const jour = d.getUTCDay() || 7;
+    const jeudi = new Date(d);
+    jeudi.setUTCDate(d.getUTCDate() + 4 - jour);
+    const anneeIso = jeudi.getUTCFullYear();
+    const jan1 = new Date(Date.UTC(anneeIso, 0, 1));
+    return Math.ceil((((jeudi.getTime() - jan1.getTime()) / 86400000) + 1) / 7);
+  };
+  const groupeRotation = (id: string): number => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return h % 3;
+  };
+  const groupeSemaine = numeroSemaineIso(new Date()) % 3;
+  const { data: sourcesSuiviesBrutes } = await supabase
     .from("affut_sources_suivies")
-    .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut")
+    .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut, periodicite")
     .order("cree_le", { ascending: true })
-    .limit(50);
+    .limit(200);
+  const sourcesAMoissonner = (sourcesSuiviesBrutes ?? [])
+    .filter((s) => s.periodicite !== "mensuelle" || groupeRotation(s.id) === groupeSemaine)
+    .map(({ periodicite: _periodicite, ...reste }) => reste);
 
   return json({
     cible,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
     urls_deja_utilisees: urlsDejaUtilisees,
-    sources_a_moissonner: sourcesSuivies ?? [],
+    sources_a_moissonner: sourcesAMoissonner,
     rubriques_connues: rubriquesConnues,
   });
 }

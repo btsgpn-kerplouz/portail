@@ -2339,6 +2339,61 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       données Supabase (pas de gabarit factice cette fois) : les lectures
       passent toujours normalement à travers le service worker.
 
+- [x] **Lot 27 — Une seule liste de sources à moissonner (fusion
+      hebdo/mensuel)** (12/09/2026, demande directe de l'utilisateur après
+      avoir remarqué que la routine du matin n'annonçait que « 14 sources
+      suivies » alors qu'il pensait en avoir écrit beaucoup plus). Deux
+      mécanismes coexistaient sous des noms presque identiques : les 14
+      lignes de `affut_sources_suivies` (écran « Sources », visitées à
+      *chaque* exécution) et un catalogue statique de 137 revues/bulletins
+      dans `documents/brief-veille.md` (visité une fois par mois seulement,
+      jamais éditable depuis l'app). Décision (3 options soumises à
+      l'utilisateur, celle-ci retenue) : fusionner en une seule table,
+      avec la périodicité comme donnée plutôt que comme deux mécanismes.
+      - Migration `supabase/013-sources-suivies-periodicite.sql` (à
+        appliquer par l'utilisateur au dashboard Supabase, SQL Editor,
+        comme les précédentes) : ajoute `periodicite` (`hebdomadaire` par
+        défaut ou `mensuelle`) et `notes` (texte libre : éditeur,
+        thématique, accès, remarques du catalogue d'origine) à
+        `affut_sources_suivies`, puis importe les 137 revues du catalogue
+        en lignes `periodicite = 'mensuelle'` (générées automatiquement
+        depuis le markdown, pas retapées à la main).
+      - `handleContext()` (`affut-veille/index.ts`) ne renvoie plus
+        aveuglément toute la table : les sources `mensuelle` sortent par
+        **rotation d'un tiers chaque semaine** (`groupeRotation()` — hash
+        déterministe de l'`id`, pas stocké en base — comparé à
+        `numeroSemaineIso() % 3`), pas toutes en bloc une semaine par mois
+        — révisé le même jour après une question directe de l'utilisateur
+        sur le coût d'un pic de ~150 sources en une seule exécution (une
+        première version, testée puis abandonnée avant tout déploiement,
+        renvoyait tout le bloc mensuel les 7 premiers jours du mois).
+        `.limit(50)` relevé à `.limit(200)` (~151 lignes désormais en
+        base).
+      - `brief-veille.md` : section « Revues et bulletins naturalistes »
+        (137 titres) supprimée — migrée en base, ne doit plus exister qu'à
+        un seul endroit. « Sources à moissonner en priorité » reformulée
+        pour expliquer la périodicité ; « Sources à privilégier » clarifiée
+        comme guide de recherche ouverte (catégories, pas des adresses).
+      - Écran Sources (`index.html`) : formulaire de source augmenté d'un
+        sélecteur Périodicité et d'un champ Notes ; en-tête et nouveau
+        filtre « toutes / hebdomadaires / mensuelles » (`state.sourcesFiltre`)
+        pour rester utilisable à ~151 lignes plutôt que les ~14 d'origine.
+      *Fait dans la foulée* : le patch en attente `~/Téléchargements/
+      affut-veille-volume-15-20.patch` (généré le matin même par une
+      session antérieure, jamais appliqué) a été appliqué en premier —
+      objectif de volume relevé de 6-10 à 15-20 candidats par exécution,
+      appuyé sur la recherche ouverte plutôt que sur les seules sources
+      suivies.
+      *Reste à faire par l'utilisateur* : appliquer la migration 013 dans
+      Supabase (SQL Editor) et redéployer la fonction Edge `affut-veille`
+      (voir `supabase/functions/affut-veille/README.md`) — sans ces deux
+      étapes manuelles, le code déjà commité reste inactif. **Non
+      re-testé en conditions réelles** (pas d'identifiants de rédacteur
+      dans cet environnement) : seul un chargement en mode public a été
+      vérifié sans erreur console ; l'écran Sources avec le nouveau filtre
+      et les ~151 lignes est à confirmer d'un coup d'œil à la prochaine
+      connexion réelle.
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés
