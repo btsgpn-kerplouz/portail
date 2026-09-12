@@ -15,9 +15,45 @@ attente de tri** — jamais publiées directement. Le tri (Retenir/Écarter)
 reste un geste humain, fait par l'enseignant dans l'écran « Moisson » déjà
 construit au Lot 4.
 
-L'agent ne décide jamais seul de ce qui est bon : il propose une liste
-resserrée de candidats plausibles. L'enseignant doit pouvoir trier en quelques minutes un
+L'agent ne décide jamais seul de ce qui est bon : il propose une liste de
+candidats plausibles. L'enseignant doit pouvoir trier en quelques minutes un
 samedi matin.
+
+## Volume attendu (révisé le 12/09/2026)
+
+**Viser 15 à 20 candidats par exécution, et dépasser 20 quand la matière de
+la semaine le permet.** Mieux vaut proposer large et laisser l'enseignant
+écarter : le tri est rapide, la recherche ne l'est pas.
+
+⚠️ **Cette fourchette prime sur toute fourchette plus basse qui figurerait
+encore dans le prompt de la routine planifiée** (la version d'origine
+demandait « 6 à 10 » — chiffre abandonné après le numéro 4, jugé trop
+étroit). Le prompt de la routine désigne lui-même ce fichier comme faisant
+foi : en cas de contradiction sur le volume, c'est la présente section qui
+s'applique.
+
+Ce volume ne relâche rien sur la qualité : tout candidat reste strictement
+conforme au reste du brief, et un candidat faible se jette plutôt que de
+gonfler le nombre. Il change en revanche l'équilibre de l'effort — c'est la
+**recherche ouverte** (`WebSearch`, section « Sources à privilégier ») qui
+doit fournir le gros du volume, pas les seules « Sources à moissonner en
+priorité », qui sont trop peu nombreuses pour y suffire. Compter au minimum
+une quinzaine de requêtes `WebSearch` distinctes, sur des organismes et des
+thématiques absents de cette liste.
+
+Conséquences sur la répartition, à ce volume :
+
+- couvrir **plusieurs rubriques** de `rubriques_connues`. Un numéro de 15+
+  candidats qui ne sortirait que deux ou trois rubriques signale une
+  recherche trop étroite : élargir les requêtes plutôt que forcer le
+  classement (la tolérance « pas grave si une seule ressort » de la section
+  « Les rubriques » visait un numéro de 6 à 10, elle ne vaut plus ici) ;
+- viser une part **régionale (Bretagne, Morbihan)** sensiblement plus
+  fournie qu'une ou deux entrées.
+
+Côté technique, l'Edge Function plafonne à **20 candidats par appel** et
+rejette la totalité de l'envoi au-delà : découper en plusieurs `POST`
+successifs. Voir `apps/affut/supabase/functions/affut-veille/README.md`.
 
 ## Public et angle
 
