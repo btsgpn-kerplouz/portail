@@ -115,15 +115,23 @@ async function handleContext(): Promise<Response> {
     .order("numero", { ascending: false });
   if (errNumeros) return json({ error: errNumeros.message }, 500);
 
-  const brouillonAvecMoisson = (numeros ?? []).find(
-    (n) => n.statut === "brouillon" && Array.isArray(n.moisson) && n.moisson.length > 0,
-  );
+  // Le brouillon « en cours » est le numéro pas encore publié, qu'il ait ou
+  // non des candidats en attente de tri dans sa moisson : un brouillon dont
+  // la moisson a déjà été entièrement triée (candidats validés en entrées,
+  // ou écartés) reste le numéro à alimenter — il ne faut PAS en fabriquer un
+  // suivant tant que celui-ci n'est pas publié (bug constaté le 12/09/2026 :
+  // la routine avait créé un n°4 alors que le n°3, brouillon avec moisson
+  // vide car déjà triée, était toujours en préparation).
+  const brouillons = (numeros ?? []).filter((n) => n.statut === "brouillon");
+  const brouillonActuel = brouillons.length
+    ? brouillons.reduce((plusAncien, n) => (n.numero < plusAncien.numero ? n : plusAncien))
+    : null;
 
-  const cible = brouillonAvecMoisson
+  const cible = brouillonActuel
     ? {
-      numero: brouillonAvecMoisson.numero,
+      numero: brouillonActuel.numero,
       existe: true,
-      moisson_actuelle: brouillonAvecMoisson.moisson,
+      moisson_actuelle: brouillonActuel.moisson ?? [],
     }
     : {
       numero: (numeros ?? []).reduce((m, n) => Math.max(m, n.numero), 0) + 1,
