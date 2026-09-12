@@ -1842,21 +1842,57 @@ function viderHistorique(){
     majCompteurHistorique();
   }
 }
+/* Un champ CSV entre guillemets, les guillemets internes doublés (RFC 4180).
+   Sans cela, un ';' ou un retour à la ligne dans une remarque décalerait toutes
+   les colonnes suivantes. */
+function champCSV(v){ return `"${(v ?? '').toString().replace(/"/g, '""')}"`; }
+
+/* Déclenche le téléchargement d'un contenu texte.
+   Le lien doit être dans le document (Firefox ignore un click() sur un élément
+   détaché) et l'URL ne peut être révoquée qu'après le début du téléchargement,
+   sinon un gros fichier arrive tronqué. */
+function telechargerTexte(contenu, nomFichier){
+  /* BOM UTF-8 : sans lui, Excel lit le fichier dans l'encodage de la machine et
+     affiche « GÃ¢vres » au lieu de « Gâvres ». */
+  const url = URL.createObjectURL(new Blob(['﻿' + contenu], {type:'text/csv;charset=utf-8;'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = nomFichier; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+}
+
+/* Format long : une ligne = une espèce dans un relevé. L'ancien format mettait
+   tout le cortège dans une seule cellule, ce qui interdisait tri, filtre et
+   tableau croisé — et devenait illisible depuis que des noms français
+   comportent une virgule (« Salicorne, groupe europaea »). L'en-tête du
+   bordereau et le résultat de l'analyse sont répétés sur chaque ligne, pour
+   qu'elle se suffise à elle-même. */
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const lignes = [['Transect','N°','Date','Observateur','Site','Commune','Distance (m)','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Espèces relevées (abondance)','Remarque','Enregistré le'].join(';')];
+  const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
+    'Espèce','Nom scientifique','Coefficient',
+    'Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
+  const lignes = [entetes];
   liste.forEach(r=>{
-    const especesAvecAbond = (r.cortege||[]).map(e => `${e.fr}${e.latin?' ('+e.latin+')':' [non référencée]'}:${libelleCouverture(e.mode, e.cover)}`).join(', ');
-    const remarque = (r.observation||'').replace(/[\r\n;]+/g,' ').trim();
-    lignes.push([r.transect||'', r.numero||'', r.dateReleve||(r.date||'').slice(0,10), r.observateur||'', r.site||'', r.commune||'', r.distance, r.top, r.carMatch||'', r.score, especesAvecAbond, remarque, r.date].join(';'));
+    const bordereau = [r.transect||'', r.numero||'', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
+      r.observateur||'', r.site||'', r.commune||''];
+    const analyse = [r.top||'', r.carMatch||'', r.score ?? '', (r.observation||'').trim(), r.date||''];
+    const cortege = r.cortege || [];
+    if(!cortege.length){
+      // relevé sans espèce : on garde la ligne, sinon le relevé disparaîtrait du fichier
+      lignes.push([...bordereau, '', '', '', ...analyse]);
+      return;
+    }
+    cortege.forEach(e=>{
+      lignes.push([...bordereau,
+        e.fr || '', e.latin || 'non référencée', libelleCouverture(e.mode, e.cover),
+        ...analyse]);
+    });
   });
-  const blob = new Blob([lignes.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'releves_petite_mer_de_gavres.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
+    'releves_petite_mer_de_gavres.csv');
 }
 
 /* ---------- Export compatible Phytoscope ----------
@@ -1899,13 +1935,8 @@ function exporterPourPhytoscopeCSV(){
       ]);
     });
   });
-  const csv = lignes.map(l => l.map(v => `"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'releves_petite_mer_de_gavres_phytoscope.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
+    'releves_petite_mer_de_gavres_phytoscope.csv');
   if(omises.size || libres.size){
     const bloc = [];
     if(omises.size) bloc.push('Sans équivalent dans le référentiel de Phytoscope :\n'
