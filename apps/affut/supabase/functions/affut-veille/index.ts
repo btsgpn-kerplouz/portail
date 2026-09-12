@@ -198,22 +198,43 @@ async function handleContext(): Promise<Response> {
   // `periodicite` distingue deux cadences plutôt que deux listes séparées :
   // - 'hebdomadaire' (défaut) : renvoyée à chaque exécution ;
   // - 'mensuelle' (revues/bulletins qui paraissent au trimestre ou à
-  //   l'année) : renvoyée seulement quand la collecte tombe dans les 7
-  //   premiers jours du mois, une approximation déterministe de « la
-  //   première exécution hebdomadaire du mois » (la routine tourne chaque
-  //   samedi, donc au plus un samedi sur les 7 premiers jours).
+  //   l'année, ~137 lignes) : renvoyée par **rotation d'un tiers par
+  //   semaine** plutôt qu'en bloc une fois par mois (révisé le 12/09/2026,
+  //   demande explicite de l'utilisateur après la fusion des deux listes :
+  //   visiter 151 adresses en une seule exécution, une semaine sur quatre,
+  //   coûtait trop cher en temps/crédits par rapport à un rythme régulier).
+  //   Chaque source `mensuelle` est assignée à l'un de 3 groupes par un
+  //   hash déterministe de son `id` (`groupeRotation()`) — pas stocké en
+  //   base, recalculé à chaque appel, donc aucune migration à refaire si le
+  //   nombre de sources change. Le groupe actif tourne avec le numéro de
+  //   semaine ISO (`groupeSemaine = numeroSemaineIso() % 3`), donc chaque
+  //   source mensuelle est visitée une semaine sur trois (~toutes les 3
+  //   semaines, un peu plus fréquent qu'avant mais réparti) plutôt qu'un pic
+  //   de 151 sources le même jour.
   // limit(200) plutôt que 50 : la fusion avec le catalogue de revues porte
-  // le total à ~150 lignes, quasiment tout renvoyé les semaines où
-  // `estSemaineMensuelle` est vrai (silencieusement tronqué au-delà, comme
-  // avant — mais avec de la marge cette fois).
-  const estSemaineMensuelle = new Date().getUTCDate() <= 7;
+  // le total à ~150 lignes (silencieusement tronqué au-delà, comme avant —
+  // mais avec de la marge cette fois).
+  const numeroSemaineIso = (d: Date): number => {
+    const jour = d.getUTCDay() || 7;
+    const jeudi = new Date(d);
+    jeudi.setUTCDate(d.getUTCDate() + 4 - jour);
+    const anneeIso = jeudi.getUTCFullYear();
+    const jan1 = new Date(Date.UTC(anneeIso, 0, 1));
+    return Math.ceil((((jeudi.getTime() - jan1.getTime()) / 86400000) + 1) / 7);
+  };
+  const groupeRotation = (id: string): number => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return h % 3;
+  };
+  const groupeSemaine = numeroSemaineIso(new Date()) % 3;
   const { data: sourcesSuiviesBrutes } = await supabase
     .from("affut_sources_suivies")
     .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut, periodicite")
     .order("cree_le", { ascending: true })
     .limit(200);
   const sourcesAMoissonner = (sourcesSuiviesBrutes ?? [])
-    .filter((s) => s.periodicite !== "mensuelle" || estSemaineMensuelle)
+    .filter((s) => s.periodicite !== "mensuelle" || groupeRotation(s.id) === groupeSemaine)
     .map(({ periodicite: _periodicite, ...reste }) => reste);
 
   return json({

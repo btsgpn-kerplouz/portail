@@ -82,9 +82,14 @@ défaut, ou `mensuelle`) — voir migration
 `supabase/013-sources-suivies-periodicite.sql`. Le `GET` ne renvoie dans
 `sources_a_moissonner` que :
 - les sources `hebdomadaire`, à chaque exécution ;
-- les sources `mensuelle`, uniquement quand la collecte tombe dans les 7
-  premiers jours du mois (`new Date().getUTCDate() <= 7`, proxy déterministe
-  de « premier samedi du mois » vu la cadence hebdomadaire fixe).
+- **un tiers, par rotation, des sources `mensuelle`** (révisé le 12/09/2026 —
+  la première version renvoyait tout le bloc mensuel en une seule exécution
+  par mois, jugé trop coûteux en temps/crédits pour ~137 sources d'un coup).
+  Chaque source mensuelle est assignée à l'un de 3 groupes par un hash
+  déterministe de son `id` (`groupeRotation()`, pas stocké en base — recalculé
+  à chaque appel), et le groupe actif tourne avec le numéro de semaine ISO
+  (`numeroSemaineIso() % 3`). Chaque source mensuelle est donc visitée une
+  semaine sur trois, jamais toutes le même jour.
 
 Avant cette date, il existait une seconde liste — un catalogue statique de
 137 revues/bulletins dans `documents/brief-veille.md`, visité une fois par

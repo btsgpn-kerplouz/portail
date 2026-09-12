@@ -2399,7 +2399,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var derniereDate = sourcesSuivies.length ? sourcesSuivies[0].derniereMoisson.date : "";
 
     var entete = '<h1 class="sr-only">Sources suivies</h1><div class="sources-entete">' +
-      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>dont ' + nbHebdo + ' visitées chaque samedi et ' + nbMensuelle + ' une fois par mois</span></div>' +
+      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>dont ' + nbHebdo + ' visitées chaque samedi et ' + nbMensuelle + ' par rotation (un tiers chaque samedi)</span></div>' +
       '<div class="sources-collecte"><span class="label">Dernière collecte</span><span class="valeur">' + esc(derniereDate) + (totalEchec ? ' · <span class="echec">' + totalEchec + ' en échec</span>' : "") + '</span></div>' +
       '<div class="sources-entete-actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-plein" data-action="source-add">+ Suivre une source</button></div>' +
     '</div>';
@@ -2525,7 +2525,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             '<div class="champ"><label for="champ-periodicite">Périodicité</label>' +
               '<select id="champ-periodicite" name="periodicite">' +
                 '<option value="hebdomadaire"' + (!s || s.periodicite !== "mensuelle" ? " selected" : "") + '>hebdomadaire — visitée à chaque veille</option>' +
-                '<option value="mensuelle"' + (s && s.periodicite === "mensuelle" ? " selected" : "") + '>mensuelle — revues/bulletins peu fréquents</option>' +
+                '<option value="mensuelle"' + (s && s.periodicite === "mensuelle" ? " selected" : "") + '>mensuelle — revues/bulletins peu fréquents, visitée un samedi sur trois par rotation</option>' +
               '</select></div>' +
           '</div>' +
           champ("Notes (éditeur, thématique, accès…)", "notes", s ? s.notes : "", "informatif, jamais lu par la routine", true) +

@@ -37,9 +37,10 @@ conforme au reste du brief, et un candidat faible se jette plutôt que de
 gonfler le nombre. Il change en revanche l'équilibre de l'effort — c'est la
 **recherche ouverte** (`WebSearch`, section « Sources à privilégier ») qui
 doit fournir le gros du volume, pas les seules « Sources à moissonner en
-priorité » — la plupart des semaines, seule leur part hebdomadaire (une
-quinzaine d'adresses) est renvoyée par le `GET`, trop peu nombreuse pour y
-suffire. Compter au minimum
+priorité » — même avec la rotation mensuelle (environ 14 hebdomadaires +
+un tiers des ~137 mensuelles, soit une soixantaine d'adresses par
+exécution), une bonne partie n'aura rien de neuf une semaine donnée, trop
+aléatoire pour y suffire seule. Compter au minimum
 une quinzaine de requêtes `WebSearch` distinctes, sur des organismes et des
 thématiques absents de cette liste.
 
@@ -182,15 +183,19 @@ mécanismes à retenir sous des noms presque identiques.
 Contrairement à la section « Sources à privilégier » ci-dessus (point de
 départ pour une recherche ouverte), celle-ci est une **consigne, pas une
 suggestion** : à chaque exécution, visiter effectivement chaque adresse
-**dont la périodicité s'applique cette semaine** (lire le flux RSS, ou
-parcourir la page suivie) et regarder ce qui y est récent. Le `GET` a déjà
-fait le tri — il ne renvoie que les sources hebdomadaires plus, les
-semaines où c'est pertinent, les mensuelles (revues/bulletins qui paraissent
-au trimestre ou à l'année : les revisiter chaque semaine serait une perte de
-temps, la plupart n'ayant rien de neuf) — ne pas essayer de deviner
-autrement quelles sources visiter. Une source de cette liste sans nouveauté
-publiable cette semaine n'est pas une erreur — ne rien proposer plutôt que
-forcer un candidat faible.
+renvoyée (lire le flux RSS, ou parcourir la page suivie) et regarder ce qui
+y est récent. Le `GET` a déjà fait le tri — il ne renvoie que les sources
+hebdomadaires (à chaque exécution) plus un **tiers, par rotation, des
+sources mensuelles** (revues/bulletins qui paraissent au trimestre ou à
+l'année, ~137 lignes : les revisiter toutes chaque semaine serait une perte
+de temps et de crédits, la plupart n'ayant rien de neuf — mais les revisiter
+toutes le même jour une fois par mois ferait un pic de ~150 adresses en une
+exécution ; la rotation par tiers, un groupe différent chaque semaine
+ISO — voir `groupeRotation()`/`numeroSemaineIso()` dans `index.ts` —,
+répartit la charge). Ne pas essayer de deviner autrement quelles sources
+visiter : la liste renvoyée est déjà la bonne pour cette semaine. Une
+source de cette liste sans nouveauté publiable cette semaine n'est pas une
+erreur — ne rien proposer plutôt que forcer un candidat faible.
 
 Un candidat trouvé via une de ces sources reprend par défaut sa `rubrique`,
 `territoire` et `echelle` (ajustables si l'article le justifie clairement).

@@ -2359,12 +2359,16 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         en lignes `periodicite = 'mensuelle'` (générées automatiquement
         depuis le markdown, pas retapées à la main).
       - `handleContext()` (`affut-veille/index.ts`) ne renvoie plus
-        aveuglément toute la table : les sources `mensuelle` ne sortent
-        dans `sources_a_moissonner` que quand la collecte tombe dans les 7
-        premiers jours du mois (`new Date().getUTCDate() <= 7`) — proxy
-        déterministe de « premier samedi du mois », côté serveur plutôt
-        que laissé à l'appréciation de l'agent. `.limit(50)` relevé à
-        `.limit(200)` (~151 lignes désormais en base).
+        aveuglément toute la table : les sources `mensuelle` sortent par
+        **rotation d'un tiers chaque semaine** (`groupeRotation()` — hash
+        déterministe de l'`id`, pas stocké en base — comparé à
+        `numeroSemaineIso() % 3`), pas toutes en bloc une semaine par mois
+        — révisé le même jour après une question directe de l'utilisateur
+        sur le coût d'un pic de ~150 sources en une seule exécution (une
+        première version, testée puis abandonnée avant tout déploiement,
+        renvoyait tout le bloc mensuel les 7 premiers jours du mois).
+        `.limit(50)` relevé à `.limit(200)` (~151 lignes désormais en
+        base).
       - `brief-veille.md` : section « Revues et bulletins naturalistes »
         (137 titres) supprimée — migrée en base, ne doit plus exister qu'à
         un seul endroit. « Sources à moissonner en priorité » reformulée

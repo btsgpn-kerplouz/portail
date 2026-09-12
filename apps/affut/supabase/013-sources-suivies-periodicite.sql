@@ -13,9 +13,10 @@
 -- consulter, hebdomadaires et mensuelles confondues, en ajoutant la
 -- périodicité comme donnée plutôt que comme deux mécanismes séparés :
 -- - `periodicite` : 'hebdomadaire' (visitée à chaque exécution, comme avant
---   pour les 14 sources d'origine) ou 'mensuelle' (visitée seulement à
---   l'exécution qui tombe dans la 1re semaine du mois — logique reprise de
---   la section « Revues et bulletins naturalistes » du brief) ;
+--   pour les 14 sources d'origine) ou 'mensuelle' (visitée par rotation, un
+--   tiers des lignes chaque semaine — voir `groupeRotation()`/
+--   `numeroSemaineIso()` dans `functions/affut-veille/index.ts` ; le tiers
+--   n'est pas stocké en base, recalculé à chaque appel à partir de l'`id`) ;
 -- - `notes` : le reliquat texte libre du catalogue (éditeur, thématique,
 --   accès, périodicité éditoriale, remarques) — informationnel, jamais lu
 --   par la mécanique de filtrage.
