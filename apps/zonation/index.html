@@ -668,7 +668,9 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Tableau de synthèse (CSV)</button>
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par relevé, avec l'habitat proposé et le cortège. Pour archiver ou travailler dans un tableur.</p>
         <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export vers Phytoscope (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
+        <button class="secondaire" onclick="exporterCompletCSV()">⬇ Export complet (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Mêmes colonnes que l'export Phytoscope, mais <b>sans aucune espèce écartée</b> et avec l'habitat proposé et le recouvrement en pourcentage. Pour archiver la campagne et l'analyser dans un tableur — pas pour l'importer dans Phytoscope.</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -692,8 +694,15 @@ let etat = {
   especeSelectionnee: null, // taxon choisi dans les suggestions (étape 1), en attente de confirmation
   especeEnCours: null, // {fr, latin, reconnue} confirmé à l'étape 1, en cours de saisie d'abondance (étape 2)
   coefCourant: null, // coefficient Braun-Blanquet actuellement sélectionné pour l'ajout
-  dernierResultat: null
+  dernierResultat: null,
+  solNu: false // quadrat déclaré sans végétation : cortège vide, mais relevé bien réel
 };
+
+/* Un quadrat sans végétation est une donnée, pas une absence de donnée : sur la
+   slikke, le sol nu marque la limite inférieure de la végétation. Phytoscope le
+   représente par le taxon d'identifiant -1 (« Sol nu », strate « Sans
+   végétation ») ; on reprend sa convention pour que l'import s'y retrouve. */
+const SOL_NU = {taxonId:-1, nom:'Sol nu', strate:'Sans végétation', habitat:'Sol nu (aucune végétation)'};
 
 /* Habitats proposés par le relevé et le calcul de score : le référentiel complet
    (data.js), déjà restreint aux groupements effectivement trouvables sur le site. */
@@ -1135,13 +1144,35 @@ const CARTE_ENREGISTREMENT = `<div class="carte">
   </div>
 </div>`;
 
+/* Quadrat déclaré sans végétation : pas d'analyse à mener, mais un relevé à
+   enregistrer. On saute le classement des habitats et l'on propose directement
+   l'enregistrement. */
+function declarerSolNu(){
+  if(etat.cortege.length) return;
+  if(!confirm('Déclarer ce quadrat entièrement sans végétation (sol nu) ?\n\nIl sera enregistré comme tel, sans proposition d\'habitat.')) return;
+  etat.solNu = true;
+  afficherResultats();
+}
+
 function afficherResultats(){
+  const zoneAvert = document.getElementById('zone-avertissement');
+  if(etat.solNu){
+    zoneAvert.innerHTML = '';
+    document.getElementById('zone-resultats').innerHTML = `<div class="resultat-carte top1">
+      <div class="etiquette-top">Quadrat sans végétation</div>
+      <div class="resultat-entete"><div><h3>${SOL_NU.habitat}</h3>
+        <div class="syntaxon">Aucune espèce dans le quadrat : recouvrement végétal nul.</div></div></div>
+      <div class="qualificatif qualificatif-nul">Le sol nu est une donnée de terrain : il marque la limite inférieure de la végétation sur la slikke.</div>
+    </div>` + CARTE_ENREGISTREMENT;
+    etat.dernierResultat = null;
+    allerA('resultats');
+    return;
+  }
   const total = etat.cortege.length;
   const nbReconnues = etat.cortege.filter(e=>e.reconnue).length;
-  const zoneAvert = document.getElementById('zone-avertissement');
   zoneAvert.innerHTML = '';
   if(total === 0){
-    zoneAvert.innerHTML = `<div class="avertissement">Aucune espèce saisie. Retournez au relevé pour en ajouter au moins une.</div>`;
+    zoneAvert.innerHTML = `<div class="avertissement">Aucune espèce saisie. Retournez au relevé pour en ajouter au moins une, ou déclarez le quadrat sans végétation.</div>`;
   } else if(nbReconnues < 3){
     zoneAvert.innerHTML = `<div class="avertissement">Peu d'espèces reconnues (${nbReconnues}).</div>`;
   }
@@ -1764,6 +1795,7 @@ function resetReleve(){
   etat.especeEnCours = null;
   etat.coefCourant = null;
   etat.dernierResultat = null;
+  etat.solNu = false;
   // La distance est vidée pour être recalculée par majEcranIdentite (relevé suivant = +1 m).
   document.getElementById('in-distance').value = '';
   document.getElementById('recherche-espece').value = '';
@@ -1776,7 +1808,9 @@ function nouveauPoint(){
 }
 
 function enregistrerReleve(){
-  if(!etat.dernierResultat) return;
+  // Un quadrat de sol nu n'a pas de résultat d'analyse, et c'est normal.
+  if(!etat.dernierResultat && !etat.solNu) return;
+  const r = etat.dernierResultat;
   const liste = chargerHistorique();
   const id = lireIdentite();
   const transect = id.transect;
@@ -1793,11 +1827,12 @@ function enregistrerReleve(){
     observation: document.getElementById('in-observation')?.value || '',
     distance: id.distance,
     cortege: etat.cortege.map(e=>({fr:e.fr, latin:e.latin, mode:e.mode, cover:e.cover, reconnue:e.reconnue})),
-    top: etat.dernierResultat.habitat.nomFr,
-    topFiche: etat.dernierResultat.habitat.id,
-    tauxCar: etat.dernierResultat.tauxCar,
-    carMatch: `${etat.dernierResultat.matchCar.length}/${etat.dernierResultat.totalCar}`,
-    score: etat.dernierResultat.score
+    solNu: !!etat.solNu,
+    top: r ? r.habitat.nomFr : SOL_NU.habitat,
+    topFiche: r ? r.habitat.id : null,
+    tauxCar: r ? r.tauxCar : 0,
+    carMatch: r ? `${r.matchCar.length}/${r.totalCar}` : '',
+    score: r ? r.score : 0
   });
   sauverHistorique(liste);
   majCompteurHistorique();
@@ -1862,6 +1897,46 @@ function telechargerTexte(contenu, nomFichier){
   setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
 }
 
+/* Observations d'un relevé, sous la forme commune aux trois exports.
+
+   Le pourcentage est la valeur médiane de la classe Braun-Blanquet : le
+   coefficient est un intervalle (2 = 5 → 25 %), inexploitable tel quel dans un
+   tableur. Les valeurs employées sont celles de la table BB de PhytoScope, donc
+   identiques de part et d'autre — i 0,01 · r 0,1 · + 0,5 · 1 2,5 · 2 15 ·
+   3 37,5 · 4 62,5 · 5 87,5.
+
+   Un quadrat de sol nu donne une observation unique à 100 %, suivant la
+   convention de PhytoScope (taxon -1, strate « Sans végétation »). Sans elle le
+   relevé serait perdu : l'import de PhytoScope écarte les relevés sans ligne. */
+function observationsDuReleve(r){
+  const cortege = r.cortege || [];
+  if(r.solNu || !cortege.length){
+    return [{fr:SOL_NU.nom, latin:SOL_NU.nom, taxonId:SOL_NU.taxonId, strate:SOL_NU.strate,
+             mode:'pct', cover:'100', coefficient:'', pct:100, solNu:true}];
+  }
+  return cortege.map(e=>({
+    fr: e.fr || '',
+    latin: e.latin || '',
+    taxonId: e.latin ? TAXON_PHYTOSCOPE[e.latin] : undefined,
+    strate: 'Herbacée',
+    mode: e.mode || 'bb',
+    cover: e.cover,
+    coefficient: libelleCouverture(e.mode, e.cover),
+    pct: pctDeCouverture(e.mode, e.cover),
+    solNu: false
+  }));
+}
+
+/* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes). */
+function enteteRelevePhytoscope(r, releveId){
+  return [releveId, `Transect ${r.transect || '?'} — relevé n°${r.numero ?? '?'}`,
+    [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres',
+    `Transect ${r.transect || ''}`,
+    r.dateReleve || (r.date || new Date().toISOString()).slice(0,10),
+    r.observateur || '',
+    r.distance != null && r.distance !== '' ? `Distance sur le transect : ${r.distance} m` : '', '', '1 m²'];
+}
+
 /* Format long : une ligne = une espèce dans un relevé. L'ancien format mettait
    tout le cortège dans une seule cellule, ce qui interdisait tri, filtre et
    tableau croisé — et devenait illisible depuis que des noms français
@@ -1872,23 +1947,15 @@ function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
   const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
-    'Espèce','Nom scientifique','Coefficient',
+    'Espèce','Nom scientifique','Coefficient','Recouvrement médian (%)',
     'Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
   const lignes = [entetes];
   liste.forEach(r=>{
-    const bordereau = [r.transect||'', r.numero||'', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
+    const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
       r.observateur||'', r.site||'', r.commune||''];
     const analyse = [r.top||'', r.carMatch||'', r.score ?? '', (r.observation||'').trim(), r.date||''];
-    const cortege = r.cortege || [];
-    if(!cortege.length){
-      // relevé sans espèce : on garde la ligne, sinon le relevé disparaîtrait du fichier
-      lignes.push([...bordereau, '', '', '', ...analyse]);
-      return;
-    }
-    cortege.forEach(e=>{
-      lignes.push([...bordereau,
-        e.fr || '', e.latin || 'non référencée', libelleCouverture(e.mode, e.cover),
-        ...analyse]);
+    observationsDuReleve(r).forEach(o=>{
+      lignes.push([...bordereau, o.fr, o.latin, o.coefficient, o.pct, ...analyse]);
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
@@ -1918,21 +1985,16 @@ function exporterPourPhytoscopeCSV(){
   const omises = new Set();       // espèces référencées mais sans équivalent chez Phytoscope
   const libres = new Set();       // espèces saisies au clavier, sans nom scientifique
   liste.forEach(r=>{
-    const releveId = idPhytoscope();
-    const nomReleve = `Transect ${r.transect || '?'} — relevé n°${r.numero || '?'}`;
-    const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
-    const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
-    (r.cortege||[]).forEach(e=>{
-      if(!e.latin){ libres.add(e.fr); return; }   // saisie libre : aucun nom scientifique à résoudre
-      const tid = TAXON_PHYTOSCOPE[e.latin];
-      if(tid === undefined){ omises.add(e.latin); return; }  // sans correspondance : Phytoscope la rejetterait
-      lignes.push([
-        releveId, nomReleve,
-        site, `Transect ${r.transect || ''}`,
-        date, r.observateur || '',
-        r.distance ? `Distance sur le transect : ${r.distance} m` : '', '', '1 m²',
-        tid, e.latin, 'Herbacée', e.mode || 'bb', e.cover
-      ]);
+    const entete = enteteRelevePhytoscope(r, idPhytoscope());
+    observationsDuReleve(r).forEach(o=>{
+      if(o.solNu){
+        // taxon -1 : Phytoscope le reconnaît comme sol nu et conserve le relevé
+        lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover]);
+        return;
+      }
+      if(!o.latin){ libres.add(o.fr); return; }          // saisie libre : rien à résoudre
+      if(o.taxonId === undefined){ omises.add(o.latin); return; }  // Phytoscope la rejetterait
+      lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover]);
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
@@ -1947,6 +2009,39 @@ function exporterPourPhytoscopeCSV(){
       + bloc.join('\n\n')
       + '\n\nElles restent enregistrées dans vos relevés et présentes dans le tableau de synthèse.');
   }
+}
+
+/* ---------- Export complet, disposition PhytoScope ----------
+   Même colonnes que l'export ci-dessus, mais SANS aucun filtrage : toutes les
+   espèces saisies y figurent, y compris celles sans équivalent BaseFlor
+   (Salicorne indéterminée, Agrostide hybride) et celles tapées au clavier —
+   « taxon_id » reste alors vide. S'y ajoutent l'habitat proposé pour le relevé
+   et le recouvrement en pourcentage.
+
+   Ce fichier n'est pas destiné à l'import dans PhytoScope, qui rejetterait les
+   lignes sans taxon reconnu : c'est l'enregistrement fidèle et complet de la
+   campagne, pour archivage et analyse. */
+function exporterCompletCSV(){
+  const liste = chargerHistorique();
+  if(!liste.length) return;
+  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation",
+    "coordonnees_gps","surface","taxon_id","nom_scientifique","nom_francais","strate",
+    "mode_recouvrement","recouvrement_saisi","recouvrement_median_pct",
+    "habitat_potentiel","especes_caracteristiques","indice_global_pct","distance_m","remarque"];
+  const lignes = [entetes];
+  liste.forEach(r=>{
+    const entete = enteteRelevePhytoscope(r, idPhytoscope());
+    const analyse = [r.top || '', r.carMatch || '', r.score ?? '', r.distance ?? '',
+      (r.observation || '').trim()];
+    observationsDuReleve(r).forEach(o=>{
+      lignes.push([...entete,
+        o.taxonId ?? '', o.latin, o.fr, o.strate,
+        o.mode, o.cover, o.pct,
+        ...analyse]);
+    });
+  });
+  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
+    'releves_petite_mer_de_gavres_complet.csv');
 }
 
 /* Barre d'action fixe, adaptée à l'étape du bordereau en cours. */
@@ -2044,8 +2139,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
    quadrat monospécifique, où oublier « Ajouter » vide le relevé entier). */
 function actionsEcranReleve(){
   const vide = etat.cortege.length === 0;
+  // Quadrat sans végétation : action explicite, pour que le sol nu soit une
+  // déclaration et non la conséquence d'un oubli d'« Ajouter au relevé ».
   return `<button class="secondaire" onclick="allerA('identite')">← Identité</button>`
-    + `<button onclick="analyserDepuisBarre()"${vide?' disabled title="Ajoutez au moins une espèce au relevé"':''}>Analyser le relevé</button>`;
+    + (vide ? `<button class="secondaire" onclick="declarerSolNu()">Sol nu</button>` : '')
+    + `<button onclick="analyserDepuisBarre()"${vide?' disabled title="Ajoutez au moins une espèce, ou déclarez le quadrat sans végétation"':''}>Analyser le relevé</button>`;
 }
 
 const ACTIONS_PAR_ECRAN = {
