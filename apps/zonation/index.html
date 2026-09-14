@@ -244,6 +244,39 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
+/* Écran d'analyse. Le diagramme est large par nature — un transect de 80 m ne
+   tient pas dans un écran de téléphone : il défile horizontalement dans son
+   propre cadre, la page ne défilant jamais latéralement. */
+.analyse-diagramme{
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  border:1px solid var(--line);border-radius:var(--rayon-petit);
+  background:#fff;margin:.6em 0;padding:.3em;
+}
+/* Deux vues nécessaires : ajustée pour saisir la structure d'ensemble sur un
+   écran de téléphone, réelle pour lire les noms d'espèces — la colonne des noms
+   occupe à elle seule les deux tiers d'un écran de 375 px. */
+.analyse-diagramme.ajuste svg{display:block;width:100%;height:auto;max-width:100%;}
+.analyse-diagramme.reelle{cursor:grab;}
+.analyse-diagramme.reelle svg{display:block;height:auto;max-width:none;}
+.analyse-vues{display:flex;gap:.4em;align-items:center;flex-wrap:wrap;margin:.2em 0 0;}
+.analyse-vues button{
+  font-family:var(--sans);font-size:.74rem;font-weight:600;padding:.4em .7em;
+  background:#fff;color:var(--acc);border:1px solid var(--acc);
+  border-radius:var(--rayon-petit);cursor:pointer;
+}
+.analyse-vues button[aria-pressed="true"]{background:var(--acc);color:#fff;}
+.analyse-meta{font-size:.78rem;color:var(--text-2);margin:.3em 0 .6em;line-height:1.5;}
+.analyse-meta b{color:var(--acc-dark);}
+.analyse-aide{font-size:.75rem;color:var(--text-2);margin:.2em 0 .8em;line-height:1.45;}
+.analyse-ok{font-size:.85rem;color:var(--acc-dark);margin:.2em 0;line-height:1.5;}
+.analyse-alerte{
+  background:#fdf6e3;border:1px solid #d9c98a;border-left:4px solid #b08900;
+  border-radius:var(--rayon-petit);padding:.6em .8em;font-size:.82rem;line-height:1.5;
+}
+.analyse-alerte b{color:#7a5f00;}
+.analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
+.analyse-liste b{color:var(--acc-dark);}
+
 /* Correction d'un relevé existant : l'écart avec une saisie neuve doit sauter aux
    yeux, sinon on croit ajouter un point et l'on s'étonne que rien ne s'incrémente. */
 .bandeau-edition{
@@ -723,6 +756,13 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     </div>
   </section>
 
+  <!-- ANALYSE D'UN TRANSECT : le diagramme et sa lecture, dans l'appli. Le SVG
+       reste téléchargeable depuis cet écran pour être annoté ailleurs. -->
+  <section class="ecran" id="ecran-analyse">
+    <a class="retour-lien" onclick="allerA('historique')">← Mes transects</a>
+    <div id="zone-analyse"></div>
+  </section>
+
 </main>
 
 <!-- LIGHTBOX PHOTO (mini-flore) : agrandissement au clic d'une photo, tap
@@ -845,7 +885,8 @@ function allerA(nom){
   const titres = {
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
-    'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site"
+    'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
+    analyse:"Analyse du transect"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -858,6 +899,7 @@ function allerA(nom){
   }
   if(nom==='fiches') construireEcranFiches();
   if(nom==='historique') afficherHistorique();
+  if(nom==='analyse') construireEcranAnalyse();
   window.scrollTo(0,0);
 }
 document.getElementById('btn-accueil').onclick = ()=>allerA('accueil');
@@ -2031,7 +2073,7 @@ function afficherHistorique(){
       ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
     </tbody></table>
     <div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;">
-      <button class="secondaire" onclick="exporterProfilTransect('${nom.replace(/'/g,"\\'")}')">⬇ Profil de transect (SVG)</button>
+      <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}')">Analyser ce transect →</button>
       ${!actif ? `<button class="discret" onclick="reprendreTransect('${nom.replace(/'/g,"\\'")}')">↻ Reprendre ce transect</button>` : ''}
     </div>
   `;
@@ -2060,6 +2102,18 @@ const PROFIL_MARGE_G = 250;     // colonne des noms d'espèces
 const echapXML = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+/* Pas courant d'un transect : la médiane des écarts entre relevés consécutifs.
+   Sert à dimensionner les barres du diagramme et à repérer les interruptions.
+   La médiane se prend sur la LISTE des écarts, pas sur l'ensemble dédoublonné :
+   avec un pas constant, cet ensemble n'a qu'une valeur et l'index médian tombait
+   dans le vide, ramenant le pas à 1 m quel que soit l'échantillonnage réel. */
+function pasCourant(rs){
+  if(rs.length < 2) return 1;
+  const ecarts = rs.slice(1).map((r, i) => r.d - rs[i].d).filter(e => e > 0).sort((a, b) => a - b);
+  if(!ecarts.length) return 1;
+  return ecarts[Math.floor(ecarts.length / 2)];
+}
+
 /* Zone de chaque fiche et son rang dans le gradient. */
 function zoneDeFiche(id){
   for(let i = 0; i < PROFIL_ZONATION.length; i++){
@@ -2078,9 +2132,7 @@ function construireProfilTransectSVG(nomTransect){
 
   const dMin = rs[0].d, dMax = rs[rs.length - 1].d;
   const etendue = Math.max(1, dMax - dMin);
-  const pas = rs.length > 1
-    ? [...new Set(rs.slice(1).map((r, i) => r.d - rs[i].d))].sort((a, b) => a - b)[Math.floor((rs.length - 1) / 2)] || 1
-    : 1;
+  const pas = pasCourant(rs);
 
   /* Espèces, ordonnées par première apparition : l'espèce la plus marine porte
      le n°1, comme sur les transects publiés. */
@@ -2220,6 +2272,144 @@ function construireProfilTransectSVG(nomTransect){
   S.push('</svg>');
   return S.join('\n');
 }
+
+/* ---------- Module d'analyse d'un transect ----------
+   Le diagramme dans l'appli, avec sa lecture : séquence des zones, contrôle du
+   gradient, richesse spécifique. Le contrôle du gradient est le plus utile
+   pédagogiquement : un transect va de la mer vers la terre, la zonation doit
+   donc progresser dans un sens. Une inversion signale presque toujours une
+   détermination à revoir — pas une bizarrerie du terrain. */
+let analyseTransectCourant = null;
+
+function ouvrirAnalyseTransect(nom){
+  analyseTransectCourant = nom;
+  allerA('analyse');
+}
+
+function basculerVueDiagramme(vue){
+  const d = document.getElementById('diagramme-transect');
+  if(!d) return;
+  d.classList.toggle('ajuste', vue === 'ajuste');
+  d.classList.toggle('reelle', vue === 'reelle');
+  document.getElementById('vue-ajuste')?.setAttribute('aria-pressed', String(vue === 'ajuste'));
+  document.getElementById('vue-reelle')?.setAttribute('aria-pressed', String(vue === 'reelle'));
+  if(vue === 'reelle') d.scrollLeft = 0;
+}
+
+function construireEcranAnalyse(){
+  const cont = document.getElementById('zone-analyse');
+  const nom = analyseTransectCourant;
+  const rs = chargerHistorique()
+    .filter(r => (r.transect || 'Transect (sans nom)') === nom)
+    .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+    .map(r => ({...r, d: Number(r.distance)}))
+    .sort((a, b) => a.d - b.d);
+
+  if(rs.length < 2){
+    cont.innerHTML = `<div class="carte"><h2>Transect ${echapHTML(nom)}</h2>
+      <p class="vide-msg">Il faut au moins deux relevés avec une distance renseignée pour analyser un transect.</p></div>`;
+    return;
+  }
+
+  /* Tronçons de zones, et les fiches que chacun recouvre. */
+  const troncons = [];
+  rs.forEach(r => {
+    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const cle = z ? z.zone : 'Non attribué';
+    const dernier = troncons[troncons.length - 1];
+    if(dernier && dernier.zone === cle){
+      dernier.fin = r.d; dernier.n++;
+      if(r.topFiche != null && !dernier.fiches.includes(r.topFiche)) dernier.fiches.push(r.topFiche);
+    } else {
+      troncons.push({zone:cle, rang: z ? z.rang : null, debut:r.d, fin:r.d, n:1,
+        fiches: r.topFiche != null ? [r.topFiche] : []});
+    }
+  });
+
+  /* Contrôle du gradient : le rang de zone doit être non décroissant. */
+  const inversions = [];
+  let precedent = null;
+  troncons.forEach(t => {
+    if(t.rang == null) return;
+    if(precedent && t.rang < precedent.rang) inversions.push({de: precedent, vers: t});
+    precedent = t;
+  });
+
+  /* Richesse et fréquence des espèces. */
+  const richesses = rs.filter(r => !r.solNu).map(r => (r.cortege || []).length);
+  const triees = richesses.slice().sort((a,b) => a-b);
+  const mediane = triees.length ? triees[Math.floor(triees.length/2)] : 0;
+  const freq = new Map();
+  rs.forEach(r => (r.cortege || []).forEach(e => {
+    const k = e.fr || e.latin;
+    if(!freq.has(k)) freq.set(k, {fr:k, latin:e.latin, n:0, min:r.d, max:r.d});
+    const f = freq.get(k); f.n++; f.min = Math.min(f.min, r.d); f.max = Math.max(f.max, r.d);
+  }));
+  const especes = [...freq.values()].sort((a,b) => b.n - a.n || a.fr.localeCompare(b.fr,'fr'));
+  const uniques = especes.filter(e => e.n === 1);
+
+  /* Mètres non relevés : écarts supérieurs au pas courant. */
+  const pas = pasCourant(rs);
+  const sauts = rs.slice(1).map((r,i) => ({de: rs[i].d, a: r.d, ecart: r.d - rs[i].d}))
+    .filter(s => s.ecart > pas);
+
+  const id0 = rs[0];
+  cont.innerHTML = `
+    <div class="carte">
+      <h2 style="margin-top:.2em;">Transect ${echapHTML(nom)}</h2>
+      <p class="analyse-meta">${rs.length} relevés · de ${rs[0].d} à ${rs[rs.length-1].d} m · pas courant ${pas} m${id0.observateur ? ' · ' + echapHTML(id0.observateur) : ''}${id0.dateReleve ? ' · ' + id0.dateReleve.split('-').reverse().join('/') : ''}</p>
+      <div class="analyse-vues">
+        <button type="button" id="vue-ajuste" aria-pressed="true" onclick="basculerVueDiagramme('ajuste')">Vue d'ensemble</button>
+        <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
+      </div>
+      <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom) || ''}</div>
+      <p class="analyse-aide">Une ligne par espèce : l'épaisseur de la barre donne l'abondance-dominance, sa longueur la plage de distances où l'espèce a été notée. En <b>taille réelle</b>, faites glisser pour parcourir le transect ; le zoom à deux doigts fonctionne aussi.</p>
+      <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
+    </div>
+
+    <div class="carte">
+      <h3>Lecture de la zonation</h3>
+      <table class="historique"><thead><tr><th>De → à</th><th>Zone</th><th>Fiche(s)</th><th>Relevés</th></tr></thead><tbody>
+        ${troncons.map(t => `<tr>
+          <td>${t.debut} → ${t.fin} m</td>
+          <td>${echapHTML(t.zone)}</td>
+          <td>${t.fiches.length ? t.fiches.join(', ') : '—'}</td>
+          <td class="num">${t.n}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+
+    <div class="carte">
+      <h3>Contrôle du gradient</h3>
+      ${inversions.length ? `
+        <div class="analyse-alerte">
+          <b>${inversions.length} inversion${inversions.length>1?'s':''} dans la zonation.</b>
+          Un transect va de la mer vers la terre : la zonation doit progresser dans un seul sens.
+          Une inversion vient presque toujours d'une détermination à revoir — le bouton « Modifier »
+          de l'historique permet de corriger l'espèce, et l'habitat est recalculé.
+        </div>
+        <ul class="analyse-liste">
+          ${inversions.map(x => `<li>À <b>${x.vers.debut} m</b> : retour de <b>${echapHTML(x.de.zone)}</b> vers <b>${echapHTML(x.vers.zone)}</b>, qui est plus bas sur le gradient.</li>`).join('')}
+        </ul>`
+      : `<p class="analyse-ok">✓ La zonation progresse dans un seul sens, de la mer vers la terre : ${troncons.filter(t=>t.rang!=null).map(t=>echapHTML(t.zone)).join(' → ')}.</p>`}
+    </div>
+
+    <div class="carte">
+      <h3>Richesse et cortège</h3>
+      <p class="analyse-meta">Espèces par relevé : ${Math.min(...richesses)} au minimum, ${mediane} en médiane, ${Math.max(...richesses)} au maximum${rs.filter(r=>r.solNu).length ? ` · ${rs.filter(r=>r.solNu).length} quadrat${rs.filter(r=>r.solNu).length>1?'s':''} de sol nu` : ''}</p>
+      <table class="historique"><thead><tr><th>Espèce</th><th>Relevés</th><th>Présente de → à</th></tr></thead><tbody>
+        ${especes.slice(0,12).map(e => `<tr>
+          <td><span class="fr">${echapHTML(e.fr)}</span>${e.latin ? `<br><span class="latin">${echapHTML(e.latin)}</span>` : ''}</td>
+          <td class="num">${e.n}</td>
+          <td>${e.min} → ${e.max} m</td></tr>`).join('')}
+      </tbody></table>
+      ${especes.length > 12 ? `<p class="analyse-meta">… et ${especes.length - 12} autre${especes.length-12>1?'s':''} espèce${especes.length-12>1?'s':''}.</p>` : ''}
+      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} vue${uniques.length>1?'s':''} sur un seul relevé</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}. À vérifier : une espèce notée une seule fois est soit rare, soit mal déterminée.</p>` : ''}
+      ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}. Le diagramme y laisse un blanc, la continuité n'ayant pas été observée.</p>` : ''}
+    </div>`;
+}
+
+const echapHTML = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function exporterProfilTransect(nomTransect){
   const svg = construireProfilTransectSVG(nomTransect);
