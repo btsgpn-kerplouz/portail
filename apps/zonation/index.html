@@ -2290,11 +2290,17 @@ function construireProfilTransectSVG(nomTransect){
 }
 
 /* ---------- Module d'analyse d'un transect ----------
-   Le diagramme dans l'appli, avec sa lecture : séquence des zones, contrôle du
-   gradient, richesse spécifique. Le contrôle du gradient est le plus utile
-   pédagogiquement : un transect va de la mer vers la terre, la zonation doit
-   donc progresser dans un sens. Une inversion signale presque toujours une
-   détermination à revoir — pas une bizarrerie du terrain. */
+   Le diagramme dans l'appli, avec sa lecture : séquence des zones, points de
+   vigilance, richesse spécifique.
+
+   Les points de vigilance sont la partie la plus utile pédagogiquement : un
+   transect va de la mer vers la terre, et l'on s'attend à ce que la zonation
+   progresse dans ce sens. Quand ce n'est pas le cas, l'appli signale sans
+   qualifier : deux causes sont possibles et elle ne peut pas trancher — la
+   microtopographie (cuvette, chenal, banquette portant une végétation de niveau
+   inférieur, auquel cas le relevé est juste) ou une détermination à revoir.
+   C'est la remarque de terrain qui départage, et elle est reprise à côté du
+   point signalé. */
 let analyseTransectCourant = null;
 
 function ouvrirAnalyseTransect(nom){
@@ -2434,7 +2440,9 @@ function construireEcranAnalyse(){
     }
   });
 
-  /* Contrôle du gradient : le rang de zone doit être non décroissant. */
+  /* Points de vigilance : endroits où le rang de zone décroît, c'est-à-dire où
+     la zonation revient vers un niveau plus bas. Signalés, jamais qualifiés
+     d'erreur — la microtopographie en produit de parfaitement réels. */
   const inversions = [];
   let precedent = null;
   troncons.forEach(t => {
@@ -2510,18 +2518,30 @@ function construireEcranAnalyse(){
     </div>
 
     <div class="carte">
-      <h3>Contrôle du gradient</h3>
+      <h3>Points de vigilance</h3>
       ${inversions.length ? `
         <div class="analyse-alerte">
-          <b>${inversions.length} inversion${inversions.length>1?'s':''} dans la zonation.</b>
-          Un transect va de la mer vers la terre : la zonation doit progresser dans un seul sens.
-          Une inversion vient presque toujours d'une détermination à revoir — le bouton « Modifier »
-          de l'historique permet de corriger l'espèce, et l'habitat est recalculé.
+          <b>${inversions.length} point${inversions.length>1?'s':''} où la zonation ne progresse pas vers la terre.</b>
+          Ce n'est pas nécessairement une erreur. Deux explications sont à peser sur le terrain :
+          <ul class="analyse-liste">
+            <li><b>La microtopographie.</b> Une cuvette, un chenal, une banquette ou une dépression
+              du schorre retient l'eau et porte une végétation de niveau inférieur à son entourage.
+              La zonation n'y est pas linéaire, et le relevé est juste.</li>
+            <li><b>Une détermination à revoir.</b> Le bouton « Modifier » de l'historique permet de
+              corriger l'espèce, et l'habitat est recalculé.</li>
+          </ul>
+          Le champ « remarque » du relevé est l'endroit où trancher : une cuvette notée sur le terrain
+          explique le point de vigilance.
         </div>
         <ul class="analyse-liste">
-          ${inversions.map(x => `<li>À <b>${x.vers.debut} m</b> : retour de <b>${echapHTML(x.de.zone)}</b> vers <b>${echapHTML(x.vers.zone)}</b>, qui est plus bas sur le gradient.</li>`).join('')}
+          ${inversions.map(x => {
+            const r = rs.find(v => v.d === x.vers.debut);
+            const note = r && (r.observation || '').trim();
+            return `<li>À <b>${x.vers.debut} m</b> : la zonation revient de <b>${echapHTML(x.de.zone)}</b>
+              vers <b>${echapHTML(x.vers.zone)}</b>, plus bas sur le gradient.${note ? `<br><span class="analyse-note">Remarque du relevé : « ${echapHTML(note)} »</span>` : `<br><span class="analyse-note">Aucune remarque sur ce relevé.</span>`}</li>`;
+          }).join('')}
         </ul>`
-      : `<p class="analyse-ok">✓ La zonation progresse dans un seul sens, de la mer vers la terre : ${troncons.filter(t=>t.rang!=null).map(t=>echapHTML(t.zone)).join(' → ')}.</p>`}
+      : `<p class="analyse-ok">✓ Aucun point de vigilance : la zonation progresse régulièrement vers la terre — ${troncons.filter(t=>t.rang!=null).map(t=>echapHTML(t.zone)).join(' → ')}.</p>`}
     </div>
 
     <div class="carte">
