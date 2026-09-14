@@ -2328,13 +2328,18 @@ function appliquerImportCSV(texte, nomFichier){
     const v = i => i >= 0 ? (c[i] || '').trim() : '';
     let transect = v(iTransect);
     let numero = v(iNumero);
-    if(!transect){                       // export complet : « Transect R1 » dans code_projet
-      const m = v(iProjet).match(/transect\s*(.+)$/i);
+    if(!transect){                       // export complet : le transect est dans code_projet
+      const m = v(iProjet).match(/transect\s*(.+)$/i);   // ancienne forme « Transect R1 »
       transect = m ? m[1].trim() : (v(iProjet) || '?');
     }
-    if(!numero){                         // « Transect R1 — relevé n°5 » dans releve_nom
-      const m = v(iNomRel).match(/relev[ée]\s*n[°o]\s*(\d+)/i);
-      numero = m ? m[1] : '';
+    if(!numero){
+      /* releve_nom, deux formes : « R1-15 » depuis le raccourcissement des
+         libellés, « Transect R1 — relevé n°15 » dans les fichiers antérieurs. */
+      const nom = v(iNomRel);
+      const court = nom.match(/^(.+)-(\d+)$/);
+      const longue = nom.match(/relev[ée]\s*n[°o]\s*(\d+)/i);
+      if(longue) numero = longue[1];
+      else if(court){ numero = court[2]; if(!v(iTransect) && !v(iProjet)) transect = court[1].trim(); }
     }
     const cle = (v(iReleveId) && !v(iTransect)) ? 'id:' + v(iReleveId) : transect + '#' + numero;
     if(!groupes.has(cle)) groupes.set(cle, {
@@ -2469,14 +2474,23 @@ function observationsDuReleve(r){
   }));
 }
 
+/* Nom court d'un relevé : « R1-15 » pour le relevé n°15 du transect R1.
+   Les libellés en phrase (« Transect R1 — relevé n°15 », « Distance sur le
+   transect : 15 m ») élargissaient les colonnes dans un tableur sans rien
+   apporter : le nom de la colonne dit déjà de quoi il s'agit. Le format reste
+   unique par relevé, ce dont PhytoScope a besoin pour les regrouper. */
+function nomCourtReleve(r){
+  return `${r.transect || '?'}-${r.numero ?? '?'}`;
+}
+
 /* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes). */
 function enteteRelevePhytoscope(r, releveId){
-  return [releveId, `Transect ${r.transect || '?'} — relevé n°${r.numero ?? '?'}`,
+  return [releveId, nomCourtReleve(r),
     [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres',
-    `Transect ${r.transect || ''}`,
+    r.transect || '',
     r.dateReleve || (r.date || new Date().toISOString()).slice(0,10),
     r.observateur || '',
-    r.distance != null && r.distance !== '' ? `Distance sur le transect : ${r.distance} m` : '', '', '1 m²'];
+    r.distance != null && r.distance !== '' ? `${r.distance} m` : '', '', '1 m²'];
 }
 
 /* Format long : une ligne = une espèce dans un relevé. L'ancien format mettait
