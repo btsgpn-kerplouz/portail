@@ -689,6 +689,9 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
         <button class="secondaire" onclick="exporterCompletCSV()">⬇ Export complet (CSV)</button>
         <p style="font-size:.75rem;color:var(--text-2);margin:0;">Mêmes colonnes que l'export Phytoscope, mais <b>sans aucune espèce écartée</b> et avec l'habitat proposé et le recouvrement en pourcentage. Pour archiver la campagne et l'analyser dans un tableur — pas pour l'importer dans Phytoscope.</p>
+        <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
+        <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Tableau de synthèse » ou un « Export complet » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois.</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -1926,6 +1929,186 @@ function afficherHistorique(){
     ${!actif ? `<button class="discret" onclick="reprendreTransect('${nom.replace(/'/g,"\\'")}')">↻ Reprendre ce transect</button>` : ''}
   `;
   }).join('');
+}
+
+/* ---------- Import d'un CSV produit par l'appli ----------
+   Deux usages : récupérer ses propres relevés après réinstallation, et réunir
+   les fichiers de plusieurs groupes pour en tirer un profil de transect.
+
+   Sont acceptés le « Tableau de synthèse » (colonnes Transect / Relevé n° /
+   Espèce…) et l'« Export complet » (colonnes releve_id / nom_scientifique…).
+   Les relevés sont AJOUTÉS : rien n'est remplacé, et un relevé déjà présent
+   (même transect, même numéro, même date) n'est pas importé deux fois, pour
+   qu'un import répété reste sans effet. */
+
+/* Retrouve le coefficient Braun-Blanquet dont la classe contient ce pourcentage.
+   Sert à relire l'export complet, où le sol nu est noté en pct, et tout fichier
+   dont le recouvrement aurait été converti. */
+function coefDepuisPct(pct){
+  if(!isFinite(pct)) return '';
+  const bornes = [['5',75],['4',50],['3',25],['2',5],['1',1],['+',0.1],['r',0.02],['i',0]];
+  return (bornes.find(([, seuil]) => pct >= seuil) || ['i'])[0];
+}
+
+/* Index des espèces du référentiel, par nom scientifique et par nom français :
+   un fichier importé est rattaché au référentiel quand c'est possible, pour que
+   l'espèce compte dans le score et porte le nom de l'appli. */
+const ESPECES_PAR_LATIN = {}, ESPECES_PAR_FR = {};
+HABITATS.forEach(h => h.especes.forEach(e => {
+  if(!ESPECES_PAR_LATIN[e.latin]) ESPECES_PAR_LATIN[e.latin] = {fr: e.fr, latin: e.latin};
+  if(!ESPECES_PAR_FR[e.fr]) ESPECES_PAR_FR[e.fr] = {fr: e.fr, latin: e.latin};
+}));
+
+/* Découpage RFC 4180 : les champs entre guillemets peuvent contenir le
+   séparateur, des retours à la ligne et des guillemets doublés. */
+function lireCSV(texte){
+  const t = texte.replace(/^﻿/, '');
+  const sep = (t.split('\n')[0].match(/;/g) || []).length >= (t.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
+  const lignes = [];
+  let champ = '', ligne = [], dansGuillemets = false;
+  for(let i = 0; i < t.length; i++){
+    const ch = t[i];
+    if(dansGuillemets){
+      if(ch === '"'){ if(t[i+1] === '"'){ champ += '"'; i++; } else dansGuillemets = false; }
+      else champ += ch;
+      continue;
+    }
+    if(ch === '"'){ dansGuillemets = true; }
+    else if(ch === sep){ ligne.push(champ); champ = ''; }
+    else if(ch === '\r'){ /* ignoré : le \n qui suit termine la ligne */ }
+    else if(ch === '\n'){ ligne.push(champ); lignes.push(ligne); ligne = []; champ = ''; }
+    else champ += ch;
+  }
+  if(champ !== '' || ligne.length){ ligne.push(champ); lignes.push(ligne); }
+  return lignes.filter(l => l.some(c => (c||'').trim() !== ''));
+}
+
+const normEntete = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+
+function importerFichierCSV(input){
+  const fichier = input.files && input.files[0];
+  input.value = '';                       // permet de réimporter le même fichier
+  if(!fichier) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    try { appliquerImportCSV(lecteur.result, fichier.name); }
+    catch(e){ alert('Import impossible : ' + e.message); }
+  };
+  lecteur.onerror = () => alert('Lecture du fichier impossible.');
+  lecteur.readAsText(fichier, 'utf-8');
+}
+
+function appliquerImportCSV(texte, nomFichier){
+  const lignes = lireCSV(texte);
+  if(lignes.length < 2) throw new Error('fichier vide ou sans ligne de données.');
+  const entete = lignes[0].map(normEntete);
+  const col = (...noms) => { for(const n of noms){ const i = entete.indexOf(n); if(i >= 0) return i; } return -1; };
+
+  const iEspece   = col('espece', 'nom_francais');
+  const iLatin    = col('nom_scientifique');
+  const iCoef     = col('coefficient', 'recouvrement_saisi');
+  const iTransect = col('transect');
+  const iNumero   = col('releve_n', 'releve_no', 'releve_numero');
+  const iReleveId = col('releve_id');
+  const iNomRel   = col('releve_nom');
+  const iProjet   = col('code_projet');
+  const iDistance = col('distance_m', 'distance');
+  const iDate     = col('date');
+  const iObs      = col('observateur');
+  const iSite     = col('site');
+  const iCommune  = col('commune');
+  const iRemarque = col('remarque');
+  const iMode     = col('mode_recouvrement');
+  if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
+    throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
+
+  const avertissements = [];
+  /* Une ligne = une observation. Les lignes d'un même relevé sont regroupées par
+     transect + numéro quand ces colonnes existent (tableau de synthèse), sinon
+     par releve_id (export complet). */
+  const groupes = new Map();
+  lignes.slice(1).forEach((c, n) => {
+    const v = i => i >= 0 ? (c[i] || '').trim() : '';
+    let transect = v(iTransect);
+    let numero = v(iNumero);
+    if(!transect){                       // export complet : « Transect R1 » dans code_projet
+      const m = v(iProjet).match(/transect\s*(.+)$/i);
+      transect = m ? m[1].trim() : (v(iProjet) || '?');
+    }
+    if(!numero){                         // « Transect R1 — relevé n°5 » dans releve_nom
+      const m = v(iNomRel).match(/relev[ée]\s*n[°o]\s*(\d+)/i);
+      numero = m ? m[1] : '';
+    }
+    const cle = (v(iReleveId) && !v(iTransect)) ? 'id:' + v(iReleveId) : transect + '#' + numero;
+    if(!groupes.has(cle)) groupes.set(cle, {
+      transect, numero: numero === '' ? null : Number(numero),
+      dateReleve: v(iDate), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
+      distance: v(iDistance), observation: v(iRemarque), cortege: [], solNu: false
+    });
+    const g = groupes.get(cle);
+    const latin = v(iLatin), fr = v(iEspece) || latin;
+    const coef = v(iCoef);
+    if(!fr && !latin) return;                                  // ligne sans espèce
+    if(/^sol nu$/i.test(latin) || /^sol nu$/i.test(fr)){ g.solNu = true; return; }
+    if(v(iMode) === 'pct'){ avertissements.push(`ligne ${n+2} : recouvrement en % (${coef}) converti en coefficient`); }
+    const code = v(iMode) === 'pct' ? coefDepuisPct(parseFloat(coef.replace(',','.'))) : coef;
+    if(!(code in COEF_ABONDANCE)){
+      avertissements.push(`ligne ${n+2} : coefficient « ${coef} » non reconnu, espèce ignorée (${fr})`);
+      return;
+    }
+    const connue = ESPECES_PAR_LATIN[latin] || ESPECES_PAR_FR[fr];
+    g.cortege.push({fr: connue ? connue.fr : fr, latin: connue ? connue.latin : (latin || null),
+      mode: 'bb', cover: code, reconnue: !!connue});
+    if(!connue) avertissements.push(`ligne ${n+2} : « ${fr || latin} » hors référentiel, conservée sans effet sur le score`);
+  });
+
+  const existants = chargerHistorique();
+  const dejaLa = new Set(existants.map(r => `${r.transect}#${r.numero}#${r.dateReleve||''}`));
+  const ajoutes = [];
+  let doublons = 0;
+  groupes.forEach(g => {
+    if(dejaLa.has(`${g.transect}#${g.numero}#${g.dateReleve}`)){ doublons++; return; }
+    // L'habitat est recalculé avec le référentiel courant : le fichier n'en porte
+    // que le libellé, alors que le profil a besoin du numéro de fiche.
+    const sauve = etat.cortege;
+    etat.cortege = g.cortege.filter(e => e.reconnue).map(e => ({...e, key: normaliser(e.latin)}));
+    const res = g.solNu || !etat.cortege.length ? null
+      : calculerScores().filter(x => x.matchCar.length || x.matchFreq.length)[0];
+    etat.cortege = sauve;
+    ajoutes.push({
+      date: new Date().toISOString(), dateReleve: g.dateReleve, transect: g.transect,
+      numero: g.numero, observateur: g.observateur, site: g.site, commune: g.commune,
+      observation: g.observation, distance: g.distance, cortege: g.cortege,
+      solNu: g.solNu || !g.cortege.length,
+      top: res ? res.habitat.nomFr : SOL_NU.habitat, topFiche: res ? res.habitat.id : null,
+      tauxCar: res ? res.tauxCar : 0,
+      carMatch: res ? `${res.matchCar.length}/${res.totalCar}` : '',
+      score: res ? res.score : 0
+    });
+  });
+
+  if(!ajoutes.length && !doublons) throw new Error('aucun relevé lisible dans ce fichier.');
+  if(ajoutes.length){
+    ajoutes.sort((a,b) => String(a.transect).localeCompare(String(b.transect),'fr') || (a.numero||0)-(b.numero||0));
+    sauverHistorique(existants.concat(ajoutes));
+    majCompteurHistorique();
+    afficherHistorique();
+    dessinerMotifHero();
+  }
+  const nObs = ajoutes.reduce((n,r) => n + r.cortege.length, 0);
+  const transects = [...new Set(ajoutes.map(r => r.transect))];
+  let msg = `${nomFichier}\n\n${ajoutes.length} relevé${ajoutes.length>1?'s':''} importé${ajoutes.length>1?'s':''}`
+    + ` (${nObs} observation${nObs>1?'s':''})`
+    + (transects.length ? `\nTransect${transects.length>1?'s':''} : ${transects.join(', ')}` : '')
+    + (doublons ? `\n${doublons} relevé${doublons>1?'s':''} déjà présent${doublons>1?'s':''}, non réimporté${doublons>1?'s':''}.` : '');
+  if(avertissements.length){
+    const apercu = avertissements.slice(0,8);
+    msg += `\n\n${avertissements.length} remarque${avertissements.length>1?'s':''} :\n· ` + apercu.join('\n· ')
+      + (avertissements.length > apercu.length ? `\n· … et ${avertissements.length - apercu.length} autre(s)` : '');
+  }
+  msg += '\n\nL\'habitat a été recalculé avec le référentiel de cette version de l\'appli.';
+  alert(msg);
 }
 
 function viderHistorique(){
