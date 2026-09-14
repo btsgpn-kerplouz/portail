@@ -244,6 +244,21 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
+/* Pas de distance : cibles larges, utilisables au pouce sur l'estran. */
+.pas-distance{display:flex;gap:.4em;align-items:stretch;}
+.pas-distance input{flex:1 1 auto;min-width:0;text-align:center;font-family:var(--mono);}
+.pas-distance button{
+  flex:0 0 auto;min-width:3.1em;padding:.55em .2em;
+  font-family:var(--mono);font-size:.95rem;font-weight:700;
+  background:var(--page-chantier);color:var(--acc-dark);
+  border:1px solid var(--line);border-radius:var(--rayon-petit);cursor:pointer;
+}
+.pas-distance button:active{background:var(--acc);color:#fff;}
+.pas-distance .pas-moins{color:var(--text-2);}
+.rappel-distance{font-size:.76rem;color:var(--text-2);margin:.45em 0 0;}
+.rappel-distance:empty{display:none;}
+.rappel-distance b{color:var(--acc-dark);}
+
 /* Rappel du transect en cours. Il remplace l'ancien champ libre « Transect n° » :
    on montre la ligne à laquelle appartient le relevé, sans inviter à la changer. */
 .carte-transect{
@@ -584,7 +599,17 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
       <div class="champ" style="margin-bottom:0;">
         <label for="in-distance">Distance sur le transect (m)</label>
-        <input type="number" id="in-distance" placeholder="Ex : 3">
+        <!-- Sauter des mètres doit se faire au pouce : sur l'estran, saisir un
+             nombre au clavier est lent et l'on n'échantillonne pas toujours
+             mètre par mètre. Le champ reste éditable pour un cas particulier. -->
+        <div class="pas-distance">
+          <button type="button" class="pas-moins" onclick="avancerDistance(-1)" aria-label="Reculer d'un mètre">−1</button>
+          <input type="number" id="in-distance" placeholder="Ex : 3" inputmode="decimal" oninput="majRappelDistance()">
+          <button type="button" onclick="avancerDistance(1)">+1</button>
+          <button type="button" onclick="avancerDistance(5)">+5</button>
+          <button type="button" onclick="avancerDistance(10)">+10</button>
+        </div>
+        <p class="rappel-distance" id="rappel-distance"></p>
       </div>
     </div>
   </section>
@@ -1784,6 +1809,40 @@ function majDistanceSuggeree(nomTransect, numero){
   const rs = releveDuTransect(nomTransect);
   const derniere = rs.length ? parseFloat(rs[rs.length-1].distance) : NaN;
   inDistance.value = !isNaN(derniere) ? (derniere + 1) : numero;
+  majRappelDistance();
+}
+
+/* Décale la distance proposée, pour sauter des mètres sans passer par le clavier.
+   On ne descend pas sous le dernier relevé enregistré : un transect se parcourt
+   dans un sens, et une distance qui reculerait brouillerait le profil. */
+function avancerDistance(pas){
+  const inDistance = document.getElementById('in-distance');
+  if(!inDistance) return;
+  const rs = releveDuTransect(assurerTransectActif());
+  const derniere = rs.length ? parseFloat(rs[rs.length-1].distance) : NaN;
+  const plancher = isNaN(derniere) ? 0 : derniere;
+  const actuelle = parseFloat(inDistance.value);
+  const base = isNaN(actuelle) ? plancher : actuelle;
+  inDistance.value = Math.max(plancher + (rs.length ? 1 : 0), base + pas);
+  majRappelDistance();
+}
+
+/* Rappelle l'écart avec le relevé précédent : c'est lui qui dit si l'on a sauté
+   des mètres, information que le diagramme de profil reprendra. */
+function majRappelDistance(){
+  const cont = document.getElementById('rappel-distance');
+  if(!cont) return;
+  const rs = releveDuTransect(assurerTransectActif());
+  if(!rs.length){ cont.textContent = 'Premier relevé de ce transect.'; return; }
+  const derniere = parseFloat(rs[rs.length-1].distance);
+  const actuelle = parseFloat(document.getElementById('in-distance').value);
+  if(isNaN(derniere) || isNaN(actuelle)){ cont.textContent = ''; return; }
+  const ecart = Math.round((actuelle - derniere) * 100) / 100;
+  cont.innerHTML = `Relevé précédent à <b>${derniere} m</b> · `
+    + (ecart === 1 ? 'mètre suivant'
+      : ecart > 1 ? `<b>${ecart} m</b> plus loin — ${ecart - 1} mètre${ecart - 1 > 1 ? 's' : ''} non relevé${ecart - 1 > 1 ? 's' : ''}`
+      : ecart === 0 ? 'même distance que le précédent'
+      : `<b>${ecart} m</b> : en arrière du précédent`);
 }
 
 /* Prépare la page 1 (identité) : numéro calculé, valeurs mémorisées proposées. */
