@@ -244,6 +244,30 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
+/* Correction d'un relevé existant : l'écart avec une saisie neuve doit sauter aux
+   yeux, sinon on croit ajouter un point et l'on s'étonne que rien ne s'incrémente. */
+.bandeau-edition{
+  background:#fdf6e3;border:1px solid #d9c98a;border-left:4px solid #b08900;
+  border-radius:var(--rayon-petit);padding:.6em .8em;margin-bottom:1em;
+  font-size:.8rem;color:var(--ink);line-height:1.5;
+}
+.bandeau-edition b{color:#7a5f00;}
+.bandeau-edition button{margin-top:.4em;}
+/* Action secondaire dans un tableau dense : elle doit rester lisible au pouce
+   sans prendre le pas sur la donnée. */
+.btn-modifier{
+  font-family:var(--sans);font-size:.72rem;font-weight:600;
+  padding:.35em .6em;white-space:nowrap;
+  background:#fff;color:var(--acc);
+  border:1px solid var(--acc);border-radius:var(--rayon-petit);cursor:pointer;
+}
+.btn-modifier:active{background:var(--acc);color:#fff;}
+.tag-corrige{
+  font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;
+  background:#fdf6e3;color:#7a5f00;border:1px solid #d9c98a;border-radius:3px;padding:0 .3em;
+  white-space:nowrap;
+}
+
 /* Rappel du transect en cours. Il remplace l'ancien champ libre « Transect n° » :
    on montre la ligne à laquelle appartient le relevé, sans inviter à la changer. */
 .carte-transect{
@@ -545,6 +569,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran" id="ecran-identite">
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
+      <div class="bandeau-edition" hidden></div>
       <span class="etape-label">Étape 1/3 — Identité du relevé</span>
       <h2 style="margin-top:.2em;">Relevé n°<span id="numero-releve-affiche">1</span> <span class="titre-transect">du transect <span id="transect-affiche">1</span></span></h2>
       <p style="font-size:.78rem;color:var(--text-2);margin:-.1em 0 1.1em;">En-tête d'un bordereau de terrain : ces informations situent le relevé (qui, quand, où) et le rendent exploitable par quelqu'un d'autre que vous. Le numéro du relevé est attribué automatiquement : il s'incrémente à chaque enregistrement sur la même ligne.</p>
@@ -592,6 +617,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <!-- ECRAN RELEVE -->
   <section class="ecran" id="ecran-releve">
     <a class="retour-lien" onclick="allerA('identite')">← Identité du relevé</a>
+    <div class="bandeau-edition" hidden></div>
     <div class="rappel-bordereau" id="rappel-bordereau"></div>
 
     <div class="carte">
@@ -716,8 +742,16 @@ let etat = {
   especeEnCours: null, // {fr, latin, reconnue} confirmé à l'étape 1, en cours de saisie d'abondance (étape 2)
   coefCourant: null, // coefficient Braun-Blanquet actuellement sélectionné pour l'ajout
   dernierResultat: null,
-  solNu: false // quadrat déclaré sans végétation : cortège vide, mais relevé bien réel
+  solNu: false, // quadrat déclaré sans végétation : cortège vide, mais relevé bien réel
+  edition: null // clé du relevé en cours de correction (null = nouveau relevé)
 };
+
+/* Clé stable d'un relevé enregistré. Les relevés n'avaient pas d'identifiant :
+   l'horodatage d'enregistrement en tient lieu pour ceux déjà en mémoire, et les
+   nouveaux reçoivent un « id » propre. Nécessaire pour retrouver et remplacer un
+   relevé que l'on corrige — une détermination d'espèce se révise souvent après
+   coup, au retour sur la flore. */
+function cleReleve(r){ return r.id || r.date || ''; }
 
 /* Un quadrat sans végétation est une donnée, pas une absence de donnée : sur la
    slikke, le sol nu marque la limite inférieure de la végétation. Phytoscope le
@@ -813,7 +847,10 @@ function allerA(nom){
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site"
   };
-  document.getElementById('titre-ecran').firstChild.textContent = titres[nom] || "Zonation";
+  const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
+  document.getElementById('titre-ecran').firstChild.textContent =
+    enCorrection ? "Corriger le relevé" : (titres[nom] || "Zonation");
+  if(typeof majBandeauEdition === 'function') majBandeauEdition();
   if(nom==='identite') majEcranIdentite();
   if(nom==='releve'){
     initSaisieEspeces();
@@ -1170,6 +1207,7 @@ const CARTE_ENREGISTREMENT = `<div class="carte">
    l'enregistrement. */
 function declarerSolNu(){
   if(etat.cortege.length) return;
+  if(etat.solNu){ afficherResultats(); return; }   // déjà déclaré : correction d un relevé de sol nu
   if(!confirm('Déclarer ce quadrat entièrement sans végétation (sol nu) ?\n\nIl sera enregistré comme tel, sans proposition d\'habitat.')) return;
   etat.solNu = true;
   afficherResultats();
@@ -1858,6 +1896,8 @@ function resetReleve(){
   etat.coefCourant = null;
   etat.dernierResultat = null;
   etat.solNu = false;
+  etat.edition = null;
+  document.querySelectorAll('.bandeau-edition').forEach(el=>{ el.hidden = true; el.innerHTML = ''; });
   // La distance est vidée pour être recalculée par majEcranIdentite (relevé suivant = +1 m).
   document.getElementById('in-distance').value = '';
   document.getElementById('recherche-espece').value = '';
@@ -1876,13 +1916,21 @@ function enregistrerReleve(){
   const liste = chargerHistorique();
   const id = lireIdentite();
   const transect = id.transect;
-  const numero = prochainNumeroTransect(transect);
   memoriserBordereau(id);
-  liste.push({
-    date: new Date().toISOString(),
+
+  const i = etat.edition ? liste.findIndex(x => cleReleve(x) === etat.edition) : -1;
+  const correction = i >= 0;
+  const ancien = correction ? liste[i] : null;
+  /* Une correction garde son identité — numéro, transect et date d'enregistrement
+     d'origine — et ne se renumérote pas : le numéro situe le relevé sur la ligne,
+     le renuméroter décalerait tout le transect. */
+  const enregistre = {
+    id: correction ? cleReleve(ancien) : (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+    date: correction ? ancien.date : new Date().toISOString(),
+    modifieLe: correction ? new Date().toISOString() : undefined,
     dateReleve: id.date,
-    transect,
-    numero,
+    transect: correction ? ancien.transect : transect,
+    numero: correction ? ancien.numero : prochainNumeroTransect(transect),
     observateur: id.observateur,
     site: id.site,
     commune: id.commune,
@@ -1895,12 +1943,68 @@ function enregistrerReleve(){
     tauxCar: r ? r.tauxCar : 0,
     carMatch: r ? `${r.matchCar.length}/${r.totalCar}` : '',
     score: r ? r.score : 0
-  });
+  };
+  if(correction) liste[i] = enregistre; else liste.push(enregistre);
   sauverHistorique(liste);
   majCompteurHistorique();
   dessinerMotifHero();
-  alert(`Relevé n°${numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
+
+  if(correction){
+    const change = ancien.top !== enregistre.top;
+    alert(`Relevé n°${enregistre.numero} corrigé (transect ${enregistre.transect}).`
+      + (change ? `\n\nL'habitat proposé a changé :\n· avant : ${ancien.top}\n· après : ${enregistre.top}`
+                : `\n\nHabitat proposé inchangé : ${enregistre.top}`));
+    resetReleve();
+    allerA('historique');
+    return;
+  }
+  alert(`Relevé n°${enregistre.numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
   nouveauPoint();
+}
+
+/* Reprend un relevé enregistré pour le corriger : on recharge son en-tête et son
+   cortège dans la saisie, et l'enregistrement le remplacera au lieu d'en créer un
+   nouveau. Cas d'usage principal : une espèce redéterminée au retour du terrain. */
+function modifierReleve(cle){
+  const r = chargerHistorique().find(x => cleReleve(x) === cle);
+  if(!r){ alert('Ce relevé n\'a pas été retrouvé.'); return; }
+  resetReleve();
+  etat.edition = cle;
+  etat.solNu = !!r.solNu;
+  etat.cortege = (r.cortege || []).map(e => ({
+    key: e.latin ? normaliser(e.latin) : null,
+    fr: e.fr, latin: e.latin, mode: e.mode || 'bb', cover: e.cover, reconnue: !!e.reconnue
+  }));
+  definirTransectActif(r.transect);
+  allerA('identite');
+  // après majEcranIdentite(), qui remplit les champs vides : on impose les valeurs du relevé
+  const mettre = (id, v) => { const el = document.getElementById(id); if(el) el.value = v ?? ''; };
+  mettre('in-transect', r.transect);
+  mettre('in-date', r.dateReleve);
+  mettre('in-observateur', r.observateur);
+  mettre('in-site', r.site);
+  mettre('in-commune', r.commune);
+  mettre('in-distance', r.distance);
+  majCarteTransect();
+  majBandeauEdition();
+}
+
+/* Signale sans ambiguïté qu'on corrige un relevé existant : sans cela on croit
+   saisir un nouveau point, et l'on s'étonne que le compteur n'avance pas. */
+function majBandeauEdition(){
+  document.querySelectorAll('.bandeau-edition').forEach(el => {
+    if(!etat.edition){ el.hidden = true; el.innerHTML = ''; return; }
+    const r = chargerHistorique().find(x => cleReleve(x) === etat.edition);
+    el.hidden = false;
+    el.innerHTML = `<b>Correction du relevé n°${r ? r.numero : '?'}</b>`
+      + ` du transect ${r ? r.transect : '?'}${r && r.distance !== '' && r.distance != null ? `, à ${r.distance} m` : ''}.`
+      + ` Il sera remplacé, sans nouveau numéro.`
+      + ` <button type="button" class="discret" onclick="annulerEdition()">Abandonner la correction</button>`;
+  });
+}
+function annulerEdition(){
+  resetReleve();
+  allerA('historique');
 }
 
 function afficherHistorique(){
@@ -1923,8 +2027,8 @@ function afficherHistorique(){
       <h3 style="margin:0;">Transect ${nom} ${actif ? '<span class="tag" style="margin-left:.4em;">en cours</span>' : ''}</h3>
       <span style="font-family:var(--mono);font-size:.75rem;color:var(--text-2);">${rs.length} relevé${rs.length>1?'s':''}${rs[0] && rs[0].observateur ? ' · '+rs[0].observateur : ''}${rs[0] && rs[0].dateReleve ? ' · '+rs[0].dateReleve.split('-').reverse().join('/') : ''}</span>
     </div>
-    <table class="historique"><thead><tr><th>N°</th><th>Dist. (m)</th><th>Habitat probable</th><th>Espèces caract.</th><th>Remarque</th></tr></thead><tbody>
-      ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td></tr>`).join('')}
+    <table class="historique"><thead><tr><th>N°</th><th>Dist. (m)</th><th>Habitat probable</th><th>Espèces caract.</th><th>Remarque</th><th></th></tr></thead><tbody>
+      ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
     </tbody></table>
     <div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;">
       <button class="secondaire" onclick="exporterProfilTransect('${nom.replace(/'/g,"\\'")}')">⬇ Profil de transect (SVG)</button>
@@ -2269,6 +2373,7 @@ function appliquerImportCSV(texte, nomFichier){
       : calculerScores().filter(x => x.matchCar.length || x.matchFreq.length)[0];
     etat.cortege = sauve;
     ajoutes.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
       date: new Date().toISOString(), dateReleve: g.dateReleve, transect: g.transect,
       numero: g.numero, observateur: g.observateur, site: g.site, commune: g.commune,
       observation: g.observation, distance: g.distance, cortege: g.cortege,
@@ -2579,7 +2684,7 @@ function actionsEcranReleve(){
   // Quadrat sans végétation : action explicite, pour que le sol nu soit une
   // déclaration et non la conséquence d'un oubli d'« Ajouter au relevé ».
   return `<button class="secondaire" onclick="allerA('identite')">← Identité</button>`
-    + (vide ? `<button class="secondaire" onclick="declarerSolNu()">Sol nu</button>` : '')
+    + (vide ? `<button class="secondaire" onclick="declarerSolNu()">${etat.solNu ? 'Sol nu → résultat' : 'Sol nu'}</button>` : '')
     + `<button onclick="analyserDepuisBarre()"${vide?' disabled title="Ajoutez au moins une espèce, ou déclarez le quadrat sans végétation"':''}>Analyser le relevé</button>`;
 }
 
