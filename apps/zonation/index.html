@@ -244,11 +244,28 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
-/* Indique si le n° de transect saisi reprend un transect déjà commencé (et où il
-   en est) ou en ouvre un nouveau — sinon rien ne signale qu'on repart de zéro. */
-.etat-transect{font-size:.76rem;color:var(--text-2);margin:-.5em 0 .9em;}
-.etat-transect:empty{display:none;}   /* pas de vide réservé quand aucun transect n'est saisi */
-.etat-transect b{color:var(--acc-dark);}
+/* Rappel du transect en cours. Il remplace l'ancien champ libre « Transect n° » :
+   on montre la ligne à laquelle appartient le relevé, sans inviter à la changer. */
+.carte-transect{
+  background:var(--page-chantier);border:1px solid var(--line);border-left:4px solid var(--acc);
+  border-radius:var(--rayon-petit);padding:.6em .8em;margin-bottom:1em;
+}
+.carte-transect .transect-titre{font-family:var(--mono);font-size:.85rem;color:var(--acc-dark);}
+.carte-transect .transect-detail{font-size:.76rem;color:var(--text-2);margin-top:.15em;}
+.carte-transect .transect-detail b{color:var(--acc-dark);}
+.carte-transect button{margin-top:.5em;}
+.titre-transect{font-size:.62em;font-weight:400;color:var(--text-2);white-space:nowrap;}
+/* Panneau de changement de transect : déplié à la demande, il explique d'abord ce
+   qu'est un transect, puisque c'est cette confusion qui a coûté des relevés. */
+.choix-transect{
+  border:1px solid var(--line);border-radius:var(--rayon-petit);
+  padding:.7em .8em;margin:-.5em 0 1em;background:#fff;
+}
+.choix-transect .aide-transect{font-size:.78rem;color:var(--text-2);margin:0 0 .6em;line-height:1.45;}
+.choix-transect .aide-transect b{color:var(--ink);}
+.choix-transect .choix-groupe{display:flex;flex-wrap:wrap;gap:.4em;align-items:center;margin-top:.5em;}
+.choix-transect .choix-groupe>span{font-size:.76rem;color:var(--text-2);width:100%;}
+.choix-transect small{font-weight:400;opacity:.75;}
 .masque{display:none;}
 /* Encadré du nom de l'espèce en cours : c'est le sujet de toute l'étape, il doit se
    détacher franchement du texte courant qui l'entoure. Aplat clair + filet d'accent
@@ -529,22 +546,23 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
       <span class="etape-label">Étape 1/3 — Identité du relevé</span>
-      <h2 style="margin-top:.2em;">Relevé n°<span id="numero-releve-affiche">1</span></h2>
-      <p style="font-size:.78rem;color:var(--text-2);margin:-.1em 0 1.1em;">En-tête d'un bordereau de terrain : ces informations situent le relevé (qui, quand, où) et le rendent exploitable par quelqu'un d'autre que vous. Le numéro est attribué automatiquement selon la position sur le transect.</p>
+      <h2 style="margin-top:.2em;">Relevé n°<span id="numero-releve-affiche">1</span> <span class="titre-transect">du transect <span id="transect-affiche">1</span></span></h2>
+      <p style="font-size:.78rem;color:var(--text-2);margin:-.1em 0 1.1em;">En-tête d'un bordereau de terrain : ces informations situent le relevé (qui, quand, où) et le rendent exploitable par quelqu'un d'autre que vous. Le numéro du relevé est attribué automatiquement : il s'incrémente à chaque enregistrement sur la même ligne.</p>
 
-      <div class="ligne2">
-        <div class="champ">
-          <label for="in-transect">Transect n°</label>
-          <input type="text" id="in-transect" list="liste-transects" autocomplete="off" placeholder="Ex : 1" oninput="onSaisieIdentite()">
-          <datalist id="liste-transects"></datalist>
-        </div>
-        <div class="champ">
-          <label for="in-date">Date</label>
-          <input type="date" id="in-date">
-        </div>
+      <!-- Le transect n'est plus un champ libre proposé avant chaque relevé :
+           beaucoup d'élèves l'incrémentaient à chaque quadrat, croyant y inscrire
+           le numéro du relevé. Il est désormais rappelé, et changer de transect
+           est une action délibérée. Le champ reste présent, masqué, pour que
+           lireIdentite() et les exports ne changent pas. -->
+      <input type="hidden" id="in-transect">
+      <div class="carte-transect" id="carte-transect"></div>
+      <div class="choix-transect" id="choix-transect" hidden></div>
+
+      <div class="champ">
+        <label for="in-date">Date</label>
+        <input type="date" id="in-date">
       </div>
 
-      <p class="etat-transect" id="etat-transect"></p>
       <div class="champ">
         <label for="in-observateur">Observateur·ice</label>
         <input type="text" id="in-observateur" list="liste-observateurs" autocomplete="off" placeholder="Prénom Nom">
@@ -1693,29 +1711,67 @@ function transectsEnregistres(){
   return vus;
 }
 
-/* Rappelle où en est le transect saisi : reprise d'un transect existant ou nouveau. */
-function majEtatTransect(nom){
-  const cont = document.getElementById('etat-transect');
+/* Rappel du transect en cours, en tête du bordereau. Non modifiable ici : le
+   changement passe par une action explicite, avec rappel de ce qu'est un
+   transect — c'est la confusion relevé / transect qui a produit le plus
+   d'erreurs sur le terrain. */
+function majCarteTransect(){
+  const cont = document.getElementById('carte-transect');
   if(!cont) return;
+  const nom = assurerTransectActif();
   const rs = releveDuTransect(nom);
-  if(!nom){ cont.innerHTML = ''; return; }
-  if(!rs.length){
-    cont.innerHTML = `Nouveau transect : ce relevé sera le <b>n°1</b>.`;
-    return;
-  }
-  const derniere = rs[rs.length-1].distance;
-  cont.innerHTML = `Transect déjà commencé : <b>${rs.length} relevé${rs.length>1?'s':''}</b> enregistré${rs.length>1?'s':''}${derniere ? `, dernier à <b>${derniere} m</b>` : ''}.`;
+  const derniere = rs.length ? rs[rs.length-1].distance : null;
+  cont.innerHTML = `
+    <div class="transect-titre">Transect <b>${nom}</b></div>
+    <div class="transect-detail">${rs.length
+      ? `${rs.length} relevé${rs.length>1?'s':''} déjà enregistré${rs.length>1?'s':''}`
+        + (derniere != null && derniere !== '' ? `, dernier à <b>${derniere} m</b>` : '')
+      : `Aucun relevé pour l'instant : celui-ci sera le premier.`}</div>
+    <button type="button" class="discret" onclick="ouvrirChoixTransect()">Changer de transect</button>`;
 }
 
-function onSaisieIdentite(){
-  const nom = (document.getElementById('in-transect').value || '').trim();
-  if(nom) definirTransectActif(nom);
-  const effectif = nom || assurerTransectActif();
-  const numero = prochainNumeroTransect(effectif);
-  document.getElementById('numero-releve-affiche').textContent = numero;
-  majEtatTransect(nom);
-  majDistanceSuggeree(effectif, numero);
+/* Les noms de transect sont saisis par les élèves : on passe par un index dans
+   une liste temporaire plutôt que d'injecter le nom dans un attribut onclick. */
+let choixTransects = [];
+function ouvrirChoixTransect(){
+  const cont = document.getElementById('choix-transect');
+  if(!cont) return;
+  const actif = assurerTransectActif();
+  choixTransects = transectsEnregistres();
+  const max = Math.max(0, ...choixTransects.concat([actif]).map(t => parseInt(t,10) || 0));
+  const suivant = String(max + 1);
+  const reprises = choixTransects.filter(t => t !== actif).map((t,i) =>
+    `<button type="button" class="secondaire" onclick="choisirTransect(${choixTransects.indexOf(t)})">Transect ${t} <small>(${releveDuTransect(t).length} relevé${releveDuTransect(t).length>1?'s':''})</small></button>`).join('');
+  cont.innerHTML = `
+    <p class="aide-transect"><b>Un transect est une ligne entière</b>, du bas de l'estran vers la terre, composée de <b>plusieurs relevés</b> — un par point de mesure. Le numéro du relevé s'incrémente tout seul à chaque enregistrement : vous n'avez rien à changer ici entre deux quadrats.</p>
+    <p class="aide-transect">Ne changez de transect que pour repartir sur une <b>nouvelle ligne</b>, à un autre endroit du site.</p>
+    ${reprises ? `<div class="choix-groupe"><span>Reprendre un transect commencé :</span>${reprises}</div>` : ''}
+    <div class="choix-groupe"><span>Ou :</span>
+      <button type="button" onclick="commencerTransect('${suivant}')">Commencer le transect ${suivant}</button>
+      <button type="button" class="discret" onclick="fermerChoixTransect()">Annuler — rester sur le transect ${actif}</button>
+    </div>`;
+  cont.hidden = false;
 }
+function fermerChoixTransect(){
+  const cont = document.getElementById('choix-transect');
+  if(cont){ cont.hidden = true; cont.innerHTML = ''; }
+}
+function choisirTransect(index){
+  const nom = choixTransects[index];
+  if(nom == null) return;
+  definirTransectActif(nom);
+  fermerChoixTransect();
+  resetReleve();
+  majEcranIdentite();
+}
+function commencerTransect(nom){
+  if(!confirm(`Commencer le transect ${nom} ?\n\nÀ ne faire que pour une nouvelle ligne de relevés, pas pour un nouveau quadrat sur la ligne en cours.`)) return;
+  definirTransectActif(nom);
+  fermerChoixTransect();
+  resetReleve();
+  majEcranIdentite();
+}
+
 
 function majDistanceSuggeree(nomTransect, numero){
   const inDistance = document.getElementById('in-distance');
@@ -1735,8 +1791,12 @@ function majEcranIdentite(){
   const d = m.dernier || {};
 
   document.getElementById('numero-releve-affiche').textContent = numero;
+  const tAff = document.getElementById('transect-affiche');
+  if(tAff) tAff.textContent = nom;
   const set = (id, val)=>{ const el = document.getElementById(id); if(el && !el.value) el.value = val; };
-  set('in-transect', nom);
+  // Le transect n'est plus saisi à la main : il suit le transect actif sans condition.
+  // (set() ne remplit que les champs vides, ce qui laissait ici l'ancien transect.)
+  document.getElementById('in-transect').value = nom;
   set('in-date', new Date().toISOString().slice(0,10));
   set('in-observateur', d.observateur || '');
   set('in-site', d.site || SITE_DEFAUT);
@@ -1745,11 +1805,10 @@ function majEcranIdentite(){
   remplirDatalist('liste-observateurs', m.observateurs);
   remplirDatalist('liste-sites', (m.sites || []).concat(m.sites && m.sites.includes(SITE_DEFAUT) ? [] : [SITE_DEFAUT]));
   remplirDatalist('liste-communes', (m.communes || []).concat(m.communes && m.communes.includes(COMMUNE_DEFAUT) ? [] : [COMMUNE_DEFAUT]));
-  remplirDatalist('liste-transects', transectsEnregistres());
 
   const inDistance = document.getElementById('in-distance');
   if(inDistance && !inDistance.value) majDistanceSuggeree(nom, numero);
-  majEtatTransect(document.getElementById('in-transect').value.trim());
+  majCarteTransect();
 }
 
 /* Lit l'en-tête saisi en page 1 (sert au rappel, à l'enregistrement et aux exports). */
