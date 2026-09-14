@@ -244,9 +244,18 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-family:var(--mono);font-size:.72rem;color:var(--text-2);
 }
 .rappel-bordereau b{color:var(--acc-dark);font-weight:700;}
-/* Écran d'analyse. Le diagramme est large par nature — un transect de 80 m ne
-   tient pas dans un écran de téléphone : il défile horizontalement dans son
-   propre cadre, la page ne défilant jamais latéralement. */
+/* Écran d'analyse. <main> est borné à 640 px, largeur juste pour la saisie de
+   terrain sur téléphone — mais l'analyse se consulte surtout sur ordinateur, et
+   un transect de 80 m comprimé dans une colonne de 570 px n'a aucun intérêt.
+   Cet écran seul reprend la largeur disponible. */
+main:has(#ecran-analyse.actif){max-width:1180px;}
+@supports not selector(:has(*)){
+  /* Repli pour les navigateurs sans :has() — la classe est posée par allerA(). */
+  main.pleine-largeur{max-width:1180px;}
+}
+
+/* Le diagramme est large par nature : il défile horizontalement dans son propre
+   cadre, la page ne défilant jamais latéralement. */
 .analyse-diagramme{
   overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
   border:1px solid var(--line);border-radius:var(--rayon-petit);
@@ -904,7 +913,9 @@ function allerA(nom){
   }
   if(nom==='fiches') construireEcranFiches();
   if(nom==='historique') afficherHistorique();
-  if(nom==='analyse') construireEcranAnalyse();
+  // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
+  document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
+  if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); }
   window.scrollTo(0,0);
 }
 document.getElementById('btn-accueil').onclick = ()=>allerA('accueil');
@@ -2306,9 +2317,10 @@ function diagrammeRichesseTransect(rs){
   const pts = rs.map(r => ({d: r.d, n: r.solNu ? 0 : (r.cortege || []).length, solNu: !!r.solNu}));
   if(pts.length < 2) return '';
   const maxN = Math.max(1, ...pts.map(p => p.n));
-  /* viewBox proche de la largeur réelle sur téléphone : un cadre de 640 px réduit
-     à 390 divisait les polices par 1,6 et les rendait illisibles. */
-  const W = 380, H = 150, gG = 26, gD = 8, gH = 12, gB = 30;
+  /* Module consulté surtout sur ordinateur : cadre dimensionné pour un écran
+     large, où il s'affiche à l'échelle 1. Sur téléphone il se réduit, mais le
+     graphique reste simple — des colonnes et un axe. */
+  const W = 720, H = 230, gG = 34, gD = 12, gH = 16, gB = 40;
   const dMin = pts[0].d, dMax = pts[pts.length-1].d, etendue = Math.max(1, dMax - dMin);
   const x = d => gG + ((d - dMin) / etendue) * (W - gG - gD);
   const y = n => H - gB - (n / maxN) * (H - gH - gB);
@@ -2318,7 +2330,7 @@ function diagrammeRichesseTransect(rs){
   // grille horizontale, volontairement effacée
   for(let k = 0; k <= maxN; k += Math.max(1, Math.ceil(maxN / 4))){
     S.push(`<line x1="${gG}" y1="${y(k).toFixed(1)}" x2="${W-gD}" y2="${y(k).toFixed(1)}" stroke="${DIAG_TRAIT}" stroke-width="1"/>`);
-    S.push(`<text x="${gG-5}" y="${(y(k)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="${DIAG_GRIS}">${k}</text>`);
+    S.push(`<text x="${gG-7}" y="${(y(k)+4).toFixed(1)}" text-anchor="end" font-size="12" fill="${DIAG_GRIS}">${k}</text>`);
   }
   pts.forEach(p => {
     const h = Math.max(p.n ? 2 : 0, y(0) - y(p.n));
@@ -2334,12 +2346,12 @@ function diagrammeRichesseTransect(rs){
   for(let d = Math.ceil(dMin/pasAxe)*pasAxe; d <= dMax; d += pasAxe){
     /* Les graduations extrêmes sont ancrées vers l'intérieur : centrée, la
        dernière (« 80 m ») sortait du cadre et se faisait rogner. */
-    const xd = x(d), demi = String(d).length * 3 + 6;
+    const xd = x(d), demi = String(d).length * 3.6 + 7;
     const ancre = xd + demi > W - 2 ? 'end' : (xd - demi < 0 ? 'start' : 'middle');
     const xt = ancre === 'end' ? W - 2 : (ancre === 'start' ? 0 : xd);
-    S.push(`<text x="${xt.toFixed(1)}" y="${H-gB+14}" text-anchor="${ancre}" font-size="10" fill="${DIAG_GRIS}">${d} m</text>`);
+    S.push(`<text x="${xt.toFixed(1)}" y="${H-gB+17}" text-anchor="${ancre}" font-size="12" fill="${DIAG_GRIS}">${d} m</text>`);
   }
-  S.push(`<text x="${gG}" y="${H-4}" font-size="9.5" fill="${DIAG_GRIS}">Une colonne par quadrat · trait gris = sol nu</text>`);
+  S.push(`<text x="${gG}" y="${H-6}" font-size="11" fill="${DIAG_GRIS}">Une colonne par quadrat · trait gris = sol nu</text>`);
   S.push('</svg>');
   return S.join('');
 }
@@ -2352,22 +2364,34 @@ function diagrammeRichesseParZone(parZone){
   /* Étiquette réduite au seul nombre d'espèces : « 15 · méd. 8/quadrat » débordait
      du cadre sur les barres longues. La médiane reste dans l'infobulle et dans le
      tableau dépliant. */
-  const hLigne = 24, gG = 128, gD = 26, gH = 8;
-  const W = 380, H = gH + z.length * hLigne + 20;
+  const hLigne = 30, gG = 184, gD = 34, gH = 10;
+  const W = 720, H = gH + z.length * hLigne + 26;
   const lg = v => ((v / maxD) * (W - gG - gD));
   const S = [`<svg viewBox="0 0 ${W} ${H}" width="100%" height="auto" role="img" aria-label="Nombre d'espèces distinctes par zone">`];
   z.forEach((v, i) => {
     const yb = gH + i * hLigne;
     const l = Math.max(2, lg(v.distinctes));
     const infobulle = `${echapHTML(v.zone)} : ${v.distinctes} espèces distinctes, médiane ${v.mediane} par quadrat sur ${v.n} quadrat${v.n>1?'s':''}`;
-    S.push(`<text x="${gG-6}" y="${yb + hLigne/2 + 3.5}" text-anchor="end" font-size="10.5" fill="${DIAG_INK}">${echapHTML(v.zone)}</text>`);
-    S.push(`<rect x="${gG}" y="${yb + 4}" width="${l.toFixed(1)}" height="${hLigne-10}" rx="2" fill="${DIAG_ACC}"><title>${infobulle}</title></rect>`);
-    S.push(`<text x="${(gG + l + 5).toFixed(1)}" y="${yb + hLigne/2 + 3.5}" font-size="10.5" fill="${DIAG_GRIS}">${v.distinctes}</text>`);
+    S.push(`<text x="${gG-8}" y="${yb + hLigne/2 + 4.5}" text-anchor="end" font-size="13" fill="${DIAG_INK}">${echapHTML(v.zone)}</text>`);
+    S.push(`<rect x="${gG}" y="${yb + 5}" width="${l.toFixed(1)}" height="${hLigne-12}" rx="3" fill="${DIAG_ACC}"><title>${infobulle}</title></rect>`);
+    S.push(`<text x="${(gG + l + 7).toFixed(1)}" y="${yb + hLigne/2 + 4.5}" font-size="13" fill="${DIAG_GRIS}">${v.distinctes}</text>`);
   });
   S.push(`<line x1="${gG}" y1="${gH}" x2="${gG}" y2="${gH + z.length*hLigne}" stroke="${DIAG_INK}" stroke-width="1"/>`);
-  S.push(`<text x="${gG}" y="${H-4}" font-size="9.5" fill="${DIAG_GRIS}">Espèces distinctes, de la mer vers la terre</text>`);
+  S.push(`<text x="${gG}" y="${H-6}" font-size="11" fill="${DIAG_GRIS}">Espèces distinctes, de la mer vers la terre</text>`);
   S.push('</svg>');
   return S.join('');
+}
+
+/* Vue par défaut du diagramme : taille réelle quand il tient dans la largeur
+   disponible — sur ordinateur c'est souvent le cas, et la réduire n'apporterait
+   qu'une perte de netteté. Sinon vue d'ensemble, pour voir la structure avant
+   d'aller chercher le détail. */
+function choisirVueParDefaut(){
+  const d = document.getElementById('diagramme-transect');
+  const svg = d && d.querySelector('svg');
+  if(!svg) return;
+  const naturelle = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : 0;
+  basculerVueDiagramme(naturelle && naturelle <= d.clientWidth - 8 ? 'reelle' : 'ajuste');
 }
 
 function basculerVueDiagramme(vue){
