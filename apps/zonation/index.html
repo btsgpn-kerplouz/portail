@@ -265,6 +265,11 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   border-radius:var(--rayon-petit);cursor:pointer;
 }
 .analyse-vues button[aria-pressed="true"]{background:var(--acc);color:#fff;}
+.analyse-soustitre{font-size:.86rem;margin:1.1em 0 .2em;color:var(--acc-dark);}
+.analyse-graphe{margin:.5em 0 .8em;}
+.analyse-graphe svg{display:block;width:100%;height:auto;}
+.analyse-plus{margin:.2em 0 .6em;}
+.analyse-plus summary{font-size:.78rem;color:var(--acc);cursor:pointer;padding:.3em 0;}
 .analyse-meta{font-size:.78rem;color:var(--text-2);margin:.3em 0 .6em;line-height:1.5;}
 .analyse-meta b{color:var(--acc-dark);}
 .analyse-aide{font-size:.75rem;color:var(--text-2);margin:.2em 0 .8em;line-height:1.45;}
@@ -2286,6 +2291,85 @@ function ouvrirAnalyseTransect(nom){
   allerA('analyse');
 }
 
+/* ---------- Diagrammes de l'analyse ----------
+   Une seule série par diagramme : pas de légende, le titre nomme la mesure, et
+   la couleur est l'accent de la charte — son contraste sur le fond est ce qui
+   compte ici, la séparation de teintes n'ayant pas d'objet sans deuxième série.
+   Valeurs étiquetées directement : les barres sont peu nombreuses et le chiffre
+   est le propos. */
+const DIAG_ACC = '#0b5f7d', DIAG_INK = '#191b16', DIAG_GRIS = '#565a4e', DIAG_TRAIT = '#d8d4c6';
+
+/* Richesse le long du transect. Colonnes et non courbe : les relevés sont des
+   points discrets, et une ligne suggérerait une continuité entre deux quadrats
+   éloignés — le blanc d'une interruption doit rester un blanc. */
+function diagrammeRichesseTransect(rs){
+  const pts = rs.map(r => ({d: r.d, n: r.solNu ? 0 : (r.cortege || []).length, solNu: !!r.solNu}));
+  if(pts.length < 2) return '';
+  const maxN = Math.max(1, ...pts.map(p => p.n));
+  /* viewBox proche de la largeur réelle sur téléphone : un cadre de 640 px réduit
+     à 390 divisait les polices par 1,6 et les rendait illisibles. */
+  const W = 380, H = 150, gG = 26, gD = 8, gH = 12, gB = 30;
+  const dMin = pts[0].d, dMax = pts[pts.length-1].d, etendue = Math.max(1, dMax - dMin);
+  const x = d => gG + ((d - dMin) / etendue) * (W - gG - gD);
+  const y = n => H - gB - (n / maxN) * (H - gH - gB);
+  const pas = pasCourant(rs);
+  const largeur = Math.max(2, ((W - gG - gD) / etendue) * pas - 2);   // 2 px d'écart entre colonnes
+  const S = [`<svg viewBox="0 0 ${W} ${H}" width="100%" height="auto" role="img" aria-label="Nombre d'espèces par quadrat le long du transect">`];
+  // grille horizontale, volontairement effacée
+  for(let k = 0; k <= maxN; k += Math.max(1, Math.ceil(maxN / 4))){
+    S.push(`<line x1="${gG}" y1="${y(k).toFixed(1)}" x2="${W-gD}" y2="${y(k).toFixed(1)}" stroke="${DIAG_TRAIT}" stroke-width="1"/>`);
+    S.push(`<text x="${gG-5}" y="${(y(k)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="${DIAG_GRIS}">${k}</text>`);
+  }
+  pts.forEach(p => {
+    const h = Math.max(p.n ? 2 : 0, y(0) - y(p.n));
+    const titre = `${p.d} m : ${p.solNu ? 'sol nu' : p.n + ' espèce' + (p.n>1?'s':'')}`;
+    if(p.solNu){   // sol nu : marque au ras de l'axe, pour ne pas le lire comme un oubli
+      S.push(`<rect x="${(x(p.d)-largeur/2).toFixed(1)}" y="${(y(0)-2).toFixed(1)}" width="${largeur.toFixed(1)}" height="2" fill="${DIAG_GRIS}"><title>${titre}</title></rect>`);
+      return;
+    }
+    S.push(`<rect x="${(x(p.d)-largeur/2).toFixed(1)}" y="${y(p.n).toFixed(1)}" width="${largeur.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${DIAG_ACC}"><title>${titre}</title></rect>`);
+  });
+  S.push(`<line x1="${gG}" y1="${y(0)}" x2="${W-gD}" y2="${y(0)}" stroke="${DIAG_INK}" stroke-width="1"/>`);
+  const pasAxe = etendue > 60 ? 20 : (etendue > 25 ? 10 : 5);
+  for(let d = Math.ceil(dMin/pasAxe)*pasAxe; d <= dMax; d += pasAxe){
+    /* Les graduations extrêmes sont ancrées vers l'intérieur : centrée, la
+       dernière (« 80 m ») sortait du cadre et se faisait rogner. */
+    const xd = x(d), demi = String(d).length * 3 + 6;
+    const ancre = xd + demi > W - 2 ? 'end' : (xd - demi < 0 ? 'start' : 'middle');
+    const xt = ancre === 'end' ? W - 2 : (ancre === 'start' ? 0 : xd);
+    S.push(`<text x="${xt.toFixed(1)}" y="${H-gB+14}" text-anchor="${ancre}" font-size="10" fill="${DIAG_GRIS}">${d} m</text>`);
+  }
+  S.push(`<text x="${gG}" y="${H-4}" font-size="9.5" fill="${DIAG_GRIS}">Une colonne par quadrat · trait gris = sol nu</text>`);
+  S.push('</svg>');
+  return S.join('');
+}
+
+/* Richesse par zone : barres horizontales, les noms de zones étant longs. */
+function diagrammeRichesseParZone(parZone){
+  const z = parZone.filter(v => !v.solNuSeul && v.distinctes > 0);
+  if(z.length < 2) return '';
+  const maxD = Math.max(...z.map(v => v.distinctes));
+  /* Étiquette réduite au seul nombre d'espèces : « 15 · méd. 8/quadrat » débordait
+     du cadre sur les barres longues. La médiane reste dans l'infobulle et dans le
+     tableau dépliant. */
+  const hLigne = 24, gG = 128, gD = 26, gH = 8;
+  const W = 380, H = gH + z.length * hLigne + 20;
+  const lg = v => ((v / maxD) * (W - gG - gD));
+  const S = [`<svg viewBox="0 0 ${W} ${H}" width="100%" height="auto" role="img" aria-label="Nombre d'espèces distinctes par zone">`];
+  z.forEach((v, i) => {
+    const yb = gH + i * hLigne;
+    const l = Math.max(2, lg(v.distinctes));
+    const infobulle = `${echapHTML(v.zone)} : ${v.distinctes} espèces distinctes, médiane ${v.mediane} par quadrat sur ${v.n} quadrat${v.n>1?'s':''}`;
+    S.push(`<text x="${gG-6}" y="${yb + hLigne/2 + 3.5}" text-anchor="end" font-size="10.5" fill="${DIAG_INK}">${echapHTML(v.zone)}</text>`);
+    S.push(`<rect x="${gG}" y="${yb + 4}" width="${l.toFixed(1)}" height="${hLigne-10}" rx="2" fill="${DIAG_ACC}"><title>${infobulle}</title></rect>`);
+    S.push(`<text x="${(gG + l + 5).toFixed(1)}" y="${yb + hLigne/2 + 3.5}" font-size="10.5" fill="${DIAG_GRIS}">${v.distinctes}</text>`);
+  });
+  S.push(`<line x1="${gG}" y1="${gH}" x2="${gG}" y2="${gH + z.length*hLigne}" stroke="${DIAG_INK}" stroke-width="1"/>`);
+  S.push(`<text x="${gG}" y="${H-4}" font-size="9.5" fill="${DIAG_GRIS}">Espèces distinctes, de la mer vers la terre</text>`);
+  S.push('</svg>');
+  return S.join('');
+}
+
 function basculerVueDiagramme(vue){
   const d = document.getElementById('diagramme-transect');
   if(!d) return;
@@ -2348,6 +2432,29 @@ function construireEcranAnalyse(){
   const especes = [...freq.values()].sort((a,b) => b.n - a.n || a.fr.localeCompare(b.fr,'fr'));
   const uniques = especes.filter(e => e.n === 1);
 
+  /* Richesse par zone. On agrège par NOM de zone et non par tronçon : en cas
+     d'inversion, une même zone apparaît deux fois sur le transect et ses deux
+     passages décrivent la même végétation. */
+  const zones = new Map();
+  rs.forEach(r => {
+    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const cle = z ? z.zone : 'Non attribué';
+    if(!zones.has(cle)) zones.set(cle, {zone:cle, rang: z ? z.rang : 99, n:0, richesses:[], especes:new Set()});
+    const v = zones.get(cle);
+    v.n++;
+    if(!r.solNu){
+      v.richesses.push((r.cortege || []).length);
+      (r.cortege || []).forEach(e => v.especes.add(e.latin || e.fr));
+    }
+  });
+  const parZone = [...zones.values()].sort((a,b) => a.rang - b.rang).map(v => {
+    const t = v.richesses.slice().sort((a,b) => a-b);
+    return {zone: v.zone, rang: v.rang, n: v.n, distinctes: v.especes.size,
+      solNuSeul: !t.length,
+      min: t.length ? t[0] : 0, max: t.length ? t[t.length-1] : 0,
+      mediane: t.length ? t[Math.floor(t.length/2)] : 0};
+  });
+
   /* Mètres non relevés : écarts supérieurs au pas courant. */
   const pas = pasCourant(rs);
   const sauts = rs.slice(1).map((r,i) => ({de: rs[i].d, a: r.d, ecart: r.d - rs[i].d}))
@@ -2394,22 +2501,49 @@ function construireEcranAnalyse(){
     </div>
 
     <div class="carte">
-      <h3>Richesse et cortège</h3>
-      <p class="analyse-meta">Espèces par relevé : ${Math.min(...richesses)} au minimum, ${mediane} en médiane, ${Math.max(...richesses)} au maximum${rs.filter(r=>r.solNu).length ? ` · ${rs.filter(r=>r.solNu).length} quadrat${rs.filter(r=>r.solNu).length>1?'s':''} de sol nu` : ''}</p>
-      <table class="historique"><thead><tr><th>Espèce</th><th>Relevés</th><th>Présente de → à</th></tr></thead><tbody>
-        ${especes.slice(0,12).map(e => `<tr>
-          <td><span class="fr">${echapHTML(e.fr)}</span>${e.latin ? `<br><span class="latin">${echapHTML(e.latin)}</span>` : ''}</td>
-          <td class="num">${e.n}</td>
-          <td>${e.min} → ${e.max} m</td></tr>`).join('')}
+      <h3>Richesse spécifique</h3>
+      <p class="analyse-meta">Nombre d'espèces notées par quadrat : <b>${Math.min(...richesses)}</b> au minimum,
+        <b>${mediane}</b> en médiane, <b>${Math.max(...richesses)}</b> au maximum${rs.filter(r=>r.solNu).length ? ` · ${rs.filter(r=>r.solNu).length} quadrat${rs.filter(r=>r.solNu).length>1?'s':''} de sol nu, comptés à part` : ''}.</p>
+
+      <h4 class="analyse-soustitre">Le long du transect</h4>
+      <div class="analyse-graphe">${diagrammeRichesseTransect(rs)}</div>
+
+      <h4 class="analyse-soustitre">Par zone</h4>
+      <p class="analyse-aide">La richesse augmente normalement de la slikke vers le haut schorre : les contraintes de salinité et de submersion s'y relâchent.</p>
+      <div class="analyse-graphe">${diagrammeRichesseParZone(parZone)}</div>
+      <details class="analyse-plus"><summary>Voir les chiffres par zone</summary>
+      <table class="historique"><thead><tr><th>Zone</th><th>Quadrats</th><th>Espèces / quadrat</th><th>Espèces distinctes</th></tr></thead><tbody>
+        ${parZone.map(z => `<tr>
+          <td>${echapHTML(z.zone)}</td>
+          <td class="num">${z.n}</td>
+          <td class="num">${z.solNuSeul ? '—' : `${z.min} → ${z.max} <small>(méd. ${z.mediane})</small>`}</td>
+          <td class="num">${z.distinctes || '—'}</td></tr>`).join('')}
+      </tbody></table></details>
+
+      <h4 class="analyse-soustitre">Espèces, de la plus fréquente à la plus rare</h4>
+      <p class="analyse-aide">« Nb de relevés » compte les quadrats où l'espèce a été notée ; « présente de → à » donne son amplitude sur le transect — la longueur de sa barre dans le diagramme.</p>
+      <table class="historique"><thead><tr><th>Espèce</th><th>Nb de relevés</th><th>Présente de → à</th></tr></thead><tbody>
+        ${especes.slice(0,8).map(e => ligneEspeceAnalyse(e)).join('')}
       </tbody></table>
-      ${especes.length > 12 ? `<p class="analyse-meta">… et ${especes.length - 12} autre${especes.length-12>1?'s':''} espèce${especes.length-12>1?'s':''}.</p>` : ''}
-      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} vue${uniques.length>1?'s':''} sur un seul relevé</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}. À vérifier : une espèce notée une seule fois est soit rare, soit mal déterminée.</p>` : ''}
+      ${especes.length > 8 ? `<details class="analyse-plus"><summary>Voir les ${especes.length} espèces</summary>
+        <table class="historique"><tbody>${especes.slice(8).map(e => ligneEspeceAnalyse(e)).join('')}</tbody></table>
+      </details>` : ''}
+
+      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} notée${uniques.length>1?'s':''} sur un seul quadrat</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}. À regarder : limite d'aire sur le transect, espèce réellement rare, ou détermination à revoir.</p>` : ''}
       ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}. Le diagramme y laisse un blanc, la continuité n'ayant pas été observée.</p>` : ''}
     </div>`;
 }
 
 const echapHTML = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* Une ligne du tableau des espèces de l'analyse. */
+function ligneEspeceAnalyse(e){
+  return `<tr>
+    <td><span class="fr">${echapHTML(e.fr)}</span>${e.latin ? `<br><span class="latin">${echapHTML(e.latin)}</span>` : ''}</td>
+    <td class="num">${e.n}</td>
+    <td>${e.min} → ${e.max} m</td></tr>`;
+}
 
 function exporterProfilTransect(nomTransect){
   const svg = construireProfilTransectSVG(nomTransect);
