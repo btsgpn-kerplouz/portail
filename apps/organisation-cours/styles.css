@@ -2459,6 +2459,16 @@ tr.repartition-sem-row td {
 .mission-sig-hint { font-size: .72rem; }
 .mission-signature-img { max-height: 60px; max-width: 100%; align-self: flex-start; }
 .mission-signature-add { align-self: flex-start; font-size: .78rem; }
+/* Retours 15/09/2026 — choix du/de la signataire (n'importe quel enseignant
+   actif, plus seulement « moi »), voir missionSignatureSelectHtml. */
+.mission-signature-select-label { display: flex; align-items: center; gap: .35rem; font-size: .72rem; color: var(--muted); }
+.mission-signature-select { font-size: .78rem; padding: .1rem .3rem; }
+.mission-signature-content { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
+.mission-signature-absente { font-size: .72rem; margin: 0; }
+/* Retours 15/09/2026 (2e passe) — Remplacer/Retirer une signature déjà
+   déposée (la mienne ou celle d'un·e collègue, cf. missionSignatureBoxHtml). */
+.mission-signature-actions { display: flex; gap: .6rem; }
+.mission-signature-actions .lien { font-size: .72rem; }
 
 .mission-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
 .mission-destinataires { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
@@ -3424,6 +3434,9 @@ table.rm-annexe-table ul { margin: .1rem 0 .1rem .9rem; }
 /* Retours 17/08/2026 — tableau plutôt que des cartes (voir renderReunions) :
    réutilise .frais-table, seule la ligne cliquable est spécifique ici. */
 .frais-table tbody tr[data-edit-reunion] { cursor: pointer; }
+/* Retours 15/09/2026 — à venir / passées séparées en 2 tableaux distincts. */
+.reunions-souscategorie { margin: var(--sp-3) 0 .3rem; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--moss-dark); }
+.reunions-souscategorie:first-child { margin-top: 0; }
 
 /* ---- Catalogue de matériel (ajustements #6, 22/08/2026) — encart Tableau de
    bord : liste à 2 niveaux (type de matériel / identifiants individuels),

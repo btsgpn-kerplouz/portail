@@ -1684,9 +1684,17 @@ function defaultMissionDetail(entity) {
     heureDebut: heureDebut || '', heureFin: heureFin || '',
     description: missionViewTarget.kind === 'standalone' ? '' : missionTitreEntite(entity),
     accompagnants: missionViewTarget.kind === 'standalone' ? [] : missionAccompagnantsParDefaut(entity),
-    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
+    // Retours 15/09/2026 — les 3 vérifications sont cochées par défaut (plutôt
+    // que de compter sur un cochage manuel systématique) : décocher reste
+    // possible pour le cas réel où l'une d'elles ne s'applique pas.
+    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: true, verifPermis: true, controleFormateur: true },
     faitLe: new Date().toISOString().slice(0, 10),
     destinataires: missionDestinatairesMemorises(),
+    // Retours 15/09/2026 — quelle signature afficher/imprimer dans « Le
+    // Demandeur » : par défaut la mienne, mais n'importe quel enseignant
+    // actif peut être choisi (voir missionSignatureBoxHtml plus bas et
+    // 020-oc-signatures-lecture-partagee.sql).
+    signatureInitiales: moiInitiales,
     envoyeAt: null
   };
 }
@@ -1774,11 +1782,51 @@ function missionCheck(checked, field, label) {
   </label>`;
 }
 
-function missionSignatureBoxHtml() {
-  const url = missionSignatureUrlCache;
-  if (url) return `<img src="${escapeAttr(url)}" alt="Signature" class="mission-signature-img" />`;
-  return `<button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Ajouter ma signature (privé)</button>
-    <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
+// Retours 15/09/2026 — la signature affichée/imprimée n'est plus forcément
+// « la mienne » : n'importe quel enseignant actif rédigeant l'ODM d'un·e
+// collègue doit pouvoir choisir SA signature (véhicule personnel conduit par
+// le collègue, ODM rédigé par un autre enseignant) — et, 2e retour le même
+// jour, la DÉPOSER pour ce/cette collègue s'il/elle ne l'a pas fait
+// lui/elle-même (RLS élargie à l'écriture aussi, cf. 020-oc-signatures-
+// equipe-partagee.sql : plus seulement au propriétaire du dossier). Le
+// <select> liste les comptes actifs (missionEnseignantsActifsCache,
+// alimenté par missionChargerEnseignantsActifs).
+function missionSignatureSelectHtml(detail) {
+  const choisi = String(detail.signatureInitiales || moiInitiales || '').toUpperCase();
+  const actifs = missionEnseignantsActifsCache;
+  const options = actifs.length
+    ? actifs.map(e => {
+        const ini = (e.initiales || '').toUpperCase();
+        if (!ini) return '';
+        return `<option value="${escapeAttr(ini)}" ${ini === choisi ? 'selected' : ''}>${escapeHtml(ini)}${ini === moiInitiales ? ' (moi)' : ''}</option>`;
+      }).join('')
+    : `<option value="${escapeAttr(choisi)}" selected>${escapeHtml(choisi || '—')}</option>`;
+  return `<label class="mission-signature-select-label">Signature de :
+    <select class="mission-signature-select" data-mission-field="signatureInitiales">${options}</select>
+  </label>`;
+}
+
+function missionSignatureBoxHtml(detail) {
+  const choisi = String(detail.signatureInitiales || moiInitiales || '').toUpperCase();
+  const url = choisi ? missionSignatureUrlParInitiales.get(choisi) : null;
+  const pourMoi = choisi === moiInitiales;
+  const libelleAjout = pourMoi ? 'Ajouter ma signature' : `Déposer la signature de ${escapeHtml(choisi)}`;
+  let contenu;
+  if (url) {
+    contenu = `<img src="${escapeAttr(url)}" alt="Signature de ${escapeAttr(choisi)}" class="mission-signature-img" />
+      <div class="mission-signature-actions">
+        <button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Remplacer</button>
+        <button type="button" id="missionSignatureRemove" class="lien mission-signature-remove">Retirer</button>
+        <input type="file" id="missionSignatureFile" accept="image/*" hidden />
+      </div>`;
+  } else if (choisi && missionSignatureUrlParInitiales.has(choisi)) {
+    contenu = `<p class="meta mission-signature-absente">Pas de signature enregistrée pour ${escapeHtml(choisi)}.</p>
+      <button type="button" id="missionSignatureUpload" class="lien mission-signature-add">${libelleAjout}</button>
+      <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
+  } else {
+    contenu = `<p class="meta mission-signature-absente">Chargement…</p>`;
+  }
+  return `${missionSignatureSelectHtml(detail)}<div class="mission-signature-content">${contenu}</div>`;
 }
 
 function renderMissionView() {
@@ -1786,6 +1834,8 @@ function renderMissionView() {
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
   const titre = missionTitreEntite(entity);
+  if (!missionEnseignantsCharges) missionChargerEnseignantsActifs();
+  missionChargerSignaturePour(detail.signatureInitiales || moiInitiales);
 
   const titleEl = $('#missionTitle');
   // Retours 03/09/2026 — précise DE QUI est cet ODM quand l'entité a 2
@@ -1853,7 +1903,7 @@ function renderMissionView() {
     <div class="mission-signatures">
       <div class="mission-sig-box">
         <span class="mission-sig-title">Le Demandeur :</span>
-        ${missionSignatureBoxHtml()}
+        ${missionSignatureBoxHtml(detail)}
       </div>
       <div class="mission-sig-box">
         <span class="mission-sig-title">Formateur / Enseignant :</span>
@@ -1890,6 +1940,9 @@ function missionSetField(path, value) {
     const titleEl = $('#missionTitle');
     if (titleEl) titleEl.textContent = `Ordre de mission — ${missionTitreEntite(entity)}`;
   }
+  // Changer de signataire doit réafficher tout de suite l'image (ou le bouton
+  // d'ajout / le message d'absence) correspondant au nouveau choix.
+  if (path === 'signatureInitiales') renderMissionView();
 }
 
 // Écran « Ordre de mission » (Accueil mobile, ajustements #5 22/08/2026) —
@@ -2020,6 +2073,15 @@ function missionDrawCheckbox(doc, x, yPos, label, checked) {
   doc.text(label, x + 7, yPos);
 }
 
+// Retours 15/09/2026 — génération PDF muette sur mobile (ni « Enregistrer »
+// ni « Envoyer ») : la cause la plus probable est window.jspdf pas encore
+// disponible (CDN chargé en `defer`, réseau mobile plus lent/instable) —
+// avant, ça plantait sans un mot (destructuring de `window.jspdf` undefined).
+// On vérifie maintenant explicitement et on prévient au lieu de rien faire.
+function missionJspdfDisponible() {
+  return !!(window.jspdf && window.jspdf.jsPDF);
+}
+
 async function missionGenererPdfDoc(detail, isVierge) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
@@ -2097,6 +2159,25 @@ async function missionGenererPdfDoc(detail, isVierge) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text('Le Demandeur :', 17, y + 5);
+  // Retours 15/09/2026 — jusqu'ici le PDF n'affichait AUCUNE signature (image
+  // seulement visible à l'écran, jamais dessinée dans le document jsPDF) :
+  // on insère ici celle choisie via le sélecteur (missionSignatureBoxHtml),
+  // pas forcément la mienne (voir missionSignatureImageParInitiales).
+  if (!isVierge) {
+    const initSignature = String(detail.signatureInitiales || '').trim().toUpperCase();
+    const imgSignature = initSignature ? missionSignatureImageParInitiales.get(initSignature) : null;
+    if (imgSignature) {
+      try {
+        const margeImg = 3;
+        const maxW = boxWidth - margeImg * 2;
+        const maxH = boxHeight - 9;
+        const ratio = Math.min(maxW / imgSignature.width, maxH / imgSignature.height, 1);
+        const w = imgSignature.width * ratio;
+        const h = imgSignature.height * ratio;
+        doc.addImage(imgSignature, 'PNG', 15 + (boxWidth - w) / 2, y + 8 + (maxH - h) / 2, w, h);
+      } catch (e) { console.error('[signature] insertion PDF', e); }
+    }
+  }
   doc.rect(15 + boxWidth + 4, y, boxWidth, boxHeight);
   doc.text('Formateur / Enseignant :', 15 + boxWidth + 6, y + 5);
   doc.rect(15 + (boxWidth * 2) + 8, y, boxWidth, boxHeight);
@@ -2110,11 +2191,30 @@ async function missionGenererPdfDoc(detail, isVierge) {
   return doc;
 }
 
+// Retours 15/09/2026 — point de passage commun pour Enregistrer/Imprimer/
+// Envoyer : alerte au lieu de rien faire si jsPDF manque encore, et capture
+// toute exception de génération (image de signature invalide, etc.) plutôt
+// que de laisser planter silencieusement le bouton.
+async function missionCreerPdf(detail, isVierge) {
+  if (!missionJspdfDisponible()) {
+    alert('La génération de PDF n’a pas pu se charger (bibliothèque manquante). Vérifiez votre connexion internet puis rechargez la page.');
+    return null;
+  }
+  try {
+    return await missionGenererPdfDoc(detail, isVierge);
+  } catch (e) {
+    console.error('[mission] génération PDF', e);
+    alert('Échec de la génération du PDF : ' + (e?.message || e));
+    return null;
+  }
+}
+
 async function missionTelechargerPdf(isVierge = false) {
   const entity = missionEntity();
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
-  const doc = await missionGenererPdfDoc(detail, isVierge);
+  const doc = await missionCreerPdf(detail, isVierge);
+  if (!doc) return;
   doc.save(isVierge ? 'OM_vierge.pdf' : `OM_${detail.commandePar.nom || 'mission'}.pdf`);
 }
 
@@ -2144,7 +2244,8 @@ async function missionImprimerPdf(isVierge = false) {
   const entity = missionEntity();
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
-  missionImprimerDoc(await missionGenererPdfDoc(detail, isVierge));
+  const doc = await missionCreerPdf(detail, isVierge);
+  if (doc) missionImprimerDoc(doc);
 }
 
 // Tuile « Ordre de mission » (Lot C-bis, 23/08/2026) — modèle vierge accessible
@@ -2152,20 +2253,45 @@ async function missionImprimerPdf(isVierge = false) {
 // d'ordre de mission : aucune entité n'est nécessaire, isVierge ignore de
 // toute façon le contenu passé à missionGenererPdfDoc.
 async function missionImprimerModeleVierge() {
-  missionImprimerDoc(await missionGenererPdfDoc({}, true));
+  const doc = await missionCreerPdf({}, true);
+  if (doc) missionImprimerDoc(doc);
 }
 
-// mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app) —
-// on télécharge donc d'abord le PDF, puis on ouvre le mail pré-rempli qui le
-// rappelle dans le corps du message.
+// mailto: ne peut pas joindre de fichier (limite du protocole, pas de l'app).
+// Retours 15/09/2026 — sur mobile, ça obligeait à retrouver le PDF tout juste
+// téléchargé pour le joindre à la main (pénible, parfois impossible selon le
+// client mail) : quand le navigateur le permet (Web Share, Chrome/Android et
+// Safari iOS 15+), on partage directement le fichier généré — vers Mail,
+// WhatsApp, Drive… au choix de l'utilisateur. Le mailto: + téléchargement
+// reste le repli si l'API n'existe pas (desktop, navigateurs plus anciens).
 async function missionSendMail() {
   const entity = missionEntity();
   if (!entity) return;
   const detail = ensureMissionDetail(entity);
-  await missionTelechargerPdf(false);
+  const doc = await missionCreerPdf(detail, false);
+  if (!doc) return;
+  const nomFichier = `OM_${detail.commandePar.nom || 'mission'}.pdf`;
   const sujet = `Ordre de mission — ${missionTitreEntite(entity)}`;
-  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? formatDateFr(detail.dateMission) : ''} (${detail.destination || ''}).\nMerci de joindre le PDF que vous venez de télécharger avant l’envoi.\n\nCordialement,\n${detail.commandePar.nom}`;
-  const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+  const corps = `Bonjour,\n\nVeuillez trouver ci-joint l’ordre de mission du ${detail.dateMission ? formatDateFr(detail.dateMission) : ''} (${detail.destination || ''}).\n\nCordialement,\n${detail.commandePar.nom}`;
+
+  try {
+    const fichier = new File([doc.output('blob')], nomFichier, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+      await navigator.share({ files: [fichier], title: sujet, text: corps });
+      detail.envoyeAt = new Date().toISOString();
+      setOrdreMissionEnvoye(entity, missionTeacherCible(), true);
+      saveData('Ordre de mission marqué envoyé');
+      return;
+    }
+  } catch (e) {
+    if (e?.name === 'AbortError') return; // partage annulé par l'utilisateur : pas une erreur
+    console.error('[mission] partage', e);
+    // on retombe sur le flux mailto/téléchargement ci-dessous
+  }
+
+  doc.save(nomFichier);
+  const corpsAvecRappel = corps + '\nMerci de joindre le PDF que vous venez de télécharger avant l’envoi.\n';
+  const href = `mailto:${detail.destinataires.join(',')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corpsAvecRappel)}`;
   window.location.href = href;
   detail.envoyeAt = new Date().toISOString();
   setOrdreMissionEnvoye(entity, missionTeacherCible(), true);
@@ -2173,39 +2299,135 @@ async function missionSendMail() {
 }
 
 // Signature — stockage privé Supabase (bucket "oc-signatures", voir
-// supabase/013-signatures-storage.sql), jamais dans le dépôt. Non testable
-// depuis retours/preview.js (stub sans Supabase réel) : à vérifier par Martin
-// sur http://localhost:8765/index.html une fois le bucket créé.
-let missionSignatureUrlCache = '';
+// supabase/013-signatures-storage.sql + 020-oc-signatures-lecture-partagee.sql),
+// jamais dans le dépôt. Non testable depuis retours/preview.js (stub sans
+// Supabase réel) : à vérifier par Martin sur http://localhost:8765/index.html
+// une fois le bucket créé et 020 appliqué.
+//
+// Retours 15/09/2026 — n'importe quel enseignant actif peut désormais être
+// choisi comme signataire (missionSignatureSelectHtml) : le cache passe donc
+// d'une seule URL (moi) à une Map par initiales. Une 2e Map garde l'<img>
+// déjà chargée (pas juste son URL signée) pour pouvoir l'insérer dans le PDF
+// (jsPDF a besoin d'un HTMLImageElement/canvas, pas d'une URL).
+const missionSignatureUrlParInitiales = new Map();   // INITIALES -> signedUrl | null (null = testé, absent)
+const missionSignatureImageParInitiales = new Map(); // INITIALES -> HTMLImageElement
+const missionSignatureEnCours = new Set();
 
-async function missionChargerSignature() {
+let missionEnseignantsActifsCache = [];
+let missionEnseignantsCharges = false;
+async function missionChargerEnseignantsActifs() {
+  const api = window.OC_ENSEIGNANTS;
+  if (!api) return;
+  try {
+    await api.rafraichir();
+    missionEnseignantsActifsCache = api.listerActifs();
+    missionEnseignantsCharges = true;
+    if (missionViewTarget) renderMissionView();
+  } catch (e) { console.error('[signature] liste des enseignants actifs', e); }
+}
+
+function missionChargerImageSignature(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// Retours 15/09/2026 (2e passe) — Martin : « je veux pouvoir déposer la
+// signature d'un collègue », pas seulement choisir/afficher celle de comptes
+// qui l'ont déjà déposée eux-mêmes. Un seul point de résolution
+// initiales -> user_id, partagé par le chargement ET le dépôt/suppression
+// (voir 020-oc-signatures-equipe-partagee.sql : lecture ET écriture ouvertes
+// à tout enseignant actif, plus seulement au propriétaire du dossier).
+async function missionResoudreUserId(cle) {
+  if (cle === moiInitiales) {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient) return null;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    return user?.id || null;
+  }
+  const trouve = missionEnseignantsActifsCache.find(e => (e.initiales || '').toUpperCase() === cle);
+  return trouve?.user_id || null;
+}
+
+async function missionChargerSignaturePour(initiales) {
+  const cle = String(initiales || '').trim().toUpperCase();
+  if (!cle || missionSignatureUrlParInitiales.has(cle) || missionSignatureEnCours.has(cle)) return;
+  // Sortie AVANT le premier `await` et AVANT tout ajout à missionSignatureEnCours :
+  // un `finally` qui rappelle renderMissionView() ici (comme plus bas) sans être
+  // passé par un vrai point d'attente rappellerait cette même fonction de façon
+  // strictement synchrone à chaque rendu → récursion infinie (pile épuisée),
+  // trouvé en préproduction locale (retours 15/09/2026, écran sans Supabase).
+  const getClient = window.OC_SUPABASE_CLIENT;
+  if (!getClient) return;
+  missionSignatureEnCours.add(cle);
+  try {
+    const sb = await getClient();
+    const userId = await missionResoudreUserId(cle);
+    if (!userId) { missionSignatureUrlParInitiales.set(cle, null); return; }
+    const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${userId}/signature.png`, 3600);
+    if (error || !data) { missionSignatureUrlParInitiales.set(cle, null); return; }
+    missionSignatureUrlParInitiales.set(cle, data.signedUrl);
+    const img = await missionChargerImageSignature(data.signedUrl);
+    if (img) missionSignatureImageParInitiales.set(cle, img);
+  } catch (e) {
+    console.error('[signature] chargement', e);
+    missionSignatureUrlParInitiales.set(cle, null);
+  } finally {
+    missionSignatureEnCours.delete(cle);
+    if (missionViewTarget) renderMissionView();
+  }
+}
+
+function missionInvaliderSignatureCache(cle) {
+  missionSignatureUrlParInitiales.delete(cle);
+  missionSignatureImageParInitiales.delete(cle);
+}
+
+async function missionUploaderSignaturePour(initiales, file) {
+  const cle = String(initiales || '').trim().toUpperCase();
+  if (!cle || !file) return;
   try {
     const getClient = window.OC_SUPABASE_CLIENT;
     if (!getClient) return;
     const sb = await getClient();
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${user.id}/signature.png`, 3600);
-    if (error) { console.error('[signature] createSignedUrl', error); return; }
-    if (!data) return;
-    missionSignatureUrlCache = data.signedUrl;
-    if (missionViewTarget) renderMissionView();
-  } catch (e) { console.error('[signature] chargement', e); }
+    const userId = await missionResoudreUserId(cle);
+    if (!userId) { alert(`Compte introuvable pour ${cle}.`); return; }
+    setSaveStatus(cle === moiInitiales ? 'Envoi de la signature…' : `Envoi de la signature de ${cle}…`);
+    const { error } = await sb.storage.from('oc-signatures').upload(`${userId}/signature.png`, file, { upsert: true, contentType: file.type });
+    if (error) { console.error('[signature] upload', error); alert('Échec de l’envoi de la signature : ' + error.message); return; }
+    // On force le rechargement (une éventuelle ancienne URL/image en cache
+    // n'est plus valable : le fichier vient d'être remplacé).
+    missionInvaliderSignatureCache(cle);
+    await missionChargerSignaturePour(cle);
+    setSaveStatus('Signature enregistrée');
+  } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
 }
 
-async function missionUploaderSignature(file) {
+async function missionSupprimerSignaturePour(initiales) {
+  const cle = String(initiales || '').trim().toUpperCase();
+  if (!cle) return;
+  const confirmation = cle === moiInitiales
+    ? 'Retirer votre signature enregistrée ?'
+    : `Retirer la signature enregistrée de ${cle} ?`;
+  if (!confirm(confirmation)) return;
   try {
     const getClient = window.OC_SUPABASE_CLIENT;
-    if (!getClient || !file) return;
+    if (!getClient) return;
     const sb = await getClient();
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    setSaveStatus('Envoi de la signature…');
-    const { error } = await sb.storage.from('oc-signatures').upload(`${user.id}/signature.png`, file, { upsert: true, contentType: file.type });
-    if (error) { console.error('[signature] upload', error); alert('Échec de l’envoi de la signature : ' + error.message); return; }
-    await missionChargerSignature();
-    setSaveStatus('Signature enregistrée (privée)');
-  } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
+    const userId = await missionResoudreUserId(cle);
+    if (!userId) return;
+    setSaveStatus('Suppression de la signature…');
+    const { error } = await sb.storage.from('oc-signatures').remove([`${userId}/signature.png`]);
+    if (error) { console.error('[signature] suppression', error); alert('Échec de la suppression : ' + error.message); return; }
+    missionInvaliderSignatureCache(cle);
+    setSaveStatus('Signature retirée');
+    renderMissionView();
+  } catch (e) { console.error('[signature] suppression', e); alert('Échec de la suppression.'); }
 }
 
 // Retour Martin (23/08/2026) : les frais partent à l'administration en fin
@@ -2707,42 +2929,61 @@ function updateReunionsBadge() {
   badge.textContent = n ? `${n} à venir` : '';
 }
 
-function renderReunions() {
-  updateReunionsBadge();
-  const wrap = $('#reunionsList');
-  if (!wrap) return;
-  // Journal consultable a posteriori → plus récentes en tête.
-  const list = [...(state.reunions || [])].sort((a, b) =>
-    (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
-  if (!list.length) {
-    wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, ordre du jour).</p>`;
-    return;
-  }
-  // Retours 17/08/2026 — tableau plutôt que des cartes : plus dense, plus
-  // facile à parcourir d'un coup d'œil (date, lieu, participants, sujet).
-  // L'icône voiture ne marque que le véhicule personnel (ordre de mission à
-  // suivre) ; le van d'établissement a sa propre étiquette de réservation
-  // ailleurs (Urgences), pas besoin de la dupliquer ici.
-  const rows = list.map(r => {
-    // Retours 03/09/2026 — à 2 conducteurs indépendants, l'icône ne passe
-    // « demandé » que si LES DEUX ODM sont envoyés (un seul ne suffit plus,
-    // cf. ordreMissionEnvoye).
-    const conducteurs = deplacementConducteurs(r);
-    const odmComplet = conducteurs.length === 2 ? conducteurs.every(t => ordreMissionEnvoye(r, t)) : !!r.ordreMission;
-    const vehiculeTitre = odmComplet
-      ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)'
-      : 'Véhicule personnel — ordre de mission à demander';
-    return `<tr data-edit-reunion="${escapeAttr(r.id)}">
+function reunionRowHtml(r) {
+  // Retours 03/09/2026 — à 2 conducteurs indépendants, l'icône ne passe
+  // « demandé » que si LES DEUX ODM sont envoyés (un seul ne suffit plus,
+  // cf. ordreMissionEnvoye).
+  const conducteurs = deplacementConducteurs(r);
+  const odmComplet = conducteurs.length === 2 ? conducteurs.every(t => ordreMissionEnvoye(r, t)) : !!r.ordreMission;
+  const vehiculeTitre = odmComplet
+    ? 'Véhicule personnel — ordre de mission demandé (voir Frais de déplacement)'
+    : 'Véhicule personnel — ordre de mission à demander';
+  return `<tr data-edit-reunion="${escapeAttr(r.id)}">
       <td>${escapeHtml(r.date ? formatDateFr(r.date) : '—')}</td>
       <td>${escapeHtml(r.lieu || '—')}</td>
       <td title="${escapeAttr(r.participants || '')}">${escapeHtml(r.participants ? truncate(r.participants, 40) : '—')}</td>
       <td title="${escapeAttr(r.sujets || '')}">${escapeHtml(r.sujets ? truncate(r.sujets, 60) : '—')}</td>
       <td>${deplacementModesPresents(r).has('personnel') ? `<span title="${escapeAttr(vehiculeTitre)}">🚗</span>` : ''}</td>
     </tr>`;
-  }).join('');
-  wrap.innerHTML = `<table class="frais-table"><thead><tr>
+}
+
+function reunionTableHtml(titre, list) {
+  if (!list.length) return '';
+  const rows = list.map(reunionRowHtml).join('');
+  return `<h4 class="reunions-souscategorie">${escapeHtml(titre)}</h4>
+    <table class="frais-table"><thead><tr>
       <th>Date</th><th>Lieu</th><th>Participants</th><th>Ordre du jour</th><th>Véhicule perso</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderReunions() {
+  updateReunionsBadge();
+  const wrap = $('#reunionsList');
+  if (!wrap) return;
+  const all = state.reunions || [];
+  if (!all.length) {
+    wrap.innerHTML = `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, ordre du jour).</p>`;
+    return;
+  }
+  const today = dashAujourdhui();
+  const aVenir = [];
+  const passees = [];
+  for (const r of all) {
+    const d = parseIsoDate(r.date);
+    if (d && d >= today) aVenir.push(r); else passees.push(r);
+  }
+  // À venir : la plus proche en premier (on s'en sert pour préparer).
+  aVenir.sort((a, b) => (a.date || '').localeCompare(b.date || '') || String(a.id).localeCompare(String(b.id)));
+  // Passées : journal consultable a posteriori → plus récentes en tête.
+  passees.sort((a, b) => (b.date || '').localeCompare(a.date || '') || String(b.id).localeCompare(String(a.id)));
+  // Retours 17/08/2026 — tableau plutôt que des cartes : plus dense, plus
+  // facile à parcourir d'un coup d'œil (date, lieu, participants, sujet).
+  // L'icône voiture ne marque que le véhicule personnel (ordre de mission à
+  // suivre) ; le van d'établissement a sa propre étiquette de réservation
+  // ailleurs (Urgences), pas besoin de la dupliquer ici.
+  wrap.innerHTML = reunionTableHtml(`À venir (${aVenir.length})`, aVenir)
+    + reunionTableHtml(`Passées (${passees.length})`, passees)
+    || `<p class="empty-hint">Aucune réunion enregistrée. Cliquez « + Réunion » pour garder trace d'une réunion réalisée (qui, où, quand, ordre du jour).</p>`;
 }
 
 function openReunionModal(reunion = null) {
@@ -9521,11 +9762,20 @@ function bindEvents() {
       $('#missionSignatureFile')?.click();
       return;
     }
+    if (event.target.closest('#missionSignatureRemove')) {
+      const entity = missionEntity(); if (!entity) return;
+      const detail = ensureMissionDetail(entity);
+      missionSupprimerSignaturePour(detail.signatureInitiales || moiInitiales);
+      return;
+    }
   });
   $('#missionDocument')?.addEventListener('change', (event) => {
     if (event.target.id !== 'missionSignatureFile') return;
     const file = event.target.files?.[0];
-    if (file) missionUploaderSignature(file);
+    if (!file) return;
+    const entity = missionEntity(); if (!entity) return;
+    const detail = ensureMissionDetail(entity);
+    missionUploaderSignaturePour(detail.signatureInitiales || moiInitiales, file);
   });
   $('#missionAddDestinataire')?.addEventListener('click', () => {
     const entity = missionEntity(); if (!entity) return;
@@ -9548,7 +9798,13 @@ function bindEvents() {
   $('#missionPdfButton')?.addEventListener('click', () => missionTelechargerPdf(false));
   $('#missionBlankPdfButton')?.addEventListener('click', () => missionImprimerPdf(true));
   $('#missionSendButton')?.addEventListener('click', missionSendMail);
-  missionChargerSignature();
+  missionChargerEnseignantsActifs();
+  missionChargerSignaturePour(moiInitiales);
+  // Précharger le logo tout de suite (pas seulement au premier PDF généré) :
+  // par le temps qu'on clique « Enregistrer le PDF », il est déjà en cache,
+  // ce qui raccourcit d'autant la portion asynchrone de missionGenererPdfDoc
+  // lancée depuis le clic (retours 15/09/2026 — génération muette sur mobile).
+  missionChargerLogoImage();
 
   // Ruban pédagogique
   // Écran 8 — sous-onglets Référentiel & Ruban.

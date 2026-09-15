@@ -102,6 +102,13 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     le nouveau filtre optimiste + fusion de conflit côté `js/sync.js` (bug du
     04/09/2026 : un « Déroulé » de séance co-enseignée écrasé en silence par
     l'enregistrement d'un·e collègue) ne détecterait jamais rien.
+23. `020-oc-signatures-equipe-partagee.sql` — **à appliquer** : lecture ET
+    écriture (dépôt/remplacement/suppression) du bucket `oc-signatures` (013)
+    s'ouvrent à tout enseignant actif (au lieu du seul propriétaire du
+    dossier) — l'écran « Ordre de mission » permet désormais de choisir ET de
+    déposer la signature d'un·e collègue, pas seulement la sienne. Remplace
+    entièrement les 4 policies de `013` (voir l'avertissement en tête du
+    fichier sur ce que ça implique).
 
 ## Réglage obligatoire côté Auth
 
