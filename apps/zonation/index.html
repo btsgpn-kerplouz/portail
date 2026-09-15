@@ -2587,7 +2587,7 @@ function construireEcranAnalyse(){
         <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
       </div>
       <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
-      <p class="analyse-aide">Une ligne par espèce : l'épaisseur de la barre donne l'abondance-dominance, sa longueur la plage de distances où l'espèce a été notée. <b>Survolez</b> une barre pour le détail d'un relevé, <b>cliquez</b> un aplat de zone pour ouvrir la fiche de son habitat. En <b>taille réelle</b>, faites glisser pour parcourir le transect. Le diagramme téléchargé reste en noir et blanc, pour le papier.</p>
+      <p class="analyse-aide">Épaisseur = abondance-dominance · longueur = présence sur le transect. Survol : détail · clic sur une zone : fiche.</p>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
 
@@ -2607,16 +2607,7 @@ function construireEcranAnalyse(){
       ${inversions.length ? `
         <div class="analyse-alerte">
           <b>${inversions.length} point${inversions.length>1?'s':''} où la zonation ne progresse pas vers la terre.</b>
-          Ce n'est pas nécessairement une erreur. Deux explications sont à peser sur le terrain :
-          <ul class="analyse-liste">
-            <li><b>La microtopographie.</b> Une cuvette, un chenal, une banquette ou une dépression
-              du schorre retient l'eau et porte une végétation de niveau inférieur à son entourage.
-              La zonation n'y est pas linéaire, et le relevé est juste.</li>
-            <li><b>Une détermination à revoir.</b> Le bouton « Modifier » de l'historique permet de
-              corriger l'espèce, et l'habitat est recalculé.</li>
-          </ul>
-          Le champ « remarque » du relevé est l'endroit où trancher : une cuvette notée sur le terrain
-          explique le point de vigilance.
+          Pas forcément une erreur : <b>microtopographie</b> (cuvette, chenal…) ou <b>détermination à revoir</b> (bouton « Modifier »).
         </div>
         <ul class="analyse-liste">
           ${inversions.map(x => {
@@ -2638,7 +2629,7 @@ function construireEcranAnalyse(){
       <div class="analyse-graphe">${diagrammeRichesseTransect(rs)}</div>
 
       <h4 class="analyse-soustitre">Par zone</h4>
-      <p class="analyse-aide">La richesse augmente normalement de la slikke vers le haut schorre : les contraintes de salinité et de submersion s'y relâchent.</p>
+      <p class="analyse-aide">Elle augmente en général de la slikke vers le haut schorre.</p>
       <div class="analyse-graphe">${diagrammeRichesseParZone(parZone)}</div>
       <details class="analyse-plus"><summary>Voir les chiffres par zone</summary>
       <table class="historique"><thead><tr>
@@ -2654,13 +2645,11 @@ function construireEcranAnalyse(){
             : (z.min === z.max ? `${z.min}` : `${z.min} – ${z.max} <small>(méd. ${z.mediane})</small>`)}</td>
           <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>' : z.distinctes}</td></tr>`).join('')}
       </tbody></table>
-      <p class="analyse-aide"><b>Espèces dans un quadrat</b> : nombre d'espèces sur un mètre carré — min pour le quadrat le plus pauvre de la zone, max pour le plus riche, méd. pour la médiane (la moitié des quadrats en compte autant ou moins).
-        <b>Espèces différentes</b> : toutes celles notées dans la zone, quadrats cumulés — ce nombre dépasse donc le précédent dès que les quadrats ne contiennent pas les mêmes espèces.
-        Une zone traversée par peu de quadrats donne des valeurs à prendre avec prudence.</p>
+      <p class="analyse-aide">Espèces différentes = tous les quadrats de la zone cumulés.</p>
       </details>
 
       <h4 class="analyse-soustitre">Espèces, de la plus fréquente à la plus rare</h4>
-      <p class="analyse-aide">« Nb de relevés » compte les quadrats où l'espèce a été notée ; « présente de → à » donne son amplitude sur le transect — la longueur de sa barre dans le diagramme.</p>
+      <p class="analyse-aide">Nb de relevés = quadrats où l'espèce est notée.</p>
       <table class="historique"><thead><tr><th>Espèce</th><th>Nb de relevés</th><th>Présente de → à</th></tr></thead><tbody>
         ${especes.slice(0,8).map(e => ligneEspeceAnalyse(e)).join('')}
       </tbody></table>
@@ -2668,8 +2657,8 @@ function construireEcranAnalyse(){
         <table class="historique"><tbody>${especes.slice(8).map(e => ligneEspeceAnalyse(e)).join('')}</tbody></table>
       </details>` : ''}
 
-      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} notée${uniques.length>1?'s':''} sur un seul quadrat</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}. À regarder : limite d'aire sur le transect, espèce réellement rare, ou détermination à revoir.</p>` : ''}
-      ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}. Le diagramme y laisse un blanc, la continuité n'ayant pas été observée.</p>` : ''}
+      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} notée${uniques.length>1?'s':''} sur un seul quadrat</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}.</p>` : ''}
+      ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}.</p>` : ''}
     </div>`;
 }
 
