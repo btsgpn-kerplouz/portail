@@ -2644,17 +2644,17 @@ function construireEcranAnalyse(){
       <table class="historique"><thead><tr>
         <th>Zone</th>
         <th>Nb de quadrats</th>
-        <th>Espèces dans un quadrat<br><small>de … à … · valeur médiane</small></th>
+        <th>Espèces dans un quadrat<br><small>min – max (méd.)</small></th>
         <th>Espèces différentes<br><small>toute la zone</small></th>
       </tr></thead><tbody>
         ${parZone.map(z => `<tr>
           <td><span class="pastille-zone" style="background:${teinteZone(z.rang)}"></span>${echapHTML(z.zone)}</td>
           <td class="num">${z.n}${z.n === 1 ? ' <small class="analyse-note">un seul : peu représentatif</small>' : ''}</td>
           <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>'
-            : (z.min === z.max ? `${z.min}` : `${z.min} à ${z.max} · <small>médiane ${z.mediane}</small>`)}</td>
+            : (z.min === z.max ? `${z.min}` : `${z.min} – ${z.max} <small>(méd. ${z.mediane})</small>`)}</td>
           <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>' : z.distinctes}</td></tr>`).join('')}
       </tbody></table>
-      <p class="analyse-aide"><b>Espèces dans un quadrat</b> : combien d'espèces tiennent sur un mètre carré de la zone, du quadrat le plus pauvre au plus riche.
+      <p class="analyse-aide"><b>Espèces dans un quadrat</b> : nombre d'espèces sur un mètre carré — min pour le quadrat le plus pauvre de la zone, max pour le plus riche, méd. pour la médiane (la moitié des quadrats en compte autant ou moins).
         <b>Espèces différentes</b> : toutes celles notées dans la zone, quadrats cumulés — ce nombre dépasse donc le précédent dès que les quadrats ne contiennent pas les mêmes espèces.
         Une zone traversée par peu de quadrats donne des valeurs à prendre avec prudence.</p>
       </details>
