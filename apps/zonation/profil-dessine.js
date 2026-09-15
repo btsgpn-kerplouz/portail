@@ -126,6 +126,7 @@ const EMPRISE_PORT = {
 const DESSIN_PX_M = 46;        // pixels par mètre le long du transect
 const DESSIN_PX_CM = 1.25;     // pixels par cm de hauteur : exagération verticale ≈ ×3
 const DESSIN_MARGE_G = 150;     // colonne de l'échelle des hauteurs
+const DESSIN_PX_RANG = 14;     // relief du profil type : dénivelé dessiné par rang de zone
 const STRATES = [{lim:15, nom:"strate basse"}, {lim:40, nom:"strate moyenne"}];
 
 function portEspece(e){
@@ -373,9 +374,42 @@ function construireProfilDessineSVG(nomTransect, options){
   const liste = [...especes.values()].sort((a, b) => b.hcm - a.hcm || a.fr.localeCompare(b.fr, 'fr'));
   const hMaxCm = Math.max(50, Math.ceil(Math.max(0, ...[...especes.values()].map(e => e.hcm)) / 25) * 25);
 
+  /* Relief : PROFIL TYPE. Aucune altitude n'est relevée ; la ligne de sol monte
+     avec le rang de la zone de chaque relevé (slikke en bas, haut schorre en
+     haut), lissé par une moyenne glissante pour donner une pente continue. Sans
+     relief, le sol est plat. */
+  const relief = !(options && options.relief === false);
+  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche) ? zoneDeFiche(r.topFiche).rang : null));
+  let dernierRang = rangs.find(v => v != null) ?? 0;
+  const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
+  const lisses = bruts.map((_, i) => {
+    let s = 0, n = 0;
+    for(let k = i - 2; k <= i + 2; k++){
+      if(k < 0 || k >= bruts.length) continue;
+      const p = 3 - Math.abs(k - i);
+      s += bruts[k] * p; n += p;
+    }
+    return s / n;
+  });
+  const rMin = Math.min(...lisses), rMax = Math.max(...lisses);
+  const ampli = relief ? DESSIN_PX_RANG * (rMax - rMin) : 0;
+
   const yTitre = pourFichier ? 58 : 0;
-  const ySol = yTitre + 18 + hMaxCm * DESSIN_PX_CM;
-  const yBande = ySol + 3, hBande = 8;
+  const ySol = yTitre + 18 + hMaxCm * DESSIN_PX_CM + ampli;   // sol au plus bas
+  /* Hauteur du sol à la distance d, par interpolation entre relevés. */
+  const solY = d => {
+    if(!relief) return ySol;
+    let rg;
+    if(d <= rs[0].d) rg = lisses[0];
+    else if(d >= rs[rs.length - 1].d) rg = lisses[lisses.length - 1];
+    else {
+      let i = 1; while(rs[i].d < d) i++;
+      const t = (d - rs[i - 1].d) / (rs[i].d - rs[i - 1].d);
+      rg = lisses[i - 1] + t * (lisses[i] - lisses[i - 1]);
+    }
+    return ySol - (rg - rMin) * DESSIN_PX_RANG;
+  };
+  const yBande = ySol + 6, hBande = 8;
   const yAxe = yBande + hBande + 4;
   const W = DESSIN_MARGE_G + largeur + 24;
   /* Le fichier téléchargé porte sa légende : il doit se lire seul. */
@@ -393,20 +427,6 @@ function construireProfilDessineSVG(nomTransect, options){
     S.push(`<text x="14" y="45" font-size="11.5" fill="#565a4e">Transect ${echapXML(nomTransect)} · ${rs.length} relevés${id0.dateReleve ? ' · ' + echapXML(id0.dateReleve.split('-').reverse().join('/')) : ''}${id0.observateur ? ' · ' + echapXML(id0.observateur) : ''}</text>`);
   }
 
-  /* Strates : repères horizontaux et échelle des hauteurs. */
-  const yCm = cm => ySol - cm * DESSIN_PX_CM;
-  S.push(`<line x1="${DESSIN_MARGE_G - 8}" y1="${n1(yCm(hMaxCm))}" x2="${DESSIN_MARGE_G - 8}" y2="${ySol}" stroke="#191b16" stroke-width="1"/>`);
-  for(const cm of [0, STRATES[0].lim, STRATES[1].lim, hMaxCm]){
-    S.push(`<line x1="${DESSIN_MARGE_G - 12}" y1="${n1(yCm(cm))}" x2="${DESSIN_MARGE_G - 8}" y2="${n1(yCm(cm))}" stroke="#191b16"/>`);
-    S.push(`<text x="${DESSIN_MARGE_G - 15}" y="${n1(yCm(cm) + 3.5)}" text-anchor="end" font-size="10" fill="#565a4e">${cm} cm</text>`);
-  }
-  STRATES.forEach(s => S.push(`<line x1="${DESSIN_MARGE_G}" y1="${n1(yCm(s.lim))}" x2="${n1(DESSIN_MARGE_G + largeur)}" y2="${n1(yCm(s.lim))}" stroke="#cfc9b8" stroke-width="0.8" stroke-dasharray="5 5"/>`));
-  const bornes = [0, STRATES[0].lim, STRATES[1].lim, hMaxCm];
-  ['basse', 'moyenne', 'haute'].forEach((nom, i) => {
-    const yc = (yCm(bornes[i]) + yCm(bornes[i + 1])) / 2;
-    S.push(`<text x="12" y="${n1(yc + 3.5)}" font-size="10" font-style="italic" fill="#8a8676">strate ${nom}</text>`);
-  });
-
   /* Cellules : chaque relevé occupe la moitié des intervalles qui le séparent
      de ses voisins, sans dépasser un pas de part et d'autre — au-delà, le sol
      est laissé en pointillés « non relevé ». */
@@ -417,15 +437,43 @@ function construireProfilDessineSVG(nomTransect, options){
     return {r, a, b};
   });
 
+  /* Tracé d'une ligne parallèle au sol (décalée de dy px) entre deux distances. */
+  const trace = (da, db, dy = 0) => {
+    const nb = Math.max(1, Math.ceil((db - da) * DESSIN_PX_M / 6));
+    const pts = [];
+    for(let k = 0; k <= nb; k++){ const d = da + (db - da) * k / nb; pts.push(`${n1(x(d))},${n1(solY(d) - dy)}`); }
+    return pts.join(' ');
+  };
+  const d0 = dMin - pas / 2, d1 = dMax + pas / 2;
+
+  /* Terre sous la ligne de sol, pour que le relief se lise d'un coup d'œil. */
+  if(relief) S.push(`<polygon points="${trace(d0, d1)} ${n1(x(d1))},${ySol + 5} ${n1(x(d0))},${ySol + 5}" fill="#f1eee4"/>`);
+
+  /* Strates : repères parallèles au sol, et échelle des hauteurs au départ. */
+  STRATES.forEach(s => S.push(`<polyline points="${trace(d0, d1, s.lim * DESSIN_PX_CM)}" fill="none" stroke="#cfc9b8" stroke-width="0.8" stroke-dasharray="5 5"/>`));
+  const ySol0 = solY(d0);
+  const yCm = cm => ySol0 - cm * DESSIN_PX_CM;
+  S.push(`<line x1="${DESSIN_MARGE_G - 8}" y1="${n1(yCm(hMaxCm))}" x2="${DESSIN_MARGE_G - 8}" y2="${n1(ySol0)}" stroke="#191b16" stroke-width="1"/>`);
+  for(const cm of [0, STRATES[0].lim, STRATES[1].lim, hMaxCm]){
+    S.push(`<line x1="${DESSIN_MARGE_G - 12}" y1="${n1(yCm(cm))}" x2="${DESSIN_MARGE_G - 8}" y2="${n1(yCm(cm))}" stroke="#191b16"/>`);
+    S.push(`<text x="${DESSIN_MARGE_G - 15}" y="${n1(yCm(cm) + 3.5)}" text-anchor="end" font-size="10" fill="#565a4e">${cm} cm</text>`);
+  }
+  const bornes = [0, STRATES[0].lim, STRATES[1].lim, hMaxCm];
+  ['basse', 'moyenne', 'haute'].forEach((nom, i) => {
+    const yc = (yCm(bornes[i]) + yCm(bornes[i + 1])) / 2;
+    S.push(`<text x="12" y="${n1(yc + 3.5)}" font-size="10" font-style="italic" fill="#8a8676">strate ${nom}</text>`);
+  });
+  if(relief) S.push(`<text x="12" y="${ySol + 3}" font-size="9" font-style="italic" fill="#8a8676">sol (profil type)</text>`);
+
   /* Sol, bande de zone et trous d'échantillonnage. */
   cellules.forEach((c, i) => {
     const z = c.r.solNu ? {rang: 0, zone: 'Sol nu'} : (c.r.topFiche != null ? zoneDeFiche(c.r.topFiche) : null);
     S.push(`<rect x="${n1(x(c.a))}" y="${yBande}" width="${n1(Math.max(1, x(c.b) - x(c.a)))}" height="${hBande}" fill="${teinteZone(z ? z.rang : null)}"/>`);
-    S.push(`<line x1="${n1(x(c.a))}" y1="${ySol}" x2="${n1(x(c.b))}" y2="${ySol}" stroke="#191b16" stroke-width="1.4"/>`);
+    S.push(`<polyline points="${trace(c.a, c.b)}" fill="none" stroke="#191b16" stroke-width="1.4"/>`);
     const suiv = cellules[i + 1];
     if(suiv && suiv.a > c.b + 1e-9){
-      S.push(`<line x1="${n1(x(c.b))}" y1="${ySol}" x2="${n1(x(suiv.a))}" y2="${ySol}" stroke="#191b16" stroke-width="1" stroke-dasharray="3 4"/>`);
-      if(suiv.a - c.b >= 3) S.push(`<text x="${n1((x(c.b) + x(suiv.a)) / 2)}" y="${n1(ySol - 8)}" text-anchor="middle" font-size="9.5" font-style="italic" fill="#8a8676">non relevé</text>`);
+      S.push(`<polyline points="${trace(c.b, suiv.a)}" fill="none" stroke="#191b16" stroke-width="1" stroke-dasharray="3 4"/>`);
+      if(suiv.a - c.b >= 3) S.push(`<text x="${n1((x(c.b) + x(suiv.a)) / 2)}" y="${n1(solY((c.b + suiv.a) / 2) - 8)}" text-anchor="middle" font-size="9.5" font-style="italic" fill="#8a8676">non relevé</text>`);
     }
   });
 
@@ -448,14 +496,17 @@ function construireProfilDessineSVG(nomTransect, options){
       const phase = R();
       for(let k = 0; k < nb; k++){
         const t = ((k + phase * .8 + .1) / nb);
-        const xi = x(c.a) + Math.min(.97, Math.max(.03, t + (R() - .5) * .35 / nb)) * largeurPx;
-        individus.push({port, lw, hPx: hPx * (.88 + R() * .24), xi, R: aleaGraine(graineTexte(`${c.r.d}|${e.latin || e.fr}|${k}`))});
+        const f = Math.min(.97, Math.max(.03, t + (R() - .5) * .35 / nb));
+        const xi = x(c.a) + f * largeurPx;
+        // pied posé sur le sol, un peu enfoncé pour ne pas flotter dans la pente
+        const yi = solY(c.a + f * (c.b - c.a)) + (relief ? 1 : 0);
+        individus.push({port, lw, hPx: hPx * (.88 + R() * .24), xi, yi, R: aleaGraine(graineTexte(`${c.r.d}|${e.latin || e.fr}|${k}`))});
       }
     });
   });
   individus.sort((a, b) => b.hPx - a.hPx);
   S.push(`<g fill="none" stroke="#191b16" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round">`);
-  individus.forEach(v => S.push((PICTOS[v.port] || PICTOS.herbe)(v.xi, ySol, v.hPx, v.R, undefined, v.lw)));
+  individus.forEach(v => S.push((PICTOS[v.port] || PICTOS.herbe)(v.xi, v.yi, v.hPx, v.R, undefined, v.lw)));
   S.push(`</g>`);
 
   /* Axe des distances. */
@@ -467,11 +518,12 @@ function construireProfilDessineSVG(nomTransect, options){
   }
 
   /* Zones sensibles au survol : un rectangle transparent par quadrat. */
+  const yHaut = ySol - ampli - hMaxCm * DESSIN_PX_CM;
   if(!pourFichier) cellules.forEach(c => {
     const z = c.r.solNu ? 'Sol nu' : (c.r.topFiche != null ? (zoneDeFiche(c.r.topFiche) || {}).zone : null);
     const esp = (c.r.cortege || []).slice().sort((a, b) => (pctDeCouverture('bb', b.cover) || 0) - (pctDeCouverture('bb', a.cover) || 0))
       .map(e => `${e.fr} (${e.cover})`).join(', ');
-    S.push(`<rect x="${n1(x(c.a))}" y="${n1(yCm(hMaxCm))}" width="${n1(Math.max(1, x(c.b) - x(c.a)))}" height="${n1(ySol - yCm(hMaxCm) + hBande + 3)}" fill="transparent" class="cellule-dessin"><title>${c.r.d} m${z ? ' · ' + echapXML(z) : ''}${c.r.topFiche != null ? ' (f' + c.r.topFiche + ')' : ''}\n${echapXML(esp || 'sol nu')}</title></rect>`);
+    S.push(`<rect x="${n1(x(c.a))}" y="${n1(yHaut)}" width="${n1(Math.max(1, x(c.b) - x(c.a)))}" height="${n1(yBande + hBande - yHaut)}" fill="transparent" class="cellule-dessin"><title>${c.r.d} m${z ? ' · ' + echapXML(z) : ''}${c.r.topFiche != null ? ' (f' + c.r.topFiche + ')' : ''}\n${echapXML(esp || 'sol nu')}</title></rect>`);
   });
 
   if(pourFichier){
@@ -482,15 +534,19 @@ function construireProfilDessineSVG(nomTransect, options){
         + `<text x="56" y="20" font-size="11.5">${echapXML(e.fr)}</text>`
         + `<text x="56" y="35" font-size="9.5" fill="#565a4e">${echapXML(NOMS_PORTS[e.port] || '')} · ~${e.hcm} cm${e.connu ? '' : ' · dessin générique'}</text></g>`);
     });
-    S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Hauteurs types des espèces (non mesurées) · nombre de dessins proportionnel au recouvrement · sol plat, sans topographie · d'après les profils de COLASSE V., 2019 (CBN de Brest)</text>`);
+    S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Hauteurs types des espèces (non mesurées) · nombre de dessins proportionnel au recouvrement · ${relief ? 'relief : profil type déduit des zones, altitude non mesurée' : 'sol plat'} · d'après les profils de COLASSE V., 2019 (CBN de Brest)</text>`);
   }
   S.push('</svg>');
   return {svg: S.join('\n'), especes: liste};
 }
 
+/* Relief affiché : profil type (par défaut) ou sol plat. Mémorisé pour la
+   session, et repris par le téléchargement. */
+let dessinRelief = true;
+
 /* Bloc HTML de l'écran d'analyse : dessin + légende par strate. */
 function blocProfilDessine(nomTransect){
-  const res = construireProfilDessineSVG(nomTransect);
+  const res = construireProfilDessineSVG(nomTransect, {relief: dessinRelief});
   if(!res) return '';
   const parStrate = {haute: [], moyenne: [], basse: []};
   res.especes.forEach(e => parStrate[strateDe(e.hcm)].push(e));
@@ -501,18 +557,33 @@ function blocProfilDessine(nomTransect){
     </ul></div>`).join('');
   const cible = String(nomTransect).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   return `
-    <div class="carte">
+    <div class="carte" id="bloc-profil-dessine">
       <h3>Profil de végétation dessiné</h3>
       <p class="analyse-aide">Densité : plus une espèce couvre le quadrat, plus elle est dessinée de fois. Stratification : chaque espèce à sa hauteur type, les plus hautes derrière. Survol d'un quadrat : ses espèces.</p>
+      <div class="analyse-vues">
+        <button type="button" aria-pressed="${dessinRelief}" onclick="basculerReliefDessin('${cible}', true)">Relief (profil type)</button>
+        <button type="button" aria-pressed="${!dessinRelief}" onclick="basculerReliefDessin('${cible}', false)">Sol plat</button>
+      </div>
       <div class="analyse-diagramme reelle dessin-profil">${res.svg}</div>
       <div class="dessin-legende">${legende}</div>
-      <p class="analyse-note">Hauteurs types (non mesurées) et sol plat : aucune topographie n'est relevée. D'après les profils de COLASSE (2019, fig. 6).</p>
+      <p class="analyse-note">${dessinRelief
+        ? 'Relief : profil type déduit de la zone de chaque relevé (slikke en bas, haut schorre en haut), sans altitude mesurée. Un creux correspond à un point de vigilance : cuvette, chenal… ou détermination à revoir.'
+        : 'Sol plat : aucune topographie n\'est relevée sur le terrain.'} Hauteurs des plantes : hauteurs types, non mesurées. D'après les profils de COLASSE (2019, fig. 6).</p>
       <button class="secondaire" onclick="exporterProfilDessine('${cible}')">⬇ Télécharger le profil dessiné (SVG)</button>
     </div>`;
 }
 
+function basculerReliefDessin(nomTransect, relief){
+  dessinRelief = relief;
+  const bloc = document.getElementById('bloc-profil-dessine');
+  if(!bloc) return;
+  const defil = bloc.querySelector('.dessin-profil').scrollLeft;
+  bloc.outerHTML = blocProfilDessine(nomTransect);
+  document.querySelector('#bloc-profil-dessine .dessin-profil').scrollLeft = defil;
+}
+
 function exporterProfilDessine(nomTransect){
-  const res = construireProfilDessineSVG(nomTransect, {fichier: true});
+  const res = construireProfilDessineSVG(nomTransect, {fichier: true, relief: dessinRelief});
   if(!res){ informer('Il faut au moins deux relevés avec une distance renseignée pour dessiner un profil.'); return; }
-  telechargerTexte(res.svg, `profil_dessine_${String(nomTransect).replace(/[^\w-]+/g, '_')}.svg`, 'image/svg+xml');
+  telechargerTexte(res.svg, `profil_dessine_${String(nomTransect).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_')}${dessinRelief ? '' : '_sol_plat'}.svg`, 'image/svg+xml');
 }

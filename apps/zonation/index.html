@@ -3002,6 +3002,16 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iCommune  = col('commune');
   const iRemarque = col('remarque');
   const iMode     = col('mode_recouvrement');
+  const iLocal    = col('localisation');
+  /* Distance : colonne dédiée, sinon lue dans « localisation » où l'export
+     Phytoscope la range (« 12 m », « Distance sur le transect : 12 m »).
+     Virgule décimale d'un tableur ramenée au point. */
+  const distanceDe = (brute, local) => {
+    const d = String(brute || '').replace(',', '.').replace(/\s*m$/i, '').trim();
+    if(d !== '' && isFinite(Number(d))) return d;
+    const m = String(local || '').match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
+    return m ? m[1].replace(',', '.') : '';
+  };
   if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
     throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
   /* Sans numéro de relevé ni identifiant, toutes les lignes tomberaient dans un
@@ -3018,6 +3028,9 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const v = i => i >= 0 ? (c[i] || '').trim() : '';
     let transect = v(iTransect);
     let numero = v(iNumero);
+    // la correspondance tolérante des en-têtes peut confondre « Relevé n° » et
+    // « releve_nom » : un numéro qui n'en est pas un est ignoré
+    if(!/^\d+$/.test(numero)) numero = '';
     if(!transect){
       /* code_projet a porté trois choses au fil des versions : « Transect R1 »,
          puis « R1 », puis l'habitat depuis qu'il sert au regroupement dans
@@ -3041,7 +3054,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
     if(!groupes.has(cle)) groupes.set(cle, {
       transect, numero: numero === '' ? null : Number(numero),
       dateReleve: dateISO(v(iDate)), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
-      distance: v(iDistance), observation: v(iRemarque), cortege: [], solNu: false
+      distance: distanceDe(v(iDistance), v(iLocal)), observation: v(iRemarque), cortege: [], solNu: false
     });
     const g = groupes.get(cle);
     const latin = v(iLatin), fr = v(iEspece) || latin;
