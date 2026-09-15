@@ -657,7 +657,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     </button>
     <button class="accueil-bouton secondaire2" onclick="allerA('analyses')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="7" width="30" height="26"></rect><line x1="9" y1="13" x2="19" y2="13" stroke-width="2.6"></line><line x1="15" y1="19" x2="27" y2="19" stroke-width="4"></line><line x1="23" y1="25" x2="31" y2="25" stroke-width="2.6"></line><line x1="17" y1="7" x2="17" y2="33" stroke-dasharray="2.5 2.5" stroke-width="1"></line></svg></span>
-      <span class="txt"><b>Analyser un transect</b><span id="compteur-analyses-txt">Zonation, points de vigilance, richesse</span></span>
+      <span class="txt"><b>Analyses</b><span id="compteur-analyses-txt">Zonation, points de vigilance, richesse spécifique</span></span>
     </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
@@ -828,7 +828,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran" id="ecran-analyses">
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
-      <h2>Analyser un transect</h2>
+      <h2>Analyses</h2>
       <p style="font-size:.78rem;color:var(--text-2);">Choisissez un transect : diagramme de la zonation, points de vigilance et richesse spécifique. Plus lisible sur ordinateur.</p>
       <div id="zone-analyses"></div>
       <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
@@ -836,7 +836,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   </section>
 
   <section class="ecran" id="ecran-analyse">
-    <a class="retour-lien" id="lien-retour-analyse" onclick="allerA(origineAnalyse)">← Analyser un transect</a>
+    <a class="retour-lien" id="lien-retour-analyse" onclick="allerA(origineAnalyse)">← Analyses</a>
     <div id="zone-analyse"></div>
   </section>
 
@@ -963,7 +963,7 @@ function allerA(nom){
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect", analyses:"Analyser un transect"
+    analyse:"Analyse du transect", analyses:"Analyses"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -1847,7 +1847,7 @@ function majCompteurHistorique(){
   document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
   const nt = new Set(chargerHistorique().map(r => r.transect || 'Transect (sans nom)')).size;
   document.getElementById('compteur-analyses-txt').textContent =
-    nt ? `${nt} transect${nt > 1 ? 's' : ''} · zonation, points de vigilance, richesse` : 'Zonation, points de vigilance, richesse';
+    nt ? `${nt} transect${nt > 1 ? 's' : ''} · zonation, points de vigilance, richesse spécifique` : 'Zonation, points de vigilance, richesse spécifique';
 }
 /* ---------- Bordereau de terrain : identité du relevé ----------
    Chaque relevé appartient à un transect (une sortie terrain). La numérotation
@@ -2435,7 +2435,7 @@ function ouvrirAnalyseTransect(nom, origine){
   analyseTransectCourant = nom;
   origineAnalyse = origine === 'historique' ? 'historique' : 'analyses';
   document.getElementById('lien-retour-analyse').textContent =
-    origineAnalyse === 'historique' ? '← Mes transects' : '← Analyser un transect';
+    origineAnalyse === 'historique' ? '← Mes transects' : '← Analyses';
   allerA('analyse');
 }
 
