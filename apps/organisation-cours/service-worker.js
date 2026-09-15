@@ -1,4 +1,4 @@
-const CACHE_NAME = "organisation-cours-pwa-v1-2-0";
+const CACHE_NAME = "organisation-cours-pwa-v1-2-1";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -20,7 +20,7 @@ const APP_SHELL = [
   "./fonts/atkinson-bold.woff2",
   "./fonts/atkinson-italic.woff2",
   "./fonts/jetbrains-mono.woff2",
-  "./img/logo-kerplouz.png"
+  "./img/LogoCarre.png"
 ];
 
 self.addEventListener("install", event => {

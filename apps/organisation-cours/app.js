@@ -1632,8 +1632,12 @@ function missionTitreEntite(entity) {
 // Préférences purement locales au poste (pas de colonne Supabase pour ça :
 // la fonction change rarement, les destinataires sont propres à chaque
 // enseignant) — jamais de vraie adresse codée en dur dans le dépôt.
+// Retours 15/09/2026 — pré-remplie avec l'intitulé commun à toute l'équipe
+// (identique pour MD, TZ...), modifiable/écrasable comme avant au premier
+// changement (memoriserMissionFonction).
+const MISSION_FONCTION_DEFAUT = 'Enseignant | Écologie et Environnement BTS GPN';
 function missionFonctionMemorisee() {
-  try { return localStorage.getItem('oc-ma-fonction') || ''; } catch (e) { return ''; }
+  try { return localStorage.getItem('oc-ma-fonction') || MISSION_FONCTION_DEFAUT; } catch (e) { return MISSION_FONCTION_DEFAUT; }
 }
 function memoriserMissionFonction(valeur) {
   try { localStorage.setItem('oc-ma-fonction', valeur || ''); } catch (e) { /* stockage indisponible : tant pis */ }
@@ -1848,7 +1852,7 @@ function renderMissionView() {
   const doc = $('#missionDocument');
   if (doc) doc.innerHTML = `
     <header class="mission-doc-header">
-      <img src="img/logo-kerplouz.png" alt="Kerplouz LaSalle — Auray" class="mission-logo" />
+      <img src="img/LogoCarre.png" alt="Kerplouz LaSalle — Auray" class="mission-logo" />
       <h1>Ordre de mission</h1>
     </header>
     <div class="mission-field-line">
@@ -2030,7 +2034,7 @@ function renderMissionListDialog() {
 // le vrai document de l'établissement (retours/code_ordre-de-mission, jamais
 // commité) : mêmes coordonnées jsPDF que le PDF officiel, plutôt qu'une page
 // HTML imprimée dont la mise en page dépend des réglages du navigateur.
-const MISSION_LOGO_URL = 'img/logo-kerplouz.png';
+const MISSION_LOGO_URL = 'img/LogoCarre.png';
 let missionLogoImageCache = null;
 function missionChargerLogoImage() {
   if (missionLogoImageCache) return Promise.resolve(missionLogoImageCache);
@@ -2089,7 +2093,11 @@ async function missionGenererPdfDoc(detail, isVierge) {
   let y = 20;
 
   const logo = await missionChargerLogoImage();
-  if (logo) doc.addImage(logo, 'PNG', 15, 10, 40, 15);
+  // Logo carré (retours 15/09/2026, LogoCarre.png remplace l'ancien logo
+  // rectangulaire) : même position et même hauteur qu'avant (15, 10, hauteur
+  // 15mm), largeur = hauteur pour ne pas l'écraser dans l'ancien rectangle
+  // 40×15 pensé pour un logo large.
+  if (logo) doc.addImage(logo, 'PNG', 15, 10, 15, 15);
 
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
