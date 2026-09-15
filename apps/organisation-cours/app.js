@@ -2093,11 +2093,14 @@ async function missionGenererPdfDoc(detail, isVierge) {
   let y = 20;
 
   const logo = await missionChargerLogoImage();
-  // Logo carré (retours 15/09/2026, LogoCarre.png remplace l'ancien logo
-  // rectangulaire) : même position et même hauteur qu'avant (15, 10, hauteur
-  // 15mm), largeur = hauteur pour ne pas l'écraser dans l'ancien rectangle
-  // 40×15 pensé pour un logo large.
-  if (logo) doc.addImage(logo, 'PNG', 15, 10, 15, 15);
+  // LogoCarre.png (fourni par Martin) livré sur un canevas carré 438×438,
+  // mais le contenu visible est une bande 423×156 (ratio ~2,7 — quasi
+  // identique à l'ancien logo 390×162, ratio 2,4) : le canevas carré n'était
+  // que du remplissage transparent, recadré à la source (voir img/LogoCarre.png,
+  // même fichier, contenu recadré) plutôt que compensé ici par une taille
+  // différente. Mêmes coordonnées que l'ancien logo — aucun changement de
+  // mise en page.
+  if (logo) doc.addImage(logo, 'PNG', 15, 10, 40, 15);
 
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
@@ -2362,9 +2365,31 @@ async function missionResoudreUserId(cle) {
   return trouve?.user_id || null;
 }
 
+// Retours 15/09/2026 (3e passe) — Martin : « ma signature ne s'enregistre
+// pas, je dois la recharger à chaque fois ». Vérifié directement dans le
+// bucket : le fichier existe bel et bien côté Supabase (createSignedUrl
+// réussit à la main). Le bug était donc côté cache : la moindre erreur
+// (course avec l'auth pas encore prête juste après le chargement de page,
+// aléa réseau...) était traitée EXACTEMENT comme « pas de signature » et
+// mise en cache pour tout le reste de la session — aucun nouvel essai
+// possible avant un rechargement complet, ce qui donnait l'impression que
+// le dépôt ne « prenait » jamais. On distingue maintenant l'échec confirmé
+// (objet vraiment introuvable, 404/NoSuchKey — celui-là seul mérite d'être
+// mémorisé) de tout le reste (retenté automatiquement, avec un anti-rafale
+// de 5s pour ne pas marteler l'API en cas d'échec réellement persistant).
+const missionSignatureDernierEssai = new Map(); // INITIALES -> timestamp du dernier essai NON concluant
+const MISSION_SIGNATURE_COOLDOWN_MS = 5000;
+
+function missionSignatureErreurIntrouvable(error) {
+  if (!error) return false;
+  return String(error.statusCode) === '404' || error.code === 'NoSuchKey' || /object not found/i.test(error.message || '');
+}
+
 async function missionChargerSignaturePour(initiales) {
   const cle = String(initiales || '').trim().toUpperCase();
   if (!cle || missionSignatureUrlParInitiales.has(cle) || missionSignatureEnCours.has(cle)) return;
+  const dernierEssai = missionSignatureDernierEssai.get(cle);
+  if (dernierEssai && Date.now() - dernierEssai < MISSION_SIGNATURE_COOLDOWN_MS) return;
   // Sortie AVANT le premier `await` et AVANT tout ajout à missionSignatureEnCours :
   // un `finally` qui rappelle renderMissionView() ici (comme plus bas) sans être
   // passé par un vrai point d'attente rappellerait cette même fonction de façon
@@ -2376,15 +2401,29 @@ async function missionChargerSignaturePour(initiales) {
   try {
     const sb = await getClient();
     const userId = await missionResoudreUserId(cle);
-    if (!userId) { missionSignatureUrlParInitiales.set(cle, null); return; }
+    if (!userId) {
+      // Compte introuvable dans la liste des actifs = légitime (compte
+      // inactif/inexistant) UNIQUEMENT si cette liste est déjà chargée et
+      // qu'il ne s'agit pas de moi-même — pour « moi », un userId manquant
+      // ne peut être qu'un souci passager d'auth (jamais un état normal).
+      if (cle !== moiInitiales && missionEnseignantsCharges) missionSignatureUrlParInitiales.set(cle, null);
+      else missionSignatureDernierEssai.set(cle, Date.now());
+      return;
+    }
     const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${userId}/signature.png`, 3600);
-    if (error || !data) { missionSignatureUrlParInitiales.set(cle, null); return; }
+    if (error) {
+      if (missionSignatureErreurIntrouvable(error)) missionSignatureUrlParInitiales.set(cle, null);
+      else { console.error('[signature] createSignedUrl', error); missionSignatureDernierEssai.set(cle, Date.now()); }
+      return;
+    }
+    if (!data) { missionSignatureDernierEssai.set(cle, Date.now()); return; }
+    missionSignatureDernierEssai.delete(cle);
     missionSignatureUrlParInitiales.set(cle, data.signedUrl);
     const img = await missionChargerImageSignature(data.signedUrl);
     if (img) missionSignatureImageParInitiales.set(cle, img);
   } catch (e) {
     console.error('[signature] chargement', e);
-    missionSignatureUrlParInitiales.set(cle, null);
+    missionSignatureDernierEssai.set(cle, Date.now());
   } finally {
     missionSignatureEnCours.delete(cle);
     if (missionViewTarget) renderMissionView();
@@ -2394,6 +2433,7 @@ async function missionChargerSignaturePour(initiales) {
 function missionInvaliderSignatureCache(cle) {
   missionSignatureUrlParInitiales.delete(cle);
   missionSignatureImageParInitiales.delete(cle);
+  missionSignatureDernierEssai.delete(cle);
 }
 
 async function missionUploaderSignaturePour(initiales, file) {
