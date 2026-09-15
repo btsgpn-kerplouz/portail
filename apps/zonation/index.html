@@ -288,6 +288,18 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
 .zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
 .analyse-diagramme .barre-espece{cursor:help;}
+/* Liste des transects à analyser */
+.carte-analyse{position:relative;display:block;width:100%;text-align:left;margin:.6em 0 0;padding:.75em 2.4em .8em .9em;
+  background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:var(--rayon);cursor:pointer;font-family:var(--sans);}
+.carte-analyse:hover:not(:disabled){border-color:var(--acc);}
+.carte-analyse:disabled{cursor:default;opacity:.65;}
+.carte-analyse-titre{display:block;font-family:var(--serif);font-size:.98rem;}
+.carte-analyse-infos{display:block;font-family:var(--mono);font-size:.72rem;color:var(--text-2);margin-top:.2em;}
+.carte-analyse-go{position:absolute;right:.9em;top:50%;transform:translateY(-50%);color:var(--acc);font-size:1.1rem;}
+.frise-zones{position:relative;display:block;height:.55em;margin-top:.55em;background:#f3f1ea;border-radius:2px;overflow:hidden;}
+.frise-zones span{position:absolute;top:0;bottom:0;}
+.note-import-analyses{font-size:.75rem;color:var(--text-2);margin:1em 0 0;}
+.note-import-analyses a{color:var(--acc);cursor:pointer;text-decoration:underline;}
 .bulle-diagramme{
   position:absolute;z-index:5;pointer-events:none;max-width:16em;
   background:var(--ink);color:#f4f2ec;border-radius:var(--rayon-petit);
@@ -643,6 +655,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
     </button>
+    <button class="accueil-bouton secondaire2" onclick="allerA('analyses')">
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="7" width="30" height="26"></rect><line x1="9" y1="13" x2="19" y2="13" stroke-width="2.6"></line><line x1="15" y1="19" x2="27" y2="19" stroke-width="4"></line><line x1="23" y1="25" x2="31" y2="25" stroke-width="2.6"></line><line x1="17" y1="7" x2="17" y2="33" stroke-dasharray="2.5 2.5" stroke-width="1"></line></svg></span>
+      <span class="txt"><b>Analyses</b><span id="compteur-analyses-txt">Zonation, points de vigilance, richesse spécifique</span></span>
+    </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
       <span id="btn-installer-txt">Installer l'application sur cet appareil</span>
@@ -808,8 +824,19 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
   <!-- ANALYSE D'UN TRANSECT : le diagramme et sa lecture, dans l'appli. Le SVG
        reste téléchargeable depuis cet écran pour être annoté ailleurs. -->
+  <!-- LISTE DES TRANSECTS À ANALYSER (accès direct depuis l'accueil) -->
+  <section class="ecran" id="ecran-analyses">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div class="carte">
+      <h2>Analyses</h2>
+      <p style="font-size:.78rem;color:var(--text-2);">Choisissez un transect : diagramme de la zonation, points de vigilance et richesse spécifique. Plus lisible sur ordinateur.</p>
+      <div id="zone-analyses"></div>
+      <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
+    </div>
+  </section>
+
   <section class="ecran" id="ecran-analyse">
-    <a class="retour-lien" onclick="allerA('historique')">← Mes transects</a>
+    <a class="retour-lien" id="lien-retour-analyse" onclick="allerA(origineAnalyse)">← Analyses</a>
     <div id="zone-analyse"></div>
   </section>
 
@@ -936,7 +963,7 @@ function allerA(nom){
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect"
+    analyse:"Analyse du transect", analyses:"Analyses"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -949,6 +976,7 @@ function allerA(nom){
   }
   if(nom==='fiches') construireEcranFiches();
   if(nom==='historique') afficherHistorique();
+  if(nom==='analyses') afficherListeAnalyses();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
   document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
   if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); activerDiagrammeInteractif(); }
@@ -1817,6 +1845,9 @@ function sauverHistorique(liste){
 function majCompteurHistorique(){
   const n = chargerHistorique().length;
   document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
+  const nt = new Set(chargerHistorique().map(r => r.transect || 'Transect (sans nom)')).size;
+  document.getElementById('compteur-analyses-txt').textContent =
+    nt ? `${nt} transect${nt > 1 ? 's' : ''} · zonation, points de vigilance, richesse spécifique` : 'Zonation, points de vigilance, richesse spécifique';
 }
 /* ---------- Bordereau de terrain : identité du relevé ----------
    Chaque relevé appartient à un transect (une sortie terrain). La numérotation
@@ -2177,7 +2208,7 @@ function afficherHistorique(){
       ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
     </tbody></table>
     <div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;">
-      <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}')">Analyser ce transect →</button>
+      <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}', 'historique')">Analyser ce transect →</button>
       ${!actif ? `<button class="discret" onclick="reprendreTransect('${nom.replace(/'/g,"\\'")}')">↻ Reprendre ce transect</button>` : ''}
     </div>
   `;
@@ -2396,10 +2427,61 @@ function construireProfilTransectSVG(nomTransect, options){
    C'est la remarque de terrain qui départage, et elle est reprise à côté du
    point signalé. */
 let analyseTransectCourant = null;
+/* L'analyse s'ouvre depuis l'accueil (liste des transects) ou depuis Mes
+   transects : le lien de retour ramène là d'où l'on vient. */
+let origineAnalyse = 'analyses';
 
-function ouvrirAnalyseTransect(nom){
+function ouvrirAnalyseTransect(nom, origine){
   analyseTransectCourant = nom;
+  origineAnalyse = origine === 'historique' ? 'historique' : 'analyses';
+  document.getElementById('lien-retour-analyse').textContent =
+    origineAnalyse === 'historique' ? '← Mes transects' : '← Analyses';
   allerA('analyse');
+}
+
+/* Liste des transects de l'appareil, chacun avec une frise des zones traversées
+   (mêmes couleurs que le diagramme) pour les reconnaître d'un coup d'œil. */
+function afficherListeAnalyses(){
+  const zone = document.getElementById('zone-analyses');
+  const groupes = new Map();
+  chargerHistorique().forEach(r => {
+    const t = r.transect || 'Transect (sans nom)';
+    if(!groupes.has(t)) groupes.set(t, []);
+    groupes.get(t).push(r);
+  });
+  if(!groupes.size){
+    zone.innerHTML = `<p class="vide-msg">Aucun transect sur cet appareil. Saisissez des relevés, ou importez le fichier d'un groupe dans Mes transects.</p>`;
+    return;
+  }
+  const nomActif = nomTransectActif();
+  zone.innerHTML = [...groupes.entries()].map(([nom, tous]) => {
+    const rs = tous.filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+      .map(r => ({...r, d: Number(r.distance)})).sort((a, b) => a.d - b.d);
+    const r0 = tous[0];
+    const infos = [`${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
+    if(rs.length) infos.push(`${rs[0].d} → ${rs[rs.length-1].d} m`);
+    if(r0.observateur) infos.push(echapHTML(r0.observateur));
+    if(r0.dateReleve) infos.push(r0.dateReleve.split('-').reverse().join('/'));
+    const possible = rs.length >= 2;
+    let frise = '';
+    if(possible){
+      const dMin = rs[0].d, etendue = Math.max(1, rs[rs.length-1].d - dMin);
+      // chaque relevé colore la moitié de l'intervalle qui le sépare de ses voisins
+      frise = rs.map((r, i) => {
+        const a = i ? (r.d + rs[i-1].d) / 2 : dMin;
+        const b = i < rs.length - 1 ? (r.d + rs[i+1].d) / 2 : rs[rs.length-1].d;
+        const z = r.solNu ? {rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+        return `<span style="left:${((a-dMin)/etendue*100).toFixed(2)}%;width:${Math.max(.3,(b-a)/etendue*100).toFixed(2)}%;background:${teinteZone(z ? z.rang : null)}"></span>`;
+      }).join('');
+    }
+    const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`;
+    return `<button type="button" class="carte-analyse"${possible ? ` onclick="ouvrirAnalyseTransect(${cible.replace(/"/g,'&quot;')})"` : ' disabled'}>
+      <span class="carte-analyse-titre"><b>Transect ${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}</span>
+      <span class="carte-analyse-infos">${infos.join(' · ')}</span>
+      ${possible ? `<span class="frise-zones" aria-hidden="true">${frise}</span>` : `<span class="carte-analyse-infos">Il faut au moins deux relevés avec une distance.</span>`}
+      ${possible ? '<span class="carte-analyse-go" aria-hidden="true">→</span>' : ''}
+    </button>`;
+  }).join('');
 }
 
 /* ---------- Diagrammes de l'analyse ----------
@@ -2838,18 +2920,54 @@ function importerFichierCSV(input){
   if(!fichier) return;
   const lecteur = new FileReader();
   lecteur.onload = () => {
-    try { appliquerImportCSV(lecteur.result, fichier.name); }
+    try { const d = decoderFichierTexte(lecteur.result); appliquerImportCSV(d.texte, fichier.name, d); }
     catch(e){ informer('Import impossible : ' + e.message); }
   };
   lecteur.onerror = () => informer('Lecture du fichier impossible.');
-  lecteur.readAsText(fichier, 'utf-8');
+  lecteur.readAsArrayBuffer(fichier);
 }
 
-function appliquerImportCSV(texte, nomFichier){
+/* Un CSV ouvert puis réenregistré dans Excel (Windows) n'est plus en UTF-8 mais
+   en Windows-1252 : lu comme UTF-8, « Relevé n° » devient « Relev� n� », la
+   colonne n'est plus reconnue et tous les relevés fusionnent en un seul. On tente
+   donc l'UTF-8 strict, et l'on se rabat sur Windows-1252 s'il échoue. */
+function decoderFichierTexte(tampon){
+  try { return {texte: new TextDecoder('utf-8', {fatal:true}).decode(tampon), encodageRepare: false}; }
+  catch(e){ return {texte: new TextDecoder('windows-1252').decode(tampon), encodageRepare: true}; }
+}
+
+/* Excel réécrit aussi les dates en « 10/09/2026 » : on revient au format ISO. */
+function dateISO(v){
+  const s = (v || '').trim();
+  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : s;
+}
+
+function appliquerImportCSV(texte, nomFichier, infos){
   const lignes = lireCSV(texte);
   if(lignes.length < 2) throw new Error('fichier vide ou sans ligne de données.');
   const entete = lignes[0].map(normEntete);
-  const col = (...noms) => { for(const n of noms){ const i = entete.indexOf(n); if(i >= 0) return i; } return -1; };
+  /* Recherche de colonne tolérante : nom exact d'abord, puis à une ou deux
+     lettres près — un en-tête passé par un tableur peut avoir perdu ses accents
+     (« Relev? n? ») sans que le fichier soit pour autant inexploitable. */
+  const lettres = t => t.replace(/[^a-z0-9]/g, '');
+  const ecartLettres = (a, b) => {
+    const d = Array.from({length: a.length + 1}, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for(let j = 1; j <= b.length; j++) d[0][j] = j;
+    for(let i = 1; i <= a.length; i++) for(let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[a.length][b.length];
+  };
+  const col = (...noms) => {
+    for(const n of noms){ const i = entete.indexOf(n); if(i >= 0) return i; }
+    for(const n of noms){
+      const cible = lettres(n);
+      if(cible.length < 5) continue;
+      const i = entete.findIndex(h => { const l = lettres(h); return l && ecartLettres(l, cible) <= 2; });
+      if(i >= 0) return i;
+    }
+    return -1;
+  };
 
   const iEspece   = col('espece', 'nom_francais');
   const iLatin    = col('nom_scientifique');
@@ -2868,6 +2986,10 @@ function appliquerImportCSV(texte, nomFichier){
   const iMode     = col('mode_recouvrement');
   if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
     throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
+  /* Sans numéro de relevé ni identifiant, toutes les lignes tomberaient dans un
+     seul relevé : mieux vaut refuser que fusionner silencieusement un transect. */
+  if(iNumero < 0 && iReleveId < 0 && iNomRel < 0)
+    throw new Error('colonne « Relevé n° » introuvable : les relevés ne peuvent pas être distingués.');
 
   const avertissements = [];
   /* Une ligne = une observation. Les lignes d'un même relevé sont regroupées par
@@ -2900,7 +3022,7 @@ function appliquerImportCSV(texte, nomFichier){
     const cle = (v(iReleveId) && !v(iTransect)) ? 'id:' + v(iReleveId) : transect + '#' + numero;
     if(!groupes.has(cle)) groupes.set(cle, {
       transect, numero: numero === '' ? null : Number(numero),
-      dateReleve: v(iDate), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
+      dateReleve: dateISO(v(iDate)), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
       distance: v(iDistance), observation: v(iRemarque), cortege: [], solNu: false
     });
     const g = groupes.get(cle);
@@ -2909,7 +3031,11 @@ function appliquerImportCSV(texte, nomFichier){
     if(!fr && !latin) return;                                  // ligne sans espèce
     if(/^sol nu$/i.test(latin) || /^sol nu$/i.test(fr)){ g.solNu = true; return; }
     if(v(iMode) === 'pct'){ avertissements.push(`ligne ${n+2} : recouvrement en % (${coef}) converti en coefficient`); }
-    const code = v(iMode) === 'pct' ? coefDepuisPct(parseFloat(coef.replace(',','.'))) : coef;
+    /* Coefficient normalisé : un tableur peut écrire « 5,0 », « 5.0 » ou mettre
+       « I » / « R » en majuscule. */
+    const brutCoef = coef.replace(/\s+/g, '');
+    const code = v(iMode) === 'pct' ? coefDepuisPct(parseFloat(brutCoef.replace(',','.')))
+      : (/^[1-5]([.,]0+)?$/.test(brutCoef) ? brutCoef[0] : brutCoef.toLowerCase());
     if(!(code in COEF_ABONDANCE)){
       avertissements.push(`ligne ${n+2} : coefficient « ${coef} » non reconnu, espèce ignorée (${fr})`);
       return;
@@ -2920,12 +3046,49 @@ function appliquerImportCSV(texte, nomFichier){
     if(!connue) avertissements.push(`ligne ${n+2} : « ${fr || latin} » hors référentiel, conservée sans effet sur le score`);
   });
 
+  /* Import de plusieurs groupes. Chaque groupe a en général un transect « 1 »
+     numéroté 1, 2, 3… à la même date : le nom du transect ne suffit donc pas à
+     l'identifier.
+     - Un relevé est reconnu comme déjà présent par son observateur, sa date, son
+       numéro et sa distance — pas par le nom du transect, qui peut avoir été
+       renommé lors d'un import précédent.
+     - Tout transect importé est nommé « 1 · Observateur » (plus la date si ce
+       nom est déjà pris) : les groupes restent séparés, jamais mélangés dans un
+       même transect, et tous les noms suivent la même forme. */
   const existants = chargerHistorique();
-  const dejaLa = new Set(existants.map(r => `${r.transect}#${r.numero}#${r.dateReleve||''}`));
+  const empreinte = r => `${(r.observateur||'').trim().toLowerCase()}#${r.dateReleve||''}#${r.numero}#${r.distance ?? ''}`;
+  const dejaLa = new Set(existants.map(empreinte));
+  const nomsPris = new Set(existants.map(r => r.transect || 'Transect (sans nom)'));
+  const renommages = new Map();          // transect du fichier → nom retenu
+  const observateurPrincipal = t => {
+    const c = {};
+    groupes.forEach(g => { if(g.transect === t && g.observateur) c[g.observateur] = (c[g.observateur]||0) + 1; });
+    return Object.entries(c).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+  };
+  /* Nom homogène pour tout transect importé : « 1 · Observateur ». Si ce nom est
+     déjà pris (même groupe, autre sortie), on ajoute la date ; en dernier recours
+     un numéro. Sans observateur, le nom du fichier en tient lieu. */
+  const dateTransect = t => {
+    const g = [...groupes.values()].find(x => x.transect === t && x.dateReleve);
+    return g ? g.dateReleve.split('-').reverse().join('/') : '';
+  };
+  const nomRetenu = t => {
+    if(renommages.has(t)) return renommages.get(t);
+    const obs = observateurPrincipal(t);
+    const base = `${t} · ${obs || nomFichier.replace(/\.csv$/i,'')}`;
+    let nom = base;
+    if(nomsPris.has(nom) && dateTransect(t)) nom = `${base} · ${dateTransect(t)}`;
+    let k = 2;
+    while(nomsPris.has(nom)) nom = `${base} (${k++})`;
+    renommages.set(t, nom); nomsPris.add(nom);
+    return nom;
+  };
   const ajoutes = [];
   let doublons = 0;
   groupes.forEach(g => {
-    if(dejaLa.has(`${g.transect}#${g.numero}#${g.dateReleve}`)){ doublons++; return; }
+    if(dejaLa.has(empreinte(g))){ doublons++; return; }
+    g.transectFichier = g.transect;
+    g.transect = nomRetenu(g.transect);
     // L'habitat est recalculé avec le référentiel courant : le fichier n'en porte
     // que le libellé, alors que le profil a besoin du numéro de fiche.
     const sauve = etat.cortege;
@@ -2956,9 +3119,11 @@ function appliquerImportCSV(texte, nomFichier){
   }
   const nObs = ajoutes.reduce((n,r) => n + r.cortege.length, 0);
   const transects = [...new Set(ajoutes.map(r => r.transect))];
-  let msg = `${nomFichier}\n\n${ajoutes.length} relevé${ajoutes.length>1?'s':''} importé${ajoutes.length>1?'s':''}`
+  let msg = `${nomFichier}${infos && infos.encodageRepare ? '\n(fichier réenregistré par un tableur : encodage réparé)' : ''}\n\n${ajoutes.length} relevé${ajoutes.length>1?'s':''} importé${ajoutes.length>1?'s':''}`
     + ` (${nObs} observation${nObs>1?'s':''})`
     + (transects.length ? `\nTransect${transects.length>1?'s':''} : ${transects.join(', ')}` : '')
+    + [...renommages.entries()].filter(([a,b]) => a !== b)
+        .map(([a,b]) => `\nTransect « ${a} » du fichier → « ${b} ».`).join('')
     + (doublons ? `\n${doublons} relevé${doublons>1?'s':''} déjà présent${doublons>1?'s':''}, non réimporté${doublons>1?'s':''}.` : '');
   if(avertissements.length){
     const apercu = avertissements.slice(0,8);
