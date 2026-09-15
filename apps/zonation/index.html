@@ -2838,18 +2838,54 @@ function importerFichierCSV(input){
   if(!fichier) return;
   const lecteur = new FileReader();
   lecteur.onload = () => {
-    try { appliquerImportCSV(lecteur.result, fichier.name); }
+    try { const d = decoderFichierTexte(lecteur.result); appliquerImportCSV(d.texte, fichier.name, d); }
     catch(e){ informer('Import impossible : ' + e.message); }
   };
   lecteur.onerror = () => informer('Lecture du fichier impossible.');
-  lecteur.readAsText(fichier, 'utf-8');
+  lecteur.readAsArrayBuffer(fichier);
 }
 
-function appliquerImportCSV(texte, nomFichier){
+/* Un CSV ouvert puis réenregistré dans Excel (Windows) n'est plus en UTF-8 mais
+   en Windows-1252 : lu comme UTF-8, « Relevé n° » devient « Relev� n� », la
+   colonne n'est plus reconnue et tous les relevés fusionnent en un seul. On tente
+   donc l'UTF-8 strict, et l'on se rabat sur Windows-1252 s'il échoue. */
+function decoderFichierTexte(tampon){
+  try { return {texte: new TextDecoder('utf-8', {fatal:true}).decode(tampon), encodageRepare: false}; }
+  catch(e){ return {texte: new TextDecoder('windows-1252').decode(tampon), encodageRepare: true}; }
+}
+
+/* Excel réécrit aussi les dates en « 10/09/2026 » : on revient au format ISO. */
+function dateISO(v){
+  const s = (v || '').trim();
+  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : s;
+}
+
+function appliquerImportCSV(texte, nomFichier, infos){
   const lignes = lireCSV(texte);
   if(lignes.length < 2) throw new Error('fichier vide ou sans ligne de données.');
   const entete = lignes[0].map(normEntete);
-  const col = (...noms) => { for(const n of noms){ const i = entete.indexOf(n); if(i >= 0) return i; } return -1; };
+  /* Recherche de colonne tolérante : nom exact d'abord, puis à une ou deux
+     lettres près — un en-tête passé par un tableur peut avoir perdu ses accents
+     (« Relev? n? ») sans que le fichier soit pour autant inexploitable. */
+  const lettres = t => t.replace(/[^a-z0-9]/g, '');
+  const ecartLettres = (a, b) => {
+    const d = Array.from({length: a.length + 1}, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for(let j = 1; j <= b.length; j++) d[0][j] = j;
+    for(let i = 1; i <= a.length; i++) for(let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[a.length][b.length];
+  };
+  const col = (...noms) => {
+    for(const n of noms){ const i = entete.indexOf(n); if(i >= 0) return i; }
+    for(const n of noms){
+      const cible = lettres(n);
+      if(cible.length < 5) continue;
+      const i = entete.findIndex(h => { const l = lettres(h); return l && ecartLettres(l, cible) <= 2; });
+      if(i >= 0) return i;
+    }
+    return -1;
+  };
 
   const iEspece   = col('espece', 'nom_francais');
   const iLatin    = col('nom_scientifique');
@@ -2868,6 +2904,10 @@ function appliquerImportCSV(texte, nomFichier){
   const iMode     = col('mode_recouvrement');
   if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
     throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
+  /* Sans numéro de relevé ni identifiant, toutes les lignes tomberaient dans un
+     seul relevé : mieux vaut refuser que fusionner silencieusement un transect. */
+  if(iNumero < 0 && iReleveId < 0 && iNomRel < 0)
+    throw new Error('colonne « Relevé n° » introuvable : les relevés ne peuvent pas être distingués.');
 
   const avertissements = [];
   /* Une ligne = une observation. Les lignes d'un même relevé sont regroupées par
@@ -2900,7 +2940,7 @@ function appliquerImportCSV(texte, nomFichier){
     const cle = (v(iReleveId) && !v(iTransect)) ? 'id:' + v(iReleveId) : transect + '#' + numero;
     if(!groupes.has(cle)) groupes.set(cle, {
       transect, numero: numero === '' ? null : Number(numero),
-      dateReleve: v(iDate), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
+      dateReleve: dateISO(v(iDate)), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
       distance: v(iDistance), observation: v(iRemarque), cortege: [], solNu: false
     });
     const g = groupes.get(cle);
@@ -2909,7 +2949,11 @@ function appliquerImportCSV(texte, nomFichier){
     if(!fr && !latin) return;                                  // ligne sans espèce
     if(/^sol nu$/i.test(latin) || /^sol nu$/i.test(fr)){ g.solNu = true; return; }
     if(v(iMode) === 'pct'){ avertissements.push(`ligne ${n+2} : recouvrement en % (${coef}) converti en coefficient`); }
-    const code = v(iMode) === 'pct' ? coefDepuisPct(parseFloat(coef.replace(',','.'))) : coef;
+    /* Coefficient normalisé : un tableur peut écrire « 5,0 », « 5.0 » ou mettre
+       « I » / « R » en majuscule. */
+    const brutCoef = coef.replace(/\s+/g, '');
+    const code = v(iMode) === 'pct' ? coefDepuisPct(parseFloat(brutCoef.replace(',','.')))
+      : (/^[1-5]([.,]0+)?$/.test(brutCoef) ? brutCoef[0] : brutCoef.toLowerCase());
     if(!(code in COEF_ABONDANCE)){
       avertissements.push(`ligne ${n+2} : coefficient « ${coef} » non reconnu, espèce ignorée (${fr})`);
       return;
@@ -2920,12 +2964,49 @@ function appliquerImportCSV(texte, nomFichier){
     if(!connue) avertissements.push(`ligne ${n+2} : « ${fr || latin} » hors référentiel, conservée sans effet sur le score`);
   });
 
+  /* Import de plusieurs groupes. Chaque groupe a en général un transect « 1 »
+     numéroté 1, 2, 3… à la même date : le nom du transect ne suffit donc pas à
+     l'identifier.
+     - Un relevé est reconnu comme déjà présent par son observateur, sa date, son
+       numéro et sa distance — pas par le nom du transect, qui peut avoir été
+       renommé lors d'un import précédent.
+     - Tout transect importé est nommé « 1 · Observateur » (plus la date si ce
+       nom est déjà pris) : les groupes restent séparés, jamais mélangés dans un
+       même transect, et tous les noms suivent la même forme. */
   const existants = chargerHistorique();
-  const dejaLa = new Set(existants.map(r => `${r.transect}#${r.numero}#${r.dateReleve||''}`));
+  const empreinte = r => `${(r.observateur||'').trim().toLowerCase()}#${r.dateReleve||''}#${r.numero}#${r.distance ?? ''}`;
+  const dejaLa = new Set(existants.map(empreinte));
+  const nomsPris = new Set(existants.map(r => r.transect || 'Transect (sans nom)'));
+  const renommages = new Map();          // transect du fichier → nom retenu
+  const observateurPrincipal = t => {
+    const c = {};
+    groupes.forEach(g => { if(g.transect === t && g.observateur) c[g.observateur] = (c[g.observateur]||0) + 1; });
+    return Object.entries(c).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+  };
+  /* Nom homogène pour tout transect importé : « 1 · Observateur ». Si ce nom est
+     déjà pris (même groupe, autre sortie), on ajoute la date ; en dernier recours
+     un numéro. Sans observateur, le nom du fichier en tient lieu. */
+  const dateTransect = t => {
+    const g = [...groupes.values()].find(x => x.transect === t && x.dateReleve);
+    return g ? g.dateReleve.split('-').reverse().join('/') : '';
+  };
+  const nomRetenu = t => {
+    if(renommages.has(t)) return renommages.get(t);
+    const obs = observateurPrincipal(t);
+    const base = `${t} · ${obs || nomFichier.replace(/\.csv$/i,'')}`;
+    let nom = base;
+    if(nomsPris.has(nom) && dateTransect(t)) nom = `${base} · ${dateTransect(t)}`;
+    let k = 2;
+    while(nomsPris.has(nom)) nom = `${base} (${k++})`;
+    renommages.set(t, nom); nomsPris.add(nom);
+    return nom;
+  };
   const ajoutes = [];
   let doublons = 0;
   groupes.forEach(g => {
-    if(dejaLa.has(`${g.transect}#${g.numero}#${g.dateReleve}`)){ doublons++; return; }
+    if(dejaLa.has(empreinte(g))){ doublons++; return; }
+    g.transectFichier = g.transect;
+    g.transect = nomRetenu(g.transect);
     // L'habitat est recalculé avec le référentiel courant : le fichier n'en porte
     // que le libellé, alors que le profil a besoin du numéro de fiche.
     const sauve = etat.cortege;
@@ -2956,9 +3037,11 @@ function appliquerImportCSV(texte, nomFichier){
   }
   const nObs = ajoutes.reduce((n,r) => n + r.cortege.length, 0);
   const transects = [...new Set(ajoutes.map(r => r.transect))];
-  let msg = `${nomFichier}\n\n${ajoutes.length} relevé${ajoutes.length>1?'s':''} importé${ajoutes.length>1?'s':''}`
+  let msg = `${nomFichier}${infos && infos.encodageRepare ? '\n(fichier réenregistré par un tableur : encodage réparé)' : ''}\n\n${ajoutes.length} relevé${ajoutes.length>1?'s':''} importé${ajoutes.length>1?'s':''}`
     + ` (${nObs} observation${nObs>1?'s':''})`
     + (transects.length ? `\nTransect${transects.length>1?'s':''} : ${transects.join(', ')}` : '')
+    + [...renommages.entries()].filter(([a,b]) => a !== b)
+        .map(([a,b]) => `\nTransect « ${a} » du fichier → « ${b} ».`).join('')
     + (doublons ? `\n${doublons} relevé${doublons>1?'s':''} déjà présent${doublons>1?'s':''}, non réimporté${doublons>1?'s':''}.` : '');
   if(avertissements.length){
     const apercu = avertissements.slice(0,8);
