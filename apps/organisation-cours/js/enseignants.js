@@ -53,3 +53,10 @@ export function resoudre(jeton) {
   if (!cle) return null;
   return parAlias.get(cle) || parInitiales.get(cle) || null;
 }
+
+// Pont vers app.js (script classique, ne peut pas faire `import`) — même
+// principe que window.OC_SYNC/OC_SUPABASE_CLIENT. Utilisé par le sélecteur de
+// signature de l'écran « Ordre de mission » (retours 15/09/2026) : il faut
+// pouvoir résoudre les initiales d'un·e collègue vers son user_id pour lire
+// SA signature (voir 020-oc-signatures-lecture-partagee.sql).
+window.OC_ENSEIGNANTS = { rafraichir, listerActifs, initialesDe, resoudre };

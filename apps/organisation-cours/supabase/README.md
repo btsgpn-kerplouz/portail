@@ -102,6 +102,11 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
     le nouveau filtre optimiste + fusion de conflit côté `js/sync.js` (bug du
     04/09/2026 : un « Déroulé » de séance co-enseignée écrasé en silence par
     l'enregistrement d'un·e collègue) ne détecterait jamais rien.
+23. `020-oc-signatures-lecture-partagee.sql` — **à appliquer** : la lecture du
+    bucket `oc-signatures` (013) s'ouvre à tout enseignant actif (au lieu du
+    seul propriétaire du dossier) — l'écran « Ordre de mission » permet
+    désormais de choisir la signature d'un·e collègue à afficher/imprimer.
+    L'écriture (dépôt/remplacement/suppression) reste strictement personnelle.
 
 ## Réglage obligatoire côté Auth
 
