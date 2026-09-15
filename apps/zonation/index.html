@@ -278,7 +278,15 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
    seulement survolable. Le curseur doit dire lequel est lequel. */
 .analyse-diagramme{position:relative;}
 .analyse-diagramme .zone-cliquable{cursor:pointer;}
-.analyse-diagramme .zone-cliquable:hover{filter:brightness(0.95);}
+.analyse-diagramme .bande-zone{transition:fill-opacity .15s;}
+.analyse-diagramme .bande-zone.estompe{fill-opacity:.08;}
+.analyse-diagramme .bande-zone.surbrillance{fill-opacity:.9;}
+.zones-legende{display:flex;flex-wrap:wrap;gap:.35em;margin:.6em 0 .1em;}
+.zone-puce{font-family:var(--sans);font-size:.74rem;font-weight:600;display:inline-flex;align-items:center;padding:.3em .65em;
+  border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer;}
+.zone-puce small{font-weight:400;color:var(--text-2);margin-left:.4em;}
+.zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
+.zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
 .analyse-diagramme .barre-espece{cursor:help;}
 .bulle-diagramme{
   position:absolute;z-index:5;pointer-events:none;max-width:16em;
@@ -2249,10 +2257,13 @@ function construireProfilTransectSVG(nomTransect, options){
   const largeurGraphe = Math.max(640, Math.round(etendue * PROFIL_ECH_X));
   const hEspeces = liste.length * PROFIL_H_ESPECE;
   const yEspeces = 74;                                  // sous le titre
-  const yZones = yEspeces + hEspeces + 14;              // étiquettes de zones, sur deux lignes au besoin
-  const yAxe = yZones + 36;                             // axe des distances juste dessous
+  const yZones = yEspeces + hEspeces + 14;              // repères de zones (SVG téléchargé seulement)
+  /* À l'écran les noms de zones sont hors du dessin, dans des pastilles
+     interactives : écrits dans les bandes, ils se chevauchaient dès qu'une zone
+     était étroite. Le SVG téléchargé garde un simple numéro par bande. */
+  const yAxe = yZones + (interactif ? 4 : 22);
   const yLeg = yAxe + 44;                               // légende en ligne sous l'axe
-  const H = yLeg + 46;
+  const H = yLeg + (interactif ? 46 : 66);   // ligne « Zones : … » en plus sur le SVG téléchargé
   const W = PROFIL_MARGE_G + largeurGraphe + 40;
   const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
 
@@ -2289,9 +2300,7 @@ function construireProfilTransectSVG(nomTransect, options){
     const x1 = Math.max(PROFIL_MARGE_G, x(t.debut) - demiPas);
     const x2 = Math.min(PROFIL_MARGE_G + largeurGraphe, x(t.fin) + demiPas);
     const fiche = t.fiches && t.fiches.length ? t.fiches[0] : null;
-    const attrs = interactif && fiche != null
-      ? ` class="zone-cliquable" data-fiche="${fiche}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"`
-      : '';
+    const attrs = ` class="bande-zone${fiche != null ? ' zone-cliquable' : ''}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"${fiche != null ? ` data-fiche="${fiche}"` : ''}`;
     S.push(`<rect x="${x1.toFixed(1)}" y="${yEspeces - 6}" width="${Math.max(0, x2-x1).toFixed(1)}" height="${yAxe - (yEspeces - 6)}" fill="${teinteZone(t.rang)}" fill-opacity="0.45"${attrs}>`
       + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? ` · fiche ${fiche} — cliquer pour ouvrir` : ''}</title>` : '')
       + `</rect>`);
@@ -2336,24 +2345,12 @@ function construireProfilTransectSVG(nomTransect, options){
     });
   });
 
-  /* Étiquettes de zones. Un tronçon étroit — une seule zone traversée sur un
-     mètre — donne un libellé plus large que sa bande : on alterne alors sur deux
-     lignes et l'on borne la position, sinon les libellés se recouvrent et le
-     dernier sort du cadre. */
-  let finPrecedente = -Infinity, ligneAlternee = false;
-  troncons.forEach(t => {
-    if(t.zone === '—') return;
-    const libelle = t.zone.toUpperCase();
-    const large = x(t.fin) - x(t.debut) > 70;
-    const taille = large ? 12 : 9.5;
-    const demiLargeur = libelle.length * taille * 0.31;
-    let xc = (x(t.debut) + x(t.fin)) / 2;
-    xc = Math.max(PROFIL_MARGE_G + demiLargeur + 2,
-          Math.min(PROFIL_MARGE_G + largeurGraphe - demiLargeur - 2, xc));
-    ligneAlternee = (xc - demiLargeur) < finPrecedente ? !ligneAlternee : false;
-    finPrecedente = xc + demiLargeur;
-    const y = yZones + 12 + (ligneAlternee ? 13 : 0);
-    S.push(`<text x="${xc.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${taille}" font-weight="bold" letter-spacing="0.5">${echapXML(libelle)}</text>`);
+  /* SVG téléchargé : un numéro de zone au pied de chaque bande (0 = sol nu),
+     les noms étant donnés une fois dans une ligne de légende. */
+  if(!interactif) troncons.forEach(t => {
+    if(t.rang == null) return;
+    const xc = (x(t.debut) + x(t.fin)) / 2;
+    S.push(`<text x="${xc.toFixed(1)}" y="${(yZones + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="bold">${t.rang}</text>`);
   });
 
   /* Axe des distances : graduation tous les 5 ou 10 m selon l'étendue. */
@@ -2375,6 +2372,12 @@ function construireProfilTransectSVG(nomTransect, options){
     S.push(`<text x="${xl.toFixed(1)}" y="${yLeg + 20}" font-size="9.5" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
   });
 
+  if(!interactif){
+    const vues = new Map();
+    troncons.forEach(t => { if(t.rang != null && !vues.has(t.rang)) vues.set(t.rang, t.zone); });
+    const ligne = [...vues.entries()].sort((a,b) => a[0]-b[0]).map(([r, z]) => `${r} ${z}`).join('  ·  ');
+    S.push(`<text x="14" y="${H - 32}" font-size="10.5" fill="#191b16"><tspan font-weight="bold">Zones : </tspan>${echapXML(ligne)}</text>`);
+  }
   S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · référentiel COLASSE V., 2019 (CBN de Brest)</text>`);
   S.push('</svg>');
   return S.join('\n');
@@ -2515,8 +2518,34 @@ function activerDiagrammeInteractif(){
   };
   const cacher = () => { bulle.hidden = true; };
 
+  /* Pastilles de zones au-dessus du diagramme : survoler une pastille (ou une
+     bande) met la zone en évidence et estompe les autres ; un clic la garde
+     sélectionnée, un second clic la relâche. */
+  const bandes = [...svg.querySelectorAll('.bande-zone')];
+  const puces = [...document.querySelectorAll('#zones-legende .zone-puce')];
+  let fixe = null;
+  const eclairer = z => {
+    bandes.forEach(b => {
+      b.classList.toggle('estompe', !!z && b.dataset.zone !== z);
+      b.classList.toggle('surbrillance', !!z && b.dataset.zone === z);
+    });
+    puces.forEach(p => {
+      p.classList.toggle('active', p.dataset.zone === z);
+      p.setAttribute('aria-pressed', String(p.dataset.zone === fixe));
+    });
+  };
+  puces.forEach(p => {
+    p.addEventListener('mouseenter', () => eclairer(p.dataset.zone));
+    p.addEventListener('mouseleave', () => eclairer(fixe));
+    p.addEventListener('focus', () => eclairer(p.dataset.zone));
+    p.addEventListener('blur', () => eclairer(fixe));
+    p.addEventListener('click', () => { fixe = (fixe === p.dataset.zone) ? null : p.dataset.zone; eclairer(fixe); });
+  });
+
   svg.addEventListener('mousemove', ev => {
-    const c = ev.target.closest('.barre-espece, .zone-cliquable');
+    const c = ev.target.closest('.barre-espece, .bande-zone');
+    const bande = ev.target.closest('.bande-zone');
+    eclairer(bande ? bande.dataset.zone : fixe);
     if(!c){ cacher(); return; }
     if(c.classList.contains('barre-espece')){
       const fr = c.dataset.fr, latin = c.dataset.latin, cover = c.dataset.cover;
@@ -2526,16 +2555,31 @@ function activerDiagrammeInteractif(){
         + `<br><span class="bulle-sec">${echapHTML(info.desc || '')} ${info.intervalle ? '(' + info.intervalle + ')' : ''}</span>`, ev);
     } else {
       montrer(`<b>${echapHTML(c.dataset.zone)}</b><br>${c.dataset.de} → ${c.dataset.a} m`
-        + `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>`, ev);
+        + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
     }
   });
-  svg.addEventListener('mouseleave', cacher);
+  svg.addEventListener('mouseleave', () => { cacher(); eclairer(fixe); });
   svg.addEventListener('click', ev => {
     const z = ev.target.closest('.zone-cliquable');
     if(!z) return;
     cacher();
     allerVoirFiche(Number(z.dataset.fiche), 'analyse');
   });
+}
+
+/* Pastilles des zones présentes sur le transect, dans l'ordre du gradient, avec
+   leurs emprises (plusieurs si la zone réapparaît). */
+function pucesZones(troncons){
+  const zs = new Map();
+  troncons.forEach(t => {
+    if(t.rang == null) return;
+    if(!zs.has(t.zone)) zs.set(t.zone, {zone: t.zone, rang: t.rang, plages: []});
+    zs.get(t.zone).plages.push(t.debut === t.fin ? String(t.debut) : t.debut + '–' + t.fin);
+  });
+  return [...zs.values()].sort((a, b) => a.rang - b.rang).map(z =>
+    '<button type="button" class="zone-puce" data-zone="' + echapHTML(z.zone) + '" aria-pressed="false">'
+    + '<span class="pastille-zone" style="background:' + teinteZone(z.rang) + '"></span>'
+    + echapHTML(z.zone) + '<small>' + z.plages.join(' · ') + ' m</small></button>').join('');
 }
 
 function basculerVueDiagramme(vue){
@@ -2639,8 +2683,9 @@ function construireEcranAnalyse(){
         <button type="button" id="vue-ajuste" aria-pressed="true" onclick="basculerVueDiagramme('ajuste')">Vue d'ensemble</button>
         <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
       </div>
+      <div class="zones-legende" id="zones-legende">${pucesZones(troncons)}</div>
       <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
-      <p class="analyse-aide">Épaisseur = abondance-dominance · longueur = présence sur le transect. Survol : détail · clic sur une zone : fiche.</p>
+      <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Épaisseur = abondance-dominance · longueur = présence. Clic sur une bande : fiche.</p>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
 
