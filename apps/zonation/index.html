@@ -274,6 +274,35 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
   border-radius:var(--rayon-petit);cursor:pointer;
 }
 .analyse-vues button[aria-pressed="true"]{background:var(--acc);color:#fff;}
+/* Diagramme interactif : l'aplat de zone est cliquable, la barre d'espèce
+   seulement survolable. Le curseur doit dire lequel est lequel. */
+.analyse-diagramme{position:relative;}
+.analyse-diagramme .zone-cliquable{cursor:pointer;}
+.analyse-diagramme .bande-zone{transition:fill-opacity .15s;}
+.analyse-diagramme .bande-zone.estompe{fill-opacity:.08;}
+.analyse-diagramme .bande-zone.surbrillance{fill-opacity:.9;}
+.zones-legende{display:flex;flex-wrap:wrap;gap:.35em;margin:.6em 0 .1em;}
+.zone-puce{font-family:var(--sans);font-size:.74rem;font-weight:600;display:inline-flex;align-items:center;padding:.3em .65em;
+  border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);cursor:pointer;}
+.zone-puce small{font-weight:400;color:var(--text-2);margin-left:.4em;}
+.zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
+.zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
+.analyse-diagramme .barre-espece{cursor:help;}
+.bulle-diagramme{
+  position:absolute;z-index:5;pointer-events:none;max-width:16em;
+  background:var(--ink);color:#f4f2ec;border-radius:var(--rayon-petit);
+  padding:.45em .6em;font-size:.76rem;line-height:1.4;
+  box-shadow:0 2px 8px rgba(25,27,22,.25);
+}
+.bulle-diagramme i{opacity:.85;}
+.lien-fiche{
+  font-family:var(--mono);font-size:.78rem;font-weight:700;
+  padding:.15em .45em;margin:.1em .15em .1em 0;cursor:pointer;
+  background:var(--acc-soft);color:var(--acc-dark);
+  border:1px solid var(--acc);border-radius:4px;
+}
+.lien-fiche:hover{background:var(--acc);color:#fff;}
+.bulle-diagramme .bulle-sec{opacity:.75;font-size:.72rem;}
 .analyse-soustitre{font-size:.86rem;margin:1.1em 0 .2em;color:var(--acc-dark);}
 .analyse-graphe{margin:.5em 0 .8em;}
 .analyse-graphe svg{display:block;width:100%;height:auto;}
@@ -290,6 +319,15 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .analyse-alerte b{color:#7a5f00;}
 .analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
 .analyse-liste b{color:var(--acc-dark);}
+.analyse-note{font-size:.78rem;color:var(--text-2);font-style:italic;}
+/* Confirmation intégrée (remplace confirm(), bloqué dans certains contextes). */
+.confirm-fond{position:fixed;inset:0;z-index:100;background:rgba(25,27,22,.45);display:flex;align-items:center;justify-content:center;padding:1em;}
+.confirm-boite{background:var(--card);border-radius:var(--rayon);max-width:26em;width:100%;padding:1.1em 1.1em .9em;box-shadow:0 6px 24px rgba(25,27,22,.3);}
+.confirm-texte{white-space:pre-line;margin:0 0 1em;line-height:1.5;color:var(--ink);}
+.confirm-actions{display:flex;gap:.5em;justify-content:flex-end;flex-wrap:wrap;}
+.confirm-actions .danger{background:var(--status-invalide);border-color:var(--status-invalide);}
+.pastille-zone{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.45em;vertical-align:-.05em;border:1px solid rgba(25,27,22,.2);}
+.historique th small{font-family:var(--sans);text-transform:none;letter-spacing:0;font-weight:400;opacity:.8;}
 
 /* Correction d'un relevé existant : l'écart avec une saisie neuve doit sauter aux
    yeux, sinon on croit ajouter un point et l'on s'étonne que rien ne s'incrémente. */
@@ -756,12 +794,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <p style="font-size:.78rem;color:var(--text-2);">Tout est enregistré uniquement sur cet appareil (hors-ligne). Exportez régulièrement pour ne rien perdre.</p>
       <div id="zone-historique"></div>
       <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
-        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Tableau de synthèse (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par relevé, avec l'habitat proposé et le cortège. Pour archiver ou travailler dans un tableur.</p>
-        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export vers Phytoscope (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
-        <button class="secondaire" onclick="exporterCompletCSV()">⬇ Export complet (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Mêmes colonnes que l'export Phytoscope, mais <b>sans aucune espèce écartée</b> et avec l'habitat proposé et le recouvrement en pourcentage. Pour archiver la campagne et l'analyser dans un tableur — pas pour l'importer dans Phytoscope.</p>
+        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Export complet (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par espèce pour chaque relevé, rien d'écarté. Pour archiver et travailler dans un tableur.</p>
+        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export pour Phytoscope (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : relevés regroupés par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
         <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
         <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Tableau de synthèse » ou un « Export complet » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois.</p>
@@ -807,8 +843,8 @@ let etat = {
    coup, au retour sur la flore. */
 function cleReleve(r){ return r.id || r.date || ''; }
 
-/* Un quadrat sans végétation est une donnée, pas une absence de donnée : sur la
-   slikke, le sol nu marque la limite inférieure de la végétation. Phytoscope le
+/* Un quadrat sans végétation est une donnée, pas une absence de donnée, où qu'il
+   se trouve sur le transect. Phytoscope le
    représente par le taxon d'identifiant -1 (« Sol nu », strate « Sans
    végétation ») ; on reprend sa convention pour que l'import s'y retrouve. */
 const SOL_NU = {taxonId:-1, nom:'Sol nu', strate:'Sans végétation', habitat:'Sol nu (aucune végétation)'};
@@ -915,7 +951,7 @@ function allerA(nom){
   if(nom==='historique') afficherHistorique();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
   document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
-  if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); }
+  if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); activerDiagrammeInteractif(); }
   window.scrollTo(0,0);
 }
 document.getElementById('btn-accueil').onclick = ()=>allerA('accueil');
@@ -1265,10 +1301,60 @@ const CARTE_ENREGISTREMENT = `<div class="carte">
    l'enregistrement. */
 function declarerSolNu(){
   if(etat.cortege.length) return;
-  if(etat.solNu){ afficherResultats(); return; }   // déjà déclaré : correction d un relevé de sol nu
-  if(!confirm('Déclarer ce quadrat entièrement sans végétation (sol nu) ?\n\nIl sera enregistré comme tel, sans proposition d\'habitat.')) return;
+  /* Pas de boîte de confirmation : l'écran suivant en tient lieu (« Enregistrer »
+     ou « Nouveau point sans enregistrer »). La boîte native confirm() est
+     bloquée dans certains contextes — application installée, navigateur
+     intégré — où elle répond « non » sans rien afficher : le bouton semblait
+     alors inerte. */
   etat.solNu = true;
   afficherResultats();
+}
+
+/* Message dans la page, en remplacement de alert() : bloquée dans les mêmes
+   contextes que confirm(), la boîte native faisait disparaître sans bruit le
+   compte rendu d'enregistrement, d'import ou d'export. Non bloquant. */
+function informer(message){
+  const fond = document.createElement('div');
+  fond.className = 'confirm-fond';
+  fond.innerHTML = `<div class="confirm-boite" role="alertdialog" aria-modal="true">
+    <p class="confirm-texte"></p>
+    <div class="confirm-actions"><button type="button">OK</button></div></div>`;
+  fond.querySelector('.confirm-texte').textContent = message;
+  const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier); };
+  const clavier = ev => { if(ev.key === 'Escape' || ev.key === 'Enter') fermer(); };
+  fond.addEventListener('click', ev => { if(ev.target === fond || ev.target.closest('button')) fermer(); });
+  document.addEventListener('keydown', clavier);
+  document.body.appendChild(fond);
+  fond.querySelector('button').focus();
+}
+
+/* Confirmation dans la page, en remplacement de confirm() pour la même raison.
+   Renvoie une promesse résolue à true (confirmé) ou false (annulé). */
+function demanderConfirmation(message, options){
+  const o = Object.assign({ok:'Confirmer', annuler:'Annuler', danger:false}, options || {});
+  return new Promise(resolve => {
+    const fond = document.createElement('div');
+    fond.className = 'confirm-fond';
+    fond.innerHTML = `<div class="confirm-boite" role="dialog" aria-modal="true">
+      <p class="confirm-texte"></p>
+      <div class="confirm-actions">
+        <button type="button" class="secondaire" data-r="0"></button>
+        <button type="button" class="${o.danger ? 'danger' : ''}" data-r="1"></button>
+      </div></div>`;
+    fond.querySelector('.confirm-texte').textContent = message;
+    fond.querySelector('[data-r="0"]').textContent = o.annuler;
+    fond.querySelector('[data-r="1"]').textContent = o.ok;
+    const fermer = r => { fond.remove(); document.removeEventListener('keydown', clavier); resolve(r); };
+    const clavier = ev => { if(ev.key === 'Escape') fermer(false); };
+    fond.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-r]');
+      if(b) fermer(b.dataset.r === '1');
+      else if(ev.target === fond) fermer(false);
+    });
+    document.addEventListener('keydown', clavier);
+    document.body.appendChild(fond);
+    fond.querySelector('[data-r="1"]').focus();
+  });
 }
 
 function afficherResultats(){
@@ -1279,7 +1365,6 @@ function afficherResultats(){
       <div class="etiquette-top">Quadrat sans végétation</div>
       <div class="resultat-entete"><div><h3>${SOL_NU.habitat}</h3>
         <div class="syntaxon">Aucune espèce dans le quadrat : recouvrement végétal nul.</div></div></div>
-      <div class="qualificatif qualificatif-nul">Le sol nu est une donnée de terrain : il marque la limite inférieure de la végétation sur la slikke.</div>
     </div>` + CARTE_ENREGISTREMENT;
     etat.dernierResultat = null;
     allerA('resultats');
@@ -1516,6 +1601,9 @@ function allerVoirFiche(id, origine){
   if(origine === 'resultats'){
     lien.textContent = '← Retour aux résultats';
     lien.onclick = ()=> allerA('resultats');
+  } else if(origine === 'analyse'){
+    lien.textContent = '← Retour à l\'analyse du transect';
+    lien.onclick = ()=> allerA('analyse');
   } else {
     lien.textContent = '← Fiches habitats';
     lien.onclick = ()=> allerA('fiches');
@@ -1863,8 +1951,8 @@ function choisirTransect(index){
   resetReleve();
   majEcranIdentite();
 }
-function commencerTransect(nom){
-  if(!confirm(`Commencer le transect ${nom} ?\n\nÀ ne faire que pour une nouvelle ligne de relevés, pas pour un nouveau quadrat sur la ligne en cours.`)) return;
+async function commencerTransect(nom){
+  if(!await demanderConfirmation(`Commencer le transect ${nom} ?\n\nÀ ne faire que pour une nouvelle ligne de relevés, pas pour un nouveau quadrat sur la ligne en cours.`, {ok:`Commencer le transect ${nom}`})) return;
   definirTransectActif(nom);
   fermerChoixTransect();
   resetReleve();
@@ -2009,14 +2097,14 @@ function enregistrerReleve(){
 
   if(correction){
     const change = ancien.top !== enregistre.top;
-    alert(`Relevé n°${enregistre.numero} corrigé (transect ${enregistre.transect}).`
+    informer(`Relevé n°${enregistre.numero} corrigé (transect ${enregistre.transect}).`
       + (change ? `\n\nL'habitat proposé a changé :\n· avant : ${ancien.top}\n· après : ${enregistre.top}`
                 : `\n\nHabitat proposé inchangé : ${enregistre.top}`));
     resetReleve();
     allerA('historique');
     return;
   }
-  alert(`Relevé n°${enregistre.numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
+  informer(`Relevé n°${enregistre.numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
   nouveauPoint();
 }
 
@@ -2025,7 +2113,7 @@ function enregistrerReleve(){
    nouveau. Cas d'usage principal : une espèce redéterminée au retour du terrain. */
 function modifierReleve(cle){
   const r = chargerHistorique().find(x => cleReleve(x) === cle);
-  if(!r){ alert('Ce relevé n\'a pas été retrouvé.'); return; }
+  if(!r){ informer('Ce relevé n\'a pas été retrouvé.'); return; }
   resetReleve();
   etat.edition = cle;
   etat.solNu = !!r.solNu;
@@ -2101,18 +2189,14 @@ function afficherHistorique(){
    par espèce, l'épaisseur de la barre donnant l'abondance-dominance et son
    étendue la plage de distances où l'espèce a été notée.
 
-   La ligne de sol est un PROFIL TYPE : aucune altitude n'est relevée sur le
-   terrain, la forme est déduite de la succession des zones (basse slikke la plus
-   basse, contact dunaire le plus haut). Elle situe les végétations les unes par
-   rapport aux autres, elle ne prétend pas mesurer le terrain.
-
-   Les plantes dessinées, les niveaux d'eau et les aménagements du modèle papier
-   restent à ajouter à la main : le SVG est éditable. */
+   Pas de ligne de sol : aucune altitude n'est relevée sur le terrain, et un
+   profil déduit des zones laissait un panneau sans information. Les plantes
+   dessinées, les niveaux d'eau et les aménagements du modèle papier restent à
+   ajouter à la main : le SVG est éditable. */
 
 const PROFIL_EPAISSEUR = {'i':1.5, 'r':1.5, '+':2, '1':3, '2':5.5, '3':8.5, '4':12, '5':16};
 const PROFIL_ECH_X = 13;        // pixels par mètre
 const PROFIL_H_ESPECE = 17;     // hauteur d'une ligne d'espèce
-const PROFIL_H_SOL = 210;       // hauteur du panneau de profil type
 const PROFIL_MARGE_G = 250;     // colonne des noms d'espèces
 
 const echapXML = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -2138,7 +2222,16 @@ function zoneDeFiche(id){
   return null;
 }
 
-function construireProfilTransectSVG(nomTransect){
+/* Couleur d'une zone : la même que dans le profil de zonation de l'appli et
+   sur les fiches (ZONES_LINES_COULEURS), pour qu'une zone se reconnaisse d'un
+   écran à l'autre. Le rang 0 (sol nu) garde le gris du papier. */
+function teinteZone(rang){
+  if(rang == null || rang === 0) return '#e9e6dc';
+  return ZONES_LINES_COULEURS[rang - 1] || '#e9e6dc';
+}
+
+function construireProfilTransectSVG(nomTransect, options){
+  const interactif = !!(options && options.interactif);
   const rs = chargerHistorique()
     .filter(r => (r.transect || 'Transect (sans nom)') === nomTransect)
     .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
@@ -2164,10 +2257,13 @@ function construireProfilTransectSVG(nomTransect){
   const largeurGraphe = Math.max(640, Math.round(etendue * PROFIL_ECH_X));
   const hEspeces = liste.length * PROFIL_H_ESPECE;
   const yEspeces = 74;                                  // sous le titre
-  const yZones = yEspeces + hEspeces + 14;              // bandeaux de zones
-  const ySol = yZones + 44;                             // place pour deux lignes d'étiquettes
-  const yAxe = ySol + PROFIL_H_SOL + 6;
-  const H = yAxe + 62;
+  const yZones = yEspeces + hEspeces + 14;              // repères de zones (SVG téléchargé seulement)
+  /* À l'écran les noms de zones sont hors du dessin, dans des pastilles
+     interactives : écrits dans les bandes, ils se chevauchaient dès qu'une zone
+     était étroite. Le SVG téléchargé garde un simple numéro par bande. */
+  const yAxe = yZones + (interactif ? 4 : 22);
+  const yLeg = yAxe + 44;                               // légende en ligne sous l'axe
+  const H = yLeg + (interactif ? 46 : 66);   // ligne « Zones : … » en plus sur le SVG téléchargé
   const W = PROFIL_MARGE_G + largeurGraphe + 40;
   const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
 
@@ -2185,8 +2281,29 @@ function construireProfilTransectSVG(nomTransect){
     const z = r.solNu ? {zone: 'Sol nu', rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
     const cle = z ? z.zone : '—';
     const dernier = troncons[troncons.length - 1];
-    if(dernier && dernier.zone === cle) dernier.fin = r.d;
-    else troncons.push({zone: cle, rang: z ? z.rang : null, debut: r.d, fin: r.d});
+    if(dernier && dernier.zone === cle){
+      dernier.fin = r.d;
+      // les fiches du tronçon servent de cible de clic en mode interactif
+      if(r.topFiche != null && !dernier.fiches.includes(r.topFiche)) dernier.fiches.push(r.topFiche);
+    } else {
+      troncons.push({zone: cle, rang: z ? z.rang : null, debut: r.d, fin: r.d,
+        fiches: r.topFiche != null ? [r.topFiche] : []});
+    }
+  });
+
+  /* Aplats de zones, posés avant tout le reste pour rester en arrière-plan.
+     Cliquables en interactif : la zone renvoie à la fiche de son habitat. */
+  const demiPas = (pas * PROFIL_ECH_X * (largeurGraphe / (etendue * PROFIL_ECH_X))) / 2;
+  // Le SVG téléchargé reste en noir et blanc, figure destinée au papier :
+  // les aplats ne sont posés qu'à l'écran.
+  if(interactif) troncons.forEach(t => {
+    const x1 = Math.max(PROFIL_MARGE_G, x(t.debut) - demiPas);
+    const x2 = Math.min(PROFIL_MARGE_G + largeurGraphe, x(t.fin) + demiPas);
+    const fiche = t.fiches && t.fiches.length ? t.fiches[0] : null;
+    const attrs = ` class="bande-zone${fiche != null ? ' zone-cliquable' : ''}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"${fiche != null ? ` data-fiche="${fiche}"` : ''}`;
+    S.push(`<rect x="${x1.toFixed(1)}" y="${yEspeces - 6}" width="${Math.max(0, x2-x1).toFixed(1)}" height="${yAxe - (yEspeces - 6)}" fill="${teinteZone(t.rang)}" fill-opacity="0.45"${attrs}>`
+      + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? ` · fiche ${fiche} — cliquer pour ouvrir` : ''}</title>` : '')
+      + `</rect>`);
   });
 
   // cadre du panneau des espèces
@@ -2195,7 +2312,7 @@ function construireProfilTransectSVG(nomTransect){
   // limites de zones, en pointillés, traversant les deux panneaux
   troncons.slice(1).forEach(t => {
     const xl = x(t.debut) - (pas * PROFIL_ECH_X * (largeurGraphe / (etendue * PROFIL_ECH_X))) / 2;
-    S.push(`<line x1="${xl.toFixed(1)}" y1="${yEspeces - 6}" x2="${xl.toFixed(1)}" y2="${ySol + PROFIL_H_SOL}" stroke="#191b16" stroke-width="1" stroke-dasharray="6 5"/>`);
+    S.push(`<line x1="${xl.toFixed(1)}" y1="${yEspeces - 6}" x2="${xl.toFixed(1)}" y2="${yAxe}" stroke="#191b16" stroke-width="1" stroke-dasharray="6 5"/>`);
   });
 
   /* Une ligne par espèce. Chaque relevé donne un rectangle centré sur sa
@@ -2217,52 +2334,23 @@ function construireProfilTransectSVG(nomTransect){
       const gA = prec && (o.d - prec.d) <= pas * 2 ? (o.d - prec.d) / 2 : pas / 2;
       const gB = suiv && (suiv.d - o.d) <= pas * 2 ? (suiv.d - o.d) / 2 : pas / 2;
       const x1 = x(Math.max(dMin, o.d - gA)), x2 = x(Math.min(dMax, o.d + gB));
+      /* En interactif, chaque barre porte de quoi renseigner l'infobulle : la
+         barre elle-même est fine, la zone sensible est donc élargie par un
+         rectangle transparent de la hauteur de la ligne. */
+      const info = interactif
+        ? ` class="barre-espece" data-fr="${echapXML(sp.fr)}" data-latin="${echapXML(sp.latin || '')}" data-cover="${echapXML(o.cover)}" data-d="${o.d}" data-pct="${pctDeCouverture('bb', o.cover)}"`
+        : '';
       S.push(`<rect x="${x1.toFixed(1)}" y="${(yLigne - ep / 2).toFixed(1)}" width="${Math.max(2, x2 - x1).toFixed(1)}" height="${ep}" fill="#191b16"/>`);
+      if(interactif) S.push(`<rect x="${x1.toFixed(1)}" y="${(yLigne - PROFIL_H_ESPECE/2).toFixed(1)}" width="${Math.max(6, x2 - x1).toFixed(1)}" height="${PROFIL_H_ESPECE}" fill="transparent"${info}/>`);
     });
   });
 
-  /* Profil type : la ligne de sol monte avec le rang de la zone. Le rang est une
-     valeur en marches ; une moyenne glissante en fait une pente continue, plus
-     proche d'un versant réel — sans pour autant prétendre le mesurer. */
-  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche) ? zoneDeFiche(r.topFiche).rang : null));
-  let dernierRang = 0;
-  const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
-  const fenetre = 2;
-  const lissés = bruts.map((_, i) => {
-    let s = 0, n = 0;
-    for(let k = i - fenetre; k <= i + fenetre; k++){
-      if(k < 0 || k >= bruts.length) continue;
-      const p = 1 + fenetre - Math.abs(k - i);       // pondération triangulaire
-      s += bruts[k] * p; n += p;
-    }
-    return s / n;
-  });
-  const yDe = rang => ySol + PROFIL_H_SOL - 26 - (rang / PROFIL_ZONATION.length) * (PROFIL_H_SOL - 60);
-  const pts = rs.map((r, i) => `${x(r.d).toFixed(1)},${yDe(lissés[i]).toFixed(1)}`);
-  S.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="#191b16" stroke-width="1.6" stroke-linejoin="round"/>`);
-  // niveau d'eau au pied du transect, repère de lecture
-  const yEau = yDe(0) + 6;
-  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yEau.toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yEau.toFixed(1)}" stroke="#0b5f7d" stroke-width="1"/>`);
-  S.push(`<text x="${PROFIL_MARGE_G + 6}" y="${(yEau - 5).toFixed(1)}" font-size="10" fill="#0b5f7d">Niveau du bas de transect (profil type, sans mesure d'altitude)</text>`);
-
-  /* Étiquettes de zones. Un tronçon étroit — une seule zone traversée sur un
-     mètre — donne un libellé plus large que sa bande : on alterne alors sur deux
-     lignes et l'on borne la position, sinon les libellés se recouvrent et le
-     dernier sort du cadre. */
-  let finPrecedente = -Infinity, ligneAlternee = false;
-  troncons.forEach(t => {
-    if(t.zone === '—') return;
-    const libelle = t.zone.toUpperCase();
-    const large = x(t.fin) - x(t.debut) > 70;
-    const taille = large ? 12 : 9.5;
-    const demiLargeur = libelle.length * taille * 0.31;
-    let xc = (x(t.debut) + x(t.fin)) / 2;
-    xc = Math.max(PROFIL_MARGE_G + demiLargeur + 2,
-          Math.min(PROFIL_MARGE_G + largeurGraphe - demiLargeur - 2, xc));
-    ligneAlternee = (xc - demiLargeur) < finPrecedente ? !ligneAlternee : false;
-    finPrecedente = xc + demiLargeur;
-    const y = yZones + 12 + (ligneAlternee ? 13 : 0);
-    S.push(`<text x="${xc.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${taille}" font-weight="bold" letter-spacing="0.5">${echapXML(libelle)}</text>`);
+  /* SVG téléchargé : un numéro de zone au pied de chaque bande (0 = sol nu),
+     les noms étant donnés une fois dans une ligne de légende. */
+  if(!interactif) troncons.forEach(t => {
+    if(t.rang == null) return;
+    const xc = (x(t.debut) + x(t.fin)) / 2;
+    S.push(`<text x="${xc.toFixed(1)}" y="${(yZones + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="bold">${t.rang}</text>`);
   });
 
   /* Axe des distances : graduation tous les 5 ou 10 m selon l'étendue. */
@@ -2273,18 +2361,24 @@ function construireProfilTransectSVG(nomTransect){
     S.push(`<text x="${x(d).toFixed(1)}" y="${yAxe + 20}" text-anchor="middle" font-size="11">${d} m</text>`);
   }
 
-  /* Légende abondance-dominance, dans la colonne de gauche. */
-  const yLeg = yZones + 34;
-  S.push(`<text x="14" y="${yLeg}" font-size="11" font-weight="bold">Abondance-dominance</text>`);
+  /* Légende abondance-dominance, en une ligne sous l'axe. */
+  S.push(`<text x="14" y="${yLeg + 4}" font-size="11" font-weight="bold">Abondance-dominance</text>`);
+  const pasLeg = largeurGraphe / 8;
   ['5','4','3','2','1','+','r','i'].forEach((c, k) => {
-    const yl = yLeg + 18 + k * 15;
+    const xl = PROFIL_MARGE_G + k * pasLeg;
     const ep = PROFIL_EPAISSEUR[c];
-    S.push(`<rect x="20" y="${(yl - ep / 2).toFixed(1)}" width="74" height="${ep}" fill="#191b16"/>`);
-    S.push(`<text x="104" y="${yl + 4}" font-size="10.5">${echapXML(c)}</text>`);
-    S.push(`<text x="120" y="${yl + 4}" font-size="9.5" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
+    S.push(`<rect x="${xl.toFixed(1)}" y="${(yLeg - ep / 2).toFixed(1)}" width="${Math.min(46, pasLeg - 60).toFixed(1)}" height="${ep}" fill="#191b16"/>`);
+    S.push(`<text x="${(xl + Math.min(46, pasLeg - 60) + 6).toFixed(1)}" y="${yLeg + 4}" font-size="11" font-weight="bold">${echapXML(c)}</text>`);
+    S.push(`<text x="${xl.toFixed(1)}" y="${yLeg + 20}" font-size="9.5" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
   });
 
-  S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · référentiel COLASSE V., 2019 (CBN de Brest) · profil type déduit de la succession des zones, sans relevé topographique</text>`);
+  if(!interactif){
+    const vues = new Map();
+    troncons.forEach(t => { if(t.rang != null && !vues.has(t.rang)) vues.set(t.rang, t.zone); });
+    const ligne = [...vues.entries()].sort((a,b) => a[0]-b[0]).map(([r, z]) => `${r} ${z}`).join('  ·  ');
+    S.push(`<text x="14" y="${H - 32}" font-size="10.5" fill="#191b16"><tspan font-weight="bold">Zones : </tspan>${echapXML(ligne)}</text>`);
+  }
+  S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · référentiel COLASSE V., 2019 (CBN de Brest)</text>`);
   S.push('</svg>');
   return S.join('\n');
 }
@@ -2379,7 +2473,7 @@ function diagrammeRichesseParZone(parZone){
     const l = Math.max(2, lg(v.distinctes));
     const infobulle = `${echapHTML(v.zone)} : ${v.distinctes} espèces distinctes, médiane ${v.mediane} par quadrat sur ${v.n} quadrat${v.n>1?'s':''}`;
     S.push(`<text x="${gG-8}" y="${yb + hLigne/2 + 4.5}" text-anchor="end" font-size="13" fill="${DIAG_INK}">${echapHTML(v.zone)}</text>`);
-    S.push(`<rect x="${gG}" y="${yb + 5}" width="${l.toFixed(1)}" height="${hLigne-12}" rx="3" fill="${DIAG_ACC}"><title>${infobulle}</title></rect>`);
+    S.push(`<rect x="${gG}" y="${yb + 5}" width="${l.toFixed(1)}" height="${hLigne-12}" rx="3" fill="${teinteZone(v.rang)}" stroke="#191b16" stroke-opacity="0.25"><title>${infobulle}</title></rect>`);
     S.push(`<text x="${(gG + l + 7).toFixed(1)}" y="${yb + hLigne/2 + 4.5}" font-size="13" fill="${DIAG_GRIS}">${v.distinctes}</text>`);
   });
   S.push(`<line x1="${gG}" y1="${gH}" x2="${gG}" y2="${gH + z.length*hLigne}" stroke="${DIAG_INK}" stroke-width="1"/>`);
@@ -2398,6 +2492,94 @@ function choisirVueParDefaut(){
   if(!svg) return;
   const naturelle = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : 0;
   basculerVueDiagramme(naturelle && naturelle <= d.clientWidth - 8 ? 'reelle' : 'ajuste');
+}
+
+/* ---------- Interactivité du diagramme ----------
+   Infobulle au survol d'une barre d'espèce ou d'un aplat de zone, et clic sur
+   une zone pour ouvrir la fiche de son habitat. Le SVG téléchargé reste inerte
+   et sans couleur : c'est une figure destinée au papier. */
+function activerDiagrammeInteractif(){
+  const d = document.getElementById('diagramme-transect');
+  const svg = d && d.querySelector('svg');
+  if(!svg) return;
+  const bulle = document.getElementById('bulle-diagramme');
+  if(!bulle) return;
+
+  const montrer = (html, ev) => {
+    bulle.innerHTML = html;
+    bulle.hidden = false;
+    const cadre = d.getBoundingClientRect();
+    const bb = bulle.getBoundingClientRect();
+    // maintenue dans le cadre du diagramme, au-dessus du curseur
+    let gx = ev.clientX - cadre.left + d.scrollLeft - bb.width / 2;
+    gx = Math.max(4, Math.min(d.scrollWidth - bb.width - 4, gx));
+    bulle.style.left = gx + 'px';
+    bulle.style.top = Math.max(4, ev.clientY - cadre.top - bb.height - 12) + 'px';
+  };
+  const cacher = () => { bulle.hidden = true; };
+
+  /* Pastilles de zones au-dessus du diagramme : survoler une pastille (ou une
+     bande) met la zone en évidence et estompe les autres ; un clic la garde
+     sélectionnée, un second clic la relâche. */
+  const bandes = [...svg.querySelectorAll('.bande-zone')];
+  const puces = [...document.querySelectorAll('#zones-legende .zone-puce')];
+  let fixe = null;
+  const eclairer = z => {
+    bandes.forEach(b => {
+      b.classList.toggle('estompe', !!z && b.dataset.zone !== z);
+      b.classList.toggle('surbrillance', !!z && b.dataset.zone === z);
+    });
+    puces.forEach(p => {
+      p.classList.toggle('active', p.dataset.zone === z);
+      p.setAttribute('aria-pressed', String(p.dataset.zone === fixe));
+    });
+  };
+  puces.forEach(p => {
+    p.addEventListener('mouseenter', () => eclairer(p.dataset.zone));
+    p.addEventListener('mouseleave', () => eclairer(fixe));
+    p.addEventListener('focus', () => eclairer(p.dataset.zone));
+    p.addEventListener('blur', () => eclairer(fixe));
+    p.addEventListener('click', () => { fixe = (fixe === p.dataset.zone) ? null : p.dataset.zone; eclairer(fixe); });
+  });
+
+  svg.addEventListener('mousemove', ev => {
+    const c = ev.target.closest('.barre-espece, .bande-zone');
+    const bande = ev.target.closest('.bande-zone');
+    eclairer(bande ? bande.dataset.zone : fixe);
+    if(!c){ cacher(); return; }
+    if(c.classList.contains('barre-espece')){
+      const fr = c.dataset.fr, latin = c.dataset.latin, cover = c.dataset.cover;
+      const info = COEF_ABONDANCE[cover] || {};
+      montrer(`<b>${echapHTML(fr)}</b>${latin ? `<br><i>${echapHTML(latin)}</i>` : ''}`
+        + `<br>${c.dataset.d} m · coefficient <b>${echapHTML(cover)}</b>`
+        + `<br><span class="bulle-sec">${echapHTML(info.desc || '')} ${info.intervalle ? '(' + info.intervalle + ')' : ''}</span>`, ev);
+    } else {
+      montrer(`<b>${echapHTML(c.dataset.zone)}</b><br>${c.dataset.de} → ${c.dataset.a} m`
+        + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
+    }
+  });
+  svg.addEventListener('mouseleave', () => { cacher(); eclairer(fixe); });
+  svg.addEventListener('click', ev => {
+    const z = ev.target.closest('.zone-cliquable');
+    if(!z) return;
+    cacher();
+    allerVoirFiche(Number(z.dataset.fiche), 'analyse');
+  });
+}
+
+/* Pastilles des zones présentes sur le transect, dans l'ordre du gradient, avec
+   leurs emprises (plusieurs si la zone réapparaît). */
+function pucesZones(troncons){
+  const zs = new Map();
+  troncons.forEach(t => {
+    if(t.rang == null) return;
+    if(!zs.has(t.zone)) zs.set(t.zone, {zone: t.zone, rang: t.rang, plages: []});
+    zs.get(t.zone).plages.push(t.debut === t.fin ? String(t.debut) : t.debut + '–' + t.fin);
+  });
+  return [...zs.values()].sort((a, b) => a.rang - b.rang).map(z =>
+    '<button type="button" class="zone-puce" data-zone="' + echapHTML(z.zone) + '" aria-pressed="false">'
+    + '<span class="pastille-zone" style="background:' + teinteZone(z.rang) + '"></span>'
+    + echapHTML(z.zone) + '<small>' + z.plages.join(' · ') + ' m</small></button>').join('');
 }
 
 function basculerVueDiagramme(vue){
@@ -2501,8 +2683,9 @@ function construireEcranAnalyse(){
         <button type="button" id="vue-ajuste" aria-pressed="true" onclick="basculerVueDiagramme('ajuste')">Vue d'ensemble</button>
         <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
       </div>
-      <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom) || ''}</div>
-      <p class="analyse-aide">Une ligne par espèce : l'épaisseur de la barre donne l'abondance-dominance, sa longueur la plage de distances où l'espèce a été notée. En <b>taille réelle</b>, faites glisser pour parcourir le transect ; le zoom à deux doigts fonctionne aussi.</p>
+      <div class="zones-legende" id="zones-legende">${pucesZones(troncons)}</div>
+      <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
+      <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Épaisseur = abondance-dominance · longueur = présence. Clic sur une bande : fiche.</p>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
 
@@ -2512,7 +2695,7 @@ function construireEcranAnalyse(){
         ${troncons.map(t => `<tr>
           <td>${t.debut} → ${t.fin} m</td>
           <td>${echapHTML(t.zone)}</td>
-          <td>${t.fiches.length ? t.fiches.join(', ') : '—'}</td>
+          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${f}, 'analyse')" title="${echapHTML((HABITATS.find(h => h.id === f) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
           <td class="num">${t.n}</td></tr>`).join('')}
       </tbody></table>
     </div>
@@ -2522,16 +2705,7 @@ function construireEcranAnalyse(){
       ${inversions.length ? `
         <div class="analyse-alerte">
           <b>${inversions.length} point${inversions.length>1?'s':''} où la zonation ne progresse pas vers la terre.</b>
-          Ce n'est pas nécessairement une erreur. Deux explications sont à peser sur le terrain :
-          <ul class="analyse-liste">
-            <li><b>La microtopographie.</b> Une cuvette, un chenal, une banquette ou une dépression
-              du schorre retient l'eau et porte une végétation de niveau inférieur à son entourage.
-              La zonation n'y est pas linéaire, et le relevé est juste.</li>
-            <li><b>Une détermination à revoir.</b> Le bouton « Modifier » de l'historique permet de
-              corriger l'espèce, et l'habitat est recalculé.</li>
-          </ul>
-          Le champ « remarque » du relevé est l'endroit où trancher : une cuvette notée sur le terrain
-          explique le point de vigilance.
+          Pas forcément une erreur : <b>microtopographie</b> (cuvette, chenal…) ou <b>détermination à revoir</b> (bouton « Modifier »).
         </div>
         <ul class="analyse-liste">
           ${inversions.map(x => {
@@ -2553,19 +2727,27 @@ function construireEcranAnalyse(){
       <div class="analyse-graphe">${diagrammeRichesseTransect(rs)}</div>
 
       <h4 class="analyse-soustitre">Par zone</h4>
-      <p class="analyse-aide">La richesse augmente normalement de la slikke vers le haut schorre : les contraintes de salinité et de submersion s'y relâchent.</p>
+      <p class="analyse-aide">Elle augmente en général de la slikke vers le haut schorre.</p>
       <div class="analyse-graphe">${diagrammeRichesseParZone(parZone)}</div>
       <details class="analyse-plus"><summary>Voir les chiffres par zone</summary>
-      <table class="historique"><thead><tr><th>Zone</th><th>Quadrats</th><th>Espèces / quadrat</th><th>Espèces distinctes</th></tr></thead><tbody>
+      <table class="historique"><thead><tr>
+        <th>Zone</th>
+        <th>Nb de quadrats</th>
+        <th>Espèces dans un quadrat<br><small>min – max (méd.)</small></th>
+        <th>Espèces différentes<br><small>toute la zone</small></th>
+      </tr></thead><tbody>
         ${parZone.map(z => `<tr>
-          <td>${echapHTML(z.zone)}</td>
-          <td class="num">${z.n}</td>
-          <td class="num">${z.solNuSeul ? '—' : `${z.min} → ${z.max} <small>(méd. ${z.mediane})</small>`}</td>
-          <td class="num">${z.distinctes || '—'}</td></tr>`).join('')}
-      </tbody></table></details>
+          <td><span class="pastille-zone" style="background:${teinteZone(z.rang)}"></span>${echapHTML(z.zone)}</td>
+          <td class="num">${z.n}${z.n === 1 ? ' <small class="analyse-note">un seul : peu représentatif</small>' : ''}</td>
+          <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>'
+            : (z.min === z.max ? `${z.min}` : `${z.min} – ${z.max} <small>(méd. ${z.mediane})</small>`)}</td>
+          <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>' : z.distinctes}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="analyse-aide">Espèces différentes = tous les quadrats de la zone cumulés.</p>
+      </details>
 
       <h4 class="analyse-soustitre">Espèces, de la plus fréquente à la plus rare</h4>
-      <p class="analyse-aide">« Nb de relevés » compte les quadrats où l'espèce a été notée ; « présente de → à » donne son amplitude sur le transect — la longueur de sa barre dans le diagramme.</p>
+      <p class="analyse-aide">Nb de relevés = quadrats où l'espèce est notée.</p>
       <table class="historique"><thead><tr><th>Espèce</th><th>Nb de relevés</th><th>Présente de → à</th></tr></thead><tbody>
         ${especes.slice(0,8).map(e => ligneEspeceAnalyse(e)).join('')}
       </tbody></table>
@@ -2573,8 +2755,8 @@ function construireEcranAnalyse(){
         <table class="historique"><tbody>${especes.slice(8).map(e => ligneEspeceAnalyse(e)).join('')}</tbody></table>
       </details>` : ''}
 
-      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} notée${uniques.length>1?'s':''} sur un seul quadrat</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}. À regarder : limite d'aire sur le transect, espèce réellement rare, ou détermination à revoir.</p>` : ''}
-      ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}. Le diagramme y laisse un blanc, la continuité n'ayant pas été observée.</p>` : ''}
+      ${uniques.length ? `<p class="analyse-meta"><b>${uniques.length} espèce${uniques.length>1?'s':''} notée${uniques.length>1?'s':''} sur un seul quadrat</b> : ${uniques.slice(0,8).map(e=>echapHTML(e.fr)).join(', ')}${uniques.length>8?'…':''}.</p>` : ''}
+      ${sauts.length ? `<p class="analyse-meta"><b>${sauts.length} interruption${sauts.length>1?'s':''}</b> dans la série : ${sauts.slice(0,5).map(s=>`${s.de}→${s.a} m`).join(', ')}${sauts.length>5?'…':''}.</p>` : ''}
     </div>`;
 }
 
@@ -2591,7 +2773,7 @@ function ligneEspeceAnalyse(e){
 
 function exporterProfilTransect(nomTransect){
   const svg = construireProfilTransectSVG(nomTransect);
-  if(!svg){ alert('Il faut au moins deux relevés avec une distance renseignée pour tracer un profil.'); return; }
+  if(!svg){ informer('Il faut au moins deux relevés avec une distance renseignée pour tracer un profil.'); return; }
   telechargerTexte(svg, `profil_transect_${String(nomTransect).replace(/[^\w-]+/g,'_')}.svg`, 'image/svg+xml');
 }
 
@@ -2657,9 +2839,9 @@ function importerFichierCSV(input){
   const lecteur = new FileReader();
   lecteur.onload = () => {
     try { appliquerImportCSV(lecteur.result, fichier.name); }
-    catch(e){ alert('Import impossible : ' + e.message); }
+    catch(e){ informer('Import impossible : ' + e.message); }
   };
-  lecteur.onerror = () => alert('Lecture du fichier impossible.');
+  lecteur.onerror = () => informer('Lecture du fichier impossible.');
   lecteur.readAsText(fichier, 'utf-8');
 }
 
@@ -2696,9 +2878,15 @@ function appliquerImportCSV(texte, nomFichier){
     const v = i => i >= 0 ? (c[i] || '').trim() : '';
     let transect = v(iTransect);
     let numero = v(iNumero);
-    if(!transect){                       // export complet : le transect est dans code_projet
-      const m = v(iProjet).match(/transect\s*(.+)$/i);   // ancienne forme « Transect R1 »
-      transect = m ? m[1].trim() : (v(iProjet) || '?');
+    if(!transect){
+      /* code_projet a porté trois choses au fil des versions : « Transect R1 »,
+         puis « R1 », puis l'habitat depuis qu'il sert au regroupement dans
+         PhytoScope. Quand il porte l'habitat, le transect n'est plus là que
+         dans le nom du relevé — « R1-15 », traité juste après. */
+      const p = v(iProjet);
+      const m = p.match(/transect\s*(.+)$/i);
+      if(m) transect = m[1].trim();
+      else if(p && !/^(f\d|Sol nu|Habitat non)/i.test(p)) transect = p;
     }
     if(!numero){
       /* releve_nom, deux formes : « R1-15 » depuis le raccourcissement des
@@ -2707,7 +2895,7 @@ function appliquerImportCSV(texte, nomFichier){
       const court = nom.match(/^(.+)-(\d+)$/);
       const longue = nom.match(/relev[ée]\s*n[°o]\s*(\d+)/i);
       if(longue) numero = longue[1];
-      else if(court){ numero = court[2]; if(!v(iTransect) && !v(iProjet)) transect = court[1].trim(); }
+      else if(court){ numero = court[2]; if(!transect) transect = court[1].trim(); }
     }
     const cle = (v(iReleveId) && !v(iTransect)) ? 'id:' + v(iReleveId) : transect + '#' + numero;
     if(!groupes.has(cle)) groupes.set(cle, {
@@ -2778,11 +2966,11 @@ function appliquerImportCSV(texte, nomFichier){
       + (avertissements.length > apercu.length ? `\n· … et ${avertissements.length - apercu.length} autre(s)` : '');
   }
   msg += '\n\nL\'habitat a été recalculé avec le référentiel de cette version de l\'appli.';
-  alert(msg);
+  informer(msg);
 }
 
-function viderHistorique(){
-  if(confirm('Effacer tous les relevés enregistrés sur cet appareil ?')){
+async function viderHistorique(){
+  if(await demanderConfirmation('Effacer tous les relevés enregistrés sur cet appareil ?\n\nPensez à exporter avant : cette action est définitive.', {ok:'Tout effacer', danger:true})){
     localStorage.removeItem(CLE_HISTORIQUE);
     localStorage.removeItem(CLE_TRANSECT_ACTIF);
     afficherHistorique();
@@ -2851,11 +3039,23 @@ function nomCourtReleve(r){
   return `${r.transect || '?'}-${r.numero ?? '?'}`;
 }
 
+/* « code_projet » porte l'HABITAT et non le transect : c'est ce champ que
+   PhytoScope utilise pour regrouper les relevés dans sa bibliothèque
+   (`key = r.codeProjet`), trier et filtrer. Avec le transect, les quarante
+   relevés d'une ligne arrivaient dans un seul groupe, tous milieux confondus —
+   or l'objet de l'analyse est justement de comparer les milieux entre eux.
+   Le transect reste lisible dans le nom du relevé (« R1-15 »). */
+function groupeProjetReleve(r){
+  if(r.solNu) return 'Sol nu';
+  if(r.topFiche == null) return 'Habitat non attribué';
+  return `f${r.topFiche} · ${r.top || ''}`.trim();
+}
+
 /* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes). */
 function enteteRelevePhytoscope(r, releveId){
   return [releveId, nomCourtReleve(r),
     [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres',
-    r.transect || '',
+    groupeProjetReleve(r),
     r.dateReleve || (r.date || new Date().toISOString()).slice(0,10),
     r.observateur || '',
     r.distance != null && r.distance !== '' ? `${r.distance} m` : '', '', '1 m²'];
@@ -2870,20 +3070,25 @@ function enteteRelevePhytoscope(r, releveId){
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
+  /* Fichier complet unique (l'ancien « export complet » à la disposition de
+     PhytoScope faisait doublon) : zone et n° de fiche ajoutés, pour trier et
+     croiser les milieux entre eux dans un tableur. */
   const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
     'Espèce','Nom scientifique','Coefficient','Recouvrement médian (%)',
-    'Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
+    'Zone','Fiche','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
   const lignes = [entetes];
   liste.forEach(r=>{
     const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
       r.observateur||'', r.site||'', r.commune||''];
-    const analyse = [r.top||'', r.carMatch||'', r.score ?? '', (r.observation||'').trim(), r.date||''];
+    const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const analyse = [z ? z.zone : '', r.topFiche ?? '', r.top||'', r.carMatch||'', r.score ?? '',
+      (r.observation||'').trim(), r.date||''];
     observationsDuReleve(r).forEach(o=>{
       lignes.push([...bordereau, o.fr, o.latin, o.coefficient, o.pct, ...analyse]);
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres.csv');
+    'releves_petite_mer_de_gavres_complet.csv');
 }
 
 /* ---------- Export compatible Phytoscope ----------
@@ -2929,44 +3134,12 @@ function exporterPourPhytoscopeCSV(){
       + [...omises].map(n => '· ' + n).join('\n'));
     if(libres.size) bloc.push('Saisies au clavier, sans nom scientifique :\n'
       + [...libres].map(n => '· ' + n).join('\n'));
-    alert('Export terminé.\n\nCes espèces ne figurent pas dans le fichier :\n\n'
+    informer('Export terminé.\n\nCes espèces ne figurent pas dans le fichier :\n\n'
       + bloc.join('\n\n')
       + '\n\nElles restent enregistrées dans vos relevés et présentes dans le tableau de synthèse.');
   }
 }
 
-/* ---------- Export complet, disposition PhytoScope ----------
-   Même colonnes que l'export ci-dessus, mais SANS aucun filtrage : toutes les
-   espèces saisies y figurent, y compris celles sans équivalent BaseFlor
-   (Salicorne indéterminée, Agrostide hybride) et celles tapées au clavier —
-   « taxon_id » reste alors vide. S'y ajoutent l'habitat proposé pour le relevé
-   et le recouvrement en pourcentage.
-
-   Ce fichier n'est pas destiné à l'import dans PhytoScope, qui rejetterait les
-   lignes sans taxon reconnu : c'est l'enregistrement fidèle et complet de la
-   campagne, pour archivage et analyse. */
-function exporterCompletCSV(){
-  const liste = chargerHistorique();
-  if(!liste.length) return;
-  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation",
-    "coordonnees_gps","surface","taxon_id","nom_scientifique","nom_francais","strate",
-    "mode_recouvrement","recouvrement_saisi","recouvrement_median_pct",
-    "habitat_potentiel","especes_caracteristiques","indice_global_pct","distance_m","remarque"];
-  const lignes = [entetes];
-  liste.forEach(r=>{
-    const entete = enteteRelevePhytoscope(r, idPhytoscope());
-    const analyse = [r.top || '', r.carMatch || '', r.score ?? '', r.distance ?? '',
-      (r.observation || '').trim()];
-    observationsDuReleve(r).forEach(o=>{
-      lignes.push([...entete,
-        o.taxonId ?? '', o.latin, o.fr, o.strate,
-        o.mode, o.cover, o.pct,
-        ...analyse]);
-    });
-  });
-  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres_complet.csv');
-}
 
 /* Barre d'action fixe, adaptée à l'étape du bordereau en cours. */
 /* ---- Motif de fond du bandeau d'accueil ----
@@ -3077,10 +3250,10 @@ const ACTIONS_PAR_ECRAN = {
 
 /* Filet de sécurité : une espèce choisie et cotée mais pas encore ajoutée serait
    perdue silencieusement. On la signale plutôt que de l'ignorer. */
-function analyserDepuisBarre(){
+async function analyserDepuisBarre(){
   const e = etat.especeEnCours;
   if(e && etat.coefCourant){
-    const ok = confirm(`« ${e.fr} » (coefficient ${etat.coefCourant}) n'a pas encore été ajoutée au relevé.\n\nOK : l'ajouter puis analyser.\nAnnuler : revenir à la saisie.`);
+    const ok = await demanderConfirmation(`« ${e.fr} » (coefficient ${etat.coefCourant}) n'a pas encore été ajoutée au relevé.`, {ok:'L\'ajouter puis analyser', annuler:'Revenir à la saisie'});
     if(!ok) return;
     ajouterAuCortege();
   }
