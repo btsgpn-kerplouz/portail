@@ -311,6 +311,9 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .analyse-alerte b{color:#7a5f00;}
 .analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
 .analyse-liste b{color:var(--acc-dark);}
+.analyse-note{font-size:.78rem;color:var(--text-2);font-style:italic;}
+.pastille-zone{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.45em;vertical-align:-.05em;border:1px solid rgba(25,27,22,.2);}
+.historique th small{font-family:var(--sans);text-transform:none;letter-spacing:0;font-weight:400;opacity:.8;}
 
 /* Correction d'un relevé existant : l'écart avec une saisie neuve doit sauter aux
    yeux, sinon on croit ajouter un point et l'on s'étonne que rien ne s'incrémente. */
@@ -2638,13 +2641,23 @@ function construireEcranAnalyse(){
       <p class="analyse-aide">La richesse augmente normalement de la slikke vers le haut schorre : les contraintes de salinité et de submersion s'y relâchent.</p>
       <div class="analyse-graphe">${diagrammeRichesseParZone(parZone)}</div>
       <details class="analyse-plus"><summary>Voir les chiffres par zone</summary>
-      <table class="historique"><thead><tr><th>Zone</th><th>Quadrats</th><th>Espèces / quadrat</th><th>Espèces distinctes</th></tr></thead><tbody>
+      <table class="historique"><thead><tr>
+        <th>Zone</th>
+        <th>Nb de quadrats</th>
+        <th>Espèces dans un quadrat<br><small>de … à … · valeur médiane</small></th>
+        <th>Espèces différentes<br><small>toute la zone</small></th>
+      </tr></thead><tbody>
         ${parZone.map(z => `<tr>
-          <td>${echapHTML(z.zone)}</td>
-          <td class="num">${z.n}</td>
-          <td class="num">${z.solNuSeul ? '—' : `${z.min} → ${z.max} <small>(méd. ${z.mediane})</small>`}</td>
-          <td class="num">${z.distinctes || '—'}</td></tr>`).join('')}
-      </tbody></table></details>
+          <td><span class="pastille-zone" style="background:${teinteZone(z.rang)}"></span>${echapHTML(z.zone)}</td>
+          <td class="num">${z.n}${z.n === 1 ? ' <small class="analyse-note">un seul : peu représentatif</small>' : ''}</td>
+          <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>'
+            : (z.min === z.max ? `${z.min}` : `${z.min} à ${z.max} · <small>médiane ${z.mediane}</small>`)}</td>
+          <td class="num">${z.solNuSeul ? '<small class="analyse-note">sans végétation</small>' : z.distinctes}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="analyse-aide"><b>Espèces dans un quadrat</b> : combien d'espèces tiennent sur un mètre carré de la zone, du quadrat le plus pauvre au plus riche.
+        <b>Espèces différentes</b> : toutes celles notées dans la zone, quadrats cumulés — ce nombre dépasse donc le précédent dès que les quadrats ne contiennent pas les mêmes espèces.
+        Une zone traversée par peu de quadrats donne des valeurs à prendre avec prudence.</p>
+      </details>
 
       <h4 class="analyse-soustitre">Espèces, de la plus fréquente à la plus rare</h4>
       <p class="analyse-aide">« Nb de relevés » compte les quadrats où l'espèce a été notée ; « présente de → à » donne son amplitude sur le transect — la longueur de sa barre dans le diagramme.</p>
