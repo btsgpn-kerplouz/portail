@@ -333,9 +333,11 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
 .analyse-liste b{color:var(--acc-dark);}
 .analyse-note{font-size:.78rem;color:var(--text-2);font-style:italic;}
-/* Profil de végétation dessiné */
-.dessin-profil svg{display:block;height:auto;max-width:none;}
-.dessin-profil .cellule-dessin:hover{fill:rgba(25,27,22,.06);}
+/* Profil de végétation dessiné, dans le diagramme */
+.analyse-diagramme .cellule-dessin:hover{fill:rgba(25,27,22,.06);}
+.analyse-vues-sep{width:1px;align-self:stretch;background:var(--line);margin:0 .3em;}
+.dessin-details{margin:.2em 0 .8em;}
+.dessin-details summary{cursor:pointer;font-size:.8rem;font-weight:600;color:var(--acc);}
 .dessin-legende{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.4em 1.2em;margin:.6em 0;}
 .dessin-strate h4{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--acc-dark);margin:.3em 0 .2em;}
 .dessin-strate ul{list-style:none;margin:0;padding:0;}
@@ -2242,7 +2244,7 @@ function afficherHistorique(){
    ajouter à la main : le SVG est éditable. */
 
 const PROFIL_EPAISSEUR = {'i':1.5, 'r':1.5, '+':2, '1':3, '2':5.5, '3':8.5, '4':12, '5':16};
-const PROFIL_ECH_X = 13;        // pixels par mètre
+const PROFIL_ECH_X = 30;        // pixels par mètre : assez pour dessiner la végétation de chaque quadrat
 const PROFIL_H_ESPECE = 17;     // hauteur d'une ligne d'espèce
 const PROFIL_MARGE_G = 250;     // colonne des noms d'espèces
 
@@ -2304,15 +2306,29 @@ function construireProfilTransectSVG(nomTransect, options){
   const largeurGraphe = Math.max(640, Math.round(etendue * PROFIL_ECH_X));
   const hEspeces = liste.length * PROFIL_H_ESPECE;
   const yEspeces = 74;                                  // sous le titre
-  const yZones = yEspeces + hEspeces + 14;              // repères de zones (SVG téléchargé seulement)
+  const W = PROFIL_MARGE_G + largeurGraphe + 40;
+  const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
+
+  /* Sous les barres d'espèces, le profil de végétation dessiné, sur la même
+     échelle de distance (profil-dessine.js). */
+  const relief = options && options.relief != null ? options.relief
+    : (typeof dessinRelief === 'undefined' ? true : dessinRelief);
+  const yDessin = yEspeces + hEspeces + 12;
+  const dessin = typeof panneauProfilDessine === 'function'
+    ? panneauProfilDessine(rs, {x, pxm: largeurGraphe / etendue, yHaut: yDessin, margeG: PROFIL_MARGE_G,
+        relief, graine: nomTransect, interactif})
+    : {svg: '', hauteur: 0, liste: []};
+
+  const yZones = yDessin + dessin.hauteur + 10;         // repères de zones (SVG téléchargé seulement)
   /* À l'écran les noms de zones sont hors du dessin, dans des pastilles
      interactives : écrits dans les bandes, ils se chevauchaient dès qu'une zone
      était étroite. Le SVG téléchargé garde un simple numéro par bande. */
   const yAxe = yZones + (interactif ? 4 : 22);
   const yLeg = yAxe + 44;                               // légende en ligne sous l'axe
-  const H = yLeg + (interactif ? 46 : 66);   // ligne « Zones : … » en plus sur le SVG téléchargé
-  const W = PROFIL_MARGE_G + largeurGraphe + 40;
-  const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
+  // le SVG téléchargé porte aussi la légende des dessins et la ligne « Zones : … »
+  const legDessins = !interactif && dessin.liste.length && typeof legendeDessinsSVG === 'function'
+    ? legendeDessinsSVG(dessin.liste, 14, yLeg + 54, W - 28) : null;
+  const H = yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0);
 
   const S = [];
   S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Georgia, 'Times New Roman', serif">`);
@@ -2392,6 +2408,8 @@ function construireProfilTransectSVG(nomTransect, options){
     });
   });
 
+  S.push(dessin.svg);
+
   /* SVG téléchargé : un numéro de zone au pied de chaque bande (0 = sol nu),
      les noms étant donnés une fois dans une ligne de légende. */
   if(!interactif) troncons.forEach(t => {
@@ -2419,6 +2437,7 @@ function construireProfilTransectSVG(nomTransect, options){
     S.push(`<text x="${xl.toFixed(1)}" y="${yLeg + 20}" font-size="9.5" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
   });
 
+  if(legDessins) S.push(legDessins.svg);
   if(!interactif){
     const vues = new Map();
     troncons.forEach(t => { if(t.rang != null && !vues.has(t.rang)) vues.set(t.rang, t.zone); });
@@ -2641,11 +2660,15 @@ function activerDiagrammeInteractif(){
   });
 
   svg.addEventListener('mousemove', ev => {
-    const c = ev.target.closest('.barre-espece, .bande-zone');
-    const bande = ev.target.closest('.bande-zone');
-    eclairer(bande ? bande.dataset.zone : fixe);
+    const c = ev.target.closest('.barre-espece, .bande-zone, .cellule-dessin');
+    const bande = ev.target.closest('.bande-zone, .cellule-dessin');
+    eclairer(bande && bande.dataset.zone ? bande.dataset.zone : fixe);
     if(!c){ cacher(); return; }
-    if(c.classList.contains('barre-espece')){
+    if(c.classList.contains('cellule-dessin')){
+      montrer(`<b>${c.dataset.d} m</b>${c.dataset.zone ? ' · ' + echapHTML(c.dataset.zone) : ''}`
+        + `<br>${echapHTML(c.dataset.especes)}`
+        + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
+    } else if(c.classList.contains('barre-espece')){
       const fr = c.dataset.fr, latin = c.dataset.latin, cover = c.dataset.cover;
       const info = COEF_ABONDANCE[cover] || {};
       montrer(`<b>${echapHTML(fr)}</b>${latin ? `<br><i>${echapHTML(latin)}</i>` : ''}`
@@ -2678,6 +2701,23 @@ function pucesZones(troncons){
     '<button type="button" class="zone-puce" data-zone="' + echapHTML(z.zone) + '" aria-pressed="false">'
     + '<span class="pastille-zone" style="background:' + teinteZone(z.rang) + '"></span>'
     + echapHTML(z.zone) + '<small>' + z.plages.join(' · ') + ' m</small></button>').join('');
+}
+
+/* Relief du profil dessiné : l'écran est reconstruit, en gardant la vue, le
+   défilement du diagramme et la position dans la page. */
+function basculerReliefDessin(relief){
+  const d = document.getElementById('diagramme-transect');
+  const vue = d && d.classList.contains('reelle') ? 'reelle' : 'ajuste';
+  const defil = d ? d.scrollLeft : 0, page = window.scrollY;
+  const details = document.querySelector('.dessin-details');
+  const ouvert = details && details.open;
+  dessinRelief = relief;
+  construireEcranAnalyse();
+  basculerVueDiagramme(vue);
+  activerDiagrammeInteractif();
+  document.getElementById('diagramme-transect').scrollLeft = defil;
+  if(ouvert) document.querySelector('.dessin-details').open = true;
+  window.scrollTo(0, page);
 }
 
 function basculerVueDiagramme(vue){
@@ -2780,14 +2820,22 @@ function construireEcranAnalyse(){
       <div class="analyse-vues">
         <button type="button" id="vue-ajuste" aria-pressed="true" onclick="basculerVueDiagramme('ajuste')">Vue d'ensemble</button>
         <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
+        <span class="analyse-vues-sep" aria-hidden="true"></span>
+        <button type="button" aria-pressed="${dessinRelief}" onclick="basculerReliefDessin(true)">Relief (profil type)</button>
+        <button type="button" aria-pressed="${!dessinRelief}" onclick="basculerReliefDessin(false)">Sol plat</button>
       </div>
       <div class="zones-legende" id="zones-legende">${pucesZones(troncons)}</div>
       <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
-      <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Épaisseur = abondance-dominance · longueur = présence. Clic sur une bande : fiche.</p>
+      <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Barres : épaisseur = abondance-dominance · longueur = présence. Profil dessiné : nombre de dessins = recouvrement, hauteur type de chaque espèce ; survol d'un quadrat : ses espèces. Clic sur une zone ou un quadrat : fiche.</p>
+      <details class="dessin-details">
+        <summary>Légende des dessins, par strate</summary>
+        <div class="dessin-legende">${legendeDessinsHTML(nom)}</div>
+        <p class="analyse-note">${dessinRelief
+          ? 'Relief : profil type déduit de la zone de chaque relevé (slikke en bas, haut schorre en haut), sans altitude mesurée. Un creux correspond à un point de vigilance : cuvette, chenal… ou détermination à revoir.'
+          : 'Sol plat : aucune topographie n\'est relevée sur le terrain.'} Hauteurs des plantes : hauteurs types, non mesurées. D'après les profils de COLASSE (2019, fig. 6).</p>
+      </details>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
-
-    ${typeof blocProfilDessine === 'function' ? blocProfilDessine(nom) : ''}
 
     <div class="carte">
       <h3>Lecture de la zonation</h3>
