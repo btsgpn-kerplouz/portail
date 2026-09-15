@@ -333,6 +333,16 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
 .analyse-liste b{color:var(--acc-dark);}
 .analyse-note{font-size:.78rem;color:var(--text-2);font-style:italic;}
+/* Profil de végétation dessiné */
+.dessin-profil svg{display:block;height:auto;max-width:none;}
+.dessin-profil .cellule-dessin:hover{fill:rgba(25,27,22,.06);}
+.dessin-legende{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.4em 1.2em;margin:.6em 0;}
+.dessin-strate h4{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--acc-dark);margin:.3em 0 .2em;}
+.dessin-strate ul{list-style:none;margin:0;padding:0;}
+.dessin-strate li{display:flex;align-items:center;gap:.5em;margin:.1em 0;}
+.dessin-strate li svg{flex-shrink:0;}
+.dessin-strate li b{display:block;font-size:.82rem;font-weight:600;}
+.dessin-strate li small{display:block;font-size:.72rem;color:var(--text-2);}
 /* Confirmation intégrée (remplace confirm(), bloqué dans certains contextes). */
 .confirm-fond{position:fixed;inset:0;z-index:100;background:rgba(25,27,22,.45);display:flex;align-items:center;justify-content:center;padding:1em;}
 .confirm-boite{background:var(--card);border-radius:var(--rayon);max-width:26em;width:100%;padding:1.1em 1.1em .9em;box-shadow:0 6px 24px rgba(25,27,22,.3);}
@@ -852,6 +862,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
 <script src="data.js"></script>
 <script src="mini-flore-data.js"></script>
+<script src="profil-dessine.js"></script>
 <script>
 /* Etat de l'application */
 let etat = {
@@ -1838,7 +1849,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.27.0';
+const VERSION_APPLI = '1.28.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -2775,6 +2786,8 @@ function construireEcranAnalyse(){
       <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Épaisseur = abondance-dominance · longueur = présence. Clic sur une bande : fiche.</p>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
+
+    ${typeof blocProfilDessine === 'function' ? blocProfilDessine(nom) : ''}
 
     <div class="carte">
       <h3>Lecture de la zonation</h3>
