@@ -2463,8 +2463,12 @@ tr.repartition-sem-row td {
    actif, plus seulement « moi »), voir missionSignatureSelectHtml. */
 .mission-signature-select-label { display: flex; align-items: center; gap: .35rem; font-size: .72rem; color: var(--muted); }
 .mission-signature-select { font-size: .78rem; padding: .1rem .3rem; }
-.mission-signature-content { flex: 1; display: flex; align-items: flex-start; }
+.mission-signature-content { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
 .mission-signature-absente { font-size: .72rem; margin: 0; }
+/* Retours 15/09/2026 (2e passe) — Remplacer/Retirer une signature déjà
+   déposée (la mienne ou celle d'un·e collègue, cf. missionSignatureBoxHtml). */
+.mission-signature-actions { display: flex; gap: .6rem; }
+.mission-signature-actions .lien { font-size: .72rem; }
 
 .mission-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
 .mission-destinataires { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }

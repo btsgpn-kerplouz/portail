@@ -1782,10 +1782,12 @@ function missionCheck(checked, field, label) {
 // Retours 15/09/2026 — la signature affichée/imprimée n'est plus forcément
 // « la mienne » : n'importe quel enseignant actif rédigeant l'ODM d'un·e
 // collègue doit pouvoir choisir SA signature (véhicule personnel conduit par
-// le collègue, ODM rédigé par un autre enseignant). Le <select> liste les
-// comptes actifs (missionEnseignantsActifsCache, alimenté par
-// missionChargerEnseignantsActifs) ; seule « la mienne » reste déposable
-// depuis cet écran (RLS : écriture strictement personnelle, cf. 013 + 020).
+// le collègue, ODM rédigé par un autre enseignant) — et, 2e retour le même
+// jour, la DÉPOSER pour ce/cette collègue s'il/elle ne l'a pas fait
+// lui/elle-même (RLS élargie à l'écriture aussi, cf. 020-oc-signatures-
+// equipe-partagee.sql : plus seulement au propriétaire du dossier). Le
+// <select> liste les comptes actifs (missionEnseignantsActifsCache,
+// alimenté par missionChargerEnseignantsActifs).
 function missionSignatureSelectHtml(detail) {
   const choisi = String(detail.signatureInitiales || moiInitiales || '').toUpperCase();
   const actifs = missionEnseignantsActifsCache;
@@ -1804,14 +1806,20 @@ function missionSignatureSelectHtml(detail) {
 function missionSignatureBoxHtml(detail) {
   const choisi = String(detail.signatureInitiales || moiInitiales || '').toUpperCase();
   const url = choisi ? missionSignatureUrlParInitiales.get(choisi) : null;
+  const pourMoi = choisi === moiInitiales;
+  const libelleAjout = pourMoi ? 'Ajouter ma signature' : `Déposer la signature de ${escapeHtml(choisi)}`;
   let contenu;
   if (url) {
-    contenu = `<img src="${escapeAttr(url)}" alt="Signature de ${escapeAttr(choisi)}" class="mission-signature-img" />`;
-  } else if (choisi === moiInitiales) {
-    contenu = `<button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Ajouter ma signature (privé)</button>
-      <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
+    contenu = `<img src="${escapeAttr(url)}" alt="Signature de ${escapeAttr(choisi)}" class="mission-signature-img" />
+      <div class="mission-signature-actions">
+        <button type="button" id="missionSignatureUpload" class="lien mission-signature-add">Remplacer</button>
+        <button type="button" id="missionSignatureRemove" class="lien mission-signature-remove">Retirer</button>
+        <input type="file" id="missionSignatureFile" accept="image/*" hidden />
+      </div>`;
   } else if (choisi && missionSignatureUrlParInitiales.has(choisi)) {
-    contenu = `<p class="meta mission-signature-absente">Pas de signature enregistrée pour ${escapeHtml(choisi)}.</p>`;
+    contenu = `<p class="meta mission-signature-absente">Pas de signature enregistrée pour ${escapeHtml(choisi)}.</p>
+      <button type="button" id="missionSignatureUpload" class="lien mission-signature-add">${libelleAjout}</button>
+      <input type="file" id="missionSignatureFile" accept="image/*" hidden />`;
   } else {
     contenu = `<p class="meta mission-signature-absente">Chargement…</p>`;
   }
@@ -2325,6 +2333,24 @@ function missionChargerImageSignature(url) {
   });
 }
 
+// Retours 15/09/2026 (2e passe) — Martin : « je veux pouvoir déposer la
+// signature d'un collègue », pas seulement choisir/afficher celle de comptes
+// qui l'ont déjà déposée eux-mêmes. Un seul point de résolution
+// initiales -> user_id, partagé par le chargement ET le dépôt/suppression
+// (voir 020-oc-signatures-equipe-partagee.sql : lecture ET écriture ouvertes
+// à tout enseignant actif, plus seulement au propriétaire du dossier).
+async function missionResoudreUserId(cle) {
+  if (cle === moiInitiales) {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient) return null;
+    const sb = await getClient();
+    const { data: { user } } = await sb.auth.getUser();
+    return user?.id || null;
+  }
+  const trouve = missionEnseignantsActifsCache.find(e => (e.initiales || '').toUpperCase() === cle);
+  return trouve?.user_id || null;
+}
+
 async function missionChargerSignaturePour(initiales) {
   const cle = String(initiales || '').trim().toUpperCase();
   if (!cle || missionSignatureUrlParInitiales.has(cle) || missionSignatureEnCours.has(cle)) return;
@@ -2338,14 +2364,7 @@ async function missionChargerSignaturePour(initiales) {
   missionSignatureEnCours.add(cle);
   try {
     const sb = await getClient();
-    let userId = null;
-    if (cle === moiInitiales) {
-      const { data: { user } } = await sb.auth.getUser();
-      userId = user?.id || null;
-    } else {
-      const trouve = missionEnseignantsActifsCache.find(e => (e.initiales || '').toUpperCase() === cle);
-      userId = trouve?.user_id || null;
-    }
+    const userId = await missionResoudreUserId(cle);
     if (!userId) { missionSignatureUrlParInitiales.set(cle, null); return; }
     const { data, error } = await sb.storage.from('oc-signatures').createSignedUrl(`${userId}/signature.png`, 3600);
     if (error || !data) { missionSignatureUrlParInitiales.set(cle, null); return; }
@@ -2361,23 +2380,51 @@ async function missionChargerSignaturePour(initiales) {
   }
 }
 
-async function missionUploaderSignature(file) {
+function missionInvaliderSignatureCache(cle) {
+  missionSignatureUrlParInitiales.delete(cle);
+  missionSignatureImageParInitiales.delete(cle);
+}
+
+async function missionUploaderSignaturePour(initiales, file) {
+  const cle = String(initiales || '').trim().toUpperCase();
+  if (!cle || !file) return;
   try {
     const getClient = window.OC_SUPABASE_CLIENT;
-    if (!getClient || !file) return;
+    if (!getClient) return;
     const sb = await getClient();
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    setSaveStatus('Envoi de la signature…');
-    const { error } = await sb.storage.from('oc-signatures').upload(`${user.id}/signature.png`, file, { upsert: true, contentType: file.type });
+    const userId = await missionResoudreUserId(cle);
+    if (!userId) { alert(`Compte introuvable pour ${cle}.`); return; }
+    setSaveStatus(cle === moiInitiales ? 'Envoi de la signature…' : `Envoi de la signature de ${cle}…`);
+    const { error } = await sb.storage.from('oc-signatures').upload(`${userId}/signature.png`, file, { upsert: true, contentType: file.type });
     if (error) { console.error('[signature] upload', error); alert('Échec de l’envoi de la signature : ' + error.message); return; }
     // On force le rechargement (une éventuelle ancienne URL/image en cache
     // n'est plus valable : le fichier vient d'être remplacé).
-    missionSignatureUrlParInitiales.delete(moiInitiales);
-    missionSignatureImageParInitiales.delete(moiInitiales);
-    await missionChargerSignaturePour(moiInitiales);
-    setSaveStatus('Signature enregistrée (privée)');
+    missionInvaliderSignatureCache(cle);
+    await missionChargerSignaturePour(cle);
+    setSaveStatus('Signature enregistrée');
   } catch (e) { console.error('[signature] upload', e); alert('Échec de l’envoi de la signature.'); }
+}
+
+async function missionSupprimerSignaturePour(initiales) {
+  const cle = String(initiales || '').trim().toUpperCase();
+  if (!cle) return;
+  const confirmation = cle === moiInitiales
+    ? 'Retirer votre signature enregistrée ?'
+    : `Retirer la signature enregistrée de ${cle} ?`;
+  if (!confirm(confirmation)) return;
+  try {
+    const getClient = window.OC_SUPABASE_CLIENT;
+    if (!getClient) return;
+    const sb = await getClient();
+    const userId = await missionResoudreUserId(cle);
+    if (!userId) return;
+    setSaveStatus('Suppression de la signature…');
+    const { error } = await sb.storage.from('oc-signatures').remove([`${userId}/signature.png`]);
+    if (error) { console.error('[signature] suppression', error); alert('Échec de la suppression : ' + error.message); return; }
+    missionInvaliderSignatureCache(cle);
+    setSaveStatus('Signature retirée');
+    renderMissionView();
+  } catch (e) { console.error('[signature] suppression', e); alert('Échec de la suppression.'); }
 }
 
 // Retour Martin (23/08/2026) : les frais partent à l'administration en fin
@@ -9712,11 +9759,20 @@ function bindEvents() {
       $('#missionSignatureFile')?.click();
       return;
     }
+    if (event.target.closest('#missionSignatureRemove')) {
+      const entity = missionEntity(); if (!entity) return;
+      const detail = ensureMissionDetail(entity);
+      missionSupprimerSignaturePour(detail.signatureInitiales || moiInitiales);
+      return;
+    }
   });
   $('#missionDocument')?.addEventListener('change', (event) => {
     if (event.target.id !== 'missionSignatureFile') return;
     const file = event.target.files?.[0];
-    if (file) missionUploaderSignature(file);
+    if (!file) return;
+    const entity = missionEntity(); if (!entity) return;
+    const detail = ensureMissionDetail(entity);
+    missionUploaderSignaturePour(detail.signatureInitiales || moiInitiales, file);
   });
   $('#missionAddDestinataire')?.addEventListener('click', () => {
     const entity = missionEntity(); if (!entity) return;
