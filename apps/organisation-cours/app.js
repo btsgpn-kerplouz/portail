@@ -1684,7 +1684,10 @@ function defaultMissionDetail(entity) {
     heureDebut: heureDebut || '', heureFin: heureFin || '',
     description: missionViewTarget.kind === 'standalone' ? '' : missionTitreEntite(entity),
     accompagnants: missionViewTarget.kind === 'standalone' ? [] : missionAccompagnantsParDefaut(entity),
-    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: false, verifPermis: false, controleFormateur: false },
+    // Retours 15/09/2026 — les 3 vérifications sont cochées par défaut (plutôt
+    // que de compter sur un cochage manuel systématique) : décocher reste
+    // possible pour le cas réel où l'une d'elles ne s'applique pas.
+    transport: { vehiculePersonnel: true, vehiculeDe: '', verifAssurance: true, verifPermis: true, controleFormateur: true },
     faitLe: new Date().toISOString().slice(0, 10),
     destinataires: missionDestinatairesMemorises(),
     // Retours 15/09/2026 — quelle signature afficher/imprimer dans « Le
