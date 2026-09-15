@@ -211,7 +211,7 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .accueil-installer[hidden]{display:none;}
 .installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
 .installer-etat[hidden]{display:none;}
-.version-appli{margin:1.2em 0 0;text-align:center;font-family:var(--mono);font-size:.72rem;color:var(--text-2);}
+.version-appli{font-family:var(--mono);white-space:nowrap;}
 .champ{margin-bottom:.9em;}
 .champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
 .ligne2{display:flex;gap:.6em;}
@@ -624,7 +624,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <rect x="27" y="10" width="9" height="18" fill="currentColor" stroke="none"/>
     </svg>
   </button>
-  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN</small></div>
+  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN · <span class="version-appli" title="Version de l'application">v<span id="version-appli"></span></span></small></div>
   <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
 </div>
 
@@ -665,7 +665,6 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <span id="btn-installer-txt">Installer l'application sur cet appareil</span>
     </button>
     <p class="installer-etat" id="installer-etat" hidden></p>
-    <p class="version-appli">Version <span id="version-appli"></span></p>
   </section>
 
   <!-- ECRAN IDENTITE DU RELEVE (page 1 du bordereau) -->
@@ -1836,7 +1835,7 @@ function ouvrirMiniFloreGlobale(){
 }
 
 /* ---------- Historique / localStorage ---------- */
-/* Numéro de version affiché sur l'accueil : permet de vérifier d'un coup d'œil
+/* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
 const VERSION_APPLI = '1.27.0';
