@@ -211,6 +211,7 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .accueil-installer[hidden]{display:none;}
 .installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
 .installer-etat[hidden]{display:none;}
+.version-appli{font-family:var(--mono);white-space:nowrap;}
 .champ{margin-bottom:.9em;}
 .champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
 .ligne2{display:flex;gap:.6em;}
@@ -623,7 +624,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <rect x="27" y="10" width="9" height="18" fill="currentColor" stroke="none"/>
     </svg>
   </button>
-  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN</small></div>
+  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN · <span class="version-appli" title="Version de l'application">v<span id="version-appli"></span></span></small></div>
   <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
 </div>
 
@@ -1834,6 +1835,10 @@ function ouvrirMiniFloreGlobale(){
 }
 
 /* ---------- Historique / localStorage ---------- */
+/* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
+   qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
+   temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
+const VERSION_APPLI = '1.27.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -3387,6 +3392,7 @@ let _minuteurMotif;
 window.addEventListener('resize', ()=>{ clearTimeout(_minuteurMotif); _minuteurMotif = setTimeout(dessinerMotifHero, 120); });
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('version-appli').textContent = VERSION_APPLI;
   majCompteurHistorique();
   dessinerMotifHero();
   const barre = document.createElement('div');
