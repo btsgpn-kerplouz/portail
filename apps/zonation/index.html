@@ -312,6 +312,12 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .analyse-liste{font-size:.82rem;line-height:1.6;margin:.6em 0 0;padding-left:1.2em;}
 .analyse-liste b{color:var(--acc-dark);}
 .analyse-note{font-size:.78rem;color:var(--text-2);font-style:italic;}
+/* Confirmation intégrée (remplace confirm(), bloqué dans certains contextes). */
+.confirm-fond{position:fixed;inset:0;z-index:100;background:rgba(25,27,22,.45);display:flex;align-items:center;justify-content:center;padding:1em;}
+.confirm-boite{background:var(--card);border-radius:var(--rayon);max-width:26em;width:100%;padding:1.1em 1.1em .9em;box-shadow:0 6px 24px rgba(25,27,22,.3);}
+.confirm-texte{white-space:pre-line;margin:0 0 1em;line-height:1.5;color:var(--ink);}
+.confirm-actions{display:flex;gap:.5em;justify-content:flex-end;flex-wrap:wrap;}
+.confirm-actions .danger{background:var(--status-invalide);border-color:var(--status-invalide);}
 .pastille-zone{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.45em;vertical-align:-.05em;border:1px solid rgba(25,27,22,.2);}
 .historique th small{font-family:var(--sans);text-transform:none;letter-spacing:0;font-weight:400;opacity:.8;}
 
@@ -780,12 +786,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <p style="font-size:.78rem;color:var(--text-2);">Tout est enregistré uniquement sur cet appareil (hors-ligne). Exportez régulièrement pour ne rien perdre.</p>
       <div id="zone-historique"></div>
       <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
-        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Tableau de synthèse (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par relevé, avec l'habitat proposé et le cortège. Pour archiver ou travailler dans un tableur.</p>
-        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export vers Phytoscope (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope par le bouton « Importer » de son écran d'accueil : chaque relevé y est ajouté sans écraser les précédents. Quelques espèces peu courantes n'ont pas d'équivalent dans son référentiel et sont écartées — la liste vous est affichée à la fin de l'export.</p>
-        <button class="secondaire" onclick="exporterCompletCSV()">⬇ Export complet (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Mêmes colonnes que l'export Phytoscope, mais <b>sans aucune espèce écartée</b> et avec l'habitat proposé et le recouvrement en pourcentage. Pour archiver la campagne et l'analyser dans un tableur — pas pour l'importer dans Phytoscope.</p>
+        <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Export complet (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par espèce pour chaque relevé, rien d'écarté. Pour archiver et travailler dans un tableur.</p>
+        <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export pour Phytoscope (CSV)</button>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : relevés regroupés par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
         <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
         <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Tableau de synthèse » ou un « Export complet » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois.</p>
@@ -831,8 +835,8 @@ let etat = {
    coup, au retour sur la flore. */
 function cleReleve(r){ return r.id || r.date || ''; }
 
-/* Un quadrat sans végétation est une donnée, pas une absence de donnée : sur la
-   slikke, le sol nu marque la limite inférieure de la végétation. Phytoscope le
+/* Un quadrat sans végétation est une donnée, pas une absence de donnée, où qu'il
+   se trouve sur le transect. Phytoscope le
    représente par le taxon d'identifiant -1 (« Sol nu », strate « Sans
    végétation ») ; on reprend sa convention pour que l'import s'y retrouve. */
 const SOL_NU = {taxonId:-1, nom:'Sol nu', strate:'Sans végétation', habitat:'Sol nu (aucune végétation)'};
@@ -1289,10 +1293,60 @@ const CARTE_ENREGISTREMENT = `<div class="carte">
    l'enregistrement. */
 function declarerSolNu(){
   if(etat.cortege.length) return;
-  if(etat.solNu){ afficherResultats(); return; }   // déjà déclaré : correction d un relevé de sol nu
-  if(!confirm('Déclarer ce quadrat entièrement sans végétation (sol nu) ?\n\nIl sera enregistré comme tel, sans proposition d\'habitat.')) return;
+  /* Pas de boîte de confirmation : l'écran suivant en tient lieu (« Enregistrer »
+     ou « Nouveau point sans enregistrer »). La boîte native confirm() est
+     bloquée dans certains contextes — application installée, navigateur
+     intégré — où elle répond « non » sans rien afficher : le bouton semblait
+     alors inerte. */
   etat.solNu = true;
   afficherResultats();
+}
+
+/* Message dans la page, en remplacement de alert() : bloquée dans les mêmes
+   contextes que confirm(), la boîte native faisait disparaître sans bruit le
+   compte rendu d'enregistrement, d'import ou d'export. Non bloquant. */
+function informer(message){
+  const fond = document.createElement('div');
+  fond.className = 'confirm-fond';
+  fond.innerHTML = `<div class="confirm-boite" role="alertdialog" aria-modal="true">
+    <p class="confirm-texte"></p>
+    <div class="confirm-actions"><button type="button">OK</button></div></div>`;
+  fond.querySelector('.confirm-texte').textContent = message;
+  const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier); };
+  const clavier = ev => { if(ev.key === 'Escape' || ev.key === 'Enter') fermer(); };
+  fond.addEventListener('click', ev => { if(ev.target === fond || ev.target.closest('button')) fermer(); });
+  document.addEventListener('keydown', clavier);
+  document.body.appendChild(fond);
+  fond.querySelector('button').focus();
+}
+
+/* Confirmation dans la page, en remplacement de confirm() pour la même raison.
+   Renvoie une promesse résolue à true (confirmé) ou false (annulé). */
+function demanderConfirmation(message, options){
+  const o = Object.assign({ok:'Confirmer', annuler:'Annuler', danger:false}, options || {});
+  return new Promise(resolve => {
+    const fond = document.createElement('div');
+    fond.className = 'confirm-fond';
+    fond.innerHTML = `<div class="confirm-boite" role="dialog" aria-modal="true">
+      <p class="confirm-texte"></p>
+      <div class="confirm-actions">
+        <button type="button" class="secondaire" data-r="0"></button>
+        <button type="button" class="${o.danger ? 'danger' : ''}" data-r="1"></button>
+      </div></div>`;
+    fond.querySelector('.confirm-texte').textContent = message;
+    fond.querySelector('[data-r="0"]').textContent = o.annuler;
+    fond.querySelector('[data-r="1"]').textContent = o.ok;
+    const fermer = r => { fond.remove(); document.removeEventListener('keydown', clavier); resolve(r); };
+    const clavier = ev => { if(ev.key === 'Escape') fermer(false); };
+    fond.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-r]');
+      if(b) fermer(b.dataset.r === '1');
+      else if(ev.target === fond) fermer(false);
+    });
+    document.addEventListener('keydown', clavier);
+    document.body.appendChild(fond);
+    fond.querySelector('[data-r="1"]').focus();
+  });
 }
 
 function afficherResultats(){
@@ -1303,7 +1357,6 @@ function afficherResultats(){
       <div class="etiquette-top">Quadrat sans végétation</div>
       <div class="resultat-entete"><div><h3>${SOL_NU.habitat}</h3>
         <div class="syntaxon">Aucune espèce dans le quadrat : recouvrement végétal nul.</div></div></div>
-      <div class="qualificatif qualificatif-nul">Le sol nu est une donnée de terrain : il marque la limite inférieure de la végétation sur la slikke.</div>
     </div>` + CARTE_ENREGISTREMENT;
     etat.dernierResultat = null;
     allerA('resultats');
@@ -1890,8 +1943,8 @@ function choisirTransect(index){
   resetReleve();
   majEcranIdentite();
 }
-function commencerTransect(nom){
-  if(!confirm(`Commencer le transect ${nom} ?\n\nÀ ne faire que pour une nouvelle ligne de relevés, pas pour un nouveau quadrat sur la ligne en cours.`)) return;
+async function commencerTransect(nom){
+  if(!await demanderConfirmation(`Commencer le transect ${nom} ?\n\nÀ ne faire que pour une nouvelle ligne de relevés, pas pour un nouveau quadrat sur la ligne en cours.`, {ok:`Commencer le transect ${nom}`})) return;
   definirTransectActif(nom);
   fermerChoixTransect();
   resetReleve();
@@ -2036,14 +2089,14 @@ function enregistrerReleve(){
 
   if(correction){
     const change = ancien.top !== enregistre.top;
-    alert(`Relevé n°${enregistre.numero} corrigé (transect ${enregistre.transect}).`
+    informer(`Relevé n°${enregistre.numero} corrigé (transect ${enregistre.transect}).`
       + (change ? `\n\nL'habitat proposé a changé :\n· avant : ${ancien.top}\n· après : ${enregistre.top}`
                 : `\n\nHabitat proposé inchangé : ${enregistre.top}`));
     resetReleve();
     allerA('historique');
     return;
   }
-  alert(`Relevé n°${enregistre.numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
+  informer(`Relevé n°${enregistre.numero} enregistré (transect ${transect}). Vous pouvez passer au point suivant.`);
   nouveauPoint();
 }
 
@@ -2052,7 +2105,7 @@ function enregistrerReleve(){
    nouveau. Cas d'usage principal : une espèce redéterminée au retour du terrain. */
 function modifierReleve(cle){
   const r = chargerHistorique().find(x => cleReleve(x) === cle);
-  if(!r){ alert('Ce relevé n\'a pas été retrouvé.'); return; }
+  if(!r){ informer('Ce relevé n\'a pas été retrouvé.'); return; }
   resetReleve();
   etat.edition = cle;
   etat.solNu = !!r.solNu;
@@ -2675,7 +2728,7 @@ function ligneEspeceAnalyse(e){
 
 function exporterProfilTransect(nomTransect){
   const svg = construireProfilTransectSVG(nomTransect);
-  if(!svg){ alert('Il faut au moins deux relevés avec une distance renseignée pour tracer un profil.'); return; }
+  if(!svg){ informer('Il faut au moins deux relevés avec une distance renseignée pour tracer un profil.'); return; }
   telechargerTexte(svg, `profil_transect_${String(nomTransect).replace(/[^\w-]+/g,'_')}.svg`, 'image/svg+xml');
 }
 
@@ -2741,9 +2794,9 @@ function importerFichierCSV(input){
   const lecteur = new FileReader();
   lecteur.onload = () => {
     try { appliquerImportCSV(lecteur.result, fichier.name); }
-    catch(e){ alert('Import impossible : ' + e.message); }
+    catch(e){ informer('Import impossible : ' + e.message); }
   };
-  lecteur.onerror = () => alert('Lecture du fichier impossible.');
+  lecteur.onerror = () => informer('Lecture du fichier impossible.');
   lecteur.readAsText(fichier, 'utf-8');
 }
 
@@ -2868,11 +2921,11 @@ function appliquerImportCSV(texte, nomFichier){
       + (avertissements.length > apercu.length ? `\n· … et ${avertissements.length - apercu.length} autre(s)` : '');
   }
   msg += '\n\nL\'habitat a été recalculé avec le référentiel de cette version de l\'appli.';
-  alert(msg);
+  informer(msg);
 }
 
-function viderHistorique(){
-  if(confirm('Effacer tous les relevés enregistrés sur cet appareil ?')){
+async function viderHistorique(){
+  if(await demanderConfirmation('Effacer tous les relevés enregistrés sur cet appareil ?\n\nPensez à exporter avant : cette action est définitive.', {ok:'Tout effacer', danger:true})){
     localStorage.removeItem(CLE_HISTORIQUE);
     localStorage.removeItem(CLE_TRANSECT_ACTIF);
     afficherHistorique();
@@ -2972,20 +3025,25 @@ function enteteRelevePhytoscope(r, releveId){
 function exporterHistoriqueCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
+  /* Fichier complet unique (l'ancien « export complet » à la disposition de
+     PhytoScope faisait doublon) : zone et n° de fiche ajoutés, pour trier et
+     croiser les milieux entre eux dans un tableur. */
   const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
     'Espèce','Nom scientifique','Coefficient','Recouvrement médian (%)',
-    'Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
+    'Zone','Fiche','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
   const lignes = [entetes];
   liste.forEach(r=>{
     const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
       r.observateur||'', r.site||'', r.commune||''];
-    const analyse = [r.top||'', r.carMatch||'', r.score ?? '', (r.observation||'').trim(), r.date||''];
+    const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const analyse = [z ? z.zone : '', r.topFiche ?? '', r.top||'', r.carMatch||'', r.score ?? '',
+      (r.observation||'').trim(), r.date||''];
     observationsDuReleve(r).forEach(o=>{
       lignes.push([...bordereau, o.fr, o.latin, o.coefficient, o.pct, ...analyse]);
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres.csv');
+    'releves_petite_mer_de_gavres_complet.csv');
 }
 
 /* ---------- Export compatible Phytoscope ----------
@@ -3031,44 +3089,12 @@ function exporterPourPhytoscopeCSV(){
       + [...omises].map(n => '· ' + n).join('\n'));
     if(libres.size) bloc.push('Saisies au clavier, sans nom scientifique :\n'
       + [...libres].map(n => '· ' + n).join('\n'));
-    alert('Export terminé.\n\nCes espèces ne figurent pas dans le fichier :\n\n'
+    informer('Export terminé.\n\nCes espèces ne figurent pas dans le fichier :\n\n'
       + bloc.join('\n\n')
       + '\n\nElles restent enregistrées dans vos relevés et présentes dans le tableau de synthèse.');
   }
 }
 
-/* ---------- Export complet, disposition PhytoScope ----------
-   Même colonnes que l'export ci-dessus, mais SANS aucun filtrage : toutes les
-   espèces saisies y figurent, y compris celles sans équivalent BaseFlor
-   (Salicorne indéterminée, Agrostide hybride) et celles tapées au clavier —
-   « taxon_id » reste alors vide. S'y ajoutent l'habitat proposé pour le relevé
-   et le recouvrement en pourcentage.
-
-   Ce fichier n'est pas destiné à l'import dans PhytoScope, qui rejetterait les
-   lignes sans taxon reconnu : c'est l'enregistrement fidèle et complet de la
-   campagne, pour archivage et analyse. */
-function exporterCompletCSV(){
-  const liste = chargerHistorique();
-  if(!liste.length) return;
-  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation",
-    "coordonnees_gps","surface","taxon_id","nom_scientifique","nom_francais","strate",
-    "mode_recouvrement","recouvrement_saisi","recouvrement_median_pct",
-    "habitat_potentiel","especes_caracteristiques","indice_global_pct","distance_m","remarque"];
-  const lignes = [entetes];
-  liste.forEach(r=>{
-    const entete = enteteRelevePhytoscope(r, idPhytoscope());
-    const analyse = [r.top || '', r.carMatch || '', r.score ?? '', r.distance ?? '',
-      (r.observation || '').trim()];
-    observationsDuReleve(r).forEach(o=>{
-      lignes.push([...entete,
-        o.taxonId ?? '', o.latin, o.fr, o.strate,
-        o.mode, o.cover, o.pct,
-        ...analyse]);
-    });
-  });
-  telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres_complet.csv');
-}
 
 /* Barre d'action fixe, adaptée à l'étape du bordereau en cours. */
 /* ---- Motif de fond du bandeau d'accueil ----
@@ -3179,10 +3205,10 @@ const ACTIONS_PAR_ECRAN = {
 
 /* Filet de sécurité : une espèce choisie et cotée mais pas encore ajoutée serait
    perdue silencieusement. On la signale plutôt que de l'ignorer. */
-function analyserDepuisBarre(){
+async function analyserDepuisBarre(){
   const e = etat.especeEnCours;
   if(e && etat.coefCourant){
-    const ok = confirm(`« ${e.fr} » (coefficient ${etat.coefCourant}) n'a pas encore été ajoutée au relevé.\n\nOK : l'ajouter puis analyser.\nAnnuler : revenir à la saisie.`);
+    const ok = await demanderConfirmation(`« ${e.fr} » (coefficient ${etat.coefCourant}) n'a pas encore été ajoutée au relevé.`, {ok:'L\'ajouter puis analyser', annuler:'Revenir à la saisie'});
     if(!ok) return;
     ajouterAuCortege();
   }
