@@ -373,7 +373,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .illustration-numero label{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
 .illustration-numero .illustration-ligne{align-items:center}
 .illustration-numero input{font-family:var(--af-police);font-size:13px;padding:7px 9px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant);min-width:260px}
-.illustration-apercu-mini{flex:none;width:64px;height:48px;object-fit:cover;border:1px solid var(--af-filet-fort)}
+.cadrage-numero{margin-top:4px}
+.cadrage-zone{position:relative;width:100%;max-width:220px;aspect-ratio:3/4;background-size:cover;background-repeat:no-repeat;border:1px solid var(--af-filet-fort);cursor:crosshair}
+.cadrage-repere{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid var(--af-sur-accent);background:rgba(26,22,17,.35);box-shadow:0 0 0 1px rgba(26,22,17,.6);pointer-events:none}
+.cadrage-aide{margin:5px 0 0;font-size:11px;color:var(--af-encre-3)}
 .modal-boutons{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--af-filet)}
 .modal-boutons-droite{display:flex;gap:10px;margin-left:auto}
 .btn-texte{font-family:var(--af-police-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--af-filet-fort);color:var(--af-encre-2)}
@@ -1016,14 +1019,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return {
       numero: n.numero, statut: n.statut, mois: n.mois, semaine: n.semaine, titre: n.titre,
       chapo: n.chapo, candidates: n.candidates, collecte: n.collecte || null, moisson: n.moisson || null,
-      image_url: n.imageUrl || null, date_publication: n.datePublication || null
+      image_url: n.imageUrl || null, date_publication: n.datePublication || null,
+      image_position: n.imagePosition || "50% 50%"
     };
   }
   function depuisLigneNumero(r, entreesDuNumero){
     return {
       numero: r.numero, statut: r.statut, mois: r.mois, semaine: r.semaine, titre: r.titre,
       chapo: r.chapo, candidates: r.candidates, collecte: r.collecte, moisson: r.moisson,
-      vues: r.vues, entrees: entreesDuNumero, imageUrl: r.image_url, datePublication: r.date_publication
+      vues: r.vues, entrees: entreesDuNumero, imageUrl: r.image_url, datePublication: r.date_publication,
+      imagePosition: r.image_position || "50% 50%"
     };
   }
   function versLigneSource(s){
@@ -1871,14 +1876,34 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // extraire une og:image, contrairement à une entrée qui a sa propre
   // source. Pour reprendre l'image d'une entrée déjà illustrée, la copier
   // depuis son propre champ (formulaire de l'entrée) et la coller ici.
+  //
+  // Cadrage manuel (Lot 29, 15/09/2026) : la tuile Sommaire recadre la photo
+  // au centre par défaut (object-fit:cover), ce qui tombe mal sur certaines
+  // photos en desktop (colonne étroite et haute — le mobile laisse plus de
+  // marge, entrées masquées). L'aperçu ci-dessous EST le contrôle : cliquer
+  // dessus déplace le point focal, enregistré aussitôt (pas de bouton
+  // Valider séparé, comme le reste de la rédaction). Rendu en
+  // background-image/-position plutôt qu'un <img> + object-position : calcul
+  // du point cliqué identique des deux côtés, mais évite de dupliquer le
+  // markup image/repère.
   function renderChampIllustrationNumero(){
     var v = numero.imageUrl || "";
+    var pos = numero.imagePosition || "50% 50%";
+    var xy = pos.split(" ");
+    var px = parseFloat(xy[0]) || 50, py = parseFloat(xy[1]) || 50;
     return '<div class="illustration-numero">' +
       '<label for="champ-image-numero">Illustration du numéro (tuile Sommaire, facultative)</label>' +
       '<div class="illustration-ligne">' +
         '<input id="champ-image-numero" type="text" value="' + esc(v) + '" placeholder="Coller une adresse d\'image…">' +
-        (v ? '<img class="illustration-apercu-mini" src="' + esc(v) + '" alt="">' : "") +
       '</div>' +
+      (v ? '<div class="cadrage-numero">' +
+        '<div class="cadrage-zone" data-action="cadrage-numero" style="background-image:url(\'' + esc(v) + '\');background-position:' + esc(pos) + '" title="Cliquer pour cadrer">' +
+          '<span class="cadrage-repere" style="left:' + px + '%;top:' + py + '%"></span>' +
+        '</div>' +
+        '<p class="aide cadrage-aide">Cliquer sur l\'aperçu pour cadrer la tuile Sommaire (surtout utile en desktop)' +
+          (pos !== "50% 50%" ? ' · <button type="button" class="lien-action" data-action="recentrer-cadrage-numero">Recentrer</button>' : '') +
+        '</p>' +
+      '</div>' : "") +
     '</div>';
   }
 
@@ -2052,7 +2077,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // — vérifié). Cette tuile est de toute façon quasi toujours au-dessus
     // de la ligne de flottaison (c'est LE visuel de tête du Sommaire) :
     // le différer n'apporte rien, au prix de ce risque d'espace vide.
-    var image = n.imageUrl ? '<img class="nc-image" src="' + esc(n.imageUrl) + '" alt="">' : "";
+    var image = n.imageUrl ? '<img class="nc-image" src="' + esc(n.imageUrl) + '" alt="" style="object-position:' + esc(n.imagePosition || "50% 50%") + '">' : "";
     // Tuile entièrement cliquable (Lot 16, retour d'usage : « on retire
     // l'espace à droite avec le compteur d'actualités ») : un seul geste
     // pour ouvrir le numéro, plus de bouton dédié séparé — <button> plutôt
@@ -3147,6 +3172,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var illustrationsMasseBtn = ev.target.closest('[data-action="recuperer-illustrations-manquantes"]');
     if (illustrationsMasseBtn) { recupererIllustrationsManquantes(illustrationsMasseBtn); return; }
 
+    // Cadrage manuel de l'illustration du numéro (Lot 29) : l'aperçu est
+    // lui-même le contrôle, cliquer dessus déplace le point focal.
+    var cadrageZone = ev.target.closest('[data-action="cadrage-numero"]');
+    if (cadrageZone) {
+      var rectCadrage = cadrageZone.getBoundingClientRect();
+      var px2 = Math.round(Math.min(100, Math.max(0, (ev.clientX - rectCadrage.left) / rectCadrage.width * 100)));
+      var py2 = Math.round(Math.min(100, Math.max(0, (ev.clientY - rectCadrage.top) / rectCadrage.height * 100)));
+      numero.imagePosition = px2 + "% " + py2 + "%";
+      render();
+      ecrireNumero({ image_position: numero.imagePosition });
+      return;
+    }
+    if (ev.target.closest('[data-action="recentrer-cadrage-numero"]')) {
+      numero.imagePosition = "50% 50%";
+      render();
+      ecrireNumero({ image_position: numero.imagePosition });
+      return;
+    }
+
     // ---- lot 4 : impression ----
     if (ev.target.closest('[data-action="imprimer"]')) { numeroImprimer(); return; }
 
@@ -3442,7 +3486,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var v = ev.target.value.trim();
     if (v === (numero.imageUrl || "")) return;
     numero.imageUrl = v || null;
-    ecrireNumero({ image_url: numero.imageUrl });
+    // Nouvelle image = cadrage repris à zéro (Lot 29) : le point focal
+    // choisi pour l'ancienne photo n'a aucune raison de convenir à la
+    // nouvelle.
+    numero.imagePosition = "50% 50%";
+    ecrireNumero({ image_url: numero.imageUrl, image_position: numero.imagePosition });
     render();
   });
 
