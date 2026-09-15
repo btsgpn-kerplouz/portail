@@ -288,6 +288,18 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
 .zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
 .analyse-diagramme .barre-espece{cursor:help;}
+/* Liste des transects à analyser */
+.carte-analyse{position:relative;display:block;width:100%;text-align:left;margin:.6em 0 0;padding:.75em 2.4em .8em .9em;
+  background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:var(--rayon);cursor:pointer;font-family:var(--sans);}
+.carte-analyse:hover:not(:disabled){border-color:var(--acc);}
+.carte-analyse:disabled{cursor:default;opacity:.65;}
+.carte-analyse-titre{display:block;font-family:var(--serif);font-size:.98rem;}
+.carte-analyse-infos{display:block;font-family:var(--mono);font-size:.72rem;color:var(--text-2);margin-top:.2em;}
+.carte-analyse-go{position:absolute;right:.9em;top:50%;transform:translateY(-50%);color:var(--acc);font-size:1.1rem;}
+.frise-zones{position:relative;display:block;height:.55em;margin-top:.55em;background:#f3f1ea;border-radius:2px;overflow:hidden;}
+.frise-zones span{position:absolute;top:0;bottom:0;}
+.note-import-analyses{font-size:.75rem;color:var(--text-2);margin:1em 0 0;}
+.note-import-analyses a{color:var(--acc);cursor:pointer;text-decoration:underline;}
 .bulle-diagramme{
   position:absolute;z-index:5;pointer-events:none;max-width:16em;
   background:var(--ink);color:#f4f2ec;border-radius:var(--rayon-petit);
@@ -643,6 +655,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
     </button>
+    <button class="accueil-bouton secondaire2" onclick="allerA('analyses')">
+      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="7" width="30" height="26"></rect><line x1="9" y1="13" x2="19" y2="13" stroke-width="2.6"></line><line x1="15" y1="19" x2="27" y2="19" stroke-width="4"></line><line x1="23" y1="25" x2="31" y2="25" stroke-width="2.6"></line><line x1="17" y1="7" x2="17" y2="33" stroke-dasharray="2.5 2.5" stroke-width="1"></line></svg></span>
+      <span class="txt"><b>Analyser un transect</b><span id="compteur-analyses-txt">Zonation, points de vigilance, richesse</span></span>
+    </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
       <span id="btn-installer-txt">Installer l'application sur cet appareil</span>
@@ -808,8 +824,19 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
   <!-- ANALYSE D'UN TRANSECT : le diagramme et sa lecture, dans l'appli. Le SVG
        reste téléchargeable depuis cet écran pour être annoté ailleurs. -->
+  <!-- LISTE DES TRANSECTS À ANALYSER (accès direct depuis l'accueil) -->
+  <section class="ecran" id="ecran-analyses">
+    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <div class="carte">
+      <h2>Analyser un transect</h2>
+      <p style="font-size:.78rem;color:var(--text-2);">Choisissez un transect : diagramme de la zonation, points de vigilance et richesse spécifique. Plus lisible sur ordinateur.</p>
+      <div id="zone-analyses"></div>
+      <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
+    </div>
+  </section>
+
   <section class="ecran" id="ecran-analyse">
-    <a class="retour-lien" onclick="allerA('historique')">← Mes transects</a>
+    <a class="retour-lien" id="lien-retour-analyse" onclick="allerA(origineAnalyse)">← Analyser un transect</a>
     <div id="zone-analyse"></div>
   </section>
 
@@ -936,7 +963,7 @@ function allerA(nom){
     accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect"
+    analyse:"Analyse du transect", analyses:"Analyser un transect"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -949,6 +976,7 @@ function allerA(nom){
   }
   if(nom==='fiches') construireEcranFiches();
   if(nom==='historique') afficherHistorique();
+  if(nom==='analyses') afficherListeAnalyses();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
   document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
   if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); activerDiagrammeInteractif(); }
@@ -1817,6 +1845,9 @@ function sauverHistorique(liste){
 function majCompteurHistorique(){
   const n = chargerHistorique().length;
   document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
+  const nt = new Set(chargerHistorique().map(r => r.transect || 'Transect (sans nom)')).size;
+  document.getElementById('compteur-analyses-txt').textContent =
+    nt ? `${nt} transect${nt > 1 ? 's' : ''} · zonation, points de vigilance, richesse` : 'Zonation, points de vigilance, richesse';
 }
 /* ---------- Bordereau de terrain : identité du relevé ----------
    Chaque relevé appartient à un transect (une sortie terrain). La numérotation
@@ -2177,7 +2208,7 @@ function afficherHistorique(){
       ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
     </tbody></table>
     <div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;">
-      <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}')">Analyser ce transect →</button>
+      <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}', 'historique')">Analyser ce transect →</button>
       ${!actif ? `<button class="discret" onclick="reprendreTransect('${nom.replace(/'/g,"\\'")}')">↻ Reprendre ce transect</button>` : ''}
     </div>
   `;
@@ -2396,10 +2427,61 @@ function construireProfilTransectSVG(nomTransect, options){
    C'est la remarque de terrain qui départage, et elle est reprise à côté du
    point signalé. */
 let analyseTransectCourant = null;
+/* L'analyse s'ouvre depuis l'accueil (liste des transects) ou depuis Mes
+   transects : le lien de retour ramène là d'où l'on vient. */
+let origineAnalyse = 'analyses';
 
-function ouvrirAnalyseTransect(nom){
+function ouvrirAnalyseTransect(nom, origine){
   analyseTransectCourant = nom;
+  origineAnalyse = origine === 'historique' ? 'historique' : 'analyses';
+  document.getElementById('lien-retour-analyse').textContent =
+    origineAnalyse === 'historique' ? '← Mes transects' : '← Analyser un transect';
   allerA('analyse');
+}
+
+/* Liste des transects de l'appareil, chacun avec une frise des zones traversées
+   (mêmes couleurs que le diagramme) pour les reconnaître d'un coup d'œil. */
+function afficherListeAnalyses(){
+  const zone = document.getElementById('zone-analyses');
+  const groupes = new Map();
+  chargerHistorique().forEach(r => {
+    const t = r.transect || 'Transect (sans nom)';
+    if(!groupes.has(t)) groupes.set(t, []);
+    groupes.get(t).push(r);
+  });
+  if(!groupes.size){
+    zone.innerHTML = `<p class="vide-msg">Aucun transect sur cet appareil. Saisissez des relevés, ou importez le fichier d'un groupe dans Mes transects.</p>`;
+    return;
+  }
+  const nomActif = nomTransectActif();
+  zone.innerHTML = [...groupes.entries()].map(([nom, tous]) => {
+    const rs = tous.filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+      .map(r => ({...r, d: Number(r.distance)})).sort((a, b) => a.d - b.d);
+    const r0 = tous[0];
+    const infos = [`${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
+    if(rs.length) infos.push(`${rs[0].d} → ${rs[rs.length-1].d} m`);
+    if(r0.observateur) infos.push(echapHTML(r0.observateur));
+    if(r0.dateReleve) infos.push(r0.dateReleve.split('-').reverse().join('/'));
+    const possible = rs.length >= 2;
+    let frise = '';
+    if(possible){
+      const dMin = rs[0].d, etendue = Math.max(1, rs[rs.length-1].d - dMin);
+      // chaque relevé colore la moitié de l'intervalle qui le sépare de ses voisins
+      frise = rs.map((r, i) => {
+        const a = i ? (r.d + rs[i-1].d) / 2 : dMin;
+        const b = i < rs.length - 1 ? (r.d + rs[i+1].d) / 2 : rs[rs.length-1].d;
+        const z = r.solNu ? {rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+        return `<span style="left:${((a-dMin)/etendue*100).toFixed(2)}%;width:${Math.max(.3,(b-a)/etendue*100).toFixed(2)}%;background:${teinteZone(z ? z.rang : null)}"></span>`;
+      }).join('');
+    }
+    const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`;
+    return `<button type="button" class="carte-analyse"${possible ? ` onclick="ouvrirAnalyseTransect(${cible.replace(/"/g,'&quot;')})"` : ' disabled'}>
+      <span class="carte-analyse-titre"><b>Transect ${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}</span>
+      <span class="carte-analyse-infos">${infos.join(' · ')}</span>
+      ${possible ? `<span class="frise-zones" aria-hidden="true">${frise}</span>` : `<span class="carte-analyse-infos">Il faut au moins deux relevés avec une distance.</span>`}
+      ${possible ? '<span class="carte-analyse-go" aria-hidden="true">→</span>' : ''}
+    </button>`;
+  }).join('');
 }
 
 /* ---------- Diagrammes de l'analyse ----------
