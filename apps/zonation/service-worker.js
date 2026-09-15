@@ -7,7 +7,9 @@
    Même stratégie que PhytoScope : réseau d'abord pour la page (afin de recevoir
    les mises à jour), cache d'abord pour les ressources, qui ne changent qu'avec
    une nouvelle version du cache. */
-const CACHE_NAME = "zonation-pwa-v1-26-0";
+/* Même numéro que VERSION_APPLI dans index.html, affiché sur l'accueil. */
+const VERSION = "1.26.0";
+const CACHE_NAME = "zonation-pwa-v" + VERSION.replace(/\./g, "-");
 
 const VIGNETTES_BB = ["i", "r", "+", "1", "2", "3", "4", "5"];
 const DISPOSITIONS = ["agregee", "eclatee", "mixte"];
