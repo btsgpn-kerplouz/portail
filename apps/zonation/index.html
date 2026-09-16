@@ -869,9 +869,9 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran" id="ecran-fiches">
     <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
     <div class="carte">
-      <h2>La zonation, de la vasière à la dune</h2>
+      <h2 id="titre-zonation">La zonation, de la vasière à la dune</h2>
       <svg class="zonation-diagram" id="svg-zonation" viewBox="0 0 600 224" xmlns="http://www.w3.org/2000/svg"></svg>
-      <p style="font-size:.8rem;color:var(--text-2);">D'après les profils de végétation relevés sur le site (Fig. 6, COLASSE 2019). L'ordre réel varie localement selon la topographie.</p>
+      <p style="font-size:.8rem;color:var(--text-2);" id="note-zonation"></p>
     </div>
     <div class="filtre-groupe" id="filtre-zonation"></div>
     <div id="liste-fiches"></div>
@@ -1653,11 +1653,33 @@ function decouperEnLignes(texte, maxLen){
 
 function idAttr(id){ return typeof id === 'string' ? `'${id}'` : id; }
 
-const GRANDS_ENSEMBLES = [
-  { nom:'Slikke', debut:0, fin:2, couleur:'#3c6e8a' },
-  { nom:'Schorre', debut:2, fin:6, couleur:'#3f7a3a' },
-  { nom:'Contact dune', debut:6, fin:7, couleur:'#6b4f82' }
-];
+const GRANDS_ENSEMBLES_MILIEU = {
+  marais: [
+    { nom:'Slikke', debut:0, fin:2, couleur:'#3c6e8a' },
+    { nom:'Schorre', debut:2, fin:6, couleur:'#3f7a3a' },
+    { nom:'Contact dune', debut:6, fin:7, couleur:'#6b4f82' }
+  ],
+  dunes: [
+    { nom:'Plage', debut:0, fin:1, couleur:'#3c6e8a' },
+    { nom:'Dunes mobiles', debut:1, fin:4, couleur:'#3f7a3a' },
+    { nom:'Dunes fixées', debut:4, fin:6, couleur:'#6b7a2f' },
+    { nom:'Fourrés', debut:6, fin:7, couleur:'#6b4f82' },
+    { nom:'Anthropique', debut:7, fin:8, couleur:'#8a8676' }
+  ]
+};
+const grandsEnsembles = () => GRANDS_ENSEMBLES_MILIEU[milieuActif] || [];
+
+/* Libellés raccourcis pour les cases du profil : à huit zones, une case fait
+   75 px et « Milieux anthropiques » débordait sur ses voisines. */
+const ZONE_LIBELLE_COURT = {
+  'Dune embryonnaire': 'Dune embryo.',
+  'Dune semi-fixée': 'Dune semi-fixée',
+  'Dune fixée, prairies': 'Prairies',
+  'Fourrés et boisements': 'Fourrés, bois',
+  'Milieux anthropiques': 'Friches, chemins',
+  'Contact schorre/dune': 'Contact dune'
+};
+const libelleZoneCourt = z => ZONE_LIBELLE_COURT[z] || z;
 
 /* Chemin du sol (trait redistribué à 7 largeurs égales, Fig. 6 COLASSE 2019),
    copié tel quel du handoff de design documents/Profil de marais salés/ —
@@ -1669,6 +1691,68 @@ const GRANDS_ENSEMBLES = [
    le tracé doit changer, régénérer depuis la source du handoff. */
 const PROFIL_SOL_D = "M 0 269.7 L 20 269.7 L 40 268.3 L 60 264.2 L 80 259.2 L 100 256.4 L 120 253.8 L 140 252.7 L 160 250.7 L 180 250.0 L 200 247.9 L 220 244.8 L 240 242.7 L 260 242.0 L 280 239.9 L 300 237.9 L 320 235.6 L 340 233.6 L 360 229.9 L 380 227.3 L 400 224.9 L 420 221.7 L 440 219.6 L 460 215.7 L 480 210.1 L 500 203.5 L 520 197.8 L 540 195.8 L 560 197.6 L 580 193.3 L 600 190.8 L 620 189.4 L 640 188.9 L 660 189.2 L 680 189.7 L 700 189.8 L 720 189.6 L 740 188.7 L 760 186.5 L 780 185.6 L 800 184.3 L 820 181.7 L 840 180.9 L 860 180.8 L 880 181.2 L 900 182.0 L 920 181.7 L 940 181.7 L 960 180.8 L 980 180.4 L 1000 178.7 L 1020 177.9 L 1040 177.7 L 1060 176.5 L 1080 177.0 L 1100 175.6 L 1120 174.5 L 1140 174.6 L 1160 170.8 L 1180 169.3 L 1200 166.4 L 1220 164.7 L 1240 162.4 L 1260 156.8 L 1280 154.1 L 1300 150.8 L 1320 149.1 L 1340 148.5 L 1360 146.7 L 1380 146.2 L 1400 146.1 L 1420 145.7 L 1440 145.7 L 1460 143.7 L 1480 142.5 L 1500 141.2 L 1520 139.6 L 1540 137.7 L 1560 135.3 L 1580 133.7 L 1600 131.4 L 1600 300 L 0 300 Z";
 
+/* Profil type dunaire, dans le même repère source (1600 × 300) que le profil de
+   marais : plage basse, dune embryonnaire, crête de dune blanche, revers
+   semi-fixé, plateau de dune grise, prairies puis fourrés. Le document ne
+   publiant pas de profil, ce dessin illustre la SÉQUENCE des zones, pas un
+   relief mesuré — la légende sous le schéma le dit. */
+const DUNES_NIVEAUX = {
+  'Haut de plage': 34, 'Dune embryonnaire': 62, 'Dune blanche': 150,
+  'Dune semi-fixée': 112, 'Dune grise': 100, 'Dune fixée, prairies': 92,
+  'Fourrés et boisements': 96, 'Milieux anthropiques': 88
+};
+/* Végétation typique d'une zone : port du dessin, hauteur (unités source) et
+   nombre de silhouettes par zone. */
+const DUNES_VEGETATION = {
+  'Haut de plage': [['herbe', 20, 3], ['tapis', 14, 2]],
+  'Dune embryonnaire': [['graminee-epi', 42, 3], ['rampant', 16, 2]],
+  'Dune blanche': [['graminee-epi', 72, 4], ['hampe-boule', 40, 1]],
+  'Dune semi-fixée': [['graminee', 46, 3], ['tapis', 16, 2]],
+  'Dune grise': [['coussin', 34, 2], ['tapis', 14, 3], ['buisson', 36, 1]],
+  'Dune fixée, prairies': [['graminee-epi', 50, 3], ['hampe-boule', 34, 1]],
+  'Fourrés et boisements': [['arbuste', 105, 2], ['buisson', 60, 1]],
+  'Milieux anthropiques': [['hampe-corymbe', 56, 2], ['graminee-epi', 40, 1]]
+};
+function solDunesSVG(n){
+  const pas = 1600 / n;
+  const zones = PROFIL_ACTIF.map(z => z.zone);
+  const yDe = zone => 300 - (DUNES_NIVEAUX[zone] || 90) - 30;   // 30 = marge basse
+  // ligne de sol : un point par bord de zone, lissée en courbes
+  const pts = [[0, yDe(zones[0])]];
+  zones.forEach((z, i) => pts.push([i * pas + pas / 2, yDe(z)]));
+  pts.push([1600, yDe(zones[zones.length - 1])]);
+  let d = `M ${pts[0][0]} ${pts[0][1].toFixed(1)}`;
+  for(let i = 1; i < pts.length; i++){
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    d += ` C ${((x0 + x1) / 2).toFixed(1)} ${y0.toFixed(1)}, ${((x0 + x1) / 2).toFixed(1)} ${y1.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  const dFerme = d + ` L 1600 300 L 0 300 Z`;
+  const solY = x => {
+    let i = 1; while(i < pts.length - 1 && pts[i][0] < x) i++;
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const t = (x - x0) / Math.max(1, x1 - x0);
+    return y0 + (y1 - y0) * (t * t * (3 - 2 * t));      // même adoucissement que la courbe
+  };
+  // végétation : silhouettes du profil de transect, à l'échelle du repère source
+  let veg = '';
+  if(typeof PICTOS === 'function' || typeof PICTOS === 'object'){
+    zones.forEach((z, i) => {
+      (DUNES_VEGETATION[z] || []).forEach(([port, h, nb], j) => {
+        for(let k = 0; k < nb; k++){
+          const x = i * pas + pas * ((k + 0.5 + j * 0.25) / (nb + j * 0.25));
+          const R = aleaGraine(graineTexte(`profil|${z}|${port}|${k}`));
+          veg += (PICTOS[port] || PICTOS.herbe)(x, solY(x) + 2, h * (0.85 + R() * 0.3), R, undefined, 1);
+        }
+      });
+    });
+  }
+  return {
+    d: dFerme, mer: pas * 0.92, niveau: yDe(zones[0]) + 16,
+    vegetation: `<path d="${dFerme}" fill="#efe9d8"/><path d="${d}" fill="none" stroke="#a89c7c" stroke-width="3"/>`
+      + `<g fill="none" stroke="#191b16" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${veg}</g>`
+  };
+}
+
 function construireProfilSVG(svgId, opts){
   opts = opts || {};
   const svg = document.getElementById(svgId);
@@ -1677,7 +1761,7 @@ function construireProfilSVG(svgId, opts){
   const w = 600/n;
   let html = '';
   // Bande des grands ensembles (Slikke / Schorre / Contact dune)
-  GRANDS_ENSEMBLES.forEach(g=>{
+  grandsEnsembles().forEach(g=>{
     const x0 = g.debut*w, x1 = g.fin*w;
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="17" fill="${g.couleur}" opacity="0.13"/>
@@ -1696,16 +1780,23 @@ function construireProfilSVG(svgId, opts){
   // la même couleur de base sous deux nuances différentes.
   const zoneWSrc = 1600/n;
   const zoneRectsProfil = PROFIL_ACTIF.map((z,i)=>`<rect x="${i*zoneWSrc}" y="0" width="${zoneWSrc}" height="300" fill="${ZONES_LINES_COULEURS[i]}" opacity="${opts.zoneSelectionnee===i?0.95:0.7}"/>`).join('');
+  /* Le marais dispose du profil publié (Fig. 6 COLASSE 2019) redessiné en
+     illustration. Le document dunaire n'en publie aucun : le profil dunaire est
+     donc construit ici, sol et végétation, à partir de la séquence des zones —
+     et les dessins sont ceux du profil de transect (profil-dessine.js), pour
+     que l'oyat ou l'immortelle aient la même silhouette d'un écran à l'autre. */
+  const sol = milieuActif === 'dunes' ? solDunesSVG(n) : {d: PROFIL_SOL_D, mer: 1148, niveau: 174.5, vegetation: ''};
   html += `<g style="pointer-events:none" transform="translate(0,22) scale(0.375,0.40566037736) translate(0,-88)">
-    <defs><clipPath id="soil7-${svgId}"><path d="${PROFIL_SOL_D}"/></clipPath></defs>
-    <rect x="0" y="174.5" width="1148" height="126" fill="#cfe1ec" opacity="0.6"/>
-    <path d="M0 174.5 H1148" stroke="#8fb4ca" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9"/>
+    <defs><clipPath id="soil7-${svgId}"><path d="${sol.d}"/></clipPath></defs>
+    <rect x="0" y="${sol.niveau}" width="${sol.mer}" height="${300 - sol.niveau}" fill="#cfe1ec" opacity="0.6"/>
+    <path d="M0 ${sol.niveau} H${sol.mer}" stroke="#8fb4ca" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9"/>
     <g clip-path="url(#soil7-${svgId})">${zoneRectsProfil}</g>
-    <image href="documents/profil-vasiere-dune.png" x="0" y="43.2" width="1600" height="239.01" preserveAspectRatio="none"/>
+    ${milieuActif === 'dunes' ? sol.vegetation
+      : `<image href="documents/profil-vasiere-dune.png" x="0" y="43.2" width="1600" height="239.01" preserveAspectRatio="none"/>`}
   </g>`;
 
   // Séparateurs verticaux entre grands ensembles, sur toute la hauteur profil + cases
-  GRANDS_ENSEMBLES.slice(1).forEach(g=>{
+  grandsEnsembles().slice(1).forEach(g=>{
     html += `<line x1="${g.debut*w}" y1="20" x2="${g.debut*w}" y2="208" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
 
@@ -1717,8 +1808,12 @@ function construireProfilSVG(svgId, opts){
   // paraissent légèrement décalés horizontalement. La séparation visuelle entre
   // cases vient d'un simple filet clair superposé, pas d'un rétrécissement.
   PROFIL_ACTIF.forEach((z,i)=>{
-    const fichesAffiches = z.fiches;
-    const lignes = decouperEnLignes(z.zone, 9);
+    /* À huit zones, on n'affiche que huit pastilles par case et le reste en
+       « +n » : la dune grise compte neuf unités, qui débordaient sur le
+       libellé de la zone. */
+    const fichesAffiches = z.fiches.slice(0, 8);
+    const reste = z.fiches.length - fichesAffiches.length;
+    const lignes = decouperEnLignes(libelleZoneCourt(z.zone), n >= 8 ? 8 : 9).slice(0, 2);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
     const selectionnee = opts.zoneSelectionnee === i;
     html += `<g class="zone-colonne" tabindex="0" role="button" aria-label="${z.zone} — voir uniquement les habitats de cette zone" onclick="selectionnerZoneFiches(${i})" style="cursor:pointer;">
@@ -1726,18 +1821,29 @@ function construireProfilSVG(svgId, opts){
       <rect x="${i*w}" y="110" width="${w}" height="98" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.95:0.7}"/>
       ${selectionnee ? `<rect x="${i*w+1}" y="111" width="${w-2}" height="96" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
       <text class="txt-zone" x="${i*w+w/2}" y="190" text-anchor="middle" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
-    fichesAffiches.forEach((fid, k)=>{
-      const cx = i*w + 13 + (k%4)*16;
-      const cy = 124 + Math.floor(k/4)*16;
-      html += `<circle cx="${cx}" cy="${cy}" r="7.5" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
-        <text x="${cx}" y="${cy+2.8}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
+    /* À huit zones, les codes d'unités (« 2.1a ») tiendraient dans une pastille
+       de 13 px sans être lisibles : on n'affiche alors que leur nombre, les
+       codes restant lisibles dans la liste des fiches juste en dessous. */
+    if(n >= 8){
+      const nb = z.fiches.length;
+      html += `<text x="${i*w + w/2}" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#191b16" style="pointer-events:none">${nb}</text>`
+        + `<text x="${i*w + w/2}" y="152" text-anchor="middle" font-size="8" fill="#191b16" style="pointer-events:none">${nb > 1 ? 'unités' : 'unité'}</text>`;
+    }
+    const rPast = 7.5, ecart = 16;
+    if(n < 8) fichesAffiches.forEach((fid, k)=>{
+      const cx = i*w + 13 + (k%4)*ecart;
+      const cy = 124 + Math.floor(k/4)*ecart;
+      html += `<circle cx="${cx}" cy="${cy}" r="${rPast}" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
+        <text x="${cx}" y="${cy+2.6}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
     });
+    if(reste > 0 && n < 8) html += `<text x="${i*w + w/2}" y="${124 + 2*ecart + 3}" text-anchor="middle" font-size="7.5" fill="#191b16" style="pointer-events:none">+${reste}</text>`;
     html += `</g>`;
     if(i>0){
       html += `<line x1="${i*w}" y1="110" x2="${i*w}" y2="208" stroke="#f4f2ec" stroke-width="1.5" opacity="0.6" style="pointer-events:none"/>`;
     }
   });
-  svg.innerHTML = html + `<text x="10" y="219" font-size="9.8" fill="#565a4e">slikke (mer) →</text><text x="590" y="219" font-size="9.8" fill="#565a4e" text-anchor="end">← dune</text>`;
+  const bornes = milieuActif === 'dunes' ? ['plage (mer) →', '← intérieur'] : ['slikke (mer) →', '← dune'];
+  svg.innerHTML = html + `<text x="10" y="219" font-size="9.8" fill="#565a4e">${bornes[0]}</text><text x="590" y="219" font-size="9.8" fill="#565a4e" text-anchor="end">${bornes[1]}</text>`;
 }
 
 /* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
@@ -1746,7 +1852,7 @@ function construireMiniProfilSVG(idxZone){
   const n = PROFIL_ACTIF.length;
   const w = 600/n;
   let html = '';
-  GRANDS_ENSEMBLES.forEach(g=>{
+  grandsEnsembles().forEach(g=>{
     const x0 = g.debut*w, x1 = g.fin*w;
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="14" fill="${g.couleur}" opacity="0.13"/>
@@ -1754,7 +1860,7 @@ function construireMiniProfilSVG(idxZone){
       <text class="txt-ge-mini" x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="700" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
-  GRANDS_ENSEMBLES.slice(1).forEach(g=>{
+  grandsEnsembles().slice(1).forEach(g=>{
     html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="82" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
   PROFIL_ACTIF.forEach((z,i)=>{
@@ -1793,6 +1899,17 @@ function selectionnerZoneFiches(i){
 }
 
 function construireEcranFiches(){
+  /* Titre et légende du profil : ils changent avec le milieu, et la légende dit
+     d'où vient le schéma — profil publié pour le marais, séquence reconstruite
+     pour les dunes. */
+  const t = document.getElementById('titre-zonation');
+  if(t) t.textContent = milieuActif === 'dunes'
+    ? 'La zonation, de la plage à la dune grise'
+    : 'La zonation, de la vasière à la dune';
+  const note = document.getElementById('note-zonation');
+  if(note) note.textContent = milieuActif === 'dunes'
+    ? "Séquence des zones reconstruite d'après les rubriques « Dynamique et contacts » des fiches (DELASSUS et al. 2018) : ce document ne publie pas de profil. Le relief dessiné illustre l'ordre des milieux, il n'est pas mesuré. Friches et chemins empierrés sont hors gradient."
+    : "D'après les profils de végétation relevés sur le site (Fig. 6, COLASSE 2019). L'ordre réel varie localement selon la topographie.";
   construireProfilSVG('svg-zonation', {zoneSelectionnee: zoneFichesActive});
 
   const filtreInfo = document.getElementById('filtre-zonation');
