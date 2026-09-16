@@ -212,6 +212,31 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
 .installer-etat[hidden]{display:none;}
 .version-appli{font-family:var(--mono);white-space:nowrap;}
+/* Choix du milieu dans le bandeau d'accueil : une carte par document source.
+   La carte active s'éclaircit, les autres restent en retrait — le milieu se
+   choisit donc en regardant la typologie sur laquelle on travaille. */
+.hero-milieux{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:.6em;}
+.hero-milieu{
+  display:flex;gap:.7em;align-items:flex-start;text-align:left;width:100%;
+  padding:.6em .7em;border-radius:var(--rayon-petit);cursor:pointer;
+  background:rgba(244,242,236,.06);border:1px solid rgba(244,242,236,.22);color:var(--page);
+  transition:background .15s,border-color .15s;
+}
+.hero-milieu:hover{background:rgba(244,242,236,.13);border-color:rgba(244,242,236,.45);}
+.hero-milieu[aria-pressed="true"]{background:rgba(244,242,236,.16);border-color:var(--page);}
+.hero-milieu img{
+  flex:0 0 auto;display:block;width:clamp(54px,14vw,68px);height:auto;
+  border-radius:2px;border:1px solid rgba(244,242,236,.35);
+  filter:saturate(.75);opacity:.75;
+}
+.hero-milieu[aria-pressed="true"] img{filter:none;opacity:1;}
+.hero-milieu-txt{min-width:0;}
+.hero-milieu-txt b{display:block;font-family:var(--serif);font-size:.95rem;margin-bottom:.15em;}
+.hero-milieu[aria-pressed="true"] .hero-milieu-txt b::after{content:" ✓";color:var(--page);}
+.hero-milieu .hero-doc{display:block;font-size:.78rem;line-height:1.35;margin:0 0 .25em;}
+.hero-milieu .hero-meta{display:block;font-size:.7rem;}
+.hero-pied{margin:.7em 0 0;font-size:.72rem;line-height:1.5;color:rgba(244,242,236,.6);}
+.hero-pied .hero-lien{margin:0 0 0 .4em;}
 .champ{margin-bottom:.9em;}
 .champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
 .ligne2{display:flex;gap:.6em;}
@@ -636,7 +661,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <rect x="27" y="10" width="9" height="18" fill="currentColor" stroke="none"/>
     </svg>
   </button>
-  <div class="titre" id="titre-ecran">Zonation<small>Petite Mer de Gâvres — BTS GPN · <span class="version-appli" title="Version de l'application">v<span id="version-appli"></span></span></small></div>
+  <div class="titre" id="titre-ecran">Zonation<small><span id="entete-milieu">Marais salés</span> — BTS GPN · <span class="version-appli" title="Version de l'application">v<span id="version-appli"></span></span></small></div>
   <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
 </div>
 
@@ -646,14 +671,31 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran actif" id="ecran-accueil">
     <div class="accueil-hero">
       <canvas class="hero-motif" id="hero-motif" aria-hidden="true"></canvas>
-      <div class="hero-source">
-        <a class="hero-couv" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener" title="Ouvrir le rapport (PDF) sur le site du CBN de Brest"><img src="documents/couverture.jpg" width="340" height="481" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy"></a>
-        <div class="hero-source-txt">
-          <span class="hero-kicker">Typologie de référence</span>
-          <p class="hero-doc">Typologie des végétations et des habitats des marais salés de la Petite Mer de Gâvres (56)</p>
-          <p class="hero-meta">COLASSE V., avril 2019 — Conservatoire botanique national de Brest.<br>Site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ».</p>
-          <a class="hero-lien" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener">Télécharger le rapport (PDF) ↗</a>
-        </div>
+      <!-- Le choix du milieu EST la présentation des sources : deux typologies du
+           CBN de Brest, une carte chacune, celle en cours en surbrillance. -->
+      <span class="hero-kicker">Milieu étudié — deux typologies de référence</span>
+      <div class="hero-milieux" role="group" aria-label="Choix du milieu étudié">
+        <button type="button" class="hero-milieu" id="hero-marais" aria-pressed="true" onclick="definirMilieu('marais')">
+          <img src="documents/couverture.jpg" width="381" height="538" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy">
+          <span class="hero-milieu-txt">
+            <b>Marais salés</b>
+            <span class="hero-doc">Typologie des végétations et des habitats des marais salés de la Petite Mer de Gâvres (56)</span>
+            <span class="hero-meta">COLASSE V., 2019 — CBN de Brest<br><span id="hero-n-marais"></span></span>
+          </span>
+        </button>
+        <button type="button" class="hero-milieu" id="hero-dunes" aria-pressed="false" onclick="definirMilieu('dunes')">
+          <img src="documents/couverture-dunes.jpg" width="381" height="538" alt="Couverture du rapport DELASSUS 2018, CBN de Brest" loading="lazy">
+          <span class="hero-milieu-txt">
+            <b>Milieux dunaires</b>
+            <span class="hero-doc">Typologie des végétations et des habitats dunaires du massif de Gâvres - Quiberon</span>
+            <span class="hero-meta">DELASSUS L., QUÉRÉ E. &amp; HARDEGEN M., 2018 — CBN de Brest<br><span id="hero-n-dunes"></span></span>
+          </span>
+        </button>
+      </div>
+      <p class="hero-pied">
+        Même site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ».
+        <a class="hero-lien" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener">Rapport marais salés (PDF) ↗</a>
+      </p>
       </div>
     </div>
     <button class="accueil-bouton principal" onclick="allerA('identite')">
@@ -662,7 +704,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     </button>
     <button class="accueil-bouton secondaire2" onclick="allerA('fiches')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="6" width="22" height="28" rx="2"></rect><line x1="14" y1="14" x2="26" y2="14"></line><line x1="14" y1="20" x2="26" y2="20"></line><line x1="14" y1="26" x2="22" y2="26"></line></svg></span>
-      <span class="txt"><b>Fiches habitats</b><span>Les 16 groupements trouvables sur le site</span></span>
+      <span class="txt"><b>Fiches habitats</b><span id="compteur-fiches-txt">Les groupements trouvables sur le site</span></span>
     </button>
     <button class="accueil-bouton secondaire2" onclick="allerA('historique')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
@@ -864,6 +906,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
 <script src="data.js"></script>
 <script src="mini-flore-data.js"></script>
+<script src="data-dunes.js"></script>
 <script src="profil-dessine.js"></script>
 <script>
 /* Etat de l'application */
@@ -890,9 +933,77 @@ function cleReleve(r){ return r.id || r.date || ''; }
    végétation ») ; on reprend sa convention pour que l'import s'y retrouve. */
 const SOL_NU = {taxonId:-1, nom:'Sol nu', strate:'Sans végétation', habitat:'Sol nu (aucune végétation)'};
 
-/* Habitats proposés par le relevé et le calcul de score : le référentiel complet
-   (data.js), déjà restreint aux groupements effectivement trouvables sur le site. */
-const HABITATS_ACTIFS = HABITATS;
+/* ---------- Deux milieux, deux référentiels ----------
+   L'appli couvre les marais salés de la Petite Mer de Gâvres (COLASSE 2019,
+   data.js) et les milieux dunaires du massif de Gâvres-Quiberon (DELASSUS et
+   al. 2018, data-dunes.js, séries 1 et 2 : hauts de plages, dunes mobiles et
+   xérosère intradunaire). Tout le reste — saisie, import, exports, analyses,
+   profil dessiné — est commun.
+
+   Un relevé porte son milieu, et les identifiants de fiches les distinguent
+   sans ambiguïté : nombres pour le marais (1, 6, 17), codes pour les dunes
+   (« 1.1a », « 2.1c »). C'est ce qui permet d'analyser un transect dunaire
+   alors que l'écran de saisie est resté sur le marais. */
+const CLE_MILIEU = 'pmg_milieu_v1';
+const MILIEUX = {
+  marais: {
+    nom: 'Marais salés', nomLong: 'Marais salés de la Petite Mer de Gâvres',
+    habitats: HABITATS, profil: PROFIL_ZONATION,
+    source: 'COLASSE V., 2019 — CBN de Brest',
+    libelleFiche: 'Fiche', gradient: 'de la slikke vers le haut schorre'
+  },
+  dunes: {
+    nom: 'Milieux dunaires', nomLong: 'Massif dunaire de Gâvres - Quiberon',
+    habitats: typeof HABITATS_DUNES !== 'undefined' ? HABITATS_DUNES : [],
+    profil: typeof PROFIL_ZONATION_DUNES !== 'undefined' ? PROFIL_ZONATION_DUNES : [],
+    source: 'DELASSUS L., QUÉRÉ E. & HARDEGEN M., 2018 — CBN de Brest',
+    libelleFiche: 'Unité', gradient: 'de la plage vers l\'intérieur des dunes'
+  }
+};
+let milieuActif = localStorage.getItem(CLE_MILIEU) === 'dunes' ? 'dunes' : 'marais';
+let HABITATS_ACTIFS = MILIEUX[milieuActif].habitats;
+let PROFIL_ACTIF = MILIEUX[milieuActif].profil;
+
+/* Le milieu d'une fiche se lit sur son identifiant : les codes dunaires sont
+   des chaînes (« 2.1a »), les fiches du marais des nombres. */
+const milieuDeFiche = id => typeof id === 'string' ? 'dunes' : 'marais';
+/* Milieu d'un relevé : le champ enregistré, sinon déduit de l'identifiant de
+   fiche — les relevés d'avant cette version n'ont pas de champ milieu. */
+const milieuDuReleve = r => MILIEUX[r && r.milieu] ? r.milieu
+  : (r && r.topFiche != null ? milieuDeFiche(r.topFiche) : 'marais');
+const profilDeFiche = id => MILIEUX[milieuDeFiche(id)].profil;
+const habitatsDeFiche = id => MILIEUX[milieuDeFiche(id)].habitats;
+function habitatParId(id){ return (habitatsDeFiche(id) || []).find(h => h.id === id); }
+
+/* Accueil : état des deux boutons, source du référentiel et nombre de fiches. */
+function majEcranMilieu(){
+  const m = MILIEUX[milieuActif];
+  ['marais', 'dunes'].forEach(k => {
+    document.getElementById('hero-' + k)?.setAttribute('aria-pressed', String(milieuActif === k));
+    const n = document.getElementById('hero-n-' + k);
+    if(n) n.textContent = k === 'dunes'
+      ? `${MILIEUX.dunes.habitats.length} unités · hauts de plages, dunes mobiles, xérosère`
+      : `${MILIEUX.marais.habitats.length} fiches · slikke, schorre, contact dunaire`;
+  });
+  const em = document.getElementById('entete-milieu');
+  if(em) em.textContent = m.nom;
+  const cf = document.getElementById('compteur-fiches-txt');
+  if(cf) cf.textContent = milieuActif === 'dunes'
+    ? `Les ${HABITATS_ACTIFS.length} unités de cartographie des séries 1 et 2`
+    : `Les ${HABITATS_ACTIFS.length} groupements trouvables sur le site`;
+}
+
+function definirMilieu(m){
+  if(!MILIEUX[m] || m === milieuActif) return;
+  milieuActif = m;
+  localStorage.setItem(CLE_MILIEU, m);
+  HABITATS_ACTIFS = MILIEUX[m].habitats;
+  PROFIL_ACTIF = MILIEUX[m].profil;
+  construireZonesParFiche();
+  zoneFichesActive = null;
+  majEcranMilieu();
+  allerA('accueil');
+}
 
 /* Échelle d'abondance-dominance de Braun-Blanquet — barème réel utilisé pour la cotation
    des relevés phytosociologiques (mêmes valeurs de référence que l'app Phytoscope du
@@ -932,14 +1043,18 @@ function libelleCouverture(mode, cover){
   return mode === 'pct' ? `${cover}%` : cover;
 }
 
-const ZONES_LINES_COULEURS = ["#7fa8bd","#8fb3c9","#a9c9a0","#8fb98a","#6fa46a","#d8c9a0","#c9b8d8"];
+const ZONES_LINES_COULEURS = ["#7fa8bd","#8fb3c9","#a9c9a0","#8fb98a","#6fa46a","#d8c9a0","#c9b8d8","#cfc9b8"];
 
 /* Certaines fiches (19, 20) appartiennent officiellement à deux zones à la fois (cf. Figure 5
    du rapport) : on stocke donc un tableau de zones par fiche, pas une seule valeur. */
 const ZONE_PAR_FICHE = {};
-PROFIL_ZONATION.forEach(z => z.fiches.forEach(id => {
-  (ZONE_PAR_FICHE[id] = ZONE_PAR_FICHE[id] || []).push(z.zone);
-}));
+function construireZonesParFiche(){
+  Object.keys(ZONE_PAR_FICHE).forEach(k => delete ZONE_PAR_FICHE[k]);
+  PROFIL_ACTIF.forEach(z => z.fiches.forEach(id => {
+    (ZONE_PAR_FICHE[id] = ZONE_PAR_FICHE[id] || []).push(z.zone);
+  }));
+}
+construireZonesParFiche();
 function zonesDuFiche(id){ return ZONE_PAR_FICHE[id] || []; }
 
 function normaliser(s){
@@ -1253,10 +1368,13 @@ function construireTableauCortege(){
      trouvée étant en plus pesée par son abondance-dominance (une espèce dominante compte
      plus qu'une espèce simplement présente), plafonné à 100 % pour rester lisible.
 */
-function calculerScores(){
+function calculerScores(habitats){
+  /* Le référentiel peut être imposé : à l'import, chaque relevé est jugé avec
+     celui de SON milieu, pas avec celui affiché à l'écran. */
+  const REF = habitats || HABITATS_ACTIFS;
   const cortegeReconnu = new Map(etat.cortege.filter(e=>e.reconnue).map(e=>[e.key, {mode:e.mode, cover:e.cover}]));
   const wCar = 2, wFreq = 1;
-  const resultats = HABITATS_ACTIFS.map(h=>{
+  const resultats = REF.map(h=>{
     let num=0, den=0, matchCar=[], matchFreq=[], manqueCar=[], totalCar=0;
     h.especes.forEach(e=>{
       if(e.statut === 'absent') return;
@@ -1302,7 +1420,7 @@ function carteResultatHTML(r, i){
     ...r.matchFreq.map(e=>puceEspece(e,'freq')),
     ...r.manqueCar.map(e=>`<span class="puce-espece manque">✗ ${e.fr}</span>`)
   ].join('');
-  const idxZoneR = PROFIL_ZONATION.findIndex(z => z.fiches.includes(h.id));
+  const idxZoneR = PROFIL_ACTIF.findIndex(z => z.fiches.includes(h.id));
   return `<div class="resultat-carte ${i===0?'top1':''}">
     ${i===0 ? `<div class="etiquette-top">🎯 Habitat le plus probable</div>` : `<div class="etiquette-autre">Autre possibilité</div>`}
     <div class="resultat-entete">
@@ -1489,7 +1607,7 @@ function construireProfilSVG(svgId, opts){
   opts = opts || {};
   const svg = document.getElementById(svgId);
   if(!svg) return;
-  const n = PROFIL_ZONATION.length;
+  const n = PROFIL_ACTIF.length;
   const w = 600/n;
   let html = '';
   // Bande des grands ensembles (Slikke / Schorre / Contact dune)
@@ -1511,7 +1629,7 @@ function construireProfilSVG(svgId, opts){
   // profil (opaque) et les cases (semi-transparentes sur le fond de carte) affichent
   // la même couleur de base sous deux nuances différentes.
   const zoneWSrc = 1600/n;
-  const zoneRectsProfil = PROFIL_ZONATION.map((z,i)=>`<rect x="${i*zoneWSrc}" y="0" width="${zoneWSrc}" height="300" fill="${ZONES_LINES_COULEURS[i]}" opacity="${opts.zoneSelectionnee===i?0.95:0.7}"/>`).join('');
+  const zoneRectsProfil = PROFIL_ACTIF.map((z,i)=>`<rect x="${i*zoneWSrc}" y="0" width="${zoneWSrc}" height="300" fill="${ZONES_LINES_COULEURS[i]}" opacity="${opts.zoneSelectionnee===i?0.95:0.7}"/>`).join('');
   html += `<g style="pointer-events:none" transform="translate(0,22) scale(0.375,0.40566037736) translate(0,-88)">
     <defs><clipPath id="soil7-${svgId}"><path d="${PROFIL_SOL_D}"/></clipPath></defs>
     <rect x="0" y="174.5" width="1148" height="126" fill="#cfe1ec" opacity="0.6"/>
@@ -1532,7 +1650,7 @@ function construireProfilSVG(svgId, opts){
   // exactement là où finit sa bande dans le profil au-dessus, sans quoi les deux
   // paraissent légèrement décalés horizontalement. La séparation visuelle entre
   // cases vient d'un simple filet clair superposé, pas d'un rétrécissement.
-  PROFIL_ZONATION.forEach((z,i)=>{
+  PROFIL_ACTIF.forEach((z,i)=>{
     const fichesAffiches = z.fiches;
     const lignes = decouperEnLignes(z.zone, 9);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
@@ -1559,7 +1677,7 @@ function construireProfilSVG(svgId, opts){
 /* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
    que le profil complet, mais avec un point rouge sur la zone de l'habitat affiché. */
 function construireMiniProfilSVG(idxZone){
-  const n = PROFIL_ZONATION.length;
+  const n = PROFIL_ACTIF.length;
   const w = 600/n;
   let html = '';
   GRANDS_ENSEMBLES.forEach(g=>{
@@ -1573,7 +1691,7 @@ function construireMiniProfilSVG(idxZone){
   GRANDS_ENSEMBLES.slice(1).forEach(g=>{
     html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="82" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
-  PROFIL_ZONATION.forEach((z,i)=>{
+  PROFIL_ACTIF.forEach((z,i)=>{
     const lignes = decouperEnLignes(z.zone, 9);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
     html += `<g>
@@ -1587,12 +1705,12 @@ function construireMiniProfilSVG(idxZone){
   return `<svg class="zonation-diagram" viewBox="0 0 600 86" xmlns="http://www.w3.org/2000/svg">${html}</svg>`;
 }
 
-/* Ordre et couleur de référence pour toute liste de fiches : dérivés de PROFIL_ZONATION
+/* Ordre et couleur de référence pour toute liste de fiches : dérivés de PROFIL_ACTIF
    (la même source qui construit le diagramme), pour que l'ordre affiché suive
    effectivement la progression du transect slikke → dune, et que chaque fiche porte
    la couleur de sa zone dans le diagramme (correspondance visuelle directe). */
-const ORDRE_TRANSECT = PROFIL_ZONATION.flatMap(z => z.fiches);
-function indexZoneHabitat(id){ return PROFIL_ZONATION.findIndex(z => z.fiches.includes(id)); }
+const ordreTransect = () => PROFIL_ACTIF.flatMap(z => z.fiches);
+function indexZoneHabitat(id){ return PROFIL_ACTIF.findIndex(z => z.fiches.includes(id)); }
 function couleurZoneHabitat(id){
   const i = indexZoneHabitat(id);
   return i>=0 ? ZONES_LINES_COULEURS[i] : 'var(--line)';
@@ -1613,18 +1731,19 @@ function construireEcranFiches(){
 
   const filtreInfo = document.getElementById('filtre-zonation');
   if(zoneFichesActive !== null){
-    const z = PROFIL_ZONATION[zoneFichesActive];
+    const z = PROFIL_ACTIF[zoneFichesActive];
     filtreInfo.innerHTML = `<span class="filtre-chip actif">📍 ${z.zone}</span><span class="filtre-chip" onclick="selectionnerZoneFiches(null)">✕ Tout afficher</span>`;
   } else {
     filtreInfo.innerHTML = `<p style="font-size:.78rem;color:var(--text-2);margin:.6em 0;">Touchez une case du profil pour n'afficher que les habitats de cette zone.</p>`;
   }
 
   const cont = document.getElementById('liste-fiches');
-  const idsZone = zoneFichesActive !== null ? PROFIL_ZONATION[zoneFichesActive].fiches : null;
-  const liste = HABITATS
+  const idsZone = zoneFichesActive !== null ? PROFIL_ACTIF[zoneFichesActive].fiches : null;
+  const ordre = ordreTransect();
+  const liste = HABITATS_ACTIFS
     .filter(h => !idsZone || idsZone.includes(h.id))
     .slice()
-    .sort((a,b)=> ORDRE_TRANSECT.indexOf(a.id) - ORDRE_TRANSECT.indexOf(b.id));
+    .sort((a,b)=> ordre.indexOf(a.id) - ordre.indexOf(b.id));
   cont.innerHTML = liste.map(h=>`
     <div class="fiche-liste-ligne">
       <span class="fiche-liste-barre" style="background:${couleurZoneHabitat(h.id)};" aria-hidden="true"></span>
@@ -1637,7 +1756,7 @@ function construireEcranFiches(){
 }
 
 function allerVoirFiche(id, origine){
-  const h = HABITATS.find(x=>x.id===id);
+  const h = habitatParId(id);
   if(!h) return;
   const lien = document.getElementById('lien-retour-fiche');
   if(origine === 'resultats'){
@@ -1652,12 +1771,16 @@ function allerVoirFiche(id, origine){
   }
   const cont = document.getElementById('contenu-detail-fiche');
   const especesParStatut = s => h.especes.filter(e=>e.statut===s).map(e=>`${e.fr} <i>(${e.latin})</i>`).join(', ') || '—';
-  const especesMiniFlore = h.especes.filter(e=>e.statut==='car'||e.statut==='freq');
-  const idxZone = PROFIL_ZONATION.findIndex(z => z.fiches.includes(h.id));
+  /* La mini-flore ne s'affiche que pour les espèces réellement photographiées :
+     les taxons dunaires n'ont pas encore de photos, le bouton disparaît donc
+     plutôt que d'annoncer des images inexistantes. */
+  const especesMiniFlore = h.especes.filter(e => (e.statut === 'car' || e.statut === 'freq')
+    && MINI_FLORE[e.latin] && MINI_FLORE[e.latin].photos && MINI_FLORE[e.latin].photos.length);
+  const idxZone = PROFIL_ACTIF.findIndex(z => z.fiches.includes(h.id));
   const couleurZone = idxZone>=0 ? ZONES_LINES_COULEURS[idxZone] : 'var(--line)';
   cont.innerHTML = `
     <div class="carte" style="border-left:5px solid ${couleurZone};">
-      <span class="tag">Fiche ${h.id}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${PROFIL_ZONATION[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
+      <span class="tag">${MILIEUX[milieuDeFiche(h.id)].libelleFiche} ${h.id}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${PROFIL_ACTIF[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
       <h2>${h.nomFr}</h2>
       <div class="syntaxon">${h.syntaxon}</div>
       ${especesMiniFlore.length ? `
@@ -1775,7 +1898,7 @@ function fermerLightboxPhoto(){
   document.getElementById('lightbox-photo-img').src = '';
 }
 function ouvrirMiniFloreFiche(id){
-  const h = HABITATS.find(x=>x.id===id);
+  const h = habitatParId(id);
   if(!h) return;
   const especes = h.especes.filter(e=>e.statut==='car'||e.statut==='freq');
   // Classement par famille botanique plutôt que par statut car/freq — le statut
@@ -1798,7 +1921,7 @@ function ouvrirMiniFloreFiche(id){
    mais sans pastille de statut (non pertinente hors contexte d'une fiche). */
 function especesDuSite(){
   const vues = new Map();
-  HABITATS.forEach(h=>{
+  HABITATS_ACTIFS.forEach(h=>{
     h.especes.filter(e=>e.statut==='car'||e.statut==='freq').forEach(e=>{
       if(!vues.has(e.latin)) vues.set(e.latin, {latin:e.latin, fr:e.fr});
     });
@@ -1806,9 +1929,9 @@ function especesDuSite(){
   return [...vues.values()];
 }
 /* Habitats dans l'ordre canonique du profil de zonation (slikke → dune),
-   même convention que l'écran Fiches habitats (ORDRE_TRANSECT). */
+   même convention que l'écran Fiches habitats (ordreTransect). */
 function especesParHabitatOrdonne(){
-  return ORDRE_TRANSECT.map(id => HABITATS.find(h=>h.id===id)).filter(Boolean)
+  return ordreTransect().map(id => habitatParId(id)).filter(Boolean)
     .map(h => ({h, especes: h.especes.filter(e=>e.statut==='car'||e.statut==='freq')}))
     .filter(g => g.especes.length);
 }
@@ -1851,7 +1974,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.28.0';
+const VERSION_APPLI = '1.30.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -2133,6 +2256,7 @@ function enregistrerReleve(){
     distance: id.distance,
     cortege: etat.cortege.map(e=>({fr:e.fr, latin:e.latin, mode:e.mode, cover:e.cover, reconnue:e.reconnue})),
     solNu: !!etat.solNu,
+    milieu: correction && ancien.milieu ? ancien.milieu : milieuActif,
     top: r ? r.habitat.nomFr : SOL_NU.habitat,
     topFiche: r ? r.habitat.id : null,
     tauxCar: r ? r.tauxCar : 0,
@@ -2265,8 +2389,16 @@ function pasCourant(rs){
 
 /* Zone de chaque fiche et son rang dans le gradient. */
 function zoneDeFiche(id){
-  for(let i = 0; i < PROFIL_ZONATION.length; i++){
-    if(PROFIL_ZONATION[i].fiches.includes(id)) return {zone: PROFIL_ZONATION[i].zone, rang: i + 1};
+  /* Le profil consulté est celui du milieu de la fiche, pas du milieu affiché :
+     on peut analyser un transect dunaire en ayant la saisie réglée sur le
+     marais. Les zones dunaires portent leur rang ; les zones anthropiques
+     (friches, chemins) n'en ont pas et restent hors gradient. */
+  const profil = profilDeFiche(id);
+  for(let i = 0; i < profil.length; i++){
+    if(profil[i].fiches.includes(id)){
+      const rang = profil[i].rang !== undefined ? profil[i].rang : i + 1;
+      return rang == null ? null : {zone: profil[i].zone, rang};
+    }
   }
   return null;
 }
@@ -2843,7 +2975,7 @@ function construireEcranAnalyse(){
         ${troncons.map(t => `<tr>
           <td>${t.debut} → ${t.fin} m</td>
           <td>${echapHTML(t.zone)}</td>
-          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${f}, 'analyse')" title="${echapHTML((HABITATS.find(h => h.id === f) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
+          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse')" title="${echapHTML((habitatParId(f) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
           <td class="num">${t.n}</td></tr>`).join('')}
       </tbody></table>
     </div>
@@ -2948,7 +3080,7 @@ function coefDepuisPct(pct){
    un fichier importé est rattaché au référentiel quand c'est possible, pour que
    l'espèce compte dans le score et porte le nom de l'appli. */
 const ESPECES_PAR_LATIN = {}, ESPECES_PAR_FR = {};
-HABITATS.forEach(h => h.especes.forEach(e => {
+[...HABITATS, ...(typeof HABITATS_DUNES !== 'undefined' ? HABITATS_DUNES : [])].forEach(h => h.especes.forEach(e => {
   if(!ESPECES_PAR_LATIN[e.latin]) ESPECES_PAR_LATIN[e.latin] = {fr: e.fr, latin: e.latin};
   if(!ESPECES_PAR_FR[e.fr]) ESPECES_PAR_FR[e.fr] = {fr: e.fr, latin: e.latin};
 }));
@@ -3050,6 +3182,10 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iCommune  = col('commune');
   const iRemarque = col('remarque');
   const iMode     = col('mode_recouvrement');
+  const iMilieu   = col('milieu');
+  /* Milieu du relevé : lu dans le fichier quand la colonne existe, sinon le
+     milieu affiché. Un fichier d'avant cette version n'en a pas. */
+  const milieuDe = v => /dun/i.test(v || '') ? 'dunes' : (/marais|salé|schorre|slikke/i.test(v || '') ? 'marais' : null);
   const iLocal    = col('localisation');
   /* Distance : colonne dédiée, sinon lue dans « localisation » où l'export
      Phytoscope la range (« 12 m », « Distance sur le transect : 12 m »).
@@ -3102,7 +3238,8 @@ function appliquerImportCSV(texte, nomFichier, infos){
     if(!groupes.has(cle)) groupes.set(cle, {
       transect, numero: numero === '' ? null : Number(numero),
       dateReleve: dateISO(v(iDate)), observateur: v(iObs), site: v(iSite), commune: v(iCommune),
-      distance: distanceDe(v(iDistance), v(iLocal)), observation: v(iRemarque), cortege: [], solNu: false
+      distance: distanceDe(v(iDistance), v(iLocal)), observation: v(iRemarque), cortege: [], solNu: false,
+      milieu: milieuDe(v(iMilieu))
     });
     const g = groupes.get(cle);
     const latin = v(iLatin), fr = v(iEspece) || latin;
@@ -3173,7 +3310,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const sauve = etat.cortege;
     etat.cortege = g.cortege.filter(e => e.reconnue).map(e => ({...e, key: normaliser(e.latin)}));
     const res = g.solNu || !etat.cortege.length ? null
-      : calculerScores().filter(x => x.matchCar.length || x.matchFreq.length)[0];
+      : calculerScores(MILIEUX[g.milieu || milieuActif].habitats).filter(x => x.matchCar.length || x.matchFreq.length)[0];
     etat.cortege = sauve;
     ajoutes.push({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
@@ -3181,6 +3318,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
       numero: g.numero, observateur: g.observateur, site: g.site, commune: g.commune,
       observation: g.observation, distance: g.distance, cortege: g.cortege,
       solNu: g.solNu || !g.cortege.length,
+      milieu: g.milieu || milieuActif,
       top: res ? res.habitat.nomFr : SOL_NU.habitat, topFiche: res ? res.habitat.id : null,
       tauxCar: res ? res.tauxCar : 0,
       carMatch: res ? `${res.matchCar.length}/${res.totalCar}` : '',
@@ -3317,13 +3455,16 @@ function exporterHistoriqueCSV(){
   /* Fichier complet unique (l'ancien « export complet » à la disposition de
      PhytoScope faisait doublon) : zone et n° de fiche ajoutés, pour trier et
      croiser les milieux entre eux dans un tableur. */
-  const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune',
+  const entetes = ['Transect','Relevé n°','Distance (m)','Date','Observateur','Site','Commune','Milieu',
     'Espèce','Nom scientifique','Coefficient','Recouvrement médian (%)',
     'Zone','Fiche','Habitat probable','Espèces caractéristiques trouvées','Indice global (%)','Remarque','Enregistré le'];
   const lignes = [entetes];
   liste.forEach(r=>{
+    // le milieu figure dans le fichier : un tableur mêlant marais et dunes doit
+    // pouvoir les séparer, et l'import le relit
+    const milieu = MILIEUX[milieuDuReleve(r)].nom;
     const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
-      r.observateur||'', r.site||'', r.commune||''];
+      r.observateur||'', r.site||'', r.commune||'', milieu];
     const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
     const analyse = [z ? z.zone : '', r.topFiche ?? '', r.top||'', r.carMatch||'', r.score ?? '',
       (r.observation||'').trim(), r.date||''];
@@ -3467,6 +3608,7 @@ window.addEventListener('resize', ()=>{ clearTimeout(_minuteurMotif); _minuteurM
 
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('version-appli').textContent = VERSION_APPLI;
+  majEcranMilieu();
   majCompteurHistorique();
   dessinerMotifHero();
   const barre = document.createElement('div');
