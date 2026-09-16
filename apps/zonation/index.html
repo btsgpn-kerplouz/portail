@@ -212,31 +212,55 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
 .installer-etat[hidden]{display:none;}
 .version-appli{font-family:var(--mono);white-space:nowrap;}
-/* Choix du milieu dans le bandeau d'accueil : une carte par document source.
-   La carte active s'éclaircit, les autres restent en retrait — le milieu se
-   choisit donc en regardant la typologie sur laquelle on travaille. */
-.hero-milieux{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:.6em;}
-.hero-milieu{
-  display:flex;gap:.7em;align-items:flex-start;text-align:left;width:100%;
-  padding:.6em .7em;border-radius:var(--rayon-petit);cursor:pointer;
-  background:rgba(244,242,236,.06);border:1px solid rgba(244,242,236,.22);color:var(--page);
-  transition:background .15s,border-color .15s;
+/* ---- Porte d'entrée : choix du milieu ----
+   Deux grandes cartes, une par typologie, avec un libellé « Entrer » : le geste
+   attendu doit être évident dès l'ouverture de l'appli. */
+.accueil-hero.porte{margin-bottom:0;border-radius:0;min-height:calc(100vh - 3.4em);padding:1.6em 1.1em 2em;}
+.porte-titre{font-family:var(--serif);font-size:1.35rem;line-height:1.25;margin:.2em 0 .5em;color:var(--page);}
+.porte-intro{font-size:.84rem;line-height:1.55;color:rgba(244,242,236,.78);margin:0 0 1.2em;max-width:42em;}
+.porte-cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.8em;}
+.porte-carte{
+  display:flex;gap:.9em;align-items:stretch;text-align:left;width:100%;
+  padding:.9em;border-radius:var(--rayon);cursor:pointer;
+  background:var(--card);border:1px solid var(--card);color:var(--ink);
+  transition:transform .12s,box-shadow .12s;
 }
-.hero-milieu:hover{background:rgba(244,242,236,.13);border-color:rgba(244,242,236,.45);}
-.hero-milieu[aria-pressed="true"]{background:rgba(244,242,236,.16);border-color:var(--page);}
-.hero-milieu img{
-  flex:0 0 auto;display:block;width:clamp(54px,14vw,68px);height:auto;
-  border-radius:2px;border:1px solid rgba(244,242,236,.35);
-  filter:saturate(.75);opacity:.75;
+.porte-carte:hover,.porte-carte:focus-visible{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.28);}
+.porte-carte img{flex:0 0 auto;display:block;width:clamp(64px,17vw,84px);height:auto;border-radius:2px;border:1px solid var(--line);}
+.porte-txt{display:flex;flex-direction:column;min-width:0;}
+.porte-txt b{font-family:var(--serif);font-size:1.05rem;margin-bottom:.2em;}
+.porte-doc{font-size:.8rem;line-height:1.4;color:var(--text-2);margin-bottom:.35em;}
+.porte-meta{font-family:var(--mono);font-size:.7rem;color:var(--text-2);}
+.porte-src{margin-top:.15em;}
+.porte-entrer{margin-top:auto;padding-top:.5em;font-family:var(--sans);font-size:.85rem;font-weight:700;color:var(--acc);}
+.porte-carte:hover .porte-entrer{text-decoration:underline;}
+.porte-carte.dernier{border-color:var(--acc);box-shadow:0 0 0 2px rgba(11,95,125,.35);}
+.porte-carte.dernier .porte-entrer::after{content:" · dernier choix";font-weight:400;font-size:.72rem;color:var(--text-2);}
+.porte-pied{margin:1.4em 0 0;font-family:var(--mono);font-size:.7rem;color:rgba(244,242,236,.5);}
+
+/* ---- Bandeau du milieu en cours, en tête de l'accueil ---- */
+.bandeau-milieu{
+  display:flex;gap:.7em;align-items:center;flex-wrap:wrap;
+  background:var(--ink);color:var(--page);margin:-1em -1em 1em;padding:.7em 1.1em;
+  border-radius:0 0 var(--rayon) var(--rayon);
 }
-.hero-milieu[aria-pressed="true"] img{filter:none;opacity:1;}
-.hero-milieu-txt{min-width:0;}
-.hero-milieu-txt b{display:block;font-family:var(--serif);font-size:.95rem;margin-bottom:.15em;}
-.hero-milieu[aria-pressed="true"] .hero-milieu-txt b::after{content:" ✓";color:var(--page);}
-.hero-milieu .hero-doc{display:block;font-size:.78rem;line-height:1.35;margin:0 0 .25em;}
-.hero-milieu .hero-meta{display:block;font-size:.7rem;}
-.hero-pied{margin:.7em 0 0;font-size:.72rem;line-height:1.5;color:rgba(244,242,236,.6);}
-.hero-pied .hero-lien{margin:0 0 0 .4em;}
+.bandeau-couv{flex:0 0 auto;line-height:0;}
+.bandeau-couv img{display:block;width:34px;height:auto;border-radius:2px;border:1px solid rgba(244,242,236,.35);}
+.bandeau-txt{flex:1 1 150px;min-width:0;}
+.bandeau-txt b{display:block;font-family:var(--serif);font-size:.95rem;}
+.bandeau-txt span{display:block;font-size:.72rem;color:rgba(244,242,236,.7);}
+.bandeau-lien{
+  display:inline-block;margin-top:.2em;font-family:var(--mono);font-size:.66rem;
+  color:rgba(244,242,236,.62);text-decoration:none;border-bottom:1px solid rgba(244,242,236,.28);
+}
+.bandeau-lien:hover{color:var(--page);border-bottom-color:var(--page);}
+.bandeau-lien[hidden]{display:none;}
+.bandeau-changer{
+  flex:0 0 auto;font-family:var(--sans);font-size:.78rem;font-weight:600;padding:.4em .7em;
+  background:none;color:var(--page);border:1px solid rgba(244,242,236,.45);
+  border-radius:var(--rayon-petit);cursor:pointer;
+}
+.bandeau-changer:hover{background:rgba(244,242,236,.14);}
 .champ{margin-bottom:.9em;}
 .champ label{display:block;font-size:.85rem;font-weight:700;margin-bottom:.3em;color:var(--text-2);}
 .ligne2{display:flex;gap:.6em;}
@@ -667,36 +691,53 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
 
 <main>
 
-  <!-- ECRAN ACCUEIL -->
-  <section class="ecran actif" id="ecran-accueil">
-    <div class="accueil-hero">
+  <!-- ECRAN D'ENTRÉE : CHOIX DU MILIEU
+       L'appli couvre deux typologies ; tant que le milieu n'est pas choisi, la
+       saisie, les fiches et les analyses ne veulent rien dire. Le choix est
+       donc une porte d'entrée, pas une option de l'accueil. -->
+  <section class="ecran actif" id="ecran-milieu">
+    <div class="accueil-hero porte">
       <canvas class="hero-motif" id="hero-motif" aria-hidden="true"></canvas>
-      <!-- Le choix du milieu EST la présentation des sources : deux typologies du
-           CBN de Brest, une carte chacune, celle en cours en surbrillance. -->
-      <span class="hero-kicker">Milieu étudié — deux typologies de référence</span>
-      <div class="hero-milieux" role="group" aria-label="Choix du milieu étudié">
-        <button type="button" class="hero-milieu" id="hero-marais" aria-pressed="true" onclick="definirMilieu('marais')">
+      <h1 class="porte-titre">Sur quel milieu travaillez-vous&nbsp;?</h1>
+      <p class="porte-intro">Deux typologies du Conservatoire botanique national de Brest, pour le même site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ». Votre choix fixe les fiches, la liste des espèces proposées à la saisie et les analyses. Vous pourrez en changer à tout moment.</p>
+      <div class="porte-cartes">
+        <button type="button" class="porte-carte" id="porte-marais" onclick="definirMilieu('marais')">
           <img src="documents/couverture.jpg" width="381" height="538" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy">
-          <span class="hero-milieu-txt">
+          <span class="porte-txt">
             <b>Marais salés</b>
-            <span class="hero-doc">Typologie des végétations et des habitats des marais salés de la Petite Mer de Gâvres (56)</span>
-            <span class="hero-meta">COLASSE V., 2019 — CBN de Brest<br><span id="hero-n-marais"></span></span>
+            <span class="porte-doc">Petite Mer de Gâvres — de la slikke au contact dunaire</span>
+            <span class="porte-meta" id="porte-n-marais"></span>
+            <span class="porte-meta porte-src">COLASSE V., 2019</span>
+            <span class="porte-entrer">Entrer <span aria-hidden="true">→</span></span>
           </span>
         </button>
-        <button type="button" class="hero-milieu" id="hero-dunes" aria-pressed="false" onclick="definirMilieu('dunes')">
+        <button type="button" class="porte-carte" id="porte-dunes" onclick="definirMilieu('dunes')">
           <img src="documents/couverture-dunes.jpg" width="381" height="538" alt="Couverture du rapport DELASSUS 2018, CBN de Brest" loading="lazy">
-          <span class="hero-milieu-txt">
+          <span class="porte-txt">
             <b>Milieux dunaires</b>
-            <span class="hero-doc">Typologie des végétations et des habitats dunaires du massif de Gâvres - Quiberon</span>
-            <span class="hero-meta">DELASSUS L., QUÉRÉ E. &amp; HARDEGEN M., 2018 — CBN de Brest<br><span id="hero-n-dunes"></span></span>
+            <span class="porte-doc">Massif de Gâvres - Quiberon — de la plage à la dune grise</span>
+            <span class="porte-meta" id="porte-n-dunes"></span>
+            <span class="porte-meta porte-src">DELASSUS L., QUÉRÉ E. &amp; HARDEGEN M., 2018</span>
+            <span class="porte-entrer">Entrer <span aria-hidden="true">→</span></span>
           </span>
         </button>
       </div>
-      <p class="hero-pied">
-        Même site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ».
-        <a class="hero-lien" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener">Rapport marais salés (PDF) ↗</a>
-      </p>
-      </div>
+      <p class="porte-pied">Version <span id="version-porte"></span> · Zonation, BTS GPN Kerplouz</p>
+    </div>
+  </section>
+
+  <!-- ECRAN ACCUEIL -->
+  <section class="ecran" id="ecran-accueil">
+    <!-- Rappel permanent du milieu en cours, avec le retour à la porte d'entrée :
+         on doit toujours savoir dans quel référentiel on saisit. -->
+    <div class="bandeau-milieu">
+      <span class="bandeau-couv"><img id="bandeau-couverture" src="documents/couverture.jpg" width="381" height="538" alt="" loading="lazy"></span>
+      <span class="bandeau-txt">
+        <b id="bandeau-milieu-nom">Marais salés</b>
+        <span id="bandeau-milieu-doc"></span>
+        <a class="bandeau-lien" id="bandeau-pdf" href="https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf" target="_blank" rel="noopener">Rapport de référence (PDF) ↗</a>
+      </span>
+      <button type="button" class="bandeau-changer" onclick="allerA('milieu')">Changer de milieu</button>
     </div>
     <button class="accueil-bouton principal" onclick="allerA('identite')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="7" y="7" width="26" height="26"></rect><line x1="7" y1="20" x2="33" y2="20"></line><line x1="20" y1="7" x2="20" y2="33"></line><circle cx="14" cy="14" r="2.4" fill="currentColor" stroke="none"></circle><circle cx="26" cy="25" r="3.4" fill="currentColor" stroke="none"></circle></svg></span>
@@ -950,17 +991,24 @@ const MILIEUX = {
     nom: 'Marais salés', nomLong: 'Marais salés de la Petite Mer de Gâvres',
     habitats: HABITATS, profil: PROFIL_ZONATION,
     source: 'COLASSE V., 2019 — CBN de Brest',
-    libelleFiche: 'Fiche', gradient: 'de la slikke vers le haut schorre'
+    libelleFiche: 'Fiche', gradient: 'de la slikke vers le haut schorre',
+    couverture: 'documents/couverture.jpg',
+    pdf: 'https://www.cbnbrest.fr/pmb_pdf/CBNB_Colasse_2019_69231.pdf',
+    resume: 'Petite Mer de Gâvres · slikke, schorre, contact dunaire'
   },
   dunes: {
     nom: 'Milieux dunaires', nomLong: 'Massif dunaire de Gâvres - Quiberon',
     habitats: typeof HABITATS_DUNES !== 'undefined' ? HABITATS_DUNES : [],
     profil: typeof PROFIL_ZONATION_DUNES !== 'undefined' ? PROFIL_ZONATION_DUNES : [],
     source: 'DELASSUS L., QUÉRÉ E. & HARDEGEN M., 2018 — CBN de Brest',
-    libelleFiche: 'Unité', gradient: 'de la plage vers l\'intérieur des dunes'
+    libelleFiche: 'Unité', gradient: 'de la plage vers l\'intérieur des dunes',
+    couverture: 'documents/couverture-dunes.jpg',
+    pdf: null,                        // pas d'adresse stable connue pour ce rapport
+    resume: 'Massif de Gâvres - Quiberon · hauts de plages, dunes mobiles, xérosère'
   }
 };
 let milieuActif = localStorage.getItem(CLE_MILIEU) === 'dunes' ? 'dunes' : 'marais';
+const dejaEntre = !!localStorage.getItem(CLE_MILIEU);   // l'appli a déjà servi sur cet appareil
 let HABITATS_ACTIFS = MILIEUX[milieuActif].habitats;
 let PROFIL_ACTIF = MILIEUX[milieuActif].profil;
 
@@ -978,13 +1026,26 @@ function habitatParId(id){ return (habitatsDeFiche(id) || []).find(h => h.id ===
 /* Accueil : état des deux boutons, source du référentiel et nombre de fiches. */
 function majEcranMilieu(){
   const m = MILIEUX[milieuActif];
+  // porte d'entrée : nombre de fiches ou d'unités par typologie
   ['marais', 'dunes'].forEach(k => {
-    document.getElementById('hero-' + k)?.setAttribute('aria-pressed', String(milieuActif === k));
-    const n = document.getElementById('hero-n-' + k);
-    if(n) n.textContent = k === 'dunes'
-      ? `${MILIEUX.dunes.habitats.length} unités · hauts de plages, dunes mobiles, xérosère`
-      : `${MILIEUX.marais.habitats.length} fiches · slikke, schorre, contact dunaire`;
+    const n = document.getElementById('porte-n-' + k);
+    if(n) n.textContent = `${MILIEUX[k].habitats.length} ${k === 'dunes' ? 'unités de cartographie' : 'fiches habitats'}`;
+    /* Le dernier milieu utilisé est signalé : au retour sur l'appli, la carte à
+       toucher se repère sans lire. */
+    const c = document.getElementById('porte-' + k);
+    if(c) c.classList.toggle('dernier', k === milieuActif && dejaEntre);
   });
+  const vp = document.getElementById('version-porte');
+  if(vp) vp.textContent = VERSION_APPLI;
+  // bandeau de l'accueil : quel milieu, quel document
+  const bn = document.getElementById('bandeau-milieu-nom');
+  if(bn) bn.textContent = m.nom;
+  const bd = document.getElementById('bandeau-milieu-doc');
+  if(bd) bd.textContent = `${m.resume} · ${m.source}`;
+  const bc = document.getElementById('bandeau-couverture');
+  if(bc) bc.src = m.couverture;
+  const bp = document.getElementById('bandeau-pdf');
+  if(bp){ bp.hidden = !m.pdf; if(m.pdf) bp.href = m.pdf; }
   const em = document.getElementById('entete-milieu');
   if(em) em.textContent = m.nom;
   const cf = document.getElementById('compteur-fiches-txt');
@@ -994,7 +1055,8 @@ function majEcranMilieu(){
 }
 
 function definirMilieu(m){
-  if(!MILIEUX[m] || m === milieuActif) return;
+  if(!MILIEUX[m]) return;
+  if(m === milieuActif){ majEcranMilieu(); allerA('accueil'); return; }
   milieuActif = m;
   localStorage.setItem(CLE_MILIEU, m);
   HABITATS_ACTIFS = MILIEUX[m].habitats;
@@ -1089,7 +1151,7 @@ function allerA(nom){
   document.getElementById('ecran-'+nom).classList.add('actif');
   majZoomViewport(nom);
   const titres = {
-    accueil:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
+    accueil:"Zonation", milieu:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
     analyse:"Analyse du transect", analyses:"Analyses"
@@ -1104,6 +1166,10 @@ function allerA(nom){
     majRappelBordereau();
   }
   if(nom==='fiches') construireEcranFiches();
+  /* Sur la porte d'entrée, aucun milieu n'est encore engagé : l'en-tête ne doit
+     pas en annoncer un. */
+  const emt = document.getElementById('entete-milieu');
+  if(emt) emt.textContent = nom === 'milieu' ? 'Typologies du CBN de Brest' : MILIEUX[milieuActif].nom;
   if(nom==='historique') afficherHistorique();
   if(nom==='analyses') afficherListeAnalyses();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
@@ -3609,6 +3675,7 @@ window.addEventListener('resize', ()=>{ clearTimeout(_minuteurMotif); _minuteurM
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('version-appli').textContent = VERSION_APPLI;
   majEcranMilieu();
+  allerA('milieu');            // l'appli ouvre sur le choix du milieu
   majCompteurHistorique();
   dessinerMotifHero();
   const barre = document.createElement('div');
