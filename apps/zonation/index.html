@@ -1821,14 +1821,14 @@ function construireProfilSVG(svgId, opts){
       <rect x="${i*w}" y="110" width="${w}" height="98" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.95:0.7}"/>
       ${selectionnee ? `<rect x="${i*w+1}" y="111" width="${w-2}" height="96" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
       <text class="txt-zone" x="${i*w+w/2}" y="190" text-anchor="middle" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
-    /* À huit zones, les codes d'unités (« 2.1a ») tiendraient dans une pastille
-       de 13 px sans être lisibles : on n'affiche alors que leur nombre, les
-       codes restant lisibles dans la liste des fiches juste en dessous. */
-    if(n >= 8){
-      const nb = z.fiches.length;
-      html += `<text x="${i*w + w/2}" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#191b16" style="pointer-events:none">${nb}</text>`
-        + `<text x="${i*w + w/2}" y="152" text-anchor="middle" font-size="8" fill="#191b16" style="pointer-events:none">${nb > 1 ? 'unités' : 'unité'}</text>`;
-    }
+    /* Mêmes pastilles numérotées que pour le marais, mais un code d'unité
+       dunaire (« 2.1a ») ne tient pas dans un cercle de 15 px : la pastille
+       devient une gélule un peu plus large, trois par ligne. */
+    if(n >= 8) z.fiches.forEach((fid, k)=>{
+      const px = i*w + 5.5 + (k % 3) * 23, py = 116 + Math.floor(k / 3) * 15;
+      html += `<rect x="${px}" y="${py}" width="21" height="12.5" rx="6.2" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
+        <text x="${px + 10.5}" y="${py + 9}" text-anchor="middle" font-size="7.4" fill="#191b16" style="pointer-events:none">${fid}</text>`;
+    });
     const rPast = 7.5, ecart = 16;
     if(n < 8) fichesAffiches.forEach((fid, k)=>{
       const cx = i*w + 13 + (k%4)*ecart;
