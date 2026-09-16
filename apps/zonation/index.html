@@ -1012,16 +1012,28 @@ const dejaEntre = !!localStorage.getItem(CLE_MILIEU);   // l'appli a déjà serv
 let HABITATS_ACTIFS = MILIEUX[milieuActif].habitats;
 let PROFIL_ACTIF = MILIEUX[milieuActif].profil;
 
-/* Le milieu d'une fiche se lit sur son identifiant : les codes dunaires sont
-   des chaînes (« 2.1a »), les fiches du marais des nombres. */
-const milieuDeFiche = id => typeof id === 'string' ? 'dunes' : 'marais';
-/* Milieu d'un relevé : le champ enregistré, sinon déduit de l'identifiant de
-   fiche — les relevés d'avant cette version n'ont pas de champ milieu. */
-const milieuDuReleve = r => MILIEUX[r && r.milieu] ? r.milieu
-  : (r && r.topFiche != null ? milieuDeFiche(r.topFiche) : 'marais');
-const profilDeFiche = id => MILIEUX[milieuDeFiche(id)].profil;
-const habitatsDeFiche = id => MILIEUX[milieuDeFiche(id)].habitats;
-function habitatParId(id){ return (habitatsDeFiche(id) || []).find(h => h.id === id); }
+/* Les deux référentiels numérotent leurs fiches à partir de 1 : un numéro seul
+   ne dit donc pas de quel milieu il vient. C'est le relevé qui porte son milieu
+   (champ « milieu »), et les fonctions qui lisent une fiche reçoivent ce milieu
+   en second argument. Les relevés d'avant l'arrivée des dunes sont du marais. */
+const milieuDeFiche = (id, milieu) => MILIEUX[milieu] ? milieu : milieuActif;
+/* Milieu d'un relevé : son champ, sinon le marais — seul référentiel existant
+   avant cette version. */
+const milieuDuReleve = r => MILIEUX[r && r.milieu] ? r.milieu : 'marais';
+/* Milieu d'un transect : celui de ses relevés. */
+const milieuTransect = nom => {
+  const r = chargerHistorique().find(x => (x.transect || 'Transect (sans nom)') === nom);
+  return milieuDuReleve(r);
+};
+const profilDeFiche = (id, milieu) => MILIEUX[milieuDeFiche(id, milieu)].profil;
+const habitatsDeFiche = (id, milieu) => MILIEUX[milieuDeFiche(id, milieu)].habitats;
+function habitatParId(id, milieu){ return (habitatsDeFiche(id, milieu) || []).find(h => h.id === id); }
+/* Libellé d'une fiche pour l'affichage : « Fiche 6 » au marais, « Unité 9 ·
+   2.1a » pour les dunes, le code du document restant le repère vers le rapport. */
+function libelleFicheComplet(h, milieu){
+  const m = MILIEUX[milieuDeFiche(h.id, milieu)];
+  return `${m.libelleFiche} ${h.id}${h.code ? ' · ' + h.code : ''}`;
+}
 
 /* Accueil : état des deux boutons, source du référentiel et nombre de fiches. */
 function majEcranMilieu(){
@@ -1811,7 +1823,7 @@ function construireProfilSVG(svgId, opts){
     /* À huit zones, on n'affiche que huit pastilles par case et le reste en
        « +n » : la dune grise compte neuf unités, qui débordaient sur le
        libellé de la zone. */
-    const fichesAffiches = z.fiches.slice(0, 8);
+    const fichesAffiches = z.fiches.slice(0, 12);   // trois lignes de quatre au plus
     const reste = z.fiches.length - fichesAffiches.length;
     const lignes = decouperEnLignes(libelleZoneCourt(z.zone), n >= 8 ? 8 : 9).slice(0, 2);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
@@ -1821,22 +1833,18 @@ function construireProfilSVG(svgId, opts){
       <rect x="${i*w}" y="110" width="${w}" height="98" fill="${ZONES_LINES_COULEURS[i]}" opacity="${selectionnee?0.95:0.7}"/>
       ${selectionnee ? `<rect x="${i*w+1}" y="111" width="${w-2}" height="96" fill="none" stroke="#c0562b" stroke-width="2.5"/>` : ''}
       <text class="txt-zone" x="${i*w+w/2}" y="190" text-anchor="middle" font-weight="${selectionnee?700:400}" fill="#191b16">${tspans}</text>`;
-    /* Mêmes pastilles numérotées que pour le marais, mais un code d'unité
-       dunaire (« 2.1a ») ne tient pas dans un cercle de 15 px : la pastille
-       devient une gélule un peu plus large, trois par ligne. */
-    if(n >= 8) z.fiches.forEach((fid, k)=>{
-      const px = i*w + 5.5 + (k % 3) * 23, py = 116 + Math.floor(k / 3) * 15;
-      html += `<rect x="${px}" y="${py}" width="21" height="12.5" rx="6.2" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
-        <text x="${px + 10.5}" y="${py + 9}" text-anchor="middle" font-size="7.4" fill="#191b16" style="pointer-events:none">${fid}</text>`;
-    });
-    const rPast = 7.5, ecart = 16;
-    if(n < 8) fichesAffiches.forEach((fid, k)=>{
-      const cx = i*w + 13 + (k%4)*ecart;
+    /* Mêmes pastilles numérotées dans les deux milieux : les unités dunaires
+       portent désormais un numéro de fiche (1 à 28), pas un code à quatre
+       caractères. À huit zones, les cases sont plus étroites : pastilles et
+       espacement réduits d'un cheveu. */
+    const rPast = n >= 8 ? 7 : 7.5, ecart = n >= 8 ? 15 : 16;
+    fichesAffiches.forEach((fid, k)=>{
+      const cx = i*w + (n >= 8 ? 12 : 13) + (k%4)*ecart;
       const cy = 124 + Math.floor(k/4)*ecart;
       html += `<circle cx="${cx}" cy="${cy}" r="${rPast}" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
         <text x="${cx}" y="${cy+2.6}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
     });
-    if(reste > 0 && n < 8) html += `<text x="${i*w + w/2}" y="${124 + 2*ecart + 3}" text-anchor="middle" font-size="7.5" fill="#191b16" style="pointer-events:none">+${reste}</text>`;
+    if(reste > 0) html += `<text x="${i*w + w/2}" y="${124 + 2*ecart + 3}" text-anchor="middle" font-size="7.5" fill="#191b16" style="pointer-events:none">+${reste}</text>`;
     html += `</g>`;
     if(i>0){
       html += `<line x1="${i*w}" y1="110" x2="${i*w}" y2="208" stroke="#f4f2ec" stroke-width="1.5" opacity="0.6" style="pointer-events:none"/>`;
@@ -1848,11 +1856,15 @@ function construireProfilSVG(svgId, opts){
 
 /* Petit diagramme de position, réutilisé sur chaque fiche détail : mêmes colonnes
    que le profil complet, mais avec un point rouge sur la zone de l'habitat affiché. */
-function construireMiniProfilSVG(idxZone){
-  const n = PROFIL_ACTIF.length;
+function construireMiniProfilSVG(idxZone, milieu){
+  /* Une fiche ouverte depuis l'analyse peut venir de l'autre milieu : le mini
+     profil suit celui de la fiche, pas celui affiché. */
+  const profil = MILIEUX[milieu] ? MILIEUX[milieu].profil : PROFIL_ACTIF;
+  const ensembles = GRANDS_ENSEMBLES_MILIEU[milieu] || grandsEnsembles();
+  const n = profil.length;
   const w = 600/n;
   let html = '';
-  grandsEnsembles().forEach(g=>{
+  ensembles.forEach(g=>{
     const x0 = g.debut*w, x1 = g.fin*w;
     html += `<g>
       <rect x="${x0}" y="1" width="${x1-x0-2}" height="14" fill="${g.couleur}" opacity="0.13"/>
@@ -1860,11 +1872,11 @@ function construireMiniProfilSVG(idxZone){
       <text class="txt-ge-mini" x="${(x0+x1)/2}" y="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="700" fill="${g.couleur}">${g.nom.toUpperCase()}</text>
     </g>`;
   });
-  grandsEnsembles().slice(1).forEach(g=>{
+  ensembles.slice(1).forEach(g=>{
     html += `<line x1="${g.debut*w}" y1="17" x2="${g.debut*w}" y2="82" stroke="#191b16" stroke-width="1" stroke-dasharray="2,2" opacity="0.35"/>`;
   });
-  PROFIL_ACTIF.forEach((z,i)=>{
-    const lignes = decouperEnLignes(z.zone, 9);
+  profil.forEach((z,i)=>{
+    const lignes = decouperEnLignes(libelleZoneCourt(z.zone), n >= 8 ? 8 : 9).slice(0, 2);
     const tspans = lignes.map((l,j)=>`<tspan x="${i*w+w/2}" dy="${j===0?'0':'1.15em'}">${l}</tspan>`).join('');
     html += `<g>
       <rect x="${i*w}" y="24" width="${w-2}" height="30" fill="${ZONES_LINES_COULEURS[i]}" opacity="${i===idxZone?0.9:0.4}"/>
@@ -1882,9 +1894,9 @@ function construireMiniProfilSVG(idxZone){
    effectivement la progression du transect slikke → dune, et que chaque fiche porte
    la couleur de sa zone dans le diagramme (correspondance visuelle directe). */
 const ordreTransect = () => PROFIL_ACTIF.flatMap(z => z.fiches);
-function indexZoneHabitat(id){ return PROFIL_ACTIF.findIndex(z => z.fiches.includes(id)); }
-function couleurZoneHabitat(id){
-  const i = indexZoneHabitat(id);
+function indexZoneHabitat(id, milieu){ return profilDeFiche(id, milieu).findIndex(z => z.fiches.includes(id)); }
+function couleurZoneHabitat(id, milieu){
+  const i = indexZoneHabitat(id, milieu);
   return i>=0 ? ZONES_LINES_COULEURS[i] : 'var(--line)';
 }
 
@@ -1932,14 +1944,19 @@ function construireEcranFiches(){
       <span class="fiche-liste-barre" style="background:${couleurZoneHabitat(h.id)};" aria-hidden="true"></span>
       <div class="fiche-liste-item" onclick="allerVoirFiche(${idAttr(h.id)})">
         <span class="num">${h.id}</span>${h.nomFr}
-        <div class="zonation-tag">${h.zonation}</div>
+        <div class="zonation-tag">${h.zonation}${h.code ? ` · unité ${h.code}` : ''}</div>
       </div>
     </div>
   `).join('') || `<p class="vide-msg">Aucune fiche dans cette zone.</p>`;
 }
 
-function allerVoirFiche(id, origine){
-  const h = habitatParId(id);
+/* Milieu de la fiche ouverte : depuis une analyse, ce n'est pas forcément le
+   milieu affiché — on peut analyser un transect dunaire en ayant réglé la
+   saisie sur le marais. */
+let milieuFicheAffichee = null;
+function allerVoirFiche(id, origine, milieu){
+  milieuFicheAffichee = MILIEUX[milieu] ? milieu : milieuActif;
+  const h = habitatParId(id, milieuFicheAffichee);
   if(!h) return;
   const lien = document.getElementById('lien-retour-fiche');
   if(origine === 'resultats'){
@@ -1959,11 +1976,12 @@ function allerVoirFiche(id, origine){
      plutôt que d'annoncer des images inexistantes. */
   const especesMiniFlore = h.especes.filter(e => (e.statut === 'car' || e.statut === 'freq')
     && MINI_FLORE[e.latin] && MINI_FLORE[e.latin].photos && MINI_FLORE[e.latin].photos.length);
-  const idxZone = PROFIL_ACTIF.findIndex(z => z.fiches.includes(h.id));
+  const profilFiche = profilDeFiche(h.id, milieuFicheAffichee);
+  const idxZone = profilFiche.findIndex(z => z.fiches.includes(h.id));
   const couleurZone = idxZone>=0 ? ZONES_LINES_COULEURS[idxZone] : 'var(--line)';
   cont.innerHTML = `
     <div class="carte" style="border-left:5px solid ${couleurZone};">
-      <span class="tag">${MILIEUX[milieuDeFiche(h.id)].libelleFiche} ${h.id}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${PROFIL_ACTIF[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
+      <span class="tag">${libelleFicheComplet(h, milieuFicheAffichee)}</span><span class="tag">${h.groupe}</span>${idxZone>=0 ? `<span class="tag" style="background:${couleurZone};color:#191b16;border-color:${couleurZone};">${profilFiche[idxZone].zone}</span>` : ''}<span class="tag">${h.zonation}</span>
       <h2>${h.nomFr}</h2>
       <div class="syntaxon">${h.syntaxon}</div>
       ${especesMiniFlore.length ? `
@@ -1975,7 +1993,7 @@ function allerVoirFiche(id, origine){
         </span>
         <span class="fleche" aria-hidden="true">→</span>
       </button>` : ''}
-      ${idxZone>=0 ? `<p class="abondance-label" style="margin:.9em 0 .2em;">Position sur le profil de zonation</p>${construireMiniProfilSVG(idxZone)}` : ''}
+      ${idxZone>=0 ? `<p class="abondance-label" style="margin:.9em 0 .2em;">Position sur le profil de zonation</p>${construireMiniProfilSVG(idxZone, milieuFicheAffichee)}` : ''}
       <p style="font-size:.8rem;color:var(--text-2);">EUNIS ${h.codes.eunis} · CORINE ${h.codes.corine} · EUR28 ${h.codes.eur28} · Cahiers d'habitats ${h.codes.cahiers}</p>
       <div class="detail-bloc"><h3>Physionomie</h3><p>${h.physionomie||'—'}</p></div>
       <div class="detail-bloc"><h3>Écologie</h3><p>${h.ecologie||'—'}</p></div>
@@ -2081,7 +2099,7 @@ function fermerLightboxPhoto(){
   document.getElementById('lightbox-photo-img').src = '';
 }
 function ouvrirMiniFloreFiche(id){
-  const h = habitatParId(id);
+  const h = habitatParId(id, milieuFicheAffichee);
   if(!h) return;
   const especes = h.especes.filter(e=>e.statut==='car'||e.statut==='freq');
   // Classement par famille botanique plutôt que par statut car/freq — le statut
@@ -2656,7 +2674,7 @@ function construireProfilTransectSVG(nomTransect, options){
   /* Bandeaux de zones : tronçons de relevés consécutifs partageant la même zone. */
   const troncons = [];
   rs.forEach(r => {
-    const z = r.solNu ? {zone: 'Sol nu', rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const z = r.solNu ? {zone: 'Sol nu', rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
     const cle = z ? z.zone : '—';
     const dernier = troncons[troncons.length - 1];
     if(dernier && dernier.zone === cle){
@@ -2820,7 +2838,7 @@ function afficherListeAnalyses(){
       frise = rs.map((r, i) => {
         const a = i ? (r.d + rs[i-1].d) / 2 : dMin;
         const b = i < rs.length - 1 ? (r.d + rs[i+1].d) / 2 : rs[rs.length-1].d;
-        const z = r.solNu ? {rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+        const z = r.solNu ? {rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
         return `<span style="left:${((a-dMin)/etendue*100).toFixed(2)}%;width:${Math.max(.3,(b-a)/etendue*100).toFixed(2)}%;background:${teinteZone(z ? z.rang : null)}"></span>`;
       }).join('');
     }
@@ -2999,7 +3017,7 @@ function activerDiagrammeInteractif(){
     const z = ev.target.closest('.zone-cliquable');
     if(!z) return;
     cacher();
-    allerVoirFiche(Number(z.dataset.fiche), 'analyse');
+    allerVoirFiche(Number(z.dataset.fiche), 'analyse', milieuTransect(analyseTransectCourant));
   });
 }
 
@@ -3063,7 +3081,7 @@ function construireEcranAnalyse(){
   /* Tronçons de zones, et les fiches que chacun recouvre. */
   const troncons = [];
   rs.forEach(r => {
-    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
     const cle = z ? z.zone : 'Non attribué';
     const dernier = troncons[troncons.length - 1];
     if(dernier && dernier.zone === cle){
@@ -3104,7 +3122,7 @@ function construireEcranAnalyse(){
      passages décrivent la même végétation. */
   const zones = new Map();
   rs.forEach(r => {
-    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
     const cle = z ? z.zone : 'Non attribué';
     if(!zones.has(cle)) zones.set(cle, {zone:cle, rang: z ? z.rang : 99, n:0, richesses:[], especes:new Set()});
     const v = zones.get(cle);
@@ -3158,7 +3176,7 @@ function construireEcranAnalyse(){
         ${troncons.map(t => `<tr>
           <td>${t.debut} → ${t.fin} m</td>
           <td>${echapHTML(t.zone)}</td>
-          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse')" title="${echapHTML((habitatParId(f) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
+          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse', '${milieuTransect(nom)}')" title="${echapHTML((habitatParId(f, milieuTransect(nom)) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
           <td class="num">${t.n}</td></tr>`).join('')}
       </tbody></table>
     </div>
@@ -3613,7 +3631,10 @@ function nomCourtReleve(r){
 function groupeProjetReleve(r){
   if(r.solNu) return 'Sol nu';
   if(r.topFiche == null) return 'Habitat non attribué';
-  return `f${r.topFiche} · ${r.top || ''}`.trim();
+  /* Le code de l'unité dunaire (« 2.1a ») suit le numéro de fiche : c'est le
+     seul repère pour retrouver l'unité dans le rapport de Delassus. */
+  const h = habitatParId(r.topFiche, milieuDuReleve(r));
+  return `f${r.topFiche}${h && h.code ? ' (' + h.code + ')' : ''} · ${r.top || ''}`.trim();
 }
 
 /* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes). */
@@ -3648,7 +3669,7 @@ function exporterHistoriqueCSV(){
     const milieu = MILIEUX[milieuDuReleve(r)].nom;
     const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
       r.observateur||'', r.site||'', r.commune||'', milieu];
-    const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche) : null);
+    const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
     const analyse = [z ? z.zone : '', r.topFiche ?? '', r.top||'', r.carMatch||'', r.score ?? '',
       (r.observation||'').trim(), r.date||''];
     observationsDuReleve(r).forEach(o=>{

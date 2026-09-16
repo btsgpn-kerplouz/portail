@@ -493,7 +493,7 @@ function panneauProfilDessine(rs, o){
   /* Relief : PROFIL TYPE. Aucune altitude n'est relevée ; la ligne de sol monte
      avec le rang de la zone de chaque relevé (slikke en bas, haut schorre en
      haut), lissé par une moyenne glissante pour donner une pente continue. */
-  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche) ? zoneDeFiche(r.topFiche).rang : null));
+  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche, milieuDuReleve(r)) ? zoneDeFiche(r.topFiche, milieuDuReleve(r)).rang : null));
   let dernierRang = rangs.find(v => v != null) ?? 0;
   const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
   const lisses = bruts.map((_, i) => {
@@ -605,7 +605,7 @@ function panneauProfilDessine(rs, o){
      son habitat. */
   const yCell = ySol - ampli - hMaxCm * pxCm - 4;
   if(o.interactif) cellules.forEach(c => {
-    const z = c.r.solNu ? {zone: 'Sol nu'} : (c.r.topFiche != null ? zoneDeFiche(c.r.topFiche) : null);
+    const z = c.r.solNu ? {zone: 'Sol nu'} : (c.r.topFiche != null ? zoneDeFiche(c.r.topFiche, milieuDuReleve(c.r)) : null);
     const esp = (c.r.cortege || []).slice()
       .sort((a, b) => (pctDeCouverture('bb', b.cover) || 0) - (pctDeCouverture('bb', a.cover) || 0))
       .map(e => `${e.fr} (${e.cover})`).join(' · ');

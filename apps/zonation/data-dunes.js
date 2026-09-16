@@ -10,7 +10,10 @@
    dunaire (4.x) sont hors sujet ici.
 
    L'identification porte sur les UNITÉS DE CARTOGRAPHIE (1.1a, 2.1c…), niveau
-   auquel le document donne les tableaux de relevés.
+   auquel le document donne les tableaux de relevés. Chaque unité reçoit un
+   numéro de fiche (1 à 28, dans l'ordre du document) pour que l'appli les
+   désigne comme les fiches du marais ; le champ "code" garde le code du
+   document, seul repère pour revenir au rapport.
 
    statut espèce :
      "car"    = espèce caractéristique de l'unité : citée comme diagnostique
@@ -30,7 +33,8 @@
 
 const HABITATS_DUNES = [
  {
-  "id": "1.1a",
+  "id": 1,
+  "code": "1.1a",
   "fiche": "1.1",
   "ordre": 1,
   "zone": "Haut de plage",
@@ -105,7 +109,8 @@ const HABITATS_DUNES = [
   "dynamique": "L'accumulation de sable permet aux vivaces, surtout Elymus farctus, de s'installer : la laisse de mer évolue alors en dune embryonnaire. Contact inférieur avec la plage nue, supérieur avec la dune embryonnaire."
  },
  {
-  "id": "1.1b",
+  "id": 2,
+  "code": "1.1b",
   "fiche": "1.1",
   "ordre": 2,
   "zone": "Haut de plage",
@@ -186,7 +191,8 @@ const HABITATS_DUNES = [
   "dynamique": "L'accumulation de sable permet aux vivaces, surtout Elymus farctus, de s'installer : la laisse de mer évolue alors en dune embryonnaire. Contact inférieur avec la plage nue, supérieur avec la dune embryonnaire."
  },
  {
-  "id": "1.1c",
+  "id": 3,
+  "code": "1.1c",
   "fiche": "1.1",
   "ordre": 3,
   "zone": "Haut de plage",
@@ -249,7 +255,8 @@ const HABITATS_DUNES = [
   "dynamique": "L'accumulation de sable permet aux vivaces, surtout Elymus farctus, de s'installer : la laisse de mer évolue alors en dune embryonnaire. Contact inférieur avec la plage nue, supérieur avec la dune embryonnaire."
  },
  {
-  "id": "1.2a",
+  "id": 4,
+  "code": "1.2a",
   "fiche": "1.2",
   "ordre": 4,
   "zone": "Dune embryonnaire",
@@ -318,7 +325,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dynamique interne nulle : la végétation reste en place tant que les apports éoliens durent. En grandissant, la dune reçoit moins de sable et évolue vers la dune blanche à Oyat. Contact inférieur avec les laisses de mer, supérieur avec la dune vive ; les dunes embryonnaires de sable grossier peuvent toucher directement les pelouses des dunes grises."
  },
  {
-  "id": "1.2b",
+  "id": 5,
+  "code": "1.2b",
   "fiche": "1.2",
   "ordre": 5,
   "zone": "Dune embryonnaire",
@@ -423,7 +431,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dynamique interne nulle : la végétation reste en place tant que les apports éoliens durent. En grandissant, la dune reçoit moins de sable et évolue vers la dune blanche à Oyat. Contact inférieur avec les laisses de mer, supérieur avec la dune vive ; les dunes embryonnaires de sable grossier peuvent toucher directement les pelouses des dunes grises."
  },
  {
-  "id": "1.3a",
+  "id": 6,
+  "code": "1.3a",
   "fiche": "1.3",
   "ordre": 6,
   "zone": "Dune blanche",
@@ -528,7 +537,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dunes vives globalement stables ; seule l'évolution du trait de côte les fait bouger. La dune blanche peut être ravivée par l'ouverture de caoudeyres, dont la cicatrisation passe par un groupement à fétuques. Contact avec les dunes embryonnaires ou le haut de plage côté mer, avec les dunes fixées côté terre."
  },
  {
-  "id": "1.3b",
+  "id": 7,
+  "code": "1.3b",
   "fiche": "1.3",
   "ordre": 7,
   "zone": "Dune semi-fixée",
@@ -639,7 +649,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dunes vives globalement stables ; seule l'évolution du trait de côte les fait bouger. La dune blanche peut être ravivée par l'ouverture de caoudeyres, dont la cicatrisation passe par un groupement à fétuques. Contact avec les dunes embryonnaires ou le haut de plage côté mer, avec les dunes fixées côté terre."
  },
  {
-  "id": "1.3c",
+  "id": 8,
+  "code": "1.3c",
   "fiche": "1.3",
   "ordre": 8,
   "zone": "Dune semi-fixée",
@@ -666,7 +677,8 @@ const HABITATS_DUNES = [
   "sansReleve": "Aucun relevé : unité trop ponctuelle sur le site. L'appli ne peut donc pas la proposer à partir d'un cortège."
  },
  {
-  "id": "2.1a",
+  "id": 9,
+  "code": "2.1a",
   "fiche": "2.1",
   "ordre": 9,
   "zone": "Dune grise",
@@ -933,7 +945,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1b",
+  "id": 10,
+  "code": "2.1b",
   "fiche": "2.1",
   "ordre": 10,
   "zone": "Dune grise",
@@ -1169,7 +1182,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1c",
+  "id": 11,
+  "code": "2.1c",
   "fiche": "2.1",
   "ordre": 11,
   "zone": "Dune grise",
@@ -1388,7 +1402,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1d",
+  "id": 12,
+  "code": "2.1d",
   "fiche": "2.1",
   "ordre": 12,
   "zone": "Dune grise",
@@ -1718,7 +1733,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1e",
+  "id": 13,
+  "code": "2.1e",
   "fiche": "2.1",
   "ordre": 13,
   "zone": "Dune grise",
@@ -1930,7 +1946,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1f",
+  "id": 14,
+  "code": "2.1f",
   "fiche": "2.1",
   "ordre": 14,
   "zone": "Dune grise",
@@ -2235,7 +2252,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1g",
+  "id": 15,
+  "code": "2.1g",
   "fiche": "2.1",
   "ordre": 15,
   "zone": "Dune grise",
@@ -2441,7 +2459,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1h",
+  "id": 16,
+  "code": "2.1h",
   "fiche": "2.1",
   "ordre": 16,
   "zone": "Dune grise",
@@ -2607,7 +2626,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.1i",
+  "id": 17,
+  "code": "2.1i",
   "fiche": "2.1",
   "ordre": 17,
   "zone": "Dune grise",
@@ -2703,7 +2723,8 @@ const HABITATS_DUNES = [
   ]
  },
  {
-  "id": "2.2a",
+  "id": 18,
+  "code": "2.2a",
   "fiche": "2.2",
   "ordre": 18,
   "zone": "Dune fixée, prairies",
@@ -2936,7 +2957,8 @@ const HABITATS_DUNES = [
   "dynamique": "Évolution progressive vers les fourrés dunaires sur sol sec, plus rapide que depuis les pelouses, du fait de l'épais horizon organo-minéral. Les prairies peuvent localement coloniser des pelouses dégradées. Contact avec les pelouses et les fourrés des dunes fixées."
  },
  {
-  "id": "2.2b",
+  "id": 19,
+  "code": "2.2b",
   "fiche": "2.2",
   "ordre": 19,
   "zone": "Dune fixée, prairies",
@@ -3212,7 +3234,8 @@ const HABITATS_DUNES = [
   "dynamique": "Évolution progressive vers les fourrés dunaires sur sol sec, plus rapide que depuis les pelouses, du fait de l'épais horizon organo-minéral. Les prairies peuvent localement coloniser des pelouses dégradées. Contact avec les pelouses et les fourrés des dunes fixées."
  },
  {
-  "id": "2.3",
+  "id": 20,
+  "code": "2.3",
   "fiche": "2.3",
   "ordre": 20,
   "zone": "Fourrés et boisements",
@@ -3329,7 +3352,8 @@ const HABITATS_DUNES = [
   "dynamique": "Colonisent les pelouses des dunes fixées, surtout après perturbation, et localement les dunes grises typiques. L'évolution vers une forêt est incertaine sur le site : chênaie pédonculée probable, ou forêt secondaire à Pinus pinaster et Cupressus macrocarpa à partir des plantations voisines."
  },
  {
-  "id": "2.4a",
+  "id": 21,
+  "code": "2.4a",
   "fiche": "2.4",
   "ordre": 21,
   "zone": "Fourrés et boisements",
@@ -3356,7 +3380,8 @@ const HABITATS_DUNES = [
   "sansReleve": "Aucun relevé phytosociologique dans le document : l'appli ne peut pas proposer cette unité à partir d'un cortège."
  },
  {
-  "id": "2.4b",
+  "id": 22,
+  "code": "2.4b",
   "fiche": "2.4",
   "ordre": 22,
   "zone": "Fourrés et boisements",
@@ -3383,7 +3408,8 @@ const HABITATS_DUNES = [
   "sansReleve": "Aucun relevé phytosociologique dans le document : l'appli ne peut pas proposer cette unité à partir d'un cortège."
  },
  {
-  "id": "2.5a",
+  "id": 23,
+  "code": "2.5a",
   "fiche": "2.5",
   "ordre": 23,
   "zone": "Milieux anthropiques",
@@ -3584,7 +3610,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dérivent des pelouses des dunes fixées par eutrophisation ou rudéralisation ; le retour à un groupement dunaire typique semble aujourd'hui compliqué, ce qui les fait traiter comme des habitats à part. Évolution possible vers les fourrés puis les boisements. Contact avec les pelouses ou les prairies dont elles dérivent."
  },
  {
-  "id": "2.5b",
+  "id": 24,
+  "code": "2.5b",
   "fiche": "2.5",
   "ordre": 24,
   "zone": "Milieux anthropiques",
@@ -3695,7 +3722,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dérivent des pelouses des dunes fixées par eutrophisation ou rudéralisation ; le retour à un groupement dunaire typique semble aujourd'hui compliqué, ce qui les fait traiter comme des habitats à part. Évolution possible vers les fourrés puis les boisements. Contact avec les pelouses ou les prairies dont elles dérivent."
  },
  {
-  "id": "2.5c",
+  "id": 25,
+  "code": "2.5c",
   "fiche": "2.5",
   "ordre": 25,
   "zone": "Milieux anthropiques",
@@ -3836,7 +3864,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dérivent des pelouses des dunes fixées par eutrophisation ou rudéralisation ; le retour à un groupement dunaire typique semble aujourd'hui compliqué, ce qui les fait traiter comme des habitats à part. Évolution possible vers les fourrés puis les boisements. Contact avec les pelouses ou les prairies dont elles dérivent."
  },
  {
-  "id": "2.5d",
+  "id": 26,
+  "code": "2.5d",
   "fiche": "2.5",
   "ordre": 26,
   "zone": "Milieux anthropiques",
@@ -3899,7 +3928,8 @@ const HABITATS_DUNES = [
   "dynamique": "Dérivent des pelouses des dunes fixées par eutrophisation ou rudéralisation ; le retour à un groupement dunaire typique semble aujourd'hui compliqué, ce qui les fait traiter comme des habitats à part. Évolution possible vers les fourrés puis les boisements. Contact avec les pelouses ou les prairies dont elles dérivent."
  },
  {
-  "id": "2.6a",
+  "id": 27,
+  "code": "2.6a",
   "fiche": "2.6",
   "ordre": 27,
   "zone": "Milieux anthropiques",
@@ -3926,7 +3956,8 @@ const HABITATS_DUNES = [
   "sansReleve": "Aucun relevé : unité définie par l'absence de végétation. À déclarer comme un quadrat sans végétation (sol nu)."
  },
  {
-  "id": "2.6b",
+  "id": 28,
+  "code": "2.6b",
   "fiche": "2.6",
   "ordre": 28,
   "zone": "Milieux anthropiques",
@@ -4148,76 +4179,76 @@ const PROFIL_ZONATION_DUNES = [
     "zone": "Haut de plage",
     "rang": 1,
     "fiches": [
-      "1.1a",
-      "1.1b",
-      "1.1c"
+      1,
+      2,
+      3
     ]
   },
   {
     "zone": "Dune embryonnaire",
     "rang": 2,
     "fiches": [
-      "1.2a",
-      "1.2b"
+      4,
+      5
     ]
   },
   {
     "zone": "Dune blanche",
     "rang": 3,
     "fiches": [
-      "1.3a"
+      6
     ]
   },
   {
     "zone": "Dune semi-fixée",
     "rang": 4,
     "fiches": [
-      "1.3b",
-      "1.3c"
+      7,
+      8
     ]
   },
   {
     "zone": "Dune grise",
     "rang": 5,
     "fiches": [
-      "2.1a",
-      "2.1b",
-      "2.1c",
-      "2.1d",
-      "2.1e",
-      "2.1f",
-      "2.1g",
-      "2.1h",
-      "2.1i"
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
     ]
   },
   {
     "zone": "Dune fixée, prairies",
     "rang": 6,
     "fiches": [
-      "2.2a",
-      "2.2b"
+      18,
+      19
     ]
   },
   {
     "zone": "Fourrés et boisements",
     "rang": 7,
     "fiches": [
-      "2.3",
-      "2.4a",
-      "2.4b"
+      20,
+      21,
+      22
     ]
   },
   {
     "zone": "Milieux anthropiques",
     "rang": null,
     "fiches": [
-      "2.5a",
-      "2.5b",
-      "2.5c",
-      "2.5d",
-      "2.6a",
-      "2.6b"
+      23,
+      24,
+      25,
+      26,
+      27,
+      28
     ]
   }
 ];
