@@ -245,6 +245,20 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   font-size:1.25rem;line-height:1;color:var(--acc);}
 .porte-carte:hover .porte-fleche{right:.45em;}
 .porte-note{margin:.7em 0 0;font-size:.74rem;line-height:1.5;color:rgba(244,242,236,.6);max-width:40em;}
+/* Entrée de l'analyse, en retrait des deux cartes-documents : c'est un travail
+   d'après-terrain, qui porte sur les transects des deux milieux. */
+.porte-analyses{
+  position:relative;display:flex;gap:.8em;align-items:center;width:100%;text-align:left;
+  margin-top:.9em;padding:.75em 2.2em .75em .85em;border-radius:var(--rayon);cursor:pointer;
+  background:rgba(244,242,236,.08);border:1px solid rgba(244,242,236,.3);color:var(--page);
+}
+.porte-analyses:hover{background:rgba(244,242,236,.15);border-color:var(--page);}
+.porte-analyses-picto{flex:0 0 auto;width:2.2em;height:2.2em;padding:.3em;display:flex;align-items:center;
+  border:1px solid rgba(244,242,236,.45);border-radius:var(--rayon-petit);}
+.porte-analyses-picto svg{width:100%;height:100%;}
+.porte-analyses-txt b{display:block;font-family:var(--serif);font-size:1rem;}
+.porte-analyses-txt span{display:block;font-size:.76rem;color:rgba(244,242,236,.7);}
+.porte-analyses .porte-fleche{color:var(--page);}
 /* Les trois étapes du travail : dire ce que l'appli fait, sans promesse de plus. */
 .porte-etapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.5em;
   list-style:none;margin:1.6em 0 0;padding:0;}
@@ -743,7 +757,19 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
           <span class="porte-fleche" aria-hidden="true">→</span>
         </button>
       </div>
-      <p class="porte-note">Le milieu choisi fixe les fiches, les espèces proposées à la saisie et les analyses. Il se change à tout moment depuis l'accueil.</p>
+      <p class="porte-note">Le milieu choisi fixe les fiches et les espèces proposées à la saisie. Il se change à tout moment depuis l'accueil.</p>
+
+      <!-- L'analyse ne dépend pas du milieu : chaque relevé porte le sien, et un
+           transect est analysé avec son propre référentiel. Elle a donc sa
+           propre entrée, au lieu d'être répétée dans les deux accueils. -->
+      <button type="button" class="porte-analyses" onclick="allerA('analyses')">
+        <span class="porte-analyses-picto" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="7" width="30" height="26"></rect><line x1="9" y1="13" x2="19" y2="13" stroke-width="2.6"></line><line x1="15" y1="19" x2="27" y2="19" stroke-width="4"></line><line x1="23" y1="25" x2="31" y2="25" stroke-width="2.6"></line><line x1="17" y1="7" x2="17" y2="33" stroke-dasharray="2.5 2.5" stroke-width="1"></line></svg></span>
+        <span class="porte-analyses-txt">
+          <b>Analyser un transect</b>
+          <span id="porte-n-analyses">Zonation, points de vigilance, richesse spécifique</span>
+        </span>
+        <span class="porte-fleche" aria-hidden="true">→</span>
+      </button>
 
       <ol class="porte-etapes">
         <li><b>1</b><span>Relevé au quadrat<small>espèces et abondance-dominance</small></span></li>
@@ -779,10 +805,6 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <button class="accueil-bouton secondaire2" onclick="allerA('historique')">
       <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><line x1="5" y1="20" x2="35" y2="20"></line><circle cx="10" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="30" cy="20" r="2.6" fill="currentColor" stroke="none"></circle><line x1="10" y1="14" x2="10" y2="26"></line><line x1="30" y1="14" x2="30" y2="26"></line></svg></span>
       <span class="txt"><b>Mes transects</b><span id="compteur-historique-txt">Aucun relevé enregistré</span></span>
-    </button>
-    <button class="accueil-bouton secondaire2" onclick="allerA('analyses')">
-      <span class="picto"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="7" width="30" height="26"></rect><line x1="9" y1="13" x2="19" y2="13" stroke-width="2.6"></line><line x1="15" y1="19" x2="27" y2="19" stroke-width="4"></line><line x1="23" y1="25" x2="31" y2="25" stroke-width="2.6"></line><line x1="17" y1="7" x2="17" y2="33" stroke-dasharray="2.5 2.5" stroke-width="1"></line></svg></span>
-      <span class="txt"><b>Analyses</b><span id="compteur-analyses-txt">Zonation, points de vigilance, richesse spécifique</span></span>
     </button>
     <button class="accueil-installer" id="btn-installer" hidden onclick="installerApplication()">
       <span class="picto" aria-hidden="true">⭳</span>
@@ -951,7 +973,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
        reste téléchargeable depuis cet écran pour être annoté ailleurs. -->
   <!-- LISTE DES TRANSECTS À ANALYSER (accès direct depuis l'accueil) -->
   <section class="ecran" id="ecran-analyses">
-    <a class="retour-lien" onclick="allerA('accueil')">← Accueil</a>
+    <a class="retour-lien" onclick="allerA('milieu')">← Première page</a>
     <div class="carte">
       <h2>Analyses</h2>
       <p style="font-size:.78rem;color:var(--text-2);">Choisissez un transect : diagramme de la zonation, points de vigilance et richesse spécifique. Plus lisible sur ordinateur.</p>
@@ -2226,11 +2248,22 @@ function sauverHistorique(liste){
   localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(liste));
 }
 function majCompteurHistorique(){
-  const n = chargerHistorique().length;
-  document.getElementById('compteur-historique-txt').textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
-  const nt = new Set(chargerHistorique().map(r => r.transect || 'Transect (sans nom)')).size;
-  document.getElementById('compteur-analyses-txt').textContent =
-    nt ? `${nt} transect${nt > 1 ? 's' : ''} · zonation, points de vigilance, richesse spécifique` : 'Zonation, points de vigilance, richesse spécifique';
+  const liste = chargerHistorique();
+  const n = liste.length;
+  const ch = document.getElementById('compteur-historique-txt');
+  if(ch) ch.textContent = n ? `${n} relevé(s) enregistré(s)` : 'Aucun relevé enregistré';
+  /* Entrée « Analyser un transect » de la première page : elle compte les
+     transects des deux milieux, puisque l'analyse ne dépend pas du milieu
+     affiché. */
+  const ca = document.getElementById('porte-n-analyses');
+  if(ca){
+    const transects = new Set(liste.map(r => r.transect || 'Transect (sans nom)'));
+    const milieux = [...new Set(liste.map(milieuDuReleve))].map(m => MILIEUX[m].nom.toLowerCase());
+    ca.textContent = transects.size
+      ? `${transects.size} transect${transects.size > 1 ? 's' : ''} enregistré${transects.size > 1 ? 's' : ''}`
+        + (milieux.length ? ` · ${milieux.join(' et ')}` : '')
+      : 'Zonation, points de vigilance, richesse spécifique';
+  }
 }
 /* ---------- Bordereau de terrain : identité du relevé ----------
    Chaque relevé appartient à un transect (une sortie terrain). La numérotation
@@ -2630,12 +2663,12 @@ function pasCourant(rs){
 }
 
 /* Zone de chaque fiche et son rang dans le gradient. */
-function zoneDeFiche(id){
-  /* Le profil consulté est celui du milieu de la fiche, pas du milieu affiché :
+function zoneDeFiche(id, milieu){
+  /* Le profil consulté est celui du milieu DU RELEVÉ, pas du milieu affiché :
      on peut analyser un transect dunaire en ayant la saisie réglée sur le
-     marais. Les zones dunaires portent leur rang ; les zones anthropiques
-     (friches, chemins) n'en ont pas et restent hors gradient. */
-  const profil = profilDeFiche(id);
+     marais, et l'inverse. Les zones dunaires portent leur rang ; les zones
+     anthropiques (friches, chemins) n'en ont pas et restent hors gradient. */
+  const profil = profilDeFiche(id, milieu);
   for(let i = 0; i < profil.length; i++){
     if(profil[i].fiches.includes(id)){
       const rang = profil[i].rang !== undefined ? profil[i].rang : i + 1;
@@ -2867,7 +2900,9 @@ function afficherListeAnalyses(){
     const rs = tous.filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
       .map(r => ({...r, d: Number(r.distance)})).sort((a, b) => a.d - b.d);
     const r0 = tous[0];
-    const infos = [`${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
+    // le milieu en tête : la liste mêle marais et dunes, chacun analysé avec son
+    // propre référentiel
+    const infos = [MILIEUX[milieuDuReleve(r0)].nom, `${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
     if(rs.length) infos.push(`${rs[0].d} → ${rs[rs.length-1].d} m`);
     if(r0.observateur) infos.push(echapHTML(r0.observateur));
     if(r0.dateReleve) infos.push(r0.dateReleve.split('-').reverse().join('/'));
