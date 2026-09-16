@@ -1741,27 +1741,32 @@ const PROFIL_SOL_D = "M 0 269.7 L 20 269.7 L 40 268.3 L 60 264.2 L 80 259.2 L 10
    semi-fixé, plateau de dune grise, prairies puis fourrés. Le document ne
    publiant pas de profil, ce dessin illustre la SÉQUENCE des zones, pas un
    relief mesuré — la légende sous le schéma le dit. */
-const DUNES_NIVEAUX = {
-  'Haut de plage': 34, 'Dune embryonnaire': 62, 'Dune blanche': 150,
-  'Dune semi-fixée': 112, 'Dune grise': 100, 'Dune fixée, prairies': 92,
-  'Fourrés et boisements': 96, 'Milieux anthropiques': 88
+/* Altitude du sol de chaque zone, en ordonnée du repère source (y croît vers le
+   bas). Le panneau dessiné n'occupe que la bande 88 → 300 de ce repère : sol et
+   végétation doivent y tenir, sinon les plantes montent dans le bandeau des
+   grands ensembles et passent sur son texte. */
+const DUNES_SOL_Y = {
+  'Haut de plage': 276, 'Dune embryonnaire': 262, 'Dune blanche': 208,
+  'Dune semi-fixée': 228, 'Dune grise': 236, 'Dune fixée, prairies': 242,
+  'Fourrés et boisements': 240, 'Milieux anthropiques': 246
 };
+const DUNES_PLAFOND = 104;        // aucune plante ne dépasse cette ordonnée
 /* Végétation typique d'une zone : port du dessin, hauteur (unités source) et
    nombre de silhouettes par zone. */
 const DUNES_VEGETATION = {
-  'Haut de plage': [['herbe', 20, 3], ['tapis', 14, 2]],
-  'Dune embryonnaire': [['graminee-epi', 42, 3], ['rampant', 16, 2]],
-  'Dune blanche': [['graminee-epi', 72, 4], ['hampe-boule', 40, 1]],
-  'Dune semi-fixée': [['graminee', 46, 3], ['tapis', 16, 2]],
-  'Dune grise': [['coussin', 34, 2], ['tapis', 14, 3], ['buisson', 36, 1]],
-  'Dune fixée, prairies': [['graminee-epi', 50, 3], ['hampe-boule', 34, 1]],
-  'Fourrés et boisements': [['arbuste', 105, 2], ['buisson', 60, 1]],
-  'Milieux anthropiques': [['hampe-corymbe', 56, 2], ['graminee-epi', 40, 1]]
+  'Haut de plage': [['herbe', 16, 3], ['tapis', 11, 2]],
+  'Dune embryonnaire': [['graminee-epi', 34, 3], ['rampant', 13, 2]],
+  'Dune blanche': [['graminee-epi', 58, 4], ['hampe-boule', 32, 1]],
+  'Dune semi-fixée': [['graminee', 38, 3], ['tapis', 13, 2]],
+  'Dune grise': [['coussin', 26, 2], ['tapis', 11, 3], ['buisson', 28, 1]],
+  'Dune fixée, prairies': [['graminee-epi', 40, 3], ['hampe-boule', 28, 1]],
+  'Fourrés et boisements': [['arbuste', 82, 2], ['buisson', 46, 1]],
+  'Milieux anthropiques': [['hampe-corymbe', 44, 2], ['graminee-epi', 32, 1]]
 };
 function solDunesSVG(n){
   const pas = 1600 / n;
   const zones = PROFIL_ACTIF.map(z => z.zone);
-  const yDe = zone => 300 - (DUNES_NIVEAUX[zone] || 90) - 30;   // 30 = marge basse
+  const yDe = zone => DUNES_SOL_Y[zone] || 250;
   // ligne de sol : un point par bord de zone, lissée en courbes
   const pts = [[0, yDe(zones[0])]];
   zones.forEach((z, i) => pts.push([i * pas + pas / 2, yDe(z)]));
@@ -1786,13 +1791,16 @@ function solDunesSVG(n){
         for(let k = 0; k < nb; k++){
           const x = i * pas + pas * ((k + 0.5 + j * 0.25) / (nb + j * 0.25));
           const R = aleaGraine(graineTexte(`profil|${z}|${port}|${k}`));
-          veg += (PICTOS[port] || PICTOS.herbe)(x, solY(x) + 2, h * (0.85 + R() * 0.3), R, undefined, 1);
+          const sol = solY(x) + 2;
+          // aucune silhouette ne dépasse le plafond du panneau
+          const haut = Math.min(h * (0.85 + R() * 0.3), sol - DUNES_PLAFOND);
+          if(haut > 4) veg += (PICTOS[port] || PICTOS.herbe)(x, sol, haut, R, undefined, 1);
         }
       });
     });
   }
   return {
-    d: dFerme, mer: pas * 0.92, niveau: yDe(zones[0]) + 16,
+    d: dFerme, mer: pas * 0.92, niveau: yDe(zones[0]) + 12,
     vegetation: `<path d="${dFerme}" fill="#efe9d8"/><path d="${d}" fill="none" stroke="#a89c7c" stroke-width="3"/>`
       + `<g fill="none" stroke="#191b16" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${veg}</g>`
   };
@@ -1870,12 +1878,12 @@ function construireProfilSVG(svgId, opts){
        portent désormais un numéro de fiche (1 à 28), pas un code à quatre
        caractères. À huit zones, les cases sont plus étroites : pastilles et
        espacement réduits d'un cheveu. */
-    const rPast = n >= 8 ? 7 : 7.5, ecart = n >= 8 ? 15 : 16;
+    const rPast = n >= 8 ? 8.2 : 7.5, ecart = n >= 8 ? 17 : 16;
     fichesAffiches.forEach((fid, k)=>{
-      const cx = i*w + (n >= 8 ? 12 : 13) + (k%4)*ecart;
-      const cy = 124 + Math.floor(k/4)*ecart;
+      const cx = i*w + (n >= 8 ? 12.5 : 13) + (k%4)*ecart;
+      const cy = 125 + Math.floor(k/4)*(ecart + 1);
       html += `<circle cx="${cx}" cy="${cy}" r="${rPast}" fill="#fff" stroke="#191b16" stroke-width="1" style="pointer-events:none"/>
-        <text x="${cx}" y="${cy+2.6}" text-anchor="middle" font-size="7.8" fill="#191b16" style="pointer-events:none">${fid}</text>`;
+        <text x="${cx}" y="${cy + (n >= 8 ? 3.1 : 2.6)}" text-anchor="middle" font-size="${n >= 8 ? 9.4 : 7.8}" fill="#191b16" style="pointer-events:none">${fid}</text>`;
     });
     if(reste > 0) html += `<text x="${i*w + w/2}" y="${124 + 2*ecart + 3}" text-anchor="middle" font-size="7.5" fill="#191b16" style="pointer-events:none">+${reste}</text>`;
     html += `</g>`;
