@@ -212,31 +212,49 @@ main{max-width:640px;margin:0 auto;padding:1em;}
 .installer-etat{margin:.4em 0 0;font-size:.78rem;line-height:1.45;opacity:.8;}
 .installer-etat[hidden]{display:none;}
 .version-appli{font-family:var(--mono);white-space:nowrap;}
-/* ---- Porte d'entrée : choix du milieu ----
-   Deux grandes cartes, une par typologie, avec un libellé « Entrer » : le geste
-   attendu doit être évident dès l'ouverture de l'appli. */
-.accueil-hero.porte{margin-bottom:0;border-radius:0;min-height:calc(100vh - 3.4em);padding:1.6em 1.1em 2em;}
-.porte-titre{font-family:var(--serif);font-size:1.35rem;line-height:1.25;margin:.2em 0 .5em;color:var(--page);}
-.porte-intro{font-size:.84rem;line-height:1.55;color:rgba(244,242,236,.78);margin:0 0 1.2em;max-width:42em;}
-.porte-cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.8em;}
+/* ---- Porte d'entrée ----
+   Première page de l'appli : ce qu'elle fait en deux phrases, puis le choix du
+   milieu — deux cartes-documents qui sont le geste d'entrée — puis les trois
+   étapes du travail et l'usage hors réseau. */
+.accueil-hero.porte{margin-bottom:0;border-radius:0;min-height:calc(100vh - 3.4em);padding:1.5em 1.1em 2em;
+  display:flex;flex-direction:column;}
+.porte-kicker{margin:0 0 .7em;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:rgba(244,242,236,.5);}
+.porte-titre{font-family:var(--serif);font-size:clamp(1.4rem,5.4vw,1.85rem);line-height:1.18;margin:0 0 .5em;color:var(--page);}
+.porte-intro{font-size:.86rem;line-height:1.6;color:rgba(244,242,236,.8);margin:0 0 1.6em;max-width:40em;}
+.porte-question{margin:0 0 .6em;font-family:var(--sans);font-size:.95rem;font-weight:700;color:var(--page);}
+.porte-cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:.7em;}
 .porte-carte{
-  display:flex;gap:.9em;align-items:stretch;text-align:left;width:100%;
-  padding:.9em;border-radius:var(--rayon);cursor:pointer;
+  position:relative;display:flex;gap:.85em;align-items:center;text-align:left;width:100%;
+  padding:.85em 2.2em .85em .85em;border-radius:var(--rayon);cursor:pointer;
   background:var(--card);border:1px solid var(--card);color:var(--ink);
   transition:transform .12s,box-shadow .12s;
 }
-.porte-carte:hover,.porte-carte:focus-visible{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.28);}
-.porte-carte img{flex:0 0 auto;display:block;width:clamp(64px,17vw,84px);height:auto;border-radius:2px;border:1px solid var(--line);}
-.porte-txt{display:flex;flex-direction:column;min-width:0;}
-.porte-txt b{font-family:var(--serif);font-size:1.05rem;margin-bottom:.2em;}
-.porte-doc{font-size:.8rem;line-height:1.4;color:var(--text-2);margin-bottom:.35em;}
-.porte-meta{font-family:var(--mono);font-size:.7rem;color:var(--text-2);}
-.porte-src{margin-top:.15em;}
-.porte-entrer{margin-top:auto;padding-top:.5em;font-family:var(--sans);font-size:.85rem;font-weight:700;color:var(--acc);}
-.porte-carte:hover .porte-entrer{text-decoration:underline;}
-.porte-carte.dernier{border-color:var(--acc);box-shadow:0 0 0 2px rgba(11,95,125,.35);}
-.porte-carte.dernier .porte-entrer::after{content:" · dernier choix";font-weight:400;font-size:.72rem;color:var(--text-2);}
-.porte-pied{margin:1.4em 0 0;font-family:var(--mono);font-size:.7rem;color:rgba(244,242,236,.5);}
+.porte-carte:hover,.porte-carte:focus-visible{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.3);}
+.porte-carte img{flex:0 0 auto;display:block;width:clamp(58px,15vw,72px);height:auto;
+  border-radius:2px;border:1px solid var(--line);}
+.porte-txt{display:flex;flex-direction:column;gap:.15em;min-width:0;}
+.porte-nom{display:flex;align-items:baseline;gap:.5em;flex-wrap:wrap;font-family:var(--serif);font-size:1.08rem;}
+.porte-badge{display:none;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:.1em .45em;}
+.porte-carte.dernier .porte-badge{display:inline-block;}
+.porte-grad{font-size:.8rem;line-height:1.35;color:var(--text-2);}
+.porte-chiffres{font-family:var(--mono);font-size:.72rem;color:var(--ink);}
+.porte-src{font-family:var(--mono);font-size:.66rem;color:var(--text-2);}
+.porte-fleche{position:absolute;right:.7em;top:50%;transform:translateY(-50%);
+  font-size:1.25rem;line-height:1;color:var(--acc);}
+.porte-carte:hover .porte-fleche{right:.45em;}
+.porte-note{margin:.7em 0 0;font-size:.74rem;line-height:1.5;color:rgba(244,242,236,.6);max-width:40em;}
+/* Les trois étapes du travail : dire ce que l'appli fait, sans promesse de plus. */
+.porte-etapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.5em;
+  list-style:none;margin:1.6em 0 0;padding:0;}
+.porte-etapes li{display:flex;gap:.55em;align-items:flex-start;padding:.55em .7em;
+  border:1px solid rgba(244,242,236,.18);border-radius:var(--rayon-petit);background:rgba(244,242,236,.05);}
+.porte-etapes b{font-family:var(--mono);font-size:.8rem;color:rgba(244,242,236,.55);}
+.porte-etapes span{display:block;font-size:.82rem;font-weight:600;color:var(--page);}
+.porte-etapes small{display:block;font-weight:400;font-size:.72rem;color:rgba(244,242,236,.6);margin-top:.1em;}
+.porte-pied{margin:auto 0 0;padding-top:1.4em;font-family:var(--mono);font-size:.68rem;line-height:1.6;
+  color:rgba(244,242,236,.5);}
 
 /* ---- Bandeau du milieu en cours, en tête de l'accueil ---- */
 .bandeau-milieu{
@@ -698,31 +716,42 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
   <section class="ecran actif" id="ecran-milieu">
     <div class="accueil-hero porte">
       <canvas class="hero-motif" id="hero-motif" aria-hidden="true"></canvas>
-      <h1 class="porte-titre">Sur quel milieu travaillez-vous&nbsp;?</h1>
-      <p class="porte-intro">Deux typologies du Conservatoire botanique national de Brest, pour le même site Natura 2000 « Massif dunaire de Gâvres-Quiberon et zones humides associées ». Votre choix fixe les fiches, la liste des espèces proposées à la saisie et les analyses. Vous pourrez en changer à tout moment.</p>
+      <p class="porte-kicker">BTS GPN Kerplouz · relevés de terrain, sans réseau</p>
+      <h1 class="porte-titre">Identifier les habitats<br>le long d'un transect</h1>
+      <p class="porte-intro">Un quadrat après l'autre, du bord de l'eau vers l'intérieur. L'appli propose l'habitat le plus probable de chaque relevé, d'après les typologies du Conservatoire botanique national de Brest, puis lit la zonation du transect entier.</p>
+
+      <p class="porte-question">Quel milieu allez-vous relever&nbsp;?</p>
       <div class="porte-cartes">
         <button type="button" class="porte-carte" id="porte-marais" onclick="definirMilieu('marais')">
           <img src="documents/couverture.jpg" width="381" height="538" alt="Couverture du rapport COLASSE 2019, CBN de Brest" loading="lazy">
           <span class="porte-txt">
-            <b>Marais salés</b>
-            <span class="porte-doc">Petite Mer de Gâvres — de la slikke au contact dunaire</span>
-            <span class="porte-meta" id="porte-n-marais"></span>
-            <span class="porte-meta porte-src">COLASSE V., 2019</span>
-            <span class="porte-entrer">Entrer <span aria-hidden="true">→</span></span>
+            <span class="porte-nom">Marais salés<span class="porte-badge">dernier choix</span></span>
+            <span class="porte-grad">Petite Mer de Gâvres · de la slikke au contact dunaire</span>
+            <span class="porte-chiffres" id="porte-n-marais"></span>
+            <span class="porte-src">COLASSE V., 2019 — CBN de Brest</span>
           </span>
+          <span class="porte-fleche" aria-hidden="true">→</span>
         </button>
         <button type="button" class="porte-carte" id="porte-dunes" onclick="definirMilieu('dunes')">
           <img src="documents/couverture-dunes.jpg" width="381" height="538" alt="Couverture du rapport DELASSUS 2018, CBN de Brest" loading="lazy">
           <span class="porte-txt">
-            <b>Milieux dunaires</b>
-            <span class="porte-doc">Massif de Gâvres - Quiberon — de la plage à la dune grise</span>
-            <span class="porte-meta" id="porte-n-dunes"></span>
-            <span class="porte-meta porte-src">DELASSUS L., QUÉRÉ E. &amp; HARDEGEN M., 2018</span>
-            <span class="porte-entrer">Entrer <span aria-hidden="true">→</span></span>
+            <span class="porte-nom">Milieux dunaires<span class="porte-badge">dernier choix</span></span>
+            <span class="porte-grad">Massif de Gâvres - Quiberon · de la plage à la dune grise</span>
+            <span class="porte-chiffres" id="porte-n-dunes"></span>
+            <span class="porte-src">DELASSUS, QUÉRÉ &amp; HARDEGEN, 2018 — CBN de Brest</span>
           </span>
+          <span class="porte-fleche" aria-hidden="true">→</span>
         </button>
       </div>
-      <p class="porte-pied">Version <span id="version-porte"></span> · Zonation, BTS GPN Kerplouz</p>
+      <p class="porte-note">Le milieu choisi fixe les fiches, les espèces proposées à la saisie et les analyses. Il se change à tout moment depuis l'accueil.</p>
+
+      <ol class="porte-etapes">
+        <li><b>1</b><span>Relevé au quadrat<small>espèces et abondance-dominance</small></span></li>
+        <li><b>2</b><span>Habitat probable<small>classement et fiche détaillée</small></span></li>
+        <li><b>3</b><span>Analyse du transect<small>zonation, profil, richesse</small></span></li>
+      </ol>
+
+      <p class="porte-pied">Zonation v<span id="version-porte"></span> · une fois ouverte avec du réseau, l'appli fonctionne hors ligne et garde les relevés sur l'appareil.</p>
     </div>
   </section>
 
@@ -912,7 +941,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : relevés regroupés par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
         <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit n'importe quel fichier produit par l'appli — export complet, export Phytoscope, ou l'ancien « Tableau de synthèse » — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois. Si le fichier ne précise pas le milieu, il est déduit du cortège et le compte rendu le signale.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Export complet » ou un « Export pour Phytoscope » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois. Si le fichier ne précise pas le milieu, il est déduit du cortège et le compte rendu le signale.</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -1041,7 +1070,11 @@ function majEcranMilieu(){
   // porte d'entrée : nombre de fiches ou d'unités par typologie
   ['marais', 'dunes'].forEach(k => {
     const n = document.getElementById('porte-n-' + k);
-    if(n) n.textContent = `${MILIEUX[k].habitats.length} ${k === 'dunes' ? 'unités de cartographie' : 'fiches habitats'}`;
+    if(n){
+      const esp = new Set();
+      MILIEUX[k].habitats.forEach(h => h.especes.forEach(e => esp.add(e.latin)));
+      n.textContent = `${MILIEUX[k].habitats.length} ${k === 'dunes' ? 'unités' : 'fiches'} · ${esp.size} espèces`;
+    }
     /* Le dernier milieu utilisé est signalé : au retour sur l'appli, la carte à
        toucher se repère sans lire. */
     const c = document.getElementById('porte-' + k);
@@ -3391,11 +3424,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iLatin    = col('nom_scientifique');
   const iCoef     = col('coefficient', 'recouvrement_saisi');
   const iTransect = col('transect');
-  let iNumero     = col('releve_n', 'releve_no', 'releve_numero');
-  /* Le tout premier format nommait cette colonne « N° » : trop court pour la
-     correspondance tolérante, qui l'aurait confondue avec n'importe quel
-     en-tête d'une ou deux lettres. On la cherche donc à l'identique. */
-  if(iNumero < 0) iNumero = entete.findIndex(e => e === 'n' || e === 'no' || e === 'num');
+  const iNumero   = col('releve_n', 'releve_no', 'releve_numero');
   const iReleveId = col('releve_id');
   const iNomRel   = col('releve_nom');
   const iProjet   = col('code_projet');
@@ -3407,8 +3436,6 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iRemarque = col('remarque');
   const iMode     = col('mode_recouvrement');
   const iMilieu   = col('milieu');
-  const iCortege  = col('especes_relevees_abondance', 'especes_relevees');
-  const iHabitat  = col('habitat_probable');
   /* Milieu du relevé : lu dans le fichier quand la colonne existe. Sinon — tous
      les fichiers exportés avant l'arrivée des dunes — il est déduit du cortège,
      et non du milieu affiché : sans quoi un fichier de marais importé en mode
@@ -3424,9 +3451,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const m = String(local || '').match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
     return m ? m[1].replace(',', '.') : '';
   };
-  // le tout premier format n'a ni colonne d'espèce ni colonne de coefficient :
-  // son cortège tient dans une seule cellule
-  if(iCortege < 0 && (iCoef < 0 || (iEspece < 0 && iLatin < 0)))
+  if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
     throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
   /* Sans numéro de relevé ni identifiant, toutes les lignes tomberaient dans un
      seul relevé : mieux vaut refuser que fusionner silencieusement un transect. */
@@ -3472,28 +3497,6 @@ function appliquerImportCSV(texte, nomFichier, infos){
       milieu: milieuDe(v(iMilieu))
     });
     const g = groupes.get(cle);
-    /* Tout premier format de l'appli (« Tableau de synthèse ») : le cortège
-       entier tient dans une cellule, « Nom (Latin) : coef | Nom … ». Une ligne
-       vaut alors un relevé complet. */
-    if(iCortege >= 0){
-      v(iCortege).split('|').forEach(morceau => {
-        const m = morceau.trim().match(/^(.*?)\s*(?:\(([^)]*)\))?\s*(?:\[[^\]]*\])?\s*:\s*([^\s]+)$/);
-        if(!m) return;
-        const frBrut = m[1].replace(/\[[^\]]*\]/g, '').trim(), latinBrut = (m[2] || '').trim();
-        if(/^sol nu$/i.test(frBrut)){ g.solNu = true; return; }
-        const codeBrut = m[3].replace(/\s+/g, '').toLowerCase();
-        if(!(codeBrut in COEF_ABONDANCE)){
-          avertissements.push(`ligne ${n+2} : coefficient « ${m[3]} » non reconnu, espèce ignorée (${frBrut})`);
-          return;
-        }
-        const su = ESPECES_PAR_LATIN[latinBrut] || ESPECES_PAR_FR[frBrut];
-        g.cortege.push({fr: su ? su.fr : frBrut, latin: su ? su.latin : (latinBrut || null),
-          mode: 'bb', cover: codeBrut, reconnue: !!su});
-        if(!su) avertissements.push(`ligne ${n+2} : « ${frBrut || latinBrut} » hors référentiel, conservée sans effet sur le score`);
-      });
-      if(!g.cortege.length && /sol nu/i.test(v(iHabitat))) g.solNu = true;
-      return;
-    }
     const latin = v(iLatin), fr = v(iEspece) || latin;
     const coef = v(iCoef);
     if(!fr && !latin) return;                                  // ligne sans espèce
