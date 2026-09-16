@@ -912,7 +912,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : relevés regroupés par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
         <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
-        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Tableau de synthèse » ou un « Export complet » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit n'importe quel fichier produit par l'appli — export complet, export Phytoscope, ou l'ancien « Tableau de synthèse » — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois. Si le fichier ne précise pas le milieu, il est déduit du cortège et le compte rendu le signale.</p>
         <button class="discret" onclick="viderHistorique()">Tout effacer</button>
       </div>
     </div>
@@ -3286,6 +3286,25 @@ const ESPECES_PAR_LATIN = {}, ESPECES_PAR_FR = {};
   if(!ESPECES_PAR_FR[e.fr]) ESPECES_PAR_FR[e.fr] = {fr: e.fr, latin: e.latin};
 }));
 
+/* Espèces de chaque référentiel, pour deviner le milieu d'un fichier qui ne le
+   dit pas — tous ceux exportés avant l'arrivée des dunes. Une soixantaine
+   d'espèces sont communes aux deux milieux (armérie, plantain corne-de-cerf,
+   chiendent…) : c'est donc le cortège dans son ensemble qui tranche. */
+const ESPECES_PAR_MILIEU = {};
+Object.entries(MILIEUX).forEach(([cle, m]) => {
+  const s = new Set();
+  m.habitats.forEach(h => h.especes.forEach(e => { s.add(normaliser(e.latin)); s.add(normaliser(e.fr)); }));
+  ESPECES_PAR_MILIEU[cle] = s;
+});
+/* Milieu le plus vraisemblable pour un cortège : celui qui reconnaît le plus
+   d'espèces. Égalité ou cortège vide : le marais, seul référentiel des versions
+   antérieures. */
+function milieuProbable(cortege){
+  const score = cle => (cortege || []).reduce((n, e) =>
+    n + (ESPECES_PAR_MILIEU[cle].has(normaliser(e.latin)) || ESPECES_PAR_MILIEU[cle].has(normaliser(e.fr)) ? 1 : 0), 0);
+  return score('dunes') > score('marais') ? 'dunes' : 'marais';
+}
+
 /* Découpage RFC 4180 : les champs entre guillemets peuvent contenir le
    séparateur, des retours à la ligne et des guillemets doublés. */
 function lireCSV(texte){
@@ -3372,7 +3391,11 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iLatin    = col('nom_scientifique');
   const iCoef     = col('coefficient', 'recouvrement_saisi');
   const iTransect = col('transect');
-  const iNumero   = col('releve_n', 'releve_no', 'releve_numero');
+  let iNumero     = col('releve_n', 'releve_no', 'releve_numero');
+  /* Le tout premier format nommait cette colonne « N° » : trop court pour la
+     correspondance tolérante, qui l'aurait confondue avec n'importe quel
+     en-tête d'une ou deux lettres. On la cherche donc à l'identique. */
+  if(iNumero < 0) iNumero = entete.findIndex(e => e === 'n' || e === 'no' || e === 'num');
   const iReleveId = col('releve_id');
   const iNomRel   = col('releve_nom');
   const iProjet   = col('code_projet');
@@ -3384,8 +3407,12 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const iRemarque = col('remarque');
   const iMode     = col('mode_recouvrement');
   const iMilieu   = col('milieu');
-  /* Milieu du relevé : lu dans le fichier quand la colonne existe, sinon le
-     milieu affiché. Un fichier d'avant cette version n'en a pas. */
+  const iCortege  = col('especes_relevees_abondance', 'especes_relevees');
+  const iHabitat  = col('habitat_probable');
+  /* Milieu du relevé : lu dans le fichier quand la colonne existe. Sinon — tous
+     les fichiers exportés avant l'arrivée des dunes — il est déduit du cortège,
+     et non du milieu affiché : sans quoi un fichier de marais importé en mode
+     dunaire serait scoré avec le mauvais référentiel. */
   const milieuDe = v => /dun/i.test(v || '') ? 'dunes' : (/marais|salé|schorre|slikke/i.test(v || '') ? 'marais' : null);
   const iLocal    = col('localisation');
   /* Distance : colonne dédiée, sinon lue dans « localisation » où l'export
@@ -3397,7 +3424,9 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const m = String(local || '').match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
     return m ? m[1].replace(',', '.') : '';
   };
-  if(iCoef < 0 || (iEspece < 0 && iLatin < 0))
+  // le tout premier format n'a ni colonne d'espèce ni colonne de coefficient :
+  // son cortège tient dans une seule cellule
+  if(iCortege < 0 && (iCoef < 0 || (iEspece < 0 && iLatin < 0)))
     throw new Error('ce fichier ne ressemble pas à un export de Zonation (colonne d\'espèce ou de coefficient absente).');
   /* Sans numéro de relevé ni identifiant, toutes les lignes tomberaient dans un
      seul relevé : mieux vaut refuser que fusionner silencieusement un transect. */
@@ -3443,6 +3472,28 @@ function appliquerImportCSV(texte, nomFichier, infos){
       milieu: milieuDe(v(iMilieu))
     });
     const g = groupes.get(cle);
+    /* Tout premier format de l'appli (« Tableau de synthèse ») : le cortège
+       entier tient dans une cellule, « Nom (Latin) : coef | Nom … ». Une ligne
+       vaut alors un relevé complet. */
+    if(iCortege >= 0){
+      v(iCortege).split('|').forEach(morceau => {
+        const m = morceau.trim().match(/^(.*?)\s*(?:\(([^)]*)\))?\s*(?:\[[^\]]*\])?\s*:\s*([^\s]+)$/);
+        if(!m) return;
+        const frBrut = m[1].replace(/\[[^\]]*\]/g, '').trim(), latinBrut = (m[2] || '').trim();
+        if(/^sol nu$/i.test(frBrut)){ g.solNu = true; return; }
+        const codeBrut = m[3].replace(/\s+/g, '').toLowerCase();
+        if(!(codeBrut in COEF_ABONDANCE)){
+          avertissements.push(`ligne ${n+2} : coefficient « ${m[3]} » non reconnu, espèce ignorée (${frBrut})`);
+          return;
+        }
+        const su = ESPECES_PAR_LATIN[latinBrut] || ESPECES_PAR_FR[frBrut];
+        g.cortege.push({fr: su ? su.fr : frBrut, latin: su ? su.latin : (latinBrut || null),
+          mode: 'bb', cover: codeBrut, reconnue: !!su});
+        if(!su) avertissements.push(`ligne ${n+2} : « ${frBrut || latinBrut} » hors référentiel, conservée sans effet sur le score`);
+      });
+      if(!g.cortege.length && /sol nu/i.test(v(iHabitat))) g.solNu = true;
+      return;
+    }
     const latin = v(iLatin), fr = v(iEspece) || latin;
     const coef = v(iCoef);
     if(!fr && !latin) return;                                  // ligne sans espèce
@@ -3502,16 +3553,22 @@ function appliquerImportCSV(texte, nomFichier, infos){
   };
   const ajoutes = [];
   let doublons = 0;
+  const milieuxDeduits = new Map();       // milieu → nombre de relevés, pour le compte rendu
   groupes.forEach(g => {
     if(dejaLa.has(empreinte(g))){ doublons++; return; }
     g.transectFichier = g.transect;
     g.transect = nomRetenu(g.transect);
+    if(!g.milieu){
+      g.milieu = milieuProbable(g.cortege);
+      g.milieuDeduit = true;
+      milieuxDeduits.set(g.milieu, (milieuxDeduits.get(g.milieu) || 0) + 1);
+    }
     // L'habitat est recalculé avec le référentiel courant : le fichier n'en porte
     // que le libellé, alors que le profil a besoin du numéro de fiche.
     const sauve = etat.cortege;
     etat.cortege = g.cortege.filter(e => e.reconnue).map(e => ({...e, key: normaliser(e.latin)}));
     const res = g.solNu || !etat.cortege.length ? null
-      : calculerScores(MILIEUX[g.milieu || milieuActif].habitats).filter(x => x.matchCar.length || x.matchFreq.length)[0];
+      : calculerScores(MILIEUX[g.milieu].habitats).filter(x => x.matchCar.length || x.matchFreq.length)[0];
     etat.cortege = sauve;
     ajoutes.push({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
@@ -3519,7 +3576,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
       numero: g.numero, observateur: g.observateur, site: g.site, commune: g.commune,
       observation: g.observation, distance: g.distance, cortege: g.cortege,
       solNu: g.solNu || !g.cortege.length,
-      milieu: g.milieu || milieuActif,
+      milieu: g.milieu,
       top: res ? res.habitat.nomFr : SOL_NU.habitat, topFiche: res ? res.habitat.id : null,
       tauxCar: res ? res.tauxCar : 0,
       carMatch: res ? `${res.matchCar.length}/${res.totalCar}` : '',
@@ -3547,6 +3604,12 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const apercu = avertissements.slice(0,8);
     msg += `\n\n${avertissements.length} remarque${avertissements.length>1?'s':''} :\n· ` + apercu.join('\n· ')
       + (avertissements.length > apercu.length ? `\n· … et ${avertissements.length - apercu.length} autre(s)` : '');
+  }
+  /* Un fichier sans colonne « Milieu » — tous ceux d'avant les dunes — voit son
+     milieu déduit du cortège : il faut le dire, c'est une interprétation. */
+  if(milieuxDeduits.size){
+    msg += '\n\nCe fichier ne précise pas le milieu : déduit du cortège — '
+      + [...milieuxDeduits.entries()].map(([m, n]) => `${MILIEUX[m].nom} (${n} relevé${n>1?'s':''})`).join(', ') + '.';
   }
   msg += '\n\nL\'habitat a été recalculé avec le référentiel de cette version de l\'appli.';
   informer(msg);
