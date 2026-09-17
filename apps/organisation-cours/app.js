@@ -1249,14 +1249,14 @@ function doneRoomBookingRows() {
   return reservationRows().filter(r => r.booked);
 }
 
-const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission', reunion: 'Réunion' };
+const URGENCE_LABELS = { salle: 'Salle', vehicule: 'Véhicule', materiel: 'Matériel', mission: 'Ordre de mission', reunion: 'Réunion', deplacement: 'Déplacement' };
 const URGENCE_VERBES = { salle: 'Marquer réservée', vehicule: 'Réserver', materiel: 'Réserver' };
 // Retour Martin (02/09/2026) : sur desktop, le type de ligne (colonne
 // .urgence-type) passe du texte au pictogramme — reprend exactement les
 // pictos déjà utilisés ailleurs pour la même nature (mobileIconMarkup/
 // ICON_PNG_NOMS, ex. picto « document » déjà utilisé pour la tuile « Ordre de
 // mission »). Mobile garde le texte, inchangé (voir styles.css).
-const URGENCE_KIND_PICTOS = { salle: 'salle', vehicule: 'voiture', materiel: 'pelle', mission: 'document', reunion: 'reunion' };
+const URGENCE_KIND_PICTOS = { salle: 'salle', vehicule: 'voiture', materiel: 'pelle', mission: 'document', reunion: 'reunion', deplacement: 'voiture' };
 function urgenceTypeMarkup(kind) {
   const label = URGENCE_LABELS[kind] || kind;
   const picto = URGENCE_KIND_PICTOS[kind]
@@ -1308,6 +1308,30 @@ function urgenceRows() {
       date: o.date, daysUntil: o.date ? dashJoursEntre(o.date) : null,
       source: o.source, id: o.id, fait: false, missionTeacher: o.missionTeacher || '',
       teacher: entity?.teacher || ''
+    });
+  });
+  // Retour Martin (17/09/2026) : une séance/réunion avec « Déplacement
+  // nécessaire » coché mais dont AUCUN mode (établissement/personnel) n'a
+  // encore été choisi affiche « Déplacement à régler » sur sa carte
+  // (deplacementEtatCarte, état « a-decider », nature '') — mais restait
+  // invisible dans Urgences : ni pousserVehicule (exige le mode
+  // établissement, cf. reservationRows) ni ordresDeMissionAFaire (exige le
+  // mode personnel) ne la remontent tant que rien n'est choisi. Rattrapé ici
+  // via le même état agrégé que la carte, jusqu'à ce qu'un mode soit choisi
+  // (elle rejoint alors l'une des deux piles ci-dessus, qui prennent le
+  // relais).
+  [
+    ...(state.sessions || []).filter(estVisiblePourMoi).map(s => ({ source: 'session', id: s.id, entity: s, titre: s.title || 'Séance sans titre', detail: s.promotion || '', date: roomBookingDate(s), teacher: s.teacher || '' })),
+    ...(state.reunions || []).filter(estVisiblePourMoi).map(r => ({ source: 'reunion', id: r.id, entity: r, titre: r.sujets ? truncate(r.sujets, 48) : 'Réunion', detail: r.lieu || '', date: r.date ? parseIsoDate(r.date) : null, teacher: r.teacher || '' }))
+  ].forEach(({ source, id, entity, titre, detail, date, teacher }) => {
+    const etat = deplacementEtatCarte(entity);
+    if (!etat || etat.etat !== 'a-decider' || etat.total > 0) return;
+    const daysUntil = date ? dashJoursEntre(date) : null;
+    if (daysUntil !== null && daysUntil < 0) return;
+    out.push({
+      kind: 'deplacement', titre, detail,
+      date, daysUntil,
+      source, id, fait: false, teacher
     });
   });
   // Réunions à venir (retour Martin 02/09/2026) — mêmes comptes que le
@@ -1416,7 +1440,7 @@ function urgenceRowMarkup(r) {
     ? `<span class="urgence-verbe" data-open-mission="${missionAttr}" tabindex="0" role="button">Éditer</span>${basculeRetourBtn}`
     : r.kind === 'reunion'
     ? `<span class="urgence-verbe" data-edit-reunion="${escapeAttr(r.id)}" tabindex="0" role="button">Éditer</span>`
-    : r.kind === 'vehicule'
+    : (r.kind === 'vehicule' || r.kind === 'deplacement')
     ? gererDeplacementMarkup(r.source, r.id, 'urgence-verbe urgence-bascule')
     : `<label class="urgence-verbe room-booked-check"><input type="checkbox" data-reservation-kind="${escapeAttr(r.kind)}" data-reservation-source="${escapeAttr(r.source)}" data-reservation-id="${escapeAttr(r.id)}" data-reservation-modele="${escapeAttr(r.modele || '')}" data-reservation-vpe-teacher="${escapeAttr(r.vpeTeacher || '')}"><span>${escapeHtml(URGENCE_VERBES[r.kind] || 'Réserver')}</span></label>`;
   // La ligne entière ouvre la fiche de la séance/réunion (comme les cartes
@@ -1517,7 +1541,7 @@ const MOBILE_URGENCE_FILTRES = {
   tout: () => true,
   salle: r => r.kind === 'salle',
   materiel: r => r.kind === 'materiel',
-  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission',
+  deplacement: r => r.kind === 'vehicule' || r.kind === 'mission' || r.kind === 'deplacement',
   // Puce dédiée (retour Martin 02/09/2026), séparée de Déplacements : une
   // réunion à venir n'est pas un trajet.
   reunion: r => r.kind === 'reunion'
