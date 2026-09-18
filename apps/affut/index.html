@@ -1360,7 +1360,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     recherche: { q: "", champ: "tout", rubrique: "toutes" },
     sommaireDeplie: {},
     sourcesDeplie: false,
-    sourcesFiltre: "toutes", // "toutes" | "hebdomadaire" | "mensuelle" — filtre de l'écran Sources
+    sourcesFiltre: "toutes", // "toutes" | "hebdomadaire" | "mensuelle" | "tiers-mensuelle" — filtre de l'écran Sources
     bilanEntreesDeplie: false,
     bilanDetailJournalierOuvert: false, // petits graphiques « jour par jour » (vues/numéro, clics/entrée) sous les lignes du Bilan
     publicationRefusee: null,
@@ -2540,7 +2540,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="source-row">' +
       '<div class="source-nom">' +
         '<span class="nom">' + esc(s.nom) + '</span>' +
-        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + ' · ' + (s.periodicite === "mensuelle" ? "mensuelle" : "hebdomadaire") + '</span>' +
+        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + ' · ' + esc(s.periodicite || "hebdomadaire") + '</span>' +
         (s.derniereMoisson.statut === "echec" ? '<span class="echec-note">× ' + esc(s.derniereMoisson.detail) + (s.derniereMoisson.note ? " · " + esc(s.derniereMoisson.note) : "") + '</span>' : "") +
       '</div>' +
       '<div class="source-rubrique">' + esc(s.rubriqueDefaut) + '</div>' +
@@ -2551,26 +2551,26 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   function renderSourcesEcran(){
-    var nbHebdo = sourcesSuivies.filter(function(s){ return s.periodicite !== "mensuelle"; }).length;
-    var nbMensuelle = sourcesSuivies.length - nbHebdo;
+    var nbHebdo = sourcesSuivies.filter(function(s){ return s.periodicite === "hebdomadaire"; }).length;
+    var nbMensuelle = sourcesSuivies.filter(function(s){ return s.periodicite === "mensuelle"; }).length;
+    var nbTiersMensuelle = sourcesSuivies.filter(function(s){ return s.periodicite === "tiers-mensuelle"; }).length;
     var sourcesFiltrees = sourcesSuivies.filter(function(s){
-      if (state.sourcesFiltre === "hebdomadaire") return s.periodicite !== "mensuelle";
-      if (state.sourcesFiltre === "mensuelle") return s.periodicite === "mensuelle";
-      return true;
+      return state.sourcesFiltre === "toutes" || s.periodicite === state.sourcesFiltre;
     });
     var totalEchec = sourcesFiltrees.filter(function(s){ return s.derniereMoisson.statut === "echec"; }).length;
     var derniereDate = sourcesSuivies.length ? sourcesSuivies[0].derniereMoisson.date : "";
 
     var entete = '<h1 class="sr-only">Sources suivies</h1><div class="sources-entete">' +
-      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>dont ' + nbHebdo + ' visitées chaque samedi et ' + nbMensuelle + ' par rotation (un tiers chaque samedi)</span></div>' +
+      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>sources</span></div>' +
       '<div class="sources-collecte"><span class="label">Dernière collecte</span><span class="valeur">' + esc(derniereDate) + (totalEchec ? ' · <span class="echec">' + totalEchec + ' en échec</span>' : "") + '</span></div>' +
       '<div class="sources-entete-actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-plein" data-action="source-add">+ Suivre une source</button></div>' +
     '</div>';
 
     var filtres = '<div class="recherche-filtres"><div class="filtre-groupe"><span class="lbl">Périodicité</span><div class="filtre-toggle">' +
       '<button type="button" data-action="sources-filtre" data-filtre="toutes" aria-pressed="' + (state.sourcesFiltre === "toutes") + '">toutes (' + sourcesSuivies.length + ')</button>' +
-      '<button type="button" data-action="sources-filtre" data-filtre="hebdomadaire" aria-pressed="' + (state.sourcesFiltre === "hebdomadaire") + '">hebdomadaires (' + nbHebdo + ')</button>' +
-      '<button type="button" data-action="sources-filtre" data-filtre="mensuelle" aria-pressed="' + (state.sourcesFiltre === "mensuelle") + '">mensuelles (' + nbMensuelle + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="hebdomadaire" aria-pressed="' + (state.sourcesFiltre === "hebdomadaire") + '">hebdomadaire (' + nbHebdo + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="mensuelle" aria-pressed="' + (state.sourcesFiltre === "mensuelle") + '">mensuelle (' + nbMensuelle + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="tiers-mensuelle" aria-pressed="' + (state.sourcesFiltre === "tiers-mensuelle") + '">tiers-mensuelle (' + nbTiersMensuelle + ')</button>' +
     '</div></div></div>';
 
     var cols = '<div class="sources-cols"><span>Source</span><span>Rubrique par défaut</span><span>Dernière moisson</span><span>Ce qu\'elle a rapporté</span><span></span></div>';
@@ -2830,8 +2830,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             champ("Rubrique par défaut", "rubriqueDefaut", s ? s.rubriqueDefaut : "") +
             '<div class="champ"><label for="champ-periodicite">Périodicité</label>' +
               '<select id="champ-periodicite" name="periodicite">' +
-                '<option value="hebdomadaire"' + (!s || s.periodicite !== "mensuelle" ? " selected" : "") + '>hebdomadaire — visitée à chaque veille</option>' +
-                '<option value="mensuelle"' + (s && s.periodicite === "mensuelle" ? " selected" : "") + '>mensuelle — revues/bulletins peu fréquents, visitée un samedi sur trois par rotation</option>' +
+                '<option value="hebdomadaire"' + (!s || (s.periodicite !== "mensuelle" && s.periodicite !== "tiers-mensuelle") ? " selected" : "") + '>hebdomadaire — chaque samedi</option>' +
+                '<option value="mensuelle"' + (s && s.periodicite === "mensuelle" ? " selected" : "") + '>mensuelle — en bloc, le premier samedi du mois</option>' +
+                '<option value="tiers-mensuelle"' + (s && s.periodicite === "tiers-mensuelle" ? " selected" : "") + '>tiers-mensuelle — par rotation, un samedi sur trois</option>' +
               '</select></div>' +
           '</div>' +
           champ("Notes (éditeur, thématique, accès…)", "notes", s ? s.notes : "", "informatif, jamais lu par la routine", true) +

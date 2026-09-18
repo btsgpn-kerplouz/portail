@@ -195,25 +195,25 @@ async function handleContext(): Promise<Response> {
   // consigne : chaque source renvoyée doit être effectivement visitée à
   // cette exécution, pas seulement lue comme contexte.
   //
-  // `periodicite` distingue deux cadences plutôt que deux listes séparées :
+  // `periodicite` distingue trois cadences, éditables par source depuis
+  // l'écran Sources, plutôt que des listes séparées :
   // - 'hebdomadaire' (défaut) : renvoyée à chaque exécution ;
-  // - 'mensuelle' (revues/bulletins qui paraissent au trimestre ou à
-  //   l'année, ~137 lignes) : renvoyée par **rotation d'un tiers par
-  //   semaine** plutôt qu'en bloc une fois par mois (révisé le 12/09/2026,
-  //   demande explicite de l'utilisateur après la fusion des deux listes :
-  //   visiter 151 adresses en une seule exécution, une semaine sur quatre,
-  //   coûtait trop cher en temps/crédits par rapport à un rythme régulier).
-  //   Chaque source `mensuelle` est assignée à l'un de 3 groupes par un
-  //   hash déterministe de son `id` (`groupeRotation()`) — pas stocké en
-  //   base, recalculé à chaque appel, donc aucune migration à refaire si le
-  //   nombre de sources change. Le groupe actif tourne avec le numéro de
-  //   semaine ISO (`groupeSemaine = numeroSemaineIso() % 3`), donc chaque
-  //   source mensuelle est visitée une semaine sur trois (~toutes les 3
-  //   semaines, un peu plus fréquent qu'avant mais réparti) plutôt qu'un pic
-  //   de 151 sources le même jour.
-  // limit(200) plutôt que 50 : la fusion avec le catalogue de revues porte
-  // le total à ~150 lignes (silencieusement tronqué au-delà, comme avant —
-  // mais avec de la marge cette fois).
+  // - 'tiers-mensuelle' (revues/bulletins peu fréquents, ~137 lignes à
+  //   l'origine) : renvoyée par **rotation d'un tiers par semaine** plutôt
+  //   qu'en bloc une fois par mois (choix du 12/09/2026 : visiter 151
+  //   adresses en une seule exécution coûtait trop cher en temps/crédits par
+  //   rapport à un rythme régulier). Chaque source est assignée à l'un de 3
+  //   groupes par un hash déterministe de son `id` (`groupeRotation()`) —
+  //   pas stocké en base, recalculé à chaque appel. Le groupe actif tourne
+  //   avec le numéro de semaine ISO (`groupeSemaine = numeroSemaineIso() %
+  //   3`), donc chaque source est visitée une semaine sur trois ;
+  // - 'mensuelle' (introduite le 18/09/2026, pour une source qu'on veut
+  //   vraiment au rythme du mois plutôt qu'en rotation) : renvoyée en bloc
+  //   complet le premier samedi du mois (`estPremierSamediDuMois()`), le
+  //   reste du temps absente de la moisson.
+  // limit(200) plutôt que 50 : la fusion avec le catalogue de revues (voir
+  // 013-sources-suivies-periodicite.sql) porte le total à ~150 lignes
+  // (silencieusement tronqué au-delà, comme avant — mais avec de la marge).
   const numeroSemaineIso = (d: Date): number => {
     const jour = d.getUTCDay() || 7;
     const jeudi = new Date(d);
@@ -228,13 +228,19 @@ async function handleContext(): Promise<Response> {
     return h % 3;
   };
   const groupeSemaine = numeroSemaineIso(new Date()) % 3;
+  const estPremierSamediDuMois = (d: Date): boolean => d.getUTCDate() <= 7;
+  const aujourdhui = new Date();
   const { data: sourcesSuiviesBrutes } = await supabase
     .from("affut_sources_suivies")
     .select("id, nom, adresse, type, echelle, territoire, rubrique_defaut, periodicite")
     .order("cree_le", { ascending: true })
     .limit(200);
   const sourcesAMoissonner = (sourcesSuiviesBrutes ?? [])
-    .filter((s) => s.periodicite !== "mensuelle" || groupeRotation(s.id) === groupeSemaine)
+    .filter((s) => {
+      if (s.periodicite === "tiers-mensuelle") return groupeRotation(s.id) === groupeSemaine;
+      if (s.periodicite === "mensuelle") return estPremierSamediDuMois(aujourdhui);
+      return true;
+    })
     .map(({ periodicite: _periodicite, ...reste }) => reste);
 
   return json({
