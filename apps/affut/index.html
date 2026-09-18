@@ -3714,10 +3714,23 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // prochain rendu déclenché par autre chose (rotation d'écran, DevTools
   // redimensionnées…). Anti-rebond léger : un redimensionnement déclenche
   // beaucoup d'événements pendant qu'on tire la fenêtre.
+  //
+  // Ignoré si un champ de saisie a le focus (correctif mobile, 18/09/2026) :
+  // l'ouverture du clavier virtuel déclenche elle aussi un `resize` (la
+  // fenêtre visible rétrécit). render() recrée tout le DOM via innerHTML, y
+  // compris le champ recréé perdant son focus — le clavier se refermait
+  // aussitôt, empêchant toute saisie (repéré sur l'écran de connexion, mais
+  // touchait tout formulaire). Un vrai changement de largeur pendant une
+  // saisie active (rotation d'écran) n'est pas rattrapé, tant pis : perdre
+  // le focus/clavier en cours de frappe est le pire des deux compromis.
   var minuteurResize = null;
   window.addEventListener("resize", function(){
     clearTimeout(minuteurResize);
-    minuteurResize = setTimeout(render, 150);
+    minuteurResize = setTimeout(function(){
+      var actif = document.activeElement;
+      if (actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName)) return;
+      render();
+    }, 150);
   });
 
   init();
