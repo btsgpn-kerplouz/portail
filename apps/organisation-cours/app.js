@@ -4336,7 +4336,7 @@ function updateMobileBannerBack() {
   // Libellé neutre dans ce cas précis, honnête quelle que soit l'origine.
   // Lot D (23/08/2026) : mobileSeance rejoint missionView — le bandeau ne
   // ramène pas à l'accueil depuis cet écran (mobileGoBack le fait revenir à
-  // mobileSemaine), le libellé « Accueil » y serait donc trompeur.
+  // l'écran d'origine : Ma semaine, Urgences…), le libellé « Accueil » y serait donc trompeur.
   backBtn.textContent = (active && (active.id === 'missionView' || active.id === 'mobileSeance')) ? '‹ Retour' : '‹ Accueil';
 }
 // #dashboard (desktop) ET #mobileAccueil (mobile) portent tous les deux la
@@ -4352,7 +4352,7 @@ function activeMobileView() {
 function mobileGoBack() {
   const active = activeMobileView();
   if (active && active.id === 'missionView') { closeMissionView(); return; }
-  if (active && active.id === 'mobileSeance') { showMobileScreen('mobileSemaine'); return; }
+  if (active && active.id === 'mobileSeance') { showMobileScreen(mobileSeanceReturnTo || 'mobileSemaine'); return; }
   showMobileScreen('mobileAccueil');
 }
 
@@ -4520,7 +4520,13 @@ async function persistMobileSeanceNotes() {
   try { await saveData('Notes de séance enregistrées', { rerender: false }); if (statusEl) statusEl.textContent = 'Enregistré'; }
   catch (e) { if (statusEl) statusEl.textContent = 'Erreur d’enregistrement'; }
 }
+// Écran d'où l'on arrive (Ma semaine, Urgences, Faites) : le bouton Retour y
+// revient, au lieu de renvoyer systématiquement à Ma semaine (retour Martin,
+// 18/09/2026 — depuis Urgences, « Retour » ramenait à Ma semaine).
+let mobileSeanceReturnTo = 'mobileSemaine';
 function openMobileSeance(id) {
+  const origine = activeMobileView()?.id;
+  if (origine && origine !== 'mobileSeance' && origine !== 'missionView') mobileSeanceReturnTo = origine;
   mobileSeanceTarget = id;
   renderMobileSeance();
   showMobileScreen('mobileSeance');
