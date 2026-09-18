@@ -2540,7 +2540,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="source-row">' +
       '<div class="source-nom">' +
         '<span class="nom">' + esc(s.nom) + '</span>' +
-        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + ' · ' + (s.periodicite === "mensuelle" ? "mensuelle" : "hebdomadaire") + '</span>' +
+        '<span class="adresse">' + esc(s.adresse) + ' · ' + esc(s.type) + ' · ' + esc(s.echelle) + (s.territoire ? " · " + esc(s.territoire) : "") + ' · ' + (s.periodicite === "mensuelle" ? "par rotation" : "chaque semaine") + '</span>' +
         (s.derniereMoisson.statut === "echec" ? '<span class="echec-note">× ' + esc(s.derniereMoisson.detail) + (s.derniereMoisson.note ? " · " + esc(s.derniereMoisson.note) : "") + '</span>' : "") +
       '</div>' +
       '<div class="source-rubrique">' + esc(s.rubriqueDefaut) + '</div>' +
@@ -2562,15 +2562,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var derniereDate = sourcesSuivies.length ? sourcesSuivies[0].derniereMoisson.date : "";
 
     var entete = '<h1 class="sr-only">Sources suivies</h1><div class="sources-entete">' +
-      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>dont ' + nbHebdo + ' visitées chaque samedi et ' + nbMensuelle + ' par rotation (un tiers chaque samedi)</span></div>' +
+      '<div class="sources-entete-principal"><span class="label">Les sources suivies</span><span class="total"><b class="tab-num">' + sourcesSuivies.length + '</b>toutes consultées à la même collecte du samedi — dont ' + nbMensuelle + ' par rotation, un tiers chaque semaine</span></div>' +
       '<div class="sources-collecte"><span class="label">Dernière collecte</span><span class="valeur">' + esc(derniereDate) + (totalEchec ? ' · <span class="echec">' + totalEchec + ' en échec</span>' : "") + '</span></div>' +
       '<div class="sources-entete-actions"><button type="button" class="btn-ligne" data-action="relancer-collecte">Relancer la collecte</button><button type="button" class="btn-plein" data-action="source-add">+ Suivre une source</button></div>' +
     '</div>';
 
-    var filtres = '<div class="recherche-filtres"><div class="filtre-groupe"><span class="lbl">Périodicité</span><div class="filtre-toggle">' +
+    var filtres = '<div class="recherche-filtres"><div class="filtre-groupe"><span class="lbl">Cadence dans la collecte du samedi</span><div class="filtre-toggle">' +
       '<button type="button" data-action="sources-filtre" data-filtre="toutes" aria-pressed="' + (state.sourcesFiltre === "toutes") + '">toutes (' + sourcesSuivies.length + ')</button>' +
-      '<button type="button" data-action="sources-filtre" data-filtre="hebdomadaire" aria-pressed="' + (state.sourcesFiltre === "hebdomadaire") + '">hebdomadaires (' + nbHebdo + ')</button>' +
-      '<button type="button" data-action="sources-filtre" data-filtre="mensuelle" aria-pressed="' + (state.sourcesFiltre === "mensuelle") + '">mensuelles (' + nbMensuelle + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="hebdomadaire" aria-pressed="' + (state.sourcesFiltre === "hebdomadaire") + '">chaque semaine (' + nbHebdo + ')</button>' +
+      '<button type="button" data-action="sources-filtre" data-filtre="mensuelle" aria-pressed="' + (state.sourcesFiltre === "mensuelle") + '">par rotation (' + nbMensuelle + ')</button>' +
     '</div></div></div>';
 
     var cols = '<div class="sources-cols"><span>Source</span><span>Rubrique par défaut</span><span>Dernière moisson</span><span>Ce qu\'elle a rapporté</span><span></span></div>';
