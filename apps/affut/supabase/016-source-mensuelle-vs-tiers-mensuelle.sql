@@ -18,11 +18,14 @@
 --   une fois par mois (le premier samedi du mois) ;
 -- - met à jour la contrainte pour accepter les 3 valeurs.
 
-update affut_sources_suivies set periodicite = 'tiers-mensuelle' where periodicite = 'mensuelle';
-
+-- La contrainte existante (013) n'autorise que 'hebdomadaire'/'mensuelle' :
+-- il faut l'élargir AVANT de renommer les lignes, sinon la mise à jour
+-- ci-dessous échoue contre l'ancienne contrainte (constaté à l'exécution).
 alter table affut_sources_suivies
   drop constraint if exists affut_sources_suivies_periodicite_check;
 
 alter table affut_sources_suivies
   add constraint affut_sources_suivies_periodicite_check
   check (periodicite in ('hebdomadaire', 'mensuelle', 'tiers-mensuelle'));
+
+update affut_sources_suivies set periodicite = 'tiers-mensuelle' where periodicite = 'mensuelle';
