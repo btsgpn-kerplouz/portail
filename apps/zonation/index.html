@@ -370,6 +370,57 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
 .zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
 .analyse-diagramme .barre-espece{cursor:help;}
+/* ---- Comparaison de transects ----
+   Vue de classe : plusieurs profils empilés, même échelle, pour montrer que la
+   zonation revient d'un groupe à l'autre malgré des longueurs différentes. */
+.barre-comparaison{
+  position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:.6em;flex-wrap:wrap;
+  margin:0 -1em;padding:.7em 1.1em;background:var(--ink);color:var(--page);
+}
+.barre-comparaison[hidden]{display:none;}
+.barre-comparaison span{flex:1 1 auto;font-size:.85rem;}
+.barre-comparaison button{font-family:var(--sans);font-size:.82rem;font-weight:600;padding:.45em .9em;
+  border-radius:var(--rayon-petit);border:1px solid var(--page);background:var(--page);color:var(--ink);cursor:pointer;}
+.barre-comparaison button.discret{background:none;color:var(--page);border-color:rgba(244,242,236,.4);}
+.carte-analyse-hote{position:relative;}
+.carte-analyse-coche{position:absolute;right:.7em;top:.7em;width:1.25em;height:1.25em;cursor:pointer;}
+.carte-analyse.choisi{border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc);}
+.comp-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:.8em;flex-wrap:wrap;}
+.comp-outils{display:flex;gap:.5em;align-items:center;flex-wrap:wrap;}
+.comp-ligne{margin:.9em 0 0;}
+.comp-ligne-tete{display:flex;justify-content:space-between;align-items:baseline;gap:.6em;flex-wrap:wrap;}
+.comp-ligne-tete b{font-family:var(--serif);font-size:1rem;}
+.comp-ligne-meta{font-family:var(--mono);font-size:.72rem;color:var(--text-2);}
+.comp-bande{position:relative;height:2.6em;margin-top:.3em;border:1px solid var(--line);border-radius:var(--rayon-petit);
+  background:repeating-linear-gradient(45deg,#f4f2ec,#f4f2ec 6px,#efece3 6px,#efece3 12px);overflow:hidden;}
+.comp-troncon{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+  border-right:1px solid rgba(255,255,255,.75);overflow:hidden;}
+.comp-troncon span{font-size:.7rem;font-weight:600;color:#191b16;padding:0 .2em;white-space:nowrap;}
+.comp-troncon.vigilance::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#c0562b;}
+.comp-axe{position:relative;height:1.3em;margin-top:.15em;}
+.comp-axe span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:.68rem;color:var(--text-2);}
+.comp-legende{display:flex;flex-wrap:wrap;gap:.3em .8em;margin:1em 0 .3em;}
+.comp-legende span{display:inline-flex;align-items:center;gap:.35em;font-size:.76rem;}
+.comp-legende i{width:.9em;height:.9em;border-radius:2px;border:1px solid var(--line);display:inline-block;}
+.comp-table{width:100%;border-collapse:collapse;margin-top:.8em;font-size:.8rem;}
+.comp-table th,.comp-table td{text-align:left;padding:.35em .5em;border-bottom:1px solid var(--line-soft);}
+.comp-table th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc-dark);}
+.comp-avert{font-size:.78rem;color:var(--modif,#b25b00);margin:.4em 0 0;}
+/* Mode projection : l'appli disparaît, il ne reste que les profils, en grand. */
+body.projection .app-header,body.projection .retour-lien,body.projection .note-import-analyses{display:none;}
+body.projection main{max-width:none;padding:0;}
+body.projection #carte-comparaison{border:0;border-radius:0;margin:0;padding:1.2em 1.6em;min-height:100vh;}
+body.projection .comp-ligne-tete b{font-size:1.5rem;}
+body.projection .comp-ligne-meta{font-size:1rem;}
+body.projection .comp-bande{height:4.6em;}
+body.projection .comp-troncon span{font-size:1.05rem;}
+body.projection .comp-axe{height:1.9em;}
+body.projection .comp-axe span{font-size:.95rem;}
+body.projection .comp-legende span{font-size:1.05rem;}
+body.projection .comp-table{font-size:1.05rem;}
+body.projection h2{font-size:1.8rem;}
+body.projection .analyse-aide{font-size:1rem;}
+
 /* Liste des transects à analyser */
 .carte-analyse{position:relative;display:block;width:100%;text-align:left;margin:.6em 0 0;padding:.75em 2.4em .8em .9em;
   background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:var(--rayon);cursor:pointer;font-family:var(--sans);}
@@ -980,6 +1031,33 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div id="zone-analyses"></div>
       <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
     </div>
+    <!-- Barre de comparaison : n'apparaît qu'une fois des transects cochés. -->
+    <div class="barre-comparaison" id="barre-comparaison" hidden>
+      <span id="barre-comparaison-txt"></span>
+      <button type="button" class="discret" onclick="viderSelectionComparaison()">Tout décocher</button>
+      <button type="button" onclick="ouvrirComparaison()">Comparer →</button>
+    </div>
+  </section>
+
+  <!-- COMPARAISON DE TRANSECTS (usage en classe)
+       Mettre côte à côte les transects de plusieurs groupes : longueurs et
+       enchaînements diffèrent, c'est justement ce qu'on veut faire voir. -->
+  <section class="ecran" id="ecran-comparaison">
+    <a class="retour-lien" onclick="allerA('analyses')">← Analyses</a>
+    <div class="carte" id="carte-comparaison">
+      <div class="comp-entete">
+        <h2 id="comp-titre">Comparer les transects</h2>
+        <div class="comp-outils">
+          <div class="analyse-vues" role="group" aria-label="Échelle horizontale">
+            <button type="button" id="comp-metres" aria-pressed="true" onclick="reglerEchelleComparaison('metres')">Mètres réels</button>
+            <button type="button" id="comp-relatif" aria-pressed="false" onclick="reglerEchelleComparaison('relatif')">Proportions</button>
+          </div>
+          <button type="button" class="secondaire" id="btn-projection" onclick="basculerProjection()">⛶ Mode projection</button>
+        </div>
+      </div>
+      <p class="analyse-aide" id="comp-aide"></p>
+      <div id="zone-comparaison"></div>
+    </div>
   </section>
 
   <section class="ecran" id="ecran-analyse">
@@ -1221,7 +1299,7 @@ function allerA(nom){
     accueil:"Zonation", milieu:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect", analyses:"Analyses"
+    analyse:"Analyse du transect", analyses:"Analyses", comparaison:"Comparer les transects"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -1236,9 +1314,13 @@ function allerA(nom){
   /* Sur la porte d'entrée, aucun milieu n'est encore engagé : l'en-tête ne doit
      pas en annoncer un. */
   const emt = document.getElementById('entete-milieu');
-  if(emt) emt.textContent = nom === 'milieu' ? 'Typologies du CBN de Brest' : MILIEUX[milieuActif].nom;
+  /* Analyses et comparaison couvrent les deux référentiels : l'en-tête n'y
+     annonce donc pas un milieu. */
+  if(emt) emt.textContent = nom === 'milieu' ? 'Typologies du CBN de Brest'
+    : (nom === 'analyses' || nom === 'comparaison' ? 'Tous milieux' : MILIEUX[milieuActif].nom);
   if(nom==='historique') afficherHistorique();
   if(nom==='analyses') afficherListeAnalyses();
+  if(nom==='comparaison') construireEcranComparaison();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
   document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
   if(nom==='analyse'){ construireEcranAnalyse(); choisirVueParDefaut(); activerDiagrammeInteractif(); }
@@ -2918,14 +3000,227 @@ function afficherListeAnalyses(){
         return `<span style="left:${((a-dMin)/etendue*100).toFixed(2)}%;width:${Math.max(.3,(b-a)/etendue*100).toFixed(2)}%;background:${teinteZone(z ? z.rang : null)}"></span>`;
       }).join('');
     }
-    const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`;
-    return `<button type="button" class="carte-analyse"${possible ? ` onclick="ouvrirAnalyseTransect(${cible.replace(/"/g,'&quot;')})"` : ' disabled'}>
-      <span class="carte-analyse-titre"><b>Transect ${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}</span>
-      <span class="carte-analyse-infos">${infos.join(' · ')}</span>
-      ${possible ? `<span class="frise-zones" aria-hidden="true">${frise}</span>` : `<span class="carte-analyse-infos">Il faut au moins deux relevés avec une distance.</span>`}
-      ${possible ? '<span class="carte-analyse-go" aria-hidden="true">→</span>' : ''}
-    </button>`;
+    const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`.replace(/"/g,'&quot;');
+    const choisi = comparaisonSelection.has(nom);
+    return `<div class="carte-analyse-hote">
+      <button type="button" class="carte-analyse${choisi ? ' choisi' : ''}"${possible ? ` onclick="ouvrirAnalyseTransect(${cible})"` : ' disabled'}>
+        <span class="carte-analyse-titre"><b>Transect ${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}</span>
+        <span class="carte-analyse-infos">${infos.join(' · ')}</span>
+        ${possible ? `<span class="frise-zones" aria-hidden="true">${frise}</span>` : `<span class="carte-analyse-infos">Il faut au moins deux relevés avec une distance.</span>`}
+        ${possible ? '<span class="carte-analyse-go" aria-hidden="true">→</span>' : ''}
+      </button>
+      ${possible ? `<input type="checkbox" class="carte-analyse-coche" ${choisi ? 'checked' : ''}
+        onchange="basculerSelectionComparaison(${cible}, this.checked)"
+        title="Cocher pour comparer ce transect à d'autres" aria-label="Comparer le transect ${echapHTML(nom)}">` : ''}
+    </div>`;
   }).join('');
+  majBarreComparaison();
+}
+
+/* ---------- Comparaison de transects ----------
+   Pensée pour la classe : plusieurs groupes relèvent le même site, sur des
+   longueurs différentes et avec des enchaînements qui ne se recouvrent pas.
+   Empiler leurs profils, à la même échelle, fait voir ce qui se répète — la
+   suite des ceintures — et ce qui diffère : longueur, zones manquantes,
+   retours en arrière. */
+let comparaisonSelection = new Set();
+let comparaisonEchelle = 'metres';
+
+function relevesTransect(nom){
+  return chargerHistorique()
+    .filter(r => (r.transect || 'Transect (sans nom)') === nom)
+    .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+    .map(r => ({...r, d: Number(r.distance)}))
+    .sort((a, b) => a.d - b.d);
+}
+
+/* Tronçons de zones consécutives d'un transect, avec les fiches traversées. */
+function tronconsTransect(rs){
+  const troncons = [];
+  rs.forEach(r => {
+    const z = r.solNu ? {zone: 'Sol nu', rang: 0}
+      : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
+    const cle = z ? z.zone : 'Non attribué';
+    const dernier = troncons[troncons.length - 1];
+    if(dernier && dernier.zone === cle){
+      dernier.fin = r.d; dernier.n++;
+      if(r.topFiche != null && !dernier.fiches.includes(r.topFiche)) dernier.fiches.push(r.topFiche);
+    } else {
+      troncons.push({zone: cle, rang: z ? z.rang : null, debut: r.d, fin: r.d, n: 1,
+        fiches: r.topFiche != null ? [r.topFiche] : []});
+    }
+  });
+  return troncons;
+}
+
+function basculerSelectionComparaison(nom, coche){
+  if(coche) comparaisonSelection.add(nom); else comparaisonSelection.delete(nom);
+  document.querySelectorAll('#zone-analyses .carte-analyse-hote').forEach(h => {
+    const c = h.querySelector('.carte-analyse-coche');
+    if(c) h.querySelector('.carte-analyse').classList.toggle('choisi', c.checked);
+  });
+  majBarreComparaison();
+}
+function viderSelectionComparaison(){
+  comparaisonSelection.clear();
+  afficherListeAnalyses();
+}
+function majBarreComparaison(){
+  const barre = document.getElementById('barre-comparaison');
+  if(!barre) return;
+  const n = comparaisonSelection.size;
+  barre.hidden = n === 0;
+  const txt = document.getElementById('barre-comparaison-txt');
+  if(txt) txt.textContent = n < 2
+    ? `${n} transect coché — cochez-en au moins deux pour les comparer.`
+    : `${n} transects cochés.`;
+  barre.querySelector('button:last-child').disabled = n < 2;
+}
+
+function ouvrirComparaison(){
+  if(comparaisonSelection.size < 2) return;
+  allerA('comparaison');
+}
+function reglerEchelleComparaison(v){
+  comparaisonEchelle = v;
+  document.getElementById('comp-metres')?.setAttribute('aria-pressed', String(v === 'metres'));
+  document.getElementById('comp-relatif')?.setAttribute('aria-pressed', String(v === 'relatif'));
+  construireEcranComparaison();
+}
+/* Un libellé plus large que son tronçon est retiré : mieux vaut une couleur
+   nue, que l'infobulle et la légende expliquent, qu'un mot tronqué. */
+function ajusterLibellesComparaison(){
+  document.querySelectorAll('#zone-comparaison .comp-troncon').forEach(t => {
+    const s = t.querySelector('span');
+    if(!s) return;
+    s.hidden = false;
+    if(s.scrollWidth > t.clientWidth - 4) s.hidden = true;
+  });
+}
+
+/* Mode projection : l'interface s'efface, les profils passent en grand. */
+function basculerProjection(){
+  const actif = document.body.classList.toggle('projection');
+  const b = document.getElementById('btn-projection');
+  if(b) b.textContent = actif ? '✕ Quitter la projection' : '⛶ Mode projection';
+  setTimeout(ajusterLibellesComparaison, 60);
+  if(actif && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+  else if(!actif && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && document.body.classList.contains('projection')) basculerProjection();
+});
+
+function construireEcranComparaison(){
+  const cont = document.getElementById('zone-comparaison');
+  if(!cont) return;
+  const noms = [...comparaisonSelection];
+  const profils = noms.map(nom => {
+    const rs = relevesTransect(nom);
+    if(rs.length < 2) return null;
+    const troncons = tronconsTransect(rs);
+    const pas = pasCourant(rs);
+    const dMin = rs[0].d, dMax = rs[rs.length - 1].d;
+    /* Retours en arrière : la zonation redescend le gradient. Même lecture que
+       dans l'analyse d'un transect — un constat, pas une faute. */
+    let vigilance = 0;
+    troncons.forEach((t, i) => {
+      const prec = troncons[i - 1];
+      if(prec && t.rang != null && prec.rang != null && t.rang < prec.rang){ t.retour = true; vigilance++; }
+    });
+    const richesses = rs.map(r => (r.cortege || []).length).sort((a, b) => a - b);
+    return {
+      nom, rs, troncons, pas, dMin, dMax, longueur: dMax - dMin + pas,
+      milieu: milieuDuReleve(rs[0]), vigilance,
+      observateur: rs[0].observateur || '', date: rs[0].dateReleve || '',
+      richesseMed: richesses.length ? richesses[Math.floor(richesses.length / 2)] : 0,
+      zones: [...new Set(troncons.filter(t => t.rang != null).map(t => t.zone))]
+    };
+  }).filter(Boolean);
+
+  if(profils.length < 2){
+    cont.innerHTML = '<p class="vide-msg">Cochez au moins deux transects dans la liste des analyses.</p>';
+    return;
+  }
+
+  const maxLong = Math.max(...profils.map(p => p.longueur));
+  const relatif = comparaisonEchelle === 'relatif';
+  const milieux = [...new Set(profils.map(p => p.milieu))];
+
+  document.getElementById('comp-titre').textContent = `Comparer ${profils.length} transects`;
+  document.getElementById('comp-aide').textContent = relatif
+    ? "Chaque transect est ramené à la même largeur : on compare l'enchaînement des ceintures, pas les distances."
+    : `Même échelle pour tous, sur ${Math.round(maxLong)} m : les transects les plus courts s'arrêtent plus tôt.`;
+
+  /* Une bande par transect : chaque tronçon de zone à sa place, avec son nom
+     quand la place le permet. */
+  const bandes = profils.map(p => {
+    const largeurRef = relatif ? p.longueur : maxLong;
+    const pos = d => ((d - p.dMin + p.pas / 2) / largeurRef) * 100;
+    const troncons = p.troncons.map(t => {
+      const g = Math.max(0, pos(t.debut) - (t.debut === p.dMin ? pos(p.dMin) : 0) - (t.debut === p.dMin ? 0 : 0));
+      const x0 = Math.max(0, ((t.debut - p.dMin) / largeurRef) * 100);
+      const x1 = Math.min(100, ((t.fin - p.dMin + p.pas) / largeurRef) * 100);
+      const large = x1 - x0;
+      const titre = `${t.zone} · ${t.debut} → ${t.fin} m · ${t.n} relevé${t.n > 1 ? 's' : ''}`
+        + (t.fiches.length ? ` · ${MILIEUX[p.milieu].libelleFiche.toLowerCase()} ${t.fiches.join(', ')}` : '');
+      /* Le libellé est posé pour tous les tronçons un peu larges, puis retiré
+         après rendu s'il ne tient pas : un nom coupé se lit plus mal que pas
+         de nom du tout (ajusterLibellesComparaison). */
+      return `<div class="comp-troncon${t.retour ? ' vigilance' : ''}" style="left:${x0.toFixed(2)}%;width:${Math.max(0.4, large).toFixed(2)}%;background:${teinteZone(t.rang)}" title="${echapHTML(titre)}">`
+        + (large > 4 ? `<span>${echapHTML(libelleZoneCourt(t.zone))}</span>` : '') + '</div>';
+    }).join('');
+    const meta = [MILIEUX[p.milieu].nom, `${p.rs.length} relevés`, `${p.dMin} → ${p.dMax} m`,
+      `pas ${p.pas} m`, p.observateur, p.date ? p.date.split('-').reverse().join('/') : '']
+      .filter(Boolean).join(' · ');
+    return `<div class="comp-ligne">
+      <div class="comp-ligne-tete"><b>${echapHTML(p.nom)}</b><span class="comp-ligne-meta">${echapHTML(meta)}</span></div>
+      <div class="comp-bande">${troncons}</div>
+    </div>`;
+  }).join('');
+
+  // axe commun, sous la dernière bande
+  let axe = '';
+  if(relatif){
+    axe = [0, 25, 50, 75, 100].map(p => `<span style="left:${p}%">${p} %</span>`).join('');
+  } else {
+    const pasAxe = maxLong > 120 ? 20 : (maxLong > 60 ? 10 : 5);
+    for(let d = 0; d <= maxLong; d += pasAxe) axe += `<span style="left:${(d / maxLong * 100).toFixed(2)}%">${d} m</span>`;
+  }
+
+  /* Légende : les zones réellement présentes, dans l'ordre du gradient et par
+     milieu — deux référentiels n'ont pas les mêmes ceintures. */
+  const legende = milieux.map(m => {
+    const zonesVues = new Set(profils.filter(p => p.milieu === m).flatMap(p => p.zones));
+    const items = MILIEUX[m].profil.filter(z => zonesVues.has(z.zone)).map((z, i) => {
+      const rang = z.rang !== undefined ? z.rang : MILIEUX[m].profil.indexOf(z) + 1;
+      return `<span><i style="background:${teinteZone(rang)}"></i>${echapHTML(z.zone)}</span>`;
+    }).join('');
+    return `<div class="comp-legende">${milieux.length > 1 ? `<span><b>${MILIEUX[m].nom} :</b></span>` : ''}${items}</div>`;
+  }).join('');
+
+  const table = `<table class="comp-table"><thead><tr>
+      <th>Transect</th><th>Longueur</th><th>Relevés</th><th>Ceintures traversées</th>
+      <th>Retours</th><th>Espèces par quadrat (méd.)</th></tr></thead><tbody>
+    ${profils.map(p => `<tr>
+      <td>${echapHTML(p.nom)}</td>
+      <td>${Math.round(p.longueur)} m</td>
+      <td>${p.rs.length}</td>
+      <td>${p.zones.length}<br><small>${echapHTML(p.zones.map(libelleZoneCourt).join(' → '))}</small></td>
+      <td>${p.vigilance || '—'}</td>
+      <td>${p.richesseMed}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+
+  const avert = milieux.length > 1
+    ? `<p class="comp-avert">Ces transects ne relèvent pas du même milieu : les ceintures des marais salés et des dunes sont deux séries distinctes, les couleurs ne se correspondent donc pas d'une bande à l'autre.</p>`
+    : '';
+
+  cont.dataset.pret = '1';
+  cont.innerHTML = bandes + `<div class="comp-axe">${axe}</div>` + legende + avert + table
+    + `<p class="analyse-note">Fond hachuré : mètres non relevés, ou transect plus court que le plus long. Trait orange : la ceinture redescend le gradient — cuvette, microtopographie ou détermination à revoir. Survolez un tronçon pour ses distances et ses fiches.</p>`;
+  /* Les libellés ne se mesurent qu'une fois posés dans la page. */
+  requestAnimationFrame(ajusterLibellesComparaison);
 }
 
 /* ---------- Diagrammes de l'analyse ----------
