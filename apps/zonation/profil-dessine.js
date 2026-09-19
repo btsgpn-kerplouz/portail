@@ -103,7 +103,111 @@ const PORT_ESPECES = {
   "Beta vulgaris subsp. maritima":         ["herbe", 60],
   "Calystegia sepium":                     ["herbe", 80],
   "Lycopus europaeus":                     ["herbe", 60],
-  "Thelypteris palustris":                 ["graminee", 50]
+  "Thelypteris palustris":                 ["graminee", 50],
+
+  /* ---- Espèces dunaires (DELASSUS et al. 2018) ---- */
+  // hauts de plages et dunes mobiles
+  "Atriplex laciniata":                    ["herbe", 25],
+  "Cakile maritima subsp. maritima":       ["herbe", 30],
+  "Salsola kali subsp. kali":              ["buisson", 25],
+  "Honckenya peploides":                   ["tapis", 10],
+  "Euphorbia peplis":                      ["rampant", 8],
+  "Polygonum maritimum":                   ["rampant", 15],
+  "Elymus farctus":                        ["graminee-epi", 50],
+  "Calystegia soldanella":                 ["rampant", 12],
+  "Eryngium maritimum":                    ["hampe-boule", 40],
+  "Euphorbia paralias":                    ["buisson", 45],
+  "Otanthus maritimus":                    ["coussin", 30],
+  "Medicago marina":                       ["tapis", 15],
+  "Ammophila arenaria subsp. arenaria":    ["graminee-epi", 90],
+  "Festuca juncifolia":                    ["graminee", 45],
+  "Galium arenarium":                      ["tapis", 12],
+  "Matthiola sinuata":                     ["hampe-capitule", 35],
+  "Pancratium maritimum":                  ["plantain", 40],
+  // pelouses et prairies des dunes fixées
+  "Ephedra distachya subsp. distachya":    ["buisson", 40],
+  "Rosa pimpinellifolia":                  ["arbuste", 60],
+  "Helichrysum stoechas subsp. stoechas":  ["coussin", 35],
+  "Corynephorus canescens":                ["graminee", 25],
+  "Koeleria glauca":                       ["graminee", 30],
+  "Carex arenaria":                        ["jonc", 30],
+  "Sedum acre":                            ["tapis", 8],
+  "Thymus drucei":                         ["tapis", 8],
+  "Sanguisorba minor subsp. minor":        ["hampe-boule", 35],
+  "Dianthus gallicus":                     ["hampe-capitule", 25],
+  "Asperula cynanchica":                   ["hampe-corymbe", 25],
+  "Eryngium campestre":                    ["hampe-boule", 45],
+  "Euphorbia portlandica":                 ["buisson", 25],
+  "Silene otites subsp. otites":           ["hampe-corymbe", 40],
+  "Thesium humifusum":                     ["tapis", 15],
+  "Geranium sanguineum":                   ["herbe", 35],
+  "Ononis repens":                         ["buisson", 25],
+  "Lagurus ovatus":                        ["graminee-epi", 35],
+  "Phleum arenarium":                      ["graminee-epi", 15],
+  "Mibora minima":                         ["graminee", 8],
+  "Vulpia myuros":                         ["graminee-epi", 25],
+  "Vulpia sp.":                            ["graminee-epi", 25],
+  "Bromus diandrus subsp. diandrus":       ["graminee-epi", 45],
+  "Bromus diandrus subsp. maximus":        ["graminee-epi", 55],
+  "Bromus hordeaceus subsp. hordeaceus":   ["graminee-epi", 40],
+  "Aira praecox":                          ["graminee", 12],
+  "Anthoxanthum odoratum":                 ["graminee-epi", 40],
+  "Gaudinia fragilis":                     ["graminee-epi", 50],
+  "Elymus x acutus":                       ["graminee-epi", 70],
+  "Poa pratensis":                         ["graminee", 35],
+  "Poa bulbosa":                           ["graminee", 15],
+  "Poa annua":                             ["graminee", 12],
+  "Arrhenatherum elatius s.l.":            ["graminee-epi", 90],
+  "Arrhenatherum elatius subsp. bulbosum": ["graminee-epi", 80],
+  "Leontodon saxatilis":                   ["hampe-capitule", 20],
+  "Hypochaeris radicata":                  ["hampe-capitule", 35],
+  "Hieracium pilosella":                   ["hampe-capitule", 15],
+  "Jasione montana subsp. montana":        ["hampe-boule", 25],
+  "Armeria maritima":                      ["hampe-boule", 20],
+  "Lotus corniculatus subsp. corniculatus":["tapis", 15],
+  "Anthyllis vulneraria":                  ["hampe-corymbe", 25],
+  "Viola kitaibeliana":                    ["rosette", 8],
+  "Crassula tillaea":                      ["tapis", 3],
+  "Sagina apetala":                        ["tapis", 5],
+  "Aphanes microcarpa":                    ["tapis", 8],
+  "Sherardia arvensis":                    ["tapis", 10],
+  "Cerastium diffusum subsp. diffusum":    ["tapis", 10],
+  "Cerastium semidecandrum subsp. semidecandrum": ["tapis", 8],
+  "Valerianella locusta":                  ["rosette", 15],
+  "Bupleurum baldense subsp. baldense":    ["herbe", 12],
+  "Asterolinon linum-stellatum":           ["herbe", 8],
+  "Trifolium scabrum":                     ["tapis", 10],
+  "Trifolium ornithopodioides":            ["tapis", 6],
+  "Trifolium suffocatum":                  ["tapis", 4],
+  "Medicago minima":                       ["tapis", 12],
+  "Lamium amplexicaule subsp. amplexicaule": ["herbe", 15],
+  "Allium sphaerocephalon":                ["hampe-boule", 50],
+  "Ophrys passionis":                      ["plantain", 25],
+  // friches, fourrés et chemins
+  "Glaucium flavum":                       ["hampe-capitule", 50],
+  "Carduus nutans subsp. nutans":          ["hampe-capitule", 70],
+  "Carduus tenuiflorus":                   ["hampe-capitule", 60],
+  "Diplotaxis tenuifolia":                 ["hampe-corymbe", 60],
+  "Anchusa arvensis subsp. arvensis":      ["herbe", 40],
+  "Echium vulgare":                        ["hampe-corymbe", 70],
+  "Verbascum thapsus":                     ["hampe-corymbe", 120],
+  "Verbascum nigrum subsp. nigrum":        ["hampe-corymbe", 90],
+  "Salvia verbenaca":                      ["hampe-corymbe", 40],
+  "Smyrnium olusatrum":                    ["hampe-corymbe", 100],
+  "Heracleum sphondylium":                 ["hampe-corymbe", 120],
+  "Urtica dioica":                         ["herbe", 80],
+  "Rumex obtusifolius":                    ["hampe-corymbe", 80],
+  "Rumex crispus":                         ["hampe-corymbe", 80],
+  "Prunus spinosa":                        ["arbuste", 200],
+  "Ulex europaeus subsp. europaeus":       ["arbuste", 150],
+  "Rubus sp.":                             ["buisson", 120],
+  "Sambucus nigra":                        ["arbuste", 250],
+  "Hedera helix subsp. helix":             ["tapis", 20],
+  "Iris foetidissima":                     ["jonc", 60],
+  "Arum italicum subsp. neglectum":        ["plantain", 40],
+  "Bryonia dioica":                        ["herbe", 90],
+  "Solanum dulcamara":                     ["herbe", 90],
+  "Cynoglossum officinale":                ["hampe-corymbe", 60]
 };
 const PORT_DEFAUT = ["herbe", 20];
 
@@ -389,7 +493,7 @@ function panneauProfilDessine(rs, o){
   /* Relief : PROFIL TYPE. Aucune altitude n'est relevée ; la ligne de sol monte
      avec le rang de la zone de chaque relevé (slikke en bas, haut schorre en
      haut), lissé par une moyenne glissante pour donner une pente continue. */
-  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche) ? zoneDeFiche(r.topFiche).rang : null));
+  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche, milieuDuReleve(r)) ? zoneDeFiche(r.topFiche, milieuDuReleve(r)).rang : null));
   let dernierRang = rangs.find(v => v != null) ?? 0;
   const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
   const lisses = bruts.map((_, i) => {
@@ -501,7 +605,7 @@ function panneauProfilDessine(rs, o){
      son habitat. */
   const yCell = ySol - ampli - hMaxCm * pxCm - 4;
   if(o.interactif) cellules.forEach(c => {
-    const z = c.r.solNu ? {zone: 'Sol nu'} : (c.r.topFiche != null ? zoneDeFiche(c.r.topFiche) : null);
+    const z = c.r.solNu ? {zone: 'Sol nu'} : (c.r.topFiche != null ? zoneDeFiche(c.r.topFiche, milieuDuReleve(c.r)) : null);
     const esp = (c.r.cortege || []).slice()
       .sort((a, b) => (pctDeCouverture('bb', b.cover) || 0) - (pctDeCouverture('bb', a.cover) || 0))
       .map(e => `${e.fr} (${e.cover})`).join(' · ');
