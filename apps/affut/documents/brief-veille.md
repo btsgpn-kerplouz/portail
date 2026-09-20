@@ -300,6 +300,26 @@ source, pas de la remplacer. Deux points à respecter strictement :
   restent disponibles telles quelles) : c'est le contenu du champ `resume`
   lui-même qui doit être une citation tronquée, pas son masquage.
 
+**Règle du 19/09/2026 — `chiffres` : un teaser, pas un résumé chiffré.**
+Même logique que pour `titre` et `resume` : la tuile donne envie d'ouvrir la
+source, elle ne la remplace pas. Les propositions précédentes alignaient
+souvent 5 à 8 chiffres, chacun quasi une phrase — la ligne débordait de la
+tuile et dispensait de lire la source. Désormais :
+
+- **0 à 3 chiffres par candidat, jamais plus.** Un seul suffit souvent. Ne
+  garder que le ou les plus frappants, le plus marquant en premier. Une
+  source sans chiffre parlant → tableau vide `[]`, ce n'est pas un défaut.
+- **Chaque élément est court** : `valeur` de 1 à 3 mots (« 770 », « 65 205 € »,
+  « 18 mois »), `libellé` de 1 à 4 mots (« chauves-souris comptées »,
+  « plan de gestion »). **Environ 40 caractères au total pour `valeur | libellé`,
+  60 au grand maximum.** Un chiffre qui demande une subordonnée (« dont … »,
+  « soit … contre … ») n'est pas un chiffre clé : le couper ou l'écarter.
+- **Pas de contexte qui explique le chiffre** : c'est justement ce que la
+  source apporte. Donner la valeur et son objet, pas sa cause ni sa conclusion.
+- Les chiffres restent repris tels quels de la source (règle « Ce que l'agent
+  ne fait jamais » ci-dessous) : choisir parmi ceux de la source, ne pas en
+  fabriquer un plus court par calcul ou arrondi.
+
 ## Boucle de retour
 
 À chaque exécution, avant de chercher, relire un échantillon récent des
