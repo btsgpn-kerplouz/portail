@@ -314,6 +314,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .carte-titre{font-size:18px;font-weight:700;line-height:1.32;color:var(--af-accent)}
 .carte-corps .flat-chiffres{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px}
 .carte-corps .flat-resume{font-size:13.5px;line-height:1.5}
+/* Texte justifié dans les tuiles de la vue publiée (demande du 19/09/2026) :
+   la césure automatique (html lang="fr") évite les « rivières » de blancs sur
+   les colonnes étroites ; la dernière ligne reste alignée à gauche. La ligne
+   de chiffres (mono, pastilles, points médians) reste volontairement non
+   justifiée : les blancs étirés y sépareraient mal les valeurs. */
+.carte-titre,.carte-corps .flat-resume{text-align:justify;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media print{
   .mode-publiee .entree{display:block !important}
   .carte-grille{display:none !important}
@@ -2018,7 +2024,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '</div>' +
           champ("Titre de l'entrée", "titre", e ? e.titre : "", "reprendre le titre de la source tel quel, pas une reformulation") +
           renderChampIllustration(e ? e.imageUrl : "") +
-          champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "une valeur par ligne, « valeur | libellé », terminer par * pour la mettre en avant", true) +
+          champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "1 à 3 lignes courtes (~40 caractères), « valeur | libellé » — un teaser, pas un résumé ; terminer par * pour mettre en avant", true) +
           champ("Résumé factuel", "resume", e ? e.resume : "", "citation tronquée des 1res phrases de la source, terminée par « [...] » — pas une paraphrase", true) +
           champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
           '<div class="modal-boutons">' +
