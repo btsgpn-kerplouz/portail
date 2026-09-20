@@ -406,8 +406,16 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .comp-table th,.comp-table td{text-align:left;padding:.35em .5em;border-bottom:1px solid var(--line-soft);}
 .comp-table th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc-dark);}
 .comp-avert{font-size:.78rem;color:var(--modif,#b25b00);margin:.4em 0 0;}
+/* Note de l'espace enseignant : dire franchement ce que ce cloisonnement est,
+   et comment le retirer de l'appareil. */
+.note-enseignant{font-size:.74rem;line-height:1.5;color:var(--text-2);margin:1em 0 0;
+  border-top:1px solid var(--line-soft);padding-top:.7em;}
+.note-enseignant button.discret{font-size:.74rem;padding:0;background:none;border:0;
+  color:var(--acc);text-decoration:underline;cursor:pointer;}
+.porte-enseignant[hidden]{display:none;}
 /* Mode projection : l'appli disparaît, il ne reste que les profils, en grand. */
-body.projection .app-header,body.projection .retour-lien,body.projection .note-import-analyses{display:none;}
+body.projection .app-header,body.projection .retour-lien,
+body.projection .note-import-analyses,body.projection .note-enseignant{display:none;}
 body.projection main{max-width:none;padding:0;}
 body.projection #carte-comparaison{border:0;border-radius:0;margin:0;padding:1.2em 1.6em;min-height:100vh;}
 body.projection .comp-ligne-tete b{font-size:1.5rem;}
@@ -821,6 +829,16 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         </span>
         <span class="porte-fleche" aria-hidden="true">→</span>
       </button>
+      <!-- Espace enseignant : n'apparaît que sur un appareil où il a été activé
+           (voir activerEspaceEnseignant). Invisible ailleurs. -->
+      <button type="button" class="porte-analyses porte-enseignant" id="porte-enseignant" hidden onclick="allerA('enseignant')">
+        <span class="porte-analyses-picto" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="9" width="30" height="20" rx="1.5"></rect><line x1="14" y1="34" x2="26" y2="34"></line><line x1="20" y1="29" x2="20" y2="34"></line><line x1="10" y1="16" x2="20" y2="16" stroke-width="2.4"></line><line x1="10" y1="22" x2="26" y2="22" stroke-width="2.4"></line></svg></span>
+        <span class="porte-analyses-txt">
+          <b>Espace enseignant</b>
+          <span>Comparer les profils des groupes, en projection</span>
+        </span>
+        <span class="porte-fleche" aria-hidden="true">→</span>
+      </button>
 
       <ol class="porte-etapes">
         <li><b>1</b><span>Relevé au quadrat<small>espèces et abondance-dominance</small></span></li>
@@ -1031,6 +1049,20 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div id="zone-analyses"></div>
       <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
     </div>
+  </section>
+
+  <!-- ESPACE ENSEIGNANT : sélection des transects à comparer.
+       Séparé de l'écran Analyses pour que les étudiants n'aient jamais sous les
+       yeux les profils des autres groupes ni les outils de projection. -->
+  <section class="ecran" id="ecran-enseignant">
+    <a class="retour-lien" onclick="allerA('milieu')">← Première page</a>
+    <div class="carte">
+      <h2>Espace enseignant</h2>
+      <p style="font-size:.78rem;color:var(--text-2);">Cochez les transects à mettre côte à côte — ceux des différents groupes, quels que soient leur longueur et leur milieu — puis lancez la comparaison. Le mode projection affiche les profils en grand pour la classe.</p>
+      <div id="zone-enseignant"></div>
+      <p class="note-import-analyses">Les transects des groupes arrivent par <a onclick="allerA('historique')">Mes transects</a> → « ⬆ Importer un fichier CSV ».</p>
+      <p class="note-enseignant">Cet espace n'apparaît que sur cet appareil, où il a été activé. Ce n'est pas une protection : l'appli fonctionne entièrement dans le navigateur et son code est public. <button type="button" class="discret" onclick="quitterEspaceEnseignant()">Retirer l'espace enseignant de cet appareil</button></p>
+    </div>
     <!-- Barre de comparaison : n'apparaît qu'une fois des transects cochés. -->
     <div class="barre-comparaison" id="barre-comparaison" hidden>
       <span id="barre-comparaison-txt"></span>
@@ -1043,7 +1075,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
        Mettre côte à côte les transects de plusieurs groupes : longueurs et
        enchaînements diffèrent, c'est justement ce qu'on veut faire voir. -->
   <section class="ecran" id="ecran-comparaison">
-    <a class="retour-lien" onclick="allerA('analyses')">← Analyses</a>
+    <a class="retour-lien" onclick="allerA('enseignant')">← Espace enseignant</a>
     <div class="carte" id="carte-comparaison">
       <div class="comp-entete">
         <h2 id="comp-titre">Comparer les transects</h2>
@@ -1299,7 +1331,7 @@ function allerA(nom){
     accueil:"Zonation", milieu:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect", analyses:"Analyses", comparaison:"Comparer les transects"
+    analyse:"Analyse du transect", analyses:"Analyses", enseignant:"Espace enseignant", comparaison:"Comparer les transects"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -1317,9 +1349,10 @@ function allerA(nom){
   /* Analyses et comparaison couvrent les deux référentiels : l'en-tête n'y
      annonce donc pas un milieu. */
   if(emt) emt.textContent = nom === 'milieu' ? 'Typologies du CBN de Brest'
-    : (nom === 'analyses' || nom === 'comparaison' ? 'Tous milieux' : MILIEUX[milieuActif].nom);
+    : (nom === 'analyses' || nom === 'comparaison' || nom === 'enseignant' ? 'Tous milieux' : MILIEUX[milieuActif].nom);
   if(nom==='historique') afficherHistorique();
   if(nom==='analyses') afficherListeAnalyses();
+  if(nom==='enseignant') afficherListeEnseignant();
   if(nom==='comparaison') construireEcranComparaison();
   // l analyse prend la largeur disponible : repli pour les navigateurs sans :has()
   document.querySelector('main')?.classList.toggle('pleine-largeur', nom==='analyse');
@@ -2965,8 +2998,12 @@ function ouvrirAnalyseTransect(nom, origine){
 
 /* Liste des transects de l'appareil, chacun avec une frise des zones traversées
    (mêmes couleurs que le diagramme) pour les reconnaître d'un coup d'œil. */
-function afficherListeAnalyses(){
-  const zone = document.getElementById('zone-analyses');
+/* Liste des transects de l'appareil. Deux usages : l'écran Analyses (on ouvre
+   un transect) et l'espace enseignant (on en coche plusieurs pour les
+   comparer) — même rendu, cases à cocher en plus. */
+function afficherListeAnalyses(cible, cochable){
+  const zone = document.getElementById(cible || 'zone-analyses');
+  if(!zone) return;
   const groupes = new Map();
   chargerHistorique().forEach(r => {
     const t = r.transect || 'Transect (sans nom)';
@@ -3001,7 +3038,7 @@ function afficherListeAnalyses(){
       }).join('');
     }
     const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`.replace(/"/g,'&quot;');
-    const choisi = comparaisonSelection.has(nom);
+    const choisi = cochable && comparaisonSelection.has(nom);
     return `<div class="carte-analyse-hote">
       <button type="button" class="carte-analyse${choisi ? ' choisi' : ''}"${possible ? ` onclick="ouvrirAnalyseTransect(${cible})"` : ' disabled'}>
         <span class="carte-analyse-titre"><b>Transect ${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}</span>
@@ -3009,12 +3046,51 @@ function afficherListeAnalyses(){
         ${possible ? `<span class="frise-zones" aria-hidden="true">${frise}</span>` : `<span class="carte-analyse-infos">Il faut au moins deux relevés avec une distance.</span>`}
         ${possible ? '<span class="carte-analyse-go" aria-hidden="true">→</span>' : ''}
       </button>
-      ${possible ? `<input type="checkbox" class="carte-analyse-coche" ${choisi ? 'checked' : ''}
+      ${possible && cochable ? `<input type="checkbox" class="carte-analyse-coche" ${choisi ? 'checked' : ''}
         onchange="basculerSelectionComparaison(${cible}, this.checked)"
         title="Cocher pour comparer ce transect à d'autres" aria-label="Comparer le transect ${echapHTML(nom)}">` : ''}
     </div>`;
   }).join('');
-  majBarreComparaison();
+  if(cochable) majBarreComparaison();
+}
+
+/* ---------- Espace enseignant ----------
+   Il n'apparaît que sur l'appareil où il a été activé, en ouvrant l'appli avec
+   « #enseignant » à la fin de l'adresse. Le choix est gardé sur cet appareil,
+   et l'adresse est nettoyée aussitôt pour ne pas rester affichée au tableau.
+
+   Ce n'est PAS une protection : tout se passe dans le navigateur et le code de
+   l'appli est public. C'est une séparation d'usage — les étudiants n'ont jamais
+   sous les yeux les profils des autres groupes ni les outils de projection.
+   Une vraie restriction demanderait un serveur avec authentification. */
+const CLE_ENSEIGNANT = 'pmg_enseignant_v1';
+const estEnseignant = () => localStorage.getItem(CLE_ENSEIGNANT) === '1';
+function activerEspaceEnseignant(){
+  const demande = /(^|[#?&])enseignant\b/i.test(location.hash + location.search);
+  if(demande){
+    try { localStorage.setItem(CLE_ENSEIGNANT, '1'); } catch(e) {}
+    history.replaceState(null, '', location.pathname);
+  }
+  const b = document.getElementById('porte-enseignant');
+  if(b) b.hidden = !estEnseignant();
+  return demande;
+}
+/* Ajouter « #enseignant » à une page déjà ouverte ne la recharge pas : il faut
+   écouter le changement d'adresse pour activer l'espace à chaud. */
+window.addEventListener('hashchange', () => {
+  if(activerEspaceEnseignant()) allerA('enseignant');
+});
+
+function quitterEspaceEnseignant(){
+  try { localStorage.removeItem(CLE_ENSEIGNANT); } catch(e) {}
+  comparaisonSelection.clear();
+  document.getElementById('porte-enseignant').hidden = true;
+  informer("L'espace enseignant est retiré de cet appareil. Pour le rétablir, ouvrez l'appli avec « #enseignant » à la fin de l'adresse.");
+  allerA('milieu');
+}
+function afficherListeEnseignant(){
+  if(!estEnseignant()){ allerA('milieu'); return; }
+  afficherListeAnalyses('zone-enseignant', true);
 }
 
 /* ---------- Comparaison de transects ----------
@@ -4216,6 +4292,7 @@ window.addEventListener('resize', ()=>{ clearTimeout(_minuteurMotif); _minuteurM
 
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('version-appli').textContent = VERSION_APPLI;
+  activerEspaceEnseignant();
   majEcranMilieu();
   allerA('milieu');            // l'appli ouvre sur le choix du milieu
   majCompteurHistorique();
