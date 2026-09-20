@@ -31,10 +31,10 @@ const PORT_ESPECES = {
   // chaméphytes et fourrés halophiles
   "Salicornia perennis":                   ["rampant", 12],
   "Halimione portulacoides":               ["coussin", 40],
-  "Salicornia pruinosa":                   ["buisson", 45],
+  "Salicornia pruinosa":                   ["soude", 45],
   "Suaeda vera":                           ["buisson", 60],
   "Inula crithmoides":                     ["hampe-capitule", 45],
-  "Baccharis halimifolia":                 ["buisson", 150],
+  "Baccharis halimifolia":                 ["arbuste", 150],
   // graminées
   "Spartina maritima":                     ["graminee-epi", 35],
   "Spartina x townsendii var. anglica":    ["graminee-epi", 70],
@@ -55,12 +55,12 @@ const PORT_ESPECES = {
   // joncs, laîches, scirpes
   "Scirpus maritimus":                     ["roseau", 80],
   "Juncus maritimus":                      ["jonc", 90],
-  "Juncus gerardi":                        ["jonc", 25],
+  "Juncus gerardi":                        ["jonc-tiges", 28],
   "Juncus ambiguus":                       ["jonc", 8],
   "Juncus bufonius subsp. minutulus":      ["jonc", 8],
   "Carex extensa":                         ["jonc", 25],
   "Carex distans":                         ["jonc", 40],
-  "Schoenus nigricans":                    ["jonc", 50],
+  "Schoenus nigricans":                    ["choin", 50],
   "Triglochin maritima":                   ["plantain", 35],
   "Triglochin bulbosum subsp. barrelieri": ["plantain", 25],
   // rosettes et hampes fleuries
@@ -88,7 +88,7 @@ const PORT_ESPECES = {
   // tapis bas
   "Glaux maritima":                        ["tapis", 8],
   "Spergularia media":                     ["tapis", 15],
-  "Spergularia marina":                    ["tapis", 10],
+  "Spergularia marina":                    ["herbe", 10],
   "Sagina maritima":                       ["tapis", 5],
   "Frankenia laevis":                      ["tapis", 6],
   "Herniaria ciliolata":                   ["tapis", 5],
@@ -100,7 +100,7 @@ const PORT_ESPECES = {
   "Atriplex littoralis":                   ["herbe", 60],
   "Atriplex prostrata":                    ["herbe", 40],
   "Atriplex laciniata":                    ["herbe", 30],
-  "Beta vulgaris subsp. maritima":         ["herbe", 60],
+  "Beta vulgaris subsp. maritima":         ["betterave", 60],
   "Calystegia sepium":                     ["herbe", 80],
   "Lycopus europaeus":                     ["herbe", 60],
   "Thelypteris palustris":                 ["graminee", 50]
@@ -109,7 +109,9 @@ const PORT_DEFAUT = ["herbe", 20];
 
 /* Libellés des ports, pour la légende. */
 const NOMS_PORTS = {
-  herbier:"herbier couché", salicorne:"annuelle charnue", soude:"annuelle charnue",
+  herbier:"herbier couché", salicorne:"plante charnue en candélabre", soude:"plante charnue touffue",
+  arbuste:"arbuste ligneux", betterave:"rosette charnue volumineuse", choin:"touffe à feuilles retombantes",
+  "jonc-tiges":"jonc à tiges dépassantes",
   rampant:"sous-arbrisseau rampant", coussin:"sous-arbrisseau en coussin",
   buisson:"sous-arbrisseau dressé", graminee:"graminée en touffe",
   "graminee-epi":"graminée à épis", roseau:"grande hélophyte", jonc:"jonc, laîche",
@@ -120,7 +122,7 @@ const NOMS_PORTS = {
 /* Emprise au sol d'un dessin, en fraction de sa hauteur (px). Sert à calculer
    combien de dessins tiennent dans un quadrat. */
 const EMPRISE_PORT = {
-  herbier:2.6, salicorne:.6, soude:.75, rampant:2, coussin:1.25, buisson:.7,
+  herbier:2.6, salicorne:.6, soude:1, arbuste:.75, betterave:1.1, choin:.9, "jonc-tiges":.5, rampant:2, coussin:1.25, buisson:.7,
   graminee:.7, "graminee-epi":.45, roseau:.3, jonc:.45, plantain:.9, rosette:1.4,
   tapis:2.4, herbe:.55, "hampe-corymbe":.6, "hampe-capitule":.6, "hampe-boule":.6
 };
@@ -175,7 +177,17 @@ const PICTOS = {
     }
     return `<path d="${p}"/>`;
   },
-  soude(x, y, h, R){ return PICTOS.salicorne(x, y, h, R, true); },
+  /* Plante charnue touffue : plusieurs tiges ramifiées depuis la base, qui
+     forment une touffe dense plutôt qu'un candélabre isolé. */
+  soude(x, y, h, R){
+    const nt = 3 + Math.floor(R() * 2);
+    let s = '';
+    for(let k = 0; k < nt; k++){
+      const t = k / (nt - 1) - .5;
+      s += PICTOS.salicorne(x + t * h * .45, y, h * (.75 + R() * .25) * (1 - Math.abs(t) * .35), R, true);
+    }
+    return s;
+  },
   rampant(x, y, h, R){
     const w = h * 2;
     let p = `M${n1(x - w/2)} ${n1(y - 1)} Q${n1(x - w/4)} ${n1(y - h * .45)} ${n1(x)} ${n1(y - 2)} T${n1(x + w/2)} ${n1(y - 1)}`;
@@ -327,7 +339,100 @@ const PICTOS = {
   },
   "hampe-corymbe"(x, y, h, R){ return PICTOS.hampe(x, y, h, R, 'corymbe'); },
   "hampe-capitule"(x, y, h, R){ return PICTOS.hampe(x, y, h, R, 'capitule'); },
-  "hampe-boule"(x, y, h, R){ return PICTOS.hampe(x, y, h, R, 'boule'); }
+  "hampe-boule"(x, y, h, R){ return PICTOS.hampe(x, y, h, R, 'boule'); },
+
+  /* Arbuste ligneux dressé (baccharis) : tronc et charpente visibles, houppier
+     feuillu posé au-dessus. */
+  arbuste(x, y, h, R, _, lw = 1){
+    const cy = y - h * .66, rx = h * .3 * lw, ry = h * .3;
+    let tronc = `M${n1(x - 1.5)} ${n1(y)} Q${n1(x - 1)} ${n1(y - h * .3)} ${n1(x + (R() - .5) * 3)} ${n1(cy + ry * .4)}`
+      + ` M${n1(x + 1.5)} ${n1(y)} Q${n1(x + 2)} ${n1(y - h * .25)} ${n1(x + 1)} ${n1(cy + ry * .4)}`;
+    // houppier : contour bosselé fermé
+    const nb = 10;
+    let p = '';
+    for(let k = 0; k <= nb; k++){
+      const a = Math.PI / 2 + 2 * Math.PI * k / nb;
+      const r = 1 + (R() - .5) * .16;
+      const px = x + Math.cos(a) * rx * r, py = cy - Math.sin(a) * ry * r;
+      if(k === 0) p = `M${n1(px)} ${n1(py)}`;
+      else p += ` A${n1(rx * .36)} ${n1(ry * .36)} 0 0 0 ${n1(px)} ${n1(py)}`;   // bosses vers l'extérieur
+    }
+    p += ' Z';
+    // charpente et petites feuilles dans le houppier
+    let br = `M${n1(x)} ${n1(cy + ry * .4)} L${n1(x - rx * .5)} ${n1(cy - ry * .3)} M${n1(x)} ${n1(cy + ry * .4)} L${n1(x + rx * .45)} ${n1(cy - ry * .4)} M${n1(x)} ${n1(cy + ry * .4)} L${n1(x + (R() - .5) * 3)} ${n1(cy - ry * .6)}`;
+    for(let k = 0; k < 7; k++){
+      const fx = x + (R() - .5) * rx * 1.3, fy = cy + (R() - .5) * ry * 1.2;
+      br += ` M${n1(fx)} ${n1(fy)} l2.2 -1.6`;
+    }
+    return `<path d="${tronc}"/><path d="${p}" fill="#fff" fill-opacity=".85"/><path d="${br}"/>`;
+  },
+
+  /* Rosette charnue volumineuse (betterave maritime) : grandes feuilles
+     épaisses étalées, hampes feuillées portant des glomérules. */
+  betterave(x, y, h, R){
+    let tiges = '';
+    const nt = 2 + Math.floor(R() * 2);
+    for(let k = 0; k < nt; k++){
+      const t = nt > 1 ? k / (nt - 1) - .5 : 0, tx = x + t * h * .5, top = y - h * (.85 + R() * .15);
+      tiges += `M${n1(x + t * 4)} ${n1(y - h * .15)} Q${n1(x + t * h * .2)} ${n1(y - h * .6)} ${n1(tx)} ${n1(top)} `;
+      for(let j = 1; j <= 3; j++){
+        const gy = y - h * (.35 + .17 * j), gx = x + t * 4 + (tx - x - t * 4) * (.3 + .23 * j), c = j % 2 ? 1 : -1;
+        tiges += `M${n1(gx)} ${n1(gy)} l${n1(c * h * .07)} ${n1(-h * .05)} `;
+      }
+    }
+    // feuilles : limbe large et épais, nervure centrale
+    let feuilles = '', nerv = '';
+    const nf = 5;
+    for(let k = 0; k < nf; k++){
+      const t = k / (nf - 1) - .5, L = h * (.36 + R() * .08);
+      // direction de la feuille, de couchée sur les côtés à dressée au centre
+      const a = Math.PI / 2 - t * 2.3, ux = Math.cos(a), uy = -Math.sin(a), vx = -uy, vy = ux;
+      const W = h * .2;                                  // limbe large, arrondi au bout
+      const pt = (fu, fv) => `${n1(x + ux * L * fu + vx * W * fv)} ${n1(y + uy * L * fu + vy * W * fv)}`;
+      feuilles += `<path d="M${n1(x)} ${n1(y)} C${pt(.2, .45)} ${pt(.85, .75)} ${pt(1, 0)} C${pt(.85, -.75)} ${pt(.2, -.45)} ${n1(x)} ${n1(y)} Z" fill="#fff" fill-opacity=".92" stroke-width="1.35"/>`;
+      nerv += `M${n1(x)} ${n1(y)} L${pt(.78, 0)} `;
+    }
+    return `<path d="${tiges}"/>${feuilles}<path d="${nerv}" stroke-width=".8"/>`;
+  },
+
+  /* Touffe à feuilles retombantes (choin noirâtre) : feuilles qui s'arquent
+     vers l'extérieur, tiges dressées terminées par un épillet sombre. */
+  choin(x, y, h, R){
+    const w = h * .9, nb = 9;
+    let p = '';
+    for(let k = 0; k < nb; k++){
+      const t = k / (nb - 1) - .5, hh = h * (.45 + R() * .2);
+      const tx = x + t * w * (1 + R() * .3), ty = y - hh * (.35 + R() * .25);
+      p += `M${n1(x + t * 3)} ${n1(y)} Q${n1(x + t * w * .25)} ${n1(y - hh * 1.25)} ${n1(tx)} ${n1(ty)} `;
+    }
+    const tetes = [];
+    const ne = 2 + Math.floor(R() * 2);
+    for(let k = 0; k < ne; k++){
+      const ex = x + (k - (ne - 1) / 2) * 3.5, top = y - h * (.85 + R() * .15);
+      p += `M${n1(ex)} ${n1(y)} L${n1(ex + (R() - .5) * 2)} ${n1(top)} `;
+      tetes.push(`<ellipse cx="${n1(ex)}" cy="${n1(top + 3)}" rx="1.6" ry="3.2" fill="#191b16"/>`);
+    }
+    return `<path d="${p}"/>` + tetes.join('');
+  },
+
+  /* Jonc bas dont quelques tiges florifères dépassent nettement la touffe
+     (jonc de Gérard). */
+  "jonc-tiges"(x, y, h, R, _, lw = 1){
+    const nb = Math.max(4, Math.round((9 + Math.floor(R() * 3)) * lw)), w = h * .45 * lw;
+    let p = '';
+    for(let k = 0; k < nb; k++){
+      const t = k / (nb - 1) - .5, th = h * (.4 + R() * .22);
+      p += `M${n1(x + t * 2)} ${n1(y)} L${n1(x + t * w)} ${n1(y - th)} `;
+    }
+    const nt = 2 + Math.floor(R() * 2);
+    for(let k = 0; k < nt; k++){
+      const t = nt > 1 ? k / (nt - 1) - .5 : 0, tx = x + t * w * .5, top = y - h * (.92 + R() * .12);
+      p += `M${n1(x + t * 2)} ${n1(y)} L${n1(tx)} ${n1(top)} `;
+      // inflorescence : petits glomérules sur la partie haute
+      p += `M${n1(tx)} ${n1(top + 4)} l2.2 -1.2 M${n1(tx)} ${n1(top + 7)} l-2.2 -1.2 M${n1(tx)} ${n1(top)} l1.5 -2`;
+    }
+    return `<path d="${p}"/>`;
+  }
 };
 
 function strateDe(hcm){
