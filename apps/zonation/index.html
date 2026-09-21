@@ -220,8 +220,7 @@ main{max-width:640px;margin:0 auto;padding:1em;}
   display:flex;flex-direction:column;}
 .porte-kicker{margin:0 0 .7em;font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.09em;
   text-transform:uppercase;color:rgba(244,242,236,.5);}
-.porte-titre{font-family:var(--serif);font-size:clamp(1.4rem,5.4vw,1.85rem);line-height:1.18;margin:0 0 .5em;color:var(--page);}
-.porte-intro{font-size:.86rem;line-height:1.6;color:rgba(244,242,236,.8);margin:0 0 1.6em;max-width:40em;}
+.porte-titre{font-family:var(--serif);font-size:clamp(1.4rem,5.4vw,1.85rem);line-height:1.18;margin:0 0 1.1em;color:var(--page);}
 .porte-question{margin:0 0 .6em;font-family:var(--sans);font-size:.95rem;font-weight:700;color:var(--page);}
 .porte-cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:.7em;}
 .porte-carte{
@@ -843,7 +842,6 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <canvas class="hero-motif" id="hero-motif" aria-hidden="true"></canvas>
       <p class="porte-kicker">BTS GPN Kerplouz · relevés de terrain, sans réseau</p>
       <h1 class="porte-titre">Identifier les habitats<br>le long d'un transect</h1>
-      <p class="porte-intro">Un quadrat après l'autre, du bord de l'eau vers l'intérieur. L'appli propose l'habitat le plus probable de chaque relevé, d'après les typologies du Conservatoire botanique national de Brest, puis lit la zonation du transect entier.</p>
 
       <p class="porte-question">Quel milieu allez-vous relever&nbsp;?</p>
       <div class="porte-cartes">
@@ -2450,7 +2448,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.30.0';
+const VERSION_APPLI = '1.30.1';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
