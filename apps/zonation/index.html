@@ -3119,9 +3119,6 @@ function construireProfilTransectSVG(nomTransect, options){
     const numero = i + 1;
     const rang = liste.length - i;                     // rang depuis le haut du panneau
     const yLigne = yEspeces + (rang - 1) * hLigne + hLigne / 2;
-    /* Une ligne sur deux reçoit un fond très pâle : sur trente espèces, l'œil
-       perd sinon la ligne entre le nom et sa barre. */
-    if(rang % 2 === 0) S.push(`<rect x="${PROFIL_MARGE_G}" y="${(yEspeces + (rang - 1) * hLigne).toFixed(1)}" width="${largeurGraphe}" height="${hLigne}" fill="#f7f5ef"/>`);
     S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yLigne + 4).toFixed(1)}" text-anchor="end" font-size="12" font-style="italic">${echapXML(sp.latin || sp.fr)}</text>`);
     S.push(`<text x="14" y="${(yLigne + 4).toFixed(1)}" font-size="11" fill="#565a4e">${numero}</text>`);
     S.push(`<line x1="${PROFIL_MARGE_G}" y1="${(yEspeces + rang * hLigne).toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${(yEspeces + rang * hLigne).toFixed(1)}" stroke="#e7e4d8" stroke-width="0.6"/>`);
