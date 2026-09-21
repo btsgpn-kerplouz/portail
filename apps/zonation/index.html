@@ -376,6 +376,7 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .lien-groupement{display:inline-block;text-align:left;max-width:22em;}
 .lien-groupement .num-fiche{font-family:var(--mono);font-weight:700;}
 .lien-groupement .nom-groupement{font-weight:600;}
+.lien-groupement .compte-groupement{display:block;font-family:var(--mono);font-size:.68rem;color:var(--text-2);}
 .lien-groupement .syntaxon-groupement{display:block;font-style:italic;font-size:.72rem;color:var(--text-2);}
 /* ---- Comparaison de transects ----
    Vue de classe : plusieurs profils empilés, même échelle, pour montrer que la
@@ -3731,7 +3732,11 @@ function construireEcranAnalyse(){
     return;
   }
 
-  /* Tronçons de zones, et les fiches que chacun recouvre. */
+  /* Tronçons de zones, et les fiches que chacun recouvre. Un tronçon est une
+     suite de relevés d'une MÊME ceinture ; plusieurs groupements peuvent s'y
+     succéder, et l'on compte alors combien de relevés reviennent à chacun —
+     sans quoi deux noms côte à côte se lisent comme une hésitation, alors que
+     chaque relevé, lui, est attribué à un seul groupement. */
   const troncons = [];
   rs.forEach(r => {
     const z = r.solNu ? {zone:'Sol nu', rang:0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
@@ -3739,10 +3744,14 @@ function construireEcranAnalyse(){
     const dernier = troncons[troncons.length - 1];
     if(dernier && dernier.zone === cle){
       dernier.fin = r.d; dernier.n++;
-      if(r.topFiche != null && !dernier.fiches.includes(r.topFiche)) dernier.fiches.push(r.topFiche);
+      if(r.topFiche != null){
+        if(!dernier.fiches.includes(r.topFiche)) dernier.fiches.push(r.topFiche);
+        dernier.parFiche.set(r.topFiche, (dernier.parFiche.get(r.topFiche) || 0) + 1);
+      }
     } else {
       troncons.push({zone:cle, rang: z ? z.rang : null, debut:r.d, fin:r.d, n:1,
-        fiches: r.topFiche != null ? [r.topFiche] : []});
+        fiches: r.topFiche != null ? [r.topFiche] : [],
+        parFiche: new Map(r.topFiche != null ? [[r.topFiche, 1]] : [])});
     }
   });
 
@@ -3831,8 +3840,10 @@ function construireEcranAnalyse(){
           <td>${echapHTML(t.zone)}</td>
           <td>${t.fiches.length ? t.fiches.map(f => {
             const h = habitatParId(f, milieuTransect(nom)) || {};
+            const nf = t.parFiche ? (t.parFiche.get(f) || 0) : 0;
             return `<button type="button" class="lien-fiche lien-groupement" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse', '${milieuTransect(nom)}')">`
               + `<span class="num-fiche">f${f}</span> <span class="nom-groupement">${echapHTML(h.nomFr || '')}</span>`
+              + (nf ? `<span class="compte-groupement">${nf} relevé${nf > 1 ? 's' : ''} sur ${t.n}</span>` : '')
               + (h.syntaxon ? `<span class="syntaxon-groupement">${echapHTML(premierSyntaxon(h.syntaxon))}</span>` : '')
               + `</button>`;
           }).join(' ') : '<span class="analyse-meta">habitat non attribué</span>'}</td>
