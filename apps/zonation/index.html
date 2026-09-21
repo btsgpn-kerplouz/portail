@@ -2932,15 +2932,30 @@ function construireProfilTransectSVG(nomTransect, options){
       + `</rect>`);
   });
 
-  /* Courbe de richesse. Le sol nu vaut zéro espèce : la courbe tombe, ce qui
-     est l'information. Deux repères seulement, 0 et le maximum du transect. */
-  const richesses = rs.map(r => ({d: r.d, n: (r.cortege || []).length}));
-  const rMax = Math.max(1, ...richesses.map(v => v.n));
-  const yR = n => yRichesse + H_RICHESSE - (n / rMax) * (H_RICHESSE - 6);
-  const ptsR = richesses.map(v => `${x(v.d).toFixed(1)},${yR(v.n).toFixed(1)}`).join(' ');
-  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yRichesse + H_RICHESSE}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yRichesse + H_RICHESSE}" stroke="#c9c4b4" stroke-width="1"/>`);
+  /* Richesse spécifique en histogramme : un bâton par quadrat. La richesse est
+     un comptage, relevé de loin en loin — une courbe aurait relié des points
+     distants de plusieurs mètres et laissé croire à une variation continue.
+     Un quadrat de sol nu ne porte pas de bâton : un tiret sous la ligne de base
+     le distingue d'un mètre non relevé. */
+  const richesses = rs.map(r => ({d: r.d, n: (r.cortege || []).length, solNu: !!r.solNu}));
+  const rBrut = Math.max(1, ...richesses.map(v => v.n));
+  // échelle arrondie au multiple de cinq : deux transects voisins tombent
+  // souvent sur la même, donc restent comparables d'un profil à l'autre
+  const rMax = Math.max(5, Math.ceil(rBrut / 5) * 5);
+  const yBase = yRichesse + H_RICHESSE;
+  const yR = n => yBase - (n / rMax) * (H_RICHESSE - 6);
+  const pasPx = pas * (largeurGraphe / etendue);
+  const largeurBaton = Math.max(1.5, Math.min(14, pasPx * 0.62));
+  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yBase}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yBase}" stroke="#c9c4b4" stroke-width="1"/>`);
   S.push(`<line x1="${PROFIL_MARGE_G}" y1="${(yR(rMax)).toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${(yR(rMax)).toFixed(1)}" stroke="#e2ded1" stroke-width="1" stroke-dasharray="4 5"/>`);
-  S.push(`<polyline points="${ptsR}" fill="none" stroke="#191b16" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`);
+  richesses.forEach(v => {
+    if(v.n > 0){
+      const h = yBase - yR(v.n);
+      S.push(`<rect x="${(x(v.d) - largeurBaton / 2).toFixed(1)}" y="${yR(v.n).toFixed(1)}" width="${largeurBaton.toFixed(1)}" height="${h.toFixed(1)}" fill="#191b16" opacity="0.8"/>`);
+    } else {
+      S.push(`<line x1="${(x(v.d) - largeurBaton / 2).toFixed(1)}" y1="${yBase + 3}" x2="${(x(v.d) + largeurBaton / 2).toFixed(1)}" y2="${yBase + 3}" stroke="#8a8676" stroke-width="1.6"/>`);
+    }
+  });
   S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yR(rMax) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${rMax}</text>`);
   S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yRichesse + H_RICHESSE + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
   /* Libellé à gauche de la colonne des noms, graduations contre le cadre : sur
