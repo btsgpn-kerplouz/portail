@@ -551,6 +551,12 @@ body.projection .analyse-aide{font-size:1rem;}
 .bandeau-edition button{margin-top:.4em;}
 /* Action secondaire dans un tableau dense : elle doit rester lisible au pouce
    sans prendre le pas sur la donnée. */
+.recap-transects{margin-bottom:1.2em;}
+.recap-transects .transect-actif{background:var(--acc-soft);}
+.actions-transect{white-space:nowrap;}
+.btn-supprimer{font-family:var(--sans);font-size:.72rem;font-weight:600;padding:.25em .5em;margin-left:.3em;
+  background:none;color:#c0562b;border:1px solid #e0b3a1;border-radius:var(--rayon-petit);cursor:pointer;}
+.btn-supprimer:hover{background:#c0562b;color:#fff;border-color:#c0562b;}
 .btn-modifier{
   font-family:var(--sans);font-size:.72rem;font-weight:600;
   padding:.35em .6em;white-space:nowrap;
@@ -2786,6 +2792,27 @@ function modifierReleve(cle){
   majBandeauEdition();
 }
 
+/* Supprime tous les relevés d'un transect. Irréversible et local : l'appli ne
+   garde rien ailleurs, d'où le rappel d'exporter avant. */
+async function supprimerTransect(nom){
+  const liste = chargerHistorique();
+  const vises = liste.filter(r => (r.transect || 'Transect (sans nom)') === nom);
+  if(!vises.length) return;
+  const ok = await demanderConfirmation(
+    `Supprimer le transect « ${nom} » et ses ${vises.length} relevé${vises.length > 1 ? 's' : ''} ?\n\n`
+    + `C'est définitif : les relevés ne sont enregistrés que sur cet appareil. `
+    + `Si vous voulez les garder, annulez et faites d'abord un export complet.`,
+    {ok: 'Supprimer', annuler: 'Annuler', danger: true});
+  if(!ok) return;
+  sauverHistorique(liste.filter(r => (r.transect || 'Transect (sans nom)') !== nom));
+  comparaisonSelection.delete(nom);
+  // le transect supprimé ne peut pas rester le transect en cours
+  if(nomTransectActif() === nom) localStorage.removeItem(CLE_TRANSECT_ACTIF);
+  majCompteurHistorique();
+  afficherHistorique();
+  informer(`Transect « ${nom} » supprimé (${vises.length} relevé${vises.length > 1 ? 's' : ''}).`);
+}
+
 /* Signale sans ambiguïté qu'on corrige un relevé existant : sans cela on croit
    saisir un nouveau point, et l'on s'étonne que le compteur n'avance pas. */
 function majBandeauEdition(){
@@ -2816,7 +2843,35 @@ function afficherHistorique(){
     if(!groupes[t]){ groupes[t] = []; ordre.push(t); }
     groupes[t].push(r);
   });
-  zone.innerHTML = ordre.map(nom=>{
+  /* Récapitulatif en tête : sur un appareil qui porte les transects de plusieurs
+     groupes, les tableaux de relevés s'enchaînent sur des écrans entiers et
+     l'on ne sait plus ce qu'on a. Une ligne par transect, et les actions au
+     même endroit. */
+  const recap = `<table class="historique recap-transects">
+    <thead><tr><th>Transect</th><th>Milieu</th><th>Relevés</th><th>Étendue</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+      ${ordre.map(nom => {
+        const rs = groupes[nom];
+        const avecD = rs.filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+          .map(r => Number(r.distance)).sort((a, b) => a - b);
+        const r0 = rs[0];
+        const cible = `'${nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}'`.replace(/"/g,'&quot;');
+        return `<tr${nom === nomActif ? ' class="transect-actif"' : ''}>
+          <td><b>${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}
+            ${r0.observateur ? `<br><span class="latin">${echapHTML(r0.observateur)}</span>` : ''}</td>
+          <td>${MILIEUX[milieuDuReleve(r0)].nom}</td>
+          <td class="num">${rs.length}</td>
+          <td>${avecD.length ? `${avecD[0]} → ${avecD[avecD.length-1]} m` : '—'}</td>
+          <td>${r0.dateReleve ? r0.dateReleve.split('-').reverse().join('/') : '—'}</td>
+          <td class="num actions-transect">
+            ${avecD.length > 1 ? `<button type="button" class="btn-modifier" onclick="ouvrirAnalyseTransect(${cible}, 'historique')">Analyser</button>` : ''}
+            <button type="button" class="btn-supprimer" onclick="supprimerTransect(${cible})">Supprimer</button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+
+  zone.innerHTML = recap + ordre.map(nom=>{
     const rs = groupes[nom].slice().sort((a,b)=>(a.numero||0)-(b.numero||0));
     const actif = nom === nomActif;
     return `
