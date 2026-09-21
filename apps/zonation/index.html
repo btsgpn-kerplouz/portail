@@ -370,6 +370,13 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .zone-puce.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
 .zone-puce[aria-pressed="true"]{background:var(--acc-soft);}
 .analyse-diagramme .barre-espece{cursor:help;}
+.analyse-diagramme .barre-richesse{cursor:pointer;}
+.analyse-diagramme .barre-richesse:hover{fill:rgba(25,27,22,.07);}
+/* Groupements nommés dans la lecture de la zonation */
+.lien-groupement{display:inline-block;text-align:left;max-width:22em;}
+.lien-groupement .num-fiche{font-family:var(--mono);font-weight:700;}
+.lien-groupement .nom-groupement{font-weight:600;}
+.lien-groupement .syntaxon-groupement{display:block;font-style:italic;font-size:.72rem;color:var(--text-2);}
 /* ---- Comparaison de transects ----
    Vue de classe : plusieurs profils empilés, même échelle, pour montrer que la
    zonation revient d'un groupe à l'autre malgré des longueurs différentes. */
@@ -2891,7 +2898,12 @@ function construireProfilTransectSVG(nomTransect, options){
   // le SVG téléchargé porte aussi la légende des dessins et la ligne « Zones : … »
   const legDessins = !interactif && dessin.liste.length && typeof legendeDessinsSVG === 'function'
     ? legendeDessinsSVG(dessin.liste, 14, yLeg + 54, W - 28) : null;
-  const H = yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0);
+  /* Groupements rencontrés, dans l'ordre du transect : le SVG téléchargé les
+     nomme en clair, sinon la figure ne porte que des numéros de fiches. */
+  const milieuTr = milieuDuReleve(rs[0]);
+  const fichesVues = [...new Set(rs.filter(r => r.topFiche != null).map(r => r.topFiche))];
+  const H = yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0)
+    + (interactif ? 0 : fichesVues.length * 12);
 
   const S = [];
   S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Georgia, 'Times New Roman', serif">`);
@@ -2928,7 +2940,7 @@ function construireProfilTransectSVG(nomTransect, options){
     const fiche = t.fiches && t.fiches.length ? t.fiches[0] : null;
     const attrs = ` class="bande-zone${fiche != null ? ' zone-cliquable' : ''}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"${fiche != null ? ` data-fiche="${fiche}"` : ''}`;
     S.push(`<rect x="${x1.toFixed(1)}" y="${yEspeces - 6}" width="${Math.max(0, x2-x1).toFixed(1)}" height="${yAxe - (yEspeces - 6)}" fill="${teinteZone(t.rang)}" fill-opacity="0.45"${attrs}>`
-      + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? ` · fiche ${fiche} — cliquer pour ouvrir` : ''}</title>` : '')
+      + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? `\n${echapXML(nomGroupement(fiche, milieuDuReleve(rs[0])) || '')} (fiche ${fiche}) — cliquer pour ouvrir` : ''}</title>` : '')
       + `</rect>`);
   });
 
@@ -2955,6 +2967,20 @@ function construireProfilTransectSVG(nomTransect, options){
     } else {
       S.push(`<line x1="${(x(v.d) - largeurBaton / 2).toFixed(1)}" y1="${yBase + 3}" x2="${(x(v.d) + largeurBaton / 2).toFixed(1)}" y2="${yBase + 3}" stroke="#8a8676" stroke-width="1.6"/>`);
     }
+  });
+  /* À l'écran, chaque bâton est saisissable : la zone sensible couvre toute la
+     hauteur du bandeau, un bâton d'une espèce étant trop fin pour être visé.
+     Survol : le quadrat en détail ; clic : la fiche de son groupement. */
+  if(interactif) rs.forEach(r => {
+    const n = (r.cortege || []).length;
+    const fiche = r.solNu ? null : r.topFiche;
+    const esp = (r.cortege || []).slice()
+      .sort((a, b) => (pctDeCouverture('bb', b.cover) || 0) - (pctDeCouverture('bb', a.cover) || 0))
+      .map(e => `${e.fr} (${e.cover})`).join(' · ');
+    S.push(`<rect x="${(x(r.d) - Math.max(6, pasPx / 2)).toFixed(1)}" y="${yRichesse}" width="${Math.max(12, pasPx).toFixed(1)}" height="${H_RICHESSE}" fill="transparent"`
+      + ` class="barre-richesse${fiche != null ? ' zone-cliquable' : ''}" data-d="${r.d}" data-n="${n}"`
+      + `${fiche != null ? ` data-fiche="${fiche}"` : ''} data-solnu="${r.solNu ? '1' : ''}"`
+      + ` data-habitat="${echapXML(r.solNu ? 'Sol nu' : (r.top || ''))}" data-especes="${echapXML(esp)}"/>`);
   });
   S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yR(rMax) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${rMax}</text>`);
   S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yRichesse + H_RICHESSE + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
@@ -3036,7 +3062,17 @@ function construireProfilTransectSVG(nomTransect, options){
     const vues = new Map();
     troncons.forEach(t => { if(t.rang != null && !vues.has(t.rang)) vues.set(t.rang, t.zone); });
     const ligne = [...vues.entries()].sort((a,b) => a[0]-b[0]).map(([r, z]) => `${r} ${z}`).join('  ·  ');
-    S.push(`<text x="14" y="${H - 32}" font-size="10.5" fill="#191b16"><tspan font-weight="bold">Zones : </tspan>${echapXML(ligne)}</text>`);
+    const yZonesLigne = H - 32 - fichesVues.length * 12;
+    S.push(`<text x="14" y="${yZonesLigne}" font-size="10.5" fill="#191b16"><tspan font-weight="bold">Zones : </tspan>${echapXML(ligne)}</text>`);
+    // une ligne par groupement rencontré, pour que la figure se lise sans l'appli
+    fichesVues.forEach((f, i) => {
+      const h = habitatParId(f, milieuTr);
+      if(!h) return;
+      S.push(`<text x="14" y="${yZonesLigne + 14 + i * 12}" font-size="9.5" fill="#565a4e">`
+        + `<tspan font-weight="bold">f${f}</tspan> ${echapXML(h.nomFr)}`
+        + (h.syntaxon ? `<tspan fill="#8a8676" font-style="italic"> — ${echapXML(premierSyntaxon(h.syntaxon))}</tspan>` : '')
+        + `</text>`);
+    });
   }
   S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · référentiel COLASSE V., 2019 (CBN de Brest)</text>`);
   S.push('</svg>');
@@ -3604,11 +3640,17 @@ function activerDiagrammeInteractif(){
   });
 
   svg.addEventListener('mousemove', ev => {
-    const c = ev.target.closest('.barre-espece, .bande-zone, .cellule-dessin');
+    const c = ev.target.closest('.barre-espece, .bande-zone, .cellule-dessin, .barre-richesse');
     const bande = ev.target.closest('.bande-zone, .cellule-dessin');
     eclairer(bande && bande.dataset.zone ? bande.dataset.zone : fixe);
     if(!c){ cacher(); return; }
-    if(c.classList.contains('cellule-dessin')){
+    if(c.classList.contains('barre-richesse')){
+      const n = Number(c.dataset.n);
+      montrer(`<b>${c.dataset.d} m</b> · ${c.dataset.solnu ? 'sol nu' : `${n} espèce${n > 1 ? 's' : ''}`}`
+        + (c.dataset.habitat ? `<br>${echapHTML(c.dataset.habitat)}` : '')
+        + (c.dataset.especes ? `<br><span class="bulle-sec">${echapHTML(c.dataset.especes)}</span>` : '')
+        + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
+    } else if(c.classList.contains('cellule-dessin')){
       montrer(`<b>${c.dataset.d} m</b>${c.dataset.zone ? ' · ' + echapHTML(c.dataset.zone) : ''}`
         + `<br>${echapHTML(c.dataset.especes)}`
         + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
@@ -3783,11 +3825,17 @@ function construireEcranAnalyse(){
 
     <div class="carte">
       <h3>Lecture de la zonation</h3>
-      <table class="historique"><thead><tr><th>De → à</th><th>Zone</th><th>Fiche(s)</th><th>Relevés</th></tr></thead><tbody>
+      <table class="historique"><thead><tr><th>De → à</th><th>Zone</th><th>Groupement végétal</th><th>Relevés</th></tr></thead><tbody>
         ${troncons.map(t => `<tr>
           <td>${t.debut} → ${t.fin} m</td>
           <td>${echapHTML(t.zone)}</td>
-          <td>${t.fiches.length ? t.fiches.map(f => `<button type="button" class="lien-fiche" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse', '${milieuTransect(nom)}')" title="${echapHTML((habitatParId(f, milieuTransect(nom)) || {}).nomFr || '')}">f${f}</button>`).join(' ') : '—'}</td>
+          <td>${t.fiches.length ? t.fiches.map(f => {
+            const h = habitatParId(f, milieuTransect(nom)) || {};
+            return `<button type="button" class="lien-fiche lien-groupement" onclick="allerVoirFiche(${JSON.stringify(f)}, 'analyse', '${milieuTransect(nom)}')">`
+              + `<span class="num-fiche">f${f}</span> <span class="nom-groupement">${echapHTML(h.nomFr || '')}</span>`
+              + (h.syntaxon ? `<span class="syntaxon-groupement">${echapHTML(premierSyntaxon(h.syntaxon))}</span>` : '')
+              + `</button>`;
+          }).join(' ') : '<span class="analyse-meta">habitat non attribué</span>'}</td>
           <td class="num">${t.n}</td></tr>`).join('')}
       </tbody></table>
     </div>
@@ -3854,6 +3902,19 @@ function construireEcranAnalyse(){
 
 const echapHTML = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* Nom du syntaxon sans ses auteurs ni ses variantes : « Spartinetum maritimae
+   (Emberger & Regnier 1926) Corillion 1953 / Spartinetum anglicae… » devient
+   « Spartinetum maritimae ». Le nom complet reste sur la fiche. */
+function premierSyntaxon(s){
+  const premier = String(s || '').split(/\s*[\/(]/)[0].trim();
+  return premier.replace(/\s+(ex|in|corr\.|nom\.|prov\.)\b.*$/i, '').trim();
+}
+/* Groupement d'une fiche, pour un libellé court : « f6 · Fourré halophile… ». */
+function nomGroupement(id, milieu){
+  const h = habitatParId(id, milieu);
+  return h ? h.nomFr : null;
+}
 
 /* Une ligne du tableau des espèces de l'analyse. */
 function ligneEspeceAnalyse(e){
