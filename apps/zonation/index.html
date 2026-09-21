@@ -509,6 +509,8 @@ body.projection .analyse-aide{font-size:1rem;}
 .analyse-meta b{color:var(--acc-dark);}
 .analyse-aide{font-size:.75rem;color:var(--text-2);margin:.2em 0 .8em;line-height:1.45;}
 .analyse-ok{font-size:.85rem;color:var(--acc-dark);margin:.2em 0;line-height:1.5;}
+.encart-exaequo ul{margin:.5em 0 .4em;}
+.encart-exaequo li{margin-bottom:.35em;}
 .analyse-alerte{
   background:#fdf6e3;border:1px solid #d9c98a;border-left:4px solid #b08900;
   border-radius:var(--rayon-petit);padding:.6em .8em;font-size:.82rem;line-height:1.5;
@@ -1691,6 +1693,43 @@ function calculerScores(habitats){
   return resultats;
 }
 
+/* ---------- Relevés qui ne tranchent pas ----------
+   Deux groupements peuvent retrouver la même part de leurs espèces
+   caractéristiques, à indice global presque égal. L'appli retient le premier du
+   classement, mais c'est un artefact de tri : ce sont LES DONNÉES DU RELEVÉ qui
+   ne permettent pas de choisir — cortège trop court, espèce différentielle non
+   vue, détermination restée au genre. Le dire oriente l'étudiant vers son
+   relevé, pas vers un doute sur la végétation. */
+const ECART_EXAEQUO = 5;          // points d'indice global en deçà desquels on ne départage pas
+
+function habitatsExAequo(resultats){
+  if(!resultats || resultats.length < 2) return [];
+  const tete = resultats[0];
+  return resultats.slice(1).filter(r =>
+    r.tauxCar === tete.tauxCar && Math.abs(tete.score - r.score) <= ECART_EXAEQUO);
+}
+
+/* Ce qui départagerait les deux groupements : leurs espèces caractéristiques
+   attendues et non trouvées. C'est la liste à chercher sur le terrain. */
+function encartExAequo(tete, exaequo){
+  const nom = r => r.habitat.nomFr;
+  const manquantes = r => (r.manqueCar || []).map(e => typeof e === 'string' ? e : (e.fr || e.latin));
+  const lignes = [tete, ...exaequo].map(r => {
+    const m = manquantes(r);
+    return `<li><b>${echapHTML(nom(r))}</b> — ${r.matchCar.length}/${r.totalCar} caractéristiques trouvées, indice ${r.score} %`
+      + (m.length ? `<br><span class="bulle-sec">à chercher pour le confirmer : ${echapHTML(m.slice(0, 5).join(', '))}</span>` : '')
+      + `</li>`;
+  }).join('');
+  return `<div class="analyse-alerte encart-exaequo">
+    <b>Ce relevé ne permet pas de choisir entre ${exaequo.length + 1} groupements.</b>
+    Ils retrouvent la même part de leurs espèces caractéristiques, à indice quasi égal :
+    le classement ci-dessous met l'un devant l'autre, mais rien dans vos données ne les sépare.
+    <ul class="analyse-liste">${lignes}</ul>
+    Que faire : compléter le relevé (agrandir le quadrat, chercher les espèces listées),
+    reprendre une détermination restée au genre, ou noter que le point est en limite de ceinture.
+  </div>`;
+}
+
 /* Traduit le taux d'espèces caractéristiques en appréciation en langage clair,
    pour des élèves débutants qui n'ont pas encore l'habitude de lire un pourcentage
    comme un niveau de confiance. */
@@ -1845,8 +1884,11 @@ function afficherResultats(){
     return;
   }
 
+  const exaequo = habitatsExAequo(pertinents);
+  etat.exaequo = exaequo.map(r => r.habitat.id);
   const autres = pertinents.slice(1);
-  zone.innerHTML = carteResultatHTML(pertinents[0], 0)
+  zone.innerHTML = (exaequo.length ? encartExAequo(pertinents[0], exaequo) : '')
+    + carteResultatHTML(pertinents[0], 0)
     + CARTE_ENREGISTREMENT
     + (autres.length ? `<details class="autres-possibilites">
         <summary>Voir ${autres.length} autre${autres.length>1?'s':''} possibilité${autres.length>1?'s':''} (moins probable${autres.length>1?'s':''})</summary>
@@ -2695,7 +2737,9 @@ function enregistrerReleve(){
     topFiche: r ? r.habitat.id : null,
     tauxCar: r ? r.tauxCar : 0,
     carMatch: r ? `${r.matchCar.length}/${r.totalCar}` : '',
-    score: r ? r.score : 0
+    score: r ? r.score : 0,
+    // groupements que ce relevé ne permet pas de départager, pour l'analyse
+    exaequo: r ? (etat.exaequo || []) : []
   };
   if(correction) liste[i] = enregistre; else liste.push(enregistre);
   sauverHistorique(liste);
@@ -3872,6 +3916,21 @@ function construireEcranAnalyse(){
           }).join('')}
         </ul>`
       : `<p class="analyse-ok">✓ Aucun point de vigilance : la zonation progresse régulièrement vers la terre — ${troncons.filter(t=>t.rang!=null).map(t=>echapHTML(t.zone)).join(' → ')}.</p>`}
+
+      ${(() => {
+        /* Relevés où deux groupements restaient à égalité : ce ne sont pas des
+           retours en arrière, mais des données trop courtes pour trancher. */
+        const indecis = rs.filter(r => (r.exaequo || []).length);
+        if(!indecis.length) return '';
+        const milieuT = milieuDuReleve(rs[0]);
+        return `<h4 class="analyse-soustitre">Relevés qui ne tranchent pas</h4>
+          <p class="analyse-aide">${indecis.length} relevé${indecis.length>1?'s ne permettent':' ne permet'} pas de choisir entre plusieurs groupements : même part d'espèces caractéristiques retrouvées, indice global quasi égal. C'est une limite des données recueillies — cortège trop court, espèce différentielle non vue, détermination restée au genre — et non une hésitation du terrain.</p>
+          <ul class="analyse-liste">
+            ${indecis.slice(0, 6).map(r => `<li>À <b>${r.d} m</b> : ${echapHTML(r.top || '')}
+              ou ${r.exaequo.map(id => echapHTML(nomGroupement(id, milieuT) || ('fiche ' + id))).join(', ')}.</li>`).join('')}
+            ${indecis.length > 6 ? `<li>… et ${indecis.length - 6} autre${indecis.length - 6 > 1 ? 's' : ''}.</li>` : ''}
+          </ul>`;
+      })()}
     </div>
 
     <div class="carte">
@@ -4225,8 +4284,9 @@ function appliquerImportCSV(texte, nomFichier, infos){
     // que le libellé, alors que le profil a besoin du numéro de fiche.
     const sauve = etat.cortege;
     etat.cortege = g.cortege.filter(e => e.reconnue).map(e => ({...e, key: normaliser(e.latin)}));
-    const res = g.solNu || !etat.cortege.length ? null
-      : calculerScores(MILIEUX[g.milieu].habitats).filter(x => x.matchCar.length || x.matchFreq.length)[0];
+    const classement = g.solNu || !etat.cortege.length ? []
+      : calculerScores(MILIEUX[g.milieu].habitats).filter(x => x.matchCar.length || x.matchFreq.length);
+    const res = classement[0] || null;
     etat.cortege = sauve;
     ajoutes.push({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
@@ -4238,7 +4298,8 @@ function appliquerImportCSV(texte, nomFichier, infos){
       top: res ? res.habitat.nomFr : SOL_NU.habitat, topFiche: res ? res.habitat.id : null,
       tauxCar: res ? res.tauxCar : 0,
       carMatch: res ? `${res.matchCar.length}/${res.totalCar}` : '',
-      score: res ? res.score : 0
+      score: res ? res.score : 0,
+      exaequo: res ? habitatsExAequo(classement).map(x => x.habitat.id) : []
     });
   });
 
