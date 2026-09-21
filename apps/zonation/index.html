@@ -3612,7 +3612,12 @@ function activerDiagrammeInteractif(){
     let gx = ev.clientX - cadre.left + d.scrollLeft - bb.width / 2;
     gx = Math.max(4, Math.min(d.scrollWidth - bb.width - 4, gx));
     bulle.style.left = gx + 'px';
-    bulle.style.top = Math.max(4, ev.clientY - cadre.top - bb.height - 12) + 'px';
+    /* Au-dessus du curseur quand il y a la place, en dessous sinon : collée en
+       haut du cadre, la bulle recouvrait le pointeur — et donc la barre visée,
+       dans le bandeau de richesse qui occupe justement le haut du diagramme. */
+    const yCurseur = ev.clientY - cadre.top;
+    const placeDessus = yCurseur - bb.height - 12 >= 4;
+    bulle.style.top = (placeDessus ? yCurseur - bb.height - 12 : yCurseur + 18) + 'px';
   };
   const cacher = () => { bulle.hidden = true; };
 
