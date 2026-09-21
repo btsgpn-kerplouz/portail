@@ -868,7 +868,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
           <span class="porte-fleche" aria-hidden="true">→</span>
         </button>
       </div>
-      <p class="porte-note">Le milieu choisi fixe les fiches et les espèces proposées à la saisie. Il se change à tout moment depuis l'accueil.</p>
+      <p class="porte-note">Le milieu choisi fixe les fiches et les espèces proposées à la saisie.</p>
 
       <!-- L'analyse ne dépend pas du milieu : chaque relevé porte le sien, et un
            transect est analysé avec son propre référentiel. Elle a donc sa
@@ -1103,9 +1103,8 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <a class="retour-lien" onclick="allerA('milieu')">← Première page</a>
     <div class="carte">
       <h2>Analyses</h2>
-      <p style="font-size:.78rem;color:var(--text-2);">Choisissez un transect : diagramme de la zonation, points de vigilance et richesse spécifique. Plus lisible sur ordinateur.</p>
       <div id="zone-analyses"></div>
-      <p class="note-import-analyses">Le transect d'un autre groupe ? Importez son fichier dans <a onclick="allerA('historique')">Mes transects</a> (« ⬆ Importer un fichier CSV ») : il apparaîtra ici.</p>
+      <p class="note-import-analyses">Le transect d'un autre groupe s'ajoute par <a onclick="allerA('historique')">Mes transects</a> → « ⬆ Importer un fichier CSV ».</p>
     </div>
   </section>
 
@@ -1116,7 +1115,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <a class="retour-lien" onclick="allerA('milieu')">← Première page</a>
     <div class="carte">
       <h2>Espace enseignant</h2>
-      <p style="font-size:.78rem;color:var(--text-2);">Cochez les transects à mettre côte à côte — ceux des différents groupes, quels que soient leur longueur et leur milieu — puis lancez la comparaison. Le mode projection affiche les profils en grand pour la classe.</p>
+      <p style="font-size:.78rem;color:var(--text-2);">Les transects comparés peuvent être de longueurs et de milieux différents.</p>
       <div id="zone-enseignant"></div>
       <p class="note-import-analyses">Les transects des groupes arrivent par <a onclick="allerA('historique')">Mes transects</a> → « ⬆ Importer un fichier CSV ».</p>
       <p class="note-enseignant">Cet espace n'apparaît que sur cet appareil, où il a été activé. Ce n'est pas une protection : l'appli fonctionne entièrement dans le navigateur et son code est public. <button type="button" class="discret" onclick="quitterEspaceEnseignant()">Retirer l'espace enseignant de cet appareil</button></p>
@@ -3936,7 +3935,7 @@ function construireEcranAnalyse(){
       </div>
       <div class="zones-legende" id="zones-legende">${pucesZones(troncons)}</div>
       <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
-      <p class="analyse-aide">Pastilles : survol ou clic pour repérer une zone. Barres : épaisseur = abondance-dominance · longueur = présence. Profil dessiné : nombre de dessins = recouvrement, hauteur type de chaque espèce ; survol d'un quadrat : ses espèces. Clic sur une zone ou un quadrat : fiche.</p>
+      <p class="analyse-aide">Barres : épaisseur = abondance-dominance, longueur = présence. Dessins : nombre = recouvrement, hauteur = port type de l'espèce. Survol pour le détail, clic pour la fiche.</p>
       <details class="dessin-details">
         <summary>Légende des dessins, par strate</summary>
         <div class="dessin-legende">${legendeDessinsHTML(nom)}</div>
@@ -3978,7 +3977,7 @@ function construireEcranAnalyse(){
             const r = rs.find(v => v.d === x.vers.debut);
             const note = r && (r.observation || '').trim();
             return `<li>À <b>${x.vers.debut} m</b> : la zonation revient de <b>${echapHTML(x.de.zone)}</b>
-              vers <b>${echapHTML(x.vers.zone)}</b>, plus bas sur le gradient.${note ? `<br><span class="analyse-note">Remarque du relevé : « ${echapHTML(note)} »</span>` : `<br><span class="analyse-note">Aucune remarque sur ce relevé.</span>`}</li>`;
+              vers <b>${echapHTML(x.vers.zone)}</b>, plus bas sur le gradient.${note ? `<br><span class="analyse-note">Remarque du relevé : « ${echapHTML(note)} »</span>` : ''}</li>`;
           }).join('')}
         </ul>`
       : `<p class="analyse-ok">✓ Aucun point de vigilance : la zonation progresse régulièrement vers la terre — ${troncons.filter(t=>t.rang!=null).map(t=>echapHTML(t.zone)).join(' → ')}.</p>`}
@@ -4008,7 +4007,6 @@ function construireEcranAnalyse(){
       <div class="analyse-graphe">${diagrammeRichesseTransect(rs)}</div>
 
       <h4 class="analyse-soustitre">Par zone</h4>
-      <p class="analyse-aide">Elle augmente en général de la slikke vers le haut schorre.</p>
       <div class="analyse-graphe">${diagrammeRichesseParZone(parZone)}</div>
       <details class="analyse-plus"><summary>Voir les chiffres par zone</summary>
       <table class="historique"><thead><tr>
