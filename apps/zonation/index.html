@@ -2863,7 +2863,12 @@ function construireProfilTransectSVG(nomTransect, options){
 
   const largeurGraphe = Math.max(640, Math.round(etendue * PROFIL_ECH_X));
   const hEspeces = liste.length * PROFIL_H_ESPECE;
-  const yEspeces = 74;                                  // sous le titre
+  /* Bandeau de richesse spécifique, au-dessus des barres : même axe des
+     distances, une seule courbe, sans grille ni axe vertical complet — il s'agit
+     de voir où le cortège s'enrichit, pas de lire des valeurs au dixième. */
+  const yRichesse = 70;
+  const H_RICHESSE = 42;
+  const yEspeces = yRichesse + H_RICHESSE + 14;         // sous le bandeau de richesse
   const W = PROFIL_MARGE_G + largeurGraphe + 40;
   const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
 
@@ -2926,6 +2931,22 @@ function construireProfilTransectSVG(nomTransect, options){
       + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? ` · fiche ${fiche} — cliquer pour ouvrir` : ''}</title>` : '')
       + `</rect>`);
   });
+
+  /* Courbe de richesse. Le sol nu vaut zéro espèce : la courbe tombe, ce qui
+     est l'information. Deux repères seulement, 0 et le maximum du transect. */
+  const richesses = rs.map(r => ({d: r.d, n: (r.cortege || []).length}));
+  const rMax = Math.max(1, ...richesses.map(v => v.n));
+  const yR = n => yRichesse + H_RICHESSE - (n / rMax) * (H_RICHESSE - 6);
+  const ptsR = richesses.map(v => `${x(v.d).toFixed(1)},${yR(v.n).toFixed(1)}`).join(' ');
+  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yRichesse + H_RICHESSE}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yRichesse + H_RICHESSE}" stroke="#c9c4b4" stroke-width="1"/>`);
+  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${(yR(rMax)).toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${(yR(rMax)).toFixed(1)}" stroke="#e2ded1" stroke-width="1" stroke-dasharray="4 5"/>`);
+  S.push(`<polyline points="${ptsR}" fill="none" stroke="#191b16" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`);
+  S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yR(rMax) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${rMax}</text>`);
+  S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yRichesse + H_RICHESSE + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
+  /* Libellé à gauche de la colonne des noms, graduations contre le cadre : sur
+     un transect pauvre, les deux se chevauchaient. */
+  S.push(`<text x="14" y="${(yRichesse + 12).toFixed(1)}" font-size="11" font-style="italic" fill="#565a4e">Richesse spécifique</text>`);
+  S.push(`<text x="14" y="${(yRichesse + 25).toFixed(1)}" font-size="9.5" fill="#8a8676">espèces par quadrat</text>`);
 
   // cadre du panneau des espèces
   S.push(`<rect x="${PROFIL_MARGE_G}" y="${yEspeces - 6}" width="${largeurGraphe}" height="${hEspeces + 10}" fill="none" stroke="#191b16" stroke-width="1"/>`);
