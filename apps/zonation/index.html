@@ -484,6 +484,11 @@ body.projection .analyse-aide{font-size:1rem;}
 .frise-zones span{position:absolute;top:0;bottom:0;}
 .note-import-analyses{font-size:.75rem;color:var(--text-2);margin:1em 0 0;}
 .note-import-analyses a{color:var(--acc);cursor:pointer;text-decoration:underline;}
+.ligne-vierge{display:flex;flex-wrap:wrap;gap:1.2em;align-items:center;margin:.8em 0 1em;font-size:.85rem;}
+.ligne-vierge label{display:flex;align-items:center;gap:.4em;color:var(--text-2);}
+.ligne-vierge input{width:4.5em;padding:.3em .4em;}
+.ligne-impression-classe{display:flex;flex-wrap:wrap;gap:.6em 1em;align-items:center;margin:1em 0 0;}
+.ligne-impression-classe .aide{font-size:.75rem;color:var(--text-2);margin:0;}
 .bulle-diagramme{
   position:absolute;z-index:5;pointer-events:none;max-width:16em;
   background:var(--ink);color:#f4f2ec;border-radius:var(--rayon-petit);
@@ -1104,6 +1109,17 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div id="zone-analyses"></div>
       <p class="note-import-analyses">Le transect d'un autre groupe s'ajoute par <a onclick="allerA('historique')">Mes transects</a> → « ⬆ Importer un fichier CSV ».</p>
     </div>
+    <div class="carte">
+      <h2>Profil vierge</h2>
+      <p class="aide">La même grille, sans données : pour porter les relevés à la main sur le terrain, ou pour tracer soi-même la zonation avant de la comparer au profil calculé.</p>
+      <div class="ligne-vierge">
+        <label>Longueur <input type="number" id="vierge-longueur" value="60" min="5" max="200" step="1"> m</label>
+        <label>Pas <input type="number" id="vierge-pas" value="2" min="0.5" max="10" step="0.5"> m</label>
+        <label>Exemplaires <input type="number" id="vierge-nb" value="1" min="1" max="12" step="1"></label>
+      </div>
+      <button class="secondaire" onclick="imprimerProfilVierge('a3', document.getElementById('vierge-longueur').value, document.getElementById('vierge-pas').value, document.getElementById('vierge-nb').value)">🖨 Imprimer / PDF (A3)</button>
+      <button class="secondaire" onclick="imprimerProfilVierge('a4', document.getElementById('vierge-longueur').value, document.getElementById('vierge-pas').value, document.getElementById('vierge-nb').value)">🖨 A4</button>
+    </div>
   </section>
 
   <!-- ESPACE ENSEIGNANT : sélection des transects à comparer.
@@ -1115,6 +1131,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <h2>Espace enseignant</h2>
       <p style="font-size:.78rem;color:var(--text-2);">Les transects comparés peuvent être de longueurs et de milieux différents.</p>
       <div id="zone-enseignant"></div>
+      <p class="ligne-impression-classe">
+        <button type="button" class="secondaire" onclick="imprimerSelectionEnseignant('a3', true)">🖨 Imprimer tous les profils de la classe (A3)</button>
+        <span class="aide">Un diagramme par page, suivi de ses clés de lecture — de quoi distribuer un tirage à chaque groupe.</span>
+      </p>
       <p class="note-import-analyses">Les transects des groupes arrivent par <a onclick="allerA('historique')">Mes transects</a> → « ⬆ Importer un fichier CSV ».</p>
       <p class="note-enseignant">Cet espace n'apparaît que sur cet appareil, où il a été activé. Ce n'est pas une protection : l'appli fonctionne entièrement dans le navigateur et son code est public. <button type="button" class="discret" onclick="quitterEspaceEnseignant()">Retirer l'espace enseignant de cet appareil</button></p>
     </div>
@@ -1122,7 +1142,8 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
     <div class="barre-comparaison" id="barre-comparaison" hidden>
       <span id="barre-comparaison-txt"></span>
       <button type="button" class="discret" onclick="viderSelectionComparaison()">Tout décocher</button>
-      <button type="button" onclick="ouvrirComparaison()">Comparer →</button>
+      <button type="button" class="discret" id="btn-imprimer-selection" onclick="imprimerSelectionEnseignant('a3')">🖨 Imprimer les profils cochés</button>
+      <button type="button" id="btn-comparer" onclick="ouvrirComparaison()">Comparer →</button>
     </div>
   </section>
 
@@ -2448,7 +2469,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.30.1';
+const VERSION_APPLI = '1.31.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -2951,17 +2972,46 @@ function teinteZone(rang){
   return ZONES_LINES_COULEURS[rang - 1] || '#e9e6dc';
 }
 
+/* Géométrie d'impression.
+   À l'écran, la figure est dessinée en pixels puis affichée telle quelle. Sur
+   papier, elle doit d'abord entrer dans une page : le navigateur la réduit
+   alors d'un seul coup, texte compris, et un transect un peu long tombe sous
+   les 6 pt — illisible, et impossible à annoter.
+
+   On procède donc à l'envers : on part de la page, on fixe la taille de texte
+   voulue, et on en déduit la géométrie. Les polices gardent leur valeur en
+   pixels ; ce sont les pixels par mètre, la hauteur de ligne et la colonne des
+   noms qui s'ajustent pour remplir la page. Les dessins suivent, leur échelle
+   étant déjà indexée sur les pixels par mètre (profil-dessine.js).
+
+   Formats en millimètres utiles, marges déduites. */
+const PAGES_IMPRESSION = {
+  a3: {nom: 'A3 paysage', L: 400, H: 277},
+  a4: {nom: 'A4 paysage', L: 277, H: 190}
+};
+/* Millimètres par pixel visés : 12 px (le corps de la figure) y valent 8 pt.
+   En dessous de 0,19 le texte passe sous 6,5 pt, on ne descend pas plus bas. */
+const MM_PAR_PX_VISE = 0.235;
+const MM_PAR_PX_MIN = 0.19;
+/* Hauteur de ligne plancher : la barre la plus épaisse fait 16 px, en deçà les
+   coefficients 5 de deux espèces voisines se touchent. */
+const H_LIGNE_MIN = 18;
+
 function construireProfilTransectSVG(nomTransect, options){
   const interactif = !!(options && options.interactif);
-  const rs = chargerHistorique()
+  /* Impression : la page conditionne la géométrie, et les blocs de légende
+     partent en seconde page — ce sont eux qui écrasaient le diagramme. */
+  const page = options && options.page ? PAGES_IMPRESSION[options.page] : null;
+  const ECH = PROFIL_ECH_X;
+  let rs = chargerHistorique()
     .filter(r => (r.transect || 'Transect (sans nom)') === nomTransect)
     .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
     .map(r => ({...r, d: Number(r.distance)}))
     .sort((a, b) => a.d - b.d);
   if(rs.length < 2) return null;
 
-  const dMin = rs[0].d, dMax = rs[rs.length - 1].d;
-  const etendue = Math.max(1, dMax - dMin);
+  let dMin = rs[0].d, dMax = rs[rs.length - 1].d;
+  let etendue = Math.max(1, dMax - dMin);
   const pas = pasCourant(rs);
 
   /* Espèces, ordonnées par première apparition : l'espèce la plus marine porte
@@ -2975,25 +3025,72 @@ function construireProfilTransectSVG(nomTransect, options){
   const liste = [...especes.values()].sort((a, b) => a.premier - b.premier || a.fr.localeCompare(b.fr, 'fr'));
   if(!liste.length) return null;
 
-  const largeurGraphe = Math.max(640, Math.round(etendue * PROFIL_ECH_X));
-  const hLigne = hauteurLigneEspece(liste.length);
-  const hEspeces = liste.length * hLigne;
+  /* Impression en deux feuilles : chaque page couvre une portion du transect.
+     La liste des espèces est établie sur le transect entier et reste identique
+     d'une page à l'autre — c'est elle qui permet d'aboucher les deux feuilles,
+     ligne par ligne, et de lire une espèce qui traverse la coupure. */
+  const fen = options && options.fenetre;
+  if(fen){
+    dMin = fen.de; dMax = fen.a;
+    etendue = Math.max(1, dMax - dMin);
+    const dans = d => d >= dMin - 0.001 && d <= dMax + 0.001;
+    rs = rs.filter(r => dans(r.d));
+    if(!rs.length) return null;
+    liste.forEach(sp => { sp.obs = sp.obs.filter(o => dans(o.d)); });
+  }
+
   /* Bandeau de richesse spécifique, au-dessus des barres : même axe des
      distances, une seule courbe, sans grille ni axe vertical complet — il s'agit
      de voir où le cortège s'enrichit, pas de lire des valeurs au dixième. */
   const yRichesse = 70;
   const H_RICHESSE = 42;
   const yEspeces = yRichesse + H_RICHESSE + 14;         // sous le bandeau de richesse
-  const W = PROFIL_MARGE_G + largeurGraphe + 40;
-  const x = d => PROFIL_MARGE_G + ((d - dMin) / etendue) * largeurGraphe;
+
+  const relief = options && options.relief != null ? options.relief
+    : (typeof dessinRelief === 'undefined' ? true : dessinRelief);
+  /* Hauteur du panneau dessiné : elle ne dépend que de l'échelle des distances
+     et de la plus haute espèce, pas de sa position. On la mesure donc avant de
+     décider de la hauteur des lignes. */
+  const mesurerDessin = pxm => typeof panneauProfilDessine === 'function'
+    ? panneauProfilDessine(rs, {x: () => 0, pxm, yHaut: 0, margeG: MG, relief,
+        graine: nomTransect, interactif}).hauteur
+    : 0;
+  /* Tout ce qui, en hauteur, ne dépend pas du nombre d'espèces. */
+  const horsEspeces = hDessin => yEspeces + 12 + hDessin + 10 + 22 + 26 + 26;
+
+  /* Colonne des noms : assez large pour le plus long binôme, sinon celui-ci
+     recouvre le numéro d'espèce — environ 5,9 px par caractère en italique
+     12 px. Plafonnée pour ne pas dévorer le graphe. */
+  const nomLePlusLong = liste.reduce((m, sp) => Math.max(m, (sp.latin || sp.fr || '').length), 0);
+  const MG = page ? Math.min(430, Math.max(220, Math.ceil(nomLePlusLong * 5.9) + 46))
+    : PROFIL_MARGE_G;
+  let largeurGraphe, hLigne, mmParPx = 0;
+  if(page){
+    /* Premier essai à la taille de texte visée ; si les espèces ne tiennent
+       pas en hauteur, on réduit l'échelle juste assez pour qu'elles entrent,
+       sans descendre sous la limite de lisibilité. */
+    mmParPx = MM_PAR_PX_VISE;
+    largeurGraphe = Math.round(page.L / mmParPx) - MG - 40;
+    let besoin = horsEspeces(mesurerDessin(largeurGraphe / etendue)) + liste.length * H_LIGNE_MIN;
+    if(besoin > page.H / mmParPx){
+      mmParPx = Math.max(MM_PAR_PX_MIN, page.H / besoin);
+      largeurGraphe = Math.round(page.L / mmParPx) - MG - 40;
+    }
+    const dispo = page.H / mmParPx - horsEspeces(mesurerDessin(largeurGraphe / etendue));
+    hLigne = Math.max(H_LIGNE_MIN, Math.min(34, Math.floor(dispo / liste.length)));
+  } else {
+    largeurGraphe = Math.max(640, Math.round(etendue * ECH));
+    hLigne = hauteurLigneEspece(liste.length);
+  }
+  const hEspeces = liste.length * hLigne;
+  const W = MG + largeurGraphe + 40;
+  const x = d => MG + ((d - dMin) / etendue) * largeurGraphe;
 
   /* Sous les barres d'espèces, le profil de végétation dessiné, sur la même
      échelle de distance (profil-dessine.js). */
-  const relief = options && options.relief != null ? options.relief
-    : (typeof dessinRelief === 'undefined' ? true : dessinRelief);
   const yDessin = yEspeces + hEspeces + 12;
   const dessin = typeof panneauProfilDessine === 'function'
-    ? panneauProfilDessine(rs, {x, pxm: largeurGraphe / etendue, yHaut: yDessin, margeG: PROFIL_MARGE_G,
+    ? panneauProfilDessine(rs, {x, pxm: largeurGraphe / etendue, yHaut: yDessin, margeG: MG,
         relief, graine: nomTransect, interactif})
     : {svg: '', hauteur: 0, liste: []};
 
@@ -3003,23 +3100,34 @@ function construireProfilTransectSVG(nomTransect, options){
      était étroite. Le SVG téléchargé garde un simple numéro par bande. */
   const yAxe = yZones + (interactif ? 4 : 22);
   const yLeg = yAxe + 44;                               // légende en ligne sous l'axe
-  // le SVG téléchargé porte aussi la légende des dessins et la ligne « Zones : … »
-  const legDessins = !interactif && dessin.liste.length && typeof legendeDessinsSVG === 'function'
+  /* Le SVG téléchargé porte aussi la légende des dessins et la ligne
+     « Zones : … ». À l'impression, ces blocs passent en seconde page. */
+  const legDessins = !interactif && !page && dessin.liste.length && typeof legendeDessinsSVG === 'function'
     ? legendeDessinsSVG(dessin.liste, 14, yLeg + 54, W - 28) : null;
   /* Groupements rencontrés, dans l'ordre du transect : le SVG téléchargé les
      nomme en clair, sinon la figure ne porte que des numéros de fiches. */
   const milieuTr = milieuDuReleve(rs[0]);
   const fichesVues = [...new Set(rs.filter(r => r.topFiche != null).map(r => r.topFiche))];
-  const H = yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0)
-    + (interactif ? 0 : fichesVues.length * 12);
+  const H = page ? yAxe + 52
+    : yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0)
+      + (interactif ? 0 : fichesVues.length * 12);
+  /* Garde-fou : une figure coupée en deux pages est inutilisable. Si elle
+     dépasse encore en hauteur — A4, ou transect très riche en espèces — on
+     réduit l'ensemble pour qu'elle tienne, quitte à perdre en lisibilité : le
+     défaut se voit, alors qu'une coupure passe inaperçue à l'écran. */
+  if(page && H * mmParPx > page.H) mmParPx = page.H / H;
+  /* Sur papier, la figure porte sa taille réelle : le navigateur n'a plus à
+     deviner une échelle, et le fichier s'insère correctement dans un document. */
+  const taille = page ? `width="${(W * mmParPx).toFixed(1)}mm" height="${(H * mmParPx).toFixed(1)}mm"`
+    : `width="${W}" height="${H}"`;
 
   const S = [];
-  S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Georgia, 'Times New Roman', serif">`);
+  S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" ${taille} font-family="Georgia, 'Times New Roman', serif">`);
   S.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
 
   const id0 = rs[0];
   S.push(`<text x="${W/2}" y="30" text-anchor="middle" font-size="19" font-weight="bold">Transect de végétation — ${echapXML(id0.site || '')}</text>`);
-  S.push(`<text x="${W/2}" y="50" text-anchor="middle" font-size="12" fill="#565a4e">Transect ${echapXML(nomTransect)} · ${rs.length} relevés · ${echapXML(id0.commune || '')}${id0.dateReleve ? ' · ' + echapXML(id0.dateReleve.split('-').reverse().join('/')) : ''}${id0.observateur ? ' · ' + echapXML(id0.observateur) : ''}</text>`);
+  S.push(`<text x="${W/2}" y="50" text-anchor="middle" font-size="12" fill="#565a4e">Transect ${echapXML(nomTransect)}${fen ? ` · feuille ${fen.i}/${fen.n}, ${fen.de} à ${fen.a} m` : ''} · ${rs.length} relevés · ${echapXML(id0.commune || '')}${id0.dateReleve ? ' · ' + echapXML(id0.dateReleve.split('-').reverse().join('/')) : ''}${id0.observateur ? ' · ' + echapXML(id0.observateur) : ''}</text>`);
 
   /* Bandeaux de zones : tronçons de relevés consécutifs partageant la même zone. */
   const troncons = [];
@@ -3039,12 +3147,12 @@ function construireProfilTransectSVG(nomTransect, options){
 
   /* Aplats de zones, posés avant tout le reste pour rester en arrière-plan.
      Cliquables en interactif : la zone renvoie à la fiche de son habitat. */
-  const demiPas = (pas * PROFIL_ECH_X * (largeurGraphe / (etendue * PROFIL_ECH_X))) / 2;
+  const demiPas = (pas * ECH * (largeurGraphe / (etendue * ECH))) / 2;
   // Le SVG téléchargé reste en noir et blanc, figure destinée au papier :
   // les aplats ne sont posés qu'à l'écran.
   if(interactif) troncons.forEach(t => {
-    const x1 = Math.max(PROFIL_MARGE_G, x(t.debut) - demiPas);
-    const x2 = Math.min(PROFIL_MARGE_G + largeurGraphe, x(t.fin) + demiPas);
+    const x1 = Math.max(MG, x(t.debut) - demiPas);
+    const x2 = Math.min(MG + largeurGraphe, x(t.fin) + demiPas);
     const fiche = t.fiches && t.fiches.length ? t.fiches[0] : null;
     const attrs = ` class="bande-zone${fiche != null ? ' zone-cliquable' : ''}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"${fiche != null ? ` data-fiche="${fiche}"` : ''}`;
     S.push(`<rect x="${x1.toFixed(1)}" y="${yEspeces - 6}" width="${Math.max(0, x2-x1).toFixed(1)}" height="${yAxe - (yEspeces - 6)}" fill="${teinteZone(t.rang)}" fill-opacity="0.45"${attrs}>`
@@ -3066,8 +3174,8 @@ function construireProfilTransectSVG(nomTransect, options){
   const yR = n => yBase - (n / rMax) * (H_RICHESSE - 6);
   const pasPx = pas * (largeurGraphe / etendue);
   const largeurBaton = Math.max(1.5, Math.min(14, pasPx * 0.62));
-  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yBase}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yBase}" stroke="#c9c4b4" stroke-width="1"/>`);
-  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${(yR(rMax)).toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${(yR(rMax)).toFixed(1)}" stroke="#e2ded1" stroke-width="1" stroke-dasharray="4 5"/>`);
+  S.push(`<line x1="${MG}" y1="${yBase}" x2="${MG + largeurGraphe}" y2="${yBase}" stroke="#c9c4b4" stroke-width="1"/>`);
+  S.push(`<line x1="${MG}" y1="${(yR(rMax)).toFixed(1)}" x2="${MG + largeurGraphe}" y2="${(yR(rMax)).toFixed(1)}" stroke="#e2ded1" stroke-width="1" stroke-dasharray="4 5"/>`);
   richesses.forEach(v => {
     if(v.n > 0){
       const h = yBase - yR(v.n);
@@ -3090,19 +3198,19 @@ function construireProfilTransectSVG(nomTransect, options){
       + `${fiche != null ? ` data-fiche="${fiche}"` : ''} data-solnu="${r.solNu ? '1' : ''}"`
       + ` data-habitat="${echapXML(r.solNu ? 'Sol nu' : (r.top || ''))}" data-especes="${echapXML(esp)}"/>`);
   });
-  S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yR(rMax) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${rMax}</text>`);
-  S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yRichesse + H_RICHESSE + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
+  S.push(`<text x="${MG - 10}" y="${(yR(rMax) + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${rMax}</text>`);
+  S.push(`<text x="${MG - 10}" y="${(yRichesse + H_RICHESSE + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
   /* Libellé à gauche de la colonne des noms, graduations contre le cadre : sur
      un transect pauvre, les deux se chevauchaient. */
   S.push(`<text x="14" y="${(yRichesse + 12).toFixed(1)}" font-size="11" font-style="italic" fill="#565a4e">Richesse spécifique</text>`);
   S.push(`<text x="14" y="${(yRichesse + 25).toFixed(1)}" font-size="9.5" fill="#8a8676">espèces par quadrat</text>`);
 
   // cadre du panneau des espèces
-  S.push(`<rect x="${PROFIL_MARGE_G}" y="${yEspeces - 6}" width="${largeurGraphe}" height="${hEspeces + 10}" fill="none" stroke="#191b16" stroke-width="1"/>`);
+  S.push(`<rect x="${MG}" y="${yEspeces - 6}" width="${largeurGraphe}" height="${hEspeces + 10}" fill="none" stroke="#191b16" stroke-width="1"/>`);
 
   // limites de zones, en pointillés, traversant les deux panneaux
   troncons.slice(1).forEach(t => {
-    const xl = x(t.debut) - (pas * PROFIL_ECH_X * (largeurGraphe / (etendue * PROFIL_ECH_X))) / 2;
+    const xl = x(t.debut) - (pas * ECH * (largeurGraphe / (etendue * ECH))) / 2;
     S.push(`<line x1="${xl.toFixed(1)}" y1="${yEspeces - 6}" x2="${xl.toFixed(1)}" y2="${yAxe}" stroke="#191b16" stroke-width="1" stroke-dasharray="6 5"/>`);
   });
 
@@ -3116,9 +3224,9 @@ function construireProfilTransectSVG(nomTransect, options){
     const numero = i + 1;
     const rang = liste.length - i;                     // rang depuis le haut du panneau
     const yLigne = yEspeces + (rang - 1) * hLigne + hLigne / 2;
-    S.push(`<text x="${PROFIL_MARGE_G - 10}" y="${(yLigne + 4).toFixed(1)}" text-anchor="end" font-size="12" font-style="italic">${echapXML(sp.latin || sp.fr)}</text>`);
+    S.push(`<text x="${MG - 10}" y="${(yLigne + 4).toFixed(1)}" text-anchor="end" font-size="12" font-style="italic">${echapXML(sp.latin || sp.fr)}</text>`);
     S.push(`<text x="14" y="${(yLigne + 4).toFixed(1)}" font-size="11" fill="#565a4e">${numero}</text>`);
-    S.push(`<line x1="${PROFIL_MARGE_G}" y1="${(yEspeces + rang * hLigne).toFixed(1)}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${(yEspeces + rang * hLigne).toFixed(1)}" stroke="#e7e4d8" stroke-width="0.6"/>`);
+    S.push(`<line x1="${MG}" y1="${(yEspeces + rang * hLigne).toFixed(1)}" x2="${MG + largeurGraphe}" y2="${(yEspeces + rang * hLigne).toFixed(1)}" stroke="#e7e4d8" stroke-width="0.6"/>`);
     sp.obs.sort((a, b) => a.d - b.d).forEach((o, j) => {
       const ep = PROFIL_EPAISSEUR[o.cover] || 2;
       const prec = sp.obs[j - 1], suiv = sp.obs[j + 1];
@@ -3148,25 +3256,27 @@ function construireProfilTransectSVG(nomTransect, options){
 
   /* Axe des distances : graduation tous les 5 ou 10 m selon l'étendue. */
   const pasAxe = etendue > 60 ? 10 : (etendue > 25 ? 5 : 2);
-  S.push(`<line x1="${PROFIL_MARGE_G}" y1="${yAxe}" x2="${PROFIL_MARGE_G + largeurGraphe}" y2="${yAxe}" stroke="#191b16" stroke-width="1"/>`);
+  S.push(`<line x1="${MG}" y1="${yAxe}" x2="${MG + largeurGraphe}" y2="${yAxe}" stroke="#191b16" stroke-width="1"/>`);
   for(let d = Math.ceil(dMin / pasAxe) * pasAxe; d <= dMax; d += pasAxe){
     S.push(`<line x1="${x(d).toFixed(1)}" y1="${yAxe}" x2="${x(d).toFixed(1)}" y2="${yAxe + 6}" stroke="#191b16" stroke-width="1"/>`);
     S.push(`<text x="${x(d).toFixed(1)}" y="${yAxe + 20}" text-anchor="middle" font-size="11">${d} m</text>`);
   }
 
   /* Légende abondance-dominance, en une ligne sous l'axe. */
+  if(!page){
   S.push(`<text x="14" y="${yLeg + 4}" font-size="11" font-weight="bold">Abondance-dominance</text>`);
   const pasLeg = largeurGraphe / 8;
   ['5','4','3','2','1','+','r','i'].forEach((c, k) => {
-    const xl = PROFIL_MARGE_G + k * pasLeg;
+    const xl = MG + k * pasLeg;
     const ep = PROFIL_EPAISSEUR[c];
     S.push(`<rect x="${xl.toFixed(1)}" y="${(yLeg - ep / 2).toFixed(1)}" width="${Math.min(46, pasLeg - 60).toFixed(1)}" height="${ep}" fill="#191b16"/>`);
     S.push(`<text x="${(xl + Math.min(46, pasLeg - 60) + 6).toFixed(1)}" y="${yLeg + 4}" font-size="11" font-weight="bold">${echapXML(c)}</text>`);
     S.push(`<text x="${xl.toFixed(1)}" y="${yLeg + 20}" font-size="9.5" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
   });
+  }
 
   if(legDessins) S.push(legDessins.svg);
-  if(!interactif){
+  if(!interactif && !page){
     const vues = new Map();
     troncons.forEach(t => { if(t.rang != null && !vues.has(t.rang)) vues.set(t.rang, t.zone); });
     const ligne = [...vues.entries()].sort((a,b) => a[0]-b[0]).map(([r, z]) => `${r} ${z}`).join('  ·  ');
@@ -3185,6 +3295,266 @@ function construireProfilTransectSVG(nomTransect, options){
   S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · référentiel COLASSE V., 2019 (CBN de Brest)</text>`);
   S.push('</svg>');
   return S.join('\n');
+}
+
+/* Seconde page d'impression : les clés de lecture.
+   Elles n'ont pas à être à l'échelle du transect, et c'est en les gardant sous
+   le diagramme qu'on écrasait celui-ci. Séparées, chacune respire. */
+function construireLegendesSVG(nomTransect, format){
+  const page = PAGES_IMPRESSION[format] || PAGES_IMPRESSION.a3;
+  const rs = chargerHistorique()
+    .filter(r => (r.transect || 'Transect (sans nom)') === nomTransect)
+    .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+    .map(r => ({...r, d: Number(r.distance)}))
+    .sort((a, b) => a.d - b.d);
+  if(rs.length < 2) return null;
+
+  let mmParPx = MM_PAR_PX_VISE;
+  const W = Math.round(page.L / mmParPx);
+  const milieuTr = milieuDuReleve(rs[0]);
+  const S = [];
+  let y = 40;
+
+  S.push(`<text x="14" y="${y}" font-size="17" font-weight="bold">Clés de lecture — transect ${echapXML(nomTransect)}</text>`);
+  y += 34;
+
+  /* Zones traversées, dans l'ordre du transect. */
+  const vues = new Map();
+  rs.forEach(r => {
+    const z = r.solNu ? {zone: 'Sol nu', rang: 0} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
+    if(z && z.rang != null && !vues.has(z.rang)) vues.set(z.rang, z.zone);
+  });
+  S.push(`<text x="14" y="${y}" font-size="12" font-weight="bold">Zones portées sur le diagramme</text>`);
+  y += 18;
+  [...vues.entries()].sort((a, b) => a[0] - b[0]).forEach(([rang, zone]) => {
+    S.push(`<text x="14" y="${y}" font-size="11.5"><tspan font-weight="bold">${rang}</tspan>  ${echapXML(zone)}</text>`);
+    y += 16;
+  });
+  y += 14;
+
+  /* Groupements rencontrés, avec leur syntaxon : la figure doit se lire sans
+     l'appli, c'est elle qui part dans le compte rendu. */
+  const fichesVues = [...new Set(rs.filter(r => r.topFiche != null).map(r => r.topFiche))];
+  if(fichesVues.length){
+    S.push(`<text x="14" y="${y}" font-size="12" font-weight="bold">Groupements végétaux</text>`);
+    y += 18;
+    fichesVues.forEach(f => {
+      const h = habitatParId(f, milieuTr);
+      if(!h) return;
+      S.push(`<text x="14" y="${y}" font-size="11.5"><tspan font-weight="bold">f${f}</tspan> ${echapXML(h.nomFr)}`
+        + (h.syntaxon ? `<tspan fill="#565a4e" font-style="italic"> — ${echapXML(premierSyntaxon(h.syntaxon))}</tspan>` : '')
+        + `</text>`);
+      y += 16;
+    });
+    y += 14;
+  }
+
+  /* Abondance-dominance : l'épaisseur des barres du diagramme. */
+  S.push(`<text x="14" y="${y}" font-size="12" font-weight="bold">Abondance-dominance (Braun-Blanquet)</text>`);
+  y += 20;
+  const yCoef = y;
+  const pasLeg = Math.min(200, (W - 28) / 8);
+  ['5','4','3','2','1','+','r','i'].forEach((c, k) => {
+    const xl = 14 + k * pasLeg;
+    const ep = PROFIL_EPAISSEUR[c];
+    S.push(`<rect x="${xl.toFixed(1)}" y="${(yCoef - ep / 2).toFixed(1)}" width="${(pasLeg - 60).toFixed(1)}" height="${ep}" fill="#191b16"/>`);
+    S.push(`<text x="${(xl + pasLeg - 52).toFixed(1)}" y="${yCoef + 4}" font-size="11.5" font-weight="bold">${echapXML(c)}</text>`);
+    S.push(`<text x="${xl.toFixed(1)}" y="${yCoef + 20}" font-size="10" fill="#565a4e">${(COEF_ABONDANCE[c]||{}).intervalle || 'individu isolé'}</text>`);
+  });
+  y = yCoef + 44;
+
+  /* Légende des dessins d'espèces. */
+  const listeDessins = typeof especesDessinees === 'function' ? especesDessinees(rs) : [];
+  let hLeg = 0;
+  if(listeDessins.length && typeof legendeDessinsSVG === 'function'){
+    const leg = legendeDessinsSVG(listeDessins, 14, y, W - 28);
+    S.push(leg.svg);
+    hLeg = leg.hauteur;
+  }
+  const H = y + hLeg + 40;
+
+  S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · ${echapXML((MILIEUX[milieuTr] || {}).source || '')}</text>`);
+  if(H * mmParPx > page.H) mmParPx = page.H / H;       // une page, jamais deux
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"`
+    + ` width="${(W * mmParPx).toFixed(1)}mm" height="${(H * mmParPx).toFixed(1)}mm"`
+    + ` font-family="Georgia, 'Times New Roman', serif">`
+    + `<rect width="${W}" height="${H}" fill="#ffffff"/>` + S.join('\n') + '</svg>';
+}
+
+/* Profil vierge : le même diagramme, sans données.
+   Sert à deux moments — sur le terrain, pour porter les relevés à la main quand
+   l'appli n'est pas ouverte ; en salle, pour que l'étudiant trace lui-même ce
+   qu'il croit voir avant de le comparer au profil calculé. La grille reprend
+   exactement la structure du diagramme rempli, pour que les deux se
+   superposent : richesse en haut, une ligne par espèce, végétation dessinée en
+   bas, axe des distances commun. */
+function construireProfilViergeSVG(format, longueur, pasM){
+  const page = PAGES_IMPRESSION[format] || PAGES_IMPRESSION.a3;
+  const etendue = Math.max(5, Number(longueur) || 60);
+  const pas = Math.max(0.5, Number(pasM) || 2);
+  let mmParPx = MM_PAR_PX_VISE;
+  const W = Math.round(page.L / mmParPx);
+  const MG = 300;                                     // colonne des noms, à remplir à la main
+  const largeurGraphe = W - MG - 40;
+  const x = d => MG + (d / etendue) * largeurGraphe;
+
+  const yRichesse = 78, H_RICHESSE = 54;
+  const yEspeces = yRichesse + H_RICHESSE + 16;
+  const H_DESSIN = 168, H_AXE = 42, H_PIED = 26;
+  const dispo = page.H / mmParPx - (yEspeces + 12 + H_DESSIN + 10 + H_AXE + H_PIED);
+  const hLigne = 26;
+  const nLignes = Math.max(8, Math.floor(dispo / hLigne));
+  const hEspeces = nLignes * hLigne;
+  const yDessin = yEspeces + hEspeces + 12;
+  const ySol = yDessin + H_DESSIN;
+  const yAxe = ySol + 10;
+  const H = yAxe + H_AXE + H_PIED;
+
+  const S = [];
+  S.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
+  S.push(`<text x="${W/2}" y="30" text-anchor="middle" font-size="19" font-weight="bold">Transect de végétation — relevé de terrain</text>`);
+
+  /* En-tête à compléter : les mêmes champs que le bordereau de l'appli. */
+  const champs = [['Transect', 300], ['Site', 240], ['Commune', 200], ['Date', 150], ['Observateurs', 300]];
+  let xc = 14;
+  champs.forEach(([nom, l]) => {
+    S.push(`<text x="${xc}" y="${56}" font-size="11" fill="#565a4e">${nom}</text>`);
+    S.push(`<line x1="${xc + nom.length * 6.4 + 14}" y1="${58}" x2="${xc + l}" y2="${58}" stroke="#8a8676" stroke-width="0.8"/>`);
+    xc += l + 20;
+  });
+
+  /* Bandeau de richesse : graduation muette, l'étudiant porte ses bâtons. */
+  S.push(`<text x="14" y="${yRichesse + 12}" font-size="11" font-style="italic" fill="#565a4e">Richesse spécifique</text>`);
+  S.push(`<text x="14" y="${yRichesse + 25}" font-size="9.5" fill="#8a8676">espèces par quadrat</text>`);
+  const yBase = yRichesse + H_RICHESSE;
+  S.push(`<line x1="${MG}" y1="${yBase}" x2="${MG + largeurGraphe}" y2="${yBase}" stroke="#191b16" stroke-width="1"/>`);
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    S.push(`<line x1="${MG}" y1="${(yBase - f * (H_RICHESSE - 6)).toFixed(1)}" x2="${MG + largeurGraphe}" y2="${(yBase - f * (H_RICHESSE - 6)).toFixed(1)}" stroke="#e2ded1" stroke-width="0.8" stroke-dasharray="4 5"/>`);
+  });
+  S.push(`<line x1="${MG - 26}" y1="${yBase - (H_RICHESSE - 6)}" x2="${MG - 26}" y2="${yBase}" stroke="#8a8676" stroke-width="0.8"/>`);
+  S.push(`<text x="${MG - 30}" y="${yBase + 4}" text-anchor="end" font-size="10" fill="#565a4e">0</text>`);
+
+  // cadre du panneau des espèces
+  S.push(`<rect x="${MG}" y="${yEspeces - 6}" width="${largeurGraphe}" height="${hEspeces + 10}" fill="none" stroke="#191b16" stroke-width="1"/>`);
+
+  /* Une ligne par espèce à porter : numéro, trait pour le nom, filet dans le
+     graphe. Le n°1 en bas, comme sur le diagramme calculé. */
+  for(let i = 0; i < nLignes; i++){
+    const rang = nLignes - i;
+    const yLigne = yEspeces + (rang - 1) * hLigne + hLigne / 2;
+    S.push(`<text x="14" y="${(yLigne + 4).toFixed(1)}" font-size="11" fill="#8a8676">${i + 1}</text>`);
+    S.push(`<line x1="34" y1="${(yLigne + 5).toFixed(1)}" x2="${MG - 10}" y2="${(yLigne + 5).toFixed(1)}" stroke="#c9c4b4" stroke-width="0.7"/>`);
+    S.push(`<line x1="${MG}" y1="${(yEspeces + rang * hLigne).toFixed(1)}" x2="${MG + largeurGraphe}" y2="${(yEspeces + rang * hLigne).toFixed(1)}" stroke="#e7e4d8" stroke-width="0.6"/>`);
+  }
+
+  /* Repères verticaux au pas de quadrat, sur toute la hauteur utile : c'est
+     eux qui permettent de porter un coefficient en face du bon mètre. */
+  for(let d = 0; d <= etendue + 0.001; d += pas){
+    const xv = x(Math.min(d, etendue));
+    S.push(`<line x1="${xv.toFixed(1)}" y1="${yEspeces - 6}" x2="${xv.toFixed(1)}" y2="${ySol}" stroke="#efece1" stroke-width="0.7"/>`);
+  }
+
+  /* Bande du profil de végétation : sol plat et strates, à dessiner. */
+  S.push(`<text x="14" y="${yDessin + 14}" font-size="11" font-weight="bold">Profil de végétation</text>`);
+  S.push(`<text x="14" y="${yDessin + 28}" font-size="9.5" fill="#8a8676">port et densité, à main levée</text>`);
+  const pxCm = (H_DESSIN - 20) / 150;
+  [[150, 'strate haute'], [40, 'strate moyenne'], [15, 'strate basse'], [0, '']].forEach(([cm, nom]) => {
+    const yc = ySol - cm * pxCm;
+    S.push(`<line x1="${MG}" y1="${yc.toFixed(1)}" x2="${MG + largeurGraphe}" y2="${yc.toFixed(1)}" stroke="${cm ? '#d9d4c4' : '#191b16'}" stroke-width="${cm ? 0.8 : 1}"${cm ? ' stroke-dasharray="5 5"' : ''}/>`);
+    S.push(`<text x="${MG - 10}" y="${(yc + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="#565a4e">${cm} cm</text>`);
+    if(nom) S.push(`<text x="${MG - 64}" y="${(yc + 14).toFixed(1)}" text-anchor="end" font-size="10" font-style="italic" fill="#8a8676">${nom}</text>`);
+  });
+
+  /* Axe des distances. */
+  const pasAxe = etendue > 60 ? 10 : (etendue > 25 ? 5 : 2);
+  S.push(`<line x1="${MG}" y1="${yAxe}" x2="${MG + largeurGraphe}" y2="${yAxe}" stroke="#191b16" stroke-width="1"/>`);
+  for(let d = 0; d <= etendue + 0.001; d += pasAxe){
+    S.push(`<line x1="${x(d).toFixed(1)}" y1="${yAxe}" x2="${x(d).toFixed(1)}" y2="${yAxe + 6}" stroke="#191b16" stroke-width="1"/>`);
+    S.push(`<text x="${x(d).toFixed(1)}" y="${yAxe + 20}" text-anchor="middle" font-size="11">${d} m</text>`);
+  }
+  S.push(`<text x="${MG}" y="${yAxe + 36}" font-size="10" fill="#565a4e">Distance depuis le point de départ · quadrats tous les ${pas} m · sens du transect : de la mer vers la terre</text>`);
+
+  S.push(`<text x="14" y="${H - 14}" font-size="9.5" fill="#565a4e">Zonation — BTS GPN Kerplouz · profil vierge (${etendue} m, pas de ${pas} m)</text>`);
+
+  if(H * mmParPx > page.H) mmParPx = page.H / H;       // une page, jamais deux
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"`
+    + ` width="${(W * mmParPx).toFixed(1)}mm" height="${(H * mmParPx).toFixed(1)}mm"`
+    + ` font-family="Georgia, 'Times New Roman', serif">` + S.join('\n') + '</svg>';
+}
+
+/* Premier et dernier mètre relevés d'un transect. */
+function etendueTransect(nom){
+  const ds = chargerHistorique()
+    .filter(r => (r.transect || 'Transect (sans nom)') === nom)
+    .map(r => Number(r.distance))
+    .filter(d => isFinite(d))
+    .sort((a, b) => a - b);
+  return ds.length >= 2 ? {de: ds[0], a: ds[ds.length - 1]} : null;
+}
+
+/* Impression d'un ou plusieurs transects, un diagramme par page suivi de ses
+   clés de lecture. La fenêtre ouverte déclare son format : le navigateur n'a
+   plus à deviner l'orientation, et « Enregistrer au format PDF » donne le même
+   résultat que l'imprimante. */
+function imprimerProfils(noms, format){
+  /* « a4x2 » : A4 en deux feuilles à abouter. Sur une seule feuille A4 le
+     transect tient, mais le texte tombe vers 5,5 pt ; coupé en deux, il revient
+     à une taille lisible, et les deux moitiés se raccordent au mètre près. */
+  const deuxFeuilles = format === 'a4x2';
+  const f = deuxFeuilles ? 'a4' : (PAGES_IMPRESSION[format] ? format : 'a3');
+  const pages = [];
+  (Array.isArray(noms) ? noms : [noms]).forEach(nom => {
+    if(deuxFeuilles){
+      const bornes = etendueTransect(nom);
+      if(!bornes) return;
+      const milieu = bornes.de + (bornes.a - bornes.de) / 2;
+      [[bornes.de, milieu], [milieu, bornes.a]].forEach(([de, a], i) => {
+        const p = construireProfilTransectSVG(nom, {page: f, interactif: false,
+          fenetre: {de, a, i: i + 1, n: 2}});
+        if(p) pages.push(p);
+      });
+    } else {
+      const diag = construireProfilTransectSVG(nom, {page: f, interactif: false});
+      if(!diag) return;
+      pages.push(diag);
+    }
+    const leg = construireLegendesSVG(nom, f);
+    if(leg) pages.push(leg);
+  });
+  if(!pages.length){ informer('Il faut au moins deux relevés avec une distance renseignée pour tracer un profil.'); return; }
+  ouvrirFenetreImpression(pages, f);
+}
+
+/* Un profil vierge à imprimer, en autant d'exemplaires que de groupes. */
+function imprimerProfilVierge(format, longueur, pas, exemplaires){
+  const f = PAGES_IMPRESSION[format] ? format : 'a3';
+  const n = Math.max(1, Math.min(12, Number(exemplaires) || 1));
+  const une = construireProfilViergeSVG(f, longueur, pas);
+  ouvrirFenetreImpression(Array.from({length: n}, () => une), f);
+}
+
+function ouvrirFenetreImpression(pages, f){
+  const w = window.open('', '_blank');
+  if(!w){ informer("Le navigateur a bloqué la fenêtre d'impression. Autorisez les fenêtres surgissantes pour ce site."); return; }
+  w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>Profils de transect — impression</title>
+<style>
+  @page { size: ${f === 'a4' ? 'A4' : 'A3'} landscape; margin: 10mm; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  .page { page-break-after: always; break-after: page; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .page svg { display: block; }
+  @media screen {
+    body { background: #e9e6dc; padding: 16px; }
+    .page { background: #fff; margin: 0 auto 16px; box-shadow: 0 1px 6px rgba(0,0,0,.2); }
+  }
+</style></head><body>`
+    + pages.map(p => `<div class="page">${p}</div>`).join('')
+    + `</body></html>`);
+  w.document.close();
+  w.focus();
+  /* Laisser le navigateur poser la mise en page avant d'ouvrir la boîte. */
+  setTimeout(() => w.print(), 400);
 }
 
 /* ---------- Module d'analyse d'un transect ----------
@@ -3366,7 +3736,33 @@ function majBarreComparaison(){
   if(txt) txt.textContent = n < 2
     ? `${n} transect coché — cochez-en au moins deux pour les comparer.`
     : `${n} transects cochés.`;
-  barre.querySelector('button:last-child').disabled = n < 2;
+  const comparer = document.getElementById('btn-comparer');
+  if(comparer) comparer.disabled = n < 2;
+  /* Un seul transect coché suffit pour l'imprimer, là où la comparaison en
+     demande deux. */
+  const imprimer = document.getElementById('btn-imprimer-selection');
+  if(imprimer) imprimer.disabled = n < 1;
+}
+
+/* Impression des profils de la classe : ceux qui sont cochés, ou tous.
+   Une page par transect, suivie de ses clés de lecture. */
+function imprimerSelectionEnseignant(format, tous){
+  let noms = tous ? [] : [...comparaisonSelection];
+  if(!noms.length){
+    noms = [];
+    chargerHistorique().forEach(r => {
+      const t = r.transect || 'Transect (sans nom)';
+      if(!noms.includes(t)) noms.push(t);
+    });
+  }
+  /* Un transect d'un seul relevé localisé n'a pas de profil. On l'écarte, et on
+     le dit — après avoir ouvert la fenêtre, pour ne pas couper le geste de
+     l'utilisateur, sans quoi le navigateur bloque la fenêtre surgissante. */
+  const tracables = noms.filter(n => etendueTransect(n));
+  if(!tracables.length){ informer("Aucun transect n'a assez de relevés localisés pour tracer un profil."); return; }
+  imprimerProfils(tracables, format);
+  const ecartes = noms.length - tracables.length;
+  if(ecartes) informer(`${ecartes} transect${ecartes > 1 ? 's' : ''} sans profil (moins de deux relevés avec une distance) ${ecartes > 1 ? 'ont' : 'a'} été écarté${ecartes > 1 ? 's' : ''} de l'impression.`);
 }
 
 function ouvrirComparaison(){
@@ -3941,6 +4337,8 @@ function construireEcranAnalyse(){
           ? 'Relief : profil type déduit de la zone de chaque relevé (slikke en bas, haut schorre en haut), sans altitude mesurée. Un creux correspond à un point de vigilance : cuvette, chenal… ou détermination à revoir.'
           : 'Sol plat : aucune topographie n\'est relevée sur le terrain.'} Hauteurs des plantes : hauteurs types, non mesurées. D'après les profils de COLASSE (2019, fig. 6).</p>
       </details>
+      <button class="secondaire" onclick="imprimerProfils('${String(nom).replace(/'/g,"\\'")}', 'a3')">🖨 Imprimer / PDF (A3)</button>
+      <button class="secondaire" onclick="imprimerProfils('${String(nom).replace(/'/g,"\\'")}', 'a4x2')">🖨 2 feuilles A4</button>
       <button class="secondaire" onclick="exporterProfilTransect('${String(nom).replace(/'/g,"\\'")}')">⬇ Télécharger le diagramme (SVG)</button>
     </div>
 
