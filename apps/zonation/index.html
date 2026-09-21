@@ -406,6 +406,42 @@ main:has(#ecran-analyse.actif){max-width:1180px;}
 .comp-table th,.comp-table td{text-align:left;padding:.35em .5em;border-bottom:1px solid var(--line-soft);}
 .comp-table th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc-dark);}
 .comp-avert{font-size:.78rem;color:var(--modif,#b25b00);margin:.4em 0 0;}
+.comp-titre-bloc{font-family:var(--serif);font-size:1rem;margin:1.6em 0 .2em;padding-top:.8em;border-top:1px solid var(--line);}
+/* Emprise de chaque ceinture : une ligne par ceinture, une barre par transect */
+.comp-emprises{width:100%;border-collapse:collapse;margin-top:.5em;table-layout:fixed;}
+.comp-emprises th{text-align:left;font-family:var(--sans);font-size:.78rem;font-weight:600;
+  text-transform:none;letter-spacing:0;color:var(--ink);width:11em;padding:.25em .5em .25em 0;border:0;}
+.comp-emprises th i{display:inline-block;width:.8em;height:.8em;border-radius:2px;margin-right:.4em;
+  border:1px solid var(--line);vertical-align:-1px;}
+.comp-emprises td{padding:.25em .3em;border:0;vertical-align:middle;}
+.comp-emprises small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--text-2);}
+.comp-barre{display:block;height:.75em;border-radius:2px;min-width:1px;}
+.comp-emprises-pied td{font-family:var(--mono);font-size:.68rem;color:var(--text-2);
+  border-top:1px solid var(--line-soft);padding-top:.3em;}
+/* Courbe de richesse */
+.comp-courbe{display:block;width:100%;height:5em;margin-top:.25em;
+  border:1px solid var(--line);border-radius:var(--rayon-petit);background:#fff;}
+/* Grille des espèces partagées */
+.comp-especes{width:100%;border-collapse:collapse;margin-top:.5em;font-size:.8rem;}
+.comp-especes th,.comp-especes td{padding:.3em .4em;border-bottom:1px solid var(--line-soft);text-align:center;}
+.comp-especes th:first-child,.comp-especes td:first-child{text-align:left;}
+.comp-especes .fr{font-weight:600;}
+.comp-especes .latin{font-style:italic;font-size:.72rem;color:var(--text-2);}
+.comp-especes th.pivote{font-family:var(--mono);font-size:.68rem;color:var(--acc-dark);
+  vertical-align:bottom;white-space:nowrap;}
+.comp-especes th.pivote span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);
+  max-height:7em;overflow:hidden;text-overflow:ellipsis;}
+.comp-especes .comp-case{display:block;width:1.5em;height:1.5em;margin:0 auto;border-radius:3px;
+  background:var(--acc,#0b5f7d);}
+.comp-especes small{display:block;font-family:var(--mono);font-size:.62rem;color:var(--text-2);margin-top:.1em;}
+.comp-especes td.vide{color:var(--line);}
+body.projection .comp-titre-bloc{font-size:1.4rem;}
+body.projection .comp-emprises th{font-size:1rem;width:13em;}
+body.projection .comp-emprises small,body.projection .comp-emprises-pied td{font-size:.85rem;}
+body.projection .comp-barre{height:1.1em;}
+body.projection .comp-courbe{height:7em;}
+body.projection .comp-especes{font-size:1rem;}
+body.projection .comp-especes .comp-case{width:2em;height:2em;}
 /* Note de l'espace enseignant : dire franchement ce que ce cloisonnement est,
    et comment le retirer de l'appareil. */
 .note-enseignant{font-size:.74rem;line-height:1.5;color:var(--text-2);margin:1em 0 0;
@@ -3205,7 +3241,22 @@ function construireEcranComparaison(){
       if(prec && t.rang != null && prec.rang != null && t.rang < prec.rang){ t.retour = true; vigilance++; }
     });
     const richesses = rs.map(r => (r.cortege || []).length).sort((a, b) => a - b);
+    /* De quoi nourrir les trois vues comparatives : richesse le long du
+       transect, emprise de chaque ceinture, et présence des espèces. */
+    const courbe = rs.map(r => ({d: r.d, n: (r.cortege || []).length, solNu: !!r.solNu}));
+    const emprises = new Map();
+    troncons.forEach(t => {
+      if(t.rang == null) return;
+      emprises.set(t.zone, (emprises.get(t.zone) || 0) + (t.fin - t.debut + pas));
+    });
+    const especes = new Map();
+    rs.forEach(r => (r.cortege || []).forEach(e => {
+      const cle = e.latin || e.fr;
+      if(!especes.has(cle)) especes.set(cle, {fr: e.fr, latin: e.latin, n: 0});
+      especes.get(cle).n++;
+    }));
     return {
+      courbe, emprises, especes,
       nom, rs, troncons, pas, dMin, dMax, longueur: dMax - dMin + pas,
       milieu: milieuDuReleve(rs[0]), vigilance,
       observateur: rs[0].observateur || '', date: rs[0].dateReleve || '',
@@ -3292,8 +3343,85 @@ function construireEcranComparaison(){
     ? `<p class="comp-avert">Ces transects ne relèvent pas du même milieu : les ceintures des marais salés et des dunes sont deux séries distinctes, les couleurs ne se correspondent donc pas d'une bande à l'autre.</p>`
     : '';
 
+  /* ---- Emprise de chaque ceinture ----
+     Répond à la question que pose la comparaison : pourquoi la même ceinture
+     tient-elle dix mètres chez l'un et trente chez l'autre ? Une ligne par
+     ceinture, une barre par transect, toutes à la même échelle. */
+  const empriseMax = Math.max(1, ...profils.flatMap(p => [...p.emprises.values()]));
+  const blocEmprises = milieux.map(m => {
+    const groupe = profils.filter(p => p.milieu === m);
+    const zonesOrdre = MILIEUX[m].profil
+      .map((z, i) => ({zone: z.zone, rang: z.rang !== undefined ? z.rang : i + 1}))
+      .filter(z => groupe.some(p => p.emprises.has(z.zone)));
+    return `${milieux.length > 1 ? `<h4 class="analyse-soustitre">${MILIEUX[m].nom}</h4>` : ''}
+      <table class="comp-emprises"><tbody>
+      ${zonesOrdre.map(z => `<tr>
+        <th><i style="background:${teinteZone(z.rang)}"></i>${echapHTML(z.zone)}</th>
+        ${groupe.map(p => {
+          const v = p.emprises.get(z.zone) || 0;
+          return `<td title="${echapHTML(p.nom)} — ${v} m"><span class="comp-barre" style="width:${(v / empriseMax * 100).toFixed(1)}%;background:${teinteZone(z.rang)}"></span><small>${v ? v + ' m' : '—'}</small></td>`;
+        }).join('')}
+      </tr>`).join('')}
+      <tr class="comp-emprises-pied"><th></th>${groupe.map(p => `<td>${echapHTML(p.nom)}</td>`).join('')}</tr>
+    </tbody></table>`;
+  }).join('');
+
+  /* ---- Richesse le long du transect ----
+     Même abscisse que les bandes, même échelle verticale pour tous : on voit
+     du premier coup d'œil qui a relevé les cortèges les plus fournis, et où. */
+  const rMax = Math.max(3, ...profils.flatMap(p => p.courbe.map(c => c.n)));
+  const blocRichesse = profils.map(p => {
+    const largeurRef = relatif ? p.longueur : maxLong;
+    const X = d => ((d - p.dMin + p.pas / 2) / largeurRef) * 1000;
+    const pts = p.courbe.map(c => `${X(c.d).toFixed(1)},${(84 - (c.n / rMax) * 74).toFixed(1)}`);
+    const aire = `M ${X(p.dMin).toFixed(1)},84 L ` + pts.join(' L ') + ` L ${X(p.dMax).toFixed(1)},84 Z`;
+    const solNu = p.courbe.filter(c => c.solNu)
+      .map(c => `<line x1="${X(c.d).toFixed(1)}" y1="76" x2="${X(c.d).toFixed(1)}" y2="84" stroke="#8a8676" stroke-width="2"/>`).join('');
+    return `<div class="comp-ligne">
+      <div class="comp-ligne-tete"><b>${echapHTML(p.nom)}</b><span class="comp-ligne-meta">${Math.min(...p.courbe.map(c=>c.n))} à ${Math.max(...p.courbe.map(c=>c.n))} espèces par quadrat · médiane ${p.richesseMed}</span></div>
+      <svg class="comp-courbe" viewBox="0 0 1000 90" preserveAspectRatio="none" role="img" aria-label="Richesse spécifique le long du transect ${echapHTML(p.nom)}">
+        <line x1="0" y1="84" x2="1000" y2="84" stroke="#dcd8cc"/>
+        <path d="${aire}" fill="var(--acc-soft,#e3eff3)"/>
+        <polyline points="${pts.join(' ')}" fill="none" stroke="var(--acc,#0b5f7d)" stroke-width="2.5" stroke-linejoin="round"/>
+        ${solNu}
+      </svg>
+    </div>`;
+  }).join('');
+
+  /* ---- Espèces partagées ----
+     Une grille espèces × transects : le fonds commun saute aux yeux, et les
+     espèces propres à un seul groupe aussi. */
+  const toutes = new Map();
+  profils.forEach(p => p.especes.forEach((e, cle) => {
+    if(!toutes.has(cle)) toutes.set(cle, {fr: e.fr, latin: e.latin, par: new Map()});
+    toutes.get(cle).par.set(p.nom, e.n / p.rs.length);
+  }));
+  const classees = [...toutes.values()].sort((a, b) =>
+    b.par.size - a.par.size
+    || [...b.par.values()].reduce((s, v) => s + v, 0) - [...a.par.values()].reduce((s, v) => s + v, 0)
+    || a.fr.localeCompare(b.fr, 'fr'));
+  const visibles = classees.slice(0, 14);
+  const restantes = classees.length - visibles.length;
+  const blocEspeces = `<table class="comp-especes"><thead><tr><th>Espèce</th>
+      ${profils.map(p => `<th class="pivote"><span>${echapHTML(p.nom)}</span></th>`).join('')}</tr></thead><tbody>
+    ${visibles.map(e => `<tr>
+      <td><span class="fr">${echapHTML(e.fr)}</span>${e.latin ? `<br><span class="latin">${echapHTML(e.latin)}</span>` : ''}</td>
+      ${profils.map(p => {
+        const part = e.par.get(p.nom);
+        if(part == null) return '<td class="vide" title="absente">·</td>';
+        const pc = Math.round(part * 100);
+        return `<td title="${echapHTML(p.nom)} — présente sur ${pc} % des quadrats"><span class="comp-case" style="opacity:${(0.18 + part * 0.82).toFixed(2)}"></span><small>${pc}%</small></td>`;
+      }).join('')}
+    </tr>`).join('')}
+  </tbody></table>
+  <p class="analyse-meta">${visibles.length} espèces sur ${classees.length}, des plus partagées aux plus localisées${restantes > 0 ? ` — ${restantes} autre${restantes>1?'s':''} non affichée${restantes>1?'s':''}` : ''}. Le pourcentage est la part des quadrats du transect où l'espèce est notée.</p>`;
+
   cont.dataset.pret = '1';
   cont.innerHTML = bandes + `<div class="comp-axe">${axe}</div>` + legende + avert + table
+    + `<h3 class="comp-titre-bloc">Emprise de chaque ceinture</h3>${blocEmprises}`
+    + `<h3 class="comp-titre-bloc">Richesse spécifique le long du transect</h3>
+       <p class="analyse-aide">Même échelle verticale pour tous (jusqu'à ${rMax} espèces par quadrat). Trait gris : quadrat de sol nu.</p>${blocRichesse}`
+    + `<h3 class="comp-titre-bloc">Espèces partagées</h3>${blocEspeces}`
     + `<p class="analyse-note">Fond hachuré : mètres non relevés, ou transect plus court que le plus long. Trait orange : la ceinture redescend le gradient — cuvette, microtopographie ou détermination à revoir. Survolez un tronçon pour ses distances et ses fiches.</p>`;
   /* Les libellés ne se mesurent qu'une fois posés dans la page. */
   requestAnimationFrame(ajusterLibellesComparaison);
