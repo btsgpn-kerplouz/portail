@@ -597,6 +597,21 @@ body.projection .analyse-aide{font-size:1rem;}
 .choix-transect .choix-groupe>span{font-size:.76rem;color:var(--text-2);width:100%;}
 .choix-transect small{font-weight:400;opacity:.75;}
 .masque{display:none;}
+/* Capture GPS optionnelle d'un relevé (relief mesuré). */
+.gps-releve button{width:100%;}
+.gps-statut{font-size:.78rem;margin:.4em 0 0;min-height:1.1em;color:var(--text-2);}
+.gps-statut.gps-ok{color:var(--status-valide);}
+.gps-statut.gps-erreur{color:var(--status-invalide);}
+.gps-statut.gps-chantier{color:var(--status-chantier);}
+.gps-statut button{margin-left:.3em;}
+.gps-manuel{display:flex;flex-wrap:wrap;gap:.4em;margin-top:.5em;}
+.gps-manuel input{flex:1;min-width:9em;}
+.gps-manuel button{flex-basis:100%;}
+/* Repère « position GPS enregistrée » dans l'historique : identifier vite quels
+   relevés d'un transect ont déjà un pointage, pour ceux qu'on va reprendre. */
+.tag-gps{
+  font-size:.85em;cursor:default;
+}
 /* Encadré du nom de l'espèce en cours : c'est le sujet de toute l'étape, il doit se
    détacher franchement du texte courant qui l'entoure. Aplat clair + filet d'accent
    à gauche, nom en serif large, latin en dessous. */
@@ -985,9 +1000,32 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         </div>
       </div>
 
-      <div class="champ" style="margin-bottom:0;">
+      <div class="champ">
         <label for="in-distance">Distance sur le transect (m)</label>
         <input type="number" id="in-distance" placeholder="Ex : 3">
+      </div>
+
+      <!-- Position GPS optionnelle : sert à calculer un relief mesuré (voir
+           profil-dessine.js / chargerAltitudeMesuree) au lieu du profil
+           interprété déduit des zones. Un point de plus par relevé affine la
+           courbe ; rien n'oblige à la capturer à chaque fois. -->
+      <div class="champ gps-releve" style="margin-bottom:0;">
+        <label>Position GPS (facultatif)</label>
+        <button type="button" class="secondaire" id="btn-gps" onclick="capturerPositionReleve()">📍 Capturer ma position</button>
+        <button type="button" class="discret" onclick="basculerSaisieManuelleGPS()">Saisir des coordonnées à la main</button>
+        <!-- Repli manuel : pratique pour tester sans bouger (l'ordinateur ne
+             donne qu'un seul point GPS approximatif, jamais un vrai transect),
+             ou pour corriger une position après coup depuis une carte. -->
+        <div class="gps-manuel" id="gps-manuel" hidden>
+          <input type="number" step="any" id="in-gps-manuel-lat" placeholder="Latitude, ex : 47.6870">
+          <input type="number" step="any" id="in-gps-manuel-lon" placeholder="Longitude, ex : -3.1610">
+          <button type="button" class="secondaire" onclick="validerPositionManuelle()">Valider ces coordonnées</button>
+        </div>
+        <p class="gps-statut" id="gps-statut"></p>
+        <input type="hidden" id="in-gps-lat">
+        <input type="hidden" id="in-gps-lon">
+        <input type="hidden" id="in-gps-acc">
+        <input type="hidden" id="in-gps-t">
       </div>
     </div>
   </section>
@@ -1195,7 +1233,12 @@ let etat = {
   coefCourant: null, // coefficient Braun-Blanquet actuellement sélectionné pour l'ajout
   dernierResultat: null,
   solNu: false, // quadrat déclaré sans végétation : cortège vide, mais relevé bien réel
-  edition: null // clé du relevé en cours de correction (null = nouveau relevé)
+  edition: null, // clé du relevé en cours de correction (null = nouveau relevé)
+  /* Est-on repassé par l'écran résultats depuis le début de cette saisie/correction ?
+     Sert à enregistrerReleve() : en correction, si on n'a pas retouché les espèces,
+     on reprend l'analyse déjà enregistrée plutôt que d'obliger à revoir espèces et
+     résultats pour un champ d'identité (ex. position GPS) sans rapport. */
+  analyseRevisitee: false
 };
 
 /* Clé stable d'un relevé enregistré. Les relevés n'avaient pas d'identifiant :
@@ -1879,6 +1922,7 @@ function demanderConfirmation(message, options){
 }
 
 function afficherResultats(){
+  etat.analyseRevisitee = true;
   const zoneAvert = document.getElementById('zone-avertissement');
   if(etat.solNu){
     zoneAvert.innerHTML = '';
@@ -2469,7 +2513,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.31.0';
+const VERSION_APPLI = '1.32.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -2674,17 +2718,102 @@ function majEcranIdentite(){
   const inDistance = document.getElementById('in-distance');
   if(inDistance && !inDistance.value) majDistanceSuggeree(nom, numero);
   majCarteTransect();
+  majAffichagePositionReleve();
+}
+
+/* ---------- Position GPS d'un relevé (facultative) ----------
+   Un point de plus, par relevé, pour calculer ensuite un relief MESURÉ
+   (profil-dessine.js / chargerAltitudeMesuree) au lieu du profil interprété
+   déduit des zones. Jamais obligatoire pour enregistrer. */
+function capturerPositionReleve(){
+  const statut = document.getElementById('gps-statut');
+  if(!navigator.geolocation){
+    statut.textContent = 'Géolocalisation non disponible sur cet appareil.';
+    statut.className = 'gps-statut gps-erreur';
+    return;
+  }
+  statut.textContent = 'Localisation en cours…';
+  statut.className = 'gps-statut gps-chantier';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('in-gps-lat').value = pos.coords.latitude;
+      document.getElementById('in-gps-lon').value = pos.coords.longitude;
+      document.getElementById('in-gps-acc').value = pos.coords.accuracy != null ? pos.coords.accuracy : '';
+      document.getElementById('in-gps-t').value = pos.timestamp;
+      majAffichagePositionReleve();
+    },
+    err => {
+      statut.textContent = err.code === 1
+        ? 'Position refusée : autorisez la géolocalisation pour ce site, ou continuez sans (profil interprété toujours disponible).'
+        : 'Position indisponible (signal GPS faible ou pas de réseau). Réessayez, ou continuez sans.';
+      statut.className = 'gps-statut gps-erreur';
+    },
+    {enableHighAccuracy: true, timeout: 15000, maximumAge: 0}
+  );
+}
+function effacerPositionReleve(){
+  ['in-gps-lat', 'in-gps-lon', 'in-gps-acc', 'in-gps-t'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  majAffichagePositionReleve();
+}
+/* Repli manuel : ni la capture GPS réelle, ni son bouton « Effacer » ne
+   changent — on ne fait qu'alimenter les mêmes champs cachés autrement, pour
+   tester sans bouger ou corriger une coordonnée après coup. */
+function basculerSaisieManuelleGPS(){
+  const bloc = document.getElementById('gps-manuel');
+  if(bloc) bloc.hidden = !bloc.hidden;
+}
+function validerPositionManuelle(){
+  const lat = document.getElementById('in-gps-manuel-lat').value.trim();
+  const lon = document.getElementById('in-gps-manuel-lon').value.trim();
+  if(lat === '' || lon === '' || !isFinite(Number(lat)) || !isFinite(Number(lon))){
+    informer('Latitude et longitude doivent être deux nombres (ex : 47.6870 et -3.1610).');
+    return;
+  }
+  document.getElementById('in-gps-lat').value = lat;
+  document.getElementById('in-gps-lon').value = lon;
+  document.getElementById('in-gps-acc').value = '';
+  document.getElementById('in-gps-t').value = Date.now();
+  document.getElementById('in-gps-manuel-lat').value = '';
+  document.getElementById('in-gps-manuel-lon').value = '';
+  document.getElementById('gps-manuel').hidden = true;
+  majAffichagePositionReleve();
+}
+function positionReleveCapturee(){
+  const lat = document.getElementById('in-gps-lat')?.value, lon = document.getElementById('in-gps-lon')?.value;
+  return !!lat && !!lon;
+}
+function majAffichagePositionReleve(){
+  const statut = document.getElementById('gps-statut'), btn = document.getElementById('btn-gps');
+  if(!statut || !btn) return;
+  if(positionReleveCapturee()){
+    const lat = Number(document.getElementById('in-gps-lat').value), lon = Number(document.getElementById('in-gps-lon').value);
+    const acc = document.getElementById('in-gps-acc').value;
+    statut.innerHTML = `Position capturée : ${lat.toFixed(5)}, ${lon.toFixed(5)}${acc ? ` (± ${Math.round(acc)} m)` : ''}`
+      + ` <button type="button" class="discret" onclick="effacerPositionReleve()">Effacer</button>`;
+    statut.className = 'gps-statut gps-ok';
+    btn.textContent = '📍 Recapturer ma position';
+  } else {
+    statut.textContent = '';
+    statut.className = 'gps-statut';
+    btn.textContent = '📍 Capturer ma position';
+  }
 }
 
 /* Lit l'en-tête saisi en page 1 (sert au rappel, à l'enregistrement et aux exports). */
 function lireIdentite(){
   const val = id => (document.getElementById(id)?.value || '').trim();
+  const gpsLat = val('in-gps-lat'), gpsLon = val('in-gps-lon');
   return {
     transect: val('in-transect') || assurerTransectActif(),
     date: val('in-date') || new Date().toISOString().slice(0,10),
     observateur: val('in-observateur'),
     site: val('in-site') || SITE_DEFAUT,
     commune: val('in-commune') || COMMUNE_DEFAUT,
+    gps: (gpsLat && gpsLon) ? {
+      lat: Number(gpsLat), lon: Number(gpsLon),
+      acc: val('in-gps-acc') ? Number(val('in-gps-acc')) : null,
+      t: val('in-gps-t') ? Number(val('in-gps-t')) : null
+    } : null,
     distance: val('in-distance')
   };
 }
@@ -2721,9 +2850,15 @@ function resetReleve(){
   etat.dernierResultat = null;
   etat.solNu = false;
   etat.edition = null;
+  etat.analyseRevisitee = false;
   document.querySelectorAll('.bandeau-edition').forEach(el=>{ el.hidden = true; el.innerHTML = ''; });
   // La distance est vidée pour être recalculée par majEcranIdentite (relevé suivant = +1 m).
   document.getElementById('in-distance').value = '';
+  // La position GPS ne se reporte jamais d'un point au suivant : chaque quadrat a la sienne.
+  ['in-gps-lat', 'in-gps-lon', 'in-gps-acc', 'in-gps-t', 'in-gps-manuel-lat', 'in-gps-manuel-lon'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const blocManuel = document.getElementById('gps-manuel');
+  if(blocManuel) blocManuel.hidden = true;
+  majAffichagePositionReleve();
   document.getElementById('recherche-espece').value = '';
   document.getElementById('espece-selectionnee').textContent = CONSIGNE_ESPECE;
 }
@@ -2734,17 +2869,25 @@ function nouveauPoint(){
 }
 
 function enregistrerReleve(){
-  // Un quadrat de sol nu n'a pas de résultat d'analyse, et c'est normal.
-  if(!etat.dernierResultat && !etat.solNu) return;
-  const r = etat.dernierResultat;
   const liste = chargerHistorique();
+  const i = etat.edition ? liste.findIndex(x => cleReleve(x) === etat.edition) : -1;
+  const correction = i >= 0;
+  const ancien = correction ? liste[i] : null;
+  /* En correction, tant que l'écran résultats n'a pas été revu, on n'a pas de
+     nouvelle analyse (etat.dernierResultat reste tel que resetReleve() l'a
+     laissé) : on reprend alors l'analyse déjà enregistrée pour ce relevé,
+     inchangée, plutôt que d'exiger un passage par espèces/résultats pour un
+     champ d'identité (ex. position GPS) sans rapport avec la végétation. Dès
+     que l'écran résultats est revisité, etat.analyseRevisitee passe à true et
+     la nouvelle analyse (même null, ex. « sans habitat proposé ») prévaut. */
+  const gardeAnalyse = correction && !etat.solNu && !etat.analyseRevisitee;
+  // Un quadrat de sol nu n'a pas de résultat d'analyse, et c'est normal.
+  if(!etat.dernierResultat && !etat.solNu && !gardeAnalyse) return;
+  const r = etat.dernierResultat;
   const id = lireIdentite();
   const transect = id.transect;
   memoriserBordereau(id);
 
-  const i = etat.edition ? liste.findIndex(x => cleReleve(x) === etat.edition) : -1;
-  const correction = i >= 0;
-  const ancien = correction ? liste[i] : null;
   /* Une correction garde son identité — numéro, transect et date d'enregistrement
      d'origine — et ne se renumérote pas : le numéro situe le relevé sur la ligne,
      le renuméroter décalerait tout le transect. */
@@ -2760,21 +2903,25 @@ function enregistrerReleve(){
     commune: id.commune,
     observation: document.getElementById('in-observation')?.value || '',
     distance: id.distance,
+    gps: id.gps,
     cortege: etat.cortege.map(e=>({fr:e.fr, latin:e.latin, mode:e.mode, cover:e.cover, reconnue:e.reconnue})),
     solNu: !!etat.solNu,
     milieu: correction && ancien.milieu ? ancien.milieu : milieuActif,
-    top: r ? r.habitat.nomFr : SOL_NU.habitat,
-    topFiche: r ? r.habitat.id : null,
-    tauxCar: r ? r.tauxCar : 0,
-    carMatch: r ? `${r.matchCar.length}/${r.totalCar}` : '',
-    score: r ? r.score : 0,
+    top: r ? r.habitat.nomFr : (gardeAnalyse ? ancien.top : SOL_NU.habitat),
+    topFiche: r ? r.habitat.id : (gardeAnalyse ? ancien.topFiche : null),
+    tauxCar: r ? r.tauxCar : (gardeAnalyse ? ancien.tauxCar : 0),
+    carMatch: r ? `${r.matchCar.length}/${r.totalCar}` : (gardeAnalyse ? ancien.carMatch : ''),
+    score: r ? r.score : (gardeAnalyse ? ancien.score : 0),
     // groupements que ce relevé ne permet pas de départager, pour l'analyse
-    exaequo: r ? (etat.exaequo || []) : []
+    exaequo: r ? (etat.exaequo || []) : (gardeAnalyse ? (ancien.exaequo || []) : [])
   };
   if(correction) liste[i] = enregistre; else liste.push(enregistre);
   sauverHistorique(liste);
   majCompteurHistorique();
   dessinerMotifHero();
+  // Le jeu de points GPS du transect a pu changer : le relief mesuré, s'il était
+  // en cache, n'est plus à jour tant qu'il n'est pas recalculé.
+  delete altitudeParTransect[enregistre.transect];
 
   if(correction){
     const change = ancien.top !== enregistre.top;
@@ -2812,6 +2959,13 @@ function modifierReleve(cle){
   mettre('in-site', r.site);
   mettre('in-commune', r.commune);
   mettre('in-distance', r.distance);
+  if(r.gps){
+    mettre('in-gps-lat', r.gps.lat);
+    mettre('in-gps-lon', r.gps.lon);
+    mettre('in-gps-acc', r.gps.acc);
+    mettre('in-gps-t', r.gps.t);
+  }
+  majAffichagePositionReleve();
   majCarteTransect();
   majBandeauEdition();
 }
@@ -2904,7 +3058,7 @@ function afficherHistorique(){
       <span style="font-family:var(--mono);font-size:.75rem;color:var(--text-2);">${rs.length} relevé${rs.length>1?'s':''}${rs[0] && rs[0].observateur ? ' · '+rs[0].observateur : ''}${rs[0] && rs[0].dateReleve ? ' · '+rs[0].dateReleve.split('-').reverse().join('/') : ''}</span>
     </div>
     <table class="historique"><thead><tr><th>N°</th><th>Dist. (m)</th><th>Habitat probable</th><th>Espèces caract.</th><th>Remarque</th><th></th></tr></thead><tbody>
-      ${rs.map(r=>`<tr><td>${r.numero||''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
+      ${rs.map(r=>`<tr><td>${r.numero||''}${r.gps?` <span class="tag-gps" title="Position GPS enregistrée">📍</span>`:''}</td><td>${r.distance||''}</td><td>${r.top}${r.modifieLe?` <span class="tag-corrige" title="Corrigé le ${r.modifieLe.slice(0,10).split('-').reverse().join('/')}">corrigé</span>`:''}</td><td>${r.carMatch || r.score+'%'}</td><td>${r.observation||'—'}</td><td class="num"><button type="button" class="btn-modifier" onclick="modifierReleve('${String(cleReleve(r)).replace(/'/g,"\'")}')">Modifier</button></td></tr>`).join('')}
     </tbody></table>
     <div style="display:flex;gap:.5em;flex-wrap:wrap;margin-top:.4em;">
       <button class="secondaire" onclick="ouvrirAnalyseTransect('${nom.replace(/'/g,"\\'")}', 'historique')">Analyser ce transect →</button>
@@ -3047,12 +3201,14 @@ function construireProfilTransectSVG(nomTransect, options){
   const yEspeces = yRichesse + H_RICHESSE + 14;         // sous le bandeau de richesse
 
   const relief = options && options.relief != null ? options.relief
-    : (typeof dessinRelief === 'undefined' ? true : dessinRelief);
+    : (typeof dessinRelief === 'undefined' ? 'plat' : dessinRelief);
+  const etatAlt = relief === 'mesure' ? altitudeTransect(nomTransect) : null;
+  const courbeAlt = etatAlt && etatAlt.statut === 'prete' ? etatAlt.courbe : null;
   /* Hauteur du panneau dessiné : elle ne dépend que de l'échelle des distances
      et de la plus haute espèce, pas de sa position. On la mesure donc avant de
      décider de la hauteur des lignes. */
   const mesurerDessin = pxm => typeof panneauProfilDessine === 'function'
-    ? panneauProfilDessine(rs, {x: () => 0, pxm, yHaut: 0, margeG: MG, relief,
+    ? panneauProfilDessine(rs, {x: () => 0, pxm, yHaut: 0, margeG: MG, relief, courbeAlt,
         graine: nomTransect, interactif}).hauteur
     : 0;
   /* Tout ce qui, en hauteur, ne dépend pas du nombre d'espèces. */
@@ -3091,7 +3247,7 @@ function construireProfilTransectSVG(nomTransect, options){
   const yDessin = yEspeces + hEspeces + 12;
   const dessin = typeof panneauProfilDessine === 'function'
     ? panneauProfilDessine(rs, {x, pxm: largeurGraphe / etendue, yHaut: yDessin, margeG: MG,
-        relief, graine: nomTransect, interactif})
+        relief, courbeAlt, graine: nomTransect, interactif})
     : {svg: '', hauteur: 0, liste: []};
 
   const yZones = yDessin + dessin.hauteur + 10;         // repères de zones (SVG téléchargé seulement)
@@ -3579,6 +3735,10 @@ function ouvrirAnalyseTransect(nom, origine){
   origineAnalyse = origine === 'historique' ? 'historique' : 'analyses';
   document.getElementById('lien-retour-analyse').textContent =
     origineAnalyse === 'historique' ? '← Mes transects' : '← Analyses';
+  // Chaque analyse rouverte repart du profil plat, plutôt que de garder le
+  // dernier mode choisi sur un autre transect (moins surprenant, et le profil
+  // mesuré n'a de toute façon aucune raison d'être disponible par défaut).
+  dessinRelief = 'plat';
   allerA('analyse');
 }
 
@@ -4160,7 +4320,10 @@ function activerDiagrammeInteractif(){
         + (c.dataset.especes ? `<br><span class="bulle-sec">${echapHTML(c.dataset.especes)}</span>` : '')
         + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
     } else if(c.classList.contains('cellule-dessin')){
-      montrer(`<b>${c.dataset.d} m</b>${c.dataset.zone ? ' · ' + echapHTML(c.dataset.zone) : ''}`
+      // data-alt : altitude mesurée à ce quadrat (mode « Profil mesuré » seulement,
+      // voir panneauProfilDessine/altAt) — recherche de l'altitude le long du
+      // transect par simple survol, comme pour les espèces.
+      montrer(`<b>${c.dataset.d} m</b>${c.dataset.zone ? ' · ' + echapHTML(c.dataset.zone) : ''}${c.dataset.alt ? ` · ${c.dataset.alt.replace('.', ',')} m IGN69` : ''}`
         + `<br>${echapHTML(c.dataset.especes)}`
         + (c.dataset.fiche ? `<br><span class="bulle-sec">Fiche ${c.dataset.fiche} — cliquer pour l'ouvrir</span>` : ''), ev);
     } else if(c.classList.contains('barre-espece')){
@@ -4198,8 +4361,56 @@ function pucesZones(troncons){
     + echapHTML(z.zone) + '<small>' + z.plages.join(' · ') + ' m</small></button>').join('');
 }
 
+/* ---------- Relief mesuré : calcul et cache ----------
+   Calculé à la demande (bouton « Profil mesuré (GPS) »), gardé en mémoire le
+   temps de la session par transect pour ne pas rappeler l'API à chaque
+   bascule d'affichage. Invalidé (delete altitudeParTransect[transect]) dès
+   qu'un relevé de ce transect est enregistré, au cas où sa position GPS
+   aurait changé. */
+const altitudeParTransect = {};   // {nom: {statut:'chargement'|'prete'|'erreur'|'insuffisant', courbe?, distanceGPSTotale?, distanceTerrain?, message?}}
+
+function altitudeTransect(nom){
+  return altitudeParTransect[nom] || null;
+}
+
+async function chargerAltitudeMesuree(nom){
+  const rs = releveDuTransect(nom)
+    .filter(r => r.distance !== '' && r.distance != null && isFinite(Number(r.distance)))
+    .map(r => ({...r, d: Number(r.distance)}))
+    .sort((a, b) => a.d - b.d);
+  const points = pointsGPSTransect(rs);
+  if(points.length < 2){
+    altitudeParTransect[nom] = {statut: 'insuffisant'};
+    return altitudeParTransect[nom];
+  }
+  altitudeParTransect[nom] = {statut: 'chargement'};
+  try{
+    const lon = points.map(p => p.lon).join('|');
+    const lat = points.map(p => p.lat).join('|');
+    const etendue = points[points.length - 1].d - points[0].d;
+    const sampling = Math.max(points.length, Math.min(200, Math.round(etendue) || points.length));
+    const url = 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevationLine.json'
+      + `?lon=${lon}&lat=${lat}&sampling=${sampling}&resource=ign_rge_alti_wld&profile_mode=simple&zonly=false`;
+    const rep = await fetch(url);
+    if(!rep.ok) throw new Error('réseau HTTP ' + rep.status);
+    const donnees = await rep.json();
+    const courbe = courbeAltitudeDepuisElevationLine(points, donnees.elevations || []);
+    if(!courbe) throw new Error('réponse de l\'API inexploitable');
+    // Écart entre la distance GPS (imprécise) et la distance mesurée au terrain
+    // (décamètre) : signale un signal GPS dégradé plutôt que de corriger quoi
+    // que ce soit — voir la note affichée sous le diagramme.
+    const distanceGPSTotale = longueurGPSTransect(points);
+    altitudeParTransect[nom] = {statut: 'prete', courbe, distanceGPSTotale, distanceTerrain: etendue};
+  }catch(e){
+    altitudeParTransect[nom] = {statut: 'erreur', message: (e && e.message) || 'échec réseau'};
+  }
+  return altitudeParTransect[nom];
+}
+
 /* Relief du profil dessiné : l'écran est reconstruit, en gardant la vue, le
-   défilement du diagramme et la position dans la page. */
+   défilement du diagramme et la position dans la page. En mode « mesure »,
+   lance le calcul si besoin et réaffiche automatiquement une fois prêt (le
+   diagramme montre le profil interprété en attendant, voir panneauProfilDessine). */
 function basculerReliefDessin(relief){
   const d = document.getElementById('diagramme-transect');
   const vue = d && d.classList.contains('reelle') ? 'reelle' : 'ajuste';
@@ -4207,12 +4418,24 @@ function basculerReliefDessin(relief){
   const details = document.querySelector('.dessin-details');
   const ouvert = details && details.open;
   dessinRelief = relief;
-  construireEcranAnalyse();
-  basculerVueDiagramme(vue);
-  activerDiagrammeInteractif();
-  document.getElementById('diagramme-transect').scrollLeft = defil;
-  if(ouvert) document.querySelector('.dessin-details').open = true;
-  window.scrollTo(0, page);
+
+  const reafficher = () => {
+    construireEcranAnalyse();
+    basculerVueDiagramme(vue);
+    activerDiagrammeInteractif();
+    document.getElementById('diagramme-transect').scrollLeft = defil;
+    if(ouvert) document.querySelector('.dessin-details').open = true;
+    window.scrollTo(0, page);
+  };
+
+  if(relief === 'mesure'){
+    const nom = analyseTransectCourant;
+    const etat = altitudeTransect(nom);
+    if(!etat || etat.statut === 'erreur'){
+      chargerAltitudeMesuree(nom).then(() => { if(dessinRelief === 'mesure' && analyseTransectCourant === nom) reafficher(); });
+    }
+  }
+  reafficher();
 }
 
 function basculerVueDiagramme(vue){
@@ -4316,6 +4539,37 @@ function construireEcranAnalyse(){
     .filter(s => s.ecart > pas);
 
   const id0 = rs[0];
+
+  /* Relief du profil dessiné : trois modes (voir profil-dessine.js). Le
+     bouton « Profil mesuré (GPS) » demande au moins 2 relevés géolocalisés
+     sur ce transect ; la note sous le diagramme explique l'état du calcul. */
+  const nGps = pointsGPSTransect(rs).length;
+  const etatAlt = dessinRelief === 'mesure' ? altitudeTransect(nom) : null;
+  let noteRelief;
+  if(dessinRelief === 'plat'){
+    noteRelief = 'Profil plat : aucune topographie n\'est relevée sur le terrain.';
+  } else if(dessinRelief === 'mesure'){
+    if(nGps < 2) noteRelief = `Profil mesuré indisponible : il faut au moins 2 relevés de ce transect avec une position GPS capturée (actuellement ${nGps}). Profil interprété affiché en attendant.`;
+    else if(!etatAlt || etatAlt.statut === 'chargement') noteRelief = 'Calcul du profil mesuré en cours (altimétrie IGN)… Profil interprété affiché en attendant.';
+    else if(etatAlt.statut === 'erreur') noteRelief = `Profil mesuré indisponible (${echapHTML(etatAlt.message || 'erreur réseau')}). Profil interprété affiché en attendant ; réessayez en rebasculant sur « Profil mesuré (GPS) ».`;
+    else {
+      noteRelief = `Profil mesuré à partir de ${nGps} position${nGps > 1 ? 's' : ''} GPS et de l'altimétrie IGN (RGE Alti). Échelle verticale identique à l'horizontale (pas d'exagération), plafonnée pour un dénivelé extrême. Précision indicative de quelques dizaines de cm ; référence IGN69, pas le zéro des cartes marines.`;
+      /* Écart GPS vs terrain : la distance GPS (imprécise, surtout avec peu de
+         points) diverge parfois nettement de la distance mesurée au décamètre.
+         Un écart marqué n'invalide pas la courbe mais indique un signal GPS
+         dégradé sur ce transect — résolution locale potentiellement inégale
+         d'un segment à l'autre si des points intermédiaires sont géolocalisés
+         (voir longueurGPSTransect, profil-dessine.js). Seuil 15%, choisi à vue
+         faute de recul terrain : à ajuster si trop bavard ou pas assez. */
+      if(etatAlt.distanceTerrain > 0){
+        const ecart = Math.abs(etatAlt.distanceGPSTotale - etatAlt.distanceTerrain) / etatAlt.distanceTerrain;
+        if(ecart > .15) noteRelief += ` ⚠ Écart notable entre la distance GPS (${Math.round(etatAlt.distanceGPSTotale)} m) et la distance mesurée au terrain (${Math.round(etatAlt.distanceTerrain)} m) : signal GPS sans doute dégradé sur ce transect${nGps > 2 ? ', la courbe peut être moins fiable sur certains segments' : ''}.`;
+      }
+    }
+  } else {
+    noteRelief = 'Profil interprété : déduit de la zone de chaque relevé (slikke en bas, haut schorre en haut), sans altitude mesurée. Un creux correspond à un point de vigilance : cuvette, chenal… ou détermination à revoir.';
+  }
+
   cont.innerHTML = `
     <div class="carte">
       <h2 style="margin-top:.2em;">Transect ${echapHTML(nom)}</h2>
@@ -4324,8 +4578,9 @@ function construireEcranAnalyse(){
         <button type="button" id="vue-ajuste" aria-pressed="true" onclick="basculerVueDiagramme('ajuste')">Vue d'ensemble</button>
         <button type="button" id="vue-reelle" aria-pressed="false" onclick="basculerVueDiagramme('reelle')">Taille réelle</button>
         <span class="analyse-vues-sep" aria-hidden="true"></span>
-        <button type="button" aria-pressed="${dessinRelief}" onclick="basculerReliefDessin(true)">Relief (profil type)</button>
-        <button type="button" aria-pressed="${!dessinRelief}" onclick="basculerReliefDessin(false)">Sol plat</button>
+        <button type="button" aria-pressed="${dessinRelief === 'plat'}" onclick="basculerReliefDessin('plat')">Profil plat</button>
+        <button type="button" aria-pressed="${dessinRelief === 'mesure'}" ${nGps < 2 ? 'disabled title="Il faut au moins 2 relevés de ce transect avec une position GPS."' : ''} onclick="basculerReliefDessin('mesure')">Profil mesuré (GPS)</button>
+        <button type="button" aria-pressed="${dessinRelief === 'type'}" onclick="basculerReliefDessin('type')">Profil interprété</button>
       </div>
       <div class="zones-legende" id="zones-legende">${pucesZones(troncons)}</div>
       <div class="analyse-diagramme ajuste" id="diagramme-transect">${construireProfilTransectSVG(nom, {interactif:true}) || ''}<div class="bulle-diagramme" id="bulle-diagramme" hidden></div></div>
@@ -4333,9 +4588,7 @@ function construireEcranAnalyse(){
       <details class="dessin-details">
         <summary>Légende des dessins, par strate</summary>
         <div class="dessin-legende">${legendeDessinsHTML(nom)}</div>
-        <p class="analyse-note">${dessinRelief
-          ? 'Relief : profil type déduit de la zone de chaque relevé (slikke en bas, haut schorre en haut), sans altitude mesurée. Un creux correspond à un point de vigilance : cuvette, chenal… ou détermination à revoir.'
-          : 'Sol plat : aucune topographie n\'est relevée sur le terrain.'} Hauteurs des plantes : hauteurs types, non mesurées. D'après les profils de COLASSE (2019, fig. 6).</p>
+        <p class="analyse-note">${noteRelief} Hauteurs des plantes : hauteurs types, non mesurées. D'après les profils de COLASSE (2019, fig. 6).</p>
       </details>
       <button class="secondaire" onclick="imprimerProfils('${String(nom).replace(/'/g,"\\'")}', 'a3')">🖨 Imprimer / PDF (A3)</button>
       <button class="secondaire" onclick="imprimerProfils('${String(nom).replace(/'/g,"\\'")}', 'a4x2')">🖨 2 feuilles A4</button>
@@ -5078,8 +5331,15 @@ function actionsEcranReleve(){
     + `<button onclick="analyserDepuisBarre()"${vide?' disabled title="Ajoutez au moins une espèce, ou déclarez le quadrat sans végétation"':''}>Analyser le relevé</button>`;
 }
 
+/* En correction (etat.edition défini), un raccourci permet d'enregistrer sans
+   repasser par espèces/résultats — utile pour un champ d'identité seul (ex.
+   position GPS capturée a posteriori). Le chemin complet (« Suivant : espèces
+   → ») reste toujours disponible juste à côté : rien n'empêche de retoucher
+   les espèces d'un relevé déjà enregistré, comme avant. */
 const ACTIONS_PAR_ECRAN = {
-  'ecran-identite': ()=> `<button class="secondaire" onclick="allerA('accueil')">Annuler</button><button onclick="validerIdentite()">Suivant : espèces →</button>`,
+  'ecran-identite': ()=> `<button class="secondaire" onclick="allerA('accueil')">Annuler</button>`
+    + (etat.edition ? `<button class="secondaire" onclick="enregistrerReleve()">💾 Enregistrer (sans revoir les espèces)</button>` : '')
+    + `<button onclick="validerIdentite()">Suivant : espèces →</button>`,
   'ecran-releve': actionsEcranReleve
 };
 

@@ -13,8 +13,13 @@
    Limites assumées, rappelées sous la figure :
      - les hauteurs sont des hauteurs TYPES (port adulte habituel sur les
        prés salés), pas des mesures ;
-     - aucune altitude n'est relevée : le relief est un PROFIL TYPE déduit de
-       la succession des zones, ou le sol est plat au choix.
+     - le relief a trois modes au choix (boutons de l'écran d'analyse) :
+       PROFIL PLAT (par défaut à l'ouverture), PROFIL INTERPRÉTÉ (déduit de la
+       succession des zones, aucune altitude relevée) ou PROFIL MESURÉ (points
+       GPS pris sur le terrain, un par relevé, optionnel + altimétrie IGN) —
+       voir chargerAltitudeMesuree() dans index.html pour le calcul, et
+       pointsGPSTransect()/courbeAltitudeDepuisElevationLine() plus bas dans
+       ce fichier pour la mise en forme de la courbe.
    ========================================================= */
 
 /* Port (famille de dessin) et hauteur type en cm de chaque espèce du
@@ -231,7 +236,8 @@ const EMPRISE_PORT = {
 
 const DESSIN_PX_M = 46;        // pixels par mètre le long du transect
 const DESSIN_PX_CM = 1.25;     // pixels par cm de hauteur : exagération verticale ≈ ×3
-const DESSIN_PX_RANG = 14;     // relief du profil type : dénivelé dessiné par rang de zone
+const DESSIN_PX_RANG = 14;     // profil interprété : dénivelé dessiné par rang de zone
+const DESSIN_AMPLI_ALT_MAX = 420; // profil mesuré : dénivelé dessiné, plafonné par sécurité (dénivelé extrême) — sinon échelle = celle de l'horizontale, voir panneauProfilDessine
 const STRATES = [{lim:15, nom:"strate basse"}, {lim:40, nom:"strate moyenne"}];
 
 function portEspece(e){
@@ -457,12 +463,18 @@ function pictoLegendeSVG(latin, fr){
    la même échelle de distance, comme sur les transects publiés.
 
    rs : relevés triés, avec d (distance en m).
-   o  : {x: d → abscisse, pxm: pixels par mètre, yHaut, margeG, relief,
-         graine, interactif}
-   Retourne {svg, hauteur, liste}. */
+   o  : {x: d → abscisse, pxm: pixels par mètre, yHaut, margeG,
+         relief: 'type'|'plat'|'mesure', courbeAlt (mode 'mesure' uniquement,
+         voir courbeAltitudeDepuisElevationLine plus bas), graine, interactif}
+   Retourne {svg, hauteur, liste, repliMesure}. */
 
-/* Relief affiché : profil type (par défaut) ou sol plat. */
-let dessinRelief = true;
+/* Relief affiché : 'plat' (« Profil plat », aucune topographie — choix par
+   défaut à l'ouverture d'une analyse de transect, remis à chaque fois par
+   ouvrirAnalyseTransect dans index.html), 'type' (« Profil interprété »,
+   déduit des zones) ou 'mesure' (« Profil mesuré (GPS) », GPS + altimétrie
+   IGN) — identifiants internes inchangés, seuls les libellés à l'écran ont
+   ces noms (boutons de l'écran d'analyse). */
+let dessinRelief = 'plat';
 
 function especesDessinees(rs){
   const especes = new Map();
@@ -478,7 +490,15 @@ function especesDessinees(rs){
 
 function panneauProfilDessine(rs, o){
   const {x, pxm, yHaut, margeG, graine} = o;
-  const relief = o.relief !== false;
+  const modeDemande = o.relief === 'mesure' ? 'mesure' : (o.relief === 'plat' ? 'plat' : 'type');
+  /* La mesure peut être demandée (bouton actif) sans être disponible (pas
+     encore calculée, échec réseau, pas assez de points GPS) : dans ce cas on
+     dessine quand même un profil interprété, le texte au-dessus du diagramme
+     (index.html, construireEcranAnalyse) explique pourquoi. */
+  const courbeAltBrute = modeDemande === 'mesure' && Array.isArray(o.courbeAlt) ? o.courbeAlt : null;
+  const repliMesure = modeDemande === 'mesure' && (!courbeAltBrute || courbeAltBrute.length < 2);
+  const mode = repliMesure ? 'type' : modeDemande;
+  const relief = mode !== 'plat';               // y a-t-il une ligne de sol non plate à tracer ?
   const pas = pasCourant(rs);
   const dMin = rs[0].d, dMax = rs[rs.length - 1].d;
   /* Les dessins gardent leurs proportions quelle que soit l'échelle horizontale
@@ -490,37 +510,72 @@ function panneauProfilDessine(rs, o){
   const liste = especesDessinees(rs);
   const hMaxCm = Math.max(50, Math.ceil(Math.max(0, ...liste.map(e => e.hcm)) / 25) * 25);
 
-  /* Relief : PROFIL TYPE. Aucune altitude n'est relevée ; la ligne de sol monte
-     avec le rang de la zone de chaque relevé (slikke en bas, haut schorre en
-     haut), lissé par une moyenne glissante pour donner une pente continue. */
-  const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche, milieuDuReleve(r)) ? zoneDeFiche(r.topFiche, milieuDuReleve(r)).rang : null));
-  let dernierRang = rangs.find(v => v != null) ?? 0;
-  const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
-  const lisses = bruts.map((_, i) => {
-    let s = 0, n = 0;
-    for(let k = i - 2; k <= i + 2; k++){
-      if(k < 0 || k >= bruts.length) continue;
-      const p = 3 - Math.abs(k - i);
-      s += bruts[k] * p; n += p;
-    }
-    return s / n;
-  });
-  const rMin = Math.min(...lisses), rMax = Math.max(...lisses);
-  const ampli = relief ? pxRang * (rMax - rMin) : 0;
-
-  const ySol = yHaut + 30 + hMaxCm * pxCm + ampli;       // sol au plus bas
-  const solY = d => {
-    if(!relief) return ySol;
-    let rg;
-    if(d <= dMin) rg = lisses[0];
-    else if(d >= dMax) rg = lisses[lisses.length - 1];
-    else {
-      let i = 1; while(rs[i].d < d) i++;
-      const t = (d - rs[i - 1].d) / (rs[i].d - rs[i - 1].d);
-      rg = lisses[i - 1] + t * (lisses[i] - lisses[i - 1]);
-    }
-    return ySol - (rg - rMin) * pxRang;
-  };
+  let ySol, solY, ampli = 0, altAt = null, courbeUtile = null;   // altAt : d → altitude (m) ; courbeUtile : points {d,z} repliés sur ce diagramme (mode 'mesure' seulement)
+  if(mode === 'type'){
+    /* PROFIL INTERPRÉTÉ. Aucune altitude n'est relevée ; la ligne de sol monte
+       avec le rang de la zone de chaque relevé (slikke en bas, haut schorre en
+       haut), lissé par une moyenne glissante pour donner une pente continue. */
+    const rangs = rs.map(r => r.solNu ? 0 : (r.topFiche != null && zoneDeFiche(r.topFiche, milieuDuReleve(r)) ? zoneDeFiche(r.topFiche, milieuDuReleve(r)).rang : null));
+    let dernierRang = rangs.find(v => v != null) ?? 0;
+    const bruts = rangs.map(v => (v == null ? dernierRang : (dernierRang = v)));
+    const lisses = bruts.map((_, i) => {
+      let s = 0, n = 0;
+      for(let k = i - 2; k <= i + 2; k++){
+        if(k < 0 || k >= bruts.length) continue;
+        const p = 3 - Math.abs(k - i);
+        s += bruts[k] * p; n += p;
+      }
+      return s / n;
+    });
+    const rMin = Math.min(...lisses), rMax = Math.max(...lisses);
+    ampli = pxRang * (rMax - rMin);
+    ySol = yHaut + 30 + hMaxCm * pxCm + ampli;
+    solY = d => {
+      let rg;
+      if(d <= dMin) rg = lisses[0];
+      else if(d >= dMax) rg = lisses[lisses.length - 1];
+      else {
+        let i = 1; while(rs[i].d < d) i++;
+        const t = (d - rs[i - 1].d) / (rs[i].d - rs[i - 1].d);
+        rg = lisses[i - 1] + t * (lisses[i] - lisses[i - 1]);
+      }
+      return ySol - (rg - rMin) * pxRang;
+    };
+  } else if(mode === 'mesure'){
+    /* MESURÉ : courbeAlt = [{d, z}] (z en mètres, IGN69) construite par
+       courbeAltitudeDepuisElevationLine() à partir des points GPS des relevés
+       et de l'altimétrie IGN (calcul dans index.html, chargerAltitudeMesuree),
+       déjà lissée. Repliée sur l'intervalle [dMin, dMax] de CE diagramme (pas
+       forcément tout le transect : l'impression en deux feuilles ne montre
+       qu'une fenêtre de distances) pour ne pas placer un repère d'altitude
+       hors cadre ni fausser l'échelle avec des valeurs hors champ.
+       Échelle verticale = échelle horizontale (pxm, déjà celle de la vue
+       courante) : un vrai profil à l'échelle, sans exagération artificielle —
+       dans l'esprit rigoureux de l'appli, qui préfère ne rien dramatiser
+       plutôt que de gonfler un relief pour qu'il « se voie mieux ». Plafonnée
+       (DESSIN_AMPLI_ALT_MAX) par sécurité pour un dénivelé extrême, qui sinon
+       ferait exploser la hauteur du diagramme. */
+    const courbeFiltree = courbeAltBrute.filter(p => p.d >= dMin - 1e-6 && p.d <= dMax + 1e-6);
+    const courbeAlt = courbeUtile = courbeFiltree.length >= 2 ? courbeFiltree : courbeAltBrute;
+    const zs = courbeAlt.map(p => p.z);
+    const zMin = Math.min(...zs), zMax = Math.max(...zs);
+    const ecart = zMax - zMin;
+    const pxParM = ecart > 0 ? Math.min(pxm, DESSIN_AMPLI_ALT_MAX / ecart) : 0;
+    ampli = ecart * pxParM;
+    ySol = yHaut + 30 + hMaxCm * pxCm + ampli;
+    altAt = d => {
+      const dd = Math.min(dMax, Math.max(dMin, d));
+      let i = 1; while(i < courbeAlt.length - 1 && courbeAlt[i].d < dd) i++;
+      const a = courbeAlt[i - 1], b = courbeAlt[i];
+      const t = b.d > a.d ? (dd - a.d) / (b.d - a.d) : 0;
+      return a.z + t * (b.z - a.z);
+    };
+    solY = d => ySol - (altAt(d) - zMin) * pxParM;
+  } else {
+    /* SOL PLAT : aucune topographie n'est dessinée. */
+    ySol = yHaut + 30 + hMaxCm * pxCm;
+    solY = () => ySol;
+  }
   const S = [];
 
   /* Cellules : chaque relevé occupe la moitié des intervalles qui le séparent
@@ -557,8 +612,10 @@ function panneauProfilDessine(rs, o){
   ['basse', 'moyenne', 'haute'].forEach((nom, i) => {
     S.push(`<text x="${xEch - 58}" y="${n1((yCm(bornes[i]) + yCm(bornes[i + 1])) / 2 + 3.5)}" text-anchor="end" font-size="10" font-style="italic" fill="#8a8676">strate ${nom}</text>`);
   });
+  const legendeRelief = mode === 'mesure' ? 'profil mesuré (GPS + altimétrie IGN)'
+    : mode === 'type' ? 'profil interprété : déduit de la zone de chaque relevé' : 'profil plat';
   S.push(`<text x="14" y="${n1(yHaut + 14)}" font-size="11" font-weight="bold">Profil de végétation</text>`);
-  S.push(`<text x="14" y="${n1(yHaut + 28)}" font-size="9.5" fill="#565a4e">${relief ? 'relief : profil type déduit des zones' : 'sol plat'}</text>`);
+  S.push(`<text x="14" y="${n1(yHaut + 28)}" font-size="9.5" fill="#565a4e">${legendeRelief}</text>`);
 
   // sol, et trous d'échantillonnage
   cellules.forEach((c, i) => {
@@ -569,6 +626,26 @@ function panneauProfilDessine(rs, o){
       if(x(suiv.a) - x(c.b) >= 50) S.push(`<text x="${n1((x(c.b) + x(suiv.a)) / 2)}" y="${n1(solY((c.b + suiv.a) / 2) + 13)}" text-anchor="middle" font-size="9.5" font-style="italic" fill="#8a8676">non relevé</text>`);
     }
   });
+
+  /* Repères d'altitude (mode mesuré uniquement) : les valeurs extrêmes de la
+     courbe repliée sur ce diagramme, annotées à même le tracé plutôt que dans
+     une règle graduée à part — la marge de gauche est déjà prise par l'échelle
+     de hauteur des plantes, sans rapport avec l'altitude, où une deuxième
+     graduation se superposerait mal. */
+  if(mode === 'mesure' && courbeUtile){
+    let iMin = 0, iMax = 0;
+    courbeUtile.forEach((p, i) => {
+      if(p.z < courbeUtile[iMin].z) iMin = i;
+      if(p.z > courbeUtile[iMax].z) iMax = i;
+    });
+    const reperes = iMin === iMax ? [iMin] : [iMin, iMax];
+    reperes.forEach(i => {
+      const p = courbeUtile[i];
+      const px = x(p.d), py = solY(p.d);
+      S.push(`<circle cx="${n1(px)}" cy="${n1(py)}" r="2.2" fill="#191b16"/>`);
+      S.push(`<text x="${n1(px)}" y="${n1(py + 14)}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#191b16">${p.z.toFixed(2).replace('.', ',')} m</text>`);
+    });
+  }
 
   /* Individus dessinés, tous quadrats confondus, puis triés du plus haut au
      plus bas : les grandes plantes passent derrière, les petites devant.
@@ -611,10 +688,84 @@ function panneauProfilDessine(rs, o){
       .map(e => `${e.fr} (${e.cover})`).join(' · ');
     S.push(`<rect x="${n1(x(c.a))}" y="${n1(yCell)}" width="${n1(Math.max(1, x(c.b) - x(c.a)))}" height="${n1(ySol + 4 - yCell)}" fill="transparent"`
       + ` class="cellule-dessin${c.r.topFiche != null ? ' zone-cliquable' : ''}" data-d="${c.r.d}" data-zone="${echapXML(z ? z.zone : '')}"`
-      + `${c.r.topFiche != null ? ` data-fiche="${c.r.topFiche}"` : ''} data-especes="${echapXML(esp || 'sol nu')}"/>`);
+      + `${c.r.topFiche != null ? ` data-fiche="${c.r.topFiche}"` : ''}${altAt ? ` data-alt="${altAt(c.r.d).toFixed(2)}"` : ''} data-especes="${echapXML(esp || 'sol nu')}"/>`);
   });
 
-  return {svg: S.join('\n'), hauteur: ySol + 6 - yHaut, liste};
+  return {svg: S.join('\n'), hauteur: ySol + 6 - yHaut, liste, repliMesure};
+}
+
+/* ---------- Relief mesuré : points GPS et mise en forme de la courbe ----------
+   Chaque relevé peut porter un point GPS optionnel (r.gps = {lat, lon}),
+   capturé sur l'écran de saisie (index.html, capturerPositionReleve()). Rien
+   n'oblige à se limiter à 2 points (départ/arrivée) : plus il y a de relevés
+   géolocalisés sur un même transect, plus la courbe d'altitude ci-dessous est
+   fidèle. */
+function pointsGPSTransect(rs){
+  return rs.filter(r => r.gps && isFinite(r.gps.lat) && isFinite(r.gps.lon))
+    .map(r => ({d: r.d, lat: r.gps.lat, lon: r.gps.lon}))
+    .sort((a, b) => a.d - b.d);
+}
+
+/* Distance orthodromique approchée (Haversine) : suffisante à l'échelle d'un
+   transect de quelques dizaines de mètres. */
+function distanceGPS(a, b){
+  const R = 6371000, toRad = v => v * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat), dLon = toRad(b.lon - a.lon);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+/* Longueur totale de la polyligne GPS (somme des segments). Sert à détecter
+   un écart avec la distance mesurée au terrain (voir chargerAltitudeMesuree,
+   index.html) : signal d'imprécision GPS, pas une correction automatique — la
+   mise en forme de la courbe (ci-dessous) reste indifférente à cet écart pour
+   2 points, et seulement partiellement sensible au-delà (voir les réserves
+   notées avec cette fonctionnalité). */
+function longueurGPSTransect(points){
+  let total = 0;
+  for(let i = 1; i < points.length; i++) total += distanceGPS(points[i - 1], points[i]);
+  return total;
+}
+
+/* Convertit la réponse elevationLine de l'API altimétrie IGN (échantillons
+   régulièrement espacés le long de la polyligne GPS demandée) en une courbe
+   {d, z} calée sur la distance « terrain » du transect (celle mesurée au
+   décamètre par l'élève, pas la distance GPS) : chaque échantillon est situé
+   par sa fraction de la longueur totale du tracé GPS, puis reporté sur les d
+   des points GPS voisins par interpolation linéaire.
+   Approximation assumée : trajet rectiligne entre deux points GPS successifs
+   (voir les réserves notées avec cette fonctionnalité — précision GPS
+   téléphone, référence IGN69 et non le zéro hydrographique). */
+function courbeAltitudeDepuisElevationLine(points, elevations){
+  if(!points || points.length < 2 || !elevations || elevations.length < 2) return null;
+  const cum = [0];
+  for(let i = 1; i < points.length; i++) cum.push(cum[i - 1] + distanceGPS(points[i - 1], points[i]));
+  const total = cum[cum.length - 1];
+  if(!(total > 0)) return null;
+  const n = elevations.length;
+  const brut = elevations.map((e, k) => {
+    const distCum = total * (k / (n - 1));
+    let i = 1;
+    while(i < points.length - 1 && cum[i] < distCum) i++;
+    const t = cum[i] > cum[i - 1] ? (distCum - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+    const d = points[i - 1].d + t * (points[i].d - points[i - 1].d);
+    return {d, z: e.z};
+  }).sort((a, b) => a.d - b.d);
+  /* Lissage : les échantillons IGN (environ 1 par mètre) portent le bruit du
+     MNT (précision ~20-50 cm, voir réserves) — sans lissage, l'exagération
+     verticale qui rend un relief réel lisible fait aussi ressortir ce bruit
+     en petits pics artificiels. Moyenne glissante pondérée sur 5 points,
+     même principe que le lissage du profil interprété (voir "lisses" plus
+     haut). */
+  return brut.map((_, i) => {
+    let sz = 0, sp = 0;
+    for(let k = i - 2; k <= i + 2; k++){
+      if(k < 0 || k >= brut.length) continue;
+      const p = 3 - Math.abs(k - i);
+      sz += brut[k].z * p; sp += p;
+    }
+    return {d: brut[i].d, z: sz / sp};
+  });
 }
 
 /* Légende des dessins pour le SVG téléchargé : il doit se lire seul. */
