@@ -2446,7 +2446,7 @@ function ouvrirMiniFloreFiche(id){
   const cont = document.getElementById('contenu-mini-flore-fiche');
   cont.innerHTML = `
     <div class="carte">
-      <span class="tag">Fiche ${h.id}</span>
+      <span class="tag">${libelleFicheComplet(h, milieuFicheAffichee)}</span>
       <h2>Mini-flore — ${h.nomFr}</h2>
       <p style="font-size:.8rem;color:var(--text-2);">Photos des espèces de cette fiche (source : Tela Botanica), classées par famille botanique. Faites glisser une photo pour voir les suivantes. Nécessite une connexion.</p>
     </div>
@@ -2513,7 +2513,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.33.0';
+const VERSION_APPLI = '1.33.1';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
