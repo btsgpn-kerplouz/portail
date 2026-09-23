@@ -3601,8 +3601,8 @@ function renderScatterLayerChecks(){
        • SUPABASE_ANON_KEY = « anon public » key  (clé publique côté client)
      Et dans Supabase → Authentication → URL Configuration, mettre la
      « Site URL » et la « Redirect URL » sur l'adresse de l'application. */
-  const SUPABASE_URL      = "https://eywuucedgtesgipniotf.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5d3V1Y2VkZ3Rlc2dpcG5pb3RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjMzOTAsImV4cCI6MjA5ODE5OTM5MH0.5MfcUNW2cKuHj0p-lD5CFPkFPEY6pxBsbRKHiWZTGxE";
+  const SUPABASE_URL      = "https://uoeuzxstotqnembcpofx.supabase.co"; // projet partagé BTS GPN (portail)
+  const SUPABASE_ANON_KEY = "sb_publishable_eW4e-uYvC8aHbTwESRdGJw_ceyhagM1";
   /* ------------------------------------------------------------------- */
 
   /* Mot de passe de classe, commun et caché : l'étudiant ne tape qu'un identifiant,
@@ -3796,7 +3796,7 @@ function renderScatterLayerChecks(){
   function markSynced(){ try{ localStorage.setItem(SUPA_SYNC_KEY, JSON.stringify({lastSyncAt:new Date().toISOString()})); }catch(e){} supaSet(syncStatusText()); }
 
   async function supaPull(){
-    const { data, error } = await sb.from("releves").select("id,donnees,updated_at");
+    const { data, error } = await sb.from("phyto_releves").select("id,donnees,updated_at");
     if(error) throw error;
     const releves=(data||[]).map(row=>{
       const r=(row.donnees && typeof row.donnees==="object") ? row.donnees : {};
@@ -3813,18 +3813,18 @@ function renderScatterLayerChecks(){
       updated_at:r.updated_at||new Date().toISOString()
     }));
     if(!rows.length) return;
-    const { error } = await sb.from("releves").upsert(rows, { onConflict:"proprietaire_id,id" });
+    const { error } = await sb.from("phyto_releves").upsert(rows, { onConflict:"proprietaire_id,id" });
     if(error) throw error;
   }
   async function supaDeleteRemote(id){
     if(!sb || !currentUser || !id) return;
-    try{ await sb.from("releves").delete().eq("id", id); markSynced(); }
+    try{ await sb.from("phyto_releves").delete().eq("id", id); markSynced(); }
     catch(e){ /* suppression distante silencieuse */ }
   }
   /* ----- Synchronisation des lots (même schéma que les relevés : table
      dédiée, blob JSON dans `donnees`, fusion par updated_at) ----- */
   async function supaPullLots(){
-    const { data, error } = await sb.from("lots").select("id,donnees,updated_at");
+    const { data, error } = await sb.from("phyto_lots").select("id,donnees,updated_at");
     if(error) throw error;
     return (data||[]).map(row=>{
       const l=(row.donnees && typeof row.donnees==="object") ? row.donnees : {};
@@ -3840,12 +3840,12 @@ function renderScatterLayerChecks(){
       updated_at:l.updated_at||new Date().toISOString()
     }));
     if(!rows.length) return;
-    const { error } = await sb.from("lots").upsert(rows, { onConflict:"proprietaire_id,id" });
+    const { error } = await sb.from("phyto_lots").upsert(rows, { onConflict:"proprietaire_id,id" });
     if(error) throw error;
   }
   async function supaDeleteRemoteLot(id){
     if(!sb || !currentUser || !id) return;
-    try{ await sb.from("lots").delete().eq("id", id); }
+    try{ await sb.from("phyto_lots").delete().eq("id", id); }
     catch(e){ /* suppression distante silencieuse */ }
   }
   async function supaSyncNow(silent){

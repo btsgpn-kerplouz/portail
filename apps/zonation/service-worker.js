@@ -8,7 +8,7 @@
    les mises à jour), cache d'abord pour les ressources, qui ne changent qu'avec
    une nouvelle version du cache. */
 /* Même numéro que VERSION_APPLI dans index.html, affiché dans l'en-tête. */
-const VERSION = "1.32.0";
+const VERSION = "1.33.0";
 const CACHE_NAME = "zonation-pwa-v" + VERSION.replace(/\./g, "-");
 
 const VIGNETTES_BB = ["i", "r", "+", "1", "2", "3", "4", "5"];

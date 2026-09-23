@@ -1,6 +1,14 @@
 # Mini flore — pipeline de génération
 
-Trois sorties générées à partir de `../especes_zonation_illustrations(URL).csv` :
+Trois sorties générées à partir d'un CSV d'espèces illustrées :
+
+- **app** (`build_app_data.py`, `fetch_species_data.py`) : lit
+  `../liste-especes-zonation-marais-dunes(URL).csv` — toutes les espèces des
+  fiches marais **et** dunes (colonnes `URL 1` à `URL 7`) ;
+- **imprimables** (`build_illustrations.py`, `build_descriptions.py`,
+  `fetch_image_dims.py`) : lisent encore l'ancien
+  `../especes_zonation_illustrations(URL).csv` (marais seul).
+
 
 - `mini-flore-illustrations.html` — document imprimable A4, photos + noms
   uniquement, regroupés par famille botanique, agencement « galerie
@@ -11,13 +19,15 @@ Trois sorties générées à partir de `../especes_zonation_illustrations(URL).c
 - `../../mini-flore-data.js` — uniquement les photos (pas de texte), au
   format consommé par l'app zonation elle-même (écran « Mini-flore de cet
   habitat » sur chaque fiche : carrousel plein écran, priorité aux
-  illustrations), indexées par nom scientifique. Ne dépend que du CSV, pas
-  du cache de descriptions.
+  illustrations), indexées par nom scientifique. Lit la famille dans
+  `cache/species_data.json` (lancer d'abord `fetch_species_data.py`,
+  incrémental, si le CSV gagne des espèces).
 
 ## Pour régénérer après avoir complété le CSV
 
 ```bash
 cd apps/zonation/documents/mini-flore
+python3 fetch_species_data.py   # familles des espèces nouvelles (incrémental)
 python3 build_app_data.py       # régénère mini-flore-data.js pour l'app (photos seules)
 
 # Uniquement si les documents imprimables (texte + mise en page photo) sont aussi à jour :

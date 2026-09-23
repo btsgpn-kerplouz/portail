@@ -14,7 +14,8 @@ Seules deux sources sont exploitees :
 
 Usage : python3 fetch_species_data.py
 Sortie : cache/species_data.json
-A relancer si le CSV gagne de nouvelles especes.
+A relancer si le CSV gagne de nouvelles especes (incremental : seules les
+especes absentes du cache, ou sans famille, sont interrogees).
 """
 import csv
 import html
@@ -26,7 +27,7 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CSV_PATH = HERE.parent / "especes_zonation_illustrations(URL).csv"
+CSV_PATH = HERE.parent / "liste-especes-zonation-marais-dunes(URL).csv"
 OUT_JSON = HERE / "cache" / "species_data.json"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; mini-flore-zonation-script/1.0)"}
@@ -148,8 +149,13 @@ def main():
 
     species = [(r[0].strip(), r[1].strip()) for r in rows[1:] if r and r[0].strip()]
 
+    # Incremental : les especes deja en cache (avec famille) ne sont pas re-interrogees.
+    cache = json.loads(OUT_JSON.read_text(encoding="utf-8")) if OUT_JSON.exists() else {}
     results = {}
     for i, (nom_sci, nom_fr) in enumerate(species):
+        if (cache.get(nom_sci) or {}).get("famille"):
+            results[nom_sci] = cache[nom_sci]
+            continue
         print(f"[{i+1}/{len(species)}] {nom_sci} ...")
         num_nom, famille = find_num_nom(nom_sci)
         entry = {"nom_sci": nom_sci, "nom_fr": nom_fr, "num_nom": num_nom, "famille": famille}
