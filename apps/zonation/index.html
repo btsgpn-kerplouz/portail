@@ -2310,8 +2310,8 @@ function allerVoirFiche(id, origine, milieu){
   const cont = document.getElementById('contenu-detail-fiche');
   const especesParStatut = s => h.especes.filter(e=>e.statut===s).map(e=>`${e.fr} <i>(${e.latin})</i>`).join(', ') || '—';
   /* La mini-flore ne s'affiche que pour les espèces réellement photographiées :
-     les taxons dunaires n'ont pas encore de photos, le bouton disparaît donc
-     plutôt que d'annoncer des images inexistantes. */
+     une fiche dont aucune espèce car/freq n'a de photo perd le bouton plutôt
+     que d'annoncer des images inexistantes. */
   const especesMiniFlore = h.especes.filter(e => (e.statut === 'car' || e.statut === 'freq')
     && MINI_FLORE[e.latin] && MINI_FLORE[e.latin].photos && MINI_FLORE[e.latin].photos.length);
   const profilFiche = profilDeFiche(h.id, milieuFicheAffichee);
@@ -2513,7 +2513,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.32.0';
+const VERSION_APPLI = '1.33.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){

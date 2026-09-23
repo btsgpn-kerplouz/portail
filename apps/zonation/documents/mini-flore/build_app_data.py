@@ -16,11 +16,24 @@ import json
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CSV_PATH = HERE.parent / "especes_zonation_illustrations(URL).csv"
+CSV_PATH = HERE.parent / "liste-especes-zonation-marais-dunes(URL).csv"
 SPECIES_JSON = HERE / "cache" / "species_data.json"
 OUT = HERE.parent.parent / "mini-flore-data.js"
 
 SPECIES = json.loads(SPECIES_JSON.read_text(encoding="utf-8")) if SPECIES_JSON.exists() else {}
+
+# Les bryophytes ne figurent pas dans bdtfx (referentiel des plantes vasculaires) :
+# famille renseignee a la main, par genre. "Lichen sp." reste sans famille.
+FAMILLES_BRYOPHYTES = {
+    "Brachythecium": "Brachytheciaceae",
+    "Homalothecium": "Brachytheciaceae",
+    "Pseudoscleropodium": "Brachytheciaceae",
+    "Didymodon": "Pottiaceae",
+    "Syntrichia": "Pottiaceae",
+    "Tortella": "Pottiaceae",
+    "Hypnum": "Hypnaceae",
+    "Ptychostomum": "Bryaceae",
+}
 
 
 def main():
@@ -28,11 +41,12 @@ def main():
 
     entries = {}
     for r in rows[1:]:
-        if len(r) < 10 or not r[0].strip():
+        if len(r) < 14 or not r[0].strip():
             continue
         nom_sci, nom_fr = r[0].strip(), r[1].strip()
-        photos = [u.strip() for u in r[6:10] if u.strip()]
-        famille = (SPECIES.get(nom_sci) or {}).get("famille")
+        photos = [u.strip() for u in r[7:14] if u.strip()]  # colonnes "URL 1" a "URL 7"
+        famille = ((SPECIES.get(nom_sci) or {}).get("famille")
+                   or FAMILLES_BRYOPHYTES.get(nom_sci.split(" ")[0]))
         entries[nom_sci] = {"nomFr": nom_fr, "famille": famille, "photos": photos}
 
     out_js = (
