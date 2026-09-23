@@ -2446,7 +2446,7 @@ function ouvrirMiniFloreFiche(id){
   const cont = document.getElementById('contenu-mini-flore-fiche');
   cont.innerHTML = `
     <div class="carte">
-      <span class="tag">Fiche ${h.id}</span>
+      <span class="tag">${libelleFicheComplet(h, milieuFicheAffichee)}</span>
       <h2>Mini-flore — ${h.nomFr}</h2>
       <p style="font-size:.8rem;color:var(--text-2);">Photos des espèces de cette fiche (source : Tela Botanica), classées par famille botanique. Faites glisser une photo pour voir les suivantes. Nécessite une connexion.</p>
     </div>
