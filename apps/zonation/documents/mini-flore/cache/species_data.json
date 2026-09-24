@@ -1577,5 +1577,971 @@
     "nom_fr": "Zostère naine",
     "num_nom": "87492",
     "famille": "Zosteraceae"
+  },
+  "Salsola kali subsp. kali": {
+    "nom_sci": "Salsola kali subsp. kali",
+    "nom_fr": "Soude épineuse",
+    "num_nom": "60076",
+    "famille": "Amaranthaceae"
+  },
+  "Cakile maritima subsp. maritima": {
+    "nom_sci": "Cakile maritima subsp. maritima",
+    "nom_fr": "Roquette de mer",
+    "num_nom": "11765",
+    "famille": "Brassicaceae"
+  },
+  "Honckenya peploides": {
+    "nom_sci": "Honckenya peploides",
+    "nom_fr": "Pourpier de mer",
+    "num_nom": "75174",
+    "famille": "Caryophyllaceae"
+  },
+  "Elymus farctus": {
+    "nom_sci": "Elymus farctus",
+    "nom_fr": "Chiendent des sables",
+    "num_nom": "23842",
+    "famille": "Poaceae"
+  },
+  "Polygonum maritimum": {
+    "nom_sci": "Polygonum maritimum",
+    "nom_fr": "Renouée maritime",
+    "num_nom": "51574",
+    "famille": "Polygonaceae"
+  },
+  "Calystegia soldanella": {
+    "nom_sci": "Calystegia soldanella",
+    "nom_fr": "Liseron des dunes",
+    "num_nom": "12352",
+    "famille": "Convolvulaceae"
+  },
+  "Euphorbia peplis": {
+    "nom_sci": "Euphorbia peplis",
+    "nom_fr": "Euphorbe péplis",
+    "num_nom": "25994",
+    "famille": "Euphorbiaceae"
+  },
+  "Ammophila arenaria subsp. arenaria": {
+    "nom_sci": "Ammophila arenaria subsp. arenaria",
+    "nom_fr": "Oyat",
+    "num_nom": "4140",
+    "famille": "Poaceae"
+  },
+  "Eryngium maritimum": {
+    "nom_sci": "Eryngium maritimum",
+    "nom_fr": "Panicaut de mer (Chardon bleu)",
+    "num_nom": "25390",
+    "famille": "Apiaceae"
+  },
+  "Euphorbia paralias": {
+    "nom_sci": "Euphorbia paralias",
+    "nom_fr": "Euphorbe des dunes",
+    "num_nom": "25991",
+    "famille": "Euphorbiaceae"
+  },
+  "Otanthus maritimus": {
+    "nom_sci": "Otanthus maritimus",
+    "nom_fr": "Immortelle des sables (Diotis)",
+    "num_nom": "47076",
+    "famille": "Asteraceae"
+  },
+  "Galium arenarium": {
+    "nom_sci": "Galium arenarium",
+    "nom_fr": "Gaillet des sables",
+    "num_nom": "28915",
+    "famille": "Rubiaceae"
+  },
+  "Leontodon saxatilis": {
+    "nom_sci": "Leontodon saxatilis",
+    "nom_fr": "Liondent des rochers",
+    "num_nom": "38368",
+    "famille": "Asteraceae"
+  },
+  "Matthiola sinuata": {
+    "nom_sci": "Matthiola sinuata",
+    "nom_fr": "Giroflée des dunes",
+    "num_nom": "41095",
+    "famille": "Brassicaceae"
+  },
+  "Carex arenaria": {
+    "nom_sci": "Carex arenaria",
+    "nom_fr": "Laîche des sables",
+    "num_nom": "13448",
+    "famille": "Cyperaceae"
+  },
+  "Conyza sumatrensis": {
+    "nom_sci": "Conyza sumatrensis",
+    "nom_fr": "Vergerette de Sumatra",
+    "num_nom": "18851",
+    "famille": "Asteraceae"
+  },
+  "Senecio jacobaea": {
+    "nom_sci": "Senecio jacobaea",
+    "nom_fr": "Séneçon jacobée",
+    "num_nom": "62920",
+    "famille": "Asteraceae"
+  },
+  "Festuca juncifolia": {
+    "nom_sci": "Festuca juncifolia",
+    "nom_fr": "Fétuque à feuilles de jonc",
+    "num_nom": "27105",
+    "famille": null
+  },
+  "Plantago lanceolata": {
+    "nom_sci": "Plantago lanceolata",
+    "nom_fr": "Plantain lancéolé",
+    "num_nom": "49948",
+    "famille": "Plantaginaceae"
+  },
+  "Cerastium diffusum subsp. diffusum": {
+    "nom_sci": "Cerastium diffusum subsp. diffusum",
+    "nom_fr": "Céraiste à quatre étamines",
+    "num_nom": "15829",
+    "famille": "Caryophyllaceae"
+  },
+  "Hypochaeris radicata": {
+    "nom_sci": "Hypochaeris radicata",
+    "nom_fr": "Porcelle enracinée",
+    "num_nom": "35439",
+    "famille": "Asteraceae"
+  },
+  "Medicago marina": {
+    "nom_sci": "Medicago marina",
+    "nom_fr": "Luzerne marine",
+    "num_nom": "41342",
+    "famille": "Fabaceae"
+  },
+  "Mibora minima": {
+    "nom_sci": "Mibora minima",
+    "nom_fr": "Mibora naine",
+    "num_nom": "42463",
+    "famille": "Poaceae"
+  },
+  "Ephedra distachya subsp. distachya": {
+    "nom_sci": "Ephedra distachya subsp. distachya",
+    "nom_fr": "Éphèdre à deux épis (Raisin de mer)",
+    "num_nom": "23987",
+    "famille": "Ephedraceae"
+  },
+  "Sedum acre": {
+    "nom_sci": "Sedum acre",
+    "nom_fr": "Orpin âcre",
+    "num_nom": "75358",
+    "famille": "Crassulaceae"
+  },
+  "Eryngium campestre": {
+    "nom_sci": "Eryngium campestre",
+    "nom_fr": "Panicaut champêtre",
+    "num_nom": "25380",
+    "famille": "Apiaceae"
+  },
+  "Euphorbia portlandica": {
+    "nom_sci": "Euphorbia portlandica",
+    "nom_fr": "Euphorbe de Portland",
+    "num_nom": "26022",
+    "famille": "Euphorbiaceae"
+  },
+  "Sanguisorba minor subsp. minor": {
+    "nom_sci": "Sanguisorba minor subsp. minor",
+    "nom_fr": "Petite pimprenelle",
+    "num_nom": "75612",
+    "famille": "Rosaceae"
+  },
+  "Koeleria glauca": {
+    "nom_sci": "Koeleria glauca",
+    "nom_fr": "Koelérie glauque",
+    "num_nom": "37133",
+    "famille": "Poaceae"
+  },
+  "Thymus drucei": {
+    "nom_sci": "Thymus drucei",
+    "nom_fr": "Thym de Bretagne",
+    "num_nom": "68121",
+    "famille": "Lamiaceae"
+  },
+  "Veronica arvensis": {
+    "nom_sci": "Veronica arvensis",
+    "nom_fr": "Véronique des champs",
+    "num_nom": "71090",
+    "famille": "Plantaginaceae"
+  },
+  "Geranium molle": {
+    "nom_sci": "Geranium molle",
+    "nom_fr": "Géranium à feuilles molles",
+    "num_nom": "29998",
+    "famille": "Geraniaceae"
+  },
+  "Lamium amplexicaule subsp. amplexicaule": {
+    "nom_sci": "Lamium amplexicaule subsp. amplexicaule",
+    "nom_fr": "Lamier amplexicaule",
+    "num_nom": "37474",
+    "famille": "Lamiaceae"
+  },
+  "Viola kitaibeliana": {
+    "nom_sci": "Viola kitaibeliana",
+    "nom_fr": "Pensée de Kitaibel",
+    "num_nom": "72315",
+    "famille": "Violaceae"
+  },
+  "Helichrysum stoechas subsp. stoechas": {
+    "nom_sci": "Helichrysum stoechas subsp. stoechas",
+    "nom_fr": "Immortelle des dunes",
+    "num_nom": "31404",
+    "famille": "Asteraceae"
+  },
+  "Erodium lebelii": {
+    "nom_sci": "Erodium lebelii",
+    "nom_fr": "Bec-de-grue de Lebel",
+    "num_nom": "75115",
+    "famille": "Geraniaceae"
+  },
+  "Tortella squarrosa": {
+    "nom_sci": "Tortella squarrosa",
+    "nom_fr": "Tortella squarrosa (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Bupleurum baldense subsp. baldense": {
+    "nom_sci": "Bupleurum baldense subsp. baldense",
+    "nom_fr": "Buplèvre du mont Baldo",
+    "num_nom": "75003",
+    "famille": "Apiaceae"
+  },
+  "Homalothecium lutescens": {
+    "nom_sci": "Homalothecium lutescens",
+    "nom_fr": "Homalothecium lutescens (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Rosa pimpinellifolia": {
+    "nom_sci": "Rosa pimpinellifolia",
+    "nom_fr": "Rosier pimprenelle",
+    "num_nom": "57303",
+    "famille": "Rosaceae"
+  },
+  "Asperula cynanchica": {
+    "nom_sci": "Asperula cynanchica",
+    "nom_fr": "Aspérule à l'esquinancie",
+    "num_nom": "85943",
+    "famille": "Rubiaceae"
+  },
+  "Valerianella locusta": {
+    "nom_sci": "Valerianella locusta",
+    "nom_fr": "Mâche doucette",
+    "num_nom": "70673",
+    "famille": "Caprifoliaceae"
+  },
+  "Sherardia arvensis": {
+    "nom_sci": "Sherardia arvensis",
+    "nom_fr": "Rubéole des champs",
+    "num_nom": "63722",
+    "famille": "Rubiaceae"
+  },
+  "Lichen sp.": {
+    "nom_sci": "Lichen sp.",
+    "nom_fr": "Lichen (non déterminé)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Senecio vulgaris": {
+    "nom_sci": "Senecio vulgaris",
+    "nom_fr": "Séneçon commun",
+    "num_nom": "63096",
+    "famille": "Asteraceae"
+  },
+  "Saxifraga tridactylites": {
+    "nom_sci": "Saxifraga tridactylites",
+    "nom_fr": "Saxifrage à trois doigts",
+    "num_nom": "61042",
+    "famille": "Saxifragaceae"
+  },
+  "Dianthus gallicus": {
+    "nom_sci": "Dianthus gallicus",
+    "nom_fr": "Œillet de France",
+    "num_nom": "22150",
+    "famille": "Caryophyllaceae"
+  },
+  "Allium sphaerocephalon": {
+    "nom_sci": "Allium sphaerocephalon",
+    "nom_fr": "Ail à tête ronde",
+    "num_nom": "3228",
+    "famille": "Amaryllidaceae"
+  },
+  "Medicago minima": {
+    "nom_sci": "Medicago minima",
+    "nom_fr": "Luzerne naine",
+    "num_nom": "41349",
+    "famille": "Fabaceae"
+  },
+  "Trifolium scabrum": {
+    "nom_sci": "Trifolium scabrum",
+    "nom_fr": "Trèfle scabre",
+    "num_nom": "69388",
+    "famille": "Fabaceae"
+  },
+  "Syntrichia ruralis subsp. ruraliformis": {
+    "nom_sci": "Syntrichia ruralis subsp. ruraliformis",
+    "nom_fr": "Syntrichia ruralis (mousse des dunes saupoudrées)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Ononis repens": {
+    "nom_sci": "Ononis repens",
+    "nom_fr": "Bugrane rampante",
+    "num_nom": "44873",
+    "famille": "Fabaceae"
+  },
+  "Phleum arenarium": {
+    "nom_sci": "Phleum arenarium",
+    "nom_fr": "Fléole des sables",
+    "num_nom": "48908",
+    "famille": "Poaceae"
+  },
+  "Myosotis ramosissima subsp. lebelii": {
+    "nom_sci": "Myosotis ramosissima subsp. lebelii",
+    "nom_fr": "Myosotis de Lebel",
+    "num_nom": "43318",
+    "famille": "Boraginaceae"
+  },
+  "Jasione montana subsp. montana": {
+    "nom_sci": "Jasione montana subsp. montana",
+    "nom_fr": "Jasione des montagnes",
+    "num_nom": "36264",
+    "famille": "Campanulaceae"
+  },
+  "Corynephorus canescens": {
+    "nom_sci": "Corynephorus canescens",
+    "nom_fr": "Corynéphore blanchâtre",
+    "num_nom": "19110",
+    "famille": "Melastomataceae"
+  },
+  "Cerastium semidecandrum subsp. semidecandrum": {
+    "nom_sci": "Cerastium semidecandrum subsp. semidecandrum",
+    "nom_fr": "Céraiste à cinq étamines",
+    "num_nom": "15986",
+    "famille": "Caryophyllaceae"
+  },
+  "Silene otites subsp. otites": {
+    "nom_sci": "Silene otites subsp. otites",
+    "nom_fr": "Silène à oreillettes",
+    "num_nom": "64284",
+    "famille": "Caryophyllaceae"
+  },
+  "Tortella flavovirens": {
+    "nom_sci": "Tortella flavovirens",
+    "nom_fr": "Tortella flavovirens (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Hypnum cupressiforme var. lacunosum": {
+    "nom_sci": "Hypnum cupressiforme var. lacunosum",
+    "nom_fr": "Hypnum cupressiforme (mousse des dunes grises)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Arenaria serpyllifolia": {
+    "nom_sci": "Arenaria serpyllifolia",
+    "nom_fr": "Sabline à feuilles de serpolet",
+    "num_nom": "6292",
+    "famille": "Caryophyllaceae"
+  },
+  "Hieracium pilosella": {
+    "nom_sci": "Hieracium pilosella",
+    "nom_fr": "Piloselle",
+    "num_nom": "33796",
+    "famille": "Asteraceae"
+  },
+  "Asterolinon linum-stellatum": {
+    "nom_sci": "Asterolinon linum-stellatum",
+    "nom_fr": "Astérolinon",
+    "num_nom": "7995",
+    "famille": "Primulaceae"
+  },
+  "Lotus corniculatus subsp. corniculatus": {
+    "nom_sci": "Lotus corniculatus subsp. corniculatus",
+    "nom_fr": "Lotier corniculé",
+    "num_nom": "39994",
+    "famille": "Fabaceae"
+  },
+  "Ranunculus bulbosus subsp. bulbosus": {
+    "nom_sci": "Ranunculus bulbosus subsp. bulbosus",
+    "nom_fr": "Renoncule bulbeuse",
+    "num_nom": "54848",
+    "famille": "Ranunculaceae"
+  },
+  "Medicago lupulina": {
+    "nom_sci": "Medicago lupulina",
+    "nom_fr": "Minette",
+    "num_nom": "41325",
+    "famille": "Fabaceae"
+  },
+  "Ophrys passionis": {
+    "nom_sci": "Ophrys passionis",
+    "nom_fr": "Ophrys de la Passion",
+    "num_nom": "45383",
+    "famille": "Orchidaceae"
+  },
+  "Anthyllis vulneraria": {
+    "nom_sci": "Anthyllis vulneraria",
+    "nom_fr": "Anthyllide vulnéraire",
+    "num_nom": "5363",
+    "famille": "Fabaceae"
+  },
+  "Brachythecium albicans": {
+    "nom_sci": "Brachythecium albicans",
+    "nom_fr": "Brachythecium albicans (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Aira praecox": {
+    "nom_sci": "Aira praecox",
+    "nom_fr": "Canche printanière",
+    "num_nom": "2294",
+    "famille": "Poaceae"
+  },
+  "Taraxacum gr. erythrospermum": {
+    "nom_sci": "Taraxacum gr. erythrospermum",
+    "nom_fr": "Pissenlit à graines rouges (groupe)",
+    "num_nom": "87290",
+    "famille": "Asteraceae"
+  },
+  "Thesium humifusum": {
+    "nom_sci": "Thesium humifusum",
+    "nom_fr": "Thésium couché",
+    "num_nom": "67814",
+    "famille": "Santalaceae"
+  },
+  "Geranium sanguineum": {
+    "nom_sci": "Geranium sanguineum",
+    "nom_fr": "Géranium sanguin",
+    "num_nom": "30061",
+    "famille": "Geraniaceae"
+  },
+  "Pseudoscleropodium purum": {
+    "nom_sci": "Pseudoscleropodium purum",
+    "nom_fr": "Pseudoscleropodium purum (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Plantago coronopus subsp. coronopus": {
+    "nom_sci": "Plantago coronopus subsp. coronopus",
+    "nom_fr": "Plantain corne-de-cerf",
+    "num_nom": "49879",
+    "famille": "Plantaginaceae"
+  },
+  "Bromus hordeaceus subsp. hordeaceus": {
+    "nom_sci": "Bromus hordeaceus subsp. hordeaceus",
+    "nom_fr": "Brome mou",
+    "num_nom": "10782",
+    "famille": "Poaceae"
+  },
+  "Bellis perennis subsp. perennis": {
+    "nom_sci": "Bellis perennis subsp. perennis",
+    "nom_fr": "Pâquerette",
+    "num_nom": "75550",
+    "famille": "Asteraceae"
+  },
+  "Juncus bufonius": {
+    "nom_sci": "Juncus bufonius",
+    "nom_fr": "Jonc des crapauds",
+    "num_nom": "36441",
+    "famille": "Juncaceae"
+  },
+  "Poa annua": {
+    "nom_sci": "Poa annua",
+    "nom_fr": "Pâturin annuel",
+    "num_nom": "50284",
+    "famille": "Poaceae"
+  },
+  "Sagina apetala": {
+    "nom_sci": "Sagina apetala",
+    "nom_fr": "Sagine apétale",
+    "num_nom": "59056",
+    "famille": "Caryophyllaceae"
+  },
+  "Anagallis arvensis": {
+    "nom_sci": "Anagallis arvensis",
+    "nom_fr": "Mouron rouge",
+    "num_nom": "4371",
+    "famille": "Primulaceae"
+  },
+  "Ptychostomum imbricatulum": {
+    "nom_sci": "Ptychostomum imbricatulum",
+    "nom_fr": "Ptychostomum imbricatulum (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Trifolium suffocatum": {
+    "nom_sci": "Trifolium suffocatum",
+    "nom_fr": "Trèfle étouffé",
+    "num_nom": "69449",
+    "famille": "Fabaceae"
+  },
+  "Parentucellia latifolia": {
+    "nom_sci": "Parentucellia latifolia",
+    "nom_fr": "Parentucelle à larges feuilles",
+    "num_nom": "47913",
+    "famille": "Orobanchaceae"
+  },
+  "Lagurus ovatus": {
+    "nom_sci": "Lagurus ovatus",
+    "nom_fr": "Lagure ovale (Queue-de-lièvre)",
+    "num_nom": "37447",
+    "famille": "Poaceae"
+  },
+  "Bromus diandrus subsp. diandrus": {
+    "nom_sci": "Bromus diandrus subsp. diandrus",
+    "nom_fr": "Brome à deux étamines",
+    "num_nom": "10664",
+    "famille": "Poaceae"
+  },
+  "Bromus diandrus subsp. maximus": {
+    "nom_sci": "Bromus diandrus subsp. maximus",
+    "nom_fr": "Grand brome des sables",
+    "num_nom": "10665",
+    "famille": "Poaceae"
+  },
+  "Glaucium flavum": {
+    "nom_sci": "Glaucium flavum",
+    "nom_fr": "Glaucière jaune (Pavot cornu)",
+    "num_nom": "30228",
+    "famille": "Papaveraceae"
+  },
+  "Carduus nutans subsp. nutans": {
+    "nom_sci": "Carduus nutans subsp. nutans",
+    "nom_fr": "Chardon penché",
+    "num_nom": "13268",
+    "famille": "Asteraceae"
+  },
+  "Solanum nigrum": {
+    "nom_sci": "Solanum nigrum",
+    "nom_fr": "Morelle noire",
+    "num_nom": "64930",
+    "famille": "Solanaceae"
+  },
+  "Poa pratensis": {
+    "nom_sci": "Poa pratensis",
+    "nom_fr": "Pâturin des prés",
+    "num_nom": "50735",
+    "famille": "Poaceae"
+  },
+  "Potentilla reptans": {
+    "nom_sci": "Potentilla reptans",
+    "nom_fr": "Potentille rampante",
+    "num_nom": "52829",
+    "famille": "Rosaceae"
+  },
+  "Geranium columbinum": {
+    "nom_sci": "Geranium columbinum",
+    "nom_fr": "Géranium colombin",
+    "num_nom": "29935",
+    "famille": "Geraniaceae"
+  },
+  "Arrhenatherum elatius s.l.": {
+    "nom_sci": "Arrhenatherum elatius s.l.",
+    "nom_fr": "Fromental",
+    "num_nom": "6701",
+    "famille": "Poaceae"
+  },
+  "Elymus x acutus": {
+    "nom_sci": "Elymus x acutus",
+    "nom_fr": "Chiendent hybride du littoral",
+    "num_nom": "86372",
+    "famille": null
+  },
+  "Vicia sativa subsp. segetalis": {
+    "nom_sci": "Vicia sativa subsp. segetalis",
+    "nom_fr": "Vesce des moissons",
+    "num_nom": "71775",
+    "famille": "Fabaceae"
+  },
+  "Prunus spinosa": {
+    "nom_sci": "Prunus spinosa",
+    "nom_fr": "Prunellier",
+    "num_nom": "53652",
+    "famille": "Rosaceae"
+  },
+  "Carex flacca subsp. flacca": {
+    "nom_sci": "Carex flacca subsp. flacca",
+    "nom_fr": "Laîche glauque",
+    "num_nom": "13760",
+    "famille": "Cyperaceae"
+  },
+  "Luzula campestris": {
+    "nom_sci": "Luzula campestris",
+    "nom_fr": "Luzule champêtre",
+    "num_nom": "40237",
+    "famille": "Juncaceae"
+  },
+  "Anthoxanthum odoratum": {
+    "nom_sci": "Anthoxanthum odoratum",
+    "nom_fr": "Flouve odorante",
+    "num_nom": "5194",
+    "famille": "Poaceae"
+  },
+  "Gaudinia fragilis": {
+    "nom_sci": "Gaudinia fragilis",
+    "nom_fr": "Gaudinie fragile",
+    "num_nom": "29424",
+    "famille": "Poaceae"
+  },
+  "Trifolium dubium": {
+    "nom_sci": "Trifolium dubium",
+    "nom_fr": "Trèfle douteux",
+    "num_nom": "69085",
+    "famille": "Fabaceae"
+  },
+  "Brachythecium rutabulum": {
+    "nom_sci": "Brachythecium rutabulum",
+    "nom_fr": "Brachythecium rutabulum (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Medicago arabica": {
+    "nom_sci": "Medicago arabica",
+    "nom_fr": "Luzerne tachetée",
+    "num_nom": "41184",
+    "famille": "Fabaceae"
+  },
+  "Festuca arundinacea": {
+    "nom_sci": "Festuca arundinacea",
+    "nom_fr": "Fétuque roseau",
+    "num_nom": "26613",
+    "famille": "Poaceae"
+  },
+  "Leucanthemum vulgare": {
+    "nom_sci": "Leucanthemum vulgare",
+    "nom_fr": "Marguerite commune",
+    "num_nom": "38749",
+    "famille": "Asteraceae"
+  },
+  "Myosotis discolor": {
+    "nom_sci": "Myosotis discolor",
+    "nom_fr": "Myosotis bicolore",
+    "num_nom": "43211",
+    "famille": "Boraginaceae"
+  },
+  "Rubus sp.": {
+    "nom_sci": "Rubus sp.",
+    "nom_fr": "Ronce (non déterminée)",
+    "num_nom": "77191",
+    "famille": "Rosaceae"
+  },
+  "Iris foetidissima": {
+    "nom_sci": "Iris foetidissima",
+    "nom_fr": "Iris fétide",
+    "num_nom": "35917",
+    "famille": "Iridaceae"
+  },
+  "Hedera helix subsp. helix": {
+    "nom_sci": "Hedera helix subsp. helix",
+    "nom_fr": "Lierre grimpant",
+    "num_nom": "124041",
+    "famille": "Araliaceae"
+  },
+  "Ulex europaeus subsp. europaeus": {
+    "nom_sci": "Ulex europaeus subsp. europaeus",
+    "nom_fr": "Ajonc d'Europe",
+    "num_nom": "70205",
+    "famille": "Fabaceae"
+  },
+  "Arum italicum subsp. neglectum": {
+    "nom_sci": "Arum italicum subsp. neglectum",
+    "nom_fr": "Gouet d'Italie",
+    "num_nom": "7026",
+    "famille": "Araceae"
+  },
+  "Bryonia dioica": {
+    "nom_sci": "Bryonia dioica",
+    "nom_fr": "Bryone dioïque",
+    "num_nom": "11290",
+    "famille": "Cucurbitaceae"
+  },
+  "Sambucus nigra": {
+    "nom_sci": "Sambucus nigra",
+    "nom_fr": "Sureau noir",
+    "num_nom": "60241",
+    "famille": "Adoxaceae"
+  },
+  "Cardamine hirsuta": {
+    "nom_sci": "Cardamine hirsuta",
+    "nom_fr": "Cardamine hérissée",
+    "num_nom": "12877",
+    "famille": "Brassicaceae"
+  },
+  "Solanum dulcamara": {
+    "nom_sci": "Solanum dulcamara",
+    "nom_fr": "Morelle douce-amère",
+    "num_nom": "64869",
+    "famille": "Solanaceae"
+  },
+  "Galium aparine": {
+    "nom_sci": "Galium aparine",
+    "nom_fr": "Gaillet gratteron",
+    "num_nom": "28896",
+    "famille": "Rubiaceae"
+  },
+  "Geranium purpureum": {
+    "nom_sci": "Geranium purpureum",
+    "nom_fr": "Géranium pourpre",
+    "num_nom": "30034",
+    "famille": "Geraniaceae"
+  },
+  "Cynoglossum officinale": {
+    "nom_sci": "Cynoglossum officinale",
+    "nom_fr": "Cynoglosse officinale",
+    "num_nom": "20599",
+    "famille": "Boraginaceae"
+  },
+  "Urtica dioica": {
+    "nom_sci": "Urtica dioica",
+    "nom_fr": "Grande ortie",
+    "num_nom": "70396",
+    "famille": "Urticaceae"
+  },
+  "Diplotaxis tenuifolia": {
+    "nom_sci": "Diplotaxis tenuifolia",
+    "nom_fr": "Diplotaxis vivace",
+    "num_nom": "22660",
+    "famille": "Brassicaceae"
+  },
+  "Galium mollugo": {
+    "nom_sci": "Galium mollugo",
+    "nom_fr": "Gaillet mollugine",
+    "num_nom": "29078",
+    "famille": "Rubiaceae"
+  },
+  "Anchusa arvensis subsp. arvensis": {
+    "nom_sci": "Anchusa arvensis subsp. arvensis",
+    "nom_fr": "Buglosse des champs",
+    "num_nom": "75685",
+    "famille": "Boraginaceae"
+  },
+  "Carduus tenuiflorus": {
+    "nom_sci": "Carduus tenuiflorus",
+    "nom_fr": "Chardon à petits capitules",
+    "num_nom": "13358",
+    "famille": "Asteraceae"
+  },
+  "Conium maculatum": {
+    "nom_sci": "Conium maculatum",
+    "nom_fr": "Grande ciguë",
+    "num_nom": "18660",
+    "famille": "Apiaceae"
+  },
+  "Echium vulgare": {
+    "nom_sci": "Echium vulgare",
+    "nom_fr": "Vipérine commune",
+    "num_nom": "23559",
+    "famille": "Boraginaceae"
+  },
+  "Geranium lucidum": {
+    "nom_sci": "Geranium lucidum",
+    "nom_fr": "Géranium luisant",
+    "num_nom": "29976",
+    "famille": "Geraniaceae"
+  },
+  "Silene latifolia subsp. alba": {
+    "nom_sci": "Silene latifolia subsp. alba",
+    "nom_fr": "Compagnon blanc",
+    "num_nom": "64192",
+    "famille": "Caryophyllaceae"
+  },
+  "Verbascum thapsus": {
+    "nom_sci": "Verbascum thapsus",
+    "nom_fr": "Bouillon blanc",
+    "num_nom": "70991",
+    "famille": "Scrophulariaceae"
+  },
+  "Anthriscus caucalis": {
+    "nom_sci": "Anthriscus caucalis",
+    "nom_fr": "Cerfeuil vulgaire",
+    "num_nom": "5263",
+    "famille": "Apiaceae"
+  },
+  "Cardaria draba": {
+    "nom_sci": "Cardaria draba",
+    "nom_fr": "Passerage drave",
+    "num_nom": "75022",
+    "famille": "Brassicaceae"
+  },
+  "Cirsium arvense": {
+    "nom_sci": "Cirsium arvense",
+    "nom_fr": "Cirse des champs",
+    "num_nom": "17468",
+    "famille": "Asteraceae"
+  },
+  "Geranium rotundifolium": {
+    "nom_sci": "Geranium rotundifolium",
+    "nom_fr": "Géranium à feuilles rondes",
+    "num_nom": "30056",
+    "famille": "Geraniaceae"
+  },
+  "Hypericum perforatum": {
+    "nom_sci": "Hypericum perforatum",
+    "nom_fr": "Millepertuis perforé",
+    "num_nom": "35348",
+    "famille": "Hypericaceae"
+  },
+  "Mercurialis annua": {
+    "nom_sci": "Mercurialis annua",
+    "nom_fr": "Mercuriale annuelle",
+    "num_nom": "42320",
+    "famille": "Euphorbiaceae"
+  },
+  "Reseda luteola": {
+    "nom_sci": "Reseda luteola",
+    "nom_fr": "Réséda des teinturiers",
+    "num_nom": "75323",
+    "famille": "Resedaceae"
+  },
+  "Sisymbrium officinale": {
+    "nom_sci": "Sisymbrium officinale",
+    "nom_fr": "Herbe aux chantres",
+    "num_nom": "64674",
+    "famille": "Brassicaceae"
+  },
+  "Sonchus asper": {
+    "nom_sci": "Sonchus asper",
+    "nom_fr": "Laiteron épineux",
+    "num_nom": "65171",
+    "famille": "Asteraceae"
+  },
+  "Verbascum nigrum subsp. nigrum": {
+    "nom_sci": "Verbascum nigrum subsp. nigrum",
+    "nom_fr": "Molène noire",
+    "num_nom": "70896",
+    "famille": "Scrophulariaceae"
+  },
+  "Verbena officinalis": {
+    "nom_sci": "Verbena officinalis",
+    "nom_fr": "Verveine officinale",
+    "num_nom": "71022",
+    "famille": "Verbenaceae"
+  },
+  "Arrhenatherum elatius subsp. bulbosum": {
+    "nom_sci": "Arrhenatherum elatius subsp. bulbosum",
+    "nom_fr": "Fromental bulbeux",
+    "num_nom": "6704",
+    "famille": "Poaceae"
+  },
+  "Heracleum sphondylium": {
+    "nom_sci": "Heracleum sphondylium",
+    "nom_fr": "Berce commune",
+    "num_nom": "31656",
+    "famille": "Apiaceae"
+  },
+  "Geranium dissectum": {
+    "nom_sci": "Geranium dissectum",
+    "nom_fr": "Géranium découpé",
+    "num_nom": "29941",
+    "famille": "Geraniaceae"
+  },
+  "Stellaria media subsp. media": {
+    "nom_sci": "Stellaria media subsp. media",
+    "nom_fr": "Mouron des oiseaux",
+    "num_nom": "66213",
+    "famille": "Caryophyllaceae"
+  },
+  "Rumex crispus": {
+    "nom_sci": "Rumex crispus",
+    "nom_fr": "Patience crépue",
+    "num_nom": "58698",
+    "famille": "Polygonaceae"
+  },
+  "Rumex obtusifolius": {
+    "nom_sci": "Rumex obtusifolius",
+    "nom_fr": "Patience à feuilles obtuses",
+    "num_nom": "58812",
+    "famille": "Polygonaceae"
+  },
+  "Salvia verbenaca": {
+    "nom_sci": "Salvia verbenaca",
+    "nom_fr": "Sauge verveine",
+    "num_nom": "60217",
+    "famille": "Lamiaceae"
+  },
+  "Vulpia sp.": {
+    "nom_sci": "Vulpia sp.",
+    "nom_fr": "Vulpie (non déterminée)",
+    "num_nom": "83494",
+    "famille": "Poaceae"
+  },
+  "Medicago sativa": {
+    "nom_sci": "Medicago sativa",
+    "nom_fr": "Luzerne cultivée",
+    "num_nom": "41470",
+    "famille": "Fabaceae"
+  },
+  "Raphanus raphanistrum": {
+    "nom_sci": "Raphanus raphanistrum",
+    "nom_fr": "Radis sauvage",
+    "num_nom": "55553",
+    "famille": "Brassicaceae"
+  },
+  "Papaver dubium": {
+    "nom_sci": "Papaver dubium",
+    "nom_fr": "Coquelicot douteux",
+    "num_nom": "47737",
+    "famille": "Papaveraceae"
+  },
+  "Smyrnium olusatrum": {
+    "nom_sci": "Smyrnium olusatrum",
+    "nom_fr": "Maceron",
+    "num_nom": "64837",
+    "famille": "Apiaceae"
+  },
+  "Poa bulbosa": {
+    "nom_sci": "Poa bulbosa",
+    "nom_fr": "Pâturin bulbeux",
+    "num_nom": "50356",
+    "famille": "Poaceae"
+  },
+  "Aphanes microcarpa": {
+    "nom_sci": "Aphanes microcarpa",
+    "nom_fr": "Alchémille à petits fruits",
+    "num_nom": "5609",
+    "famille": "Orchidaceae"
+  },
+  "Crassula tillaea": {
+    "nom_sci": "Crassula tillaea",
+    "nom_fr": "Crassule mousse",
+    "num_nom": "19340",
+    "famille": "Crassulaceae"
+  },
+  "Ptychostomum compactum": {
+    "nom_sci": "Ptychostomum compactum",
+    "nom_fr": "Ptychostomum compactum (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Erodium cicutarium": {
+    "nom_sci": "Erodium cicutarium",
+    "nom_fr": "Bec-de-grue commun",
+    "num_nom": "25064",
+    "famille": "Geraniaceae"
+  },
+  "Trifolium ornithopodioides": {
+    "nom_sci": "Trifolium ornithopodioides",
+    "nom_fr": "Trèfle pied-d'oiseau",
+    "num_nom": "69259",
+    "famille": "Fabaceae"
+  },
+  "Vulpia myuros": {
+    "nom_sci": "Vulpia myuros",
+    "nom_fr": "Vulpie queue-de-rat",
+    "num_nom": "72887",
+    "famille": "Poaceae"
+  },
+  "Didymodon vinealis": {
+    "nom_sci": "Didymodon vinealis",
+    "nom_fr": "Didymodon vinealis (mousse)",
+    "num_nom": null,
+    "famille": null
+  },
+  "Myosotis ramosissima": {
+    "nom_sci": "Myosotis ramosissima",
+    "nom_fr": "Myosotis rameux",
+    "num_nom": "43316",
+    "famille": "Boraginaceae"
   }
 }
