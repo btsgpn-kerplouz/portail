@@ -103,7 +103,11 @@ const MINI_FLORE = {
   "Aphanes microcarpa": {
     "nomFr": "Alchémille à petits fruits",
     "famille": "Rosaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:002256807L.jpg",
+      "https://api.tela-botanica.org/img:002256808L.jpg",
+      "https://api.tela-botanica.org/img:002256809L.jpg"
+    ]
   },
   "Apium graveolens": {
     "nomFr": "Céleri sauvage",
@@ -266,12 +270,19 @@ const MINI_FLORE = {
   "Bromus diandrus subsp. diandrus": {
     "nomFr": "Brome à deux étamines",
     "famille": "Poaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003179235L.jpg",
+      "https://api.tela-botanica.org/img:003179233L.jpg"
+    ]
   },
   "Bromus diandrus subsp. maximus": {
     "nomFr": "Grand brome des sables",
     "famille": "Poaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003125552L.jpg",
+      "https://api.tela-botanica.org/img:003125551L.jpg",
+      "https://api.tela-botanica.org/img:002342720L.jpg"
+    ]
   },
   "Bromus hordeaceus subsp. hordeaceus": {
     "nomFr": "Brome mou",
@@ -703,7 +714,11 @@ const MINI_FLORE = {
   "Festuca arundinacea": {
     "nomFr": "Fétuque roseau",
     "famille": "Poaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003125016L.jpg",
+      "https://api.tela-botanica.org/img:003125017L.jpg",
+      "https://api.tela-botanica.org/img:003125003L.jpg"
+    ]
   },
   "Festuca juncifolia": {
     "nomFr": "Fétuque à feuilles de jonc",
@@ -871,7 +886,11 @@ const MINI_FLORE = {
   "Hedera helix subsp. helix": {
     "nomFr": "Lierre grimpant",
     "famille": "Araliaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003523043L.jpg",
+      "https://api.tela-botanica.org/img:003518078L.jpg",
+      "https://api.tela-botanica.org/img:003518079L.jpg"
+    ]
   },
   "Helichrysum stoechas subsp. stoechas": {
     "nomFr": "Immortelle des dunes",
@@ -905,7 +924,11 @@ const MINI_FLORE = {
   "Hieracium pilosella": {
     "nomFr": "Piloselle",
     "famille": "Asteraceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:002431261L.jpg",
+      "https://api.tela-botanica.org/img:002431262L.jpg",
+      "https://api.tela-botanica.org/img:002431263L.jpg"
+    ]
   },
   "Holcus lanatus": {
     "nomFr": "Houlque laineuse",
@@ -1060,7 +1083,11 @@ const MINI_FLORE = {
   "Leucanthemum vulgare": {
     "nomFr": "Marguerite commune",
     "famille": "Asteraceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003439222L.jpg",
+      "https://api.tela-botanica.org/img:003245389L.jpg",
+      "https://api.tela-botanica.org/img:003245385L.jpg"
+    ]
   },
   "Lichen sp.": {
     "nomFr": "Lichen (non déterminé)",
@@ -1247,7 +1274,11 @@ const MINI_FLORE = {
   "Myosotis ramosissima subsp. lebelii": {
     "nomFr": "Myosotis de Lebel",
     "famille": "Boraginaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003471451L.jpg",
+      "https://api.tela-botanica.org/img:003471452L.jpg",
+      "https://api.tela-botanica.org/img:003471453L.jpg"
+    ]
   },
   "Oenanthe lachenalii": {
     "nomFr": "Oenanthe de Lachenal",
@@ -1377,7 +1408,11 @@ const MINI_FLORE = {
   "Poa bulbosa": {
     "nomFr": "Pâturin bulbeux",
     "famille": "Poaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003280259L.jpg",
+      "https://api.tela-botanica.org/img:003174525L.jpg",
+      "https://api.tela-botanica.org/img:003166592L.jpg"
+    ]
   },
   "Poa pratensis": {
     "nomFr": "Pâturin des prés",
@@ -1416,7 +1451,11 @@ const MINI_FLORE = {
   "Prunus spinosa": {
     "nomFr": "Prunellier",
     "famille": "Rosaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003477826L.jpg",
+      "https://api.tela-botanica.org/img:003477827L.jpg",
+      "https://api.tela-botanica.org/img:003477828L.jpg"
+    ]
   },
   "Pseudoscleropodium purum": {
     "nomFr": "Pseudoscleropodium purum (mousse)",
@@ -1490,17 +1529,29 @@ const MINI_FLORE = {
   "Rubus sp.": {
     "nomFr": "Ronce (non déterminée)",
     "famille": "Rosaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003465993L.jpg",
+      "https://api.tela-botanica.org/img:003465992L.jpg",
+      "https://api.tela-botanica.org/img:003411795L.jpg"
+    ]
   },
   "Rumex crispus": {
     "nomFr": "Patience crépue",
     "famille": "Polygonaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003432605L.jpg",
+      "https://api.tela-botanica.org/img:003432606L.jpg",
+      "https://api.tela-botanica.org/img:003432607L.jpg"
+    ]
   },
   "Rumex obtusifolius": {
     "nomFr": "Patience à feuilles obtuses",
     "famille": "Polygonaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003504442L.jpg",
+      "https://api.tela-botanica.org/img:003504443L.jpg",
+      "https://api.tela-botanica.org/img:003444053L.jpg"
+    ]
   },
   "Sagina apetala": {
     "nomFr": "Sagine apétale",
@@ -1573,7 +1624,11 @@ const MINI_FLORE = {
   "Sambucus nigra": {
     "nomFr": "Sureau noir",
     "famille": "Adoxaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003523061L.jpg",
+      "https://api.tela-botanica.org/img:003523062L.jpg",
+      "https://api.tela-botanica.org/img:003523063L.jpg"
+    ]
   },
   "Samolus valerandi": {
     "nomFr": "Samole de Valerand",
@@ -1595,7 +1650,11 @@ const MINI_FLORE = {
   "Saxifraga tridactylites": {
     "nomFr": "Saxifrage à trois doigts",
     "famille": "Saxifragaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003476912L.jpg",
+      "https://api.tela-botanica.org/img:003426024L.jpg",
+      "https://api.tela-botanica.org/img:003413710L.jpg"
+    ]
   },
   "Schoenus nigricans": {
     "nomFr": "Choin noirâtre",
@@ -1670,7 +1729,9 @@ const MINI_FLORE = {
   "Silene otites subsp. otites": {
     "nomFr": "Silène à oreillettes",
     "famille": "Caryophyllaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:000209180L.jpg"
+    ]
   },
   "Silene vulgaris subsp. maritima": {
     "nomFr": "Silène maritime",
@@ -1806,7 +1867,11 @@ const MINI_FLORE = {
   "Taraxacum gr. erythrospermum": {
     "nomFr": "Pissenlit à graines rouges (groupe)",
     "famille": "Asteraceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003515016L.jpg",
+      "https://api.tela-botanica.org/img:003515017L.jpg",
+      "https://api.tela-botanica.org/img:003515014L.jpg"
+    ]
   },
   "Thelypteris palustris": {
     "nomFr": "Théliptéris des marais",
@@ -1899,12 +1964,20 @@ const MINI_FLORE = {
   "Ulex europaeus subsp. europaeus": {
     "nomFr": "Ajonc d'Europe",
     "famille": "Fabaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003313812L.jpg",
+      "https://api.tela-botanica.org/img:002848165L.jpg",
+      "https://api.tela-botanica.org/img:002848164L.jpg"
+    ]
   },
   "Urtica dioica": {
     "nomFr": "Grande ortie",
     "famille": "Urticaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003507457L.jpg",
+      "https://api.tela-botanica.org/img:003507458L.jpg",
+      "https://api.tela-botanica.org/img:003507459L.jpg"
+    ]
   },
   "Valerianella locusta": {
     "nomFr": "Mâche doucette",
@@ -1980,7 +2053,11 @@ const MINI_FLORE = {
   "Vulpia sp.": {
     "nomFr": "Vulpie (non déterminée)",
     "famille": "Poaceae",
-    "photos": []
+    "photos": [
+      "https://api.tela-botanica.org/img:003242866L.jpg",
+      "https://api.tela-botanica.org/img:003242867L.jpg",
+      "https://api.tela-botanica.org/img:002429606L.jpg"
+    ]
   },
   "Zostera noltii": {
     "nomFr": "Zostère naine",
