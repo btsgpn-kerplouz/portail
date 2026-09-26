@@ -247,6 +247,66 @@ function compterParFormat(
 }
 // </memoire>
 
+// ---- Mémoire de la veille, étape 3 : règles éditoriales (26/09/2026) ---------
+// L'enseignant garde une courte liste de règles écrites (espace « Mémoire de la veille » de l'onglet Sources de
+// l'app), relue à chaque passage. La routine peut PROPOSER une règle une fois
+// par mois ; la proposition attend la décision de l'enseignant et n'entre
+// jamais d'elle-même dans les règles en vigueur. Une règle porte sur un TYPE
+// de contenu, jamais sur une source : on refuse donc toute proposition qui
+// contient une adresse.
+// Bloc pur, balisé <regles> : extrait tel quel par le test local. Utilise
+// normaliserTitre() du bloc <dedoublonnage> ci-dessus.
+// <regles>
+const REGLE_MIN_CARACTERES = 5;
+const REGLE_MAX_CARACTERES = 400;
+const JUSTIFICATION_MAX_CARACTERES = 800;
+const MAX_PROPOSITIONS_PAR_APPEL = 3;
+
+function erreurProposition(p: { texte?: unknown; justification?: unknown }): string | null {
+  if (!p || typeof p.texte !== "string") return "texte manquant";
+  const texte = p.texte.trim();
+  if (texte.length < REGLE_MIN_CARACTERES || texte.length > REGLE_MAX_CARACTERES) {
+    return `texte : entre ${REGLE_MIN_CARACTERES} et ${REGLE_MAX_CARACTERES} caractères`;
+  }
+  if (p.justification !== undefined && p.justification !== null) {
+    if (typeof p.justification !== "string" || p.justification.length > JUSTIFICATION_MAX_CARACTERES) {
+      return `justification : ${JUSTIFICATION_MAX_CARACTERES} caractères au plus`;
+    }
+  }
+  if (/https?:|www\./i.test(texte) || /\b[a-z0-9-]+\.(fr|com|org|net|bzh|eu|info)\b/i.test(texte)) {
+    return "une règle porte sur un type de contenu, jamais sur une adresse ou une source précise";
+  }
+  return null;
+}
+
+// Écarte ce qui existe déjà (règle en vigueur, proposition en attente,
+// acceptée OU refusée — une règle refusée ne doit pas revenir) et les
+// doublons d'un même envoi. Comparaison sur le texte normalisé.
+function filtrerPropositions(
+  propositions: { texte: string; justification?: string | null }[],
+  dejaConnues: string[],
+): {
+  gardees: { texte: string; justification: string }[];
+  ignorees: { texte: string; raison: "deja_connue" | "doublon_dans_le_lot" }[];
+} {
+  const vues = new Set(dejaConnues.map((t) => normaliserTitre(t)));
+  const gardees: { texte: string; justification: string }[] = [];
+  const ignorees: { texte: string; raison: "deja_connue" | "doublon_dans_le_lot" }[] = [];
+  const dansLeLot = new Set<string>();
+  for (const p of propositions) {
+    const texte = p.texte.trim();
+    const cle = normaliserTitre(texte);
+    if (dansLeLot.has(cle)) ignorees.push({ texte, raison: "doublon_dans_le_lot" });
+    else if (vues.has(cle)) ignorees.push({ texte, raison: "deja_connue" });
+    else {
+      gardees.push({ texte, justification: (p.justification ?? "").trim() });
+      dansLeLot.add(cle);
+    }
+  }
+  return { gardees, ignorees };
+}
+// </regles>
+
 // Tout ce que la veille a déjà vu, depuis toujours : entrées retenues (tous
 // numéros, publiés ou non), candidats écartés, candidats encore en attente
 // dans la moisson d'un numéro. Lecture paginée : PostgREST plafonne une
@@ -477,8 +537,31 @@ async function handleContext(): Promise<Response> {
     })
     .map(({ periodicite: _periodicite, ...reste }) => reste);
 
+  // Règles éditoriales (migration 018) : lues à CHAQUE passage, jamais
+  // tronquées. `regles_editoriales` vaut null tant que la migration n'est pas
+  // appliquée (le reste du contexte fonctionne sans). La proposition de règles
+  // n'est ouverte qu'au premier samedi du mois, et seulement si l'enseignant
+  // a déjà tranché les précédentes (pas d'empilement).
+  let reglesEditoriales: string[] | null = null;
+  let propositionsRefusees: string[] = [];
+  let peutProposerDesRegles = false;
+  try {
+    const [regles, propositions] = await Promise.all([
+      lireTout<{ texte: string; actif: boolean }>("affut_regles_editoriales", "texte, actif", "id"),
+      lireTout<{ texte: string; statut: string }>("affut_propositions_regles", "texte, statut", "id"),
+    ]);
+    reglesEditoriales = regles.filter((r) => r.actif).map((r) => r.texte);
+    propositionsRefusees = propositions.filter((p) => p.statut === "refusee").map((p) => p.texte).slice(-30);
+    peutProposerDesRegles = estPremierSamediDuMois(aujourdhui) && !propositions.some((p) => p.statut === "en_attente");
+  } catch (_e) {
+    reglesEditoriales = null;
+  }
+
   return json({
     cible,
+    regles_editoriales: reglesEditoriales,
+    peut_proposer_des_regles: peutProposerDesRegles,
+    propositions_refusees: propositionsRefusees,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
     formats_autorises: FORMATS_AUTORISES,
@@ -546,6 +629,47 @@ type Candidat = {
   resume: string;
   usage: string;
 };
+
+// Proposition de règles (étape 3) : atterrit dans affut_propositions_regles,
+// en attente de décision de l'enseignant — jamais directement dans les règles
+// en vigueur. Refusée s'il reste des propositions non tranchées.
+async function handlePropositions(body: { propositions?: unknown }): Promise<Response> {
+  const brutes = Array.isArray(body.propositions) ? body.propositions : [];
+  if (!brutes.length) return json({ error: "propositions vide" }, 400);
+  if (brutes.length > MAX_PROPOSITIONS_PAR_APPEL) {
+    return json({ error: `trop de propositions en un seul appel (max ${MAX_PROPOSITIONS_PAR_APPEL})` }, 400);
+  }
+  for (const p of brutes) {
+    const erreur = erreurProposition(p);
+    if (erreur) return json({ error: erreur, proposition: p }, 400);
+  }
+
+  const autorise = await verifierEtEnregistrerAppel();
+  if (!autorise) return json({ error: "trop d'appels récents, réessayer plus tard" }, 429);
+
+  let regles: { texte: string }[], propositions: { texte: string; statut: string }[];
+  try {
+    [regles, propositions] = await Promise.all([
+      lireTout<{ texte: string }>("affut_regles_editoriales", "texte", "id"),
+      lireTout<{ texte: string; statut: string }>("affut_propositions_regles", "texte, statut", "id"),
+    ]);
+  } catch (e) {
+    return json({ error: (e as Error).message }, 500);
+  }
+  if (propositions.some((p) => p.statut === "en_attente")) {
+    return json({ error: "des propositions attendent encore la décision de l'enseignant : ne pas en ajouter" }, 409);
+  }
+
+  const { gardees, ignorees } = filtrerPropositions(
+    brutes as { texte: string; justification?: string | null }[],
+    [...regles.map((r) => r.texte), ...propositions.map((p) => p.texte)],
+  );
+  if (gardees.length) {
+    const { error } = await supabase.from("affut_propositions_regles").insert(gardees);
+    if (error) return json({ error: error.message }, 500);
+  }
+  return json({ ok: true, propositions_ajoutees: gardees.length, propositions_ignorees: ignorees });
+}
 
 async function handleIngest(req: Request): Promise<Response> {
   let body: { numero?: number; candidats?: Candidat[] };
@@ -671,6 +795,14 @@ async function handleIngest(req: Request): Promise<Response> {
 Deno.serve(async (req) => {
   if (!estAutorise(req)) return json({ error: "unauthorized" }, 401);
   if (req.method === "GET") return await handleContext();
-  if (req.method === "POST") return await handleIngest(req);
+  if (req.method === "POST") {
+    // Deux usages du même POST : des candidats de moisson (par défaut) ou des
+    // propositions de règles (corps `{ propositions: [...] }` sans `candidats`).
+    const corps = await req.clone().json().catch(() => null);
+    if (corps && Array.isArray(corps.propositions) && corps.candidats === undefined) {
+      return await handlePropositions(corps);
+    }
+    return await handleIngest(req);
+  }
   return json({ error: "method not allowed" }, 405);
 });

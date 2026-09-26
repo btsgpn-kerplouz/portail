@@ -2506,6 +2506,28 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       **Non testé en exécution réelle** : le premier passage de la routine
       avec ce brief dira si le volume et la qualité de l'axe tiennent.
 
+- [x] **Mémoire de la veille — étape 3 : règles éditoriales durables**
+      (26/09/2026, même demande, stockage dans l'app choisi par l'utilisateur
+      plutôt qu'un fichier du dépôt public). Nouvel espace **« Mémoire de la veille »**
+      dans l'onglet Sources (sélecteur « Sources suivies / Mémoire de la veille »
+      en tête, adresse `#/sources/memoire`, pastille sur l'onglet Sources = nombre
+      de propositions à traiter ; pas d'onglet à part, à la demande de l'utilisateur) : liste de règles écrites (ajouter, modifier, désactiver,
+      supprimer ; 30 actives au plus, liste relue en entier à chaque passage) et
+      propositions de la routine à accepter ou refuser. Migration
+      `018-regles-editoriales.sql` (`affut_regles_editoriales`,
+      `affut_propositions_regles`, RLS rédacteur seul). Fonction Edge : le `GET`
+      renvoie `regles_editoriales` (`null` sans migration),
+      `peut_proposer_des_regles` (1er samedi du mois ET aucune proposition en
+      attente) et `propositions_refusees` ; un `POST {propositions}` dépose des
+      propositions **en attente** (3 max par appel, 400 caractères, refus de
+      toute adresse/source, doublons et refusées écartés, `409` s'il en reste à
+      trancher). La routine n'écrit jamais dans les règles en vigueur.
+      Consignes dans `documents/brief-veille.md` : les règles prévalent sur les
+      chiffres ; les propositions portent sur des types de contenu, jamais sur
+      une source. Tests locaux : `supabase/tests/memoire.test.mjs` (7 cas) et
+      `dedoublonnage.test.mjs` (15). **Non testé dans le navigateur ni contre
+      la vraie base.** *Ordre de mise en service* : migration 018 → Edge → merge.
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés

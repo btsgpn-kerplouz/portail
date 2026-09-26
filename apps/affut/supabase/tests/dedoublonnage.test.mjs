@@ -14,8 +14,8 @@ const bloc = (nom) => {
 };
 const dossier = mkdtempSync(join(tmpdir(), "dedoublonnage-"));
 const fichier = join(dossier, "bloc.ts");
-writeFileSync(fichier, bloc("dedoublonnage") + "\n" + bloc("memoire") + "\nexport { normaliserUrl, normaliserTitre, classerDoublons, compterParFormat, FORMATS_AUTORISES };\n");
-const { normaliserUrl, normaliserTitre, classerDoublons, compterParFormat, FORMATS_AUTORISES } = await import(pathToFileURL(fichier).href);
+writeFileSync(fichier, bloc("dedoublonnage") + "\n" + bloc("memoire") + "\n" + bloc("regles") + "\nexport { normaliserUrl, normaliserTitre, classerDoublons, compterParFormat, FORMATS_AUTORISES, erreurProposition, filtrerPropositions };\n");
+const { normaliserUrl, normaliserTitre, classerDoublons, compterParFormat, FORMATS_AUTORISES, erreurProposition, filtrerPropositions } = await import(pathToFileURL(fichier).href);
 
 let n = 0;
 const test = (nom, f) => { f(); n++; console.log("ok  " + nom); };
@@ -112,5 +112,27 @@ test("vocabulaire des formats : codes uniques, identiques à la migration SQL", 
   assert.equal(new Set(codes).size, codes.length);
   const sql = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../017-format-et-motif-ecart.sql"), "utf8");
   for (const c of codes) assert.ok(sql.includes("'" + c + "'"), "code absent du SQL : " + c);
+});
+
+test("proposition de règle : texte valide accepté, adresse ou source refusée", () => {
+  assert.equal(erreurProposition({ texte: "Ne pas proposer de communiqué sans données chiffrées.", justification: "8 écarts sur 10" }), null);
+  assert.equal(erreurProposition({ texte: "Privilégier les rapports complets aux brèves." }), null);
+  assert.match(erreurProposition({ texte: "Éviter tout ce qui vient de https://exemple.fr/actu" }), /adresse|source/);
+  assert.match(erreurProposition({ texte: "Éviter les articles de reporterre.net en général" }), /adresse|source/);
+  assert.match(erreurProposition({ texte: "abc" }), /caractères/);
+  assert.match(erreurProposition({ texte: "x".repeat(401) }), /caractères/);
+  assert.match(erreurProposition({}), /manquant/);
+  assert.match(erreurProposition({ texte: "Une règle correcte.", justification: "j".repeat(801) }), /justification/);
+});
+test("propositions : règle déjà connue, refusée ou en double dans le lot écartées", () => {
+  const r = filtrerPropositions([
+    { texte: "Éviter les communiqués sans données." },
+    { texte: "éviter les COMMUNIQUÉS sans données !" },
+    { texte: "Privilégier les rapports complets.", justification: "  11 retenus sur 13  " },
+    { texte: "Ne pas proposer d'agenda." },
+  ], ["Ne pas proposer d'agenda", "Une autre règle déjà refusée"]);
+  assert.deepEqual(r.gardees.map((g) => g.texte), ["Éviter les communiqués sans données.", "Privilégier les rapports complets."]);
+  assert.equal(r.gardees[1].justification, "11 retenus sur 13");
+  assert.deepEqual(r.ignorees.map((i) => i.raison), ["doublon_dans_le_lot", "deja_connue"]);
 });
 console.log(`\n${n} tests passés`);

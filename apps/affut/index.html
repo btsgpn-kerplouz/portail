@@ -570,6 +570,23 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .motif-puce:hover span{border-color:var(--af-encre)}
 .motif-puce input:checked + span{background:var(--af-encre);color:var(--af-sur-bandeau);border-color:var(--af-encre);font-weight:700}
 .motif-puce input:focus-visible + span{outline:2px solid var(--af-accent);outline-offset:2px}
+/* Écran « Mémoire » (règles éditoriales durables, étape 3) */
+.memoire{padding:0 0 30px}
+.espaces-sources .filtre-toggle{flex-wrap:wrap}
+.espaces-sources{padding:14px 22px 0}
+.memoire-intro{padding:18px 22px;font-size:13px;line-height:1.55;color:var(--af-encre-2);border-bottom:1px solid var(--af-filet);max-width:760px}
+.memoire-intro strong{color:var(--af-encre)}
+.regle-ligne{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--af-filet)}
+.regle-ligne.inactive .regle-texte{color:var(--af-encre-3);text-decoration:line-through}
+.regle-texte{flex:1;min-width:0;font-size:14px;line-height:1.5;color:var(--af-encre-courant)}
+.regle-meta{display:block;margin-top:4px;font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3);text-decoration:none}
+.regle-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.regle-ligne textarea,.regle-ajout textarea{width:100%;font:inherit;font-size:14px;line-height:1.5;padding:8px 10px;border:1px solid var(--af-filet-fort);min-height:64px;resize:vertical;background:var(--af-surface);color:var(--af-encre-courant)}
+.regle-edition{flex:1;display:flex;flex-direction:column;gap:8px}
+.regle-ajout{padding:16px 22px;display:flex;flex-direction:column;gap:8px;max-width:760px}
+.regle-ajout .lbl{font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--af-encre-3)}
+.regle-proposition{background:var(--af-surface-2)}
+.nav-compte{display:inline-block;margin-left:6px;min-width:16px;padding:0 4px;background:var(--af-accent);color:var(--af-sur-accent);font-size:10px;line-height:16px;text-align:center}
 /* Bilan par format */
 .bilan-format-ligne{display:grid;grid-template-columns:minmax(0,1.6fr) 64px 64px minmax(90px,1fr);gap:12px;align-items:center;padding:9px 22px;border-bottom:1px solid var(--af-filet);font-size:13px}
 .bilan-format-ligne .nb{text-align:right;font-family:var(--af-police-mono);font-variant-numeric:tabular-nums}
@@ -660,6 +677,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 }
 
 @media (max-width:640px){
+  .memoire-intro,.regle-ligne,.regle-ajout{padding-left:14px;padding-right:14px}
+  .espaces-sources{padding:12px 14px 0}
+  .regle-ligne{flex-direction:column}
+  .regle-actions{justify-content:flex-start}
   .bilan-format-ligne{grid-template-columns:minmax(0,1fr) 48px 48px;padding:9px 14px}
   .bilan-format-ligne .taux{grid-column:1 / -1}
   .bilan-note,.bilan-motifs{padding-left:14px;padding-right:14px}
@@ -1105,7 +1126,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // numeros/entrees/sourcesSuivies déclarées ci-dessous (var numeros, ...) ;
   // ces fonctions les réaffectent globalement (pas de module, IIFE unique).
 
-  var numeros = [], numero, entrees = [], sourcesSuivies = [], ecartes = [];
+  var numeros = [], numero, entrees = [], sourcesSuivies = [], ecartes = [], regles = null, propositions = [];
 
   // Mémoire de la veille, étape 2 (26/09/2026) : vocabulaire FERMÉ des formats
   // d'actualité (attribués par l'agent) et des motifs d'écart (choisis en un
@@ -1163,6 +1184,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // des colonnes `format`/`motif_code` échoue — le Bilan l'annonce alors.
     var resEc = await s.from("affut_candidats_ecartes").select("format, motif_code");
     ecartes = resEc.error ? null : resEc.data;
+    // Règles éditoriales et propositions de la routine (migration 018) : même
+    // garde — null tant que la migration n'est pas appliquée, l'écran
+    // « Mémoire » l'annonce au lieu de casser le chargement.
+    var resReg = await s.from("affut_regles_editoriales").select("*").order("id");
+    var resProp = await s.from("affut_propositions_regles").select("*").order("id");
+    if (resReg.error || resProp.error) { regles = null; propositions = []; }
+    else { regles = resReg.data; propositions = resProp.data; }
   }
 
   async function chargerDonnees(){
@@ -1262,6 +1290,39 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // `format` et `motif_code` (migration 017) : joints seulement quand ils ont
   // une valeur, pour qu'un écart sans motif choisi continue de s'écrire même
   // si la migration n'est pas encore appliquée.
+  // ---- Mémoire de la veille, étape 3 : règles éditoriales ----
+  var MAX_REGLES_ACTIVES = 30; // liste courte : relue en entier à chaque passage de la routine
+  // Relit seulement règles et propositions (léger) : la routine dépose ses
+  // propositions à tout moment, indépendamment de ce que l'écran a chargé.
+  async function rafraichirMemoire(){
+    var resReg = await client().from("affut_regles_editoriales").select("*").order("id");
+    var resProp = await client().from("affut_propositions_regles").select("*").order("id");
+    if (resReg.error || resProp.error) return; // migration 018 absente ou réseau : on garde l'état courant
+    regles = resReg.data; propositions = resProp.data;
+  }
+  async function creerRegle(texte, origine){
+    var res = await client().from("affut_regles_editoriales").insert({ texte: texte, origine: origine || "enseignant" }).select().single();
+    if (res.error) { signalerErreurEcriture(res.error); return null; }
+    regles.push(res.data);
+    return res.data;
+  }
+  async function ecrireRegle(id, champs){
+    champs.modifie_le = new Date().toISOString();
+    var res = await client().from("affut_regles_editoriales").update(champs).eq("id", id);
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
+  }
+  async function supprimerRegleDistante(id){
+    var res = await client().from("affut_regles_editoriales").delete().eq("id", id);
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
+  }
+  async function deciderProposition(id, statut){
+    var res = await client().from("affut_propositions_regles").update({ statut: statut, decidee_le: new Date().toISOString() }).eq("id", id);
+    if (res.error) { signalerErreurEcriture(res.error); return false; }
+    return true;
+  }
+
   async function creerCandidatEcarte(cand, motif, motifCode){
     var ligne = {
       numero_id: numero.numero, candidat_id: cand.id, rubrique: cand.rubrique,
@@ -1445,6 +1506,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // moins quelque chose (les numéros parus). numeroId reste calculé
     // normalement (voir numeroParDefaut()/init()) : ouvrir un numéro depuis
     // le Sommaire ou passer en Rédaction retombe bien sur le bon numéro.
+    sourcesEspace: "sources", // "sources" | "memoire" — deux espaces de l'onglet Sources (liste des sources / règles éditoriales de la veille)
+    regleEdition: null, // id (texte) de la règle éditoriale en cours de modification dans l'espace « Mémoire »
     vue: "sommaire",
     numeroId: 0,
     recherche: { q: "", champ: "tout", rubrique: "toutes" },
@@ -2644,6 +2707,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   function renderSourcesEcran(){
+    // Sélecteur d'espace en tête : liste des sources (défaut) ou mémoire de la
+    // veille (règles éditoriales). La pastille signale les propositions de la
+    // routine encore à trancher.
+    var nbProp = propositions.filter(function(p){ return p.statut === "en_attente"; }).length;
+    var espaces = '<div class="recherche-filtres espaces-sources"><div class="filtre-groupe"><div class="filtre-toggle" role="group" aria-label="Espace">' +
+      '<button type="button" data-action="sources-espace" data-espace="sources" aria-pressed="' + (state.sourcesEspace !== "memoire") + '">Sources suivies (' + sourcesSuivies.length + ')</button>' +
+      '<button type="button" data-action="sources-espace" data-espace="memoire" aria-pressed="' + (state.sourcesEspace === "memoire") + '">Mémoire de la veille' +
+        (nbProp ? '<span class="nav-compte" aria-label="' + nbProp + ' proposition' + (nbProp > 1 ? "s" : "") + ' à traiter">' + nbProp + '</span>' : "") + '</button>' +
+    '</div></div></div>';
+    if (state.sourcesEspace === "memoire") {
+      return '<div class="sources memoire"><h1 class="sr-only">Mémoire de la veille</h1>' + espaces + renderMemoireEspace() + '</div>';
+    }
+
     var nbHebdo = sourcesSuivies.filter(function(s){ return s.periodicite === "hebdomadaire"; }).length;
     var nbMensuelle = sourcesSuivies.filter(function(s){ return s.periodicite === "mensuelle"; }).length;
     var nbTiersMensuelle = sourcesSuivies.filter(function(s){ return s.periodicite === "tiers-mensuelle"; }).length;
@@ -2690,7 +2766,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       visiblesAutres.map(function(s){ return renderSourceRow(s, false); }).join("") +
       (masquees.length ? '<div class="sources-replie"><span class="chip">' + masquees.map(function(s){ return esc(s.nom); }).join(" · ") + '</span></div>' : "");
 
-    return '<div class="sources">' + entete + filtres + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
+    return '<div class="sources">' + espaces + entete + filtres + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
   }
 
   // ---- Bilan de fréquentation (Lot 13) : totaux (vues par numéro, clics
@@ -2886,6 +2962,57 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       (nonClasse ? '<p class="bilan-note">« Non classé » : décisions antérieures à cette mesure ou entrées sans format — ce compte ne baisse que si on les reclasse.</p>' : "");
   }
 
+  // Espace « Mémoire de la veille » de l'onglet Sources (étape 3 de la mémoire
+  // de la veille) : les règles éditoriales durables, relues par la routine à
+  // CHAQUE passage, et les propositions de la routine en attente de décision.
+  // Une règle porte sur un type de contenu, jamais sur une source. Placé dans
+  // Sources (et non dans un onglet à part) à la demande de l'utilisateur
+  // (26/09/2026) : c'est ce que la veille consulte et comment elle s'oriente.
+  function renderMemoireEspace(){
+    var titre = function(t){ return '<div class="groupe-titre"><span>' + t + '</span><span class="filet"></span></div>'; };
+    if (regles === null) {
+      return '<p class="bilan-note">Indisponible tant que la migration 018 n\'est pas appliquée dans Supabase.</p>';
+    }
+    var enAttente = propositions.filter(function(p){ return p.statut === "en_attente"; });
+    var actives = regles.filter(function(r){ return r.actif; }).length;
+
+    var intro = '<div class="memoire-intro"><strong>Les règles ci-dessous sont relues par la routine de veille à chaque passage</strong> et ne s\'effacent jamais. ' +
+      'Écrivez-les sur des <strong>types de contenu</strong> (« pas de communiqué sans données »), pas sur une source précise. ' +
+      'Elles ne sont jamais visibles des élèves ; n\'y mettez aucune donnée personnelle.</div>';
+
+    var propositionsHtml = enAttente.length
+      ? titre("Proposé par la routine (" + enAttente.length + ") — à accepter ou refuser") + enAttente.map(function(p){
+          return '<div class="regle-ligne regle-proposition"><div class="regle-texte">' + esc(p.texte) +
+            (p.justification ? '<span class="regle-meta">Pourquoi : ' + esc(p.justification) + '</span>' : "") + '</div>' +
+            '<div class="regle-actions"><button type="button" class="btn-mini" data-action="proposition-accepter" data-id="' + p.id + '"' + (actives >= MAX_REGLES_ACTIVES ? " disabled" : "") + '>Ajouter aux règles</button>' +
+            '<button type="button" class="btn-mini danger" data-action="proposition-refuser" data-id="' + p.id + '">Refuser</button></div></div>';
+        }).join("")
+      : "";
+
+    var lignes = regles.length ? regles.map(function(r){
+      if (state.regleEdition === String(r.id)) {
+        return '<div class="regle-ligne"><div class="regle-edition"><label class="sr-only" for="regle-edit-' + r.id + '">Texte de la règle</label>' +
+          '<textarea id="regle-edit-' + r.id + '" maxlength="400">' + esc(r.texte) + '</textarea>' +
+          '<div class="regle-actions"><button type="button" class="btn-texte" data-action="regle-annuler">Annuler</button>' +
+          '<button type="button" class="btn-mini" data-action="regle-enregistrer" data-id="' + r.id + '">Enregistrer</button></div></div></div>';
+      }
+      return '<div class="regle-ligne' + (r.actif ? "" : " inactive") + '"><div class="regle-texte">' + esc(r.texte) +
+        '<span class="regle-meta">' + (r.actif ? "" : "désactivée — ignorée par la routine · ") + (r.origine === "proposition_agent" ? "proposée par la routine, acceptée" : "écrite par vous") + '</span></div>' +
+        '<div class="regle-actions"><button type="button" class="btn-mini" data-action="regle-modifier" data-id="' + r.id + '">Modifier</button>' +
+        '<button type="button" class="btn-mini" data-action="regle-activer" data-id="' + r.id + '"' + (!r.actif && actives >= MAX_REGLES_ACTIVES ? " disabled" : "") + '>' + (r.actif ? "Désactiver" : "Réactiver") + '</button>' +
+        '<button type="button" class="btn-mini danger" data-action="regle-supprimer" data-id="' + r.id + '">Supprimer</button></div></div>';
+    }).join("") : '<p class="bilan-note">Aucune règle pour l\'instant. La routine travaille à partir des formats et des motifs d\'écart seuls.</p>';
+
+    var ajout = actives >= MAX_REGLES_ACTIVES
+      ? '<p class="bilan-note">' + MAX_REGLES_ACTIVES + ' règles actives : c\'est le maximum (la liste est relue en entier à chaque passage). Désactivez ou supprimez-en une pour en ajouter.</p>'
+      : '<div class="regle-ajout"><label class="lbl" for="regle-nouvelle">Ajouter une règle</label>' +
+        '<textarea id="regle-nouvelle" maxlength="400" placeholder="Ex. : Les sorties et conférences ne m\'intéressent pas, sauf les colloques scientifiques."></textarea>' +
+        '<div class="regle-actions"><button type="button" class="btn-plein" data-action="regle-ajouter">Ajouter la règle</button></div></div>';
+
+    return intro + propositionsHtml +
+      titre("Règles en vigueur (" + actives + " active" + (actives > 1 ? "s" : "") + ")") + lignes + ajout;
+  }
+
   function renderBilanEcran(){
     var numerosVus = numeros.filter(function(n){ return n.statut !== "brouillon"; });
     var totalVues = numerosVus.reduce(function(s, n){ return s + (n.vues || 0); }, 0);
@@ -3062,6 +3189,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
   function navPage(){
     if (state.vue === "numero") return "n" + state.numeroId + (state.mode === "redaction" ? "/redaction" : "");
+    if (state.vue === "sources" && state.sourcesEspace === "memoire") return "sources/memoire";
     return state.vue === "sommaire" ? "" : state.vue;
   }
 
@@ -3076,8 +3204,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.vue = "numero";
       state.numeroId = parseInt(m[1], 10);
       state.mode = m[2] && estRedacteurActif() ? "redaction" : "publiee";
-    } else if (page === "recherche" || ((page === "sources" || page === "bilan") && estRedacteurActif())) {
-      state.vue = page;
+    } else if (page === "recherche" || ((page === "sources" || page === "sources/memoire" || page === "bilan") && estRedacteurActif())) {
+      state.vue = page === "sources/memoire" ? "sources" : page;
+      state.sourcesEspace = page === "sources/memoire" ? "memoire" : "sources";
     } else {
       state.vue = "sommaire";
     }
@@ -3138,12 +3267,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // extrapolable ») avec les 3 onglets publics EN PLUS de Rédaction/Vue
     // publiée — Sommaire reste donc toujours la 1re pastille juste après
     // le logo, à la même position dans les deux cas.
+    var nbPropositions = propositions.filter(function(p){ return p.statut === "en_attente"; }).length;
     var navHtml = redacActif && numeros.length
       ? '<div class="mode-toggle" role="group" aria-label="Navigation">' +
           '<button type="button" data-action="vue" data-vue="sommaire" aria-pressed="' + (state.vue === "sommaire") + '">Sommaire</button>' +
           '<button type="button" data-action="vue" data-vue="recherche" aria-pressed="' + (state.vue === "recherche") + '">Rechercher</button>' +
           '<span class="mode-toggle-separateur" aria-hidden="true"></span>' +
-          '<button type="button" data-action="vue" data-vue="sources" aria-pressed="' + (state.vue === "sources") + '">Sources</button>' +
+          '<button type="button" data-action="vue" data-vue="sources" aria-pressed="' + (state.vue === "sources") + '">Sources' + (nbPropositions ? '<span class="nav-compte" aria-label="' + nbPropositions + ' proposition' + (nbPropositions > 1 ? "s" : "") + ' de règle à traiter">' + nbPropositions + '</span>' : "") + '</button>' +
           '<button type="button" data-action="aller-redaction" data-mode="redaction" aria-pressed="' + (state.vue === "numero" && state.mode === "redaction") + '">Rédaction</button>' +
           '<button type="button" data-action="aller-vue-publiee" aria-pressed="' + (state.vue === "numero" && state.mode === "publiee") + '">Vue publiée</button>' +
           '<button type="button" data-action="vue" data-vue="bilan" aria-pressed="' + (state.vue === "bilan") + '">Bilan</button>' +
@@ -3227,6 +3357,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       // rédacteur lui-même en Vue publiée) restaient invisibles tant qu'on ne
       // rechargeait pas la page entière, ce qui rendait l'écran Bilan
       // faussement figé (signalé le 15/09/2026).
+      if (vueCible === "sources") {
+        state.sourcesEspace = "sources"; // un clic sur l'onglet Sources ramène toujours à la liste des sources
+        if (estRedacteurActif()) rafraichirMemoire().then(render); // la routine a pu déposer des propositions
+      }
       if (vueCible === "bilan" && estRedacteurActif()) {
         chargerDonneesRedaction().then(render);
       }
@@ -3249,6 +3383,65 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
       render();
       return;
+    }
+
+    var espaceBtn = ev.target.closest('[data-action="sources-espace"]');
+    if (espaceBtn) {
+      state.sourcesEspace = espaceBtn.getAttribute("data-espace") === "memoire" ? "memoire" : "sources";
+      state.regleEdition = null;
+      render();
+      if (state.sourcesEspace === "memoire") rafraichirMemoire().then(render);
+      return;
+    }
+
+    // ---- Mémoire : règles éditoriales et propositions de la routine ----
+    var elRegle = ev.target.closest('[data-action^="regle-"], [data-action^="proposition-"]');
+    if (elRegle) {
+      var actionRegle = elRegle.getAttribute("data-action"), idRegle = elRegle.getAttribute("data-id");
+      var regleCourante = regles && regles.filter(function(r){ return String(r.id) === idRegle; })[0];
+      var propCourante = propositions.filter(function(p){ return String(p.id) === idRegle; })[0];
+
+      if (actionRegle === "regle-ajouter") {
+        var zone = document.getElementById("regle-nouvelle");
+        var texteNouveau = zone ? zone.value.trim() : "";
+        if (texteNouveau.length < 5) { if (zone) zone.focus(); return; }
+        if (await creerRegle(texteNouveau, "enseignant")) render();
+        return;
+      }
+      if (actionRegle === "regle-modifier") { state.regleEdition = idRegle; render(); return; }
+      if (actionRegle === "regle-annuler") { state.regleEdition = null; render(); return; }
+      if (actionRegle === "regle-enregistrer" && regleCourante) {
+        var zoneEdit = document.getElementById("regle-edit-" + idRegle);
+        var texteEdit = zoneEdit ? zoneEdit.value.trim() : "";
+        if (texteEdit.length < 5) { if (zoneEdit) zoneEdit.focus(); return; }
+        if (await ecrireRegle(regleCourante.id, { texte: texteEdit })) { regleCourante.texte = texteEdit; state.regleEdition = null; }
+        render();
+        return;
+      }
+      if (actionRegle === "regle-activer" && regleCourante) {
+        var actifApres = !regleCourante.actif;
+        if (actifApres && regles.filter(function(r){ return r.actif; }).length >= MAX_REGLES_ACTIVES) return; // bouton déjà désactivé à l'écran
+        if (await ecrireRegle(regleCourante.id, { actif: actifApres })) regleCourante.actif = actifApres;
+        render();
+        return;
+      }
+      if (actionRegle === "regle-supprimer" && regleCourante) {
+        if (window.confirm("Supprimer définitivement cette règle ?\n\n« " + regleCourante.texte + " »")) {
+          if (await supprimerRegleDistante(regleCourante.id)) regles = regles.filter(function(r){ return r !== regleCourante; });
+          render();
+        }
+        return;
+      }
+      if (actionRegle === "proposition-accepter" && propCourante) {
+        if (await creerRegle(propCourante.texte, "proposition_agent") && await deciderProposition(propCourante.id, "acceptee")) propCourante.statut = "acceptee";
+        render();
+        return;
+      }
+      if (actionRegle === "proposition-refuser" && propCourante) {
+        if (await deciderProposition(propCourante.id, "refusee")) propCourante.statut = "refusee";
+        render();
+        return;
+      }
     }
 
     var ouvrirBtn = ev.target.closest('[data-action="ouvrir-numero"]');
