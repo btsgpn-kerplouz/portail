@@ -250,6 +250,7 @@ l'enseignant (voir le code du bouton « Retenir »,
   "id": "identifiant unique et stable (slug court, ex. 2026-w36-cen-alsace-plan-gestion)",
   "rubrique": "une valeur de rubriques_connues (GET) — voir section « Les rubriques » ci-dessus",
   "origine": "auto",
+  "format": "un code de formats_autorises (GET) — obligatoire, voir section « Format de chaque candidat » ci-dessous",
   "source": {
     "nom": "Nom de l'organisme producteur",
     "territoire": "Région/département, ou vide si national/international",
@@ -265,6 +266,12 @@ l'enseignant (voir le code du bouton « Retenir »,
   "usage": "piste pédagogique privée, voir section ci-dessus"
 }
 ```
+
+Le champ `format` (ajouté le 26/09/2026) est **obligatoire** dans tout
+candidat : voir la section « Format de chaque candidat » plus bas pour les
+codes et la façon de choisir. Le serveur tolère son absence (le candidat est
+gardé, « non classé »), mais un candidat sans format prive la boucle
+d'apprentissage de sa mesure.
 
 `id` doit rester stable d'une exécution à l'autre pour la même actualité
 (pour permettre une future dé-duplication) — dérivé du numéro de semaine,
@@ -354,6 +361,55 @@ elle-même**, pas sur la réputation de la source :
 
 Un format hors liste est retiré par le serveur (le candidat est gardé, mais
 non classé) et signalé dans `avertissements` : ne pas en inventer.
+
+## Règles éditoriales de l'enseignant (depuis le 26/09/2026)
+
+Le `GET` renvoie `regles_editoriales` : une courte liste de règles écrites par
+l'enseignant dans l'espace « Mémoire de la veille » de l'onglet Sources de l'app (ou acceptées après
+proposition). **À lire en entier avant de chercher, à chaque exécution, et à
+appliquer comme des consignes de tri, pas comme des suggestions.** Elles
+**prévalent sur tout ce qu'on déduit des chiffres** (`bilan_par_format`,
+motifs) : si un format est plutôt retenu mais qu'une règle en exclut un cas,
+c'est la règle qui gagne. En cas de conflit avec ce brief, signaler le
+conflit dans le compte rendu plutôt que de trancher seul.
+
+`regles_editoriales` vaut `null` (et non une liste vide) quand la fonctionnalité
+n'est pas encore installée : dans ce cas, l'ignorer sans en faire une erreur.
+
+### Proposer une règle (une fois par mois, jamais plus)
+
+Uniquement quand le `GET` renvoie `peut_proposer_des_regles: true` (premier
+samedi du mois, et l'enseignant a déjà tranché les propositions précédentes).
+Sinon, ne rien proposer, même si un motif revient souvent.
+
+Une bonne proposition est **une consigne de tri sur un type de contenu**,
+appuyée par un constat chiffré tiré de `motifs_ecart_frequents` et de
+`bilan_par_format` (au moins 5 décisions concordantes — moins, c'est du
+hasard). Exemple : `« Ne pas proposer de communiqué sans données chiffrées. »`,
+justification : `« 8 des 10 écarts de ce type depuis septembre, motif
+"pas de données". »`
+
+À respecter absolument :
+
+- **jamais de règle sur une source** (« éviter tel site », « préférer telle
+  revue ») ni d'adresse : le serveur refuse toute proposition qui en contient.
+  Toutes les sources restent visitées ;
+- 3 propositions au plus par envoi, formulées comme une consigne claire à un
+  collègue, sans jargon technique ;
+- ne pas reproposer une règle déjà en vigueur ni une règle de
+  `propositions_refusees` : une règle refusée par l'enseignant est définitivement
+  écartée, même sous une autre formulation.
+
+Envoi (un seul type de contenu par appel : soit des candidats, soit des
+propositions) :
+
+```
+POST … -d '{"propositions": [{"texte": "…", "justification": "…"}]}'
+```
+
+La proposition atterrit **en attente** : elle n'entre jamais d'elle-même dans
+les règles en vigueur. Réponse `409` s'il reste des propositions non
+tranchées : ne pas insister.
 
 ## Boucle de retour — apprendre des FORMATS, jamais des sources
 

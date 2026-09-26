@@ -97,6 +97,23 @@ La veille apprend des **formats** d'actualité, jamais des sources.
 Tests : `node apps/affut/supabase/tests/dedoublonnage.test.mjs` et
 `…/bilan-formats.test.mjs`.
 
+## Règles éditoriales (26/09/2026, migration 018)
+
+- **`GET`** renvoie `regles_editoriales` (règles actives, en entier — `null` tant
+  que la migration n'est pas appliquée), `peut_proposer_des_regles` (premier
+  samedi du mois ET aucune proposition en attente) et `propositions_refusees`.
+- **`POST {"propositions": [{"texte", "justification"}]}`** (sans `candidats`) :
+  3 propositions au plus, texte de 5 à 400 caractères, **aucune adresse ni
+  source** (refusé), doublons de règles existantes/refusées ignorés, `409` s'il
+  reste des propositions non tranchées. Atterrit dans
+  `affut_propositions_regles` ; jamais dans `affut_regles_editoriales`, que seul
+  le rédacteur connecté à l'app modifie.
+- Tables protégées comme le reste de la rédaction (RLS, aucune vue publique).
+
+**Ordre de mise en service** : 1) appliquer `018-regles-editoriales.sql`,
+2) redéployer cette fonction, 3) merger le front. Tests :
+`node apps/affut/supabase/tests/{dedoublonnage,bilan-formats,memoire}.test.mjs`.
+
 ## Plafonds à connaître côté appelant
 
 Posés le 31/08/2026 (durcissement, en tête d'`index.ts`) — ils ne sont pas
