@@ -2394,6 +2394,53 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       et les ~151 lignes est à confirmer d'un coup d'œil à la prochaine
       connexion réelle.
 
+- [x] **Mémoire de la veille — étape 1 : ne jamais reproposer ce qui a déjà
+      été vu** (26/09/2026, demande directe de l'utilisateur). Constat : seules
+      les entrées *retenues* étaient comparées, par égalité stricte d'adresse.
+      Un article écarté il y a des semaines pouvait revenir, ainsi qu'une
+      simple variante d'adresse (`?utm_…`, `www.`, `/` final). Corrigé dans
+      `supabase/functions/affut-veille/index.ts` : le `POST` compare
+      désormais chaque candidat à l'historique complet (retenus + écartés +
+      moissons en attente, tous numéros) par identifiant, adresse normalisée
+      et titre normalisé, puis renvoie le détail des refus (`doublons`, avec
+      la `raison`). Le `GET` expose `titres_deja_vus` et étend
+      `urls_deja_utilisees` aux écartés et aux candidats en attente. Lecture
+      paginée (plafond PostgREST de 1000 lignes) ; échec de lecture = 500, pas
+      de passage silencieux. Test local : `supabase/tests/dedoublonnage.test.mjs`
+      (11 cas). Consignes ajoutées dans `documents/brief-veille.md`.
+      *Limite connue* : supprimer un numéro entier ne consigne pas ses entrées
+      comme écartées, elles pourraient donc être reproposées.
+      *Reste à faire par l'utilisateur* : redéployer la fonction Edge
+      `affut-veille`. **Non testé contre la vraie base** (aucun accès avec le
+      jeton de la routine) : la logique pure est testée, pas l'aller-retour
+      Supabase.
+- [x] **Mémoire de la veille — étape 2 : formats d'actualité et motifs
+      d'écart en un clic** (26/09/2026, même demande). Principe voulu par
+      l'utilisateur : la veille apprend des **formats** (une très bonne source
+      publie aussi des contenus trop courts/résumés, sans intérêt), **jamais
+      d'un score par source**. Fait : migration `017-format-et-motif-ecart.sql`
+      (`affut_entrees.format`, `affut_candidats_ecartes.format` + `motif_code`,
+      vocabulaire fermé, colonnes facultatives) ; fonction Edge : `format`
+      facultatif validé au `POST`, et le `GET` renvoie `formats_autorises`,
+      `bilan_par_format`, `motifs_ecart_frequents` (`null` sans la migration) ;
+      écran : pastille de format sur les candidats de la moisson, 7 puces de
+      motif à un clic dans les panneaux « Écarter » et « Supprimer » (le texte
+      libre devient une « précision » facultative), tableau « Ce que vous
+      retenez, par format » + motifs fréquents dans le Bilan ; consignes de la
+      routine dans `documents/brief-veille.md`. Tests locaux :
+      `supabase/tests/bilan-formats.test.mjs` (6 cas) et `dedoublonnage.test.mjs`
+      (13 cas). **Non testé dans le navigateur ni contre la vraie base** (pas
+      d'accès en production sans accord) : les fonctions d'affichage sont
+      testées hors navigateur avec des données factices.
+      *Ordre de mise en service* : migration 017 → redéploiement de la fonction
+      Edge → merge du front. Sans la migration, tout continue de fonctionner
+      (le Bilan annonce « indisponible », aucune écriture n'est bloquée).
+      *Limites connues* : les 63 actualités déjà retenues et les écartés
+      antérieurs restent « non classés » (reclassement rétroactif non fait,
+      à décider) ; le format d'une entrée n'est pas modifiable à la main.
+      *Étape suivante prévue* : mémoire éditoriale durable (règles écrites,
+      propositions mensuelles de l'agent à valider) — étape 3.
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés
