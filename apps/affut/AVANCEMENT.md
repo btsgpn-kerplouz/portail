@@ -2441,6 +2441,21 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       *Étape suivante prévue* : mémoire éditoriale durable (règles écrites,
       propositions mensuelles de l'agent à valider) — étape 3.
 
+- [x] **Mobile : titre dans le bandeau des tuiles + touche Retour** (26/09/2026,
+      retours d'usage sur Android). Sommaire mobile : le titre du numéro passe
+      dans le bandeau grenat, juste après le n°, dans la même police (plus
+      d'italique) ; plus de cadre fin autour de la tuile ni entre bandeau et
+      photo ; le corps de tuile, qui ne contenait plus que ce titre, disparaît
+      sur mobile. Navigation : l'app n'avait aucune entrée d'historique, si
+      bien que la touche Retour d'Android la fermait. `render()` synchronise
+      désormais l'historique du navigateur (`navSynchroniser()`) : chaque
+      changement d'écran pousse une entrée avec une adresse lisible
+      (`#/n5`, `#/n5/redaction`, `#/recherche`, `#/sources`, `#/bilan`), et
+      une fenêtre ouverte en pousse une aussi pour que Retour la ferme
+      d'abord ; un lien direct ouvre le bon écran. Écrans réservés sans
+      connexion → Sommaire. Testé dans le navigateur (aller-retour, lien
+      direct, fermeture de fenêtre), **pas sur un vrai téléphone Android**.
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés
