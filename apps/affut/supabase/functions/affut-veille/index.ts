@@ -108,6 +108,189 @@ function semaineIsoActuelle(): { mois: string; semaine: string; datePublication:
   };
 }
 
+// ---- Anti-doublons (26/09/2026) ---------------------------------------------
+// Un candidat déjà vu — retenu dans un numéro, écarté un jour, ou déjà en
+// attente dans une moisson — ne doit JAMAIS revenir, quel que soit l'ancien
+// numéro et le temps écoulé. Avant cette date, seules les entrées retenues
+// étaient comparées, et par égalité stricte d'adresse : un article écarté en
+// septembre pouvait revenir en novembre, et une simple variante d'adresse
+// (`?utm_source=…`, `www.`, `/` final, `http` au lieu de `https`) passait
+// pour un article nouveau.
+//
+// Trois clés de comparaison, dans cet ordre : identifiant du candidat,
+// adresse normalisée, titre normalisé (même article repris à une autre
+// adresse, ex. site d'origine + relais). Le titre n'est comparé qu'au-delà de
+// TITRE_MIN_CARACTERES : un titre très court et générique (« Actualités »)
+// ferait rejeter à tort des articles sans rapport.
+//
+// Bloc volontairement PUR (aucun accès base ni API Deno) et balisé
+// <dedoublonnage> : le test local (apps/affut/supabase/tests/) extrait ce
+// bloc tel quel pour le vérifier — ne pas y ajouter d'import ni d'appel réseau.
+// <dedoublonnage>
+const TITRE_MIN_CARACTERES = 20;
+const PARAMETRES_DE_PISTAGE = /^(utm_|mtm_|pk_|at_|_hs|xtor$|fbclid$|gclid$|dclid$|msclkid$|mc_cid$|mc_eid$|igshid$|spm$|ocid$|cmpid$)/i;
+
+type RaisonDoublon = "deja_retenu" | "deja_ecarte" | "deja_en_moisson" | "doublon_dans_le_lot";
+
+function normaliserUrl(brute: string): string {
+  const texte = String(brute ?? "").trim();
+  try {
+    const u = new URL(texte);
+    const hote = u.hostname.toLowerCase().replace(/^www\./, "");
+    const chemin = u.pathname.replace(/\/index\.(html?|php)$/i, "").replace(/\/+$/, "");
+    const params = [...u.searchParams.entries()]
+      .filter(([cle]) => !PARAMETRES_DE_PISTAGE.test(cle))
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([cle, valeur]) => `${cle}=${valeur}`)
+      .join("&");
+    return hote + chemin + (params ? "?" + params : "");
+  } catch {
+    return texte.toLowerCase();
+  }
+}
+
+function normaliserTitre(brut: string): string {
+  return String(brut ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+type VuDeja = { id?: string; url?: string; titre?: string; raison: RaisonDoublon };
+
+function classerDoublons<T extends { id: string; url: string; titre: string }>(
+  candidats: T[],
+  dejaVus: VuDeja[],
+): { gardes: T[]; ignores: { id: string; titre: string; raison: RaisonDoublon }[] } {
+  const parId = new Map<string, RaisonDoublon>();
+  const parUrl = new Map<string, RaisonDoublon>();
+  const parTitre = new Map<string, RaisonDoublon>();
+  const memoriser = (v: VuDeja) => {
+    if (v.id && !parId.has(v.id)) parId.set(v.id, v.raison);
+    const u = v.url ? normaliserUrl(v.url) : "";
+    if (u && !parUrl.has(u)) parUrl.set(u, v.raison);
+    const t = v.titre ? normaliserTitre(v.titre) : "";
+    if (t.length >= TITRE_MIN_CARACTERES && !parTitre.has(t)) parTitre.set(t, v.raison);
+  };
+  dejaVus.forEach(memoriser);
+
+  const gardes: T[] = [];
+  const ignores: { id: string; titre: string; raison: RaisonDoublon }[] = [];
+  for (const c of candidats) {
+    const t = normaliserTitre(c.titre);
+    const raison = parId.get(c.id) ?? parUrl.get(normaliserUrl(c.url)) ??
+      (t.length >= TITRE_MIN_CARACTERES ? parTitre.get(t) : undefined);
+    if (raison) {
+      ignores.push({ id: c.id, titre: c.titre, raison });
+    } else {
+      gardes.push(c);
+      // Deux candidats identiques dans un même envoi : seul le premier passe.
+      memoriser({ id: c.id, url: c.url, titre: c.titre, raison: "doublon_dans_le_lot" });
+    }
+  }
+  return { gardes, ignores };
+}
+// </dedoublonnage>
+
+// ---- Mémoire de la veille, étape 2 : formats et motifs (26/09/2026) ---------
+// La veille doit apprendre des FORMATS d'actualité qu'on retient ou écarte
+// (rapport avec données, brève sans fond…), jamais des sources : une très
+// bonne source publie aussi des contenus trop courts, et l'inverse. Aucun
+// compteur par source n'est donc calculé ni exposé ici, volontairement.
+//
+// Vocabulaire FERMÉ, répété dans 017-format-et-motif-ecart.sql, index.html
+// (FORMATS / MOTIFS_ECART) et documents/brief-veille.md — à garder synchronisé.
+// Bloc pur, balisé <memoire> : extrait tel quel par le test local.
+// <memoire>
+const FORMATS_AUTORISES: { code: string; description: string }[] = [
+  { code: "rapport_etude", description: "Rapport, bilan ou étude complète, avec données ou résultats détaillés" },
+  { code: "article_fond", description: "Article de fond : dossier, enquête, reportage documenté, analyse développée" },
+  { code: "publication_scientifique", description: "Article ou note d'une revue scientifique ou naturaliste" },
+  { code: "breve", description: "Brève ou communiqué court : quelques lignes, peu ou pas de développement, souvent un simple résumé renvoyant ailleurs" },
+  { code: "texte_officiel", description: "Texte officiel : arrêté, décret, avis, réglementation, plan" },
+  { code: "agenda", description: "Agenda : sortie, conférence, colloque, appel à contributions" },
+  { code: "tribune", description: "Tribune, opinion, prise de position" },
+  { code: "donnees_outil", description: "Jeu de données, référentiel, outil, carte interactive" },
+  { code: "multimedia", description: "Vidéo ou podcast" },
+  { code: "autre", description: "Autre — à éviter, seulement si aucun format ne convient" },
+];
+const CODES_FORMATS = FORMATS_AUTORISES.map((f) => f.code);
+
+// Comptes par format (retenues / écartées) et par motif d'écart. Entrées :
+// les entrées retenues d'origine « auto » et les candidats écartés. Sans
+// format renseigné (historique d'avant l'étape 2) : rangé sous « non_classe ».
+function compterParFormat(
+  entrees: { format?: string | null }[],
+  ecartes: { format?: string | null; motif_code?: string | null }[],
+): {
+  par_format: { format: string; retenues: number; ecartees: number }[];
+  motifs_ecart: { motif: string; nombre: number }[];
+} {
+  const formats = new Map<string, { retenues: number; ecartees: number }>();
+  const ligne = (f?: string | null) => {
+    const cle = f && CODES_FORMATS.includes(f) ? f : "non_classe";
+    if (!formats.has(cle)) formats.set(cle, { retenues: 0, ecartees: 0 });
+    return formats.get(cle)!;
+  };
+  for (const e of entrees) ligne(e.format).retenues++;
+  for (const e of ecartes) ligne(e.format).ecartees++;
+  const motifs = new Map<string, number>();
+  for (const e of ecartes) if (e.motif_code) motifs.set(e.motif_code, (motifs.get(e.motif_code) ?? 0) + 1);
+  return {
+    par_format: [...formats.entries()]
+      .map(([format, c]) => ({ format, ...c }))
+      .sort((a, b) => b.retenues + b.ecartees - (a.retenues + a.ecartees)),
+    motifs_ecart: [...motifs.entries()].map(([motif, nombre]) => ({ motif, nombre })).sort((a, b) => b.nombre - a.nombre),
+  };
+}
+// </memoire>
+
+// Tout ce que la veille a déjà vu, depuis toujours : entrées retenues (tous
+// numéros, publiés ou non), candidats écartés, candidats encore en attente
+// dans la moisson d'un numéro. Lecture paginée : PostgREST plafonne une
+// requête à 1000 lignes, et l'historique n'a plus de raison de rester sous
+// ce seuil. Une lecture qui échoue fait échouer l'appel (500) plutôt que de
+// laisser passer des doublons en silence — la routine peut réessayer.
+async function lireTout<T>(table: string, colonnes: string, ordre: string): Promise<T[]> {
+  const PAGE = 1000;
+  const lignes: T[] = [];
+  for (let debut = 0; ; debut += PAGE) {
+    const { data, error } = await supabase.from(table).select(colonnes).order(ordre).range(debut, debut + PAGE - 1);
+    if (error) throw new Error(`lecture ${table} : ${error.message}`);
+    lignes.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return lignes;
+}
+
+type VuDejaDate = VuDeja & { quand: string };
+
+async function chargerDejaVus(): Promise<VuDejaDate[]> {
+  const [entrees, ecartes, numeros] = await Promise.all([
+    lireTout<{ id: string; url: string | null; titre: string | null; cree_le: string | null }>(
+      "affut_entrees", "id, url, titre, cree_le", "id"),
+    lireTout<{ candidat_id: string; url: string | null; titre: string | null; ecarte_le: string | null }>(
+      "affut_candidats_ecartes", "candidat_id, url, titre, ecarte_le", "id"),
+    lireTout<{ numero: number; moisson: Candidat[] | null }>("affut_numeros", "numero, moisson", "numero"),
+  ]);
+  const vus: VuDejaDate[] = [];
+  for (const e of entrees) {
+    vus.push({ id: e.id, url: e.url ?? "", titre: e.titre ?? "", raison: "deja_retenu", quand: e.cree_le ?? "" });
+  }
+  for (const e of ecartes) {
+    vus.push({ id: e.candidat_id, url: e.url ?? "", titre: e.titre ?? "", raison: "deja_ecarte", quand: e.ecarte_le ?? "" });
+  }
+  for (const n of numeros) {
+    for (const c of n.moisson ?? []) {
+      // Encore en attente de tri : compté comme le plus récent ("9999" trie avant toute date ISO en ordre décroissant).
+      vus.push({ id: c.id, url: c.url, titre: c.titre, raison: "deja_en_moisson", quand: "9999" });
+    }
+  }
+  return vus;
+}
+
 async function handleContext(): Promise<Response> {
   const { data: numeros, error: errNumeros } = await supabase
     .from("affut_numeros")
@@ -156,16 +339,67 @@ async function handleContext(): Promise<Response> {
     ({ affut_numeros: _numero, ...reste }) => reste,
   );
 
-  const { data: ecartesRecents } = await supabase
-    .from("affut_candidats_ecartes")
-    .select("candidat_id, titre, url, rubrique, source, motif, ecarte_le")
-    .order("ecarte_le", { ascending: false })
-    .limit(15);
+  // `format` et `motif_code` : migration 017. Tant qu'elle n'est pas appliquée,
+  // la lecture échoue — on retombe alors sur les colonnes d'avant plutôt que
+  // de casser tout le contexte de la routine.
+  let ecartesRecents: Record<string, unknown>[] | null = null;
+  {
+    const complet = await supabase
+      .from("affut_candidats_ecartes")
+      .select("candidat_id, titre, url, rubrique, source, motif, motif_code, format, ecarte_le")
+      .order("ecarte_le", { ascending: false })
+      .limit(15);
+    if (!complet.error) {
+      ecartesRecents = complet.data;
+    } else {
+      const ancien = await supabase
+        .from("affut_candidats_ecartes")
+        .select("candidat_id, titre, url, rubrique, source, motif, ecarte_le")
+        .order("ecarte_le", { ascending: false })
+        .limit(15);
+      ecartesRecents = ancien.data;
+    }
+  }
 
-  const { data: toutesEntrees } = await supabase.from("affut_entrees").select("url, rubrique");
-  const urlsDejaUtilisees = Array.from(
-    new Set((toutesEntrees ?? []).map((e) => e.url).filter(Boolean)),
-  );
+  // Ce que l'enseignant retient / écarte, PAR FORMAT (jamais par source).
+  // Absent (null) si la migration 017 n'est pas encore appliquée.
+  let bilanFormats: ReturnType<typeof compterParFormat> | null = null;
+  try {
+    const [entreesFormat, ecartesFormat] = await Promise.all([
+      lireTout<{ format: string | null; origine: string | null; valide: boolean | null }>(
+        "affut_entrees", "format, origine, valide", "id"),
+      lireTout<{ format: string | null; motif_code: string | null }>(
+        "affut_candidats_ecartes", "format, motif_code", "id"),
+    ]);
+    bilanFormats = compterParFormat(
+      entreesFormat.filter((e) => e.origine === "auto" && e.valide === true),
+      ecartesFormat,
+    );
+  } catch (_e) {
+    bilanFormats = null;
+  }
+
+  // Ce que la veille a déjà vu, depuis toujours (26/09/2026) : plus seulement
+  // les entrées retenues, mais aussi tout ce qui a été écarté un jour et ce qui
+  // attend encore dans une moisson. Le serveur refuse de toute façon ces
+  // candidats à l'envoi (POST) ; les donner ici évite à l'agent de perdre du
+  // temps à les rédiger.
+  let dejaVus: VuDejaDate[];
+  try {
+    dejaVus = await chargerDejaVus();
+  } catch (e) {
+    return json({ error: (e as Error).message }, 500);
+  }
+  const urlsDejaUtilisees = Array.from(new Set(dejaVus.map((v) => v.url).filter(Boolean) as string[]));
+  // Titres : les 300 plus récents seulement (la liste grossit d'environ 20 à
+  // 40 par semaine) ; les adresses, elles, sont toutes renvoyées.
+  const titresDejaVus = [...dejaVus]
+    .filter((v) => v.titre)
+    .sort((a, b) => (a.quand < b.quand ? 1 : a.quand > b.quand ? -1 : 0))
+    .slice(0, 300)
+    .map((v) => v.titre as string);
+
+  const { data: toutesEntrees } = await supabase.from("affut_entrees").select("rubrique");
 
   // Rubriques connues (05/09/2026) : le champ `rubrique` n'est plus limité aux
   // 4 catégories de base côté écran de rédaction (liste déroulante qui se
@@ -247,7 +481,11 @@ async function handleContext(): Promise<Response> {
     cible,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
+    formats_autorises: FORMATS_AUTORISES,
+    bilan_par_format: bilanFormats?.par_format ?? null,
+    motifs_ecart_frequents: bilanFormats?.motifs_ecart ?? null,
     urls_deja_utilisees: urlsDejaUtilisees,
+    titres_deja_vus: titresDejaVus,
     sources_a_moissonner: sourcesAMoissonner,
     rubriques_connues: rubriquesConnues,
   });
@@ -302,6 +540,7 @@ type Candidat = {
   url: string;
   lienMort: boolean;
   lienMortDepuis: string | null;
+  format?: string;
   titre: string;
   chiffres: string[];
   resume: string;
@@ -336,6 +575,17 @@ async function handleIngest(req: Request): Promise<Response> {
     if (erreur) return json({ error: erreur, candidat_id: c.id }, 400);
   }
 
+  // Format : facultatif, vocabulaire fermé. Une valeur inconnue est retirée
+  // (candidat gardé, non classé) et signalée en retour plutôt que de rejeter
+  // tout l'envoi pour ça.
+  const avertissements: string[] = [];
+  for (const c of candidats) {
+    if (c.format !== undefined && c.format !== null && !CODES_FORMATS.includes(c.format)) {
+      avertissements.push(`format inconnu « ${String(c.format).slice(0, 40)} » pour ${c.id} : ignoré (voir formats_autorises dans le GET)`);
+      delete c.format;
+    }
+  }
+
   const autorise = await verifierEtEnregistrerAppel();
   if (!autorise) {
     return json({ error: "trop d'appels récents, réessayer plus tard" }, 429);
@@ -348,18 +598,18 @@ async function handleIngest(req: Request): Promise<Response> {
     .maybeSingle();
   if (errLecture) return json({ error: errLecture.message }, 500);
 
-  const { data: toutesEntrees } = await supabase.from("affut_entrees").select("url");
-  const urlsExistantes = new Set((toutesEntrees ?? []).map((e) => e.url).filter(Boolean));
-
   const moissonActuelle: Candidat[] = numeroExistant?.moisson ?? [];
-  const idsExistants = new Set(moissonActuelle.map((c) => c.id));
+
+  let dejaVus: VuDejaDate[];
+  try {
+    dejaVus = await chargerDejaVus();
+  } catch (e) {
+    return json({ error: (e as Error).message }, 500);
+  }
+  const { gardes, ignores: ignoresDetail } = classerDoublons(candidats, dejaVus);
 
   const placeRestante = Math.max(0, MAX_MOISSON_PAR_NUMERO - moissonActuelle.length);
-  const candidatsRetenus = candidats
-    .filter((c) => !idsExistants.has(c.id) && !urlsExistantes.has(c.url))
-    .slice(0, placeRestante);
-  const nouveaux = candidatsRetenus;
-  const ignores = candidats.length - nouveaux.length;
+  const nouveaux = gardes.slice(0, placeRestante);
   const moissonFusionnee = [...moissonActuelle, ...nouveaux];
   const statutCollecte = moissonFusionnee.length > 0 ? "rapporte" : "rien";
   const dateCollecte = new Date().toISOString().slice(0, 10);
@@ -408,7 +658,13 @@ async function handleIngest(req: Request): Promise<Response> {
     ok: true,
     numero: numeroCible,
     candidats_ajoutes: nouveaux.length,
-    candidats_ignores_doublon: ignores,
+    candidats_ignores_doublon: ignoresDetail.length,
+    // Détail : pourquoi chaque candidat a été refusé (deja_retenu, deja_ecarte,
+    // deja_en_moisson, doublon_dans_le_lot) — à lire avant de conclure qu'une
+    // source « n'a rien donné ».
+    doublons: ignoresDetail,
+    candidats_ignores_faute_de_place: gardes.length - nouveaux.length,
+    avertissements,
   });
 }
 

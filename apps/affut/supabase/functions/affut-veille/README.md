@@ -46,8 +46,56 @@ POST https://uoeuzxstotqnembcpofx.supabase.co/functions/v1/affut-veille
      -H "x-veille-token: $AFFUT_VEILLE_TOKEN"
      -H "content-type: application/json"
      -d '{"numero": 14, "candidats": [...]}'
-     → écrit les candidats dans affut_numeros.moisson (dédoublonnés), journalise
+     → écrit les candidats dans affut_numeros.moisson, journalise. Refuse tout
+       candidat déjà vu (retenu, écarté ou en attente, quel que soit le numéro) —
+       voir « Anti-doublons » ci-dessous.
 ```
+
+## Anti-doublons (26/09/2026)
+
+Le `POST` compare chaque candidat à **tout ce que la veille a déjà vu, depuis
+toujours** : entrées retenues (tous numéros), candidats écartés, candidats en
+attente dans une moisson. Trois clés, dans cet ordre : identifiant, adresse
+normalisée (sans `http`/`https`, `www.`, `/` final, ancre, paramètres de
+pistage `utm_*`, `fbclid`…), titre normalisé (sans accents, casse ni
+ponctuation ; comparé seulement au-delà de 20 caractères). La réponse détaille
+les refus :
+
+```
+{ "ok": true, "candidats_ajoutes": 12, "candidats_ignores_doublon": 5,
+  "doublons": [ { "id": "…", "titre": "…", "raison": "deja_ecarte" }, … ],
+  "candidats_ignores_faute_de_place": 0 }
+```
+
+`raison` ∈ `deja_retenu`, `deja_ecarte`, `deja_en_moisson`,
+`doublon_dans_le_lot`. Le `GET` renvoie en plus `titres_deja_vus` (les 300 plus
+récents) ; `urls_deja_utilisees` couvre désormais aussi les écartés et les
+candidats en attente. Si la lecture de l'historique échoue, le `POST` répond
+500 (il ne laisse pas passer de doublons en silence) : réessayer.
+
+Test local de la logique de comparaison : `node apps/affut/supabase/tests/dedoublonnage.test.mjs`.
+
+**À redéployer** après ce changement (voir « Déploiement » ci-dessus).
+
+## Formats et motifs (26/09/2026, migration 017)
+
+La veille apprend des **formats** d'actualité, jamais des sources.
+
+- **`POST`** : chaque candidat porte un `format` (code parmi `formats_autorises`).
+  Valeur inconnue → retirée, candidat gardé non classé, signalée dans
+  `avertissements`.
+- **`GET`** renvoie en plus `formats_autorises` (codes + définitions),
+  `bilan_par_format` (retenues / écartées par format) et
+  `motifs_ecart_frequents`. Ces deux derniers valent `null` tant que la
+  migration `017-format-et-motif-ecart.sql` n'est pas appliquée (le reste du
+  contexte fonctionne sans elle). **Aucun compteur par source** — voulu.
+- L'enseignant choisit le motif d'un écart en un clic (`motif_code`), en plus
+  du texte libre.
+
+**Ordre de mise en service** : 1) appliquer `017-…sql` dans le SQL Editor,
+2) redéployer cette fonction, 3) déployer le front (merge de la PR).
+Tests : `node apps/affut/supabase/tests/dedoublonnage.test.mjs` et
+`…/bilan-formats.test.mjs`.
 
 ## Plafonds à connaître côté appelant
 
