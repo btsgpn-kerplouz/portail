@@ -546,6 +546,24 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .ecart-panel .lbl{font-family:var(--af-police-mono);font-size:9.5px;color:var(--af-encre-3);line-height:1.5}
 .ecart-panel textarea{font:inherit;font-family:var(--af-police-mono);font-size:11.5px;padding:7px 9px;border:1px solid var(--af-filet-fort);min-height:52px;resize:vertical;background:var(--af-surface);color:var(--af-encre-courant)}
 .ecart-panel .boutons{display:flex;gap:8px;justify-content:flex-end}
+/* Motif d'écart en un clic (mémoire de la veille, étape 2, 26/09/2026) :
+   boutons radio natifs (clavier + lecteur d'écran gratuits), habillés en
+   puces ; l'entrée est masquée visuellement mais reste focalisable. */
+.motif-choix{display:flex;flex-wrap:wrap;gap:6px}
+.motif-puce{position:relative;display:inline-flex}
+.motif-puce input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.motif-puce span{display:inline-block;padding:6px 10px;border:1px solid var(--af-filet-fort);background:var(--af-surface);font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2);cursor:pointer}
+.motif-puce:hover span{border-color:var(--af-encre)}
+.motif-puce input:checked + span{background:var(--af-encre);color:var(--af-sur-bandeau);border-color:var(--af-encre);font-weight:700}
+.motif-puce input:focus-visible + span{outline:2px solid var(--af-accent);outline-offset:2px}
+/* Bilan par format */
+.bilan-format-ligne{display:grid;grid-template-columns:minmax(0,1.6fr) 64px 64px minmax(90px,1fr);gap:12px;align-items:center;padding:9px 22px;border-bottom:1px solid var(--af-filet);font-size:13px}
+.bilan-format-ligne .nb{text-align:right;font-family:var(--af-police-mono);font-variant-numeric:tabular-nums}
+.bilan-format-ligne .taux{display:flex;align-items:center;gap:8px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
+.bilan-format-ligne .taux .bilan-barre{min-width:40px}
+.bilan-note{padding:10px 22px;font-size:12px;color:var(--af-encre-3);line-height:1.5}
+.bilan-motifs{padding:12px 22px;display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
+.bilan-motifs b{color:var(--af-encre)}
 .deplacer-select-wrap{padding:8px 16px 12px;border-top:1px solid var(--af-filet)}
 .deplacer-select-wrap .lbl{display:block;font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3);margin-bottom:4px}
 .deplacer-select-wrap select{font:inherit;font-family:var(--af-police-mono);font-size:11px;padding:6px 8px;border:1px solid var(--af-filet-fort);background:var(--af-surface);color:var(--af-encre-courant);width:100%}
@@ -628,6 +646,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 }
 
 @media (max-width:640px){
+  .bilan-format-ligne{grid-template-columns:minmax(0,1fr) 48px 48px;padding:9px 14px}
+  .bilan-format-ligne .taux{grid-column:1 / -1}
+  .bilan-note,.bilan-motifs{padding-left:14px;padding-right:14px}
   .page{padding:0 0 40px}
   .app,.app.mode-redaction{max-width:100%;border-left:0;border-right:0}
   .bandeau{padding:11px 14px}
@@ -1005,20 +1026,26 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // ---- mapping camelCase (état JS) <-> snake_case (colonnes Supabase) ----
 
   function versLigneEntree(e, numeroId){
-    return {
+    var ligne = {
       id: e.id, numero_id: numeroId, rubrique: e.rubrique, valide: e.valide, origine: e.origine,
       ordre: e.ordre || 0,
       source: e.source, url: e.url, lien_mort: !!e.lienMort, lien_mort_depuis: e.lienMortDepuis || null,
       titre: e.titre, chiffres: e.chiffres, resume: e.resume, usage_en_cours: e.usage || null, blocs: e.blocs,
       image_url: e.imageUrl || null
     };
+    // Colonne `format` (migration 017) : jointe seulement quand elle a une
+    // valeur, pour ne pas casser l'écriture d'une entrée si la migration
+    // n'est pas encore appliquée.
+    if (e.format) ligne.format = e.format;
+    return ligne;
   }
   function depuisLigneEntree(r){
     return {
       id: r.id, rubrique: r.rubrique, valide: r.valide, origine: r.origine, ordre: r.ordre || 0, source: r.source || {},
       url: r.url, lienMort: r.lien_mort, lienMortDepuis: r.lien_mort_depuis,
       titre: r.titre, chiffres: r.chiffres || [], resume: r.resume, usage: r.usage_en_cours,
-      blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source, imageUrl: r.image_url
+      blocs: r.blocs || { chiffres: true, resume: true }, clicsSource: r.clics_source, imageUrl: r.image_url,
+      format: r.format || null
     };
   }
   function versLigneNumero(n){
@@ -1064,7 +1091,38 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // numeros/entrees/sourcesSuivies déclarées ci-dessous (var numeros, ...) ;
   // ces fonctions les réaffectent globalement (pas de module, IIFE unique).
 
-  var numeros = [], numero, entrees = [], sourcesSuivies = [];
+  var numeros = [], numero, entrees = [], sourcesSuivies = [], ecartes = [];
+
+  // Mémoire de la veille, étape 2 (26/09/2026) : vocabulaire FERMÉ des formats
+  // d'actualité (attribués par l'agent) et des motifs d'écart (choisis en un
+  // clic). Répété dans supabase/017-format-et-motif-ecart.sql,
+  // supabase/functions/affut-veille/index.ts et documents/brief-veille.md —
+  // à garder synchronisé. La veille apprend des FORMATS, jamais des sources.
+  var FORMATS = {
+    rapport_etude: "Rapport, bilan, étude", article_fond: "Article de fond", publication_scientifique: "Publication scientifique",
+    breve: "Brève / communiqué court", texte_officiel: "Texte officiel", agenda: "Agenda, événement", tribune: "Tribune, opinion",
+    donnees_outil: "Données, outil, carte", multimedia: "Vidéo, podcast", autre: "Autre", non_classe: "Non classé"
+  };
+  var MOTIFS_ECART = [
+    { code: "trop_court", libelle: "Trop court, simple résumé" },
+    { code: "pas_de_donnees", libelle: "Pas de données ni de fond" },
+    { code: "hors_sujet", libelle: "Hors sujet" },
+    { code: "agenda", libelle: "Agenda, événement" },
+    { code: "trop_local", libelle: "Trop local ou trop pointu" },
+    { code: "redondant", libelle: "Déjà traité, redondant" },
+    { code: "autre", libelle: "Autre" }
+  ];
+  function renderMotifChoix(){
+    return '<span class="lbl">Pourquoi ? Un clic suffit — la veille en tient compte pour les prochaines recherches (par type de contenu, jamais par source).</span>' +
+      '<div class="motif-choix" role="radiogroup" aria-label="Motif">' +
+      MOTIFS_ECART.map(function(m){
+        return '<label class="motif-puce"><input type="radio" name="motif-code" value="' + m.code + '" data-role="motif-code"><span>' + esc(m.libelle) + '</span></label>';
+      }).join("") + '</div>';
+  }
+  function motifCodeChoisi(panneau){
+    var el = panneau && panneau.querySelector('input[data-role="motif-code"]:checked');
+    return el ? el.value : null;
+  }
 
   async function chargerDonneesPubliques(){
     var s = client();
@@ -1086,6 +1144,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (resSrc.error) throw resSrc.error;
     numeros = assemblerNumeros(resNum.data, resEnt.data);
     sourcesSuivies = resSrc.data.map(depuisLigneSource);
+    // Écartés, pour le tableau « par format » du Bilan. Ne doit jamais bloquer
+    // le chargement : tant que la migration 017 n'est pas appliquée, la lecture
+    // des colonnes `format`/`motif_code` échoue — le Bilan l'annonce alors.
+    var resEc = await s.from("affut_candidats_ecartes").select("format, motif_code");
+    ecartes = resEc.error ? null : resEc.data;
   }
 
   async function chargerDonnees(){
@@ -1182,12 +1245,19 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // Motif d'écart (Lot 8, préparation) : garde une trace d'un candidat de
   // moisson écarté par l'enseignant, avec un motif optionnel — alimente la
   // boucle de retour de l'agent de veille (voir documents/brief-veille.md).
-  async function creerCandidatEcarte(cand, motif){
-    var res = await client().from("affut_candidats_ecartes").insert({
+  // `format` et `motif_code` (migration 017) : joints seulement quand ils ont
+  // une valeur, pour qu'un écart sans motif choisi continue de s'écrire même
+  // si la migration n'est pas encore appliquée.
+  async function creerCandidatEcarte(cand, motif, motifCode){
+    var ligne = {
       numero_id: numero.numero, candidat_id: cand.id, rubrique: cand.rubrique,
       source: cand.source, url: cand.url, titre: cand.titre, motif: motif || null
-    });
-    if (res.error) signalerErreurEcriture(res.error);
+    };
+    if (motifCode) ligne.motif_code = motifCode;
+    if (cand.format) ligne.format = cand.format;
+    var res = await client().from("affut_candidats_ecartes").insert(ligne);
+    if (res.error) { signalerErreurEcriture(res.error); return; }
+    if (ecartes) ecartes.push({ format: cand.format || null, motif_code: motifCode || null });
   }
   // Numéro suivant : le plus grand numéro existant + 1 (démo ou pas, la
   // suite logique d'une parution hebdomadaire).
@@ -1603,7 +1673,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // quel que soit numero.statut (brouillon ou publié).
   function renderEcartEntreePanel(e){
     return '<div class="ecart-panel">' +
-      '<label class="lbl" for="motif-ecart-entree-' + e.id + '">Motif de la suppression (facultatif — lu par la routine de veille automatisée, jamais par les élèves)</label>' +
+      renderMotifChoix() +
+      '<label class="lbl" for="motif-ecart-entree-' + e.id + '">Précision (facultatif — lue par la routine de veille automatisée, jamais par les élèves)</label>' +
       '<textarea id="motif-ecart-entree-' + e.id + '" data-role="motif-ecart-entree"></textarea>' +
       '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart-entree">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-suppression-entree" data-id="' + e.id + '">Supprimer définitivement</button></div>' +
     '</div>';
@@ -2343,7 +2414,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var resumeHtml = c.resume ? '<div class="flat-resume">' + esc(c.resume) + '</div>' : "";
     var ecartPanel = state.ecarterOuvert === c.id
       ? '<div class="ecart-panel">' +
-          '<label class="lbl" for="motif-ecart-' + c.id + '">Motif de l\'écart (facultatif — lu par la routine de veille automatisée, jamais par les élèves)</label>' +
+          renderMotifChoix() +
+          '<label class="lbl" for="motif-ecart-' + c.id + '">Précision (facultatif — lue par la routine de veille automatisée, jamais par les élèves)</label>' +
           '<textarea id="motif-ecart-' + c.id + '" data-role="motif-ecart"></textarea>' +
           '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-ecart" data-id="' + c.id + '">Écarter définitivement</button></div>' +
         '</div>'
@@ -2358,6 +2430,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
               (src.territoire ? '<span class="pastille-echelle">' + esc(src.territoire) + '</span>' : "") +
               '<span class="meta-mono">' + esc(src.domaine || "") + (src.date ? ' · ' + esc(src.date) : "") + '</span>' +
               '<span class="etat-pastille">◇ candidat · ' + esc(c.rubrique) + '</span>' +
+              (c.format && FORMATS[c.format] ? '<span class="pastille-echelle">' + esc(FORMATS[c.format]) + '</span>' : "") +
               (noteProbleme ? '<span class="etat-pastille mort">✕ ' + noteProbleme + '</span>' : "") +
             '</div>' +
             '<div class="flat-titre">' + esc(c.titre) + '</div>' +
@@ -2766,6 +2839,39 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     (state.bilanDetailJournalierOuvert ? grapheJournalierEntree(e, n) : "");
   }
 
+  // « Ce que vous retenez, par format » (mémoire de la veille, étape 2) :
+  // vérifie que la boucle d'apprentissage progresse — la part retenue par
+  // format doit monter là où l'on écarte moins. Jamais par source, à dessein.
+  function renderBilanFormats(){
+    var titre = '<div class="groupe-titre"><span>Ce que vous retenez, par format</span><span class="filet"></span></div>';
+    if (ecartes === null) {
+      return titre + '<p class="bilan-note">Indisponible tant que la migration 017 n\'est pas appliquée dans Supabase.</p>';
+    }
+    var lignes = {};
+    function ligne(code){ code = FORMATS[code] ? code : "non_classe"; return lignes[code] = lignes[code] || { r: 0, e: 0 }; }
+    numeros.forEach(function(n){ (n.entrees || []).forEach(function(e){ if (e.origine === "auto" && e.valide) ligne(e.format).r++; }); });
+    ecartes.forEach(function(x){ ligne(x.format).e++; });
+    var codes = Object.keys(lignes).sort(function(a, b){ return (lignes[b].r + lignes[b].e) - (lignes[a].r + lignes[a].e); });
+    if (!codes.length) return titre + '<p class="bilan-note">Rien à afficher pour l\'instant : aucune actualité de la veille n\'a encore été retenue ou écartée.</p>';
+
+    var enTete = '<div class="bilan-format-ligne" aria-hidden="true" style="font-family:var(--af-police-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)"><span>Format</span><span class="nb">Retenues</span><span class="nb">Écartées</span><span>Part retenue</span></div>';
+    var rows = codes.map(function(code){
+      var l = lignes[code], tot = l.r + l.e, pct = tot ? Math.round(100 * l.r / tot) : 0;
+      return '<div class="bilan-format-ligne"><span>' + esc(FORMATS[code]) + '</span><span class="nb">' + l.r + '</span><span class="nb">' + l.e + '</span>' +
+        '<span class="taux"><span class="bilan-barre" role="img" aria-label="' + pct + ' % retenues"><span class="bilan-barre-remplie" style="display:block;width:' + pct + '%"></span></span>' + pct + ' %</span></div>';
+    }).join("");
+
+    var motifs = {};
+    ecartes.forEach(function(x){ if (x.motif_code) motifs[x.motif_code] = (motifs[x.motif_code] || 0) + 1; });
+    var motifsHtml = MOTIFS_ECART.filter(function(m){ return motifs[m.code]; })
+      .sort(function(a, b){ return motifs[b.code] - motifs[a.code]; })
+      .map(function(m){ return '<span>' + esc(m.libelle) + ' <b>' + motifs[m.code] + '</b></span>'; }).join("");
+    var nonClasse = lignes.non_classe ? (lignes.non_classe.r + lignes.non_classe.e) : 0;
+    return titre + enTete + rows +
+      (motifsHtml ? '<div class="bilan-motifs"><span>Motifs d\'écart :</span>' + motifsHtml + '</div>' : "") +
+      (nonClasse ? '<p class="bilan-note">« Non classé » : décisions antérieures à cette mesure ou entrées sans format — ce compte ne baisse que si on les reclasse.</p>' : "");
+  }
+
   function renderBilanEcran(){
     var numerosVus = numeros.filter(function(n){ return n.statut !== "brouillon"; });
     var totalVues = numerosVus.reduce(function(s, n){ return s + (n.vues || 0); }, 0);
@@ -2810,6 +2916,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="sources bilan">' + entete +
       '<div class="sources-table">' + sectionNum + '</div>' +
       '<div class="sources-table bilan-section">' + sectionEnt + '</div>' +
+      '<div class="sources-table bilan-section">' + renderBilanFormats() + '</div>' +
     '</div>';
   }
 
@@ -3159,12 +3266,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       var entreeEcartee = entrees.filter(function(e){ return e.id === delId; })[0];
       var motifElEntree = document.getElementById("motif-ecart-entree-" + delId);
       var motifEntree = motifElEntree ? motifElEntree.value.trim() : "";
+      var motifCodeEntree = motifCodeChoisi(confirmerSuppEntreeBtn.closest(".ecart-panel"));
       entrees = entrees.filter(function(e){ return e.id !== delId; });
       numero.entrees = entrees;
       state.ecarterEntreeOuvert = null;
       state.modal = null;
       supprimerEntreeDistante(delId);
-      if (entreeEcartee) creerCandidatEcarte(entreeEcartee, motifEntree);
+      if (entreeEcartee) creerCandidatEcarte(entreeEcartee, motifEntree, motifCodeEntree);
       render();
       return;
     }
@@ -3210,7 +3318,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         numero.moisson = numero.moisson.filter(function(c){ return c.id !== cid; });
         var nouvelleEntree = {
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
-          ordre: prochainOrdre(),
+          ordre: prochainOrdre(), format: cand.format || null,
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
           titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
           blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
@@ -3244,10 +3352,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       var candEcarte = numero.moisson.filter(function(c){ return c.id === ceid; })[0];
       var motifEl = document.getElementById("motif-ecart-" + ceid);
       var motif = motifEl ? motifEl.value.trim() : "";
+      var motifCode = motifCodeChoisi(confirmerEcartBtn.closest(".ecart-panel"));
       numero.moisson = numero.moisson.filter(function(c){ return c.id !== ceid; });
       state.ecarterOuvert = null;
       ecrireNumero({ moisson: numero.moisson });
-      if (candEcarte) creerCandidatEcarte(candEcarte, motif);
+      if (candEcarte) creerCandidatEcarte(candEcarte, motif, motifCode);
       render();
       return;
     }

@@ -320,15 +320,80 @@ tuile et dispensait de lire la source. Désormais :
   ne fait jamais » ci-dessous) : choisir parmi ceux de la source, ne pas en
   fabriquer un plus court par calcul ou arrondi.
 
-## Boucle de retour
+## Ne jamais reproposer ce qui a déjà été vu
 
-À chaque exécution, avant de chercher, relire un échantillon récent des
-décisions de l'enseignant (candidats retenus vs écartés, avec leur motif
-d'écart quand il a été renseigné — voir le Lot 8 dans
-`apps/affut/AVANCEMENT.md` pour l'état de cet historique) pour ajuster le
-tri : quelles sources reviennent souvent écartées, quels types de sujets
-sont systématiquement retenus. C'est de l'apprentissage en contexte à
-chaque exécution, pas un réglage qui persiste entre deux exécutions.
+Le `GET` renvoie `urls_deja_utilisees` (adresses de tout ce qui a été retenu,
+écarté ou est en attente, depuis le début) et `titres_deja_vus` (les 300 plus
+récents). **Avant de rédiger un candidat, vérifier qu'il n'y figure pas** —
+ni à la même adresse, ni sous un titre équivalent à une autre adresse (site
+d'origine et relais, communiqué repris par la presse). Le serveur refuse de
+toute façon un candidat déjà vu (réponse `doublons`, avec la `raison`), mais
+un candidat rédigé pour rien est du temps perdu.
+
+Un article **écarté** reste écarté, quel que soit le temps écoulé : ne pas le
+reproposer sous prétexte qu'il est plus ancien dans l'historique. Si une
+source déjà écartée publie une **version nettement plus complète** du même
+sujet (rapport intégral après une brève), c'est un nouveau document à
+proposer, avec sa propre adresse.
+
+## Format de chaque candidat (obligatoire depuis le 26/09/2026)
+
+Chaque candidat porte un champ `format`, à choisir **uniquement** parmi les
+codes de `formats_autorises` renvoyés par le `GET` (liste fermée, avec une
+définition pour chacun). Le choix se fait sur le **contenu de la page
+elle-même**, pas sur la réputation de la source :
+
+- `breve` : quelques lignes, peu ou pas de développement, souvent un simple
+  résumé qui renvoie vers un document complet. Un bon critère : si l'on ne
+  peut tirer ni chiffre ni fait précis au-delà du titre, c'est une brève.
+- `rapport_etude` / `article_fond` / `publication_scientifique` : contenu
+  développé, avec données, méthode ou analyse.
+- `texte_officiel`, `agenda`, `tribune`, `donnees_outil`, `multimedia` : voir
+  les définitions du `GET`.
+- `autre` : en dernier recours seulement.
+
+Un format hors liste est retiré par le serveur (le candidat est gardé, mais
+non classé) et signalé dans `avertissements` : ne pas en inventer.
+
+## Boucle de retour — apprendre des FORMATS, jamais des sources
+
+À chaque exécution, avant de chercher, lire dans le `GET` :
+
+- `bilan_par_format` : pour chaque format, combien de candidats ont été
+  retenus et combien écartés depuis le début ;
+- `motifs_ecart_frequents` : les raisons d'écart choisies par l'enseignant
+  (`trop_court`, `pas_de_donnees`, `hors_sujet`, `agenda`, `trop_local`,
+  `redondant`, `autre`) ;
+- `candidats_ecartes_recents` (avec `motif`, `motif_code`, `format`) et
+  `entrees_retenues_recentes`, pour les cas concrets.
+
+Et **ajuster la recherche en conséquence**, par exemple :
+
+- un format presque toujours écarté (ex. `breve` avec le motif `trop_court`)
+  ne se propose plus seul : chercher plutôt le **document complet** vers
+  lequel la brève renvoie (rapport, étude, dossier), et ne rien proposer si
+  on ne le trouve pas ;
+- un format presque toujours retenu (ex. `rapport_etude`) mérite d'être
+  cherché plus activement, y compris hors des sources habituelles ;
+- un motif qui revient (ex. `pas_de_donnees`) est une consigne de tri à
+  appliquer **avant** de proposer, pas après.
+
+**Règle absolue : ne jamais déduire une préférence pour ou contre une
+source.** Une très bonne source publie aussi des contenus trop courts ; c'est
+le contenu qui est écarté, pas la source. Aucun compteur par source n'est
+fourni, et l'on ne doit pas en reconstituer un à partir des exemples récents
+(« cette source est souvent écartée », « celle-ci est toujours retenue » sont
+des conclusions interdites). Toutes les sources suivies restent visitées selon
+leur périodicité, quel que soit l'historique.
+
+Tant que les nouvelles colonnes ne sont pas encore remplies (les décisions
+d'avant le 26/09/2026 n'ont ni format ni motif codé), `bilan_par_format` peut
+être `null` ou dominé par « non_classe » : dans ce cas, se fier aux motifs
+libres des écartés récents et au bon sens éditorial de ce brief.
+
+C'est de l'apprentissage en contexte à chaque exécution, pas un réglage qui
+persiste entre deux exécutions : la mémoire durable, c'est l'historique en
+base (formats et motifs) et ce brief.
 
 ## Ce que l'agent ne fait jamais
 
