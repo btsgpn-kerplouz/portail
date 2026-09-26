@@ -414,6 +414,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .nc-badge{flex:none;width:110px;padding:14px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;background:var(--af-accent);color:var(--af-sur-accent)}
 .nc-badge .num{font-family:var(--af-police-titre);font-size:24px;font-weight:600;color:var(--af-sur-accent)}
 .nc-badge .dernier-tag{align-self:flex-start;border:1px solid var(--af-sur-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;margin-top:2px}
+.nc-badge-titre{display:none}
 .nc-image{flex:none;width:220px;object-fit:cover;border-right:1px solid var(--af-filet-moyen)}
 .nc-corps{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .nc-titre{font-family:var(--af-police-titre);font-style:italic;font-size:21px;font-weight:600;line-height:1.25;color:var(--af-accent)}
@@ -431,6 +432,19 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
   .nc-badge{width:auto;flex-direction:row;align-items:center;justify-content:space-between}
   .nc-image{width:100%;aspect-ratio:16/9;border-right:0;border-bottom:1px solid var(--af-filet-moyen)}
   .nc-liste{display:none}
+  /* Titre du numéro remonté dans le bandeau grenat, juste après le n°
+     (retour d'usage 26/09/2026) : le corps sous la photo ne contenait plus
+     que ce titre, il disparaît pour ne pas le répéter. */
+  .nc-badge{justify-content:flex-start;gap:10px}
+  .nc-badge .num{flex:none}
+  .nc-badge-titre{display:block;flex:1;min-width:0;font-family:var(--af-police-titre);font-size:20px;font-weight:600;line-height:1.2;color:var(--af-sur-accent)}
+  .nc-badge .dernier-tag{flex:none;align-self:center;margin-top:0}
+  .nc-corps{display:none}
+  /* Pas de filet fin autour de la tuile ni entre bandeau et photo
+     (retour d'usage 26/09/2026) : le bloc grenat + la photo suffisent à
+     délimiter la tuile. */
+  .numero-carte,.numero-carte.dernier,.numero-carte:hover{border:0}
+  .nc-image{border-bottom:0}
 }
 
 .mois-replie{border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
@@ -704,7 +718,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .sommaire-mois .filet{display:none}
   .sommaire-mois .compte{margin-left:auto}
   .numero-carte{flex-direction:column}
-  .nc-badge{flex-direction:row;align-items:center;justify-content:space-between;border-right:0;border-bottom:1px solid var(--af-filet);width:auto}
+  .nc-badge{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;border-right:0;border-bottom:0;width:auto}
   .nc-droite{flex-direction:row;align-items:center;border-left:0;border-top:1px solid var(--af-filet);width:auto}
   .resultat-actu{flex-direction:column}
   .ra-droite{flex-direction:row;flex-wrap:wrap;align-items:baseline;border-left:0;border-top:1px solid var(--af-filet);width:auto;text-align:left}
@@ -2161,7 +2175,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // que <div> pour rester accessible au clavier (focus + Entrée), comme
     // les autres déclencheurs de cette action (chip du Sommaire, etc.).
     return '<button type="button" class="numero-carte' + (dernier ? " dernier" : "") + '" data-action="ouvrir-numero" data-numero="' + n.numero + '">' +
-      '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
+      '<div class="nc-badge"><span class="num tab-num">n° ' + n.numero + '</span><span class="nc-badge-titre">' + esc(n.titre) + '</span>' + (dernier ? '<span class="dernier-tag">Dernier</span>' : "") + '</div>' +
       image +
       '<div class="nc-corps"><div class="nc-titre">' + esc(n.titre) + '</div><ul class="nc-liste">' + titresHtml + '</ul></div>' +
     '</button>';
@@ -3036,6 +3050,74 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="etat-limite"><span class="glyphe">◇</span><h1>Le premier numéro paraîtra bientôt</h1><p>Le carnet est une veille hebdomadaire : chaque semaine, l\'équipe pédagogique publie les actualités naturalistes, avec leurs documents d\'origine.</p><div class="rien-a-faire">Rien à faire — revenir plus tard.</div></div>';
   }
 
+  // ---- Historique du navigateur (26/09/2026, retour d'usage Android) ----
+  // L'app est une seule page : sans entrée d'historique, la touche Retour
+  // du téléphone fermait l'app au lieu de revenir à l'écran précédent.
+  // Chaque changement d'écran (vue, numéro, mode) pousse désormais une
+  // entrée, avec une adresse lisible (#/n5, #/recherche…) ; ouvrir une
+  // fenêtre modale en pousse une aussi, pour que Retour la ferme d'abord.
+  // Synchronisé à la fin de render() plutôt qu'action par action : toutes
+  // les navigations passent par là, y compris les futures.
+  var navPret = false, navCle = null, navModale = false, navIgnorerPop = 0, navRestauration = false;
+
+  function navPage(){
+    if (state.vue === "numero") return "n" + state.numeroId + (state.mode === "redaction" ? "/redaction" : "");
+    return state.vue === "sommaire" ? "" : state.vue;
+  }
+
+  function navLireHash(){
+    return location.hash.indexOf("#/") === 0 ? decodeURIComponent(location.hash.slice(2)) : null;
+  }
+
+  // Page inconnue, numéro absent ou écran réservé sans connexion : Sommaire.
+  function navAppliquer(page){
+    var m = /^n(\d+)(\/redaction)?$/.exec(page || "");
+    if (m && numeros.some(function(n){ return n.numero === parseInt(m[1], 10); })) {
+      state.vue = "numero";
+      state.numeroId = parseInt(m[1], 10);
+      state.mode = m[2] && estRedacteurActif() ? "redaction" : "publiee";
+    } else if (page === "recherche" || ((page === "sources" || page === "bilan") && estRedacteurActif())) {
+      state.vue = page;
+    } else {
+      state.vue = "sommaire";
+    }
+  }
+
+  function navSynchroniser(){
+    if (!navPret) return; // rendu avant la fin d'init() : ne pas écraser l'adresse demandée
+    var page = navPage(), modale = !!modaleFoyerActuel();
+    var url = location.pathname + location.search + (page ? "#/" + page : "");
+    var etat = { affut: 1, page: page, modale: modale };
+    if (navCle === null || navRestauration) {
+      history.replaceState(etat, "", url);
+    } else if (page === navCle) {
+      if (modale && !navModale) history.pushState(etat, "", url);
+      // Modale fermée par Annuler/Échap/fond : on dépile son entrée pour
+      // que le Retour suivant quitte bien l'écran, sans rien re-rendre.
+      else if (!modale && navModale) { navIgnorerPop++; history.back(); }
+    } else if (navModale) {
+      // Quitter un écran depuis une modale : l'entrée de la modale devient
+      // celle du nouvel écran (Retour ramène à l'écran d'avant la modale).
+      history.replaceState(etat, "", url);
+    } else {
+      if (modale) history.pushState({ affut: 1, page: page, modale: false }, "", url);
+      history.pushState(etat, "", url);
+    }
+    navCle = page; navModale = modale;
+  }
+
+  window.addEventListener("popstate", function(ev){
+    if (navIgnorerPop > 0) { navIgnorerPop--; return; }
+    var page = ev.state && ev.state.affut ? ev.state.page : navLireHash();
+    if (page === null) return; // ancre interne (#id d'entrée), pas une navigation
+    if (!navPret) return; // encore en chargement
+    navAppliquer(page);
+    state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
+    state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
+    navRestauration = true;
+    try { render(); } finally { navRestauration = false; }
+  });
+
   function render(){
     bindCurrent();
     var app = document.getElementById("app");
@@ -3122,6 +3204,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // à chaque fois plutôt qu'une fois au chargement.
     var graphesJour = app.querySelectorAll(".graphe-jour");
     for (var gj = 0; gj < graphesJour.length; gj++) initGrapheJournalierHover(graphesJour[gj]);
+
+    navSynchroniser();
   }
 
   function ouvrirConnexion(){ state.modalAuth = { erreur: null, enCours: false, info: null }; render(); }
@@ -3812,6 +3896,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       return;
     }
     state.numeroId = numeroParDefaut();
+    // Adresse directe (#/n5, #/recherche…) : lien partagé ou rechargement.
+    if (navLireHash() !== null) navAppliquer(navLireHash());
+    navPret = true;
     render();
 
     s.auth.onAuthStateChange(function(event){
