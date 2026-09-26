@@ -2496,13 +2496,14 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       26/09/2026 (mémoire de la veille étapes 1 et 2, mobile) : la
       numérotation par lots ayant été abandonnée entre-temps, cette entrée
       n'en porte pas.
-      *Reste à faire par l'utilisateur* : saisir à la main les 7 nouvelles
-      sources de l'écran « Sources » (liste fournie en conversation le
-      26/09/2026 — REEB, PNR du Golfe du Morbihan, FRENE en flux RSS,
-      Réseau des Grands Sites de France, portail des parcs nationaux,
-      Rivages de France, Fête de la Nature). Toutes vérifiées le même jour
-      (page accessible, actualités réellement datées, lisibles sans
-      JavaScript). Aucun redéploiement de la fonction Edge nécessaire.
+      *Fait le 26/09/2026* : les 7 nouvelles sources ont été ajoutées à l'écran
+      « Sources » (REEB, PNR du Golfe du Morbihan et FRENE en flux RSS, en
+      hebdomadaire ; Réseau des Grands Sites de France, portail des parcs
+      nationaux, Rivages de France et Fête de la Nature, en tiers-mensuelle ;
+      rubrique par défaut « Animation & médiation »). Toutes vérifiées le même
+      jour par l'utilisateur (page accessible, actualités réellement datées,
+      lisibles sans JavaScript) ; le total passe de 149 à 156 sources.
+      Aucun redéploiement de la fonction Edge nécessaire.
       **Non testé en exécution réelle** : le premier passage de la routine
       avec ce brief dira si le volume et la qualité de l'axe tiennent.
 
