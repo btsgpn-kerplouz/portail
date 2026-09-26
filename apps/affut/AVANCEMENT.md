@@ -2455,6 +2455,56 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       d'abord ; un lien direct ouvre le bon écran. Écrans réservés sans
       connexion → Sommaire. Testé dans le navigateur (aller-retour, lien
       direct, fermeture de fenêtre), **pas sur un vrai téléphone Android**.
+- [x] **Axe « animation & médiation » dans la veille**
+      (26/09/2026, demande directe de l'utilisateur après le numéro 5 : la
+      veille couvrait bien la gestion, la science et les données, mais
+      quasiment pas l'animation nature, la valorisation de la biodiversité
+      et l'événementiel — donc pas non plus la famille de métiers
+      correspondante, pourtant centrale en BTS GPN).
+      Deux volets, tous deux dans `documents/brief-veille.md` — **aucune
+      modification de code** : `retenir-candidat` (`index.html`) recopie la
+      rubrique du candidat telle quelle dans l'entrée, sans passer par la
+      liste déroulante, donc une rubrique inédite survit au geste
+      « Retenir » et entre ensuite d'elle-même dans `rubriquesConnues()`
+      comme dans le `rubriques_connues` du `GET`. Vérifié dans le code
+      avant d'écrire quoi que ce soit.
+      - Section « Les rubriques » : nouvelle sous-section « Rubrique
+        approuvée en plus des 4 de base » définissant **Animation &
+        médiation** (EEDD, animation nature, aires éducatives, accueil du
+        public et fréquentation, valorisation/interprétation, ressources
+        pédagogiques, événementiel naturaliste) et précisant qu'elle est
+        explicitement autorisée — l'agent ne doit pas la traiter comme une
+        « nouvelle rubrique » au sens de la priorité stricte. Distinction
+        posée avec **Evènement**, qui reste la simple annonce datée.
+        Elle n'est pas dans `RUBRIQUES_CANONIQUES` (volontairement : le
+        code n'a pas bougé), donc elle n'apparaîtra dans
+        `rubriques_connues` qu'après la première entrée retenue.
+      - Section « Sources à privilégier » : nouvel axe « animation,
+        médiation et valorisation » pour la **recherche ouverte**, à
+        traiter à chaque exécution (au moins 2-3 `WebSearch` dédiées dans
+        la quinzaine déjà demandée), avec ses catégories d'organismes
+        (réseaux EEDD, CPIE, aires éducatives et sciences participatives
+        scolaires, accueil du public/fréquentation, manifestations et temps
+        forts, médiation scientifique et interprétation). Garde-fou ajouté
+        dans la foulée : ce champ produit beaucoup d'annonces d'agenda de
+        trois lignes — la valeur est dans les bilans, retours d'expérience,
+        évaluations de dispositif et chiffres de fréquentation. Rédigé dans
+        le vocabulaire des formats introduits le même jour (`agenda`,
+        `breve`, motif `trop_court`) plutôt qu'en règle parallèle, pour ne
+        pas doublonner la section « Boucle de retour ».
+      Écrit après coup sur la branche, rebasé sur les deux commits du
+      26/09/2026 (mémoire de la veille étapes 1 et 2, mobile) : la
+      numérotation par lots ayant été abandonnée entre-temps, cette entrée
+      n'en porte pas.
+      *Reste à faire par l'utilisateur* : saisir à la main les 7 nouvelles
+      sources de l'écran « Sources » (liste fournie en conversation le
+      26/09/2026 — REEB, PNR du Golfe du Morbihan, FRENE en flux RSS,
+      Réseau des Grands Sites de France, portail des parcs nationaux,
+      Rivages de France, Fête de la Nature). Toutes vérifiées le même jour
+      (page accessible, actualités réellement datées, lisibles sans
+      JavaScript). Aucun redéploiement de la fonction Edge nécessaire.
+      **Non testé en exécution réelle** : le premier passage de la routine
+      avec ce brief dira si le volume et la qualité de l'axe tiennent.
 
 - [x] **Mémoire de la veille — étape 3 : règles éditoriales durables**
       (26/09/2026, même demande, stockage dans l'app choisi par l'utilisateur
@@ -2489,7 +2539,10 @@ idée à définir avec l'utilisateur.
 ## Points laissés ouverts par le brief (à trancher en cours de route)
 
 - Auteur unique ou plusieurs enseignants (impacte le Lot 7).
-- Nom de la 5e rubrique (4 sont utilisées dans les maquettes).
+- ~~Nom de la 5e rubrique (4 sont utilisées dans les maquettes).~~
+  Tranché le 26/09/2026 : **Animation & médiation**. La question
+  avait d'ailleurs perdu son sens le 05/09/2026, quand la liste des
+  rubriques est devenue auto-complétée plutôt que figée à 4.
 - Métadonnées de source (type de document, pages, durée de lecture) :
   déduites du lien ou saisies à la main.
 - Jour/heure de collecte et de publication, incohérents entre deux

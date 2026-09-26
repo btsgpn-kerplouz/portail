@@ -104,7 +104,29 @@ sans usage récent :
   cases précédentes, qui mérite d'être vue même si elle ne rentre dans
   aucune rubrique de gestion/science/données.
 
-Idéalement il vaut mieux répartir les candidats entre les 4 rubriques plutôt que de tout concentrer
+### Rubrique approuvée en plus des 4 de base (26/09/2026)
+
+- **Animation & médiation** — éducation à l'environnement, animation
+  nature, sciences participatives encadrées, aires éducatives, accueil du
+  public et gestion de la fréquentation, valorisation et interprétation du
+  patrimoine naturel, ressources pédagogiques, manifestations et
+  événementiel naturaliste (festivals, chantiers participatifs, temps forts
+  nationaux). Tout ce qui relève du **geste de médiation** plutôt que du
+  geste de gestion ou de suivi.
+
+Cette rubrique est **explicitement autorisée** : l'agent l'emploie comme
+n'importe quelle valeur de `rubriques_connues`, sans la traiter comme une
+« nouvelle rubrique » au sens de la priorité stricte ci-dessus. Elle ne
+figure pas dans `RUBRIQUES_CANONIQUES` (code de l'écran de rédaction et de
+la fonction Edge) : elle n'apparaîtra donc dans `rubriques_connues` qu'une
+fois une première entrée retenue par l'enseignant, ce qui est le
+fonctionnement normal — d'ici là, s'appuyer sur la présente section.
+
+Ne pas la confondre avec **Evènement**, qui reste la simple annonce d'un
+rendez-vous daté. « Animation & médiation » porte le fond : comment on
+s'adresse au public, avec quels outils, pour quel résultat.
+
+Idéalement il vaut mieux répartir les candidats entre les rubriques plutôt que de tout concentrer
 sur une seule — un numéro qui n'a que des « Gestion » est un
 signal que la recherche a été trop étroite. Mais si la veille ne trouve qu'une seule rubrique ce n'est pas dramatique. 
 
@@ -152,6 +174,47 @@ sans creuser :
 - Médias spécialisés, à condition de toujours recouper avec la source
   primaire qu'ils citent (ex. Actu-Environnement rubrique biodiversité,
   La Gazette des communes) — ne remplacent jamais un organisme producteur.
+
+### Axe « animation, médiation et valorisation » (ajouté le 26/09/2026)
+
+Cet axe est à traiter **à chaque exécution, au même titre que les autres
+catégories ci-dessus** — pas en complément optionnel quand il reste du
+temps. Il alimente principalement la rubrique **Animation & médiation**
+(voir « Les rubriques »), et fait découvrir aux étudiants une famille de
+métiers que la veille couvrait mal jusqu'ici : animateur nature, chargé de
+médiation, garde-animateur, chargé d'accueil et de fréquentation.
+Compter **au moins deux ou trois requêtes `WebSearch` dédiées** dans la
+quinzaine minimale déjà demandée. Organismes et terrains à chercher :
+
+- **Réseaux d'éducation à l'environnement (EEDD)** : FRENE au national, et
+  les réseaux régionaux — REEB en Bretagne, GRAINE (Pays de la Loire,
+  Occitanie, Hauts-de-France…), Réseau Empreintes en Normandie, URCPIE.
+- **CPIE** (Centres permanents d'initiatives pour l'environnement), au
+  national comme localement, notamment pour leurs sciences participatives.
+- **Aires éducatives** (aires marines et terrestres éducatives, OFB +
+  Éducation nationale), **Vigie-Nature École**, Eco-École/Teragir, et plus
+  largement les programmes de sciences participatives encadrés en classe.
+- **Accueil du public et gestion de la fréquentation** : Réseau des Grands
+  Sites de France, Rivages de France, portail des parcs nationaux,
+  Conservatoire du littoral, gestionnaires de réserves sur leurs volets
+  accueil, sentiers, capacité de charge, surfréquentation.
+- **Manifestations et temps forts naturalistes** : Fête de la Nature, Jour
+  de la Nuit, Nuit internationale de la chauve-souris, Fréquence Grenouille,
+  festivals de film nature (Ménigoute, Natur'Armor…), chantiers
+  participatifs, fêtes et congrès de réseaux.
+- **Médiation scientifique et interprétation** : muséums et centres de
+  culture scientifique, maisons de site et maisons de parc, réserves de
+  biosphère (MAB France), structures d'interprétation du patrimoine.
+
+Privilégier ici, comme ailleurs, ce qui a du fond : bilan d'animation,
+retour d'expérience, évaluation de dispositif, ressource pédagogique
+publiée, chiffres de fréquentation. C'est le champ qui produit le plus
+d'`agenda` et de `breve` au sens de la section « Format de chaque
+candidat » : appliquer ici exactement la même règle que partout ailleurs
+(voir « Boucle de retour ») — chercher le document complet derrière
+l'annonce, et ne rien proposer plutôt que de remplir avec trois lignes de
+programme. La rubrique **Evènement** reste disponible pour un rendez-vous
+daté qui mérite d'être signalé malgré tout.
 
 **Portails d'observation participative (réseau Biolovision/VisioNature :
 Faune-France, Faune-Bretagne, Faune-Alsace, Faune-Guyane, ornitho.ch...)** :
