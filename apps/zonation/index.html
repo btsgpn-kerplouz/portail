@@ -489,6 +489,36 @@ body.projection .analyse-aide{font-size:1rem;}
 .ligne-vierge input{width:4.5em;padding:.3em .4em;}
 .ligne-impression-classe{display:flex;flex-wrap:wrap;gap:.6em 1em;align-items:center;margin:1em 0 0;}
 .ligne-impression-classe .aide{font-size:.75rem;color:var(--text-2);margin:0;}
+
+/* ---- Unités en jeu ---- */
+.barre-horsjeu{display:flex;flex-wrap:wrap;gap:.5em 1em;align-items:center;
+  margin:1em 0;padding-bottom:.7em;border-bottom:1px solid var(--line);font-size:.85rem;}
+#horsjeu-compte{font-weight:600;}
+.horsjeu-zone{margin:0 0 1.4em;}
+.horsjeu-zone h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-2);margin:0 0 .4em;font-weight:600;}
+.horsjeu-ligne{display:flex;align-items:flex-start;gap:.6em;padding:.5em .2em;
+  border-bottom:1px solid var(--line-soft,var(--line));cursor:pointer;font-size:.88rem;}
+.horsjeu-ligne:last-child{border-bottom:0;}
+.horsjeu-ligne input{margin:.25em 0 0;flex-shrink:0;}
+.horsjeu-ligne .hj-corps{flex:1;min-width:0;}
+.horsjeu-ligne .hj-tete{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5em;}
+.horsjeu-ligne .hj-code{font-family:var(--mono,monospace);font-size:.78rem;
+  color:var(--text-2);min-width:3em;flex-shrink:0;}
+.horsjeu-ligne .hj-nom{flex:1;min-width:10em;}
+.horsjeu-ligne .hj-n{font-size:.75rem;color:var(--text-2);white-space:nowrap;}
+/* Le descriptif sert à décider sans ouvrir la fiche : discret, mais lisible. */
+.horsjeu-ligne .hj-desc{display:block;font-size:.78rem;line-height:1.45;
+  color:var(--text-2);margin-top:.2em;}
+/* Une unité sans espèces ne peut de toute façon jamais être proposée. */
+.horsjeu-ligne.vide .hj-n{font-style:italic;}
+.horsjeu-ligne input:not(:checked) ~ .hj-corps .hj-nom{color:var(--text-2);text-decoration:line-through;}
+.horsjeu-ligne input:not(:checked) ~ .hj-corps .hj-desc{opacity:.6;}
+
+.etiquette-hors-jeu{font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:2px;padding:.05em .35em;
+  color:var(--text-2);vertical-align:middle;}
+.fiche-liste-ligne.hors-jeu .fiche-liste-item{opacity:.72;}
 .bulle-diagramme{
   position:absolute;z-index:5;pointer-events:none;max-width:16em;
   background:var(--ink);color:#f4f2ec;border-radius:var(--rayon-petit);
@@ -1170,6 +1200,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <p style="font-size:.78rem;color:var(--text-2);">Les transects comparés peuvent être de longueurs et de milieux différents.</p>
       <div id="zone-enseignant"></div>
       <p class="ligne-impression-classe">
+        <button type="button" class="secondaire" onclick="allerA('horsjeu')">⚖ Choisir les unités en jeu</button>
+        <span class="aide">Retirer des propositions les végétations absentes de vos transects, sans supprimer leurs fiches.</span>
+      </p>
+      <p class="ligne-impression-classe">
         <button type="button" class="secondaire" onclick="imprimerSelectionEnseignant('a3', true)">🖨 Imprimer tous les profils de la classe (A3)</button>
         <span class="aide">Un diagramme par page, suivi de ses clés de lecture — de quoi distribuer un tirage à chaque groupe.</span>
       </p>
@@ -1182,6 +1216,25 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <button type="button" class="discret" onclick="viderSelectionComparaison()">Tout décocher</button>
       <button type="button" class="discret" id="btn-imprimer-selection" onclick="imprimerSelectionEnseignant('a3')">🖨 Imprimer les profils cochés</button>
       <button type="button" id="btn-comparer" onclick="ouvrirComparaison()">Comparer →</button>
+    </div>
+  </section>
+
+  <!-- CHOIX DES UNITÉS EN JEU (enseignant)
+       Décocher une unité la retire des propositions de rattachement, sans
+       toucher à sa fiche ni aux espèces saisissables. Le choix vit sur cet
+       appareil : il sert à essayer avant de figer la liste dans l'appli. -->
+  <section class="ecran" id="ecran-horsjeu">
+    <a class="retour-lien" onclick="allerA('enseignant')">← Espace enseignant</a>
+    <div class="carte">
+      <h2>Unités en jeu</h2>
+      <p class="aide">Décochez ce que vos transects ne traversent pas. Ces unités cessent d'être proposées au rattachement, mais leurs fiches restent consultables et leurs espèces saisissables — un étudiant peut toujours noter la plante qu'il a sous les yeux.</p>
+      <div class="barre-horsjeu">
+        <span id="horsjeu-compte"></span>
+        <button type="button" class="discret" onclick="toutCocherHorsJeu(true)">Tout remettre en jeu</button>
+        <button type="button" class="discret" onclick="retirerUnitesVides()">Retirer les unités sans espèces</button>
+      </div>
+      <div id="zone-horsjeu"></div>
+      <p class="note-enseignant">Ce choix ne vaut que sur cet appareil. Une fois arrêté, transmettez-le pour qu'il soit livré à tout le monde : <button type="button" class="discret" onclick="exporterHorsJeu()">Afficher la liste retenue</button></p>
     </div>
   </section>
 
@@ -1450,7 +1503,8 @@ function allerA(nom){
     accueil:"Zonation", milieu:"Zonation", identite:"Nouveau relevé", releve:"Nouveau relevé", resultats:"Résultat",
     fiches:"Fiches habitats", historique:"Mes transects", 'detail-fiche':"Fiche habitat",
     'mini-flore-fiche':"Mini-flore", 'mini-flore-globale':"Mini-flore du site",
-    analyse:"Analyse du transect", analyses:"Analyses", enseignant:"Espace enseignant", comparaison:"Comparer les transects"
+    analyse:"Analyse du transect", analyses:"Analyses", enseignant:"Espace enseignant", comparaison:"Comparer les transects",
+    horsjeu:"Unités en jeu"
   };
   const enCorrection = etat.edition && (nom==='identite'||nom==='releve'||nom==='resultats');
   document.getElementById('titre-ecran').firstChild.textContent =
@@ -1462,6 +1516,7 @@ function allerA(nom){
     majRappelBordereau();
   }
   if(nom==='fiches') construireEcranFiches();
+  if(nom==='horsjeu') afficherEcranHorsJeu();
   /* Sur la porte d'entrée, aucun milieu n'est encore engagé : l'en-tête ne doit
      pas en annoncer un. */
   const emt = document.getElementById('entete-milieu');
@@ -1735,10 +1790,39 @@ function construireTableauCortege(){
      trouvée étant en plus pesée par son abondance-dominance (une espèce dominante compte
      plus qu'une espèce simplement présente), plafonné à 100 % pour rester lisible.
 */
-function calculerScores(habitats){
+/* ---------- Unités mises hors jeu ----------
+   Un transect court ne traverse qu'une partie du référentiel. Proposer les
+   28 unités dunaires à un groupe qui en rencontrera quatre n'aide pas : ça
+   multiplie les hésitations sur des végétations absentes du site.
+
+   Mettre une unité hors jeu la retire des PROPOSITIONS, rien d'autre : sa
+   fiche reste consultable, ses espèces restent saisissables. Un étudiant peut
+   donc toujours noter la plante qu'il a sous les yeux — c'est seulement le
+   rattachement qui cesse d'envisager cette unité.
+
+   Deux sources : la liste livrée avec l'appli, et un choix local à l'appareil
+   (espace enseignant) qui la remplace, pour essayer avant de figer. */
+const CLE_HORS_JEU = 'pmg_horsjeu_v1';
+const HORS_JEU_LIVRE = {marais: [], dunes: []};
+
+function horsJeu(milieu){
+  const m = milieu || milieuActif;
+  try{
+    const local = JSON.parse(localStorage.getItem(CLE_HORS_JEU) || 'null');
+    if(local && Array.isArray(local[m])) return new Set(local[m]);
+  }catch(e){}
+  return new Set(HORS_JEU_LIVRE[m] || []);
+}
+function habitatsJouables(REF, milieu){
+  const hors = horsJeu(milieu);
+  return hors.size ? REF.filter(h => !hors.has(h.id)) : REF;
+}
+function estHorsJeu(id, milieu){ return horsJeu(milieu).has(id); }
+
+function calculerScores(habitats, milieu){
   /* Le référentiel peut être imposé : à l'import, chaque relevé est jugé avec
      celui de SON milieu, pas avec celui affiché à l'écran. */
-  const REF = habitats || HABITATS_ACTIFS;
+  const REF = habitatsJouables(habitats || HABITATS_ACTIFS, milieu);
   const cortegeReconnu = new Map(etat.cortege.filter(e=>e.reconnue).map(e=>[e.key, {mode:e.mode, cover:e.cover}]));
   const wCar = 2, wFreq = 1;
   const resultats = REF.map(h=>{
@@ -2278,10 +2362,11 @@ function construireEcranFiches(){
     .slice()
     .sort((a,b)=> ordre.indexOf(a.id) - ordre.indexOf(b.id));
   cont.innerHTML = liste.map(h=>`
-    <div class="fiche-liste-ligne">
+    <div class="fiche-liste-ligne${estHorsJeu(h.id) ? ' hors-jeu' : ''}">
       <span class="fiche-liste-barre" style="background:${couleurZoneHabitat(h.id)};" aria-hidden="true"></span>
       <div class="fiche-liste-item" onclick="allerVoirFiche(${idAttr(h.id)})">
-        <span class="num">${h.id}</span>${h.nomFr}
+        <span class="num">${h.id}</span>${h.nomFr}${estHorsJeu(h.id)
+          ? ` <span class="etiquette-hors-jeu" title="Consultable, mais jamais proposée au rattachement">hors jeu</span>` : ''}
         <div class="zonation-tag">${h.zonation}${h.code ? ` · unité ${h.code}` : ''}</div>
       </div>
     </div>
@@ -2513,7 +2598,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.33.3';
+const VERSION_APPLI = '1.34.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -3636,6 +3721,115 @@ function construireProfilViergeSVG(format, longueur, pasM){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"`
     + ` width="${(W * mmParPx).toFixed(1)}mm" height="${(H * mmParPx).toFixed(1)}mm"`
     + ` font-family="Georgia, 'Times New Roman', serif">` + S.join('\n') + '</svg>';
+}
+
+/* ---------- Écran « Unités en jeu » (espace enseignant) ----------
+   On liste le référentiel du milieu courant dans l'ordre du gradient, groupé
+   par zone, avec le nombre d'espèces : c'est ce nombre qui fait décider, une
+   unité sans espèces ne pouvant de toute façon jamais être proposée. */
+function afficherEcranHorsJeu(){
+  const cont = document.getElementById('zone-horsjeu');
+  if(!cont) return;
+  const hors = horsJeu();
+  const REF = HABITATS_ACTIFS;
+
+  /* Zone de chaque fiche, pour grouper dans l'ordre du profil. */
+  const zoneDe = new Map();
+  PROFIL_ACTIF.forEach((z, i) => (z.fiches || []).forEach(id => zoneDe.set(id, {nom: z.zone, ordre: i})));
+  const groupes = new Map();
+  REF.forEach(h => {
+    const z = zoneDe.get(h.id) || {nom: 'Hors profil', ordre: 999};
+    if(!groupes.has(z.ordre)) groupes.set(z.ordre, {nom: z.nom, fiches: []});
+    groupes.get(z.ordre).fiches.push(h);
+  });
+
+  cont.innerHTML = [...groupes.entries()].sort((a, b) => a[0] - b[0]).map(([, g]) => `
+    <div class="horsjeu-zone">
+      <h3>${echapHTML(g.nom)}</h3>
+      ${g.fiches.map(h => {
+        const n = (h.especes || []).length;
+        const car = (h.especes || []).filter(e => e.statut === 'car').length;
+        const desc = descriptifCourt(h);
+        return `<label class="horsjeu-ligne${n === 0 ? ' vide' : ''}">
+          <input type="checkbox" ${hors.has(h.id) ? '' : 'checked'}
+                 onchange="basculerHorsJeu(${idAttr(h.id)}, this.checked)">
+          <span class="hj-corps">
+            <span class="hj-tete">
+              <span class="hj-code">${h.code ? echapHTML(h.code) : 'f' + h.id}</span>
+              <span class="hj-nom">${echapHTML(h.nomFr)}</span>
+              <span class="hj-n">${n === 0 ? 'aucune espèce' : n + ' esp. · ' + car + ' car'}</span>
+            </span>
+            ${desc ? `<span class="hj-desc">${echapHTML(desc)}</span>` : ''}
+          </span>
+        </label>`;
+      }).join('')}
+    </div>`).join('');
+
+  const jouables = REF.length - REF.filter(h => hors.has(h.id)).length;
+  const c = document.getElementById('horsjeu-compte');
+  if(c) c.textContent = `${jouables} unité${jouables > 1 ? 's' : ''} en jeu sur ${REF.length}`;
+}
+
+/* De quoi reconnaître l'unité sans ouvrir sa fiche. Le référentiel dunaire
+   porte une « description » brève, faite pour ça ; celui des marais n'en a pas
+   et l'on se rabat sur sa physionomie, plus longue, donc coupée. */
+function descriptifCourt(h, max){
+  const t = (h.description || h.ecologie || h.physionomie || '').trim();
+  if(!t) return '';
+  const n = max || 190;
+  if(t.length <= n) return t;
+  /* Couper sur une fin de phrase si l'on en trouve une dans le dernier tiers,
+     sinon sur un mot : une coupe au milieu d'un binôme latin se lit mal.
+     Les abréviations botaniques portent un point sans finir la phrase —
+     couper après « subsp. » laisserait un nom d'espèce décapité. */
+  const ABREV = /\b(subsp|var|ssp|gr|f|cf|aff|s\.l|s\.str)\.$/i;
+  const tronc = t.slice(0, n);
+  let point = tronc.lastIndexOf('. ');
+  while(point > 0 && ABREV.test(tronc.slice(0, point + 1))){
+    point = tronc.lastIndexOf('. ', point - 1);
+  }
+  if(point > n * 0.6) return tronc.slice(0, point + 1);
+  return tronc.slice(0, tronc.lastIndexOf(' ')) + '…';
+}
+
+function lireHorsJeuLocal(){
+  try{ return JSON.parse(localStorage.getItem(CLE_HORS_JEU) || 'null') || {}; }
+  catch(e){ return {}; }
+}
+function ecrireHorsJeuLocal(m, ids){
+  const tout = lireHorsJeuLocal();
+  tout[m] = ids;
+  localStorage.setItem(CLE_HORS_JEU, JSON.stringify(tout));
+}
+function basculerHorsJeu(id, enJeu){
+  const hors = horsJeu();
+  if(enJeu) hors.delete(id); else hors.add(id);
+  ecrireHorsJeuLocal(milieuActif, [...hors]);
+  afficherEcranHorsJeu();
+}
+function toutCocherHorsJeu(){
+  ecrireHorsJeuLocal(milieuActif, []);
+  afficherEcranHorsJeu();
+}
+/* Raccourci : les unités décrites sans tableau de relevés n'ont aucune espèce
+   dans le référentiel, donc aucune chance d'être proposées. Les retirer ne
+   change rien au calcul, seulement à la longueur de la liste. */
+function retirerUnitesVides(){
+  const hors = horsJeu();
+  HABITATS_ACTIFS.forEach(h => { if(!(h.especes || []).length) hors.add(h.id); });
+  ecrireHorsJeuLocal(milieuActif, [...hors]);
+  afficherEcranHorsJeu();
+}
+function exporterHorsJeu(){
+  const hors = [...horsJeu()].sort((a, b) => a - b);
+  const noms = hors.map(id => {
+    const h = HABITATS_ACTIFS.find(x => x.id === id);
+    return h ? (h.code || 'f' + h.id) + ' ' + h.nomFr : String(id);
+  });
+  informer(hors.length
+    ? `${hors.length} unité${hors.length > 1 ? 's' : ''} hors jeu pour « ${MILIEUX[milieuActif].nom} » :\n\n`
+      + noms.join('\n') + `\n\nListe technique : ${milieuActif}: [${hors.join(', ')}]`
+    : 'Aucune unité hors jeu : tout le référentiel est proposé.');
 }
 
 /* Premier et dernier mètre relevés d'un transect. */
@@ -4998,7 +5192,7 @@ function appliquerImportCSV(texte, nomFichier, infos){
     const sauve = etat.cortege;
     etat.cortege = g.cortege.filter(e => e.reconnue).map(e => ({...e, key: normaliser(e.latin)}));
     const classement = g.solNu || !etat.cortege.length ? []
-      : calculerScores(MILIEUX[g.milieu].habitats).filter(x => x.matchCar.length || x.matchFreq.length);
+      : calculerScores(MILIEUX[g.milieu].habitats, g.milieu).filter(x => x.matchCar.length || x.matchFreq.length);
     const res = classement[0] || null;
     etat.cortege = sauve;
     ajoutes.push({
