@@ -276,6 +276,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .flat-chiffres b{display:inline-block;font-weight:700;background:var(--af-accent);color:var(--af-sur-accent);padding:1px 6px;margin-right:1px}
 .mode-redaction .flat-chiffres b [data-ed="true"]{color:var(--af-encre-courant)}
 .flat-resume{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--af-encre-2)}
+.lien-resume{color:var(--af-accent);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.mode-redaction [data-ed="true"] .lien-resume{cursor:pointer}
 
 .entree-row-droite{flex:none;display:flex;flex-direction:row;align-items:center;gap:18px;padding-right:4px}
 .entree-droite-colonne{flex:none;display:flex;flex-direction:column;gap:6px}
@@ -1126,7 +1128,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // numeros/entrees/sourcesSuivies déclarées ci-dessous (var numeros, ...) ;
   // ces fonctions les réaffectent globalement (pas de module, IIFE unique).
 
-  var numeros = [], numero, entrees = [], sourcesSuivies = [], ecartes = [], regles = null, propositions = [];
+  var numeros = [], numero, entrees = [], sourcesSuivies = [], ecartes = [], regles = null, propositions = [], derniereSynthese = null;
 
   // Mémoire de la veille, étape 2 (26/09/2026) : vocabulaire FERMÉ des formats
   // d'actualité (attribués par l'agent) et des motifs d'écart (choisis en un
@@ -1191,6 +1193,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var resProp = await s.from("affut_propositions_regles").select("*").order("id");
     if (resReg.error || resProp.error) { regles = null; propositions = []; }
     else { regles = resReg.data; propositions = resProp.data; }
+    await chargerDerniereSynthese();
   }
 
   async function chargerDonnees(){
@@ -1299,12 +1302,20 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var resProp = await client().from("affut_propositions_regles").select("*").order("id");
     if (resReg.error || resProp.error) return; // migration 018 absente ou réseau : on garde l'état courant
     regles = resReg.data; propositions = resProp.data;
+    await chargerDerniereSynthese();
   }
   async function creerRegle(texte, origine){
     var res = await client().from("affut_regles_editoriales").insert({ texte: texte, origine: origine || "enseignant" }).select().single();
     if (res.error) { signalerErreurEcriture(res.error); return null; }
     regles.push(res.data);
     return res.data;
+  }
+  // Dernière synthèse hebdomadaire des précisions d'écart par la routine
+  // (migration 019) : affichée dans l'espace Mémoire pour savoir où elle en
+  // est. null si la migration n'est pas appliquée ou si aucune synthèse.
+  async function chargerDerniereSynthese(){
+    var res = await client().from("affut_syntheses_motifs").select("*").order("faite_le", { ascending: false }).limit(1);
+    derniereSynthese = (!res.error && res.data && res.data[0]) || null;
   }
   async function ecrireRegle(id, champs){
     champs.modifie_le = new Date().toISOString();
@@ -1542,6 +1553,22 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function bindCurrent(){ numero = currentNumero(); entrees = numero ? numero.entrees : []; }
 
   function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  // Résumé factuel : une adresse collée dans le texte (http(s):// ou www.)
+  // devient un lien cliquable (demande du 03/10/2026). Le texte est échappé
+  // AVANT la détection, et l'adresse s'arrête aux espaces, guillemets et
+  // chevrons : aucun HTML saisi ne peut passer. La ponctuation finale
+  // (« voir https://…/rapport. ») reste hors du lien. Le texte stocké reste
+  // brut : l'édition en place relit textContent, jamais le HTML.
+  function escLiens(s){
+    return esc(s).replace(/\b(?:https?:\/\/|www\.)[^\s<>"]+/gi, function(url){
+      var fin = (url.match(/[.,;:!?)\]»]+$/) || [""])[0];
+      // « …_(botanique) » : parenthèse ouverte dans l'adresse, la fermante en fait partie.
+      if (fin.indexOf(")") !== -1 && url.indexOf("(") !== -1) fin = fin.slice(fin.lastIndexOf(")") + 1);
+      if (fin) url = url.slice(0, -fin.length);
+      var href = /^www\./i.test(url) ? "https://" + url : url;
+      return '<a class="lien-resume" href="' + href + '" target="_blank" rel="noopener">' + url + '</a>' + fin;
+    });
+  }
   // role="textbox" (lot 5, audit RGAA) : un <span contenteditable> n'a par
   // défaut aucune sémantique de champ de saisie pour un lecteur d'écran.
   function ed(html, path){ return (state.mode === "redaction" && !mobileActif()) ? '<span data-ed="true" data-path="' + path + '" contenteditable="true" role="textbox">' + html + '</span>' : html; }
@@ -1605,11 +1632,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
   function flatResume(e){
     if (state.mode !== "redaction") {
-      return e.blocs.resume ? '<div class="flat-resume">' + esc(e.resume) + '</div>' : "";
+      return e.blocs.resume ? '<div class="flat-resume">' + escLiens(e.resume) + '</div>' : "";
     }
     var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.resume ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="resume" title="Afficher le résumé">';
     var contenu = e.blocs.resume
-      ? '<div class="flat-resume">' + ed(esc(e.resume), e.id + ".resume") + '</div>'
+      ? '<div class="flat-resume">' + ed(escLiens(e.resume), e.id + ".resume") + '</div>'
       : '<span class="bloc-masque-texte">Résumé masqué</span>';
     return '<div class="bloc-ligne">' + checkbox + contenu + '</div>';
   }
@@ -1751,7 +1778,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   function renderEcartEntreePanel(e){
     return '<div class="ecart-panel">' +
       renderMotifChoix() +
-      '<label class="lbl" for="motif-ecart-entree-' + e.id + '">Précision (facultatif — lue par la routine de veille automatisée, jamais par les élèves)</label>' +
+      '<label class="lbl" for="motif-ecart-entree-' + e.id + '">Précision (facultatif — relue par la routine de veille le samedi suivant, qui peut en tirer une proposition de règle ; jamais lue par les élèves)</label>' +
       '<textarea id="motif-ecart-entree-' + e.id + '" data-role="motif-ecart-entree"></textarea>' +
       '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart-entree">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-suppression-entree" data-id="' + e.id + '">Supprimer définitivement</button></div>' +
     '</div>';
@@ -2173,7 +2200,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           champ("Titre de l'entrée", "titre", e ? e.titre : "", "reprendre le titre de la source tel quel, pas une reformulation") +
           renderChampIllustration(e ? e.imageUrl : "") +
           champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "1 à 3 lignes courtes (~40 caractères), « valeur | libellé » — un teaser, pas un résumé ; terminer par * pour mettre en avant", true) +
-          champ("Résumé factuel", "resume", e ? e.resume : "", "citation tronquée des 1res phrases de la source, terminée par « [...] » — pas une paraphrase", true) +
+          champ("Résumé factuel", "resume", e ? e.resume : "", "citation tronquée des 1res phrases de la source, terminée par « [...] » — pas une paraphrase. Une adresse collée (https://… ou www.…) devient un lien cliquable", true) +
           champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
           '<div class="modal-boutons">' +
             '<span></span>' +
@@ -2488,11 +2515,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var chiffresHtml = (c.chiffres && c.chiffres.length)
       ? '<div class="flat-chiffres tab-num">' + c.chiffres.map(esc).join(" · ") + '</div>'
       : "";
-    var resumeHtml = c.resume ? '<div class="flat-resume">' + esc(c.resume) + '</div>' : "";
+    var resumeHtml = c.resume ? '<div class="flat-resume">' + escLiens(c.resume) + '</div>' : "";
     var ecartPanel = state.ecarterOuvert === c.id
       ? '<div class="ecart-panel">' +
           renderMotifChoix() +
-          '<label class="lbl" for="motif-ecart-' + c.id + '">Précision (facultatif — lue par la routine de veille automatisée, jamais par les élèves)</label>' +
+          '<label class="lbl" for="motif-ecart-' + c.id + '">Précision (facultatif — relue par la routine de veille le samedi suivant, qui peut en tirer une proposition de règle ; jamais lue par les élèves)</label>' +
           '<textarea id="motif-ecart-' + c.id + '" data-role="motif-ecart"></textarea>' +
           '<div class="boutons"><button type="button" class="btn-texte" data-action="annuler-ecart">Annuler</button><button type="button" class="btn-mini danger" data-action="confirmer-ecart" data-id="' + c.id + '">Écarter définitivement</button></div>' +
         '</div>'
@@ -2978,7 +3005,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var intro = '<div class="memoire-intro"><strong>Les règles ci-dessous sont relues par la routine de veille à chaque passage</strong> et ne s\'effacent jamais. ' +
       'Écrivez-les sur des <strong>types de contenu</strong> (« pas de communiqué sans données »), pas sur une source précise. ' +
-      'Elles ne sont jamais visibles des élèves ; n\'y mettez aucune donnée personnelle.</div>';
+      'Elles ne sont jamais visibles des élèves ; n\'y mettez aucune donnée personnelle.</div>' +
+      '<p class="bilan-note">Chaque samedi, avant de moissonner, la routine relit toutes les précisions que vous avez écrites en écartant une proposition depuis sa dernière synthèse, et peut en tirer jusqu\'à 3 propositions de règle ci-dessous. Elles ne comptent qu\'une fois acceptées ; tant qu\'elles attendent votre décision, la routine n\'en propose pas d\'autres. ' +
+      (derniereSynthese
+        ? 'Dernière synthèse : ' + esc(new Date(derniereSynthese.faite_le).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })) + ' — ' +
+          derniereSynthese.nb_precisions + ' précision' + (derniereSynthese.nb_precisions > 1 ? "s" : "") + ' lue' + (derniereSynthese.nb_precisions > 1 ? "s" : "") + ', ' +
+          derniereSynthese.nb_propositions + ' proposition' + (derniereSynthese.nb_propositions > 1 ? "s" : "") + '.'
+        : 'Aucune synthèse pour l\'instant.') + '</p>';
 
     var propositionsHtml = enAttente.length
       ? titre("Proposé par la routine (" + enAttente.length + ") — à accepter ou refuser") + enAttente.map(function(p){
@@ -3343,6 +3376,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   document.addEventListener("click", async function(ev){
     var srcClicBtn = ev.target.closest('[data-action="clic-source"]');
     if (srcClicBtn) { compterClicSource(srcClicBtn.getAttribute("data-id")); }
+
+    // Lien dans un résumé en cours d'édition (contenteditable, rédaction sur
+    // ordinateur) : le navigateur n'y suit jamais un lien, on l'ouvre donc
+    // nous-mêmes. Pour retoucher l'adresse, passer par « Modifier ».
+    var lienResumeEd = ev.target.closest('[data-ed="true"] a.lien-resume');
+    if (lienResumeEd) {
+      ev.preventDefault();
+      window.open(lienResumeEd.href, "_blank", "noopener");
+      return;
+    }
 
     var vueBtn = ev.target.closest('[data-action="vue"]');
     if (vueBtn) {

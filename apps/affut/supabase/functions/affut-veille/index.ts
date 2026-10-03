@@ -540,8 +540,10 @@ async function handleContext(): Promise<Response> {
   // Règles éditoriales (migration 018) : lues à CHAQUE passage, jamais
   // tronquées. `regles_editoriales` vaut null tant que la migration n'est pas
   // appliquée (le reste du contexte fonctionne sans). La proposition de règles
-  // n'est ouverte qu'au premier samedi du mois, et seulement si l'enseignant
-  // a déjà tranché les précédentes (pas d'empilement).
+  // est ouverte CHAQUE SEMAINE depuis le 03/10/2026 (étape 4 : synthèse des
+  // précisions d'écart ; c'était le premier samedi du mois avant), mais
+  // seulement si l'enseignant a déjà tranché les précédentes (pas
+  // d'empilement).
   let reglesEditoriales: string[] | null = null;
   let propositionsRefusees: string[] = [];
   let peutProposerDesRegles = false;
@@ -552,16 +554,25 @@ async function handleContext(): Promise<Response> {
     ]);
     reglesEditoriales = regles.filter((r) => r.actif).map((r) => r.texte);
     propositionsRefusees = propositions.filter((p) => p.statut === "refusee").map((p) => p.texte).slice(-30);
-    peutProposerDesRegles = estPremierSamediDuMois(aujourdhui) && !propositions.some((p) => p.statut === "en_attente");
+    peutProposerDesRegles = !propositions.some((p) => p.statut === "en_attente");
   } catch (_e) {
     reglesEditoriales = null;
   }
+
+  // Étape 4 (migration 019) : toutes les précisions écrites à la main depuis
+  // la dernière synthèse, et pas seulement les 15 derniers écarts. Ni adresse
+  // ni source : la synthèse porte sur des types de contenu, jamais sur une
+  // source (voir brief-veille.md).
+  const { precisions, luJusquAu, tronquees } = await chargerPrecisionsASynthetiser();
 
   return json({
     cible,
     regles_editoriales: reglesEditoriales,
     peut_proposer_des_regles: peutProposerDesRegles,
     propositions_refusees: propositionsRefusees,
+    precisions_a_synthetiser: precisions,
+    precisions_lues_jusqu_au: luJusquAu,
+    precisions_tronquees: tronquees,
     entrees_retenues_recentes: entreesRecentes,
     candidats_ecartes_recents: ecartesRecents ?? [],
     formats_autorises: FORMATS_AUTORISES,
@@ -630,12 +641,81 @@ type Candidat = {
   usage: string;
 };
 
-// Proposition de règles (étape 3) : atterrit dans affut_propositions_regles,
-// en attente de décision de l'enseignant — jamais directement dans les règles
-// en vigueur. Refusée s'il reste des propositions non tranchées.
-async function handlePropositions(body: { propositions?: unknown }): Promise<Response> {
+// ---- Étape 4 : synthèse hebdomadaire des précisions d'écart (03/10/2026) ---
+// Une précision = le texte libre `motif` saisi par l'enseignant en écartant
+// un candidat ou en supprimant une entrée retenue. La routine les reçoit
+// toutes depuis la dernière synthèse (affut_syntheses_motifs, migration 019),
+// dans l'ordre chronologique, au plus MAX_PRECISIONS_PAR_SYNTHESE à la fois :
+// le reste attend la semaine suivante (`precisions_tronquees`).
+const MAX_PRECISIONS_PAR_SYNTHESE = 100;
+
+async function dernierePositionLue(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("affut_syntheses_motifs")
+    .select("lu_jusqu_au")
+    .order("lu_jusqu_au", { ascending: false })
+    .limit(1);
+  if (error) return null; // migration 019 pas appliquée : on relit tout
+  return data?.[0]?.lu_jusqu_au ?? null;
+}
+
+async function chargerPrecisionsASynthetiser(): Promise<{
+  precisions: Record<string, unknown>[];
+  luJusquAu: string | null;
+  tronquees: boolean;
+}> {
+  const depuis = await dernierePositionLue();
+  const lire = async (colonnes: string) => {
+    let requete = supabase
+      .from("affut_candidats_ecartes")
+      .select(colonnes)
+      .not("motif", "is", null)
+      .order("ecarte_le", { ascending: true })
+      .limit(MAX_PRECISIONS_PAR_SYNTHESE + 1);
+    if (depuis) requete = requete.gt("ecarte_le", depuis);
+    const { data, error } = await requete;
+    return { data: data as unknown as Record<string, unknown>[] | null, error };
+  };
+  let { data, error } = await lire("titre, rubrique, format, motif_code, motif, ecarte_le");
+  // migration 017 pas appliquée : mêmes lignes, sans format ni motif_code
+  if (error) ({ data, error } = await lire("titre, rubrique, motif, ecarte_le"));
+  if (error || !data) return { precisions: [], luJusquAu: null, tronquees: false };
+  const tronquees = data.length > MAX_PRECISIONS_PAR_SYNTHESE;
+  const lues = data.slice(0, MAX_PRECISIONS_PAR_SYNTHESE);
+  // La position avance aussi sur les précisions vides (espaces) : elles sont
+  // filtrées ici mais ne doivent pas être relues indéfiniment.
+  const luJusquAu = lues.length ? String(lues[lues.length - 1].ecarte_le) : null;
+  const precisions = lues.filter((p) => typeof p.motif === "string" && p.motif.trim() !== "");
+  return { precisions, luJusquAu, tronquees };
+}
+
+// `precisions_lues_jusqu_au` renvoyé par la routine : doit être une date
+// valide, pas dans le futur (sinon les précisions écrites d'ici là seraient
+// sautées sans avoir été lues).
+function erreurPositionLue(valeur: unknown): string | null {
+  if (typeof valeur !== "string" || Number.isNaN(Date.parse(valeur))) {
+    return "precisions_lues_jusqu_au : reprendre telle quelle la valeur renvoyée par le GET";
+  }
+  if (Date.parse(valeur) > Date.now() + 60_000) return "precisions_lues_jusqu_au : date dans le futur";
+  return null;
+}
+
+// Proposition de règles (étapes 3 et 4) : atterrit dans
+// affut_propositions_regles, en attente de décision de l'enseignant — jamais
+// directement dans les règles en vigueur. Refusée s'il reste des propositions
+// non tranchées. Accompagnée de `precisions_lues_jusqu_au` (étape 4), elle
+// enregistre aussi la synthèse — y compris avec une liste vide : « j'ai tout
+// lu, rien ne mérite une règle ».
+async function handlePropositions(body: { propositions?: unknown; precisions_lues_jusqu_au?: unknown }): Promise<Response> {
   const brutes = Array.isArray(body.propositions) ? body.propositions : [];
-  if (!brutes.length) return json({ error: "propositions vide" }, 400);
+  const position = body.precisions_lues_jusqu_au;
+  if (position !== undefined && position !== null) {
+    const erreur = erreurPositionLue(position);
+    if (erreur) return json({ error: erreur }, 400);
+  }
+  if (!brutes.length && (position === undefined || position === null)) {
+    return json({ error: "propositions vide (pour signaler une synthèse sans proposition, joindre precisions_lues_jusqu_au)" }, 400);
+  }
   if (brutes.length > MAX_PROPOSITIONS_PAR_APPEL) {
     return json({ error: `trop de propositions en un seul appel (max ${MAX_PROPOSITIONS_PAR_APPEL})` }, 400);
   }
@@ -668,7 +748,28 @@ async function handlePropositions(body: { propositions?: unknown }): Promise<Res
     const { error } = await supabase.from("affut_propositions_regles").insert(gardees);
     if (error) return json({ error: error.message }, 500);
   }
-  return json({ ok: true, propositions_ajoutees: gardees.length, propositions_ignorees: ignorees });
+
+  let syntheseEnregistree = false;
+  if (typeof position === "string") {
+    const depuis = await dernierePositionLue();
+    let compte = supabase
+      .from("affut_candidats_ecartes")
+      .select("id", { count: "exact", head: true })
+      .not("motif", "is", null)
+      .lte("ecarte_le", position);
+    if (depuis) compte = compte.gt("ecarte_le", depuis);
+    const { count } = await compte;
+    const { error } = await supabase.from("affut_syntheses_motifs").insert({
+      lu_jusqu_au: position, nb_precisions: count ?? 0, nb_propositions: gardees.length,
+    });
+    syntheseEnregistree = !error; // migration 019 absente : propositions gardées quand même
+  }
+  return json({
+    ok: true,
+    propositions_ajoutees: gardees.length,
+    propositions_ignorees: ignorees,
+    synthese_enregistree: syntheseEnregistree,
+  });
 }
 
 async function handleIngest(req: Request): Promise<Response> {

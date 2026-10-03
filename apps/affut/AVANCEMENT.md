@@ -2528,6 +2528,36 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       une source. Tests locaux : `supabase/tests/memoire.test.mjs` (7 cas) et
       `dedoublonnage.test.mjs` (15). **Non testé dans le navigateur ni contre
       la vraie base.** *Ordre de mise en service* : migration 018 → Edge → merge.
+- [x] **Mémoire de la veille — étape 4 : synthèse hebdomadaire des
+      précisions d'écart** (03/10/2026, demande de l'utilisateur pendant le
+      tri du n° 6). Les précisions écrites à la main en écartant n'étaient
+      relues que pour les 15 derniers écarts. Désormais, **chaque samedi avant
+      la moisson**, la routine reçoit toutes celles écrites depuis sa dernière
+      synthèse (`precisions_a_synthetiser`, sans adresse ni source), en tire au
+      plus 3 propositions de règle, et renvoie `precisions_lues_jusqu_au` (même
+      avec une liste vide) pour avancer. **Validation humaine maintenue,
+      écriture automatique écartée** (choix de l'utilisateur, après exposé du
+      risque : jeton de la routine plus faible que service_role, dérive d'une
+      règle mal lue qui s'auto-renforce, glissement vers une règle sur une
+      source). `peut_proposer_des_regles` ne dépend plus du 1er samedi du mois,
+      seulement de l'absence de proposition en attente ; une précision isolée
+      qui énonce une préférence générale suffit (le seuil de 5 décisions reste
+      pour les propositions tirées des chiffres). Migration
+      `019-synthese-hebdo-motifs.sql` (`affut_syntheses_motifs`, RLS rédacteur).
+      Espace Mémoire : paragraphe explicatif + date de la dernière synthèse.
+      Libellé « Précision » des panneaux d'écart mis à jour.
+      *Ordre de mise en service* : migration 019 → Edge → merge.
+      **Non testé contre la vraie base ni lors d'un vrai passage de la routine.**
+- [x] **Liens cliquables dans le résumé factuel** (03/10/2026, même
+      session). Une adresse `https://…` ou `www.…` collée dans le résumé devient
+      un lien (nouvel onglet), en lecture, en rédaction et sur les candidats de
+      moisson ; ponctuation finale hors du lien, parenthèse d'une adresse
+      Wikipédia gardée. Le texte stocké reste brut (échappé avant détection ;
+      l'édition en place relit `textContent`). En rédaction sur ordinateur, un
+      clic sur le lien l'ouvre (le navigateur ne suit pas un lien dans un champ
+      éditable) ; pour retoucher l'adresse, passer par « Modifier ». Pas de
+      lien cliquable dans l'export PDF (l'adresse y reste en texte), clics non
+      comptés dans le Bilan. Test : `supabase/tests/liens-resume.test.mjs`.
 
 ## Idées pour plus tard (hors lots planifiés)
 

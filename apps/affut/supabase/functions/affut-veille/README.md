@@ -100,8 +100,9 @@ Tests : `node apps/affut/supabase/tests/dedoublonnage.test.mjs` et
 ## Règles éditoriales (26/09/2026, migration 018)
 
 - **`GET`** renvoie `regles_editoriales` (règles actives, en entier — `null` tant
-  que la migration n'est pas appliquée), `peut_proposer_des_regles` (premier
-  samedi du mois ET aucune proposition en attente) et `propositions_refusees`.
+  que la migration n'est pas appliquée), `peut_proposer_des_regles` (aucune
+  proposition en attente — **chaque semaine** depuis le 03/10/2026, c'était le
+  premier samedi du mois avant) et `propositions_refusees`.
 - **`POST {"propositions": [{"texte", "justification"}]}`** (sans `candidats`) :
   3 propositions au plus, texte de 5 à 400 caractères, **aucune adresse ni
   source** (refusé), doublons de règles existantes/refusées ignorés, `409` s'il
@@ -113,6 +114,23 @@ Tests : `node apps/affut/supabase/tests/dedoublonnage.test.mjs` et
 **Ordre de mise en service** : 1) appliquer `018-regles-editoriales.sql`,
 2) redéployer cette fonction, 3) merger le front. Tests :
 `node apps/affut/supabase/tests/{dedoublonnage,bilan-formats,memoire}.test.mjs`.
+
+## Synthèse hebdomadaire des précisions d'écart (03/10/2026, migration 019)
+
+- **`GET`** renvoie aussi `precisions_a_synthetiser` (toutes les précisions
+  écrites à la main en écartant/supprimant, depuis la dernière synthèse, dans
+  l'ordre chronologique, 100 au plus ; ni adresse ni source : titre, rubrique,
+  format, motif_code, motif, ecarte_le), `precisions_lues_jusqu_au` (à renvoyer
+  tel quel) et `precisions_tronquees`.
+- **`POST {"propositions": [...], "precisions_lues_jusqu_au": "…"}`** :
+  enregistre la synthèse dans `affut_syntheses_motifs` en plus des
+  propositions. `propositions` peut alors être vide (« tout lu, rien à
+  proposer »). Sans `precisions_lues_jusqu_au`, comportement d'avant.
+  Date invalide ou dans le futur → `400`. Réponse : `synthese_enregistree`.
+
+**Ordre de mise en service** : 1) appliquer `019-synthese-hebdo-motifs.sql`,
+2) redéployer cette fonction, 3) merger le front et le brief. Tests :
+`node apps/affut/supabase/tests/{memoire,liens-resume}.test.mjs`.
 
 ## Plafonds à connaître côté appelant
 
