@@ -10,9 +10,9 @@ const racine = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const html = readFileSync(join(racine, "index.html"), "utf8");
 const i = html.indexOf("  function renderMemoireEspace(){"), j = html.indexOf("  function renderBilanEcran(){");
 assert.ok(i >= 0 && j > i, "renderMemoireEspace introuvable");
-const fabrique = (regles, propositions, regleEdition = null) =>
-  new Function("regles", "propositions", "state", "esc", "MAX_REGLES_ACTIVES", html.slice(i, j) + "\nreturn renderMemoireEspace();")(
-    regles, propositions, { regleEdition }, (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), 30);
+const fabrique = (regles, propositions, regleEdition = null, derniereSynthese = null) =>
+  new Function("regles", "propositions", "state", "esc", "MAX_REGLES_ACTIVES", "derniereSynthese", html.slice(i, j) + "\nreturn renderMemoireEspace();")(
+    regles, propositions, { regleEdition }, (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), 30, derniereSynthese);
 let n = 0;
 const test = (nom, f) => { f(); n++; console.log("ok  " + nom); };
 const regle = (id, texte, extra = {}) => ({ id, texte, actif: true, origine: "enseignant", ...extra });
@@ -90,5 +90,10 @@ test("lien direct #/sources/memoire sans connexion : retombe sur le Sommaire", (
 test("l'ancienne adresse #/memoire n'existe plus : Sommaire", () => {
   const r = routage(true, {}); r.navAppliquer("memoire");
   assert.equal(r.state.vue, "sommaire");
+});
+test("synthèse hebdomadaire : expliquée, avec la dernière synthèse si elle existe", () => {
+  assert.match(fabrique([], []), /Chaque samedi, avant de moissonner[\s\S]*Aucune synthèse pour l'instant/);
+  const h = fabrique([], [], null, { faite_le: "2026-10-10T05:20:00Z", nb_precisions: 6, nb_propositions: 1 });
+  assert.match(h, /Dernière synthèse : samedi 10 octobre — 6 précisions lues, 1 proposition\./);
 });
 console.log(`\n${n} tests passés`);
