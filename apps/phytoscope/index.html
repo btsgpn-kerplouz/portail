@@ -717,10 +717,6 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psSelChip button{background:none;border:0;padding:0;color:var(--label);cursor:pointer;box-shadow:none;font-size:.86rem;line-height:1}
 .psSelEmpty{color:var(--muted);font-size:.82rem;margin:0 0 10px}
 
-.psAlert8{display:flex;gap:8px;align-items:flex-start;background:var(--alertbg);color:var(--alertink);padding:10px 12px;margin-bottom:14px;font-size:.78rem;line-height:1.4}
-.psAlert8[hidden]{display:none}
-.psAlert8Icon{font-weight:700;color:var(--brand);flex:0 0 auto}
-.psAlert8 p{margin:0}
 
 .psLotsLabel{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--label);margin:0 0 8px}
 .psLotsList{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
@@ -1382,10 +1378,6 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <button class="psLinkBtn" type="button" data-select-action="none" data-kind="home">Vider</button>
           </div>
           <div class="psSelChips" id="homeSelChips"></div>
-          <div class="psAlert8" id="homeAlert8" hidden>
-            <span class="psAlert8Icon" aria-hidden="true">!</span>
-            <p>Au-delà de 8 relevés, l’écogramme et les gradients deviennent difficiles à lire. Passe en mode moyennes ou compare par lot.</p>
-          </div>
           <div class="psLots">
             <p class="psLotsLabel">Lots enregistrés</p>
             <div class="psLotsList" id="homeLotsList"></div>
@@ -2546,9 +2538,6 @@ function renderHomeSelection(){
       btn.addEventListener("click",()=>{state.selectedIds=(state.selectedIds||[]).filter(id=>id!==btn.dataset.unselectReleve); save(); renderAll();});
     });
   }
-
-  const alertBox=document.getElementById("homeAlert8");
-  if(alertBox)alertBox.hidden=sel.length<=8;
 
   const lotsHtml=(state.lots||[]).length
     ? state.lots.map((l,idx)=>{
