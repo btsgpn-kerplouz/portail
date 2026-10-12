@@ -522,8 +522,6 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psRailActions{margin-left:auto;display:flex;gap:8px}
 .psRailActions button{padding:9px 14px;font-size:.84rem;box-shadow:none}
 .psRailActions button:hover{transform:none;box-shadow:none}
-.psSelectAllSwitch{display:none;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);padding:5px 8px;font-size:.74rem;color:var(--label)}
-.psSelectAllSwitch input{width:14px;height:14px;min-height:0;margin:0}
 .psLinkBtn{background:none;border:0;padding:0;color:var(--brand);font-weight:600;font-size:.82rem;cursor:pointer;box-shadow:none;font-family:"IBM Plex Sans",system-ui,sans-serif}
 .psLinkBtn:hover{color:var(--brandDark);transform:none;box-shadow:none;background:none}
 
@@ -546,16 +544,54 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psFacetCount{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
 
 .psLibList{flex:1 1 auto;min-height:160px;max-height:520px;overflow:auto}
-.psLibHead{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:9px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label);position:sticky;top:0;z-index:2}
+.psLibHead{display:grid;grid-template-columns:22px minmax(140px,1.2fr) minmax(90px,1fr) 96px minmax(110px,1.4fr) 50px 58px 40px 50px 28px;column-gap:12px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label);position:sticky;top:0;z-index:2}
 .psLibHead .num{text-align:right}
 .psLibSortBtn{all:unset;display:block;width:100%;box-sizing:border-box;cursor:pointer;color:inherit}
 .psLibSortBtn:hover{color:var(--ink)}
 .psLibSortBtn.active{color:var(--ink);font-weight:700}
 .psLibSortBtn.num{text-align:right}
 .psLibGroup:not(:last-child){border-bottom:1px solid var(--linesoft)}
-.psLibGroupHead{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--headrow);font-size:.78rem;font-weight:600;color:var(--label)}
-.psLibGroupHead .psLinkBtn{margin-left:auto;font-size:.76rem}
-.psLibRow{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:14px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--linesoft)}
+.psLibGroupHead{display:flex;align-items:center;gap:10px;padding:0 14px 0 6px;background:var(--headrow);font-size:.8rem;color:var(--label);min-height:38px}
+.psLibGroup.open .psLibGroupHead{border-bottom:1px solid var(--linesoft)}
+/* Case de groupe : coche le transect/l'habitat/le projet entier sans le déplier. Zone
+   cliquable élargie (le label), carré dessiné comme celui des lignes. */
+.psGroupCheck{display:inline-flex;align-items:center;justify-content:center;width:30px;height:38px;flex:0 0 auto;cursor:pointer}
+.psGroupCheck input{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:13px;height:13px;border:1.5px solid var(--line);background:var(--panel);border-radius:0;min-width:0;min-height:0;margin:0;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.psGroupCheck input:checked,.psGroupCheck input:indeterminate{border-color:var(--brand)}
+.psGroupCheck input:checked::after{content:"";width:3px;height:6px;border:solid var(--brand);border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-0.5px,-1px)}
+.psGroupCheck input:indeterminate::after{content:"";width:7px;height:1.5px;background:var(--brand)}
+.psGroupToggle{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;padding:9px 0;cursor:pointer}
+.psGroupToggle:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.psGroupArrow{font-size:.7rem;color:var(--muted);width:10px;flex:0 0 auto}
+.psGroupTitle{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.psGroupSub{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.psGroupMeta{margin-left:auto;font-family:var(--mono);font-size:.68rem;color:var(--muted);white-space:nowrap;flex:0 0 auto}
+.psGroupSel{font-family:var(--mono);font-size:.66rem;color:var(--brand);white-space:nowrap;flex:0 0 auto}
+/* Ranger par : transect / habitat / projet / liste */
+.psGroupBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px 0}
+.psSegmented{display:inline-flex}
+.psSegmented button{border:1px solid var(--line);background:var(--panel);color:var(--label);padding:4px 11px;font-size:.76rem;min-height:0;border-radius:0;box-shadow:none;font-weight:500}
+.psSegmented button+button{border-left:0}
+.psSegmented button:hover{transform:none;box-shadow:none;color:var(--ink);background:var(--panel)}
+.psSegmented button.active{background:var(--headerbg);border-color:var(--headerbg);color:#fffefb}
+.psGroupBarTail{margin-left:auto;display:flex;gap:12px}
+.psGroupBarTail .psLinkBtn{font-size:.76rem}
+/* Conversion des relevés importés depuis un ancien export Zonation */
+.psConvertPanel{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--headrow);font-size:.84rem}
+.psConvertHead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.psConvertHead p{margin:0;flex:1 1 320px}
+.psConvertActions{display:flex;gap:12px;align-items:center}
+.psConvertActions button{padding:7px 12px;font-size:.8rem;box-shadow:none}
+.psConvertNote{margin:12px 0 6px;color:var(--label)}
+.psConvertProjects{margin-bottom:10px}
+.psConvertProject{display:flex;gap:8px;align-items:center;margin:0 0 6px;font-size:.8rem;color:var(--muted)}
+.psConvertProject input{flex:0 1 280px;padding:5px 8px;font-size:.82rem;min-height:0}
+.psConvertTableWrap{max-height:260px;overflow:auto;border:1px solid var(--line);background:var(--panel);margin-bottom:10px}
+.psConvertTable{width:100%;border-collapse:collapse;font-size:.76rem}
+.psConvertTable th{position:sticky;top:0;background:var(--headrow);text-align:left;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--label);padding:6px 8px;border-bottom:1px solid var(--line)}
+.psConvertTable td{padding:4px 8px;border-bottom:1px solid var(--linesoft);white-space:nowrap}
+.psConvertTable .num{text-align:right;font-family:var(--mono)}
+.psLibRow{display:grid;grid-template-columns:22px minmax(140px,1.2fr) minmax(90px,1fr) 96px minmax(110px,1.4fr) 50px 58px 40px 50px 28px;column-gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--linesoft)}
 .psLibGroup .psLibRow:last-child{border-bottom:0}
 .psLibRow input[type=checkbox]{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:13px;height:13px;border:1.5px solid var(--line);background:var(--panel);border-radius:0;flex:0 0 auto;min-width:0;min-height:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .psLibRow input[type=checkbox]:checked{border-color:var(--brand)}
@@ -639,18 +675,20 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
   /* Filtres : la ligne d'actions (compteur, tout cocher/décocher) encombrait le
      bandeau scrollable et masquait les filtres eux-mêmes (retour Martin 19/08/2026) */
   .psFacetTail{display:none}
-  /* « Sélectionner le projet » retiré du groupe : redondant avec le filtre Projet */
-  .homeGroupSelectBtn{display:none}
+  .psGroupBar{padding:8px 0 0}
+  .psGroupBar .psFacetLabel{display:none}
+  .psGroupBarTail{display:none}
+  .psLibGroupHead{padding:0 8px 0 0;flex-wrap:wrap;column-gap:8px}
+  .psGroupCheck{width:36px;height:42px}
+  .psGroupToggle{flex-wrap:wrap;row-gap:2px}
+  .psGroupMeta{margin-left:0;flex-basis:100%;padding-left:20px}
+  .psGroupSub{display:none}
+  .psConvertPanel{padding:10px 0}
   /* Cadre dans cadre (retour Martin 21/08/2026, ajustements#3) : le panneau
      .psLibrary encadrait déjà tout, en plus des bords d'écran — retiré sur
      mobile, les séparateurs internes (barre de recherche/filtres) suffisent à
      structurer visuellement le bloc. */
   .psLibrary{border:0;background:transparent}
-  /* Interrupteur tout cocher/décocher sur la ligne titre (retour Martin
-     21/08/2026, ajustements#3) — remplace l'accès qui était retiré du bandeau
-     de filtres le 19/08/2026 (il encombrait la piste scrollable), replacé ici
-     à la place. */
-  .psSelectAllSwitch{display:inline-flex;margin-left:auto;flex:0 0 auto}
 }
 
 /* Ma sélection */
@@ -1297,12 +1335,14 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
           </div>
         </div>
         <div class="psLibrary card" id="homeReleveCard">
+          <div class="psConvertPanel" id="homeConvertPanel" hidden></div>
           <div class="psLibToolbar">
             <div class="psSearchBox">
               <span aria-hidden="true">⌕</span>
               <input class="releveFilter" id="homeReleveFilter" data-kind="home" placeholder="Nom, site, observateur…">
             </div>
           </div>
+          <div class="psGroupBar" id="homeGroupBar"></div>
           <div class="psFacetBar" id="homeFacetBar"></div>
           <div class="psLibList" id="homeLibList"></div>
         </div>
@@ -1821,7 +1861,7 @@ const STORE_KEY = "botano_baseflor_releves_v03";
 const ADMIN_PASSWORD = "admin"; let adminUnlocked = false;
 const GOOGLE_SYNC_KEY = "botano_baseflor_google_sync_v01";
 const GOOGLE_SHEET_NAME = "Relevés botaniques - données personnelles";
-const APP_VERSION = "6.0";
+const APP_VERSION = "6.1";
 const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 let byId = new Map();
 let byName = new Map();
@@ -2086,10 +2126,25 @@ function analyseSideItemHtml(r,view,excluded){
 }
 
 /* ===== Accueil — bibliothèque à facettes (rail 1), sélection + lots (rail 2) ===== */
-function homeFacets(){return state.homeFacets||(state.homeFacets={projet:"",site:"",annee:"",observateur:"",strate:""});}
+/* Trois rangements des mêmes relevés (12/10/2026) : par transect (placettes dans l'ordre
+   du terrain), par habitat (relevés d'un même milieu, quel que soit leur transect) ou par
+   projet ; « liste » garde l'affichage à plat. Les groupes sont repliés par défaut et se
+   cochent d'un coup, sans les déplier : un transect de 40 placettes tient sur une ligne. */
+const HOME_GROUP_MODES=[["transect","Transect"],["habitat","Habitat"],["projet","Projet"],["liste","Liste"]];
+function homeFacets(){return state.homeFacets||(state.homeFacets={projet:"",site:"",annee:"",observateur:"",strate:"",transect:"",habitat:""});}
+function homeGroupMode(){
+  if(!state.homeGroupBy)state.homeGroupBy=state.releves.some(r=>r.transect)?"transect":"projet";
+  return state.homeGroupBy;
+}
+function homeOpenGroups(){
+  const mode=homeGroupMode();
+  if(!state.homeOpenGroups || typeof state.homeOpenGroups!=="object")state.homeOpenGroups={};
+  if(!Array.isArray(state.homeOpenGroups[mode]))state.homeOpenGroups[mode]=[];
+  return state.homeOpenGroups[mode];
+}
 function homeFacetValues(getter){
   return [...new Set(state.releves.flatMap(r=>{const v=getter(r); return Array.isArray(v)?v:[v];}).filter(Boolean))]
-    .sort((a,b)=>String(a).localeCompare(String(b),"fr"));
+    .sort((a,b)=>String(a).localeCompare(String(b),"fr",{numeric:true}));
 }
 function homeFilteredReleves(){
   const f=homeFacets();
@@ -2099,60 +2154,120 @@ function homeFilteredReleves(){
     if(f.site && (r.site||"")!==f.site)return false;
     if(f.annee && (r.date||"").slice(0,4)!==f.annee)return false;
     if(f.observateur && (r.observer||"")!==f.observateur)return false;
+    if(f.transect && (r.transect||"")!==f.transect)return false;
+    if(f.habitat && (r.habitat||"")!==f.habitat)return false;
     if(f.strate && !(r.rows||[]).some(row=>row.stratum===f.strate))return false;
-    if(query && !norm(`${r.name||""} ${r.site||""} ${r.location||""} ${r.observer||""} ${r.notes||""} ${r.codeProjet||""}`).includes(query))return false;
+    if(query && !norm(`${r.name||""} ${r.site||""} ${r.location||""} ${r.observer||""} ${r.notes||""} ${r.codeProjet||""} ${r.transect||""} ${r.habitat||""}`).includes(query))return false;
     return true;
   });
+}
+/* Ordre du terrain : transect, puis distance, puis n° de placette ; les relevés hors
+   transect viennent après, par date. */
+function compareTransectOrder(a,b){
+  const ta=a.transect||"", tb=b.transect||"";
+  if(!ta!==!tb)return ta?-1:1;
+  const t=ta.localeCompare(tb,"fr",{numeric:true}); if(t)return t;
+  const da=releveDistance(a), db=releveDistance(b);
+  if(da!=null && db!=null && da!==db)return da-db;
+  const pa=relevePlacette(a), pb=relevePlacette(b);
+  if(pa!=null && pb!=null && pa!==pb)return pa-pb;
+  return String(a.date||"").localeCompare(String(b.date||""));
 }
 const HOME_SORT_COLUMNS={
   name:{type:"text",get:r=>r.name||"Sans nom"},
   projet:{type:"text",get:r=>r.codeProjet||""},
-  site:{type:"text",get:r=>r.site||""},
-  commune:{type:"text",get:r=>r.location||""},
+  transect:{type:"custom",cmp:compareTransectOrder},
+  habitat:{type:"text",get:r=>r.habitat||""},
   date:{type:"text",get:r=>r.date||""},
   surf:{type:"num",get:r=>parseFloat(r.area)||0},
-  observateur:{type:"text",get:r=>r.observer||""},
   esp:{type:"num",get:r=>(r.rows||[]).length},
   rec:{type:"num",get:r=>releveCoverPct(r)}
 };
-function homeSort(){return state.homeSort||(state.homeSort={key:"date",dir:"desc"});}
+function homeSort(){
+  if(!state.homeSort || !HOME_SORT_COLUMNS[state.homeSort.key])state.homeSort={key:"transect",dir:"asc"};
+  return state.homeSort;
+}
 function homeSortedReleves(){
   const {key,dir}=homeSort();
-  const col=HOME_SORT_COLUMNS[key]||HOME_SORT_COLUMNS.date;
+  const col=HOME_SORT_COLUMNS[key];
   const mult=dir==="asc"?1:-1;
   return homeFilteredReleves().slice().sort((a,b)=>{
+    if(col.type==="custom")return mult*col.cmp(a,b);
     const va=col.get(a), vb=col.get(b);
-    const cmp=col.type==="num"?(va-vb):String(va).localeCompare(String(vb),"fr");
+    const cmp=col.type==="num"?(va-vb):String(va).localeCompare(String(vb),"fr",{numeric:true});
     return mult*cmp;
   });
+}
+/* « R1 · 28 m », ou « R1 · n°15 » quand la distance manque. */
+function releveTransectLabel(r){
+  if(!r.transect)return "";
+  const d=releveDistance(r), p=relevePlacette(r);
+  return r.transect+(d!=null?` · ${fmtMetres(d)} m`:(p!=null?` · n°${p}`:""));
+}
+function homeGroupsOf(list,mode){
+  const groups=[], byKey=new Map();
+  const keyOf={
+    transect:r=>r.transect?`${r.codeProjet||""}\u0001${r.transect}`:"__none__",
+    habitat:r=>r.habitat||"__none__",
+    projet:r=>r.codeProjet||"__none__"
+  }[mode];
+  list.forEach(r=>{
+    const key=keyOf(r);
+    if(!byKey.has(key)){byKey.set(key,{key,rows:[]}); groups.push(byKey.get(key));}
+    byKey.get(key).rows.push(r);
+  });
+  const plural=(n,w)=>`${n} ${w}${n>1?"s":""}`;
+  groups.forEach(g=>{
+    const first=g.rows[0], none=g.key==="__none__";
+    const transects=new Set(g.rows.map(r=>r.transect).filter(Boolean)).size;
+    if(mode==="transect"){
+      g.label=none?"Hors transect":first.transect;
+      g.sub=none?"":(first.codeProjet||"");
+      const ds=g.rows.map(releveDistance).filter(d=>d!=null);
+      const habitats=new Set(g.rows.map(r=>r.habitat).filter(Boolean)).size;
+      g.meta=[plural(g.rows.length,none?"relevé":"placette"),
+        ds.length?`${fmtMetres(Math.min(...ds))} → ${fmtMetres(Math.max(...ds))} m`:"",
+        habitats?plural(habitats,"habitat"):""].filter(Boolean).join(" · ");
+    }else{
+      g.label=none?(mode==="habitat"?"Habitat non renseigné":"Sans projet"):(mode==="habitat"?first.habitat:first.codeProjet);
+      g.sub="";
+      g.meta=[plural(g.rows.length,"relevé"),transects?plural(transects,"transect"):""].filter(Boolean).join(" · ");
+    }
+  });
+  const isNone=g=>g.key==="__none__";
+  groups.sort((a,b)=>isNone(a)!==isNone(b)?(isNone(a)?1:-1):(`${a.sub}\u0001${a.label}`).localeCompare(`${b.sub}\u0001${b.label}`,"fr",{numeric:true}));
+  return groups;
 }
 function homeLibRowHtml(r,ids){
   const nEsp=(r.rows||[]).length;
   const color=releveColor(r);
   const rec=releveCoverPct(r).toFixed(0)+" %";
-  const mobileMeta=[r.codeProjet,r.area?r.area+" m\u00b2":null,`${nEsp} esp.`,rec].filter(Boolean).join(" \u00b7 ");
-  return `<div class="psLibRow">`+
+  const tr=releveTransectLabel(r);
+  const mobileMeta=[tr||r.codeProjet,r.habitat,`${nEsp} esp.`,rec].filter(Boolean).join(" · ");
+  const title=[r.site,r.location,r.observer].filter(Boolean).join(" · ");
+  return `<div class="psLibRow"${title?` title="${esc(title)}"`:""}>`+
     `<span class="psRowSelectWrap" style="--row-color:${esc(color)}">`+
       `<input class="releveCheck" type="checkbox" data-kind="home" value="${r.id}" ${ids.has(r.id)?"checked":""} aria-label="Sélectionner ${esc(releveLabel(r))}">`+
       `<span class="psRowSelectSquare" aria-hidden="true"></span>`+
     `</span>`+
     `<span class="psRowMain"><input type="color" class="colorDot" data-releve-color="${r.id}" value="${color}" aria-label="Couleur de ${esc(releveLabel(r))}"><button type="button" class="psRowName" data-open-releve="${r.id}">${esc(releveLabel(r))}</button><span class="psRowDate">${esc(fmtDateShort(r.date))}</span></span>`+
-    `<span class="psRowMono">${esc(r.codeProjet||"\u2014")}</span>`+
-    `<span class="psRowTrunc">${esc(r.site||"\u2014")}</span>`+
-    `<span class="psRowTrunc">${esc(r.location||"\u2014")}</span>`+
+    `<span class="psRowTrunc" title="${esc(r.codeProjet||"")}">${esc(r.codeProjet||"—")}</span>`+
+    `<span class="psRowMono">${esc(tr||"—")}</span>`+
+    `<span class="psRowTrunc" title="${esc(r.habitat||"")}">${esc(r.habitat||"—")}</span>`+
     `<span class="psRowMono">${esc(fmtDateShort(r.date))}</span>`+
-    `<span class="psRowMono num">${r.area?esc(r.area)+" m\u00b2":"\u2014"}</span>`+
-    `<span class="psRowTrunc">${esc(r.observer||"\u2014")}</span>`+
+    `<span class="psRowMono num">${r.area?esc(r.area)+" m²":"—"}</span>`+
     `<span class="psRowMono num">${nEsp}</span>`+
     `<span class="psRowMono num">${rec}</span>`+
     `<span class="psRowMeta">${esc(mobileMeta)}</span>`+
-    `<button type="button" class="psLibRowDel" data-delete-releve="${r.id}" aria-label="Supprimer ${esc(releveLabel(r))}">\u2715</button>`+
+    `<button type="button" class="psLibRowDel" data-delete-releve="${r.id}" aria-label="Supprimer ${esc(releveLabel(r))}">✕</button>`+
     `</div>`;
 }
 function renderHomeLibrary(){
   ensureSelections();
+  renderZonationConvertPanel();
   const ids=new Set(state.selectedIds||[]);
   const f=homeFacets();
+  const mode=homeGroupMode();
   const list=homeSortedReleves();
 
   const countEl=document.getElementById("homeLibCount");
@@ -2160,14 +2275,30 @@ function renderHomeLibrary(){
     const n=state.releves.length, p=new Set(state.releves.map(r=>r.codeProjet).filter(Boolean)).size;
     countEl.textContent=n?`${n} relevé${n>1?"s":""} · ${p} projet${p>1?"s":""}`:"";
   }
+  const groupBar=document.getElementById("homeGroupBar");
+  if(groupBar){
+    groupBar.innerHTML=`<span class="psFacetLabel">Ranger par</span><span class="psSegmented" role="group" aria-label="Ranger les relevés par">`+
+      HOME_GROUP_MODES.map(([k,label])=>`<button type="button" data-group-mode="${k}" aria-pressed="${k===mode}"${k===mode?' class="active"':""}>${label}</button>`).join("")+
+      `</span>`+(mode!=="liste"?`<span class="psGroupBarTail"><button type="button" class="psLinkBtn" id="homeExpandAllBtn">tout déplier</button><button type="button" class="psLinkBtn" id="homeCollapseAllBtn">tout replier</button></span>`:"");
+    groupBar.querySelectorAll("[data-group-mode]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        if(state.homeGroupBy===btn.dataset.groupMode)return;
+        state.homeGroupBy=btn.dataset.groupMode;
+        state.homeSort={key:"transect",dir:"asc"};
+        save(); renderAll();
+      });
+    });
+  }
   const facetBar=document.getElementById("homeFacetBar");
   if(facetBar){
     const facetDefs=[
       ["projet","Projet",homeFacetValues(r=>r.codeProjet)],
+      ["transect","Transect",homeFacetValues(r=>r.transect)],
+      ["habitat","Habitat",homeFacetValues(r=>r.habitat)],
       ["site","Site",homeFacetValues(r=>r.site)],
       ["annee","Année",homeFacetValues(r=>(r.date||"").slice(0,4))],
       ["observateur","Observateur",homeFacetValues(r=>r.observer)]
-    ];
+    ].filter(([key,,values])=>values.length || f[key]);
     const items=facetDefs.map(([key,label,values])=>{
       const active=!!f[key];
       const opts=`<option value="">${esc(label)}</option>`+values.map(v=>`<option value="${esc(v)}" ${f[key]===v?"selected":""}>${esc(label)} · ${esc(STRATA_DISPLAY_LABEL[v]||v)}</option>`).join("");
@@ -2199,41 +2330,58 @@ function renderHomeLibrary(){
     if(!list.length){
       listBox.innerHTML=`<div class="psLibEmpty">Aucun relevé ne correspond à ces filtres.</div>`;
     }else{
-      const groups=[], byKey=new Map();
-      list.forEach(r=>{
-        const key=r.codeProjet||"__none__";
-        if(!byKey.has(key)){byKey.set(key,{key,label:r.codeProjet||"Sans projet",site:r.site||"",rows:[]}); groups.push(byKey.get(key));}
-        byKey.get(key).rows.push(r);
-      });
       const {key:curSortKey,dir:curSortDir}=homeSort();
-      const sortDefs=[["name","Relevé"],["projet","Projet"],["site","Site"],["commune","Commune"],["date","Date"],["surf","Surf.","num"],["observateur","Observateur"],["esp","Esp.","num"],["rec","Rec.","num"]];
+      const sortDefs=[["name","Relevé"],["projet","Projet"],["transect","Transect"],["habitat","Habitat"],["date","Date"],["surf","Surf.","num"],["esp","Esp.","num"],["rec","Rec.","num"]];
       const headCells=sortDefs.map(([k,label,numCls])=>{
         const active=curSortKey===k, arrow=active?(curSortDir==="asc"?" ↑":" ↓"):"";
         return `<span${numCls?' class="num"':""}><button type="button" class="psLibSortBtn${numCls?" num":""}${active?" active":""}" data-sort-key="${k}">${esc(label)}${arrow}</button></span>`;
       }).join("");
       const head=`<div class="psLibHead"><span></span>${headCells}<span></span></div>`;
-      listBox.innerHTML=head+groups.map(g=>{
-        const label=g.site?`${esc(g.label)} · ${esc(g.site)}`:esc(g.label);
-        return `<div class="psLibGroup"><div class="psLibGroupHead"><span>${label}</span><span class="psRowMeta">${g.rows.length} relevé${g.rows.length>1?"s":""}</span><label class="psSelectAllSwitch" data-select-all-projet="${esc(g.key)}"><input type="checkbox">Tout</label><button type="button" class="psLinkBtn homeGroupSelectBtn" data-projet="${esc(g.key)}">Sélectionner le projet</button></div>`+
-        g.rows.map(r=>homeLibRowHtml(r,ids)).join("")+
-        `</div>`;
-      }).join("");
-      listBox.querySelectorAll(".homeGroupSelectBtn").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-          const key=btn.dataset.projet, group=list.filter(r=>(r.codeProjet||"__none__")===key);
-          const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set]; save(); renderAll();
+      let groups=[];
+      if(mode==="liste"){
+        listBox.innerHTML=head+`<div class="psLibGroup open">${list.map(r=>homeLibRowHtml(r,ids)).join("")}</div>`;
+      }else{
+        groups=homeGroupsOf(list,mode);
+        /* Une recherche texte ou un seul groupe : on déplie, sinon les résultats resteraient cachés. */
+        const forceOpen=groups.length===1 || !!norm((state.releveFilters&&state.releveFilters.home)||"");
+        const open=new Set(homeOpenGroups());
+        listBox.innerHTML=head+groups.map(g=>{
+          const isOpen=forceOpen||open.has(g.key);
+          const nSel=g.rows.filter(r=>ids.has(r.id)).length;
+          const selInfo=nSel?`<span class="psGroupSel">${nSel===g.rows.length?"tout sélectionné":`${nSel}/${g.rows.length} sélectionné${nSel>1?"s":""}`}</span>`:"";
+          return `<div class="psLibGroup${isOpen?" open":""}"><div class="psLibGroupHead">`+
+            `<label class="psGroupCheck"><input type="checkbox" data-group-check="${esc(g.key)}" ${nSel===g.rows.length?"checked":""} aria-label="Sélectionner tout le groupe ${esc(g.label)}"></label>`+
+            `<button type="button" class="psGroupToggle" data-group-toggle="${esc(g.key)}" aria-expanded="${isOpen}">`+
+              `<span class="psGroupArrow" aria-hidden="true">${isOpen?"▾":"▸"}</span>`+
+              `<span class="psGroupTitle">${esc(g.label)}</span>`+
+              (g.sub?`<span class="psGroupSub">${esc(g.sub)}</span>`:"")+
+              `<span class="psGroupMeta">${esc(g.meta)}</span>`+
+            `</button>${selInfo}</div>`+
+            (isOpen?g.rows.map(r=>homeLibRowHtml(r,ids)).join(""):"")+
+            `</div>`;
+        }).join("");
+        listBox.querySelectorAll("[data-group-check]").forEach(cb=>{
+          const group=groups.find(g=>g.key===cb.dataset.groupCheck)?.rows||[];
+          const nSel=group.filter(r=>ids.has(r.id)).length;
+          cb.indeterminate=nSel>0 && nSel<group.length;
+          cb.addEventListener("change",()=>{
+            if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
+            else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
+            save(); renderAll();
+          });
         });
-      });
-      listBox.querySelectorAll("[data-select-all-projet]").forEach(label=>{
-        const key=label.dataset.selectAllProjet, group=groups.find(g=>g.key===key)?.rows||[];
-        const cb=label.querySelector("input");
-        cb.checked=group.length>0 && group.every(r=>ids.has(r.id));
-        cb.addEventListener("change",()=>{
-          if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
-          else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
-          save(); renderAll();
+        listBox.querySelectorAll("[data-group-toggle]").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            const key=btn.dataset.groupToggle, arr=homeOpenGroups(), i=arr.indexOf(key);
+            if(i>=0)arr.splice(i,1); else arr.push(key);
+            save(); renderAll();
+          });
         });
-      });
+      }
+      const expandAll=document.getElementById("homeExpandAllBtn");
+      if(expandAll)expandAll.addEventListener("click",()=>{state.homeOpenGroups[mode]=groups.map(g=>g.key); save(); renderAll();});
+      const collapseAll=document.getElementById("homeCollapseAllBtn");
+      if(collapseAll)collapseAll.addEventListener("click",()=>{state.homeOpenGroups[mode]=[]; save(); renderAll();});
       listBox.querySelectorAll("[data-sort-key]").forEach(btn=>{
         btn.addEventListener("click",()=>{
           const k=btn.dataset.sortKey, cur=homeSort();
@@ -2258,6 +2406,78 @@ function renderHomeLibrary(){
       });
     }
   }
+}
+
+/* ===== Transect, placette, distance, habitat =====
+   Champs ajoutés le 12/10/2026, à côté du projet (codeProjet) qui redevient la campagne
+   (« Petite Mer de Gâvres 2026 »). Les exports Zonation antérieurs n'avaient pas ces
+   colonnes : l'habitat (ou le transect) était rangé dans code_projet, le transect et le
+   n° de placette dans le nom (« R1-15 » ou « Transect R1 — relevé n°15 ») et la distance
+   dans la localisation (« 12 m » ou « Distance sur le transect : 12 m »).
+   zonationLegacyStructure() relit ces indices ; elle sert à l'import CSV et à la
+   conversion des relevés déjà importés. */
+function releveDistance(r){const d=parseFloat(String(r.distance??"").replace(",",".")); return Number.isFinite(d)?d:null;}
+function relevePlacette(r){const p=parseInt(r.placette,10); return Number.isFinite(p)?p:null;}
+function fmtMetres(d){return String(Math.round(d*10)/10).replace(".",",");}
+function defaultProjectFor(r){
+  const site=(r.site||"").split(/\s+[—–]\s+/)[0].trim(), year=(r.date||"").slice(0,4);
+  return [site,year].filter(Boolean).join(" ");
+}
+const ZONATION_HABITAT_RE=/^(f\d+\b|sol nu$|habitat non attribu)/i;
+function zonationLegacyStructure(r){
+  if(r.transect)return null;
+  const name=(r.name||"").trim(), proj=(r.codeProjet||"").trim(), loc=(r.location||"").trim();
+  const longue=name.match(/^transect\s+(.+?)\s*[—–-]\s*relev[ée]\s*n[°o]\s*(\d+)$/i);
+  const court=name.match(/^(.+)-(\d+)$/);
+  const m=longue||court; if(!m)return null;
+  const transect=m[1].trim(), placette=Number(m[2]);
+  const dist=loc.match(/^(?:distance sur le transect\s*:\s*)?(\d+(?:[.,]\d+)?)\s*m$/i);
+  const projTransect=proj.match(/^transect\s+(.+)$/i);
+  const habitat=ZONATION_HABITAT_RE.test(proj)?proj:"";
+  const projIsTransect=projTransect?projTransect[1].trim()===transect:proj===transect;
+  /* Un code projet qui n'est ni un habitat ni le transect a été saisi par quelqu'un :
+     on n'y touche pas. Sans projet, il faut au moins la distance pour reconnaître Zonation. */
+  if(proj && !habitat && !projIsTransect)return null;
+  if(!proj && !dist)return null;
+  return {transect,placette,distance:dist?Number(dist[1].replace(",",".")):null,habitat,
+    location:dist?"":loc,codeProjet:defaultProjectFor(r)||proj||""};
+}
+function applyReleveStructure(r,s,codeProjet){
+  r.transect=s.transect; r.placette=s.placette; r.distance=s.distance; r.habitat=s.habitat;
+  r.location=s.location; r.codeProjet=codeProjet??s.codeProjet;
+}
+let zonationConvertState={open:false,hidden:false,projects:{}};
+function renderZonationConvertPanel(){
+  const box=document.getElementById("homeConvertPanel"); if(!box)return;
+  const items=state.releves.map(r=>({r,s:zonationLegacyStructure(r)})).filter(x=>x.s);
+  if(!items.length || zonationConvertState.hidden){box.hidden=true; box.innerHTML=""; return;}
+  box.hidden=false;
+  const projects=[...new Set(items.map(x=>x.s.codeProjet))];
+  projects.forEach(p=>{if(!(p in zonationConvertState.projects))zonationConvertState.projects[p]=p;});
+  const target=s=>(zonationConvertState.projects[s.codeProjet]??s.codeProjet).trim();
+  const n=items.length, s=n>1?"s":"";
+  let html=`<div class="psConvertHead"><p><strong>${n} relevé${s} importé${s} depuis Zonation</strong> rangent l’habitat ou le transect dans « projet ». Les convertir les rend triables par transect, dans l’ordre du terrain, et regroupables par habitat.</p>`+
+    `<div class="psConvertActions"><button type="button" class="secondary" id="convertToggleBtn">${zonationConvertState.open?"Masquer l’aperçu":"Voir l’aperçu"}</button><button type="button" class="psLinkBtn" id="convertLaterBtn">Plus tard</button></div></div>`;
+  if(zonationConvertState.open){
+    html+=`<div class="psConvertProjects"><p class="psConvertNote">Nouveau nom de projet (site + année par défaut, modifiable) :</p>`+
+      projects.map(p=>`<label class="psConvertProject"><span>${esc(p||"(sans site ni date)")} →</span><input type="text" data-convert-project="${esc(p)}" value="${esc(zonationConvertState.projects[p])}"></label>`).join("")+`</div>`+
+      `<div class="psConvertTableWrap"><table class="psConvertTable"><thead><tr><th>Relevé</th><th>Projet actuel</th><th>Transect</th><th class="num">Placette</th><th class="num">Distance</th><th>Habitat</th></tr></thead><tbody>`+
+      items.slice().sort((a,b)=>compareTransectOrder({...a.r,...a.s},{...b.r,...b.s})).map(({r,s})=>`<tr><td>${esc(r.name||"")}</td><td>${esc(r.codeProjet||"—")}</td><td>${esc(s.transect)}</td><td class="num">${s.placette??"—"}</td><td class="num">${s.distance!=null?fmtMetres(s.distance)+" m":"—"}</td><td>${esc(s.habitat||"—")}</td></tr>`).join("")+
+      `</tbody></table></div>`+
+      `<div class="psConvertActions"><button type="button" id="convertApplyBtn">Convertir ${n} relevé${s}</button></div>`;
+  }
+  box.innerHTML=html;
+  document.getElementById("convertToggleBtn").addEventListener("click",()=>{zonationConvertState.open=!zonationConvertState.open; renderZonationConvertPanel();});
+  document.getElementById("convertLaterBtn").addEventListener("click",()=>{zonationConvertState.hidden=true; renderZonationConvertPanel();});
+  box.querySelectorAll("[data-convert-project]").forEach(inp=>inp.addEventListener("input",()=>{zonationConvertState.projects[inp.dataset.convertProject]=inp.value;}));
+  const apply=document.getElementById("convertApplyBtn");
+  if(apply)apply.addEventListener("click",()=>{
+    items.forEach(({r,s})=>{applyReleveStructure(r,s,target(s)); touchReleve(r);});
+    zonationConvertState={open:false,hidden:false,projects:{}};
+    state.homeGroupBy="transect"; state.homeSort={key:"transect",dir:"asc"};
+    homeFacets().projet="";
+    save(); renderAll(); toast(`${n} relevé${s} converti${s}.`);
+  });
 }
 function renderHomeSelection(){
   ensureSelections();
@@ -2424,8 +2644,10 @@ function shortTerm(txt,limit=22){txt=(txt||"").replace(/\s+/g," ").trim(); retur
 function taxonLabel(name,mode="short"){const clean=(name||"").replace(/\([^)]*\)/g,"").replace(/\b(?:L\.|Mill\.|DC\.|Lam\.|Sm\.|Pers\.|Willd\.|All\.|Moench|Gaertn\.|Scop\.|Huds\.)\b/g,"").trim(); const parts=clean.split(/\s+/).filter(Boolean); if(!parts.length)return "?"; const genus=parts[0].replace(/[^A-Za-zÀ-ÿ]/g,""); const epithet=(parts[1]||"").replace(/[^A-Za-zÀ-ÿ-]/g,""); if(mode==="initials")return (genus[0]||"?").toUpperCase()+(epithet?epithet[0].toUpperCase():""); return (genus[0]||"?").toUpperCase()+". "+(epithet||parts[1]||"");}
 function releveLabel(rel){const name=(rel.name||"Sans nom").trim(); return name.length>26?name.slice(0,25)+"…":name;}
 /* Code court « PROJET-NN » utilisé comme étiquette compacte (puces de sélection, titre de Saisie) —
-   NN = rang du relevé dans son projet une fois trié par date croissante, calculé à la volée. */
+   NN = rang du relevé dans son projet une fois trié par date croissante, calculé à la volée.
+   Sur un transect, la place sur le terrain parle davantage : « R1-15 ». */
 function releveCode(rel){
+  if(rel.transect){const p=relevePlacette(rel); return p!=null?`${rel.transect}-${p}`:releveTransectLabel(rel);}
   const proj=rel.codeProjet||"";
   if(!proj)return releveLabel(rel);
   const siblings=state.releves.filter(r=>(r.codeProjet||"")===proj).slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
@@ -2720,11 +2942,11 @@ function download(filename, text, mime="application/json"){const a=document.crea
 function wgs84ToLambert93(latDeg,lonDeg){const e=0.08181919106,lambda0=3*Math.PI/180,n=0.7256077650,C=11754255.426,Xs=700000,Ys=12655612.050; const lat=latDeg*Math.PI/180,lon=lonDeg*Math.PI/180; const sinLat=Math.sin(lat); const latIso=Math.atanh(sinLat)-e*Math.atanh(e*sinLat); const R=C*Math.exp(-n*latIso); const gamma=n*(lon-lambda0); return {x:Xs+R*Math.sin(gamma),y:Ys-R*Math.cos(gamma)};}
 function parseCoordsWgs84(str){const m=(str||"").toString().trim().match(/(-?\d+(?:[.,]\d+)?)\s*[,;]\s*(-?\d+(?:[.,]\d+)?)/); if(!m)return null; const lat=parseFloat(m[1].replace(",",".")),lon=parseFloat(m[2].replace(",",".")); if(Number.isNaN(lat)||Number.isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180)return null; return {lat,lon};}
 function lambert93Cols(coordsStr){const p=parseCoordsWgs84(coordsStr); if(!p)return ["",""]; const {x,y}=wgs84ToLambert93(p.lat,p.lon); return [Math.round(x),Math.round(y)];}
-const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93"];
+const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93","transect","placette","distance_m","habitat"];
 function linesToCsv(lines){return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
-function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords)]);})); return linesToCsv(lines);}
+function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords),r.transect||"",r.placette??"",r.distance??"",r.habitat||""]);})); return linesToCsv(lines);}
 function analysesWideRows(){
-  const header=["releve_id","releve_nom","site","code_projet","date","observateur","localisation","surface","coordonnees_gps","x_lambert93","y_lambert93",
+  const header=["releve_id","releve_nom","site","code_projet","transect","placette","distance_m","habitat","date","observateur","localisation","surface","coordonnees_gps","x_lambert93","y_lambert93",
     ...GRADIENTS.flatMap(g=>[`${g.short}_moyenne_simple`,`${g.short}_moyenne_ponderee`,`${g.short}_ecart_type_simple`,`${g.short}_ecart_type_pondere`]),
     "zone_humide_ellenberg_moyenne","zone_humide_ellenberg_moyenne_ponderee","zone_humide_ellenberg_statut",
     "zone_humide_reglementaire_statut","zone_humide_reglementaire_pct_hygrophiles","zone_humide_reglementaire_nb_especes_retenues","zone_humide_reglementaire_nb_especes_hygrophiles",
@@ -2734,7 +2956,7 @@ function analysesWideRows(){
     const ell=computeWetlandEllenberg(r,"Toutes strates");
     const reg=computeRegulatoryFlora(r);
     const concord=wetlandConcord(ell.status,reg.status);
-    return [r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.coords||"",...lambert93Cols(r.coords),
+    return [r.id,r.name||"",r.site||"",r.codeProjet||"",r.transect||"",r.placette??"",r.distance??"",r.habitat||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.coords||"",...lambert93Cols(r.coords),
       ...st.flatMap(x=>[x.mean??"",x.wmean??"",x.sd??"",x.wsd??""]),
       ell.mean??"",ell.wmean??"",wetlandStatusLabel(ell.status),
       regStatusLabel(reg.status),reg.ratio!=null?Math.round(reg.ratio*1000)/10:"",reg.total,reg.wet,
@@ -2747,7 +2969,7 @@ function downloadImportTemplate(){
   const pad=()=>GRADIENTS.map(()=>"");
   const rel1=["REL-EX1","Exemple — schorre moyen","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Schorre moyen","47.680, -3.350","25"];
   const rel2=["REL-EX2","Exemple — haut schorre","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Haut schorre","47.681, -3.352","16"];
-  const l93rel1=lambert93Cols(rel1[7]), l93rel2=lambert93Cols(rel2[7]);
+  const l93rel1=[...lambert93Cols(rel1[7]),"T1",1,0,"Schorre moyen"], l93rel2=[...lambert93Cols(rel2[7]),"T1",2,12,"Haut schorre"];
   const examples=[
     [...rel1,3109,"Halimione portulacoides (L.) Aellen","","Herbacée","bb","2","",...pad(),...l93rel1],
     [...rel1,"","Puccinellia distans (Jacq.) Parl.","","Herbacée","pct","15","",...pad(),...l93rel1],
@@ -2761,7 +2983,7 @@ function downloadImportTemplate(){
 }
 function parseCsvLines(text){const rows=[]; let row=[],cell="",inQuotes=false; const s=text.replace(/^﻿/,""); for(let i=0;i<s.length;i++){const c=s[i]; if(inQuotes){if(c==='"'){if(s[i+1]==='"'){cell+='"'; i++;}else inQuotes=false;}else cell+=c;} else if(c==='"')inQuotes=true; else if(c===";"){row.push(cell); cell="";} else if(c==="\n"||c==="\r"){if(c==="\r"&&s[i+1]==="\n")i++; row.push(cell); rows.push(row); row=[]; cell="";} else cell+=c;} if(cell!==""||row.length){row.push(cell); rows.push(row);} return rows.filter(r=>r.some(c=>c!=="")); }
 function resolveImportTaxon(taxonIdRaw,nomRaw){const tid=parseInt(taxonIdRaw,10); if(!Number.isNaN(tid)&&byId.has(tid))return byId.get(tid); const nom=(nomRaw||"").toString().trim(); if(nom&&byName.has(nom))return byName.get(nom); const n=norm(nom); if(!n)return null; return TAXA.find(t=>t.nn===n)||TAXA.find(t=>t.ns===n)||null;}
-function buildRelevesFromCsvRows(rows){if(!rows.length)return{releves:[],warnings:[],relevesCount:0,lignesCount:0}; const header=rows[0].map(h=>norm(h)); const idx=name=>header.indexOf(norm(name)); const iId=idx("releve_id"),iNom=idx("releve_nom"),iSite=idx("site"),iProjet=idx("code_projet"),iDate=idx("date"),iObs=idx("observateur"),iLoc=idx("localisation"),iCoords=idx("coordonnees_gps"),iSurf=idx("surface"),iTid=idx("taxon_id"),iTaxon=idx("nom_scientifique"),iStrate=idx("strate"),iMode=idx("mode_recouvrement"),iCover=idx("recouvrement_saisi"); const stratesValides=STRATA.filter(s=>s!=="Toutes strates"); const stratesNorm=new Map(stratesValides.map(s=>[norm(s),s])); const groups=new Map(); const order=[]; const warnings=[]; let lignesCount=0; for(let li=1;li<rows.length;li++){const cells=rows[li]; if(!cells||!cells.some(c=>(c||"").toString().trim()!==""))continue; const releveId=(cells[iId]||"").toString().trim(); const releveNom=(cells[iNom]||"").toString().trim(); const key=releveId||releveNom; if(!key){warnings.push({ligne:li+1,motif:"ni releve_id ni releve_nom : ligne ignorée"}); continue;} if(!groups.has(key)){groups.set(key,{meta:{name:releveNom||"Relevé importé",site:(cells[iSite]||"").toString().trim(),codeProjet:(cells[iProjet]||"").toString().trim(),date:(cells[iDate]||"").toString().trim()||today(),observer:(cells[iObs]||"").toString().trim(),location:(cells[iLoc]||"").toString().trim(),coords:(cells[iCoords]||"").toString().trim(),area:(cells[iSurf]||"").toString().trim()},rows:[]}); order.push(key);} const g=groups.get(key); const taxon=resolveImportTaxon(cells[iTid],cells[iTaxon]); if(!taxon){warnings.push({ligne:li+1,motif:`taxon non reconnu : "${(cells[iTaxon]||"").toString().trim()}"`}); continue;} const strateRaw=(cells[iStrate]||"").toString().trim(); const strate=stratesValides.includes(strateRaw)?strateRaw:stratesNorm.get(norm(strateRaw)); if(!strate){warnings.push({ligne:li+1,motif:`strate non reconnue : "${strateRaw}"`}); continue;} const mode=(cells[iMode]||"").toString().trim().toLowerCase(); const coverRaw=(cells[iCover]||"").toString().trim(); let cover; if(mode==="bb"){if(!(coverRaw in BB)){warnings.push({ligne:li+1,motif:`coefficient Braun-Blanquet invalide : "${coverRaw}"`}); continue;} cover=coverRaw;} else if(mode==="pct"){const n=parseFloat(coverRaw.replace(",",".")); if(Number.isNaN(n)){warnings.push({ligne:li+1,motif:`recouvrement % invalide : "${coverRaw}"`}); continue;} cover=Math.max(0,Math.min(100,n));} else {warnings.push({ligne:li+1,motif:`mode_recouvrement invalide (attendu "bb" ou "pct") : "${mode}"`}); continue;} g.rows.push({line_id:uid(),tid:taxon.id,name:taxon.n,stratum:strate,mode,cover}); lignesCount++;} const releves=order.map(key=>{const g=groups.get(key); const r=blankReleve(g.meta.name); Object.assign(r,g.meta); r.rows=g.rows; return r;}).filter(r=>r.rows.length); return{releves,warnings,relevesCount:releves.length,lignesCount};}
+function buildRelevesFromCsvRows(rows){if(!rows.length)return{releves:[],warnings:[],relevesCount:0,lignesCount:0}; const header=rows[0].map(h=>norm(h)); const idx=name=>header.indexOf(norm(name)); const iId=idx("releve_id"),iNom=idx("releve_nom"),iSite=idx("site"),iProjet=idx("code_projet"),iDate=idx("date"),iObs=idx("observateur"),iLoc=idx("localisation"),iCoords=idx("coordonnees_gps"),iSurf=idx("surface"),iTid=idx("taxon_id"),iTaxon=idx("nom_scientifique"),iStrate=idx("strate"),iMode=idx("mode_recouvrement"),iCover=idx("recouvrement_saisi"),iTransect=idx("transect"),iPlacette=idx("placette"),iDistance=idx("distance_m"),iHabitat=idx("habitat"); const cellNum=v=>{const n=parseFloat((v||"").toString().replace(",","."));return Number.isFinite(n)?n:null;}; const stratesValides=STRATA.filter(s=>s!=="Toutes strates"); const stratesNorm=new Map(stratesValides.map(s=>[norm(s),s])); const groups=new Map(); const order=[]; const warnings=[]; let lignesCount=0; for(let li=1;li<rows.length;li++){const cells=rows[li]; if(!cells||!cells.some(c=>(c||"").toString().trim()!==""))continue; const releveId=(cells[iId]||"").toString().trim(); const releveNom=(cells[iNom]||"").toString().trim(); const key=releveId||releveNom; if(!key){warnings.push({ligne:li+1,motif:"ni releve_id ni releve_nom : ligne ignorée"}); continue;} if(!groups.has(key)){groups.set(key,{meta:{name:releveNom||"Relevé importé",site:(cells[iSite]||"").toString().trim(),codeProjet:(cells[iProjet]||"").toString().trim(),date:(cells[iDate]||"").toString().trim()||today(),observer:(cells[iObs]||"").toString().trim(),location:(cells[iLoc]||"").toString().trim(),coords:(cells[iCoords]||"").toString().trim(),area:(cells[iSurf]||"").toString().trim(),transect:(cells[iTransect]||"").toString().trim(),placette:cellNum(cells[iPlacette]),distance:cellNum(cells[iDistance]),habitat:(cells[iHabitat]||"").toString().trim()},rows:[]}); order.push(key);} const g=groups.get(key); const taxon=resolveImportTaxon(cells[iTid],cells[iTaxon]); if(!taxon){warnings.push({ligne:li+1,motif:`taxon non reconnu : "${(cells[iTaxon]||"").toString().trim()}"`}); continue;} const strateRaw=(cells[iStrate]||"").toString().trim(); const strate=stratesValides.includes(strateRaw)?strateRaw:stratesNorm.get(norm(strateRaw)); if(!strate){warnings.push({ligne:li+1,motif:`strate non reconnue : "${strateRaw}"`}); continue;} const mode=(cells[iMode]||"").toString().trim().toLowerCase(); const coverRaw=(cells[iCover]||"").toString().trim(); let cover; if(mode==="bb"){if(!(coverRaw in BB)){warnings.push({ligne:li+1,motif:`coefficient Braun-Blanquet invalide : "${coverRaw}"`}); continue;} cover=coverRaw;} else if(mode==="pct"){const n=parseFloat(coverRaw.replace(",",".")); if(Number.isNaN(n)){warnings.push({ligne:li+1,motif:`recouvrement % invalide : "${coverRaw}"`}); continue;} cover=Math.max(0,Math.min(100,n));} else {warnings.push({ligne:li+1,motif:`mode_recouvrement invalide (attendu "bb" ou "pct") : "${mode}"`}); continue;} g.rows.push({line_id:uid(),tid:taxon.id,name:taxon.n,stratum:strate,mode,cover}); lignesCount++;} const releves=order.map(key=>{const g=groups.get(key); const r=blankReleve(g.meta.name); Object.assign(r,g.meta); r.rows=g.rows; return r;}).filter(r=>r.rows.length); let zonationCount=0; releves.forEach(r=>{const st=zonationLegacyStructure(r); if(st){applyReleveStructure(r,st); zonationCount++;}}); return{releves,warnings,relevesCount:releves.length,lignesCount,zonationCount};}
 
 
 function safeDate(s){try{return new Date(s).toLocaleString("fr-FR");}catch(e){return s||"—";}}
@@ -3218,7 +3440,7 @@ function bind(){
  document.getElementById("downloadImportTemplate").addEventListener("click",downloadImportTemplate);
  const importCsvFileName=document.getElementById("importCsvFileName");
  function resetImportCsvFileName(){if(importCsvFileName)importCsvFileName.textContent="Aucun fichier sélectionné";}
- importCsvReleves.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; if(importCsvFileName)importCsvFileName.textContent=file.name; try{const txt=await file.text(); const rows=parseCsvLines(txt); const{releves,warnings,relevesCount,lignesCount}=buildRelevesFromCsvRows(rows); if(!relevesCount){toast("Aucun relevé valide dans ce fichier."+(warnings.length?` (${warnings.length} ligne(s) ignorée(s))`:"")); e.target.value=""; resetImportCsvFileName(); return;} let msg=`Importer ${relevesCount} relevé(s), ${lignesCount} ligne(s) ?`; if(warnings.length){msg+=`\n\n${warnings.length} ligne(s) ignorée(s) :\n`+warnings.slice(0,5).map(w=>`- ligne ${w.ligne} : ${w.motif}`).join("\n")+(warnings.length>5?`\n… et ${warnings.length-5} autre(s)`:"");} if(confirm(msg)){state.releves.push(...releves); save(); renderAll(); toast(`${relevesCount} relevé(s) importé(s).`); closeImportModal();} e.target.value=""; resetImportCsvFileName();}catch(err){toast("Import impossible : "+err.message); e.target.value=""; resetImportCsvFileName();}});
+ importCsvReleves.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; if(importCsvFileName)importCsvFileName.textContent=file.name; try{const txt=await file.text(); const rows=parseCsvLines(txt); const{releves,warnings,relevesCount,lignesCount,zonationCount}=buildRelevesFromCsvRows(rows); if(!relevesCount){toast("Aucun relevé valide dans ce fichier."+(warnings.length?` (${warnings.length} ligne(s) ignorée(s))`:"")); e.target.value=""; resetImportCsvFileName(); return;} let msg=`Importer ${relevesCount} relevé(s), ${lignesCount} ligne(s) ?`; if(zonationCount)msg+=`\n\n${zonationCount} relevé(s) au format d’un ancien export Zonation : transect, placette, distance et habitat seront remis à leur place, et le projet deviendra « site + année » (modifiable ensuite dans la Saisie).`; if(warnings.length){msg+=`\n\n${warnings.length} ligne(s) ignorée(s) :\n`+warnings.slice(0,5).map(w=>`- ligne ${w.ligne} : ${w.motif}`).join("\n")+(warnings.length>5?`\n… et ${warnings.length-5} autre(s)`:"");} if(confirm(msg)){state.releves.push(...releves); save(); renderAll(); toast(`${relevesCount} relevé(s) importé(s).`); closeImportModal();} e.target.value=""; resetImportCsvFileName();}catch(err){toast("Import impossible : "+err.message); e.target.value=""; resetImportCsvFileName();}});
  if(window.saveGoogleClientId)saveGoogleClientId.addEventListener("click",()=>handleGoogleAction("saveClient"));
  if(window.googleSignIn)googleSignIn.addEventListener("click",()=>handleGoogleAction("signin"));
  if(window.googleEnsureSheet)googleEnsureSheet.addEventListener("click",()=>handleGoogleAction("ensure"));

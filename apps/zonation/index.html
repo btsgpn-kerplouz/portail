@@ -1157,8 +1157,10 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
       <div style="margin-top:.8em;display:flex;flex-direction:column;gap:.5em;align-items:flex-start;">
         <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Export complet (CSV)</button>
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par espèce pour chaque relevé, rien d'écarté. Pour archiver et travailler dans un tableur.</p>
+        <label for="in-projet-phytoscope" style="font-size:.78rem;color:var(--text-2);">Nom du projet dans Phytoscope</label>
+        <input type="text" id="in-projet-phytoscope" autocomplete="off" placeholder="Vide : site + année de chaque relevé" style="max-width:22em;">
         <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export pour Phytoscope (CSV)</button>
-        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : relevés regroupés par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : chaque relevé y garde son transect, sa distance et son habitat probable, pour être rangé dans l'ordre du terrain ou regroupé par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
         <input type="file" id="in-fichier-import" accept=".csv,text/csv" hidden onchange="importerFichierCSV(this)">
         <p style="font-size:.75rem;color:var(--text-2);margin:0;">Relit un « Export complet » ou un « Export pour Phytoscope » produit par l'appli — le vôtre ou celui d'un autre groupe. Les relevés sont <b>ajoutés</b> aux vôtres, jamais remplacés, et un relevé déjà présent n'est pas importé deux fois. Si le fichier ne précise pas le milieu, il est déduit du cortège et le compte rendu le signale.</p>
@@ -2638,7 +2640,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.35.0';
+const VERSION_APPLI = '1.36.0';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -5351,12 +5353,11 @@ function nomCourtReleve(r){
   return `${r.transect || '?'}-${r.numero ?? '?'}`;
 }
 
-/* « code_projet » porte l'HABITAT et non le transect : c'est ce champ que
-   PhytoScope utilise pour regrouper les relevés dans sa bibliothèque
-   (`key = r.codeProjet`), trier et filtrer. Avec le transect, les quarante
-   relevés d'une ligne arrivaient dans un seul groupe, tous milieux confondus —
-   or l'objet de l'analyse est justement de comparer les milieux entre eux.
-   Le transect reste lisible dans le nom du relevé (« R1-15 »). */
+/* Habitat probable du relevé, colonne « habitat » de l'export. Jusqu'au
+   12/10/2026 il était rangé dans « code_projet », seul champ de regroupement
+   de PhytoScope à l'époque : le transect s'y perdait. PhytoScope a désormais
+   des colonnes transect / placette / distance_m / habitat, et relit encore
+   les anciens fichiers (habitat dans code_projet, transect dans le nom). */
 function groupeProjetReleve(r){
   if(r.solNu) return 'Sol nu';
   if(r.topFiche == null) return 'Habitat non attribué';
@@ -5366,14 +5367,19 @@ function groupeProjetReleve(r){
   return `f${r.topFiche}${h && h.code ? ' (' + h.code + ')' : ''} · ${r.top || ''}`.trim();
 }
 
-/* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes). */
-function enteteRelevePhytoscope(r, releveId){
-  return [releveId, nomCourtReleve(r),
-    [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres',
-    groupeProjetReleve(r),
-    r.dateReleve || (r.date || new Date().toISOString()).slice(0,10),
-    r.observateur || '',
-    r.distance != null && r.distance !== '' ? `${r.distance} m` : '', '', '1 m²'];
+/* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes).
+   code_projet : le nom saisi au-dessus du bouton d'export, sinon site + année. */
+function enteteRelevePhytoscope(r, releveId, projet){
+  const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
+  const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
+  return [releveId, nomCourtReleve(r), site,
+    projet || `${r.site || 'Petite Mer de Gâvres'} ${date.slice(0,4)}`,
+    date, r.observateur || '', r.commune || '', '', '1 m²'];
+}
+/* Colonnes de rangement lues par PhytoScope, en fin de ligne. */
+function rangementRelevePhytoscope(r){
+  return [r.transect || '', r.numero ?? '',
+    r.distance != null && r.distance !== '' ? r.distance : '', groupeProjetReleve(r)];
 }
 
 /* Format long : une ligne = une espèce dans un relevé. L'ancien format mettait
@@ -5427,21 +5433,23 @@ function idPhytoscope(){ return Math.random().toString(36).slice(2,10)+Date.now(
 function exporterPourPhytoscopeCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi"];
+  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi","transect","placette","distance_m","habitat"];
+  const projet = (document.getElementById('in-projet-phytoscope')?.value || '').trim();
   const lignes = [entetes];
   const omises = new Set();       // espèces référencées mais sans équivalent chez Phytoscope
   const libres = new Set();       // espèces saisies au clavier, sans nom scientifique
   liste.forEach(r=>{
-    const entete = enteteRelevePhytoscope(r, idPhytoscope());
+    const entete = enteteRelevePhytoscope(r, idPhytoscope(), projet);
+    const rangement = rangementRelevePhytoscope(r);
     observationsDuReleve(r).forEach(o=>{
       if(o.solNu){
         // taxon -1 : Phytoscope le reconnaît comme sol nu et conserve le relevé
-        lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover]);
+        lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover, ...rangement]);
         return;
       }
       if(!o.latin){ libres.add(o.fr); return; }          // saisie libre : rien à résoudre
       if(o.taxonId === undefined){ omises.add(o.latin); return; }  // Phytoscope la rejetterait
-      lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover]);
+      lignes.push([...entete, o.taxonId, o.latin, o.strate, o.mode, o.cover, ...rangement]);
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
