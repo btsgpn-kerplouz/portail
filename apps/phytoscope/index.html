@@ -575,6 +575,11 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psGroupSub{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 .psGroupMeta{margin-left:auto;font-family:var(--mono);font-size:.68rem;color:var(--muted);white-space:nowrap;flex:0 0 auto}
 .psGroupSel{font-family:var(--mono);font-size:.66rem;color:var(--brand);white-space:nowrap;flex:0 0 auto}
+.psGroupDel{all:unset;cursor:pointer;font-size:.72rem;color:var(--muted);padding:4px 0 4px 6px;flex:0 0 auto}
+.psGroupDel:hover,.psGroupDel:focus-visible{color:var(--danger);text-decoration:underline}
+.psSelDeleteRow{margin-top:12px;padding-top:10px;border-top:1px solid var(--linesoft)}
+.psDangerLink{color:var(--danger)}
+.psDangerLink:hover{color:var(--danger);text-decoration:underline}
 /* Ranger par : transect / habitat / projet / liste */
 .psGroupBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px 0}
 .psSegmented{display:inline-flex}
@@ -1388,6 +1393,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
               <button class="psLinkBtn" type="button" id="homeSaveLotBtn">+ Enregistrer la sélection comme lot</button>
             </div>
           </div>
+          <div class="psSelDeleteRow"><button class="psLinkBtn psDangerLink" type="button" id="homeDeleteSelBtn">Supprimer les relevés sélectionnés…</button></div>
         </div>
         <div class="psRail">
           <div class="psRailHead">
@@ -1920,6 +1926,7 @@ function normalizeAppStateForSync(s){
   if(!s.releveFilters || typeof s.releveFilters!=="object")s.releveFilters={};
   if(!Array.isArray(s.lots))s.lots=[];
   s.lots.forEach(l=>{if(!l.updated_at)l.updated_at=new Date().toISOString();});
+  if(!Array.isArray(s.deletedReleveIds))s.deletedReleveIds=[];
   return s;
 }
 function mergeLots(local,remote){
@@ -1941,7 +1948,8 @@ function mergeAppStates(local, remote){
   local=normalizeAppStateForSync(stateClone(local));
   remote=normalizeAppStateForSync(stateClone(remote||{selectedId:null,releves:[]}));
   const merged=new Map();
-  remote.releves.forEach(r=>merged.set(r.id,stateClone(r)));
+  const deleted=new Set(local.deletedReleveIds||[]);
+  remote.releves.forEach(r=>{if(!deleted.has(r.id))merged.set(r.id,stateClone(r));});
   const lastSync=syncState.lastSyncAt?new Date(syncState.lastSyncAt).getTime():0;
   const conflicts=[];
   local.releves.forEach(lr=>{
@@ -2365,7 +2373,7 @@ function renderHomeLibrary(){
               `<span class="psGroupTitle">${esc(g.label)}</span>`+
               (g.sub?`<span class="psGroupSub">${esc(g.sub)}</span>`:"")+
               `<span class="psGroupMeta">${esc(g.meta)}</span>`+
-            `</button>${selInfo}</div>`+
+            `</button>${selInfo}<button type="button" class="psGroupDel" data-group-delete="${esc(g.key)}" title="Supprimer les ${g.rows.length} relevé${g.rows.length>1?"s":""} de ce groupe" aria-label="Supprimer le groupe ${esc(g.label)}">Supprimer</button></div>`+
             (isOpen?g.rows.map(r=>homeLibRowHtml(r,ids)).join(""):"")+
             `</div>`;
         }).join("");
@@ -2377,6 +2385,14 @@ function renderHomeLibrary(){
             if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
             else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
             save(); renderAll();
+          });
+        });
+        listBox.querySelectorAll("[data-group-delete]").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            const g=groups.find(x=>x.key===btn.dataset.groupDelete); if(!g)return;
+            const filtered=g.rows.length<state.releves.filter(r=>homeGroupsOf([r],mode)[0].key===g.key).length;
+            const kind={transect:"le transect",habitat:"l’habitat",projet:"le projet"}[mode];
+            deleteReleves(g.rows.map(r=>r.id),`${kind} « ${g.label} »${filtered?" (relevés affichés par les filtres seulement)":""}`);
           });
         });
         listBox.querySelectorAll("[data-group-toggle]").forEach(btn=>{
@@ -2404,17 +2420,35 @@ function renderHomeLibrary(){
           e.stopPropagation();
           const id=btn.dataset.deleteReleve, rel=state.releves.find(r=>r.id===id);
           if(!rel)return;
-          if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;}
-          if(!confirm(`Supprimer le relevé « ${releveLabel(rel)} » ?`))return;
-          if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(id);
-          state.releves=state.releves.filter(r=>r.id!==id);
-          state.selectedIds=(state.selectedIds||[]).filter(sid=>sid!==id);
-          if(state.selectedId===id)state.selectedId=state.releves[0].id;
-          save(); renderAll();
+          deleteReleves([id],`le relevé « ${releveLabel(rel)} »`);
         });
       });
     }
   }
+}
+
+/* ===== Suppression de relevés (un, un groupe entier, ou la sélection) =====
+   12/10/2026 : on peut tout supprimer, y compris le dernier relevé (current() recrée
+   un relevé vide au besoin). Les identifiants supprimés sont gardés dans
+   state.deletedReleveIds tant que la base partagée n'a pas confirmé : sans cela, une
+   synchro lancée avant la fin de la suppression distante (ou hors ligne) les faisait
+   revenir. */
+function deleteReleves(ids,what){
+  const present=new Set(state.releves.map(r=>r.id));
+  ids=[...new Set(ids)].filter(id=>present.has(id));
+  if(!ids.length){toast("Aucun relevé à supprimer.");return false;}
+  const n=ids.length, s=n>1?"s":"";
+  if(!confirm(`Supprimer ${what} — ${n} relevé${s} ?\n\nLa suppression est définitive : elle s’applique aussi à la base partagée si vous êtes connecté.`))return false;
+  const rm=new Set(ids);
+  state.releves=state.releves.filter(r=>!rm.has(r.id));
+  state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));
+  if(state.releveColors)ids.forEach(id=>delete state.releveColors[id]);
+  if(rm.has(state.selectedId))state.selectedId=state.releves[0]?.id||null;
+  if(draftReleve && rm.has(draftReleve.id))draftReleve=null;
+  state.deletedReleveIds=[...new Set([...(state.deletedReleveIds||[]),...ids])];
+  if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(ids);
+  save(); renderAll(); toast(`${n} relevé${s} supprimé${s}.`);
+  return true;
 }
 
 /* ===== Transect, placette, distance, habitat =====
@@ -2488,7 +2522,13 @@ function renderZonationConvertPanel(){
     save(); renderAll(); toast(`${n} relevé${s} converti${s}.`);
   });
 }
+function initHomeDeleteSelection(){
+  const b=document.getElementById("homeDeleteSelBtn"); if(!b || b.dataset.init)return; b.dataset.init="1";
+  b.addEventListener("click",()=>deleteReleves(state.selectedIds||[],"les relevés sélectionnés"));
+}
 function renderHomeSelection(){
+  initHomeDeleteSelection();
+  const delBtn=document.getElementById("homeDeleteSelBtn"); if(delBtn)delBtn.hidden=!(state.selectedIds||[]).length;
   ensureSelections();
   const byId=new Map(state.releves.map(r=>[r.id,r]));
   const sel=(state.selectedIds||[]).map(id=>byId.get(id)).filter(Boolean);
@@ -3528,8 +3568,7 @@ function bind(){
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
  deleteReleve.addEventListener("click",()=>{
    if(draftReleve && draftReleve.id===state.selectedId){draftReleve=null; showView("home"); return;}
-   if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;}
-   if(confirm("Supprimer le relevé actif ?")){if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(state.selectedId); state.releves=state.releves.filter(r=>r.id!==state.selectedId); state.selectedId=state.releves[0].id; save(); renderAll();}
+   const r=current(); if(state.releves.some(x=>x.id===r.id) && deleteReleves([r.id],`le relevé « ${releveLabel(r)} »`))showView("home");
  });
  [relName,relDate,relObserver,window.relSite,relLocation,window.relCoords,relArea,relNotes,window.relProjet].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
  const relCoordsGps=document.getElementById("relCoordsGps");
@@ -4226,10 +4265,22 @@ function renderScatterLayerChecks(){
     const { error } = await sb.from("phyto_releves").upsert(rows, { onConflict:"proprietaire_id,id" });
     if(error) throw error;
   }
-  async function supaDeleteRemote(id){
-    if(!sb || !currentUser || !id) return;
-    try{ await sb.from("phyto_releves").delete().eq("id", id); markSynced(); }
-    catch(e){ /* suppression distante silencieuse */ }
+  /* Supprime par paquets de 100 ; un identifiant ne quitte state.deletedReleveIds
+     qu'une fois la suppression distante confirmée (sinon reprise à la synchro suivante). */
+  async function supaDeleteRemote(ids){
+    ids=(Array.isArray(ids)?ids:[ids]).filter(Boolean);
+    if(!sb || !currentUser || !ids.length) return;
+    try{
+      for(let i=0;i<ids.length;i+=100){
+        const chunk=ids.slice(i,i+100);
+        const { error } = await sb.from("phyto_releves").delete().in("id", chunk);
+        if(error) throw error;
+        const done=new Set(chunk);
+        state.deletedReleveIds=(state.deletedReleveIds||[]).filter(id=>!done.has(id));
+      }
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      markSynced();
+    }catch(e){ console.warn("Suppression distante reportée à la prochaine synchro :", e && e.message || e); }
   }
   /* ----- Synchronisation des lots (même schéma que les relevés : table
      dédiée, blob JSON dans `donnees`, fusion par updated_at) ----- */
@@ -4263,6 +4314,7 @@ function renderScatterLayerChecks(){
     if(supaBusy) return;
     supaBusy=true; supaSet("Synchronisation…");
     try{
+      if((state.deletedReleveIds||[]).length) await supaDeleteRemote(state.deletedReleveIds.slice());
       const remote=await supaPull();
       const merged=mergeAppStates(stateClone(), remote);
       /* La synchro des lots (table à part, ajoutée après coup) ne doit jamais
