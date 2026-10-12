@@ -1158,7 +1158,7 @@ table.historique th,table.historique td{border-bottom:1px solid var(--line);padd
         <button class="secondaire" onclick="exporterHistoriqueCSV()">⬇ Export complet (CSV)</button>
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">Une ligne par espèce pour chaque relevé, rien d'écarté. Pour archiver et travailler dans un tableur.</p>
         <label for="in-projet-phytoscope" style="font-size:.78rem;color:var(--text-2);">Nom du projet dans Phytoscope</label>
-        <input type="text" id="in-projet-phytoscope" autocomplete="off" placeholder="Vide : site + année de chaque relevé" style="max-width:22em;">
+        <input type="text" id="in-projet-phytoscope" autocomplete="off" placeholder="Vide : site, date et observateurs" style="max-width:22em;">
         <button class="secondaire" onclick="exporterPourPhytoscopeCSV()">⬇ Export pour Phytoscope (CSV)</button>
         <p style="font-size:.75rem;color:var(--text-2);margin:0 0 .3em;">À importer dans Phytoscope (« Importer ») : chaque relevé y garde son transect, sa distance et son habitat probable, pour être rangé dans l'ordre du terrain ou regroupé par habitat. Les espèces sans équivalent dans son référentiel sont écartées et listées.</p>
         <button class="secondaire" onclick="document.getElementById('in-fichier-import').click()">⬆ Importer un fichier CSV</button>
@@ -2640,7 +2640,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.36.0';
+const VERSION_APPLI = '1.36.1';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -5367,13 +5367,24 @@ function groupeProjetReleve(r){
   return `f${r.topFiche}${h && h.code ? ' (' + h.code + ')' : ''} · ${r.top || ''}`.trim();
 }
 
+/* Projet par défaut d'un export : « site date · observateurs », le même pour tout le
+   fichier (un export = un projet dans PhytoScope). « Site + année » réunissait deux
+   groupes passés le même jour au même endroit, et mélangeait leurs transects « 1 ». */
+function projetParDefautPhytoscope(liste){
+  const uniques = f => [...new Set(liste.map(f).filter(Boolean))];
+  const dates = uniques(r => r.dateReleve || (r.date || '').slice(0,10)).sort();
+  const obs = uniques(r => (r.observateur || '').trim());
+  const fr = d => d.split('-').reverse().join('/');
+  const quand = !dates.length ? '' : (dates.length === 1 ? fr(dates[0]) : `${fr(dates[0])} → ${fr(dates[dates.length-1])}`);
+  const qui = obs.length > 3 ? `${obs.slice(0,3).join(', ')} +${obs.length-3}` : obs.join(', ');
+  return [[uniques(r => r.site)[0] || 'Petite Mer de Gâvres', quand].filter(Boolean).join(' '), qui].filter(Boolean).join(' · ');
+}
 /* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes).
-   code_projet : le nom saisi au-dessus du bouton d'export, sinon site + année. */
+   code_projet : le nom saisi au-dessus du bouton d'export, sinon projetParDefautPhytoscope. */
 function enteteRelevePhytoscope(r, releveId, projet){
   const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
   const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
-  return [releveId, nomCourtReleve(r), site,
-    projet || `${r.site || 'Petite Mer de Gâvres'} ${date.slice(0,4)}`,
+  return [releveId, nomCourtReleve(r), site, projet,
     date, r.observateur || '', r.commune || '', '', '1 m²'];
 }
 /* Colonnes de rangement lues par PhytoScope, en fin de ligne. */
@@ -5434,7 +5445,7 @@ function exporterPourPhytoscopeCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
   const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi","transect","placette","distance_m","habitat"];
-  const projet = (document.getElementById('in-projet-phytoscope')?.value || '').trim();
+  const projet = (document.getElementById('in-projet-phytoscope')?.value || '').trim() || projetParDefautPhytoscope(liste);
   const lignes = [entetes];
   const omises = new Set();       // espèces référencées mais sans équivalent chez Phytoscope
   const libres = new Set();       // espèces saisies au clavier, sans nom scientifique
