@@ -577,9 +577,6 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psGroupSel{font-family:var(--mono);font-size:.66rem;color:var(--brand);white-space:nowrap;flex:0 0 auto}
 .psGroupDel{all:unset;cursor:pointer;font-size:.72rem;color:var(--muted);padding:4px 0 4px 6px;flex:0 0 auto}
 .psGroupDel:hover,.psGroupDel:focus-visible{color:var(--danger);text-decoration:underline}
-.psSelDeleteRow{margin-top:12px;padding-top:10px;border-top:1px solid var(--linesoft)}
-.psDangerLink{color:var(--danger)}
-.psDangerLink:hover{color:var(--danger);text-decoration:underline}
 /* Ranger par : transect / habitat / projet / liste */
 .psGroupBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px 0}
 .psSegmented{display:inline-flex}
@@ -1385,7 +1382,6 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
               <button class="psLinkBtn" type="button" id="homeSaveLotBtn">+ Enregistrer la sélection comme lot</button>
             </div>
           </div>
-          <div class="psSelDeleteRow"><button class="psLinkBtn psDangerLink" type="button" id="homeDeleteSelBtn">Supprimer les relevés sélectionnés…</button></div>
         </div>
         <div class="psRail">
           <div class="psRailHead">
@@ -2419,7 +2415,7 @@ function renderHomeLibrary(){
   }
 }
 
-/* ===== Suppression de relevés (un, un groupe entier, ou la sélection) =====
+/* ===== Suppression de relevés (un seul ou un groupe entier) =====
    12/10/2026 : on peut tout supprimer, y compris le dernier relevé (current() recrée
    un relevé vide au besoin). Les identifiants supprimés sont gardés dans
    state.deletedReleveIds tant que la base partagée n'a pas confirmé : sans cela, une
@@ -2514,13 +2510,7 @@ function renderZonationConvertPanel(){
     save(); renderAll(); toast(`${n} relevé${s} converti${s}.`);
   });
 }
-function initHomeDeleteSelection(){
-  const b=document.getElementById("homeDeleteSelBtn"); if(!b || b.dataset.init)return; b.dataset.init="1";
-  b.addEventListener("click",()=>deleteReleves(state.selectedIds||[],"les relevés sélectionnés"));
-}
 function renderHomeSelection(){
-  initHomeDeleteSelection();
-  const delBtn=document.getElementById("homeDeleteSelBtn"); if(delBtn)delBtn.hidden=!(state.selectedIds||[]).length;
   ensureSelections();
   const byId=new Map(state.releves.map(r=>[r.id,r]));
   const sel=(state.selectedIds||[]).map(id=>byId.get(id)).filter(Boolean);
