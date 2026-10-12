@@ -446,6 +446,9 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 #scatterSvg{overflow-x:auto}
 #scatterSvg svg{cursor:crosshair;user-select:none;-webkit-user-select:none}
 #scatterSvg svg .axisPicker{cursor:pointer}
+#scatterSvg svg.zoomed{cursor:grab;touch-action:none}
+#scatterSvg.panning svg{cursor:grabbing}
+body:has(#scatterSvg.panning) #chartTooltip{display:none!important}
 .scatterZoomBtns{display:inline-flex}
 .scatterZoomBtns button{font-family:var(--mono);font-size:.82rem;min-width:34px}
 .scatterZoomBtns button+button{margin-left:-1px}
@@ -1639,10 +1642,10 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
               <div class="axisControlRow"><label class="small muted">Axe X<select id="xGrad"></select></label><label class="small muted">Axe Y<select id="yGrad"></select></label><label class="small muted">Strate<select id="scatterStratum"></select></label></div>
               <label class="switch compactSwitch small" style="margin-top:10px"><input type="checkbox" id="scatterShortLabelsReleves">Noms abrégés — relevés</label>
               <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="scatterShortLabelsSpecies">Noms abrégés — espèces</label>
-              <p class="small muted" style="margin:.6rem 0 0">Astuce : cliquer sur le nom des axes dans le graphique pour faire défiler les indices. Zoom : molette ou cadre tracé à la souris ; double-clic pour revenir à la vue entière. L’export PNG reprend le zoom affiché.</p>
+              <p class="small muted" style="margin:.6rem 0 0">Astuce : cliquer sur le nom des axes dans le graphique pour faire défiler les indices. Zoom : molette ou cadre tracé à la souris ; une fois zoomé, glisser déplace la vue et Maj + glisser trace un nouveau cadre ; double-clic pour revenir à la vue entière. L’export PNG reprend le zoom affiché.</p>
             </div>
           </div>
-          <span class="scatterZoomBtns" role="group" aria-label="Zoom de l'écogramme"><button type="button" class="secondary iconBtn" id="scatterZoomOut" aria-label="Dézoomer" title="Dézoomer">−</button><button type="button" class="secondary iconBtn" id="scatterZoomIn" aria-label="Zoomer" title="Zoomer (ou molette, ou cadre tracé à la souris)">+</button><button type="button" class="secondary iconBtn" id="scatterZoomReset" aria-label="Vue entière" title="Vue entière (ou double-clic)" disabled>1:1</button></span>
+          <span class="scatterZoomBtns" role="group" aria-label="Zoom de l'écogramme"><button type="button" class="secondary iconBtn" id="scatterZoomOut" aria-label="Dézoomer" title="Dézoomer">−</button><button type="button" class="secondary iconBtn" id="scatterZoomIn" aria-label="Zoomer" title="Zoomer (ou molette, ou cadre tracé à la souris ; une fois zoomé, glisser pour se déplacer)">+</button><button type="button" class="secondary iconBtn" id="scatterZoomReset" aria-label="Vue entière" title="Vue entière (ou double-clic)" disabled>1:1</button></span>
           <button type="button" class="secondary iconBtn graphFitBtn" data-target="#scatterSvg" aria-pressed="false" aria-label="Vue d'ensemble" title="Vue d'ensemble"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button><button class="secondary iconBtn" id="exportScatterPng" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button>
           </div>
         </div>
@@ -2819,9 +2822,10 @@ function placeScatterLabels(pts,sx,sy,W,H,m){
 }
 
 /* ===== Zoom de l'écogramme =====
-   Molette sur la zone de tracé : zoom centré sur le pointeur. Glisser : trace un cadre
-   et zoome dessus. Double-clic ou bouton ⤢ : vue entière. Boutons + / − pour le
-   tactile. Le zoom ne descend pas sous 0,5 unité d'indice par axe. */
+   Molette sur la zone de tracé : zoom centré sur le pointeur. Vue entière : glisser trace
+   un cadre et zoome dessus. Vue zoomée : glisser déplace la fenêtre (souris ou doigt),
+   Maj + glisser trace un cadre. Double-clic ou bouton 1:1 : vue entière. Boutons + / −
+   pour le tactile. Le zoom ne descend pas sous 0,5 unité d'indice par axe. */
 let scatterZoom={key:"",view:null}, scatterGeom=null, scatterZoomRaf=0;
 const SCATTER_MIN_SPAN=.5;
 function setScatterView(v){
@@ -2861,12 +2865,27 @@ function initScatterZoom(){
   },{passive:false});
   let drag=null;
   box.addEventListener("pointerdown",e=>{
-    if(e.button!==0 || e.pointerType==="touch")return;
+    if(e.button!==0)return;
     const p=scatterPointer(e); if(!p || !p.inside)return;
+    if(scatterZoom.view && !e.shiftKey){
+      /* Déplacement : décalage écran converti en unités d'indice à l'échelle du départ
+         (le SVG est redessiné à chaque image, la conversion ne doit pas en dépendre). */
+      const {W,m,H,gx,gy}=scatterGeom, k=p.svg.getScreenCTM()?.a||1;
+      drag={pan:true,cx:e.clientX,cy:e.clientY,view:{...scatterZoom.view},
+        ux:(gx.max-gx.min)/((W-m.l-m.r)*k), uy:(gy.max-gy.min)/((H-m.t-m.b)*k)};
+      box.classList.add("panning"); e.preventDefault();
+      return;
+    }
+    if(e.pointerType==="touch")return;
     drag={start:p,rect:null};
   });
   window.addEventListener("pointermove",e=>{
     if(!drag)return;
+    if(drag.pan){
+      const dx=(e.clientX-drag.cx)*drag.ux, dy=(e.clientY-drag.cy)*drag.uy, v=drag.view;
+      setScatterView({x0:v.x0-dx,x1:v.x1-dx,y0:v.y0+dy,y1:v.y1+dy});
+      return;
+    }
     const p=scatterPointer(e); if(!p)return;
     const x=Math.min(drag.start.px,p.px), y=Math.min(drag.start.py,p.py), w=Math.abs(p.px-drag.start.px), h=Math.abs(p.py-drag.start.py);
     if(!drag.rect){
@@ -2878,13 +2897,15 @@ function initScatterZoom(){
     drag.rect.setAttribute("x",x); drag.rect.setAttribute("y",y); drag.rect.setAttribute("width",w); drag.rect.setAttribute("height",h);
     drag.end=p;
   });
-  window.addEventListener("pointerup",()=>{
+  const endDrag=()=>{
     if(!drag)return;
-    const d=drag; drag=null;
-    if(!d.rect || !d.end)return;
+    const d=drag; drag=null; box.classList.remove("panning");
+    if(d.pan || !d.rect || !d.end)return;
     d.rect.remove();
     setScatterView({x0:Math.min(d.start.vx,d.end.vx),x1:Math.max(d.start.vx,d.end.vx),y0:Math.min(d.start.vy,d.end.vy),y1:Math.max(d.start.vy,d.end.vy)});
-  });
+  };
+  window.addEventListener("pointerup",endDrag);
+  window.addEventListener("pointercancel",endDrag);
   box.addEventListener("dblclick",e=>{const p=scatterPointer(e); if(p && p.inside)setScatterView(null);});
   document.getElementById("scatterZoomIn")?.addEventListener("click",()=>zoomScatterBy(.7));
   document.getElementById("scatterZoomOut")?.addEventListener("click",()=>zoomScatterBy(1/.7));
@@ -2972,7 +2993,7 @@ function renderScatter(){
    return `<rect ${tip} x="${(cx-side/2).toFixed(1)}" y="${(cy-side/2).toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="${pt.fill}" stroke="#fff" stroke-width="2.4"></rect>`;
  }).join("");
  const titleSize=mobile?15:22, yTitleX=mobile?18:64;
- const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<clipPath id="scatterPlotClip"><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}"/></clipPath><text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(${yTitleX} ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gy.label)} ↻</text><g clip-path="url(#scatterPlotClip)">${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}</g>${pointLabels}${zoomed?`<text x="${W-m.r}" y="${m.t-10}" text-anchor="end" font-size="12" fill="#647166">Zoom · ${gx.short} ${fmt(gx.min,2)}–${fmt(gx.max,2)} · ${gy.short} ${fmt(gy.min,2)}–${fmt(gy.max,2)}</text>`:""}</svg>`;
+ const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"${zoomed?' class="zoomed"':""}><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<clipPath id="scatterPlotClip"><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}"/></clipPath><text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(${yTitleX} ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gy.label)} ↻</text><g clip-path="url(#scatterPlotClip)">${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}</g>${pointLabels}${zoomed?`<text x="${W-m.r}" y="${m.t-10}" text-anchor="end" font-size="12" fill="#647166">Zoom · ${gx.short} ${fmt(gx.min,2)}–${fmt(gx.max,2)} · ${gy.short} ${fmt(gy.min,2)}–${fmt(gy.max,2)}</text>`:""}</svg>`;
  updateScatterZoomButtons();
  document.getElementById("scatterSvg").innerHTML = (pts.length||zoomed)?svg:`<div class="empty">Aucun point calculable pour ces axes, cette strate et les relevés sélectionnés — coche au moins un calque.</div>`;
 }
