@@ -444,6 +444,15 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 /* Bascule « Vue d'ensemble / Détail » du graphique */
 .graphFitBtn{display:none}
 #scatterSvg{overflow-x:auto}
+#scatterSvg svg{cursor:crosshair;user-select:none;-webkit-user-select:none}
+#scatterSvg svg .axisPicker{cursor:pointer}
+#scatterSvg svg.zoomed{cursor:grab;touch-action:none}
+#scatterSvg.panning svg{cursor:grabbing}
+body:has(#scatterSvg.panning) #chartTooltip{display:none!important}
+.scatterZoomBtns{display:inline-flex}
+.scatterZoomBtns button{font-family:var(--mono);font-size:.82rem;min-width:34px}
+.scatterZoomBtns button+button{margin-left:-1px}
+.scatterZoomBtns button:disabled{opacity:.4;cursor:default}
 #scatterSvg:not(.fitWidth) svg{width:auto!important;min-width:640px;max-width:none!important}
 .svgBox.fitWidth{overflow-x:hidden}
 .svgBox.fitWidth svg{min-width:0!important;width:100%!important;height:auto!important}
@@ -522,8 +531,6 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psRailActions{margin-left:auto;display:flex;gap:8px}
 .psRailActions button{padding:9px 14px;font-size:.84rem;box-shadow:none}
 .psRailActions button:hover{transform:none;box-shadow:none}
-.psSelectAllSwitch{display:none;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);padding:5px 8px;font-size:.74rem;color:var(--label)}
-.psSelectAllSwitch input{width:14px;height:14px;min-height:0;margin:0}
 .psLinkBtn{background:none;border:0;padding:0;color:var(--brand);font-weight:600;font-size:.82rem;cursor:pointer;box-shadow:none;font-family:"IBM Plex Sans",system-ui,sans-serif}
 .psLinkBtn:hover{color:var(--brandDark);transform:none;box-shadow:none;background:none}
 
@@ -545,17 +552,59 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psFacetTail{margin-left:auto;display:flex;align-items:center;gap:10px}
 .psFacetCount{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
 
-.psLibList{flex:1 1 auto;min-height:160px;max-height:520px;overflow:auto}
-.psLibHead{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:9px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label);position:sticky;top:0;z-index:2}
+/* Grand écran : la liste occupe la hauteur de la fenêtre sous les barres de recherche et
+   de filtres (12/10/2026, transects de plusieurs dizaines de placettes), jamais moins de 520px. */
+.psLibList{flex:1 1 auto;min-height:160px;max-height:max(520px,calc(100vh - 310px));overflow:auto}
+.psLibHead{display:grid;grid-template-columns:22px minmax(140px,1.2fr) minmax(90px,1fr) 96px minmax(110px,1.4fr) 50px 58px 40px 50px 28px;column-gap:12px;padding:8px 14px;background:var(--headrow);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--label);position:sticky;top:0;z-index:2}
 .psLibHead .num{text-align:right}
 .psLibSortBtn{all:unset;display:block;width:100%;box-sizing:border-box;cursor:pointer;color:inherit}
 .psLibSortBtn:hover{color:var(--ink)}
 .psLibSortBtn.active{color:var(--ink);font-weight:700}
 .psLibSortBtn.num{text-align:right}
 .psLibGroup:not(:last-child){border-bottom:1px solid var(--linesoft)}
-.psLibGroupHead{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--headrow);font-size:.78rem;font-weight:600;color:var(--label)}
-.psLibGroupHead .psLinkBtn{margin-left:auto;font-size:.76rem}
-.psLibRow{display:grid;grid-template-columns:22px minmax(160px,1.5fr) 68px minmax(84px,.9fr) minmax(76px,.8fr) 64px 58px minmax(84px,.9fr) 44px 50px 28px;column-gap:14px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--linesoft)}
+.psLibGroupHead{display:flex;align-items:center;gap:10px;padding:0 14px 0 6px;background:var(--headrow);font-size:.8rem;color:var(--label);min-height:38px}
+.psLibGroup.open .psLibGroupHead{border-bottom:1px solid var(--linesoft)}
+/* Case de groupe : coche le transect/l'habitat/le projet entier sans le déplier. Zone
+   cliquable élargie (le label), carré dessiné comme celui des lignes. */
+.psGroupCheck{display:inline-flex;align-items:center;justify-content:center;width:30px;height:38px;flex:0 0 auto;cursor:pointer}
+.psGroupCheck input{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:13px;height:13px;border:1.5px solid var(--line);background:var(--panel);border-radius:0;min-width:0;min-height:0;margin:0;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.psGroupCheck input:checked,.psGroupCheck input:indeterminate{border-color:var(--brand)}
+.psGroupCheck input:checked::after{content:"";width:3px;height:6px;border:solid var(--brand);border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-0.5px,-1px)}
+.psGroupCheck input:indeterminate::after{content:"";width:7px;height:1.5px;background:var(--brand)}
+.psGroupToggle{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;padding:9px 0;cursor:pointer}
+.psGroupToggle:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.psGroupArrow{font-size:.7rem;color:var(--muted);width:10px;flex:0 0 auto}
+.psGroupTitle{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.psGroupSub{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.psGroupMeta{margin-left:auto;font-family:var(--mono);font-size:.68rem;color:var(--muted);white-space:nowrap;flex:0 0 auto}
+.psGroupSel{font-family:var(--mono);font-size:.66rem;color:var(--brand);white-space:nowrap;flex:0 0 auto}
+.psGroupDel{all:unset;cursor:pointer;font-size:.72rem;color:var(--muted);padding:4px 0 4px 6px;flex:0 0 auto}
+.psGroupDel:hover,.psGroupDel:focus-visible{color:var(--danger);text-decoration:underline}
+/* Ranger par : transect / habitat / projet / liste */
+.psGroupBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px 0}
+.psSegmented{display:inline-flex}
+.psSegmented button{border:1px solid var(--line);background:var(--panel);color:var(--label);padding:4px 11px;font-size:.76rem;min-height:0;border-radius:0;box-shadow:none;font-weight:500}
+.psSegmented button+button{border-left:0}
+.psSegmented button:hover{transform:none;box-shadow:none;color:var(--ink);background:var(--panel)}
+.psSegmented button.active{background:var(--headerbg);border-color:var(--headerbg);color:#fffefb}
+.psGroupBarTail{margin-left:auto;display:flex;gap:12px}
+.psGroupBarTail .psLinkBtn{font-size:.76rem}
+/* Conversion des relevés importés depuis un ancien export Zonation */
+.psConvertPanel{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--headrow);font-size:.84rem}
+.psConvertHead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.psConvertHead p{margin:0;flex:1 1 320px}
+.psConvertActions{display:flex;gap:12px;align-items:center}
+.psConvertActions button{padding:7px 12px;font-size:.8rem;box-shadow:none}
+.psConvertNote{margin:12px 0 6px;color:var(--label)}
+.psConvertProjects{margin-bottom:10px}
+.psConvertProject{display:flex;gap:8px;align-items:center;margin:0 0 6px;font-size:.8rem;color:var(--muted)}
+.psConvertProject input{flex:0 1 280px;padding:5px 8px;font-size:.82rem;min-height:0}
+.psConvertTableWrap{max-height:260px;overflow:auto;border:1px solid var(--line);background:var(--panel);margin-bottom:10px}
+.psConvertTable{width:100%;border-collapse:collapse;font-size:.76rem}
+.psConvertTable th{position:sticky;top:0;background:var(--headrow);text-align:left;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--label);padding:6px 8px;border-bottom:1px solid var(--line)}
+.psConvertTable td{padding:4px 8px;border-bottom:1px solid var(--linesoft);white-space:nowrap}
+.psConvertTable .num{text-align:right;font-family:var(--mono)}
+.psLibRow{display:grid;grid-template-columns:22px minmax(140px,1.2fr) minmax(90px,1fr) 96px minmax(110px,1.4fr) 50px 58px 40px 50px 28px;column-gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--linesoft)}
 .psLibGroup .psLibRow:last-child{border-bottom:0}
 .psLibRow input[type=checkbox]{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:13px;height:13px;border:1.5px solid var(--line);background:var(--panel);border-radius:0;flex:0 0 auto;min-width:0;min-height:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .psLibRow input[type=checkbox]:checked{border-color:var(--brand)}
@@ -639,18 +688,20 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
   /* Filtres : la ligne d'actions (compteur, tout cocher/décocher) encombrait le
      bandeau scrollable et masquait les filtres eux-mêmes (retour Martin 19/08/2026) */
   .psFacetTail{display:none}
-  /* « Sélectionner le projet » retiré du groupe : redondant avec le filtre Projet */
-  .homeGroupSelectBtn{display:none}
+  .psGroupBar{padding:8px 0 0}
+  .psGroupBar .psFacetLabel{display:none}
+  .psGroupBarTail{display:none}
+  .psLibGroupHead{padding:0 8px 0 0;flex-wrap:wrap;column-gap:8px}
+  .psGroupCheck{width:36px;height:42px}
+  .psGroupToggle{flex-wrap:wrap;row-gap:2px}
+  .psGroupMeta{margin-left:0;flex-basis:100%;padding-left:20px}
+  .psGroupSub{display:none}
+  .psConvertPanel{padding:10px 0}
   /* Cadre dans cadre (retour Martin 21/08/2026, ajustements#3) : le panneau
      .psLibrary encadrait déjà tout, en plus des bords d'écran — retiré sur
      mobile, les séparateurs internes (barre de recherche/filtres) suffisent à
      structurer visuellement le bloc. */
   .psLibrary{border:0;background:transparent}
-  /* Interrupteur tout cocher/décocher sur la ligne titre (retour Martin
-     21/08/2026, ajustements#3) — remplace l'accès qui était retiré du bandeau
-     de filtres le 19/08/2026 (il encombrait la piste scrollable), replacé ici
-     à la place. */
-  .psSelectAllSwitch{display:inline-flex;margin-left:auto;flex:0 0 auto}
 }
 
 /* Ma sélection */
@@ -666,10 +717,6 @@ details.wetlandSection[open]>.wetlandSectionSummary .foldClosed{display:none}
 .psSelChip button{background:none;border:0;padding:0;color:var(--label);cursor:pointer;box-shadow:none;font-size:.86rem;line-height:1}
 .psSelEmpty{color:var(--muted);font-size:.82rem;margin:0 0 10px}
 
-.psAlert8{display:flex;gap:8px;align-items:flex-start;background:var(--alertbg);color:var(--alertink);padding:10px 12px;margin-bottom:14px;font-size:.78rem;line-height:1.4}
-.psAlert8[hidden]{display:none}
-.psAlert8Icon{font-weight:700;color:var(--brand);flex:0 0 auto}
-.psAlert8 p{margin:0}
 
 .psLotsLabel{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--label);margin:0 0 8px}
 .psLotsList{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
@@ -1297,12 +1344,14 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
           </div>
         </div>
         <div class="psLibrary card" id="homeReleveCard">
+          <div class="psConvertPanel" id="homeConvertPanel" hidden></div>
           <div class="psLibToolbar">
             <div class="psSearchBox">
               <span aria-hidden="true">⌕</span>
               <input class="releveFilter" id="homeReleveFilter" data-kind="home" placeholder="Nom, site, observateur…">
             </div>
           </div>
+          <div class="psGroupBar" id="homeGroupBar"></div>
           <div class="psFacetBar" id="homeFacetBar"></div>
           <div class="psLibList" id="homeLibList"></div>
         </div>
@@ -1329,10 +1378,6 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
             <button class="psLinkBtn" type="button" data-select-action="none" data-kind="home">Vider</button>
           </div>
           <div class="psSelChips" id="homeSelChips"></div>
-          <div class="psAlert8" id="homeAlert8" hidden>
-            <span class="psAlert8Icon" aria-hidden="true">!</span>
-            <p>Au-delà de 8 relevés, l’écogramme et les gradients deviennent difficiles à lire. Passe en mode moyennes ou compare par lot.</p>
-          </div>
           <div class="psLots">
             <p class="psLotsLabel">Lots enregistrés</p>
             <div class="psLotsList" id="homeLotsList"></div>
@@ -1597,9 +1642,10 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
               <div class="axisControlRow"><label class="small muted">Axe X<select id="xGrad"></select></label><label class="small muted">Axe Y<select id="yGrad"></select></label><label class="small muted">Strate<select id="scatterStratum"></select></label></div>
               <label class="switch compactSwitch small" style="margin-top:10px"><input type="checkbox" id="scatterShortLabelsReleves">Noms abrégés — relevés</label>
               <label class="switch compactSwitch small" style="margin-top:8px"><input type="checkbox" id="scatterShortLabelsSpecies">Noms abrégés — espèces</label>
-              <p class="small muted" style="margin:.6rem 0 0">Astuce : cliquer sur le nom des axes dans le graphique pour faire défiler les indices.</p>
+              <p class="small muted" style="margin:.6rem 0 0">Astuce : cliquer sur le nom des axes dans le graphique pour faire défiler les indices. Zoom : molette ou cadre tracé à la souris ; une fois zoomé, glisser déplace la vue et Maj + glisser trace un nouveau cadre ; double-clic pour revenir à la vue entière. L’export PNG reprend le zoom affiché.</p>
             </div>
           </div>
+          <span class="scatterZoomBtns" role="group" aria-label="Zoom de l'écogramme"><button type="button" class="secondary iconBtn" id="scatterZoomOut" aria-label="Dézoomer" title="Dézoomer">−</button><button type="button" class="secondary iconBtn" id="scatterZoomIn" aria-label="Zoomer" title="Zoomer (ou molette, ou cadre tracé à la souris ; une fois zoomé, glisser pour se déplacer)">+</button><button type="button" class="secondary iconBtn" id="scatterZoomReset" aria-label="Vue entière" title="Vue entière (ou double-clic)" disabled>1:1</button></span>
           <button type="button" class="secondary iconBtn graphFitBtn" data-target="#scatterSvg" aria-pressed="false" aria-label="Vue d'ensemble" title="Vue d'ensemble"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button><button class="secondary iconBtn" id="exportScatterPng" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button>
           </div>
         </div>
@@ -1649,7 +1695,7 @@ body.analyseFullView .psAnalyseLayout{padding:0 20px 0 0}
       </details>
     </div>
     <div class="card">
-      <div class="toolbar compactToolbar"><strong class="small">Tableau d’export</strong><div class="grow"></div><select id="compareStratum" class="compareToolSelect" aria-label="Strate"></select><button type="button" class="secondary miniBtn" id="compareTransposeBtn" aria-pressed="false" title="Basculer lignes/colonnes">⇄ Transposer</button><button class="secondary miniBtn" id="exportCompareCsv">CSV</button><button class="secondary miniBtn" id="exportCompareXls">Excel</button><button class="secondary miniBtn" id="exportCompareFods">LibreOffice</button></div>
+      <div class="toolbar compactToolbar"><strong class="small">Tableau d’export</strong><div class="grow"></div><select id="compareStratum" class="compareToolSelect" aria-label="Strate"></select><button type="button" class="secondary miniBtn" id="compareTransposeBtn" aria-pressed="false" title="Basculer lignes/colonnes">⇄ Transposer</button><button class="secondary miniBtn" id="exportCompareCsv">CSV</button><button class="secondary miniBtn" id="exportCompareXls">Excel (.xlsx)</button><button class="secondary miniBtn" id="exportCompareFods">LibreOffice</button></div>
       <div class="tableWrap compactTable"><table id="compareTable" class="comparisonTable"></table></div>
     </div>
       </div>
@@ -1821,7 +1867,7 @@ const STORE_KEY = "botano_baseflor_releves_v03";
 const ADMIN_PASSWORD = "admin"; let adminUnlocked = false;
 const GOOGLE_SYNC_KEY = "botano_baseflor_google_sync_v01";
 const GOOGLE_SHEET_NAME = "Relevés botaniques - données personnelles";
-const APP_VERSION = "6.0";
+const APP_VERSION = "6.1";
 const GOOGLE_SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 let byId = new Map();
 let byName = new Map();
@@ -1871,6 +1917,7 @@ function normalizeAppStateForSync(s){
   if(!s.releveFilters || typeof s.releveFilters!=="object")s.releveFilters={};
   if(!Array.isArray(s.lots))s.lots=[];
   s.lots.forEach(l=>{if(!l.updated_at)l.updated_at=new Date().toISOString();});
+  if(!Array.isArray(s.deletedReleveIds))s.deletedReleveIds=[];
   return s;
 }
 function mergeLots(local,remote){
@@ -1892,7 +1939,8 @@ function mergeAppStates(local, remote){
   local=normalizeAppStateForSync(stateClone(local));
   remote=normalizeAppStateForSync(stateClone(remote||{selectedId:null,releves:[]}));
   const merged=new Map();
-  remote.releves.forEach(r=>merged.set(r.id,stateClone(r)));
+  const deleted=new Set(local.deletedReleveIds||[]);
+  remote.releves.forEach(r=>{if(!deleted.has(r.id))merged.set(r.id,stateClone(r));});
   const lastSync=syncState.lastSyncAt?new Date(syncState.lastSyncAt).getTime():0;
   const conflicts=[];
   local.releves.forEach(lr=>{
@@ -2086,10 +2134,25 @@ function analyseSideItemHtml(r,view,excluded){
 }
 
 /* ===== Accueil — bibliothèque à facettes (rail 1), sélection + lots (rail 2) ===== */
-function homeFacets(){return state.homeFacets||(state.homeFacets={projet:"",site:"",annee:"",observateur:"",strate:""});}
+/* Trois rangements des mêmes relevés (12/10/2026) : par transect (placettes dans l'ordre
+   du terrain), par habitat (relevés d'un même milieu, quel que soit leur transect) ou par
+   projet ; « liste » garde l'affichage à plat. Les groupes sont repliés par défaut et se
+   cochent d'un coup, sans les déplier : un transect de 40 placettes tient sur une ligne. */
+const HOME_GROUP_MODES=[["transect","Transect"],["habitat","Habitat"],["projet","Projet"],["liste","Liste"]];
+function homeFacets(){return state.homeFacets||(state.homeFacets={projet:"",site:"",annee:"",observateur:"",strate:"",transect:"",habitat:""});}
+function homeGroupMode(){
+  if(!state.homeGroupBy)state.homeGroupBy=state.releves.some(r=>r.transect)?"transect":"projet";
+  return state.homeGroupBy;
+}
+function homeOpenGroups(){
+  const mode=homeGroupMode();
+  if(!state.homeOpenGroups || typeof state.homeOpenGroups!=="object")state.homeOpenGroups={};
+  if(!Array.isArray(state.homeOpenGroups[mode]))state.homeOpenGroups[mode]=[];
+  return state.homeOpenGroups[mode];
+}
 function homeFacetValues(getter){
   return [...new Set(state.releves.flatMap(r=>{const v=getter(r); return Array.isArray(v)?v:[v];}).filter(Boolean))]
-    .sort((a,b)=>String(a).localeCompare(String(b),"fr"));
+    .sort((a,b)=>String(a).localeCompare(String(b),"fr",{numeric:true}));
 }
 function homeFilteredReleves(){
   const f=homeFacets();
@@ -2099,60 +2162,120 @@ function homeFilteredReleves(){
     if(f.site && (r.site||"")!==f.site)return false;
     if(f.annee && (r.date||"").slice(0,4)!==f.annee)return false;
     if(f.observateur && (r.observer||"")!==f.observateur)return false;
+    if(f.transect && (r.transect||"")!==f.transect)return false;
+    if(f.habitat && (r.habitat||"")!==f.habitat)return false;
     if(f.strate && !(r.rows||[]).some(row=>row.stratum===f.strate))return false;
-    if(query && !norm(`${r.name||""} ${r.site||""} ${r.location||""} ${r.observer||""} ${r.notes||""} ${r.codeProjet||""}`).includes(query))return false;
+    if(query && !norm(`${r.name||""} ${r.site||""} ${r.location||""} ${r.observer||""} ${r.notes||""} ${r.codeProjet||""} ${r.transect||""} ${r.habitat||""}`).includes(query))return false;
     return true;
   });
+}
+/* Ordre du terrain : transect, puis distance, puis n° de placette ; les relevés hors
+   transect viennent après, par date. */
+function compareTransectOrder(a,b){
+  const ta=a.transect||"", tb=b.transect||"";
+  if(!ta!==!tb)return ta?-1:1;
+  const t=ta.localeCompare(tb,"fr",{numeric:true}); if(t)return t;
+  const da=releveDistance(a), db=releveDistance(b);
+  if(da!=null && db!=null && da!==db)return da-db;
+  const pa=relevePlacette(a), pb=relevePlacette(b);
+  if(pa!=null && pb!=null && pa!==pb)return pa-pb;
+  return String(a.date||"").localeCompare(String(b.date||""));
 }
 const HOME_SORT_COLUMNS={
   name:{type:"text",get:r=>r.name||"Sans nom"},
   projet:{type:"text",get:r=>r.codeProjet||""},
-  site:{type:"text",get:r=>r.site||""},
-  commune:{type:"text",get:r=>r.location||""},
+  transect:{type:"custom",cmp:compareTransectOrder},
+  habitat:{type:"text",get:r=>r.habitat||""},
   date:{type:"text",get:r=>r.date||""},
   surf:{type:"num",get:r=>parseFloat(r.area)||0},
-  observateur:{type:"text",get:r=>r.observer||""},
   esp:{type:"num",get:r=>(r.rows||[]).length},
   rec:{type:"num",get:r=>releveCoverPct(r)}
 };
-function homeSort(){return state.homeSort||(state.homeSort={key:"date",dir:"desc"});}
+function homeSort(){
+  if(!state.homeSort || !HOME_SORT_COLUMNS[state.homeSort.key])state.homeSort={key:"transect",dir:"asc"};
+  return state.homeSort;
+}
 function homeSortedReleves(){
   const {key,dir}=homeSort();
-  const col=HOME_SORT_COLUMNS[key]||HOME_SORT_COLUMNS.date;
+  const col=HOME_SORT_COLUMNS[key];
   const mult=dir==="asc"?1:-1;
   return homeFilteredReleves().slice().sort((a,b)=>{
+    if(col.type==="custom")return mult*col.cmp(a,b);
     const va=col.get(a), vb=col.get(b);
-    const cmp=col.type==="num"?(va-vb):String(va).localeCompare(String(vb),"fr");
+    const cmp=col.type==="num"?(va-vb):String(va).localeCompare(String(vb),"fr",{numeric:true});
     return mult*cmp;
   });
+}
+/* « R1 · 28 m », ou « R1 · n°15 » quand la distance manque. */
+function releveTransectLabel(r){
+  if(!r.transect)return "";
+  const d=releveDistance(r), p=relevePlacette(r);
+  return r.transect+(d!=null?` · ${fmtMetres(d)} m`:(p!=null?` · n°${p}`:""));
+}
+function homeGroupsOf(list,mode){
+  const groups=[], byKey=new Map();
+  const keyOf={
+    transect:r=>r.transect?`${r.codeProjet||""}\u0001${r.transect}`:"__none__",
+    habitat:r=>r.habitat||"__none__",
+    projet:r=>r.codeProjet||"__none__"
+  }[mode];
+  list.forEach(r=>{
+    const key=keyOf(r);
+    if(!byKey.has(key)){byKey.set(key,{key,rows:[]}); groups.push(byKey.get(key));}
+    byKey.get(key).rows.push(r);
+  });
+  const plural=(n,w)=>`${n} ${w}${n>1?"s":""}`;
+  groups.forEach(g=>{
+    const first=g.rows[0], none=g.key==="__none__";
+    const transects=new Set(g.rows.map(r=>r.transect).filter(Boolean)).size;
+    if(mode==="transect"){
+      g.label=none?"Hors transect":first.transect;
+      g.sub=none?"":(first.codeProjet||"");
+      const ds=g.rows.map(releveDistance).filter(d=>d!=null);
+      const habitats=new Set(g.rows.map(r=>r.habitat).filter(Boolean)).size;
+      g.meta=[plural(g.rows.length,none?"relevé":"placette"),
+        ds.length?`${fmtMetres(Math.min(...ds))} → ${fmtMetres(Math.max(...ds))} m`:"",
+        habitats?plural(habitats,"habitat"):""].filter(Boolean).join(" · ");
+    }else{
+      g.label=none?(mode==="habitat"?"Habitat non renseigné":"Sans projet"):(mode==="habitat"?first.habitat:first.codeProjet);
+      g.sub="";
+      g.meta=[plural(g.rows.length,"relevé"),transects?plural(transects,"transect"):""].filter(Boolean).join(" · ");
+    }
+  });
+  const isNone=g=>g.key==="__none__";
+  groups.sort((a,b)=>isNone(a)!==isNone(b)?(isNone(a)?1:-1):(`${a.sub}\u0001${a.label}`).localeCompare(`${b.sub}\u0001${b.label}`,"fr",{numeric:true}));
+  return groups;
 }
 function homeLibRowHtml(r,ids){
   const nEsp=(r.rows||[]).length;
   const color=releveColor(r);
   const rec=releveCoverPct(r).toFixed(0)+" %";
-  const mobileMeta=[r.codeProjet,r.area?r.area+" m\u00b2":null,`${nEsp} esp.`,rec].filter(Boolean).join(" \u00b7 ");
-  return `<div class="psLibRow">`+
+  const tr=releveTransectLabel(r);
+  const mobileMeta=[tr||r.codeProjet,r.habitat,`${nEsp} esp.`,rec].filter(Boolean).join(" · ");
+  const title=[r.site,r.location,r.observer].filter(Boolean).join(" · ");
+  return `<div class="psLibRow"${title?` title="${esc(title)}"`:""}>`+
     `<span class="psRowSelectWrap" style="--row-color:${esc(color)}">`+
       `<input class="releveCheck" type="checkbox" data-kind="home" value="${r.id}" ${ids.has(r.id)?"checked":""} aria-label="Sélectionner ${esc(releveLabel(r))}">`+
       `<span class="psRowSelectSquare" aria-hidden="true"></span>`+
     `</span>`+
     `<span class="psRowMain"><input type="color" class="colorDot" data-releve-color="${r.id}" value="${color}" aria-label="Couleur de ${esc(releveLabel(r))}"><button type="button" class="psRowName" data-open-releve="${r.id}">${esc(releveLabel(r))}</button><span class="psRowDate">${esc(fmtDateShort(r.date))}</span></span>`+
-    `<span class="psRowMono">${esc(r.codeProjet||"\u2014")}</span>`+
-    `<span class="psRowTrunc">${esc(r.site||"\u2014")}</span>`+
-    `<span class="psRowTrunc">${esc(r.location||"\u2014")}</span>`+
+    `<span class="psRowTrunc" title="${esc(r.codeProjet||"")}">${esc(r.codeProjet||"—")}</span>`+
+    `<span class="psRowMono">${esc(tr||"—")}</span>`+
+    `<span class="psRowTrunc" title="${esc(r.habitat||"")}">${esc(r.habitat||"—")}</span>`+
     `<span class="psRowMono">${esc(fmtDateShort(r.date))}</span>`+
-    `<span class="psRowMono num">${r.area?esc(r.area)+" m\u00b2":"\u2014"}</span>`+
-    `<span class="psRowTrunc">${esc(r.observer||"\u2014")}</span>`+
+    `<span class="psRowMono num">${r.area?esc(r.area)+" m²":"—"}</span>`+
     `<span class="psRowMono num">${nEsp}</span>`+
     `<span class="psRowMono num">${rec}</span>`+
     `<span class="psRowMeta">${esc(mobileMeta)}</span>`+
-    `<button type="button" class="psLibRowDel" data-delete-releve="${r.id}" aria-label="Supprimer ${esc(releveLabel(r))}">\u2715</button>`+
+    `<button type="button" class="psLibRowDel" data-delete-releve="${r.id}" aria-label="Supprimer ${esc(releveLabel(r))}">✕</button>`+
     `</div>`;
 }
 function renderHomeLibrary(){
   ensureSelections();
+  renderZonationConvertPanel();
   const ids=new Set(state.selectedIds||[]);
   const f=homeFacets();
+  const mode=homeGroupMode();
   const list=homeSortedReleves();
 
   const countEl=document.getElementById("homeLibCount");
@@ -2160,14 +2283,30 @@ function renderHomeLibrary(){
     const n=state.releves.length, p=new Set(state.releves.map(r=>r.codeProjet).filter(Boolean)).size;
     countEl.textContent=n?`${n} relevé${n>1?"s":""} · ${p} projet${p>1?"s":""}`:"";
   }
+  const groupBar=document.getElementById("homeGroupBar");
+  if(groupBar){
+    groupBar.innerHTML=`<span class="psFacetLabel">Ranger par</span><span class="psSegmented" role="group" aria-label="Ranger les relevés par">`+
+      HOME_GROUP_MODES.map(([k,label])=>`<button type="button" data-group-mode="${k}" aria-pressed="${k===mode}"${k===mode?' class="active"':""}>${label}</button>`).join("")+
+      `</span>`+(mode!=="liste"?`<span class="psGroupBarTail"><button type="button" class="psLinkBtn" id="homeExpandAllBtn">tout déplier</button><button type="button" class="psLinkBtn" id="homeCollapseAllBtn">tout replier</button></span>`:"");
+    groupBar.querySelectorAll("[data-group-mode]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        if(state.homeGroupBy===btn.dataset.groupMode)return;
+        state.homeGroupBy=btn.dataset.groupMode;
+        state.homeSort={key:"transect",dir:"asc"};
+        save(); renderAll();
+      });
+    });
+  }
   const facetBar=document.getElementById("homeFacetBar");
   if(facetBar){
     const facetDefs=[
       ["projet","Projet",homeFacetValues(r=>r.codeProjet)],
+      ["transect","Transect",homeFacetValues(r=>r.transect)],
+      ["habitat","Habitat",homeFacetValues(r=>r.habitat)],
       ["site","Site",homeFacetValues(r=>r.site)],
       ["annee","Année",homeFacetValues(r=>(r.date||"").slice(0,4))],
       ["observateur","Observateur",homeFacetValues(r=>r.observer)]
-    ];
+    ].filter(([key,,values])=>values.length || f[key]);
     const items=facetDefs.map(([key,label,values])=>{
       const active=!!f[key];
       const opts=`<option value="">${esc(label)}</option>`+values.map(v=>`<option value="${esc(v)}" ${f[key]===v?"selected":""}>${esc(label)} · ${esc(STRATA_DISPLAY_LABEL[v]||v)}</option>`).join("");
@@ -2199,41 +2338,66 @@ function renderHomeLibrary(){
     if(!list.length){
       listBox.innerHTML=`<div class="psLibEmpty">Aucun relevé ne correspond à ces filtres.</div>`;
     }else{
-      const groups=[], byKey=new Map();
-      list.forEach(r=>{
-        const key=r.codeProjet||"__none__";
-        if(!byKey.has(key)){byKey.set(key,{key,label:r.codeProjet||"Sans projet",site:r.site||"",rows:[]}); groups.push(byKey.get(key));}
-        byKey.get(key).rows.push(r);
-      });
       const {key:curSortKey,dir:curSortDir}=homeSort();
-      const sortDefs=[["name","Relevé"],["projet","Projet"],["site","Site"],["commune","Commune"],["date","Date"],["surf","Surf.","num"],["observateur","Observateur"],["esp","Esp.","num"],["rec","Rec.","num"]];
+      const sortDefs=[["name","Relevé"],["projet","Projet"],["transect","Transect"],["habitat","Habitat"],["date","Date"],["surf","Surf.","num"],["esp","Esp.","num"],["rec","Rec.","num"]];
       const headCells=sortDefs.map(([k,label,numCls])=>{
         const active=curSortKey===k, arrow=active?(curSortDir==="asc"?" ↑":" ↓"):"";
         return `<span${numCls?' class="num"':""}><button type="button" class="psLibSortBtn${numCls?" num":""}${active?" active":""}" data-sort-key="${k}">${esc(label)}${arrow}</button></span>`;
       }).join("");
       const head=`<div class="psLibHead"><span></span>${headCells}<span></span></div>`;
-      listBox.innerHTML=head+groups.map(g=>{
-        const label=g.site?`${esc(g.label)} · ${esc(g.site)}`:esc(g.label);
-        return `<div class="psLibGroup"><div class="psLibGroupHead"><span>${label}</span><span class="psRowMeta">${g.rows.length} relevé${g.rows.length>1?"s":""}</span><label class="psSelectAllSwitch" data-select-all-projet="${esc(g.key)}"><input type="checkbox">Tout</label><button type="button" class="psLinkBtn homeGroupSelectBtn" data-projet="${esc(g.key)}">Sélectionner le projet</button></div>`+
-        g.rows.map(r=>homeLibRowHtml(r,ids)).join("")+
-        `</div>`;
-      }).join("");
-      listBox.querySelectorAll(".homeGroupSelectBtn").forEach(btn=>{
-        btn.addEventListener("click",()=>{
-          const key=btn.dataset.projet, group=list.filter(r=>(r.codeProjet||"__none__")===key);
-          const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set]; save(); renderAll();
+      let groups=[];
+      if(mode==="liste"){
+        listBox.innerHTML=head+`<div class="psLibGroup open">${list.map(r=>homeLibRowHtml(r,ids)).join("")}</div>`;
+      }else{
+        groups=homeGroupsOf(list,mode);
+        /* Une recherche texte ou un seul groupe : on déplie, sinon les résultats resteraient cachés. */
+        const forceOpen=groups.length===1 || !!norm((state.releveFilters&&state.releveFilters.home)||"");
+        const open=new Set(homeOpenGroups());
+        listBox.innerHTML=head+groups.map(g=>{
+          const isOpen=forceOpen||open.has(g.key);
+          const nSel=g.rows.filter(r=>ids.has(r.id)).length;
+          const selInfo=nSel?`<span class="psGroupSel">${nSel===g.rows.length?"tout sélectionné":`${nSel}/${g.rows.length} sélectionné${nSel>1?"s":""}`}</span>`:"";
+          return `<div class="psLibGroup${isOpen?" open":""}"><div class="psLibGroupHead">`+
+            `<label class="psGroupCheck"><input type="checkbox" data-group-check="${esc(g.key)}" ${nSel===g.rows.length?"checked":""} aria-label="Sélectionner tout le groupe ${esc(g.label)}"></label>`+
+            `<button type="button" class="psGroupToggle" data-group-toggle="${esc(g.key)}" aria-expanded="${isOpen}">`+
+              `<span class="psGroupArrow" aria-hidden="true">${isOpen?"▾":"▸"}</span>`+
+              `<span class="psGroupTitle">${esc(g.label)}</span>`+
+              (g.sub?`<span class="psGroupSub">${esc(g.sub)}</span>`:"")+
+              `<span class="psGroupMeta">${esc(g.meta)}</span>`+
+            `</button>${selInfo}<button type="button" class="psGroupDel" data-group-delete="${esc(g.key)}" title="Supprimer les ${g.rows.length} relevé${g.rows.length>1?"s":""} de ce groupe" aria-label="Supprimer le groupe ${esc(g.label)}">Supprimer</button></div>`+
+            (isOpen?g.rows.map(r=>homeLibRowHtml(r,ids)).join(""):"")+
+            `</div>`;
+        }).join("");
+        listBox.querySelectorAll("[data-group-check]").forEach(cb=>{
+          const group=groups.find(g=>g.key===cb.dataset.groupCheck)?.rows||[];
+          const nSel=group.filter(r=>ids.has(r.id)).length;
+          cb.indeterminate=nSel>0 && nSel<group.length;
+          cb.addEventListener("change",()=>{
+            if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
+            else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
+            save(); renderAll();
+          });
         });
-      });
-      listBox.querySelectorAll("[data-select-all-projet]").forEach(label=>{
-        const key=label.dataset.selectAllProjet, group=groups.find(g=>g.key===key)?.rows||[];
-        const cb=label.querySelector("input");
-        cb.checked=group.length>0 && group.every(r=>ids.has(r.id));
-        cb.addEventListener("change",()=>{
-          if(cb.checked){const set=new Set(state.selectedIds||[]); group.forEach(r=>set.add(r.id)); state.selectedIds=[...set];}
-          else{const rm=new Set(group.map(r=>r.id)); state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));}
-          save(); renderAll();
+        listBox.querySelectorAll("[data-group-delete]").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            const g=groups.find(x=>x.key===btn.dataset.groupDelete); if(!g)return;
+            const filtered=g.rows.length<state.releves.filter(r=>homeGroupsOf([r],mode)[0].key===g.key).length;
+            const kind={transect:"le transect",habitat:"l’habitat",projet:"le projet"}[mode];
+            deleteReleves(g.rows.map(r=>r.id),`${kind} « ${g.label} »${filtered?" (relevés affichés par les filtres seulement)":""}`);
+          });
         });
-      });
+        listBox.querySelectorAll("[data-group-toggle]").forEach(btn=>{
+          btn.addEventListener("click",()=>{
+            const key=btn.dataset.groupToggle, arr=homeOpenGroups(), i=arr.indexOf(key);
+            if(i>=0)arr.splice(i,1); else arr.push(key);
+            save(); renderAll();
+          });
+        });
+      }
+      const expandAll=document.getElementById("homeExpandAllBtn");
+      if(expandAll)expandAll.addEventListener("click",()=>{state.homeOpenGroups[mode]=groups.map(g=>g.key); save(); renderAll();});
+      const collapseAll=document.getElementById("homeCollapseAllBtn");
+      if(collapseAll)collapseAll.addEventListener("click",()=>{state.homeOpenGroups[mode]=[]; save(); renderAll();});
       listBox.querySelectorAll("[data-sort-key]").forEach(btn=>{
         btn.addEventListener("click",()=>{
           const k=btn.dataset.sortKey, cur=homeSort();
@@ -2247,17 +2411,107 @@ function renderHomeLibrary(){
           e.stopPropagation();
           const id=btn.dataset.deleteReleve, rel=state.releves.find(r=>r.id===id);
           if(!rel)return;
-          if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;}
-          if(!confirm(`Supprimer le relevé « ${releveLabel(rel)} » ?`))return;
-          if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(id);
-          state.releves=state.releves.filter(r=>r.id!==id);
-          state.selectedIds=(state.selectedIds||[]).filter(sid=>sid!==id);
-          if(state.selectedId===id)state.selectedId=state.releves[0].id;
-          save(); renderAll();
+          deleteReleves([id],`le relevé « ${releveLabel(rel)} »`);
         });
       });
     }
   }
+}
+
+/* ===== Suppression de relevés (un seul ou un groupe entier) =====
+   12/10/2026 : on peut tout supprimer, y compris le dernier relevé (current() recrée
+   un relevé vide au besoin). Les identifiants supprimés sont gardés dans
+   state.deletedReleveIds tant que la base partagée n'a pas confirmé : sans cela, une
+   synchro lancée avant la fin de la suppression distante (ou hors ligne) les faisait
+   revenir. */
+function deleteReleves(ids,what){
+  const present=new Set(state.releves.map(r=>r.id));
+  ids=[...new Set(ids)].filter(id=>present.has(id));
+  if(!ids.length){toast("Aucun relevé à supprimer.");return false;}
+  const n=ids.length, s=n>1?"s":"";
+  if(!confirm(`Supprimer ${what} — ${n} relevé${s} ?\n\nLa suppression est définitive : elle s’applique aussi à la base partagée si vous êtes connecté.`))return false;
+  const rm=new Set(ids);
+  state.releves=state.releves.filter(r=>!rm.has(r.id));
+  state.selectedIds=(state.selectedIds||[]).filter(id=>!rm.has(id));
+  if(state.releveColors)ids.forEach(id=>delete state.releveColors[id]);
+  if(rm.has(state.selectedId))state.selectedId=state.releves[0]?.id||null;
+  if(draftReleve && rm.has(draftReleve.id))draftReleve=null;
+  state.deletedReleveIds=[...new Set([...(state.deletedReleveIds||[]),...ids])];
+  if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(ids);
+  save(); renderAll(); toast(`${n} relevé${s} supprimé${s}.`);
+  return true;
+}
+
+/* ===== Transect, placette, distance, habitat =====
+   Champs ajoutés le 12/10/2026, à côté du projet (codeProjet) qui redevient la campagne
+   (« Petite Mer de Gâvres 2026 »). Les exports Zonation antérieurs n'avaient pas ces
+   colonnes : l'habitat (ou le transect) était rangé dans code_projet, le transect et le
+   n° de placette dans le nom (« R1-15 » ou « Transect R1 — relevé n°15 ») et la distance
+   dans la localisation (« 12 m » ou « Distance sur le transect : 12 m »).
+   zonationLegacyStructure() relit ces indices ; elle sert à l'import CSV et à la
+   conversion des relevés déjà importés. */
+function releveDistance(r){const d=parseFloat(String(r.distance??"").replace(",",".")); return Number.isFinite(d)?d:null;}
+function relevePlacette(r){const p=parseInt(r.placette,10); return Number.isFinite(p)?p:null;}
+function fmtMetres(d){return String(Math.round(d*10)/10).replace(".",",");}
+function defaultProjectFor(r){
+  const site=(r.site||"").split(/\s+[—–]\s+/)[0].trim(), year=(r.date||"").slice(0,4);
+  return [site,year].filter(Boolean).join(" ");
+}
+const ZONATION_HABITAT_RE=/^(f\d+\b|sol nu$|habitat non attribu)/i;
+function zonationLegacyStructure(r){
+  if(r.transect)return null;
+  const name=(r.name||"").trim(), proj=(r.codeProjet||"").trim(), loc=(r.location||"").trim();
+  const longue=name.match(/^transect\s+(.+?)\s*[—–-]\s*relev[ée]\s*n[°o]\s*(\d+)$/i);
+  const court=name.match(/^(.+)-(\d+)$/);
+  const m=longue||court; if(!m)return null;
+  const transect=m[1].trim(), placette=Number(m[2]);
+  const dist=loc.match(/^(?:distance sur le transect\s*:\s*)?(\d+(?:[.,]\d+)?)\s*m$/i);
+  const projTransect=proj.match(/^transect\s+(.+)$/i);
+  const habitat=ZONATION_HABITAT_RE.test(proj)?proj:"";
+  const projIsTransect=projTransect?projTransect[1].trim()===transect:proj===transect;
+  /* Un code projet qui n'est ni un habitat ni le transect a été saisi par quelqu'un :
+     on n'y touche pas. Sans projet, il faut au moins la distance pour reconnaître Zonation. */
+  if(proj && !habitat && !projIsTransect)return null;
+  if(!proj && !dist)return null;
+  return {transect,placette,distance:dist?Number(dist[1].replace(",",".")):null,habitat,
+    location:dist?"":loc,codeProjet:defaultProjectFor(r)||proj||""};
+}
+function applyReleveStructure(r,s,codeProjet){
+  r.transect=s.transect; r.placette=s.placette; r.distance=s.distance; r.habitat=s.habitat;
+  r.location=s.location; r.codeProjet=codeProjet??s.codeProjet;
+}
+let zonationConvertState={open:false,hidden:false,projects:{}};
+function renderZonationConvertPanel(){
+  const box=document.getElementById("homeConvertPanel"); if(!box)return;
+  const items=state.releves.map(r=>({r,s:zonationLegacyStructure(r)})).filter(x=>x.s);
+  if(!items.length || zonationConvertState.hidden){box.hidden=true; box.innerHTML=""; return;}
+  box.hidden=false;
+  const projects=[...new Set(items.map(x=>x.s.codeProjet))];
+  projects.forEach(p=>{if(!(p in zonationConvertState.projects))zonationConvertState.projects[p]=p;});
+  const target=s=>(zonationConvertState.projects[s.codeProjet]??s.codeProjet).trim();
+  const n=items.length, s=n>1?"s":"";
+  let html=`<div class="psConvertHead"><p><strong>${n} relevé${s} importé${s} depuis Zonation</strong> rangent l’habitat ou le transect dans « projet ». Les convertir les rend triables par transect, dans l’ordre du terrain, et regroupables par habitat.</p>`+
+    `<div class="psConvertActions"><button type="button" class="secondary" id="convertToggleBtn">${zonationConvertState.open?"Masquer l’aperçu":"Voir l’aperçu"}</button><button type="button" class="psLinkBtn" id="convertLaterBtn">Plus tard</button></div></div>`;
+  if(zonationConvertState.open){
+    html+=`<div class="psConvertProjects"><p class="psConvertNote">Nouveau nom de projet (site + année par défaut, modifiable) :</p>`+
+      projects.map(p=>`<label class="psConvertProject"><span>${esc(p||"(sans site ni date)")} →</span><input type="text" data-convert-project="${esc(p)}" value="${esc(zonationConvertState.projects[p])}"></label>`).join("")+`</div>`+
+      `<div class="psConvertTableWrap"><table class="psConvertTable"><thead><tr><th>Relevé</th><th>Projet actuel</th><th>Transect</th><th class="num">Placette</th><th class="num">Distance</th><th>Habitat</th></tr></thead><tbody>`+
+      items.slice().sort((a,b)=>compareTransectOrder({...a.r,...a.s},{...b.r,...b.s})).map(({r,s})=>`<tr><td>${esc(r.name||"")}</td><td>${esc(r.codeProjet||"—")}</td><td>${esc(s.transect)}</td><td class="num">${s.placette??"—"}</td><td class="num">${s.distance!=null?fmtMetres(s.distance)+" m":"—"}</td><td>${esc(s.habitat||"—")}</td></tr>`).join("")+
+      `</tbody></table></div>`+
+      `<div class="psConvertActions"><button type="button" id="convertApplyBtn">Convertir ${n} relevé${s}</button></div>`;
+  }
+  box.innerHTML=html;
+  document.getElementById("convertToggleBtn").addEventListener("click",()=>{zonationConvertState.open=!zonationConvertState.open; renderZonationConvertPanel();});
+  document.getElementById("convertLaterBtn").addEventListener("click",()=>{zonationConvertState.hidden=true; renderZonationConvertPanel();});
+  box.querySelectorAll("[data-convert-project]").forEach(inp=>inp.addEventListener("input",()=>{zonationConvertState.projects[inp.dataset.convertProject]=inp.value;}));
+  const apply=document.getElementById("convertApplyBtn");
+  if(apply)apply.addEventListener("click",()=>{
+    items.forEach(({r,s})=>{applyReleveStructure(r,s,target(s)); touchReleve(r);});
+    zonationConvertState={open:false,hidden:false,projects:{}};
+    state.homeGroupBy="transect"; state.homeSort={key:"transect",dir:"asc"};
+    homeFacets().projet="";
+    save(); renderAll(); toast(`${n} relevé${s} converti${s}.`);
+  });
 }
 function renderHomeSelection(){
   ensureSelections();
@@ -2277,9 +2531,6 @@ function renderHomeSelection(){
       btn.addEventListener("click",()=>{state.selectedIds=(state.selectedIds||[]).filter(id=>id!==btn.dataset.unselectReleve); save(); renderAll();});
     });
   }
-
-  const alertBox=document.getElementById("homeAlert8");
-  if(alertBox)alertBox.hidden=sel.length<=8;
 
   const lotsHtml=(state.lots||[]).length
     ? state.lots.map((l,idx)=>{
@@ -2424,8 +2675,10 @@ function shortTerm(txt,limit=22){txt=(txt||"").replace(/\s+/g," ").trim(); retur
 function taxonLabel(name,mode="short"){const clean=(name||"").replace(/\([^)]*\)/g,"").replace(/\b(?:L\.|Mill\.|DC\.|Lam\.|Sm\.|Pers\.|Willd\.|All\.|Moench|Gaertn\.|Scop\.|Huds\.)\b/g,"").trim(); const parts=clean.split(/\s+/).filter(Boolean); if(!parts.length)return "?"; const genus=parts[0].replace(/[^A-Za-zÀ-ÿ]/g,""); const epithet=(parts[1]||"").replace(/[^A-Za-zÀ-ÿ-]/g,""); if(mode==="initials")return (genus[0]||"?").toUpperCase()+(epithet?epithet[0].toUpperCase():""); return (genus[0]||"?").toUpperCase()+". "+(epithet||parts[1]||"");}
 function releveLabel(rel){const name=(rel.name||"Sans nom").trim(); return name.length>26?name.slice(0,25)+"…":name;}
 /* Code court « PROJET-NN » utilisé comme étiquette compacte (puces de sélection, titre de Saisie) —
-   NN = rang du relevé dans son projet une fois trié par date croissante, calculé à la volée. */
+   NN = rang du relevé dans son projet une fois trié par date croissante, calculé à la volée.
+   Sur un transect, la place sur le terrain parle davantage : « R1-15 ». */
 function releveCode(rel){
+  if(rel.transect){const p=relevePlacette(rel); return p!=null?`${rel.transect}-${p}`:releveTransectLabel(rel);}
   const proj=rel.codeProjet||"";
   if(!proj)return releveLabel(rel);
   const siblings=state.releves.filter(r=>(r.codeProjet||"")===proj).slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
@@ -2502,8 +2755,27 @@ function gradientCard(i, groups, labelMode, opts){
  return `<details class="gradientCard" open data-gradient-key="${esc(g.key)}"><summary><strong>${esc(g.short)} · ${esc(g.label)}</strong><span class="gradientActions"><span class="small muted">${esc(title)}</span><button class="secondary iconBtn gradExportBtn noPrint" type="button" data-export-gradient="${esc(g.key)}" aria-label="Exporter en PNG" title="Exporter en PNG"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/></svg></button></span></summary><div class="gradientCardBody"><div class="${boxClass}"><svg viewBox="0 0 ${W} ${H}"${svgStyle} role="img" aria-label="Gradient ${esc(g.label)}" font-family="'IBM Plex Sans',system-ui,sans-serif"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/>${ticks}${groupNames.join("")}${sdBands.join("")}${meanLines.join("")}${species.join("")}${labels.join("")}</svg></div></div></details>`;
 }
 
-function scatterAxisTicks(g,scaleFn,orientation,W,H,m,mobile){const terms=gradientTerms(g); const allowed=new Set(terms.map(x=>String(x.v))); let out=""; if(orientation==="x"){for(let t=g.min;t<=g.max;t++){const x=scaleFn(t); out+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${H-m.b}" stroke="#edf2ea"/>`; if(mobile || allowed.has(String(t))||(t-g.min)%2===0){const anchor=t===g.min?"start":(t===g.max?"end":"middle"); out+=`<text x="${x}" y="${H-m.b+18}" text-anchor="${anchor}" font-size="14" fill="#647166">${t}</text>`;}} if(!mobile)out+=terms.map(o=>{const x=scaleFn(o.v), anchor=o.v===g.min?"start":(o.v===g.max?"end":"middle"); return `<text ${tipAttr(o.t)} transform="rotate(-16 ${x} ${H-m.b+38})" x="${x}" y="${H-m.b+38}" text-anchor="${anchor}" font-size="13" fill="#3f4a40">${esc(shortTerm(o.t,26))}</text>`;}).join("");}
- else{for(let t=g.min;t<=g.max;t++){const y=scaleFn(t); out+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="#edf2ea"/>`; if(mobile || allowed.has(String(t))||(t-g.min)%2===0)out+=`<text x="${m.l-12}" y="${y+3}" text-anchor="end" font-size="14" fill="#647166">${t}</text>`;} if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${m.l-44}" y="${scaleFn(o.v)+3}" text-anchor="end" font-size="12" fill="#3f4a40" opacity=".86">${esc(shortTerm(o.t,30))}</text>`).join("");} return out;}
+/* Graduations de l'écogramme. Vue entière : un trait par unité d'indice (inchangé).
+   Vue zoomée (12/10/2026) : g.min/g.max sont les bornes affichées et le pas se resserre
+   avec la plage (1 → 0,5 → 0,25 → 0,1) pour garder une échelle lisible ; les termes
+   écologiques ne sont écrits que pour les valeurs entières visibles. */
+function scatterAxisTicks(g,scaleFn,orientation,W,H,m,mobile,zoomed){
+  const eps=1e-9, terms=gradientTerms(g).filter(o=>o.v>=g.min-eps && o.v<=g.max+eps); const allowed=new Set(terms.map(x=>String(x.v)));
+  const span=g.max-g.min, step=!zoomed?1:(span>6?1:span>3?.5:span>1.2?.25:.1), dec=step===.25?2:(step<1?1:0);
+  const vals=[]; for(let k=Math.ceil(g.min/step-eps); k*step<=g.max+eps; k++)vals.push(Math.round(k*step*100)/100);
+  const showLabel=(t,i)=>zoomed?(!mobile||vals.length<=8||i%2===0):(mobile||allowed.has(String(t))||(t-g.min)%2===0);
+  const fmtT=t=>dec?t.toFixed(dec).replace(".",","):String(t);
+  const anchorOf=t=>Math.abs(t-g.min)<eps?"start":(Math.abs(t-g.max)<eps?"end":"middle");
+  let out="";
+  if(orientation==="x"){
+    vals.forEach((t,i)=>{const x=scaleFn(t); out+=`<line x1="${x}" y1="${m.t}" x2="${x}" y2="${H-m.b}" stroke="#edf2ea"/>`; if(showLabel(t,i))out+=`<text x="${x}" y="${H-m.b+18}" text-anchor="${anchorOf(t)}" font-size="14" fill="#647166">${fmtT(t)}</text>`;});
+    if(!mobile)out+=terms.map(o=>{const x=scaleFn(o.v); return `<text ${tipAttr(o.t)} transform="rotate(-16 ${x} ${H-m.b+38})" x="${x}" y="${H-m.b+38}" text-anchor="${anchorOf(o.v)}" font-size="13" fill="#3f4a40">${esc(shortTerm(o.t,26))}</text>`;}).join("");
+  }else{
+    vals.forEach((t,i)=>{const y=scaleFn(t); out+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="#edf2ea"/>`; if(showLabel(t,i))out+=`<text x="${m.l-12}" y="${y+3}" text-anchor="end" font-size="14" fill="#647166">${fmtT(t)}</text>`;});
+    if(!mobile)out+=terms.map(o=>`<text ${tipAttr(o.t)} x="${m.l-(dec?60:44)}" y="${scaleFn(o.v)+3}" text-anchor="end" font-size="12" fill="#3f4a40" opacity=".86">${esc(shortTerm(o.t,30))}</text>`).join("");
+  }
+  return out;
+}
 
 function convexHull(points){if(points.length<=1)return points.slice(); const seen=new Set(), clean=[]; points.forEach(p=>{const key=`${p.x.toFixed(6)}:${p.y.toFixed(6)}`; if(!seen.has(key)){seen.add(key); clean.push(p);}}); if(clean.length<=1)return clean.slice(); const pts=clean.slice().sort((a,b)=>a.x-b.x||a.y-b.y); const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x); const lower=[]; for(const p of pts){while(lower.length>=2 && cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop(); lower.push(p);} const upper=[]; for(let i=pts.length-1;i>=0;i--){const p=pts[i]; while(upper.length>=2 && cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop(); upper.push(p);} return lower.slice(0,-1).concat(upper.slice(0,-1));}
 function smoothClosedPath(points){if(points.length<3)return ""; let d=`M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`; const n=points.length; for(let i=0;i<n;i++){const p0=points[(i-1+n)%n], p1=points[i], p2=points[(i+1)%n], p3=points[(i+2)%n]; const c1={x:p1.x+(p2.x-p0.x)/6,y:p1.y+(p2.y-p0.y)/6}; const c2={x:p2.x-(p3.x-p1.x)/6,y:p2.y-(p3.y-p1.y)/6}; d+=` C ${c1.x.toFixed(1)} ${c1.y.toFixed(1)}, ${c2.x.toFixed(1)} ${c2.y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;} return d+" Z";}
@@ -2549,7 +2821,98 @@ function placeScatterLabels(pts,sx,sy,W,H,m){
   return out.join("");
 }
 
+/* ===== Zoom de l'écogramme =====
+   Molette sur la zone de tracé : zoom centré sur le pointeur. Vue entière : glisser trace
+   un cadre et zoome dessus. Vue zoomée : glisser déplace la fenêtre (souris ou doigt),
+   Maj + glisser trace un cadre. Double-clic ou bouton 1:1 : vue entière. Boutons + / −
+   pour le tactile. Le zoom ne descend pas sous 0,5 unité d'indice par axe. */
+let scatterZoom={key:"",view:null}, scatterGeom=null, scatterZoomRaf=0;
+const SCATTER_MIN_SPAN=.5;
+function setScatterView(v){
+  if(!scatterGeom)return;
+  const {gx0,gy0}=scatterGeom;
+  if(!v){scatterZoom.view=null; renderScatter(); return;}
+  const fit=(a,b,lo,hi)=>{let s=Math.max(SCATTER_MIN_SPAN,b-a); if(s>=hi-lo)return [lo,hi]; let c=(a+b)/2; a=c-s/2; b=c+s/2; if(a<lo){b+=lo-a; a=lo;} if(b>hi){a-=b-hi; b=hi;} return [a,b];};
+  const [x0,x1]=fit(v.x0,v.x1,gx0.min,gx0.max), [y0,y1]=fit(v.y0,v.y1,gy0.min,gy0.max);
+  scatterZoom.view=(x0<=gx0.min && x1>=gx0.max && y0<=gy0.min && y1>=gy0.max)?null:{x0,x1,y0,y1};
+  if(!scatterZoomRaf)scatterZoomRaf=requestAnimationFrame(()=>{scatterZoomRaf=0; renderScatter();});
+}
+function zoomScatterBy(factor,cx,cy){
+  if(!scatterGeom)return;
+  const {gx,gy}=scatterGeom;
+  if(cx==null)cx=(gx.min+gx.max)/2; if(cy==null)cy=(gy.min+gy.max)/2;
+  setScatterView({x0:cx-(cx-gx.min)*factor,x1:cx+(gx.max-cx)*factor,y0:cy-(cy-gy.min)*factor,y1:cy+(gy.max-cy)*factor});
+}
+/* Point écran → coordonnées du viewBox puis valeurs d'indice ; null hors zone de tracé. */
+function scatterPointer(e){
+  const svg=document.querySelector("#scatterSvg svg"); if(!svg || !scatterGeom)return null;
+  const ctm=svg.getScreenCTM(); if(!ctm)return null;
+  const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(ctm.inverse());
+  const {W,H,m,gx,gy}=scatterGeom;
+  const inside=pt.x>=m.l && pt.x<=W-m.r && pt.y>=m.t && pt.y<=H-m.b;
+  const px=Math.max(m.l,Math.min(W-m.r,pt.x)), py=Math.max(m.t,Math.min(H-m.b,pt.y));
+  return {svg,inside,px,py,vx:gx.min+(px-m.l)/(W-m.l-m.r)*(gx.max-gx.min),vy:gy.min+(H-m.b-py)/(H-m.t-m.b)*(gy.max-gy.min)};
+}
+function updateScatterZoomButtons(){
+  const reset=document.getElementById("scatterZoomReset"); if(reset)reset.disabled=!scatterZoom.view;
+}
+function initScatterZoom(){
+  const box=document.getElementById("scatterSvg"); if(!box || box.dataset.zoomInit)return; box.dataset.zoomInit="1";
+  box.addEventListener("wheel",e=>{
+    const p=scatterPointer(e); if(!p || !p.inside)return;
+    e.preventDefault();
+    zoomScatterBy(e.deltaY<0?.8:1.25,p.vx,p.vy);
+  },{passive:false});
+  let drag=null;
+  box.addEventListener("pointerdown",e=>{
+    if(e.button!==0)return;
+    const p=scatterPointer(e); if(!p || !p.inside)return;
+    if(scatterZoom.view && !e.shiftKey){
+      /* Déplacement : décalage écran converti en unités d'indice à l'échelle du départ
+         (le SVG est redessiné à chaque image, la conversion ne doit pas en dépendre). */
+      const {W,m,H,gx,gy}=scatterGeom, k=p.svg.getScreenCTM()?.a||1;
+      drag={pan:true,cx:e.clientX,cy:e.clientY,view:{...scatterZoom.view},
+        ux:(gx.max-gx.min)/((W-m.l-m.r)*k), uy:(gy.max-gy.min)/((H-m.t-m.b)*k)};
+      box.classList.add("panning"); e.preventDefault();
+      return;
+    }
+    if(e.pointerType==="touch")return;
+    drag={start:p,rect:null};
+  });
+  window.addEventListener("pointermove",e=>{
+    if(!drag)return;
+    if(drag.pan){
+      const dx=(e.clientX-drag.cx)*drag.ux, dy=(e.clientY-drag.cy)*drag.uy, v=drag.view;
+      setScatterView({x0:v.x0-dx,x1:v.x1-dx,y0:v.y0+dy,y1:v.y1+dy});
+      return;
+    }
+    const p=scatterPointer(e); if(!p)return;
+    const x=Math.min(drag.start.px,p.px), y=Math.min(drag.start.py,p.py), w=Math.abs(p.px-drag.start.px), h=Math.abs(p.py-drag.start.py);
+    if(!drag.rect){
+      if(w<6 && h<6)return;
+      drag.rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
+      drag.rect.setAttribute("fill","rgba(31,107,69,.10)"); drag.rect.setAttribute("stroke","#1f6b45"); drag.rect.setAttribute("stroke-dasharray","4 3");
+      p.svg.appendChild(drag.rect);
+    }
+    drag.rect.setAttribute("x",x); drag.rect.setAttribute("y",y); drag.rect.setAttribute("width",w); drag.rect.setAttribute("height",h);
+    drag.end=p;
+  });
+  const endDrag=()=>{
+    if(!drag)return;
+    const d=drag; drag=null; box.classList.remove("panning");
+    if(d.pan || !d.rect || !d.end)return;
+    d.rect.remove();
+    setScatterView({x0:Math.min(d.start.vx,d.end.vx),x1:Math.max(d.start.vx,d.end.vx),y0:Math.min(d.start.vy,d.end.vy),y1:Math.max(d.start.vy,d.end.vy)});
+  };
+  window.addEventListener("pointerup",endDrag);
+  window.addEventListener("pointercancel",endDrag);
+  box.addEventListener("dblclick",e=>{const p=scatterPointer(e); if(p && p.inside)setScatterView(null);});
+  document.getElementById("scatterZoomIn")?.addEventListener("click",()=>zoomScatterBy(.7));
+  document.getElementById("scatterZoomOut")?.addEventListener("click",()=>zoomScatterBy(1/.7));
+  document.getElementById("scatterZoomReset")?.addEventListener("click",()=>setScatterView(null));
+}
 function renderScatter(){
+ initScatterZoom();
  renderScatterLayerChecks();
  const layers=scatterLayers();
  const xi=parseInt(xGrad.value), yi=parseInt(yGrad.value), filter=scatterStratum.value||"Toutes strates";
@@ -2560,7 +2923,14 @@ function renderScatter(){
     disparaître, sauf les chiffres »), la marge gauche (234, prévue pour ce texte)
     n'a donc plus besoin d'être aussi large. */
  const mobile=window.matchMedia("(max-width:760px)").matches;
- const gx=GRADIENTS[xi], gy=GRADIENTS[yi];
+ const gx0=GRADIENTS[xi], gy0=GRADIENTS[yi];
+ /* Zoom (12/10/2026) : la vue affichée est un sous-domaine des deux indices ; il est
+    oublié dès qu'on change d'axe. gx/gy portent les bornes affichées, de sorte que
+    l'échelle, les graduations et l'export PNG suivent le zoom sans autre adaptation. */
+ const zkey=`${xi}|${yi}`; if(scatterZoom.key!==zkey)scatterZoom={key:zkey,view:null};
+ const zv=scatterZoom.view, zoomed=!!zv;
+ const gx=zoomed?{...gx0,min:zv.x0,max:zv.x1}:gx0, gy=zoomed?{...gy0,min:zv.y0,max:zv.y1}:gy0;
+ const inView=(x,y)=>x>=gx.min-1e-9 && x<=gx.max+1e-9 && y>=gy.min-1e-9 && y<=gy.max+1e-9;
  /* ajustements#4 (21/08/2026) : le viewBox fixe 1000×460 étiré en preserveAspectRatio="none"
     jusqu'à remplir une boîte mobile bien plus proche du carré donnait une image « totalement
     déformée » (texte et cercles écrasés horizontalement) — le facteur d'étirement horizontal
@@ -2608,9 +2978,11 @@ function renderScatter(){
      pts.push({x:wm.x,y:wm.y,label:rel.name||"Sans nom",short:shortLabelsReleves?releveCode(rel):"",sub:`${wm.n} taxons avec les deux indices · moyenne pondérée cohérente 2D · amplitude ${gx.short} ${fmt(ampX,2)} / ${gy.short} ${fmt(ampY,2)}`,r:13,fill:color,rel});
    });
  }
+ if(zoomed){pts=pts.filter(p=>inView(p.x,p.y)); ghostRaw=ghostRaw.filter(p=>inView(p.x,p.y));}
+ scatterGeom={W,H,m,gx0,gy0,gx,gy};
  if(ghostRaw.length){ghostLeaderPts=prepareScatterDisplay(ghostRaw,sx,sy,W,H,m); ghostPts=ghostLeaderPts.map(pt=>`<circle ${tipAttr(`${pt.t.n} — ${pt.relName} — ${gx.short} ${fmt(pt.x,2)} / ${gy.short} ${fmt(pt.y,2)} — ${fmt(pt.w,2)} %`)} cx="${pt.px.toFixed(1)}" cy="${pt.py.toFixed(1)}" r="2.4" fill="${pt.fill}" opacity=".24"></circle>`);}
  prepareScatterDisplay(pts,sx,sy,W,H,m);
- const ticks=scatterAxisTicks(gx,sx,"x",W,H,m,mobile)+scatterAxisTicks(gy,sy,"y",W,H,m,mobile);
+ const ticks=scatterAxisTicks(gx,sx,"x",W,H,m,mobile,zoomed)+scatterAxisTicks(gy,sy,"y",W,H,m,mobile,zoomed);
  const pointLabels=placeScatterLabels(pts,sx,sy,W,H,m);
  const guides=leaderLines(pts);
  const ghostGuides=leaderLines(ghostLeaderPts).replace(/stroke-width="1"/g,'stroke-width=".75"').replace(/stroke-opacity=".48"/g,'stroke-opacity=".20"');
@@ -2621,8 +2993,9 @@ function renderScatter(){
    return `<rect ${tip} x="${(cx-side/2).toFixed(1)}" y="${(cy-side/2).toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="${pt.fill}" stroke="#fff" stroke-width="2.4"></rect>`;
  }).join("");
  const titleSize=mobile?15:22, yTitleX=mobile?18:64;
- const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(${yTitleX} ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gy.label)} ↻</text>${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}${pointLabels}</svg>`;
- document.getElementById("scatterSvg").innerHTML = pts.length?svg:`<div class="empty">Aucun point calculable pour ces axes, cette strate et les relevés sélectionnés — coche au moins un calque.</div>`;
+ const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écogramme"${zoomed?' class="zoomed"':""}><rect x="0" y="0" width="${W}" height="${H}" rx="0" fill="#fbfcf9"/><line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#647166"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#647166"/>${ticks}<clipPath id="scatterPlotClip"><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}"/></clipPath><text class="axisPicker" data-axis="x" x="${(m.l+W-m.r)/2}" y="${H-16}" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gx.label)} ↻</text><text class="axisPicker" data-axis="y" transform="translate(${yTitleX} ${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" font-weight="700" font-size="${titleSize}" fill="#172015">${esc(gy.label)} ↻</text><g clip-path="url(#scatterPlotClip)">${envelopes.join("")}${ghostGuides}${ghostPts.join("")}${guides}${circles}</g>${pointLabels}${zoomed?`<text x="${W-m.r}" y="${m.t-10}" text-anchor="end" font-size="12" fill="#647166">Zoom · ${gx.short} ${fmt(gx.min,2)}–${fmt(gx.max,2)} · ${gy.short} ${fmt(gy.min,2)}–${fmt(gy.max,2)}</text>`:""}</svg>`;
+ updateScatterZoomButtons();
+ document.getElementById("scatterSvg").innerHTML = (pts.length||zoomed)?svg:`<div class="empty">Aucun point calculable pour ces axes, cette strate et les relevés sélectionnés — coche au moins un calque.</div>`;
 }
 
 function compareTransposed(){return !!state.compareTransposed;}
@@ -2720,11 +3093,11 @@ function download(filename, text, mime="application/json"){const a=document.crea
 function wgs84ToLambert93(latDeg,lonDeg){const e=0.08181919106,lambda0=3*Math.PI/180,n=0.7256077650,C=11754255.426,Xs=700000,Ys=12655612.050; const lat=latDeg*Math.PI/180,lon=lonDeg*Math.PI/180; const sinLat=Math.sin(lat); const latIso=Math.atanh(sinLat)-e*Math.atanh(e*sinLat); const R=C*Math.exp(-n*latIso); const gamma=n*(lon-lambda0); return {x:Xs+R*Math.sin(gamma),y:Ys-R*Math.cos(gamma)};}
 function parseCoordsWgs84(str){const m=(str||"").toString().trim().match(/(-?\d+(?:[.,]\d+)?)\s*[,;]\s*(-?\d+(?:[.,]\d+)?)/); if(!m)return null; const lat=parseFloat(m[1].replace(",",".")),lon=parseFloat(m[2].replace(",",".")); if(Number.isNaN(lat)||Number.isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180)return null; return {lat,lon};}
 function lambert93Cols(coordsStr){const p=parseCoordsWgs84(coordsStr); if(!p)return ["",""]; const {x,y}=wgs84ToLambert93(p.lat,p.lon); return [Math.round(x),Math.round(y)];}
-const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93"];
+const CSV_LIGNES_HEADERS = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","synonyme","strate","mode_recouvrement","recouvrement_saisi","recouvrement_pct_calcule",...GRADIENTS.map(g=>g.label),"x_lambert93","y_lambert93","transect","placette","distance_m","habitat"];
 function linesToCsv(lines){return lines.map(line=>line.map(v=>`"${(v??"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");}
-function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords)]);})); return linesToCsv(lines);}
+function rowsCsv(){const lines=[CSV_LIGNES_HEADERS]; state.releves.forEach(r=>r.rows.forEach(row=>{const t=taxonOf(row)||{v:[]}; lines.push([r.id,r.name,r.site||"",r.codeProjet||"",r.date,r.observer,r.location,r.coords||"",r.area,row.tid,t.n,t.s,row.stratum,row.mode,row.cover,pct(row),...GRADIENTS.map((g,i)=>t.v[i]),...lambert93Cols(r.coords),r.transect||"",r.placette??"",r.distance??"",r.habitat||""]);})); return linesToCsv(lines);}
 function analysesWideRows(){
-  const header=["releve_id","releve_nom","site","code_projet","date","observateur","localisation","surface","coordonnees_gps","x_lambert93","y_lambert93",
+  const header=["releve_id","releve_nom","site","code_projet","transect","placette","distance_m","habitat","date","observateur","localisation","surface","coordonnees_gps","x_lambert93","y_lambert93",
     ...GRADIENTS.flatMap(g=>[`${g.short}_moyenne_simple`,`${g.short}_moyenne_ponderee`,`${g.short}_ecart_type_simple`,`${g.short}_ecart_type_pondere`]),
     "zone_humide_ellenberg_moyenne","zone_humide_ellenberg_moyenne_ponderee","zone_humide_ellenberg_statut",
     "zone_humide_reglementaire_statut","zone_humide_reglementaire_pct_hygrophiles","zone_humide_reglementaire_nb_especes_retenues","zone_humide_reglementaire_nb_especes_hygrophiles",
@@ -2734,7 +3107,7 @@ function analysesWideRows(){
     const ell=computeWetlandEllenberg(r,"Toutes strates");
     const reg=computeRegulatoryFlora(r);
     const concord=wetlandConcord(ell.status,reg.status);
-    return [r.id,r.name||"",r.site||"",r.codeProjet||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.coords||"",...lambert93Cols(r.coords),
+    return [r.id,r.name||"",r.site||"",r.codeProjet||"",r.transect||"",r.placette??"",r.distance??"",r.habitat||"",r.date||"",r.observer||"",r.location||"",r.area||"",r.coords||"",...lambert93Cols(r.coords),
       ...st.flatMap(x=>[x.mean??"",x.wmean??"",x.sd??"",x.wsd??""]),
       ell.mean??"",ell.wmean??"",wetlandStatusLabel(ell.status),
       regStatusLabel(reg.status),reg.ratio!=null?Math.round(reg.ratio*1000)/10:"",reg.total,reg.wet,
@@ -2747,7 +3120,7 @@ function downloadImportTemplate(){
   const pad=()=>GRADIENTS.map(()=>"");
   const rel1=["REL-EX1","Exemple — schorre moyen","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Schorre moyen","47.680, -3.350","25"];
   const rel2=["REL-EX2","Exemple — haut schorre","Petite Mer de Gâvres","GAVRES-TP","2026-09-15","Prénom Nom","Haut schorre","47.681, -3.352","16"];
-  const l93rel1=lambert93Cols(rel1[7]), l93rel2=lambert93Cols(rel2[7]);
+  const l93rel1=[...lambert93Cols(rel1[7]),"T1",1,0,"Schorre moyen"], l93rel2=[...lambert93Cols(rel2[7]),"T1",2,12,"Haut schorre"];
   const examples=[
     [...rel1,3109,"Halimione portulacoides (L.) Aellen","","Herbacée","bb","2","",...pad(),...l93rel1],
     [...rel1,"","Puccinellia distans (Jacq.) Parl.","","Herbacée","pct","15","",...pad(),...l93rel1],
@@ -2761,7 +3134,7 @@ function downloadImportTemplate(){
 }
 function parseCsvLines(text){const rows=[]; let row=[],cell="",inQuotes=false; const s=text.replace(/^﻿/,""); for(let i=0;i<s.length;i++){const c=s[i]; if(inQuotes){if(c==='"'){if(s[i+1]==='"'){cell+='"'; i++;}else inQuotes=false;}else cell+=c;} else if(c==='"')inQuotes=true; else if(c===";"){row.push(cell); cell="";} else if(c==="\n"||c==="\r"){if(c==="\r"&&s[i+1]==="\n")i++; row.push(cell); rows.push(row); row=[]; cell="";} else cell+=c;} if(cell!==""||row.length){row.push(cell); rows.push(row);} return rows.filter(r=>r.some(c=>c!=="")); }
 function resolveImportTaxon(taxonIdRaw,nomRaw){const tid=parseInt(taxonIdRaw,10); if(!Number.isNaN(tid)&&byId.has(tid))return byId.get(tid); const nom=(nomRaw||"").toString().trim(); if(nom&&byName.has(nom))return byName.get(nom); const n=norm(nom); if(!n)return null; return TAXA.find(t=>t.nn===n)||TAXA.find(t=>t.ns===n)||null;}
-function buildRelevesFromCsvRows(rows){if(!rows.length)return{releves:[],warnings:[],relevesCount:0,lignesCount:0}; const header=rows[0].map(h=>norm(h)); const idx=name=>header.indexOf(norm(name)); const iId=idx("releve_id"),iNom=idx("releve_nom"),iSite=idx("site"),iProjet=idx("code_projet"),iDate=idx("date"),iObs=idx("observateur"),iLoc=idx("localisation"),iCoords=idx("coordonnees_gps"),iSurf=idx("surface"),iTid=idx("taxon_id"),iTaxon=idx("nom_scientifique"),iStrate=idx("strate"),iMode=idx("mode_recouvrement"),iCover=idx("recouvrement_saisi"); const stratesValides=STRATA.filter(s=>s!=="Toutes strates"); const stratesNorm=new Map(stratesValides.map(s=>[norm(s),s])); const groups=new Map(); const order=[]; const warnings=[]; let lignesCount=0; for(let li=1;li<rows.length;li++){const cells=rows[li]; if(!cells||!cells.some(c=>(c||"").toString().trim()!==""))continue; const releveId=(cells[iId]||"").toString().trim(); const releveNom=(cells[iNom]||"").toString().trim(); const key=releveId||releveNom; if(!key){warnings.push({ligne:li+1,motif:"ni releve_id ni releve_nom : ligne ignorée"}); continue;} if(!groups.has(key)){groups.set(key,{meta:{name:releveNom||"Relevé importé",site:(cells[iSite]||"").toString().trim(),codeProjet:(cells[iProjet]||"").toString().trim(),date:(cells[iDate]||"").toString().trim()||today(),observer:(cells[iObs]||"").toString().trim(),location:(cells[iLoc]||"").toString().trim(),coords:(cells[iCoords]||"").toString().trim(),area:(cells[iSurf]||"").toString().trim()},rows:[]}); order.push(key);} const g=groups.get(key); const taxon=resolveImportTaxon(cells[iTid],cells[iTaxon]); if(!taxon){warnings.push({ligne:li+1,motif:`taxon non reconnu : "${(cells[iTaxon]||"").toString().trim()}"`}); continue;} const strateRaw=(cells[iStrate]||"").toString().trim(); const strate=stratesValides.includes(strateRaw)?strateRaw:stratesNorm.get(norm(strateRaw)); if(!strate){warnings.push({ligne:li+1,motif:`strate non reconnue : "${strateRaw}"`}); continue;} const mode=(cells[iMode]||"").toString().trim().toLowerCase(); const coverRaw=(cells[iCover]||"").toString().trim(); let cover; if(mode==="bb"){if(!(coverRaw in BB)){warnings.push({ligne:li+1,motif:`coefficient Braun-Blanquet invalide : "${coverRaw}"`}); continue;} cover=coverRaw;} else if(mode==="pct"){const n=parseFloat(coverRaw.replace(",",".")); if(Number.isNaN(n)){warnings.push({ligne:li+1,motif:`recouvrement % invalide : "${coverRaw}"`}); continue;} cover=Math.max(0,Math.min(100,n));} else {warnings.push({ligne:li+1,motif:`mode_recouvrement invalide (attendu "bb" ou "pct") : "${mode}"`}); continue;} g.rows.push({line_id:uid(),tid:taxon.id,name:taxon.n,stratum:strate,mode,cover}); lignesCount++;} const releves=order.map(key=>{const g=groups.get(key); const r=blankReleve(g.meta.name); Object.assign(r,g.meta); r.rows=g.rows; return r;}).filter(r=>r.rows.length); return{releves,warnings,relevesCount:releves.length,lignesCount};}
+function buildRelevesFromCsvRows(rows){if(!rows.length)return{releves:[],warnings:[],relevesCount:0,lignesCount:0}; const header=rows[0].map(h=>norm(h)); const idx=name=>header.indexOf(norm(name)); const iId=idx("releve_id"),iNom=idx("releve_nom"),iSite=idx("site"),iProjet=idx("code_projet"),iDate=idx("date"),iObs=idx("observateur"),iLoc=idx("localisation"),iCoords=idx("coordonnees_gps"),iSurf=idx("surface"),iTid=idx("taxon_id"),iTaxon=idx("nom_scientifique"),iStrate=idx("strate"),iMode=idx("mode_recouvrement"),iCover=idx("recouvrement_saisi"),iTransect=idx("transect"),iPlacette=idx("placette"),iDistance=idx("distance_m"),iHabitat=idx("habitat"); const cellNum=v=>{const n=parseFloat((v||"").toString().replace(",","."));return Number.isFinite(n)?n:null;}; const stratesValides=STRATA.filter(s=>s!=="Toutes strates"); const stratesNorm=new Map(stratesValides.map(s=>[norm(s),s])); const groups=new Map(); const order=[]; const warnings=[]; let lignesCount=0; for(let li=1;li<rows.length;li++){const cells=rows[li]; if(!cells||!cells.some(c=>(c||"").toString().trim()!==""))continue; const releveId=(cells[iId]||"").toString().trim(); const releveNom=(cells[iNom]||"").toString().trim(); const key=releveId||releveNom; if(!key){warnings.push({ligne:li+1,motif:"ni releve_id ni releve_nom : ligne ignorée"}); continue;} if(!groups.has(key)){groups.set(key,{meta:{name:releveNom||"Relevé importé",site:(cells[iSite]||"").toString().trim(),codeProjet:(cells[iProjet]||"").toString().trim(),date:(cells[iDate]||"").toString().trim()||today(),observer:(cells[iObs]||"").toString().trim(),location:(cells[iLoc]||"").toString().trim(),coords:(cells[iCoords]||"").toString().trim(),area:(cells[iSurf]||"").toString().trim(),transect:(cells[iTransect]||"").toString().trim(),placette:cellNum(cells[iPlacette]),distance:cellNum(cells[iDistance]),habitat:(cells[iHabitat]||"").toString().trim()},rows:[]}); order.push(key);} const g=groups.get(key); const taxon=resolveImportTaxon(cells[iTid],cells[iTaxon]); if(!taxon){warnings.push({ligne:li+1,motif:`taxon non reconnu : "${(cells[iTaxon]||"").toString().trim()}"`}); continue;} const strateRaw=(cells[iStrate]||"").toString().trim(); const strate=stratesValides.includes(strateRaw)?strateRaw:stratesNorm.get(norm(strateRaw)); if(!strate){warnings.push({ligne:li+1,motif:`strate non reconnue : "${strateRaw}"`}); continue;} const mode=(cells[iMode]||"").toString().trim().toLowerCase(); const coverRaw=(cells[iCover]||"").toString().trim(); let cover; if(mode==="bb"){if(!(coverRaw in BB)){warnings.push({ligne:li+1,motif:`coefficient Braun-Blanquet invalide : "${coverRaw}"`}); continue;} cover=coverRaw;} else if(mode==="pct"){const n=parseFloat(coverRaw.replace(",",".")); if(Number.isNaN(n)){warnings.push({ligne:li+1,motif:`recouvrement % invalide : "${coverRaw}"`}); continue;} cover=Math.max(0,Math.min(100,n));} else {warnings.push({ligne:li+1,motif:`mode_recouvrement invalide (attendu "bb" ou "pct") : "${mode}"`}); continue;} g.rows.push({line_id:uid(),tid:taxon.id,name:taxon.n,stratum:strate,mode,cover}); lignesCount++;} const releves=order.map(key=>{const g=groups.get(key); const r=blankReleve(g.meta.name); Object.assign(r,g.meta); r.rows=g.rows; return r;}).filter(r=>r.rows.length); let zonationCount=0; releves.forEach(r=>{const st=zonationLegacyStructure(r); if(st){applyReleveStructure(r,st); zonationCount++;}}); return{releves,warnings,relevesCount:releves.length,lignesCount,zonationCount};}
 
 
 function safeDate(s){try{return new Date(s).toLocaleString("fr-FR");}catch(e){return s||"—";}}
@@ -2950,18 +3323,95 @@ async function exportVisibleSvgsPng(selector,filename){const svgs=[...document.q
 
 function initTooltip(){let tip=document.getElementById("chartTooltip"); if(!tip){tip=document.createElement("div"); tip.id="chartTooltip"; tip.className="chartTooltip"; document.body.appendChild(tip);} let pinned=false; const move=e=>{const pad=14; let x=e.clientX+pad,y=e.clientY+pad; tip.style.display="block"; const r=tip.getBoundingClientRect(); if(x+r.width>window.innerWidth-8)x=e.clientX-r.width-pad; if(y+r.height>window.innerHeight-8)y=e.clientY-r.height-pad; tip.style.left=Math.max(8,x)+"px"; tip.style.top=Math.max(8,y)+"px";}; const show=(el,e)=>{tip.innerHTML=esc(el.dataset.tip||""); tip.style.display="block"; move(e);}; const hide=()=>{tip.style.display="none";}; document.addEventListener("mouseover",e=>{if(pinned)return; const el=e.target.closest?.("[data-tip]"); if(el)show(el,e);}); document.addEventListener("mousemove",e=>{if(!pinned && tip.style.display==="block")move(e);}); document.addEventListener("mouseout",e=>{if(!pinned && e.target.closest?.("[data-tip]"))hide();}); document.addEventListener("click",e=>{const el=e.target.closest?.("[data-tip]"); if(el){pinned=true; show(el,e); e.stopPropagation();} else if(pinned){pinned=false; hide();}});}
 
-function getCompareTableRows(){
-  const table=document.getElementById("compareTable"); if(!table)return [];
-  return [...table.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>(td.innerText||"").replace(/\s+/g," ").trim()));
-}
 function csvEscape(v){v=(v??"").toString(); return /[";\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
-function exportCompareCsvFile(){const rows=getCompareTableRows(); if(!rows.length){toast("Aucun tableau à exporter.");return;} download(`comparaison_releves_${new Date().toISOString().slice(0,10)}.csv`, rows.map(r=>r.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");}
-function exportCompareXlsFile(){const rows=getCompareTableRows(); if(!rows.length){toast("Aucun tableau à exporter.");return;} const html=`<html><head><meta charset="utf-8"></head><body><table>${rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table></body></html>`; download(`comparaison_releves_${new Date().toISOString().slice(0,10)}.xls`, html, "application/vnd.ms-excel;charset=utf-8");}
+/* ===== Exports de l'onglet Tableaux =====
+   Jusqu'au 12/10/2026 ils relisaient le tableau HTML affiché (innerText) : les en-têtes
+   fusionnés (colspan/rowspan) étaient perdus et décalaient les colonnes, les nombres
+   partaient en texte (« 4,52 », « — »), le CSV n'avait pas de BOM (accents cassés dans
+   Excel) et le « .xls » était une page HTML renommée, signalée par Excel. Ils partent
+   désormais des données : une seule ligne d'en-tête, de vrais nombres, et les
+   métadonnées utiles du relevé (projet, transect, habitat…). « Transposer » est respecté. */
+function compareExportMatrix(){
+  const filter=compareStratum.value||"Toutes strates";
+  const indices=selectedGradientIndices("compareGradientKeys");
+  const indicators=COMPARE_INDICATORS.filter(o=>compareIndicators().includes(o.key));
+  const rels=selectedReleves("compare");
+  if(!indices.length || !indicators.length || !rels.length)return null;
+  const valueFor={simple:x=>x.mean,pondere:x=>x.wmean,ecartype:x=>x.wsd};
+  const num=v=>v==null || !Number.isFinite(Number(v))?null:Math.round(Number(v)*100)/100;
+  const header=["Code","Relevé","Projet","Transect","Placette","Distance (m)","Habitat","Date","Observateur","Strate","Taxons",
+    ...indices.flatMap(i=>indicators.map(o=>`${GRADIENTS[i].short} · ${GRADIENTS[i].label} — ${o.label.toLowerCase()}`))];
+  const rows=rels.map(r=>{
+    const st=stats(r,filter);
+    return [releveCode(r),r.name||"",r.codeProjet||"",r.transect||"",relevePlacette(r),releveDistance(r),r.habitat||"",r.date||"",r.observer||"",filter,rowsWithTaxa(r,filter).length,
+      ...indices.flatMap(i=>indicators.map(o=>num(valueFor[o.key](st[i]))))];
+  });
+  const matrix=[header,...rows];
+  return compareTransposed()?header.map((_,c)=>matrix.map(row=>row[c])):matrix;
+}
+function compareExportName(ext){return `comparaison_releves_${new Date().toISOString().slice(0,10)}.${ext}`;}
+function exportCompareCsvFile(){
+  const m=compareExportMatrix(); if(!m){toast("Aucun tableau à exporter.");return;}
+  /* Séparateur « ; » et virgule décimale : ce qu'attendent Excel et LibreOffice en français. */
+  const cell=v=>typeof v==="number"?String(v).replace(".",","):csvEscape(v??"");
+  download(compareExportName("csv"),"﻿"+m.map(r=>r.map(cell).join(";")).join("\r\n"),"text/csv;charset=utf-8");
+}
+function exportCompareXlsFile(){
+  const m=compareExportMatrix(); if(!m){toast("Aucun tableau à exporter.");return;}
+  download(compareExportName("xlsx"),sheetsToXlsx([{name:"Comparaison",rows:m}]),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+function exportCompareFodsFile(){
+  const m=compareExportMatrix(); if(!m){toast("Aucun tableau à exporter.");return;}
+  download(compareExportName("fods"),sheetsToFods([{name:"Comparaison",rows:m}]),"application/vnd.oasis.opendocument.spreadsheet-flat-xml;charset=utf-8");
+}
+/* Classeur .xlsx minimal écrit à la main (aucune bibliothèque, pas d'étape de build) :
+   une archive zip non compressée contenant les XML OOXML. Ligne 1 et colonne A figées
+   et en gras ; nombres stockés comme nombres (format 0,00 pour les décimaux). */
+function sheetsToXlsx(sheets){
+  const colName=i=>{let s=""; i++; while(i){const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26);} return s;};
+  const sheetXml=rows=>{
+    const widths=[]; rows.forEach(r=>r.forEach((v,c)=>{widths[c]=Math.max(widths[c]||8,Math.min(60,String(v??"").length+2));}));
+    const cols=`<cols>${widths.map((w,c)=>`<col min="${c+1}" max="${c+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`;
+    const data=rows.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=>{
+      const ref=`${colName(ci)}${ri+1}`, head=ri===0||ci===0;
+      if(v==null || v==="")return head?`<c r="${ref}" s="1"/>`:"";
+      if(typeof v==="number")return `<c r="${ref}" s="${head?1:(Number.isInteger(v)?0:2)}"><v>${v}</v></c>`;
+      return `<c r="${ref}" t="inlineStr"${head?' s="1"':""}><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+    }).join("")}</row>`).join("");
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane xSplit="1" ySplit="1" topLeftCell="B2" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>${cols}<sheetData>${data}</sheetData></worksheet>`;
+  };
+  const files=[
+    ["[Content_Types].xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`],
+    ["_rels/.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ["xl/workbook.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xmlEsc(String(s.name).slice(0,31))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets></workbook>`],
+    ["xl/_rels/workbook.xml.rels",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ["xl/styles.xml",`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="2" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>`],
+    ...sheets.map((s,i)=>[`xl/worksheets/sheet${i+1}.xml`,sheetXml(s.rows)])
+  ];
+  return zipStore(files);
+}
+/* Archive zip sans compression (méthode « stored ») : suffisant pour un .xlsx. */
+function zipStore(files){
+  const enc=new TextEncoder(), crcTable=zipStore.t||(zipStore.t=Array.from({length:256},(_,n)=>{let c=n; for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1; return c>>>0;}));
+  const crc32=b=>{let c=0xFFFFFFFF; for(let i=0;i<b.length;i++)c=crcTable[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0;};
+  const parts=[], central=[]; let offset=0;
+  const u16=v=>[v&255,(v>>>8)&255], u32=v=>[v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
+  files.forEach(([name,content])=>{
+    const nb=enc.encode(name), data=enc.encode(content), crc=crc32(data);
+    const common=[...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(crc),...u32(data.length),...u32(data.length),...u16(nb.length),...u16(0)];
+    const local=new Uint8Array([...u32(0x04034b50),...common,...nb]);
+    parts.push(local,data);
+    central.push(new Uint8Array([...u32(0x02014b50),...u16(20),...common,...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...nb]));
+    offset+=local.length+data.length;
+  });
+  const cdSize=central.reduce((s,c)=>s+c.length,0);
+  const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdSize),...u32(offset),...u16(0)]);
+  return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
 function xmlEsc(v){return (v??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
-function exportCompareFodsFile(){const rows=getCompareTableRows(); if(!rows.length){toast("Aucun tableau à exporter.");return;} const body=rows.map(r=>`<table:table-row>${r.map(c=>`<table:table-cell office:value-type="string"><text:p>${xmlEsc(c)}</text:p></table:table-cell>`).join("")}</table:table-row>`).join(""); const xml=`<?xml version="1.0" encoding="UTF-8"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2"><office:body><office:spreadsheet><table:table table:name="Comparaison">${body}</table:table></office:spreadsheet></office:body></office:document>`; download(`comparaison_releves_${new Date().toISOString().slice(0,10)}.fods`, xml, "application/vnd.oasis.opendocument.spreadsheet-flat-xml;charset=utf-8");}
 function aoaToCsv(rows){return "\ufeff"+rows.map(r=>r.map(csvEscape).join(";")).join("\r\n");}
 function sheetsToXls(sheets){const names=sheets.map(s=>`<x:ExcelWorksheet><x:Name>${esc(s.name)}</x:Name><x:WorksheetOptions/></x:ExcelWorksheet>`).join(""); const tables=sheets.map(s=>`<table border="1">${s.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`).join("<br/>"); return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>${names}</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${tables}</body></html>`;}
-function sheetsToFods(sheets){const body=sheets.map(s=>`<table:table table:name="${xmlEsc(s.name)}">${s.rows.map(r=>`<table:table-row>${r.map(c=>`<table:table-cell office:value-type="string"><text:p>${xmlEsc(c)}</text:p></table:table-cell>`).join("")}</table:table-row>`).join("")}</table:table>`).join(""); return `<?xml version="1.0" encoding="UTF-8"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:mimetype="application/vnd.oasis.opendocument.spreadsheet" office:version="1.2"><office:body><office:spreadsheet>${body}</office:spreadsheet></office:body></office:document>`;}
+function sheetsToFods(sheets){const body=sheets.map(s=>`<table:table table:name="${xmlEsc(s.name)}">${s.rows.map(r=>`<table:table-row>${r.map(c=>typeof c==="number"?`<table:table-cell office:value-type="float" office:value="${c}"><text:p>${xmlEsc(String(c).replace(".",","))}</text:p></table:table-cell>`:`<table:table-cell office:value-type="string"><text:p>${xmlEsc(c)}</text:p></table:table-cell>`).join("")}</table:table-row>`).join("")}</table:table>`).join(""); return `<?xml version="1.0" encoding="UTF-8"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:mimetype="application/vnd.oasis.opendocument.spreadsheet" office:version="1.2"><office:body><office:spreadsheet>${body}</office:spreadsheet></office:body></office:document>`;}
 function relevesSheets(){return [{name:"Relevés",rows:sheetRowsReleves()},{name:"Lignes",rows:sheetRowsLignes()},{name:"Synthèse",rows:sheetRowsSynthese()}];}
 function exportRelevesXlsFile(){if(!(state.releves||[]).length){toast("Aucun relevé à exporter.");return;} download(`mes_releves_${new Date().toISOString().slice(0,10)}.xls`, sheetsToXls(relevesSheets()), "application/vnd.ms-excel;charset=utf-8");}
 function exportRelevesFodsFile(){if(!(state.releves||[]).length){toast("Aucun relevé à exporter.");return;} download(`mes_releves_${new Date().toISOString().slice(0,10)}.fods`, sheetsToFods(relevesSheets()), "application/vnd.oasis.opendocument.spreadsheet-flat-xml;charset=utf-8");}
@@ -3118,8 +3568,7 @@ function bind(){
  duplicateReleve.addEventListener("click",()=>{const src=JSON.parse(JSON.stringify(current())); src.id=uid(); src.name=(src.name||"Relevé")+" — copie"; src.created_at=new Date().toISOString(); src.updated_at=src.created_at; src.device_id=getDeviceId(); (src.rows||[]).forEach(row=>row.line_id=uid()); state.releves.push(src); state.selectedId=src.id; state.selectedIds=[src.id]; save(); renderAll();});
  deleteReleve.addEventListener("click",()=>{
    if(draftReleve && draftReleve.id===state.selectedId){draftReleve=null; showView("home"); return;}
-   if(state.releves.length<=1){toast("Conserver au moins un relevé.");return;}
-   if(confirm("Supprimer le relevé actif ?")){if(typeof window.__supaOnLocalDelete==="function")window.__supaOnLocalDelete(state.selectedId); state.releves=state.releves.filter(r=>r.id!==state.selectedId); state.selectedId=state.releves[0].id; save(); renderAll();}
+   const r=current(); if(state.releves.some(x=>x.id===r.id) && deleteReleves([r.id],`le relevé « ${releveLabel(r)} »`))showView("home");
  });
  [relName,relDate,relObserver,window.relSite,relLocation,window.relCoords,relArea,relNotes,window.relProjet].filter(Boolean).forEach(el=>el.addEventListener("input",updateMeta));
  const relCoordsGps=document.getElementById("relCoordsGps");
@@ -3218,7 +3667,7 @@ function bind(){
  document.getElementById("downloadImportTemplate").addEventListener("click",downloadImportTemplate);
  const importCsvFileName=document.getElementById("importCsvFileName");
  function resetImportCsvFileName(){if(importCsvFileName)importCsvFileName.textContent="Aucun fichier sélectionné";}
- importCsvReleves.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; if(importCsvFileName)importCsvFileName.textContent=file.name; try{const txt=await file.text(); const rows=parseCsvLines(txt); const{releves,warnings,relevesCount,lignesCount}=buildRelevesFromCsvRows(rows); if(!relevesCount){toast("Aucun relevé valide dans ce fichier."+(warnings.length?` (${warnings.length} ligne(s) ignorée(s))`:"")); e.target.value=""; resetImportCsvFileName(); return;} let msg=`Importer ${relevesCount} relevé(s), ${lignesCount} ligne(s) ?`; if(warnings.length){msg+=`\n\n${warnings.length} ligne(s) ignorée(s) :\n`+warnings.slice(0,5).map(w=>`- ligne ${w.ligne} : ${w.motif}`).join("\n")+(warnings.length>5?`\n… et ${warnings.length-5} autre(s)`:"");} if(confirm(msg)){state.releves.push(...releves); save(); renderAll(); toast(`${relevesCount} relevé(s) importé(s).`); closeImportModal();} e.target.value=""; resetImportCsvFileName();}catch(err){toast("Import impossible : "+err.message); e.target.value=""; resetImportCsvFileName();}});
+ importCsvReleves.addEventListener("change",async e=>{const file=e.target.files[0]; if(!file)return; if(importCsvFileName)importCsvFileName.textContent=file.name; try{const txt=await file.text(); const rows=parseCsvLines(txt); const{releves,warnings,relevesCount,lignesCount,zonationCount}=buildRelevesFromCsvRows(rows); if(!relevesCount){toast("Aucun relevé valide dans ce fichier."+(warnings.length?` (${warnings.length} ligne(s) ignorée(s))`:"")); e.target.value=""; resetImportCsvFileName(); return;} let msg=`Importer ${relevesCount} relevé(s), ${lignesCount} ligne(s) ?`; if(zonationCount)msg+=`\n\n${zonationCount} relevé(s) au format d’un ancien export Zonation : transect, placette, distance et habitat seront remis à leur place, et le projet deviendra « site + année » (modifiable ensuite dans la Saisie).`; if(warnings.length){msg+=`\n\n${warnings.length} ligne(s) ignorée(s) :\n`+warnings.slice(0,5).map(w=>`- ligne ${w.ligne} : ${w.motif}`).join("\n")+(warnings.length>5?`\n… et ${warnings.length-5} autre(s)`:"");} if(confirm(msg)){state.releves.push(...releves); save(); renderAll(); toast(`${relevesCount} relevé(s) importé(s).`); closeImportModal();} e.target.value=""; resetImportCsvFileName();}catch(err){toast("Import impossible : "+err.message); e.target.value=""; resetImportCsvFileName();}});
  if(window.saveGoogleClientId)saveGoogleClientId.addEventListener("click",()=>handleGoogleAction("saveClient"));
  if(window.googleSignIn)googleSignIn.addEventListener("click",()=>handleGoogleAction("signin"));
  if(window.googleEnsureSheet)googleEnsureSheet.addEventListener("click",()=>handleGoogleAction("ensure"));
@@ -3816,10 +4265,22 @@ function renderScatterLayerChecks(){
     const { error } = await sb.from("phyto_releves").upsert(rows, { onConflict:"proprietaire_id,id" });
     if(error) throw error;
   }
-  async function supaDeleteRemote(id){
-    if(!sb || !currentUser || !id) return;
-    try{ await sb.from("phyto_releves").delete().eq("id", id); markSynced(); }
-    catch(e){ /* suppression distante silencieuse */ }
+  /* Supprime par paquets de 100 ; un identifiant ne quitte state.deletedReleveIds
+     qu'une fois la suppression distante confirmée (sinon reprise à la synchro suivante). */
+  async function supaDeleteRemote(ids){
+    ids=(Array.isArray(ids)?ids:[ids]).filter(Boolean);
+    if(!sb || !currentUser || !ids.length) return;
+    try{
+      for(let i=0;i<ids.length;i+=100){
+        const chunk=ids.slice(i,i+100);
+        const { error } = await sb.from("phyto_releves").delete().in("id", chunk);
+        if(error) throw error;
+        const done=new Set(chunk);
+        state.deletedReleveIds=(state.deletedReleveIds||[]).filter(id=>!done.has(id));
+      }
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      markSynced();
+    }catch(e){ console.warn("Suppression distante reportée à la prochaine synchro :", e && e.message || e); }
   }
   /* ----- Synchronisation des lots (même schéma que les relevés : table
      dédiée, blob JSON dans `donnees`, fusion par updated_at) ----- */
@@ -3853,6 +4314,7 @@ function renderScatterLayerChecks(){
     if(supaBusy) return;
     supaBusy=true; supaSet("Synchronisation…");
     try{
+      if((state.deletedReleveIds||[]).length) await supaDeleteRemote(state.deletedReleveIds.slice());
       const remote=await supaPull();
       const merged=mergeAppStates(stateClone(), remote);
       /* La synchro des lots (table à part, ajoutée après coup) ne doit jamais
