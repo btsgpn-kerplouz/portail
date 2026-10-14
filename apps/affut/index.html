@@ -2348,7 +2348,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var fiche = wrap.querySelector(".vn-sommaire");
     if (!fiche) return;
     wrap.classList.remove("vers-gauche", "dessous");
-    fiche.style.left = ""; fiche.style.top = "";
+    fiche.style.left = ""; fiche.style.top = ""; fiche.style.width = ""; fiche.style.maxWidth = "";
     var marge = 16, vw = document.documentElement.clientWidth, vh = window.innerHeight;
     // Fiche encore masquée (display:none) au 1er toucher : largeur CSS par défaut.
     var r = wrap.getBoundingClientRect(), w = fiche.offsetWidth || Math.min(300, vw - 2 * marge);
@@ -2357,8 +2357,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var haut = depasse > 0 ? Math.max(marge - r.top, -depasse) : 0;
     if (r.right + 8 + w <= vw - marge) { if (haut) fiche.style.top = haut + "px"; return; }
     if (r.left - 8 - w >= marge) { wrap.classList.add("vers-gauche"); if (haut) fiche.style.top = haut + "px"; return; }
+    // Dessous (téléphone, retour d'usage 14/10/2026) : la fiche prend toute
+    // la largeur de la grille des vignettes, alignée sur ses bords.
     wrap.classList.add("dessous");
-    var gauche = Math.max(marge, Math.min(r.left, vw - marge - w));
+    var grille = (wrap.closest(".mois-replie") || wrap).getBoundingClientRect();
+    var gauche = Math.max(marge / 2, grille.left), droite = Math.min(vw - marge / 2, grille.right);
+    fiche.style.maxWidth = "none";
+    fiche.style.width = (droite - gauche) + "px";
     fiche.style.left = (gauche - r.left) + "px";
   }
 

@@ -2569,7 +2569,8 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       remontée pour tenir dans la fenêtre. Bouton « Déplier » du mois inchangé.
       Retouches du même jour : n° en pavé grenat (police des grandes tuiles)
       dans le coin inférieur droit de l'image, semaine seule en légende ; sur
-      téléphone, grille de 3 colonnes pleine largeur (vignettes élastiques).
+      téléphone, grille de 3 colonnes pleine largeur (vignettes élastiques),
+      fiche sommaire ouverte dessous sur toute la largeur de la grille.
 
 ## Idées pour plus tard (hors lots planifiés)
 
