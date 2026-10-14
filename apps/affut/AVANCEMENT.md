@@ -2558,6 +2558,15 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       éditable) ; pour retoucher l'adresse, passer par « Modifier ». Pas de
       lien cliquable dans l'export PDF (l'adresse y reste en texte), clics non
       comptés dans le Bilan. Test : `supabase/tests/liens-resume.test.mjs`.
+- [x] **Sommaire : vignettes des mois repliés** (14/10/2026). Les pastilles
+      « n° X · sem. Y » d'un mois replié deviennent des vignettes carrées
+      (illustration du numéro, ou carré grenat « n° X » à défaut) avec n° et
+      semaine en légende. Au survol / focus clavier, une fiche flottante
+      affiche le sommaire (n°, semaine, titre du numéro, titres des entrées
+      validées, sans pastille source) ; clic sur la vignette ou la fiche =
+      ouvrir le numéro. Écran tactile : 1er toucher = fiche, 2e = ouverture.
+      Fiche placée à droite, basculée à gauche ou dessous selon la place, et
+      remontée pour tenir dans la fenêtre. Bouton « Déplier » du mois inchangé.
 
 ## Idées pour plus tard (hors lots planifiés)
 
