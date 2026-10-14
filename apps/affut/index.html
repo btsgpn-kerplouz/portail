@@ -449,9 +449,46 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
   .nc-image{border-bottom:0}
 }
 
-.mois-replie{border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2)}
-.mois-replie .chip{border:1px solid var(--af-filet-moyen);padding:4px 10px;background:var(--af-surface)}
-.mois-replie .chip:hover{background:var(--af-accent);border-color:var(--af-accent);color:var(--af-sur-accent)}
+/* Mois replié (retour d'usage 14/10/2026) : vignettes carrées des numéros,
+   sommaire en fiche flottante au survol / focus / 1er toucher — voir
+   renderVignetteNumero(). */
+.mois-replie{border:1px dashed var(--af-filet-fort);background:var(--af-surface-2);padding:12px 14px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px}
+.vignette-numero{position:relative}
+.vn-vignette{display:flex;flex-direction:column;gap:5px;width:104px;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.vn-image{display:block;width:104px;height:104px;object-fit:cover;border:1px solid var(--af-filet-moyen);background:var(--af-surface)}
+.vn-sans-image{background:var(--af-accent);border-color:var(--af-accent)}
+.vn-cadre{position:relative;display:block}
+.vn-num{position:absolute;right:1px;bottom:1px;background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-titre);font-size:16px;font-weight:600;line-height:1;padding:4px 7px 5px}
+.vn-legende{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);text-align:right}
+.vignette-numero:hover .vn-image,.vignette-numero:focus-within .vn-image,.vignette-numero.ouverte .vn-image{border-color:var(--af-accent);outline:1px solid var(--af-accent);outline-offset:-2px}
+.vn-sommaire{position:absolute;z-index:30;top:0;left:calc(100% + 8px);width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);padding:0;display:flex;flex-direction:column;text-align:left;font:inherit;color:inherit;background:var(--af-surface);border:1px solid var(--af-accent);cursor:pointer;display:none}
+/* Masquée = retirée de la mise en page (display:none) : une fiche cachée
+   mais positionnée débordait à droite et créait un défilement horizontal. */
+/* Pont invisible entre vignette et fiche : la souris peut y passer sans
+   que la fiche se referme. */
+.vn-sommaire::before{content:"";position:absolute;top:0;bottom:0;left:-10px;width:10px}
+.vignette-numero.vers-gauche .vn-sommaire{left:auto;right:calc(100% + 8px);--vn-depart:translateX(4px)}
+.vignette-numero.vers-gauche .vn-sommaire::before{left:auto;right:-10px}
+.vignette-numero.dessous .vn-sommaire{top:calc(100% + 6px);--vn-depart:translateY(-4px)}
+.vignette-numero.dessous .vn-sommaire::before{top:-8px;bottom:auto;left:0;right:0;width:auto;height:8px}
+.vignette-numero:hover .vn-sommaire,.vignette-numero:focus-within .vn-sommaire,.vignette-numero.ouverte .vn-sommaire{display:flex;animation:vn-apparition .16s ease-out}
+@keyframes vn-apparition{from{opacity:0;transform:var(--vn-depart,translateX(-4px))}to{opacity:1;transform:none}}
+.vn-tete{display:flex;justify-content:space-between;gap:10px;background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px}
+.vn-titre{padding:10px 12px 0;font-family:var(--af-police-titre);font-style:italic;font-size:17px;font-weight:600;line-height:1.25;color:var(--af-accent)}
+.vn-liste{list-style:none;margin:0;padding:8px 12px 12px;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+.vn-liste li{font-size:13px;line-height:1.4;color:var(--af-encre-2);padding-left:10px;border-left:2px solid var(--af-filet-moyen)}
+.vn-sommaire:hover .vn-liste li{border-left-color:var(--af-accent)}
+@media (prefers-reduced-motion:reduce){
+  .vignette-numero .vn-sommaire{animation:none !important}
+}
+/* Téléphone (retour d'usage 14/10/2026) : grille de 3 colonnes qui occupe
+   toute la largeur, vignettes carrées élastiques au lieu de 104 px fixes ;
+   la fiche sommaire s'ouvre alors sous la vignette (placerSommaireVignette). */
+@media (max-width:640px){
+  .mois-replie{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px}
+  .vn-vignette{width:100%}
+  .vn-image{width:100%;height:auto;aspect-ratio:1/1}
+}
 
 /* ---- recherche transversale (lot 3) ---- */
 .recherche-barre{padding:18px 22px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--af-filet)}
@@ -701,6 +738,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .mode-toggle button{flex:none}
   .auth-statut{padding-left:0;flex-wrap:wrap;max-width:100%;row-gap:4px}
   .numero-entete{padding:14px 16px}
+  /* Cartes d'entrée plus larges sur téléphone (retour d'usage 14/10/2026) :
+     marges latérales de la grille et du corps de carte resserrées. */
+  .carte-grille{padding:12px 8px 22px;gap:14px}
+  .carte-corps{padding:12px 14px 16px}
   .entete-titre{font-size:19px}
   .entete-actions{width:100%;align-items:stretch}
   .select-numero-wrap{justify-content:space-between}
@@ -2271,6 +2312,65 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     '</button>';
   }
 
+  // Vignette d'un numéro d'un mois replié (retour d'usage 14/10/2026,
+  // remplace les anciennes pastilles « n° X · sem. Y ») : l'illustration du
+  // numéro en petit carré, n° et semaine en légende, et le sommaire
+  // (titre du numéro + titres des entrées, sans pastille source) dans une
+  // fiche flottante qui apparaît au survol ou au focus clavier. Un clic sur
+  // la vignette ou sur la fiche ouvre le numéro. Sur écran tactile (pas de
+  // survol), un 1er toucher déplie la fiche, un 2e ouvre le numéro — voir
+  // l'écouteur data-action="vignette-numero". Le n° est posé en pavé grenat
+  // dans le coin inférieur droit de l'image, même police que le n° des
+  // grandes tuiles ; la semaine reste en légende dessous. Sans
+  // illustration : carré grenat uni, avec le même pavé de n°.
+  function renderVignetteNumero(n){
+    var sem = n.semaine.match(/semaine (\d+)/);
+    var semTxt = sem ? "sem. " + sem[1] : "";
+    var visuel = n.imageUrl
+      ? '<img class="vn-image" src="' + esc(n.imageUrl) + '" alt="" style="object-position:' + esc(n.imagePosition || "50% 50%") + '">'
+      : '<span class="vn-image vn-sans-image" aria-hidden="true"></span>';
+    var titres = n.entrees.slice().sort(parOrdre).filter(function(e){ return e.valide; })
+      .map(function(e){ return '<li>' + esc(e.titre) + '</li>'; }).join("");
+    var idSom = "vn-sommaire-" + n.numero;
+    return '<div class="vignette-numero">' +
+      '<button type="button" class="vn-vignette" data-action="vignette-numero" data-numero="' + n.numero + '" aria-describedby="' + idSom + '" aria-label="Ouvrir le n° ' + n.numero + (semTxt ? ", " + semTxt : "") + ' — ' + esc(n.titre) + '">' +
+        '<span class="vn-cadre">' + visuel + '<span class="vn-num">n° ' + n.numero + '</span></span>' +
+        (semTxt ? '<span class="vn-legende">' + semTxt + '</span>' : "") +
+      '</button>' +
+      '<button type="button" class="vn-sommaire" id="' + idSom + '" data-action="ouvrir-numero" data-numero="' + n.numero + '" tabindex="-1">' +
+        '<span class="vn-tete"><span>n° ' + n.numero + '</span>' + (semTxt ? '<span>' + semTxt + '</span>' : "") + '</span>' +
+        '<span class="vn-titre">' + esc(n.titre) + '</span>' +
+        (titres ? '<ul class="vn-liste">' + titres + '</ul>' : "") +
+      '</button>' +
+    '</div>';
+  }
+
+  // Garde la fiche flottante dans la fenêtre : à droite de la vignette par
+  // défaut, basculée à gauche si elle déborde, et sous la vignette (calée
+  // dans la largeur d'écran) si aucun des deux côtés ne suffit (téléphone).
+  function placerSommaireVignette(wrap){
+    var fiche = wrap.querySelector(".vn-sommaire");
+    if (!fiche) return;
+    wrap.classList.remove("vers-gauche", "dessous");
+    fiche.style.left = ""; fiche.style.top = ""; fiche.style.width = ""; fiche.style.maxWidth = "";
+    var marge = 16, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    // Fiche encore masquée (display:none) au 1er toucher : largeur CSS par défaut.
+    var r = wrap.getBoundingClientRect(), w = fiche.offsetWidth || Math.min(300, vw - 2 * marge);
+    // Sur le côté : remontée si elle dépasserait le bas de la fenêtre.
+    var h = fiche.offsetHeight, depasse = r.top + h - (vh - marge);
+    var haut = depasse > 0 ? Math.max(marge - r.top, -depasse) : 0;
+    if (r.right + 8 + w <= vw - marge) { if (haut) fiche.style.top = haut + "px"; return; }
+    if (r.left - 8 - w >= marge) { wrap.classList.add("vers-gauche"); if (haut) fiche.style.top = haut + "px"; return; }
+    // Dessous (téléphone, retour d'usage 14/10/2026) : la fiche prend toute
+    // la largeur de la grille des vignettes, alignée sur ses bords.
+    wrap.classList.add("dessous");
+    var grille = (wrap.closest(".mois-replie") || wrap).getBoundingClientRect();
+    var gauche = Math.max(marge / 2, grille.left), droite = Math.min(vw - marge / 2, grille.right);
+    fiche.style.maxWidth = "none";
+    fiche.style.width = (droite - gauche) + "px";
+    fiche.style.left = (gauche - r.left) + "px";
+  }
+
   function renderSommaire(){
     var groupes = moisGroupes();
     var dernierNumero = numerosPublies().reduce(function(m, n){ return n.numero > m ? n.numero : m; }, 0);
@@ -2282,11 +2382,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         (gi > 0 ? '<button type="button" class="deplier" data-action="deplier-mois" data-mois="' + esc(g.mois) + '"><span class="chevron">' + (ouvert ? "▾" : "▸") + '</span><span>' + (ouvert ? "Replier" : "Déplier") + '</span></button>' : "") +
         '</div>';
       if (!ouvert) {
-        var chips = g.items.map(function(n){
-          var sem = n.semaine.match(/semaine (\d+)/);
-          return '<button type="button" class="chip" data-action="ouvrir-numero" data-numero="' + n.numero + '">n° ' + n.numero + (sem ? " · sem. " + sem[1] : "") + '</button>';
-        }).join("");
-        return tete + '<div class="mois-replie">' + chips + '</div>';
+        return tete + '<div class="mois-replie">' + g.items.map(renderVignetteNumero).join("") + '</div>';
       }
       return tete + g.items.map(function(n){ return renderNumeroCarte(n, n.numero === dernierNumero); }).join("");
     }).join("");
@@ -3487,7 +3583,25 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       }
     }
 
-    var ouvrirBtn = ev.target.closest('[data-action="ouvrir-numero"]');
+    // Vignette d'un mois replié : clic direct à la souris ; sur écran
+    // tactile (pas de survol), 1er toucher = déplier la fiche sommaire,
+    // 2e toucher (vignette ou fiche) = ouvrir le numéro. Un toucher ailleurs
+    // replie la fiche.
+    var vignetteBtn = ev.target.closest('[data-action="vignette-numero"]');
+    var vignetteWrap = vignetteBtn && vignetteBtn.closest(".vignette-numero");
+    document.querySelectorAll(".vignette-numero.ouverte").forEach(function(w){
+      if (w !== ev.target.closest(".vignette-numero")) w.classList.remove("ouverte");
+    });
+    if (vignetteBtn) {
+      var sansSurvol = window.matchMedia && window.matchMedia("(hover: none)").matches;
+      if (sansSurvol && !vignetteWrap.classList.contains("ouverte")) {
+        placerSommaireVignette(vignetteWrap);
+        vignetteWrap.classList.add("ouverte");
+        return;
+      }
+    }
+
+    var ouvrirBtn = ev.target.closest('[data-action="ouvrir-numero"],[data-action="vignette-numero"]');
     if (ouvrirBtn) {
       state.numeroId = parseInt(ouvrirBtn.getAttribute("data-numero"), 10);
       state.vue = "numero";
@@ -3939,6 +4053,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     persisterEdValue(path);
     render();
   });
+
+  // Placement de la fiche sommaire d'une vignette au moment où elle
+  // apparaît (survol souris ou focus clavier), voir placerSommaireVignette().
+  function placerSiVignette(ev){
+    var wrap = ev.target.closest && ev.target.closest(".vignette-numero");
+    if (wrap && !wrap.contains(ev.relatedTarget)) placerSommaireVignette(wrap);
+  }
+  document.addEventListener("mouseover", placerSiVignette);
+  document.addEventListener("focusin", placerSiVignette);
 
   document.addEventListener("keydown", function(ev){
     if (ev.key !== "Escape") return;

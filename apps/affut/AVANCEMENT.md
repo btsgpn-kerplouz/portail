@@ -2558,6 +2558,21 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       éditable) ; pour retoucher l'adresse, passer par « Modifier ». Pas de
       lien cliquable dans l'export PDF (l'adresse y reste en texte), clics non
       comptés dans le Bilan. Test : `supabase/tests/liens-resume.test.mjs`.
+- [x] **Sommaire : vignettes des mois repliés** (14/10/2026). Les pastilles
+      « n° X · sem. Y » d'un mois replié deviennent des vignettes carrées
+      (illustration du numéro, ou carré grenat « n° X » à défaut) avec n° et
+      semaine en légende. Au survol / focus clavier, une fiche flottante
+      affiche le sommaire (n°, semaine, titre du numéro, titres des entrées
+      validées, sans pastille source) ; clic sur la vignette ou la fiche =
+      ouvrir le numéro. Écran tactile : 1er toucher = fiche, 2e = ouverture.
+      Fiche placée à droite, basculée à gauche ou dessous selon la place, et
+      remontée pour tenir dans la fenêtre. Bouton « Déplier » du mois inchangé.
+      Retouches du même jour : n° en pavé grenat (police des grandes tuiles)
+      dans le coin inférieur droit de l'image, semaine seule en légende ; sur
+      téléphone, grille de 3 colonnes pleine largeur (vignettes élastiques),
+      fiche sommaire ouverte dessous sur toute la largeur de la grille.
+      Page d'un numéro sur téléphone : cartes d'entrée élargies (marges de
+      `.carte-grille` 22 → 8 px, corps de carte 18 → 14 px).
 
 ## Idées pour plus tard (hors lots planifiés)
 
