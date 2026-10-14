@@ -456,9 +456,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .vignette-numero{position:relative}
 .vn-vignette{display:flex;flex-direction:column;gap:5px;width:104px;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .vn-image{display:block;width:104px;height:104px;object-fit:cover;border:1px solid var(--af-filet-moyen);background:var(--af-surface)}
-.vn-sans-image{display:flex;align-items:center;justify-content:center;background:var(--af-accent);border-color:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-titre);font-style:italic;font-size:22px;font-weight:600}
-.vn-legende{display:flex;justify-content:space-between;gap:6px;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
-.vn-legende .num{font-weight:700;color:var(--af-encre)}
+.vn-sans-image{background:var(--af-accent);border-color:var(--af-accent)}
+.vn-cadre{position:relative;display:block}
+.vn-num{position:absolute;right:1px;bottom:1px;background:var(--af-accent);color:var(--af-sur-accent);font-family:var(--af-police-titre);font-size:16px;font-weight:600;line-height:1;padding:4px 7px 5px}
+.vn-legende{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);text-align:right}
 .vignette-numero:hover .vn-image,.vignette-numero:focus-within .vn-image,.vignette-numero.ouverte .vn-image{border-color:var(--af-accent);outline:1px solid var(--af-accent);outline-offset:-2px}
 .vn-sommaire{position:absolute;z-index:30;top:0;left:calc(100% + 8px);width:300px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);padding:0;display:flex;flex-direction:column;text-align:left;font:inherit;color:inherit;background:var(--af-surface);border:1px solid var(--af-accent);cursor:pointer;display:none}
 /* Masquée = retirée de la mise en page (display:none) : une fiche cachée
@@ -479,6 +480,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .vn-sommaire:hover .vn-liste li{border-left-color:var(--af-accent)}
 @media (prefers-reduced-motion:reduce){
   .vignette-numero .vn-sommaire{animation:none !important}
+}
+/* Téléphone (retour d'usage 14/10/2026) : grille de 3 colonnes qui occupe
+   toute la largeur, vignettes carrées élastiques au lieu de 104 px fixes ;
+   la fiche sommaire s'ouvre alors sous la vignette (placerSommaireVignette). */
+@media (max-width:640px){
+  .mois-replie{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px}
+  .vn-vignette{width:100%}
+  .vn-image{width:100%;height:auto;aspect-ratio:1/1}
 }
 
 /* ---- recherche transversale (lot 3) ---- */
@@ -2306,21 +2315,23 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // fiche flottante qui apparaît au survol ou au focus clavier. Un clic sur
   // la vignette ou sur la fiche ouvre le numéro. Sur écran tactile (pas de
   // survol), un 1er toucher déplie la fiche, un 2e ouvre le numéro — voir
-  // l'écouteur data-action="vignette-numero". Sans illustration : carré
-  // grenat portant le n°.
+  // l'écouteur data-action="vignette-numero". Le n° est posé en pavé grenat
+  // dans le coin inférieur droit de l'image, même police que le n° des
+  // grandes tuiles ; la semaine reste en légende dessous. Sans
+  // illustration : carré grenat uni, avec le même pavé de n°.
   function renderVignetteNumero(n){
     var sem = n.semaine.match(/semaine (\d+)/);
     var semTxt = sem ? "sem. " + sem[1] : "";
     var visuel = n.imageUrl
       ? '<img class="vn-image" src="' + esc(n.imageUrl) + '" alt="" style="object-position:' + esc(n.imagePosition || "50% 50%") + '">'
-      : '<span class="vn-image vn-sans-image" aria-hidden="true">n° ' + n.numero + '</span>';
+      : '<span class="vn-image vn-sans-image" aria-hidden="true"></span>';
     var titres = n.entrees.slice().sort(parOrdre).filter(function(e){ return e.valide; })
       .map(function(e){ return '<li>' + esc(e.titre) + '</li>'; }).join("");
     var idSom = "vn-sommaire-" + n.numero;
     return '<div class="vignette-numero">' +
       '<button type="button" class="vn-vignette" data-action="vignette-numero" data-numero="' + n.numero + '" aria-describedby="' + idSom + '" aria-label="Ouvrir le n° ' + n.numero + (semTxt ? ", " + semTxt : "") + ' — ' + esc(n.titre) + '">' +
-        visuel +
-        '<span class="vn-legende"><span class="num">n° ' + n.numero + '</span>' + (semTxt ? '<span>' + semTxt + '</span>' : "") + '</span>' +
+        '<span class="vn-cadre">' + visuel + '<span class="vn-num">n° ' + n.numero + '</span></span>' +
+        (semTxt ? '<span class="vn-legende">' + semTxt + '</span>' : "") +
       '</button>' +
       '<button type="button" class="vn-sommaire" id="' + idSom + '" data-action="ouvrir-numero" data-numero="' + n.numero + '" tabindex="-1">' +
         '<span class="vn-tete"><span>n° ' + n.numero + '</span>' + (semTxt ? '<span>' + semTxt + '</span>' : "") + '</span>' +

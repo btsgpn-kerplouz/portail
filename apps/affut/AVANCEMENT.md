@@ -2567,6 +2567,9 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       ouvrir le numéro. Écran tactile : 1er toucher = fiche, 2e = ouverture.
       Fiche placée à droite, basculée à gauche ou dessous selon la place, et
       remontée pour tenir dans la fenêtre. Bouton « Déplier » du mois inchangé.
+      Retouches du même jour : n° en pavé grenat (police des grandes tuiles)
+      dans le coin inférieur droit de l'image, semaine seule en légende ; sur
+      téléphone, grille de 3 colonnes pleine largeur (vignettes élastiques).
 
 ## Idées pour plus tard (hors lots planifiés)
 
