@@ -2571,6 +2571,8 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       dans le coin inférieur droit de l'image, semaine seule en légende ; sur
       téléphone, grille de 3 colonnes pleine largeur (vignettes élastiques),
       fiche sommaire ouverte dessous sur toute la largeur de la grille.
+      Page d'un numéro sur téléphone : cartes d'entrée élargies (marges de
+      `.carte-grille` 22 → 8 px, corps de carte 18 → 14 px).
 
 ## Idées pour plus tard (hors lots planifiés)
 
