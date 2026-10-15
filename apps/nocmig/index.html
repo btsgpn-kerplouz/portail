@@ -1,0 +1,2228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOCMIG</title>
+<meta name="theme-color" content="#191b16">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="data.js"></script>
+<style>
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/ibm-plex-sans.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/ibm-plex-serif.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Serif';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/ibm-plex-serif-bold.woff2') format('woff2');}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/jetbrains-mono.woff2') format('woff2');}
+:root {
+  /* Charte « papier technique froid » (btsgpn-kerplouz), variante nocturne assumée pour NOCMIG :
+     bandeau, onglets et volet de sélection en bleu nuit ; la visualisation reste sur papier clair
+     (légèrement bleuté) pour la lecture des graphiques. Accent app : indigo de nuit. */
+  color-scheme: light;
+  --ink: #191b16; --page: #eceef3; --page-chantier: #f4f5f8; --card: #fffefb;
+  --line: #d3d6e0; --line-soft: #e6e8ef; --line-chantier: #b9bdcc;
+  --text-2: #4f5468; --text-3: #5f6480; --text-4: #858aa0;
+  --acc: #3d3a82; --acc-dark: #2b2960; --acc-soft: #e9e8f4; --acc-clair: #9a96ec;
+  /* Nuit : surfaces de commande */
+  --nuit-0: #0f1224; --nuit-1: #171b33; --nuit-2: #20253f; --nuit-3: #2c3254; --nuit-line: #363d66;
+  --nuit-ctl: #8389b3; --clair: #eceef8; --clair-2: #b9bdd8; --clair-3: #9599bb; --lune: #f0e6c0;
+  --serif: 'IBM Plex Serif', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Graphiques : palette catégorielle validée (ordre fixe, jamais recyclée), rampe séquentielle bleue */
+  --night: #e1e4f1; --grid: #e6e8ef; --axis: #b9bdcc; --gray: #a3a6b4;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --q1: #cde2fb; --q2: #9ec5f4; --q3: #6da7ec; --q4: #3987e5; --q5: #256abf; --q6: #184f95; --q7: #0d366b;
+  --ctl: #7e8399;   /* bordure de tout ce qui se clique ou se règle, sur papier */
+  --panel-w: 310px; --tabs-h: 52px;
+}
+* { box-sizing: border-box; border-radius: 0; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 15px/1.45 var(--sans); overflow-x: hidden; }
+button, select, input { font: inherit; color: var(--ink); }
+:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 35%, transparent); }
+
+/* ---------- Bandeau ---------- */
+.app-header { background: var(--nuit-0); color: var(--clair); border-top: 4px solid var(--lune); display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
+.logo-wrap { flex: none; display: block; }
+.app-logo { width: 54px; height: 40px; color: var(--lune); display: block; }
+.titre { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; color: var(--lune); line-height: 1.15; letter-spacing: .02em; }
+.titre .sous-titre { font-weight: 400; font-size: 1rem; margin-left: .55em; color: var(--clair); letter-spacing: 0; }
+.titre small { display: block; font-family: var(--sans); font-weight: 400; font-size: .86rem; color: var(--clair); margin-top: .2em; letter-spacing: 0; }
+.titre small a { color: var(--clair); text-decoration: underline; text-underline-offset: 2px; }
+.camps { display: flex; margin-left: auto; border: 1px solid var(--nuit-ctl); }
+.camps button { background: transparent; border: 0; color: var(--clair-2); font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; padding: 7px 14px; min-height: 36px; cursor: pointer; }
+.camps button:hover { background: var(--nuit-3); color: var(--clair); }
+.camps button + button { border-left: 1px solid var(--nuit-ctl); }
+.camps button[aria-pressed="true"] { background: var(--lune); color: var(--nuit-0); font-weight: 700; }
+.portail-lien { font-family: var(--mono); font-size: .72rem; color: var(--clair-3); text-decoration: none; white-space: nowrap; align-self: flex-start; padding: 4px 10px 4px 0; border-right: 1px solid var(--nuit-line); margin-right: 2px; }
+.portail-lien:hover { color: var(--clair); }
+
+/* ---------- Barre d'onglets : pleine largeur, sous le bandeau, toujours visible ---------- */
+.tabs { position: sticky; top: 0; z-index: 1000; display: flex; height: var(--tabs-h); background: var(--nuit-1); border-bottom: 1px solid var(--nuit-line); overflow-x: auto; scrollbar-width: none; margin: 0 -24px; }
+.tabs button { position: relative; background: transparent; border: 0; border-right: 1px solid var(--nuit-line); padding: 0 22px; font-family: var(--sans); font-size: .98rem; font-weight: 600; color: var(--clair-2); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
+.tabs button:first-child { border-left: 0; }
+.tabs button .tn { font-family: var(--mono); font-size: .68rem; font-weight: 500; color: var(--lune); }
+.tabs button:hover { background: var(--nuit-3); color: var(--clair); }
+/* onglet actif : il « s'ouvre » sur la zone de visualisation (même papier), filet indigo en tête */
+.tabs button[aria-selected="true"] { background: var(--page); color: var(--ink); }
+.tabs button[aria-selected="true"]::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--acc); }
+.tabs button[aria-selected="true"] .tn { color: var(--text-3); }
+
+/* ---------- Mise en page ---------- */
+.layout { display: grid; grid-template-columns: var(--panel-w) minmax(0, 1fr); align-items: start; }
+.repere { font-family: var(--mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); font-weight: 500; }
+/* Volet de sélection : surface de commande nocturne */
+#panel { position: sticky; top: 0; height: 100vh; border-right: 1px solid var(--nuit-line); overflow-y: auto; background: var(--nuit-1); color: var(--clair); color-scheme: dark; padding: 0 0 24px; scrollbar-color: var(--nuit-3) var(--nuit-1); }
+.pn-head { display: flex; align-items: center; gap: 8px; box-sizing: border-box; height: var(--tabs-h); padding: 0 16px; background: var(--nuit-0); border-bottom: 1px solid var(--nuit-line); position: sticky; top: 0; z-index: 5; }
+.pn-head .repere { color: var(--lune); font-weight: 700; margin-right: auto; letter-spacing: .18em; }
+#panel .btn { background: transparent; color: var(--clair); border-color: var(--nuit-ctl); }
+#panel .btn:hover { background: var(--nuit-3); border-color: var(--clair); }
+#panel .btn.lune { border-color: var(--lune); color: var(--lune); }
+#panel .lien { color: var(--acc-clair); text-decoration-color: color-mix(in srgb, var(--acc-clair) 45%, transparent); }
+#panel .lien:hover { color: var(--clair); text-decoration-color: var(--clair); }
+#panel .hint { color: var(--clair-3); }
+#panel select, #panel input[type=number] { background: var(--nuit-2); color: var(--clair); border-color: var(--nuit-ctl); }
+#panel select:hover, #panel input:hover { border-color: var(--clair); }
+#panel select:focus, #panel input:focus { border-color: var(--acc-clair); }
+#panel :focus-visible, .app-header :focus-visible, .tabs :focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--lune) 70%, transparent); }
+.pn-tranche { margin: 12px 16px; border: 1px solid var(--lune); border-left-width: 5px; background: var(--nuit-2); padding: 8px 10px; }
+.pn-tranche .repere { color: var(--lune); }
+.pn-tranche b { display: block; font-family: var(--mono); font-size: .9rem; color: var(--clair); margin: 2px 0 6px; }
+.pn-sec { border-bottom: 1px solid var(--nuit-line); }
+.pn-sec > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; min-height: 48px; }
+.pn-sec > summary::-webkit-details-marker { display: none; }
+.pn-sec > summary:hover { background: var(--nuit-2); }
+.pn-num { width: 22px; height: 22px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: var(--lune); color: var(--nuit-0); font-family: var(--mono); font-size: .72rem; font-weight: 700; }
+.pn-tit { font-family: var(--mono); font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--clair); }
+.pn-val { margin-left: auto; font-family: var(--mono); font-size: .72rem; color: var(--clair-2); text-align: right; }
+.pn-sec > summary::after { content: '▾'; color: var(--clair-3); font-size: .8rem; }
+.pn-sec:not([open]) > summary::after { content: '▸'; }
+.pn-body { padding: 2px 16px 16px; }
+.pn-lab { display: flex; align-items: baseline; gap: 10px; font-size: .8rem; font-weight: 600; color: var(--clair-2); margin: 14px 0 6px; }
+.pn-body > .pn-lab:first-child { margin-top: 4px; }
+.pn-unit { font-family: var(--mono); font-size: .66rem; font-weight: 400; color: var(--clair-3); letter-spacing: .04em; }
+.pn-lab .pn-unit { margin-left: auto; }
+#nightLinks:not(:empty) { margin-left: auto; }
+#nightLinks:not(:empty) ~ .pn-unit, .pn-lab .lien ~ .pn-unit { margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--nuit-line); }
+.pn-lab .lien { font-size: .8rem; font-weight: 400; padding: 0; }
+.pn-lab .lien:first-of-type { margin-left: auto; }
+/* réglages : libellé | commande, même hauteur partout */
+.pn-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: 8px; margin: 8px 0 0; color: var(--clair-2); font-size: .84rem; font-weight: 600; }
+.pn-row select, .pn-row input[type=number] { width: 100%; min-width: 0; height: 34px; font-weight: 400; box-sizing: border-box; }
+.pn-row .seg { display: flex; }
+.pn-row .seg button { flex: 1; padding: 0 6px; height: 34px; min-height: 0; line-height: 1.1; }
+.pn-unite { display: flex; align-items: center; gap: 8px; }
+.pn-unite i { font-style: normal; font-weight: 400; color: var(--clair-3); }
+.pn-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 8px; }
+.pn-actions .btn { min-height: 34px; }
+.only-m { display: none !important; }
+#workspace { min-width: 0; padding: 0 24px 48px; }
+/* Bilan : chiffres clés + contexte de la sélection, en une bande compacte toujours visible */
+.bilan { position: sticky; top: var(--tabs-h); z-index: 800; background: var(--page); display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.bilan-n { display: flex; gap: 16px; flex: none; }
+.bilan-n span { font-size: .8rem; color: var(--text-2); white-space: nowrap; }
+.bilan-n b { font-family: var(--mono); font-size: 1.15rem; font-weight: 600; color: var(--ink); margin-right: 4px; }
+.bilan-ctx { margin: 0; flex: 1 1 320px; min-width: 0; font-family: var(--mono); font-size: .72rem; color: var(--text-2); padding-left: 16px; border-left: 1px solid var(--line); }
+.bilan-ctx .tr { background: var(--acc); color: #fff; padding: 1px 6px; margin-left: 4px; cursor: pointer; border: 0; font: inherit; }
+.tab[hidden] { display: none; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.grid-ov { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+
+/* ---------- Composants ---------- */
+.card { background: var(--card); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 16px; min-width: 0; }
+.card-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.card-h h2 { font-family: var(--serif); font-weight: 700; font-size: 1.08rem; margin: 0; }
+.card-h .tools { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.note { color: var(--text-3); font-size: .84rem; margin: 2px 0 12px; max-width: 75ch; }
+.hint { color: var(--text-3); font-size: .8rem; }
+select, input[type=number], input[type=search], input[type=text] { background: #fff; border: 1px solid var(--ctl); padding: 5px 8px; min-height: 36px; cursor: pointer; }
+input[type=number], input[type=search], input[type=text] { cursor: text; }
+select:hover, input:hover { border-color: var(--ink); }
+select:focus, input:focus { border-color: var(--acc); }
+.btn { background: #fff; border: 1px solid var(--ctl); color: var(--acc); font-weight: 600; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.btn:hover { border-color: var(--acc); background: var(--acc-soft); }
+.btn.primaire { background: var(--acc); border-color: var(--acc); color: #fff; }
+.btn.primaire:hover { filter: brightness(1.15); }
+.btn.petit { font-size: .78rem; padding: 3px 9px; min-height: 30px; font-family: var(--mono); font-weight: 500; letter-spacing: .04em; }
+.lien { background: none; border: 0; color: var(--acc); padding: 4px 0; cursor: pointer; font-size: .86rem; text-align: left; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--acc) 40%, transparent); text-underline-offset: 3px; }
+.lien:hover { text-decoration-color: var(--acc); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Interrupteurs (volet nocturne) : actif = aplat clair, comme allumé ; écarté = pointillé sombre barré */
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; min-height: 34px; border: 1px solid var(--clair); background: var(--clair); color: var(--nuit-0); cursor: pointer; user-select: none; font-size: .86rem; font-weight: 500; }
+.chip:hover { background: #ffffff; }
+.chip .sw { box-shadow: 0 0 0 1px var(--nuit-0); }
+.chip .cnt { font-family: var(--mono); font-size: .72rem; color: #4f5468; }
+.chip .x { color: #5f6480; padding: 0 0 0 5px; margin-left: 2px; border-left: 1px solid #b9bdd8; }
+.chip .x:hover { color: var(--nuit-0); }
+.chip.off { background: transparent; border: 1px dashed var(--nuit-ctl); color: var(--clair-3); text-decoration: line-through; text-decoration-color: var(--clair-3); font-weight: 400; }
+.chip.off:hover { border-style: solid; border-color: var(--clair); color: var(--clair); }
+.chip.off .sw { box-shadow: none; opacity: .45; }
+.chip.off .cnt, .chip.off .x { color: var(--clair-3); border-color: var(--nuit-line); }
+.sw { width: 10px; height: 10px; display: inline-block; flex: none; }
+.sw.hollow { background: transparent !important; border: 2px solid; }
+.seg { display: inline-flex; border: 1px solid var(--ink); }
+.seg button { background: #fff; border: 0; padding: 5px 10px; min-height: 34px; cursor: pointer; font-size: .84rem; color: var(--text-2); }
+.seg button:hover { background: var(--line-soft); color: var(--ink); }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-pressed="true"], .seg button[aria-pressed="true"]:hover { background: var(--ink); color: var(--page); }
+/* volet : nuits, sites et séries en listes alignées (une ligne par élément, nombre en colonne à droite) */
+#panel .chips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+#panel .chip { display: flex; gap: 9px; min-height: 34px; padding: 0 10px; }
+#panel .chip .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#panel .chip .cnt { flex: none; text-align: right; min-width: 3ch; }
+#panel .chip .ind { width: 10px; height: 10px; flex: none; border: 1.5px solid currentColor; background: currentColor; box-sizing: border-box; }
+#panel .chip.off { text-decoration: none; }
+#panel .chip.off .nm { text-decoration: line-through; text-decoration-color: var(--clair-3); }
+#panel .chip.off .ind { background: transparent; }
+#panel .seg { border-color: var(--nuit-ctl); }
+#panel .seg button { background: transparent; color: var(--clair-2); }
+#panel .seg button:hover { background: var(--nuit-3); color: var(--clair); }
+#panel .seg button + button { border-left-color: var(--nuit-ctl); }
+#panel .seg button[aria-pressed="true"] { background: var(--lune); color: var(--nuit-0); font-weight: 600; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--card); margin-bottom: 14px; }
+.kpi { padding: 8px 14px; border-left: 1px solid var(--line-soft); }
+.kpi:first-child { border-left: 0; }
+.kpi b { display: block; font-family: var(--mono); font-size: 1.25rem; font-weight: 500; line-height: 1.2; }
+.kpi span { font-size: .78rem; color: var(--text-3); }
+.empty { color: var(--text-3); padding: 30px 0; text-align: center; font-size: .9rem; }
+/* Réglages d'un graphique : bandeau distinct du contenu */
+.reglages { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--page); border: 1px solid var(--line); padding: 8px 10px; margin: 6px 0 12px; }
+.reglages > .repere { margin-right: 2px; }
+.reglages label { display: inline-flex; gap: 6px; align-items: center; font-size: .84rem; color: var(--text-2); }
+.reglages select { min-height: 34px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 4px 0 10px; color: var(--text-2); font-size: .82rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.mini { margin-bottom: 14px; }
+.col-ov { display: flex; flex-direction: column; min-width: 0; }
+.ciel-nuit { font-size: .84rem; font-weight: 600; margin: 10px 0 2px; display: flex; gap: 6px; align-items: center; }
+.lune-ic { flex: none; vertical-align: -2px; width: auto; display: inline; }
+/* les contrôles Leaflet (z-index 1000) restent dans leur carte, sous la bande de bilan collante */
+.leaflet-container { isolation: isolate; }
+.chip .lune-ic { margin-right: -2px; }
+.ciel-tbl td { white-space: nowrap; }
+.ciel-tbl th { white-space: normal; vertical-align: bottom; }
+.ciel-tbl tr.sel td { background: var(--acc-soft); }
+.ciel-tbl .num { font-family: var(--mono); text-align: right; }
+.ciel-tbl td, .ciel-tbl th { padding-left: 6px; padding-right: 6px; }
+.ciel-src { font-size: .74rem; color: var(--text-3); margin: 8px 0 0; }
+.mini h3 { font-size: .9rem; font-weight: 600; margin: 0 0 2px; display: flex; gap: 6px; align-items: center; }
+.mini h3 .tot { color: var(--text-3); font-weight: 400; font-family: var(--mono); font-size: .76rem; }
+.scroll { overflow-x: auto; }
+.exp-cap { display: none; color: var(--text-2); font-size: .8rem; margin: 0 0 8px; font-family: var(--mono); }
+.latin { font-style: italic; color: var(--text-3); }
+.spname { cursor: pointer; }
+
+/* Graphiques SVG */
+svg { display: block; width: 100%; overflow: visible; }
+.leaflet-container svg { width: auto; display: inline; }   /* calques Leaflet : garder leurs dimensions propres */
+svg text { fill: var(--text-3); font-size: 11px; font-family: var(--mono); }
+svg .lbl { fill: var(--text-2); font-family: var(--sans); font-size: 12px; }
+svg .val { fill: var(--ink); }
+svg [data-sp] { cursor: pointer; }
+svg [data-sp]:hover .lbl { fill: var(--acc); text-decoration: underline; }
+
+/* Carte */
+.mapbox { height: 520px; border: 1px solid var(--line-soft); }
+.site-ic { border: 2px solid; }
+.site-ic.zero { background: transparent !important; border-style: dashed; }
+.srm { position: relative; }
+.srm svg { overflow: visible; }
+.gps { position: absolute; width: 7px; height: 7px; background: var(--ink); border: 1.5px solid var(--card); }
+.site-lbl { background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 0 5px; font: 12px/16px var(--sans); white-space: nowrap; display: inline-block; }
+.site-lbl b { font-family: var(--mono); font-weight: 500; font-size: 11px; }
+.leaflet-container { font-family: var(--sans); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { border-radius: 0; box-shadow: none; border: 1px solid var(--ink); }
+.leaflet-bar, .leaflet-control-layers { border-radius: 0 !important; box-shadow: none !important; border: 1px solid var(--ink) !important; }
+.leaflet-bar a { border-radius: 0 !important; }
+
+/* Infobulle */
+#tip { position: fixed; pointer-events: none; z-index: 9999; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 6px 9px; font-size: .8rem; display: none; max-width: 320px; }
+#tip .t { font-weight: 600; margin-bottom: 2px; }
+#tip .r { display: flex; gap: 6px; align-items: center; color: var(--text-2); }
+#tip .r b { color: var(--ink); margin-left: auto; padding-left: 12px; font-family: var(--mono); font-weight: 500; }
+
+/* Tableaux */
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line-soft); }
+th { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); font-weight: 500; position: sticky; top: 0; background: var(--card); }
+td.n, th.n { text-align: right; font-family: var(--mono); }
+.tablewrap { max-height: 560px; overflow: auto; }
+.row-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+#drop { border: 1px dashed var(--line-chantier); background: var(--page-chantier); padding: 22px; text-align: center; color: var(--text-2); cursor: pointer; }
+#drop.over { border-color: var(--acc); border-style: solid; color: var(--ink); }
+dl.fiche-camp { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; font-size: .9rem; }
+dl.fiche-camp dt { color: var(--text-3); }
+dl.fiche-camp dd { margin: 0; }
+
+/* Dialogues (choix des espèces, fiche espèce) */
+dialog { border: 1px solid var(--ink); padding: 0; background: var(--card); color: var(--ink); width: min(920px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(25, 27, 22, .45); }
+.dlg-h { display: flex; align-items: baseline; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); z-index: 2; }
+.dlg-h h2 { font-family: var(--serif); margin: 0; font-size: 1.2rem; }
+.dlg-h .close { margin-left: auto; background: none; border: 1px solid var(--line); min-width: 36px; min-height: 36px; cursor: pointer; font-size: 1rem; }
+.dlg-b { padding: 16px 18px; }
+#pkList { max-height: 50vh; overflow: auto; border: 1px solid var(--line); padding: 4px 0; columns: 2 260px; }
+#pkList .grp { break-inside: avoid; }
+#pkList label { display: flex; align-items: center; gap: 8px; padding: 3px 10px; cursor: pointer; font-size: .88rem; min-height: 30px; }
+#pkList label:hover { background: var(--page); }
+#pkList label .n { margin-left: auto; color: var(--text-3); font-family: var(--mono); font-size: .74rem; }
+.pk-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; }
+.pk-side { display: flex; flex-direction: column; gap: 8px; }
+.fiche-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; }
+.fiche-grid h3, .dlg-b h3 { margin: 6px 0 6px; }
+
+/* Simulation */
+.sim-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.sim-params { margin-bottom: 10px; }
+.sim-params summary { cursor: pointer; color: var(--text-2); font-size: .88rem; }
+.sim-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.sim-grid fieldset { border: 1px solid var(--line); padding: 6px 10px 8px; display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+.sim-grid legend { font-weight: 600; padding: 0 4px; font-size: .86rem; }
+.sim-grid label { color: var(--text-2); display: flex; gap: 6px; align-items: center; font-size: .84rem; }
+.sim-grid input[type=number] { width: 70px; min-height: 30px; }
+.sim-wrap { position: relative; height: 540px; border: 1px solid var(--line-soft); overflow: hidden; }
+#simMap { position: absolute; inset: 0; }
+#simCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 450; }
+#simClock { position: absolute; top: 10px; left: 56px; z-index: 460; background: var(--card); border: 1px solid var(--ink); padding: 4px 12px; display: flex; flex-direction: column; pointer-events: none; }
+#simClock b { font-family: var(--mono); font-size: 1.7rem; font-weight: 500; line-height: 1.1; }
+#simClock span { font-size: .78rem; color: var(--text-2); }
+#simLegend { position: absolute; bottom: 22px; left: 10px; z-index: 460; background: var(--card); border: 1px solid var(--ink); padding: 4px 10px; font-size: .78rem; display: flex; flex-direction: column; gap: 2px; pointer-events: none; }
+#simLegend span { display: inline-flex; gap: 6px; align-items: center; }
+#simCurve { margin-top: 8px; cursor: ew-resize; touch-action: none; }
+
+/* ---------- Téléphone et tablette : la sélection devient un tiroir ---------- */
+.grid-sp { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; }
+@media (max-width: 1000px) {
+  .grid-ov, .grid2, .grid-sp, .fiche-grid, .pk-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  :root { --tabs-h: 48px; }
+  .tabs { margin: 0 -16px; }
+  .pn-head { height: auto; padding: 12px 16px; }
+  .tabs button { padding: 0 14px; font-size: .9rem; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  #panel { position: fixed; inset: 0 auto 0 0; top: 0; height: 100vh; width: min(360px, 92vw); z-index: 1200; transform: translateX(-100%); transition: transform .2s; border-right: 1px solid var(--nuit-line); }
+  body.pn-open #panel { transform: none; }
+  body.pn-open::after { content: ''; position: fixed; inset: 0; background: rgba(15,18,36,.55); z-index: 1100; }
+  .only-m { display: inline-flex !important; }
+  #workspace { padding: 0 16px 40px; }
+  .bilan-ctx { padding-left: 0; border-left: 0; flex-basis: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .bilan-n { gap: 12px; }
+  .mapbox { height: 360px; }
+  .sim-wrap { height: 420px; }
+  .titre .sous-titre { display: block; margin: 0; }
+  .app-header { gap: 10px; }
+  .titre { flex: 1 1 0; min-width: 0; font-size: 1.15rem; }
+  .camps { flex-basis: 100%; margin-left: 0; }
+  .camps button { flex: 1; }
+  .portail-lien { border-right: 0; }
+  .app-logo { width: 44px; height: 33px; }
+  #pnOpen { white-space: nowrap; flex: none; }
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
+  <span class="logo-wrap" title="Sonogramme réel : cri en vol (« tsip ») d'une Grive musicienne, enregistré de nuit le 15 octobre 2025 (4,5 – 10,5 kHz, 0,03 s)"><svg class="app-logo" viewBox="0 0 36 27" fill="none" aria-hidden="true"><path d="M4 1v23h31" stroke="currentColor" stroke-width=".8" opacity=".55"/><path d="M2 3h2M2 9h2M2 15h2M2 21h2" stroke="currentColor" stroke-width=".8" opacity=".55"/><svg x="7" y="1" width="28" height="22" viewBox="0 0 28 22" fill="currentColor" shape-rendering="crispEdges"><path d="M5 2h4v1h-4zM3 3h2v1h-2zM8 3h2v1h-2zM2 4h4v1h-4zM8 4h2v1h-2zM2 5h1v1h-1zM8 5h3v1h-3zM1 6h3v1h-3zM8 6h4v1h-4zM0 7h4v1h-4zM9 7h4v1h-4zM0 8h3v1h-3zM9 8h2v1h-2zM12 8h2v1h-2zM0 9h3v1h-3zM9 9h1v1h-1zM13 9h2v1h-2zM0 10h2v1h-2zM9 10h2v1h-2zM14 10h1v1h-1zM10 11h1v1h-1zM14 11h1v1h-1zM10 12h1v1h-1zM14 12h1v1h-1zM10 13h1v1h-1zM15 13h1v1h-1zM10 14h1v1h-1zM16 14h1v1h-1zM11 15h1v1h-1zM16 15h1v1h-1zM11 16h1v1h-1zM18 16h7v1h-7zM23 17h1v1h-1zM12 18h1v1h-1zM23 18h1v1h-1zM13 19h1v1h-1zM22 19h2v1h-2zM15 20h5v1h-5z" opacity=".3"/><path d="M5 3h3v1h-3zM11 8h1v1h-1zM10 9h3v1h-3zM11 10h3v1h-3zM11 11h3v1h-3zM11 12h3v1h-3zM11 13h4v1h-4zM11 14h5v1h-5zM12 15h4v1h-4zM12 16h1v1h-1zM16 16h2v1h-2zM12 17h1v1h-1zM18 17h5v1h-5zM13 18h1v1h-1zM22 18h1v1h-1zM14 19h1v1h-1zM20 19h2v1h-2z" opacity=".62"/><path d="M13 16h3v1h-3zM13 17h5v1h-5zM14 18h8v1h-8zM15 19h5v1h-5z"/></svg></svg></span>
+  <div class="titre">NOCMIG<small>Analyse d'enregistrements de migration nocturne d'oiseaux issus d'un traitement par <a href="https://chirpity.net/" target="_blank" rel="noopener">Chirpity ↗</a></small></div>
+  <div class="camps" id="camps" role="group" aria-label="Campagne"></div>
+</header>
+
+<div class="layout">
+  <!-- ======== Panneau de sélection, commun à tous les onglets ======== -->
+  <aside id="panel" aria-label="Sélection">
+    <div class="pn-head"><span class="repere">Sélection</span><button class="btn petit" id="pnReset" title="Revenir aux réglages par défaut de la campagne">⟲ Réinitialiser</button><button class="btn petit only-m" id="pnClose">✕</button></div>
+    <div class="pn-tranche" id="trSec" hidden>
+      <span class="repere">Tranche horaire isolée</span>
+      <b id="trLabel"></b>
+      <button class="btn petit" id="trClear">✕ Revenir à toute la nuit</button>
+    </div>
+    <details class="pn-sec" open>
+      <summary><span class="pn-num">1</span><span class="pn-tit">Quand</span><span class="pn-val" id="valQuand"></span></summary>
+      <div class="pn-body">
+        <div class="pn-lab">Nuits <span id="nightLinks"></span><span class="pn-unit"></span></div>
+        <div class="chips" id="nightChips"></div>
+        <label class="pn-row"><span>Plage</span><select id="fWin">
+          <option value="all">Toute la session</option>
+          <option value="night" selected>Coucher → lever</option>
+          <option value="astro">Nuit noire</option>
+        </select></label>
+        <div class="pn-row"><span>Axe horaire</span><div class="seg" id="fAxis">
+          <button data-v="clock" aria-pressed="true">Heure</button><button data-v="rel" aria-pressed="false">Après coucher</button>
+        </div></div>
+        <p class="hint" id="axisHint" style="margin:6px 0 0"></p>
+      </div>
+    </details>
+    <details class="pn-sec" open>
+      <summary><span class="pn-num">2</span><span class="pn-tit">Où</span><span class="pn-val" id="valOu"></span></summary>
+      <div class="pn-body">
+        <div class="pn-lab">Sites <button class="lien" id="sitesAll">tous</button><button class="lien" id="sitesNone">aucun</button><span class="pn-unit"></span></div>
+        <div class="chips" id="siteChips"></div>
+      </div>
+    </details>
+    <details class="pn-sec" open>
+      <summary><span class="pn-num">3</span><span class="pn-tit">Quoi</span><span class="pn-val" id="valQuoi"></span></summary>
+      <div class="pn-body">
+        <div class="pn-lab">Séries <button class="lien" id="srCats" title="Revenir aux 4 catégories">catégories</button><button class="lien" id="srClear" title="Retirer toutes les séries">aucune</button><span class="pn-unit"></span></div>
+        <div class="chips" id="srChips"></div>
+        <div class="pn-actions">
+          <button class="btn lune" id="pkOpen">+ Ajouter des espèces…</button>
+        </div>
+        <p class="hint" style="margin:6px 0 0">Clic : masquer ou afficher · ✕ : retirer · 8 séries au plus.</p>
+      </div>
+    </details>
+    <details class="pn-sec" open>
+      <summary><span class="pn-num">4</span><span class="pn-tit">Comptage</span><span class="pn-val" id="valCompte"></span></summary>
+      <div class="pn-body">
+        <label class="pn-row"><span>Compter</span><select id="fMetric">
+          <option value="det">Détections (3 s)</option>
+          <option value="contact" selected>Contacts</option>
+          <option value="minute">Minutes positives</option>
+        </select></label>
+        <label class="pn-row" id="gapWrap"><span>Fusion si ≤</span><span class="pn-unite"><input id="fGap" type="number" min="3" max="600" step="3" value="30"><i>s</i></span></label>
+        <label class="pn-row"><span>Confiance ≥</span><input id="fConf" type="number" min="0" max="1" step="0.05" value="0.6"></label>
+        <p class="hint" style="margin:6px 0 0">Contact : détections successives d'une même espèce sur un même site, fusionnées si moins de N s les séparent.</p>
+      </div>
+    </details>
+  </aside>
+
+  <!-- ======== Espace de travail ======== -->
+  <div id="workspace">
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="ov" aria-selected="true"><span class="tn">01</span>Vue d'ensemble</button>
+      <button role="tab" data-tab="sp" aria-selected="false"><span class="tn">02</span>Espèces</button>
+      <button role="tab" data-tab="ch" aria-selected="false"><span class="tn">03</span>Chronologie</button>
+      <button role="tab" data-tab="sim" aria-selected="false"><span class="tn">04</span>Simulation</button>
+      <button role="tab" data-tab="me" aria-selected="false"><span class="tn">05</span>Méthode</button>
+      <button role="tab" data-tab="da" aria-selected="false"><span class="tn">06</span>Données</button>
+    </nav>
+    <div class="bilan" aria-live="polite">
+      <button class="btn petit only-m" id="pnOpen" aria-controls="panel" aria-expanded="false">▾ Sélection</button>
+      <div class="bilan-n" id="bilanN"></div>
+      <p class="bilan-ctx" id="resume"></p>
+    </div>
+
+    <!-- Vue d'ensemble -->
+    <section class="tab" id="tab-ov" role="tabpanel">
+      <div class="grid-ov">
+        <section class="card exportable" id="cMap" data-name="carte">
+          <div class="card-h"><h2>Carte des spots</h2>
+            <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
+          </div>
+          <div class="reglages noexp"><span class="repere">Réglages</span>
+            <label>Symbole <span class="seg" id="mapMode"><button data-v="cols" aria-pressed="false">Colonnes par série</button><button data-v="circ" aria-pressed="true">Cercle total</button></span></label>
+          </div>
+          <p class="exp-cap"></p>
+          <p class="note noexp" id="mapInfo"></p>
+          <div id="map" class="mapbox"></div>
+        </section>
+        <div class="col-ov">
+        <section class="card exportable" id="cHist" data-name="activite">
+          <div class="card-h"><h2>Activité au fil de la nuit</h2>
+            <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
+          </div>
+          <div class="reglages noexp"><span class="repere">Réglages</span>
+            <label>Pas <select id="srStep"><option value="10">10 min</option><option value="15">15 min</option><option value="30" selected>30 min</option><option value="60">1 h</option><option value="120">2 h</option></select></label>
+            <label>Affichage <select id="srMode"><option value="multi">un graphique par série</option><option value="stack" selected>séries empilées</option><option value="group">séries côte à côte</option><option value="site">empilé par site</option></select></label>
+            <label id="srScaleWrap" style="display:none">Échelle <select id="srScale"><option value="own">propre à chaque série</option><option value="common">commune</option></select></label>
+          </div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Bande grisée : soleil sous l'horizon. Cliquez sur une barre pour isoler cette tranche horaire dans toute l'app.</p>
+          <div id="series"></div>
+        </section>
+        <section class="card exportable" id="cCiel" data-name="ciel_meteo">
+          <div class="card-h"><h2>Ciel et météo</h2>
+            <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
+          </div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Même axe horaire que l'activité ci-dessus. Lune calculée (position et éclairement) ; météo heure par heure au barycentre des sites. Survolez une heure pour le détail.</p>
+          <p class="note" id="cielLieu"></p>
+          <div id="ciel"></div>
+          <div class="tablewrap"><table class="ciel-tbl" id="cielTbl"></table></div>
+          <p class="ciel-src">Météo : <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), réanalyse ERA5 et modèles. Pluie = cumul de l'heure écoulée ; vent à 10 m : flèche dans le sens où il souffle, lettres = d'où il vient (NE = vent de nord-est).</p>
+        </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- Espèces -->
+    <section class="tab" id="tab-sp" role="tabpanel" hidden>
+      <div class="grid-sp">
+        <section class="card exportable" id="cBars" data-name="especes">
+          <div class="card-h"><h2>Espèces</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Couleur = série ; barre vide = identification douteuse. Cliquez sur une espèce pour ouvrir sa fiche.</p>
+          <div id="bars"></div>
+        </section>
+        <section class="card exportable" id="cHeat" data-name="especes_sites">
+          <div class="card-h"><h2>Espèces × sites</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Intensité = valeur de la cellule (échelle logarithmique).</p>
+          <div class="scroll" id="heat"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Chronologie -->
+    <section class="tab" id="tab-ch" role="tabpanel" hidden>
+      <section class="card exportable" id="cChrono" data-name="chronogramme">
+        <div class="card-h"><h2>Chronogramme</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+        <div class="reglages noexp"><span class="repere">Réglages</span>
+          <label>Représentation <span class="seg" id="chMode"><button data-v="dens" aria-pressed="true">Densité</button><button data-v="ticks" aria-pressed="false">Un trait par contact</button></span></label>
+        </div>
+        <p class="exp-cap"></p>
+        <p class="note noexp" id="chNote"></p>
+        <div class="legend" id="chronoLegend"></div>
+        <div class="scroll" id="chrono"></div>
+      </section>
+      <section class="card exportable" id="cSites" data-name="activite_par_site">
+        <div class="card-h"><h2>Activité par site</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+        <div class="reglages noexp"><span class="repere">Réglages</span>
+          <label>Pas <select id="stStep"><option value="30">30 min</option><option value="60" selected>1 h</option><option value="120">2 h</option></select></label>
+          <label>Échelle <select id="stScale"><option value="common">commune</option><option value="own">propre à chaque site</option></select></label>
+        </div>
+        <p class="exp-cap"></p>
+        <div class="legend" id="sitesLegend"></div>
+        <div id="siteHists"></div>
+      </section>
+    </section>
+
+    <!-- Simulation -->
+    <section class="tab" id="tab-sim" role="tabpanel" hidden>
+      <section class="card exportable" id="cSim" data-name="simulation">
+        <div class="card-h"><h2>Simulation de la nuit</h2><div class="tools noexp"><button class="btn petit png" title="Image de l'instant affiché">⬇ PNG</button></div></div>
+        <p class="exp-cap"></p>
+        <p class="note noexp">Les contacts de la sélection apparaissent au fil de la nuit, en accéléré. Les points sont dispersés autour du spot pour rester lisibles : leur position autour du spot ne signifie rien.</p>
+        <div class="sim-bar reglages noexp">
+          <button class="btn primaire" id="simPlay" style="min-width:110px">▶ Lecture</button>
+          <button class="btn" id="simRestart" title="Revenir au début">⟲</button>
+          <input id="simSlider" type="range" min="0" max="1000" value="0" style="flex:1;min-width:120px" aria-label="Instant de la nuit">
+          <label>1 h de nuit = <select id="simSpeed"><option value="2">2 s</option><option value="5" selected>5 s</option><option value="10">10 s</option><option value="20">20 s</option></select></label>
+          <button class="btn" id="simRec">⏺ Enregistrer la vidéo</button>
+        </div>
+        <details class="sim-params noexp">
+          <summary>Paramètres d'affichage</summary>
+          <div class="sim-grid">
+            <fieldset><legend><label><input type="checkbox" id="pPulse" checked> Impulsions</label></legend>
+              <label>Rémanence <input type="number" id="pRem" value="30" min="1" max="240"> min</label>
+              <label>Dispersion <input type="number" id="pDisp" value="10" min="0" max="80"> px</label>
+              <label>Taille <input type="number" id="pSize" value="10" min="2" max="14"> px</label>
+            </fieldset>
+            <fieldset><legend><label><input type="checkbox" id="pCum"> Cumul de la nuit</label></legend>
+              <label>Hauteur max <input type="number" id="pCumH" value="70" min="20" max="200"> px</label>
+            </fieldset>
+            <fieldset><legend><label><input type="checkbox" id="pHeat"> Chaleur glissante</label></legend>
+              <label>Fenêtre <input type="number" id="pWin" value="30" min="5" max="240"> min</label>
+              <label>Rayon max <input type="number" id="pHeatR" value="60" min="10" max="200"> px</label>
+              <label>Opacité <input type="number" id="pHeatA" value="0.6" min="0.1" max="1" step="0.1"></label>
+            </fieldset>
+            <fieldset><legend>Fond</legend>
+              <label><input type="checkbox" id="pNames" checked> Noms des spots</label>
+              <label><input type="checkbox" id="pDim"> Assombrir la nuit</label>
+            </fieldset>
+          </div>
+        </details>
+        <div class="sim-wrap">
+          <div id="simMap"></div>
+          <canvas id="simCanvas"></canvas>
+          <div id="simClock"><b id="simTime">--h--</b><span id="simPhase"></span><span id="simCiel"></span></div>
+          <div id="simLegend"></div>
+        </div>
+        <div id="simCurve"></div>
+        <p class="hint noexp" id="simMsg"></p>
+      </section>
+    </section>
+
+    <!-- Méthode : courbes pédagogiques -->
+    <section class="tab" id="tab-me" role="tabpanel" hidden>
+      <section class="card exportable" id="cRich" data-name="richesse_cumulee">
+        <div class="card-h"><h2>Richesse cumulée au fil de la nuit</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+        <p class="exp-cap"></p>
+        <p class="note noexp">Nombre d'espèces différentes déjà contactées à chaque instant, par site et tous sites confondus. Tant que la courbe monte, chaque heure d'écoute apporte des espèces nouvelles ; quand elle s'aplatit, l'inventaire de la nuit approche de sa limite.</p>
+        <div class="legend" id="richLegend"></div>
+        <div id="rich"></div>
+      </section>
+      <div class="grid2">
+        <section class="card exportable" id="cSeuil" data-name="effet_du_seuil">
+          <div class="card-h"><h2>Effet du seuil de confiance</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Ce que l'on garde selon le seuil choisi. Un seuil bas garde plus d'espèces mais aussi plus d'erreurs de l'algorithme. Trait indigo : seuil actuel. Cliquez sur un graphique pour appliquer un autre seuil.</p>
+          <div id="seuil"></div>
+        </section>
+        <section class="card exportable" id="cConf" data-name="scores_de_confiance">
+          <div class="card-h"><h2>Distribution des scores de confiance</h2><div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div></div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Détections brutes des séries affichées, par tranche de 0,05. Trait indigo : seuil actuel ; en gris, les détections qu'il écarte.</p>
+          <div id="confHist"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Données -->
+    <section class="tab" id="tab-da" role="tabpanel" hidden>
+      <div class="grid2">
+        <section class="card">
+          <div class="card-h"><h2>Campagne affichée</h2></div>
+          <dl class="fiche-camp" id="campInfo"></dl>
+        </section>
+        <section class="card">
+          <div class="card-h"><h2>Importer d'autres nuits</h2></div>
+          <p class="note">CSV exportés par Chirpity ou BirdNET (un fichier par spot, colonnes <code>File</code>, <code>Start (s)</code>, <code>Common name</code>, <code>Confidence</code>…). Les fichiers restent dans ce navigateur : rien n'est envoyé.</p>
+          <div id="drop">Glisser-déposer les CSV ici, ou <u>cliquer pour choisir</u>
+            <input id="file" type="file" accept=".csv" multiple hidden>
+          </div>
+          <p class="hint" id="loaded"></p>
+        </section>
+      </div>
+      <section class="card">
+        <div class="card-h"><h2>Tri des espèces en catégories</h2></div>
+        <p class="note">Les catégories sont préremplies pour un début octobre sur le littoral morbihannais. Elles alimentent les séries « catégorie ». Modifiez-les selon votre expertise : elles sont mémorisées dans ce navigateur et exportables.</p>
+        <div class="row-tools">
+          <input id="spSearch" type="search" placeholder="⌕ Rechercher une espèce…" style="flex:1;min-width:180px">
+          <button class="btn" id="expCfg">⬇ Tri + séries (JSON)</button>
+          <button class="btn" id="impCfg">Importer…</button><input id="impFile" type="file" accept=".json" hidden>
+          <button class="btn" id="resetCfg">Réinitialiser le tri</button>
+          <button class="btn" id="expCsv">⬇ Synthèse (CSV)</button>
+        </div>
+        <div class="tablewrap"><table id="spTable"></table></div>
+      </section>
+    </section>
+  </div>
+</div>
+
+<!-- Choix des espèces -->
+<dialog id="pkDlg" aria-labelledby="pkTitle">
+  <div class="dlg-h"><h2 id="pkTitle">Ajouter des espèces</h2><button class="close" data-close>✕</button></div>
+  <div class="dlg-b pk-grid">
+    <div>
+      <div class="row-tools">
+        <input id="pkSearch" type="search" placeholder="⌕ Filtrer la liste…" style="flex:1;min-width:0">
+        <button class="btn petit" id="pkAll">Tout cocher</button>
+        <button class="btn petit" id="pkNone">Aucune</button>
+      </div>
+      <div id="pkList"></div>
+      <p class="hint" style="margin:6px 0 0">Chiffre à droite : détections brutes des nuits choisies, avant filtres.</p>
+    </div>
+    <div class="pk-side">
+      <input id="grpName" type="text" placeholder="Nom du groupe (facultatif)">
+      <button class="btn primaire" id="addGroup">Ajouter les espèces cochées comme un groupe</button>
+      <button class="btn" id="addEach">Une série par espèce cochée</button>
+      <label class="hint">Ajouter une catégorie entière<br><select id="addCat" style="width:100%;margin-top:4px"></select></label>
+      <p class="hint" id="pkMsg"></p>
+    </div>
+  </div>
+</dialog>
+
+<!-- Fiche espèce -->
+<dialog id="fiche" aria-labelledby="fcTitle">
+  <div class="dlg-h"><h2 id="fcTitle"></h2><span class="latin" id="fcLatin"></span><button class="close" data-close>✕</button></div>
+  <div class="dlg-b" id="fcBody"></div>
+</dialog>
+
+<div id="tip"></div>
+
+<script>
+// =====================================================================
+// Référentiels
+// =====================================================================
+const CATS = {
+  mig:  { label: 'Passereau migrateur', color: '--s1' },
+  eau:  { label: "Oiseau d'eau / limicole", color: '--s2' },
+  loc:  { label: 'Local / résident', color: '--s3' },
+  dout: { label: 'Identification douteuse', color: '--s4', hollow: true },
+  nc:   { label: 'Non classé', color: '--gray' },
+  excl: { label: 'Exclu', color: '--gray' },
+};
+const CAT_ORDER = ['mig', 'eau', 'loc', 'dout', 'nc', 'excl'];
+const SLOT_COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7', '--s8'];
+
+// Tri par défaut (nom commun exact → catégorie)
+const DEFAULT_CATS = {
+  'Pipit farlouse (call)':'mig','Grive musicienne (call)':'mig','Grive mauvis (call)':'mig','Alouette des champs (call)':'mig',
+  'Alouette lulu (song)':'mig','Rougegorge familier (flight call)':'mig','Accenteur mouchet (call)':'mig','Linotte mélodieuse':'mig',
+  'Tarin des aulnes':'mig','Pinson des arbres (call)':'mig','Chardonneret élégant (call)':'mig','Bergeronnette printanière':'mig',
+  'Bergeronnette des ruisseaux (call)':'mig','Merle noir (call)':'mig','Pipit maritime':'mig',
+  'Héron cendré':'eau','Goéland argenté':'eau','Goéland marin':'eau','Goéland leucophée':'eau','Mouette rieuse':'eau',
+  'Cygne tuberculé':'eau','Grand Cormoran':'eau','Grèbe castagneux':'eau','Sterne caugek':'eau','Chevalier guignette':'eau',
+  'Chevalier cul-blanc':'eau','Pluvier argenté':'eau','Pluvier doré':'eau','Pluvier grand-gravelot':'eau','Courlis cendré':'eau',
+  'Courlis corlieu':'eau','Bécasseau variable':'eau','Bécassine des marais':'eau','Canard siffleur':'eau','Bernache cravant':'eau',
+  'Macreuse noire':'eau',"Martin-pêcheur d'Europe":'eau',
+  'Rougegorge familier (call)':'loc','Rougegorge familier (song)':'loc','Troglodyte mignon (call)':'loc','Chouette hulotte':'loc',
+  'Corneille noire':'loc','Tarier pâtre (call)':'loc','Bergeronnette grise':'loc','Tourterelle turque':'loc','Bouscarle de Cetti (song)':'loc',
+  'Mésange huppée (call)':'loc','Accenteur mouchet (song)':'loc','Buse variable':'loc','Pigeon ramier':'loc','Alouette des champs (song)':'loc',
+  "Grand-duc d'Europe":'dout','Grand Harle':'dout','Perdrix rouge (song)':'dout','Bihoreau gris':'dout','Gobemouche gris':'dout',
+  // Base finale de la classe 2026 (types de cri fusionnés)
+  'Rougegorge familier':'mig','Grive musicienne':'mig','Pouillot véloce':'mig','Pipit farlouse':'mig','Accenteur mouchet':'mig',
+  'Alouette des champs':'mig','Gros-bec casse-noyaux':'mig','Grive mauvis':'mig','Serin cini (call)':'mig','Pipit des arbres':'mig',
+  'Bécasse des bois':'mig','Rémiz penduline':'mig','Bruant jaune (call)':'mig','Grive litorne (call)':'mig','Pinson du Nord':'mig',
+  'Aigrette garzette':'eau','Mouette sp.':'eau',"Gallinule poule-d'eau":'eau','Chevalier sylvain':'eau','Chevalier aboyeur':'eau',
+  'Canard chipeau':'eau','Huîtrier pie':'eau','Fuligule milouin':'eau',
+  'Tarier pâtre':'loc','Mésange charbonnière':'loc','Mésange bleue (call)':'loc','Orite à longue queue':'loc',
+  'Butor étoilé (call)':'dout','Bécasseau à poitrine cendrée':'dout',
+  // Base commune 2025 (BirdNET)
+  'Pinson des arbres':'mig','Merle noir':'mig','Pipit spioncelle':'mig','Chardonneret élégant':'mig',"Verdier d'Europe":'mig',
+  'Bruant des roseaux':'mig','Roitelet triple-bandeau':'mig','Bergeronnette des ruisseaux':'mig','Traquet motteux':'mig','Serin cini':'mig',
+  'Vanneau huppé':'eau','Foulque macroule':'eau',"Sarcelle d'hiver":'eau','Pluvier petit-gravelot':'eau',"Râle d'eau":'eau',
+  'Chevalier gambette':'eau','Barge rousse':'eau',
+  'Mésange bleue':'loc','Mésange noire':'loc',
+  'Pic épeiche':'dout','Pipit à gorge rousse':'dout',
+};
+const ETEL = { lat: 47.656, lon: -3.205 };   // repli si aucun site n'a de coordonnées
+let SUN = { ...ETEL };                       // position utilisée pour le coucher et le lever du soleil
+const DEFAULT_SERIES = () => ['mig', 'eau', 'loc', 'dout'].map((c, i) => ({ name: CATS[c].label, cat: c, species: [], slot: i, on: true }));
+
+// =====================================================================
+// Utilitaires
+// =====================================================================
+const $ = id => document.getElementById(id);
+const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const virg = (v, d = 2) => v.toFixed(d).replace('.', ',');
+const resolveVar = v => v.startsWith('var(') ? cssv(v.slice(4, -1)) : v;
+function hexA(c, a) {
+  c = c.trim();
+  if (c.startsWith('#')) { const h = c.length === 4 ? c.slice(1).split('').map(x => x + x).join('') : c.slice(1, 7); return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`; }
+  return c;
+}
+function niceTicks(max) {
+  const p = Math.pow(10, Math.floor(Math.log10(max)));
+  const step = p * ([1, 2, 5, 10].find(m => max / (p * m) <= 5) || 10);
+  const t = []; for (let v = 0; v <= max + 1e-9; v += step) t.push(Math.round(v)); return t;
+}
+const EMPTY = '<div class="empty">Aucune donnée pour cette sélection.</div>';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+
+// =====================================================================
+// Configuration mémorisée (tri des espèces, séries, positions manuelles)
+// =====================================================================
+const STORE_KEY = 'nocmig-eil-v1';
+let cfg = loadCfg();
+function loadCfg() {
+  const c = store.get(STORE_KEY, null);
+  if (c && c.cats && c.pos) { if (!c.groups) c.groups = DEFAULT_SERIES(); return c; }
+  return { cats: {}, pos: {}, groups: DEFAULT_SERIES(), groupsInit: true };
+}
+const saveCfg = () => store.set(STORE_KEY, cfg);
+const catOf = sp => cfg.cats[sp] || DEFAULT_CATS[sp] || 'nc';
+const slotVar = g => `var(${SLOT_COLORS[g.slot]})`;
+
+// =====================================================================
+// Soleil (algorithme NOAA simplifié)
+// =====================================================================
+function sunTimesUTC(y, m, d, lat, lon, zenith) {
+  const rad = Math.PI / 180;
+  const N = Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 864e5);
+  const g = 2 * Math.PI / 365 * (N - 1);
+  const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const ha = Math.acos(Math.cos(zenith * rad) / (Math.cos(lat * rad) * Math.cos(decl)) - Math.tan(lat * rad) * Math.tan(decl)) / rad;
+  return [720 - 4 * (lon + ha) - eq, 720 - 4 * (lon - ha) - eq];
+}
+function parisOffsetMin(y, m, d) {
+  const h = +new Date(Date.UTC(y, m - 1, d, 12)).toLocaleString('en-GB', { timeZone: 'Europe/Paris', hour: '2-digit', hour12: false });
+  return (h - 12) * 60;
+}
+// minutes depuis midi du soir de la nuit, pour le coucher (soir) et le lever (matin)
+const sunCache = new Map();
+function nightSun(nightDate, zenith) {
+  const key = nightDate + '|' + zenith + '|' + SUN.lat.toFixed(3) + '|' + SUN.lon.toFixed(3); if (sunCache.has(key)) return sunCache.get(key);
+  const [y, m, d] = nightDate.split('-').map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  const ny = next.getUTCFullYear(), nm = next.getUTCMonth() + 1, nd = next.getUTCDate();
+  const set = sunTimesUTC(y, m, d, SUN.lat, SUN.lon, zenith)[1] + parisOffsetMin(y, m, d) - 720;
+  const rise = sunTimesUTC(ny, nm, nd, SUN.lat, SUN.lon, zenith)[0] + parisOffsetMin(ny, nm, nd) + 720;
+  const r = { set, rise }; sunCache.set(key, r); return r;
+}
+// ---- Lune : position et éclairement (formules basse précision de l'Astronomical Almanac, ~0,3°) ----
+const D2R = Math.PI / 180, jdOf = ms => ms / 864e5 + 2440587.5;
+function moonEcl(ms) {
+  const T = (jdOf(ms) - 2451545) / 36525, s = x => Math.sin(x * D2R), c = x => Math.cos(x * D2R);
+  const lam = 218.32 + 481267.881 * T + 6.29 * s(134.9 + 477198.85 * T) - 1.27 * s(259.2 - 413335.38 * T) + 0.66 * s(235.7 + 890534.23 * T)
+    + 0.21 * s(269.9 + 954397.70 * T) - 0.19 * s(357.5 + 35999.05 * T) - 0.11 * s(186.6 + 966404.05 * T);
+  const bet = 5.13 * s(93.3 + 483202.03 * T) + 0.28 * s(228.2 + 960400.87 * T) - 0.28 * s(318.3 + 6003.18 * T) - 0.17 * s(217.6 - 407332.20 * T);
+  const par = 0.9508 + 0.0518 * c(134.9 + 477198.85 * T) + 0.0095 * c(259.2 - 413335.38 * T) + 0.0078 * c(235.7 + 890534.23 * T) + 0.0028 * c(269.9 + 954397.70 * T);
+  return { lam, bet, par };
+}
+function sunLon(ms) { const d = jdOf(ms) - 2451545, g = (357.528 + 0.9856003 * d) * D2R; return 280.46 + 0.9856474 * d + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g); }
+// hauteur topocentrique de la Lune (degrés)
+function moonAlt(ms, lat, lon) {
+  const { lam, bet, par } = moonEcl(ms), e = 23.439 * D2R, l = lam * D2R, b = bet * D2R;
+  const x = Math.cos(b) * Math.cos(l), y = Math.cos(e) * Math.cos(b) * Math.sin(l) - Math.sin(e) * Math.sin(b), z = Math.sin(e) * Math.cos(b) * Math.sin(l) + Math.cos(e) * Math.sin(b);
+  const ra = Math.atan2(y, x), dec = Math.asin(z), H = (280.46061837 + 360.98564736629 * (jdOf(ms) - 2451545) + lon) * D2R - ra;
+  const alt = Math.asin(Math.sin(lat * D2R) * Math.sin(dec) + Math.cos(lat * D2R) * Math.cos(dec) * Math.cos(H)) / D2R;
+  return alt - par * Math.cos(alt * D2R);
+}
+const PHASES = ['nouvelle lune', 'premier croissant', 'premier quartier', 'gibbeuse croissante', 'pleine lune', 'gibbeuse décroissante', 'dernier quartier', 'dernier croissant'];
+// minutes « depuis midi du soir » → instant UTC (décalage de Paris du soir de la nuit)
+const nightMs = (n, t) => { const [y, m, d] = n.split('-').map(Number); return Date.UTC(y, m - 1, d, 12) + (t - parisOffsetMin(y, m, d)) * 6e4; };
+// lune d'une nuit : éclairement à minuit, phase, intervalles où elle est levée (en minutes depuis midi)
+const moonCache = new Map();
+function nightMoon(n) {
+  const key = n + '|' + SUN.lat.toFixed(2) + '|' + SUN.lon.toFixed(2); if (moonCache.has(key)) return moonCache.get(key);
+  const mid = nightMs(n, 720), { lam, bet } = moonEcl(mid), dl = ((lam - sunLon(mid)) % 360 + 360) % 360;
+  const k = (1 - Math.cos(dl * D2R) * Math.cos(bet * D2R)) / 2;
+  const up = []; let cur = null;
+  for (let t = 0; t <= 1440; t += 5) {
+    const on = moonAlt(nightMs(n, t), SUN.lat, SUN.lon) > -0.83;   // réfraction + demi-diamètre
+    if (on && !cur) up.push(cur = [t, t]); if (on) cur[1] = t; else cur = null;
+  }
+  const r = { k, waxing: dl < 180, phase: PHASES[Math.round(dl / 45) % 8], up };
+  moonCache.set(key, r); return r;
+}
+const moonUpAt = (m, t) => m.up.some(([a, b]) => t >= a && t <= b);
+// pictogramme : disque nuit, partie éclairée couleur lune (à droite quand elle croît, hémisphère nord)
+function moonIcon(m, r = 7) {
+  const rx = r * Math.abs(1 - 2 * m.k), lit = `M0 ${-r}A${r} ${r} 0 0 1 0 ${r}A${rx} ${r} 0 0 ${m.k < 0.5 ? 0 : 1} 0 ${-r}Z`;
+  return `<svg class="lune-ic" width="${2 * r + 2}" height="${2 * r + 2}" viewBox="${-r - 1} ${-r - 1} ${2 * r + 2} ${2 * r + 2}" aria-hidden="true">` +
+    `<circle r="${r}" fill="#20253f" stroke="#8389b3" stroke-width=".8"/>` + (m.k > 0.02 ? `<path d="${lit}" fill="#f0e6c0"${m.waxing ? '' : ' transform="scale(-1 1)"'}/>` : '') + '</svg>';
+}
+const moonTxt = m => `lune ${Math.round(m.k * 100)} % (${m.phase})`;
+
+// ---- Météo horaire : Open-Meteo (archive ERA5, sinon modèles récents), mise en cache par jour ----
+const METEO_VARS = 'cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,temperature_2m';
+const meteoMem = new Map();   // 'lat|lon|AAAA-MM-JJTHH:00' → { c, p, w, d, T }
+const meteoKey = (h) => SUN.lat.toFixed(2) + '|' + SUN.lon.toFixed(2) + '|' + h;
+let meteoPending = null, meteoErr = '';
+try { const o = JSON.parse(localStorage.getItem('nocmig-meteo') || '{}'); for (const k in o) meteoMem.set(k, o[k]); } catch (e) {}
+const nextDay = n => { const d = new Date(n + 'T12:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+function meteoAt(n, h) { return meteoMem.get(meteoKey(`${h < 12 ? nextDay(n) : n}T${pad(h % 24)}:00`)); }
+// heures des nuits demandées (de 12 h le soir à 12 h le lendemain) déjà en mémoire ?
+const meteoHave = nights => nights.every(n => meteoAt(n, 18) && meteoAt(n, 6));
+async function meteoLoad(nights) {
+  if (meteoHave(nights)) return true;
+  if (meteoPending) return meteoPending;
+  const days = [...new Set(nights.flatMap(n => [n, nextDay(n)]))].sort(), a = days[0], b = days[days.length - 1];
+  const q = `?latitude=${SUN.lat.toFixed(3)}&longitude=${SUN.lon.toFixed(3)}&start_date=${a}&end_date=${b}&hourly=${METEO_VARS}&wind_speed_unit=kmh&timezone=Europe%2FParis`;
+  const get = async url => { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); return j.hourly; };
+  meteoPending = (async () => {
+    let h = null;
+    try { h = await get('https://archive-api.open-meteo.com/v1/archive' + q); } catch (e) {}
+    // archive pas encore à jour pour les derniers jours → modèles de prévision (historique de ~3 mois)
+    if (!h || h.cloud_cover.some(v => v == null)) { try { h = await get('https://api.open-meteo.com/v1/forecast' + q); } catch (e) { h = h || null; } }
+    if (!h) { meteoErr = 'Météo indisponible (hors ligne ou service injoignable) : seule la lune est affichée.'; return false; }
+    h.time.forEach((t, i) => { if (h.cloud_cover[i] != null) meteoMem.set(meteoKey(t), { c: h.cloud_cover[i], p: h.precipitation[i], w: h.wind_speed_10m[i], d: h.wind_direction_10m[i], T: h.temperature_2m[i] }); });
+    try { localStorage.setItem('nocmig-meteo', JSON.stringify(Object.fromEntries([...meteoMem].slice(-3000)))); } catch (e) {}
+    meteoErr = meteoHave(nights) ? '' : 'Météo incomplète pour ces dates.';
+    return true;
+  })().finally(() => { meteoPending = null; });
+  return meteoPending;
+}
+const ROSE = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+const roseOf = d => ROSE[Math.round(d / 45) % 8];
+
+const fmtT = t => { const mm = ((Math.round(t) + 720) % 1440 + 1440) % 1440; return pad(Math.floor(mm / 60)) + 'h' + pad(mm % 60); };
+const fmtRel = t => { const a = Math.abs(Math.round(t)); return (t < -0.5 ? '−' : '+') + Math.floor(a / 60) + 'h' + pad(a % 60); };
+// heure affichée selon l'axe choisi : heure légale, ou temps écoulé depuis le coucher du soleil
+const fmtA = t => st.axis === 'rel' ? fmtRel(t) : fmtT(t);
+const fmtTick = t => { const s = fmtA(t); return s.endsWith('h00') ? s.slice(0, -2) : s; };
+
+// =====================================================================
+// Données : campagnes intégrées (data.js) + fichiers importés
+// =====================================================================
+const CAMPS = (window.NOCMIG_DATA || []).map(c => ({ ...c, det: null }));
+const IMPORT = { id: 'import', label: 'Import', source: 'Fichiers CSV importés dans ce navigateur', conf: 0.6, sites: [], det: [], seen: new Set(), pos: {}, files: [] };
+let CAMP = null, DET = [], SITES = {};
+
+const WAV = /_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.wav$/i;
+// Détection → { site, sp, latin, conf, night, t (min depuis midi du soir), dur, file }
+function makeDet(site, sp, latin, conf, fname, startS, fallback, dur) {
+  let dt = null;
+  const m = fname.match(WAV);
+  if (m && isFinite(startS)) dt = new Date(new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() + startS * 1000);
+  else if (fallback) dt = new Date(fallback.replace(' ', 'T'));
+  if (!dt || isNaN(dt)) return null;
+  // nuit = date du soir (avant midi → nuit de la veille)
+  const ev = new Date(dt); if (dt.getHours() < 12) ev.setDate(ev.getDate() - 1);
+  const night = ev.getFullYear() + '-' + pad(ev.getMonth() + 1) + '-' + pad(ev.getDate());
+  const noon = new Date(ev.getFullYear(), ev.getMonth(), ev.getDate(), 12);
+  return { site, sp, latin, conf, night, t: (dt - noon) / 60000, dur: dur || 3, file: fname };
+}
+function campDet(c) {
+  if (c.det) return c.det;
+  c.det = [];
+  for (const [si, spi, conf, fi, start, dur] of c.rows) {
+    const d = makeDet(c.sites[si].key, c.species[spi][0], c.species[spi][1], conf, c.files[fi], start, null, dur);
+    if (d) c.det.push(d);
+  }
+  return c.det;
+}
+function setCamp(id) {
+  CAMP = id === 'import' ? IMPORT : (CAMPS.find(c => c.id === id) || CAMPS[0]);
+  DET = CAMP === IMPORT ? IMPORT.det : campDet(CAMP);
+  SITES = {};
+  CAMP.sites.forEach((s, i) => SITES[s.key] = { ...s, idx: i, src: s.src || 'data' });
+  updateSun();
+  st.nights = []; st.sitesOff.clear(); st.tr = null; st.conf = CAMP.conf;
+  $('fConf').value = st.conf;
+  refreshNights();
+  store.set('nocmig-camp', CAMP.id);
+  renderCamps();
+}
+function renderCamps() {
+  const list = [...CAMPS, ...(IMPORT.det.length ? [IMPORT] : [])];
+  $('camps').innerHTML = list.map(c => `<button data-c="${c.id}" aria-pressed="${c === CAMP}" title="${esc(c.source)}">${esc(c.id === 'import' ? 'IMPORT' : c.id)}</button>`).join('');
+  $('camps').querySelectorAll('button').forEach(b => b.onclick = () => { if (b.dataset.c !== CAMP.id) { setCamp(b.dataset.c); renderAll(); } });
+}
+// point de référence (soleil, lune, météo) : barycentre des sites de la campagne, recalculé si on déplace un site
+function updateSun() {
+  const pos = CAMP.sites.filter(s => isFinite(s.lat) && isFinite(s.lon));
+  SUN = pos.length ? { lat: mean(pos.map(s => s.lat)), lon: mean(pos.map(s => s.lon)) } : { ...ETEL };
+}
+const siteInfo = k => SITES[k] || { key: k, name: k, lat: ETEL.lat, lon: ETEL.lon, idx: 0, src: 'approx' };
+const shortName = k => siteInfo(k).name.split(' (')[0];
+// couleur d'un site : attachée au site (son rang dans la campagne), jamais à son rang dans la sélection
+const siteColor = k => `var(${SLOT_COLORS[siteInfo(k).idx % 8]})`;
+
+// ---- Import de CSV ----
+function siteKey(raw) { const k = norm(raw).replace(/20\d\d$/, ''); return ({ BARRE: 'BARREDETEL', BARREETEL: 'BARREDETEL', KERHILLIO: 'KERHILIO', PONTLOROIS: 'PONTLOROI', PLAGELINES: 'LINES' })[k] || k; }
+function ingest(file) {
+  Papa.parse(file, {
+    header: true, skipEmptyLines: true,
+    transformHeader: h => h.replace(/^﻿/, '').trim(),
+    complete: res => {
+      let n = 0;
+      const csvSite = (file.name.match(/All_detections_(.+?)(_coord|_classe)?\.csv$/i) || [])[1];
+      for (const r of res.data) {
+        const parts = (r['File'] || '').split(/[\\/]+/).filter(Boolean), fname = parts[parts.length - 1];
+        const folder = parts.length > 1 ? parts[parts.length - 2] : '';
+        const key = siteKey(folder && folder !== '.' ? folder : (csvSite || 'INCONNU'));
+        const startS = parseFloat(r['Start (s)']);
+        const id = fname + '|' + startS + '|' + r['Common name'] + '|' + r['Confidence'];
+        if (IMPORT.seen.has(id)) continue;
+        // format Chirpity (Latin name) ou BirdNET (Scientific name, End (s))
+        const dur = Math.round(parseFloat(r['End (s)']) - startS) || 3;
+        const d = makeDet(key, r['Common name'], r['Latin name'] || r['Scientific name'] || '', parseFloat(r['Confidence']) || 0, fname || '', startS, r['Detection start'], dur);
+        if (!d) continue;
+        IMPORT.seen.add(id); IMPORT.det.push(d); n++;
+        if (r['Latitude'] && r['Longitude']) {
+          const p = (IMPORT.pos[key] || (IMPORT.pos[key] = new Map())), c = `${parseFloat(r['Latitude'])} ${parseFloat(r['Longitude'])}`;
+          p.set(c, (p.get(c) || 0) + 1);
+        }
+        if (!IMPORT.sites.some(s => s.key === key)) IMPORT.sites.push({ key, name: folder || csvSite || key });
+      }
+      // position de chaque site : coordonnée majoritaire du CSV, sauf si partagée avec un autre site
+      // (point par défaut de Chirpity) → position manuelle mémorisée, sinon près des autres sites, déplaçable
+      const sans = [];
+      for (const s of IMPORT.sites) {
+        const m = IMPORT.pos[s.key], major = m && [...m.entries()].sort((a, b) => b[1] - a[1])[0];
+        const shared = major && IMPORT.sites.some(o => o.key !== s.key && IMPORT.pos[o.key] && IMPORT.pos[o.key].has(major[0]));
+        const [lat, lon] = major ? major[0].split(' ').map(Number) : [NaN, NaN];
+        if (major && !shared && isFinite(lat) && (lat || lon)) Object.assign(s, { lat, lon, src: 'csv' }); else sans.push(s);
+      }
+      const situes = IMPORT.sites.filter(s => s.src === 'csv');
+      const ctr = situes.length ? [mean(situes.map(s => s.lat)), mean(situes.map(s => s.lon))] : [ETEL.lat, ETEL.lon];
+      for (const s of sans) {
+        if (!cfg.pos[s.key]) { cfg.pos[s.key] = [ctr[0] + (Math.random() - .5) * .02, ctr[1] + (Math.random() - .5) * .02]; saveCfg(); }
+        Object.assign(s, { lat: cfg.pos[s.key][0], lon: cfg.pos[s.key][1], src: 'manuel' });
+      }
+      if (!n) {
+        $('loaded').textContent = `${file.name} : aucune détection reconnue. Colonnes attendues (export Chirpity ou BirdNET) : File, Start (s), Common name, Confidence.`
+          + (IMPORT.files.length ? ' Déjà importés : ' + IMPORT.files.join(' · ') : '');
+        return;
+      }
+      IMPORT.files.push(`${file.name} (${n})`);
+      $('loaded').textContent = 'Importés : ' + IMPORT.files.join(' · ') + ` — ${IMPORT.det.length} détections`;
+      setCamp('import'); renderAll();
+    },
+  });
+}
+const drop = $('drop'), fileIn = $('file');
+drop.onclick = () => fileIn.click();
+fileIn.onchange = () => { [...fileIn.files].forEach(ingest); fileIn.value = ''; };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); [...e.dataTransfer.files].filter(f => /\.csv$/i.test(f.name)).forEach(ingest); };
+
+// =====================================================================
+// État de la sélection
+// =====================================================================
+const st = { nights: [], win: 'night', conf: 0.6, metric: 'contact', gap: 30, axis: 'clock', sitesOff: new Set(), tr: null };
+const SR = { step: 30, mode: 'stack', scale: 'own' };
+let SEL = null;
+let TAB = 'ov';
+
+const nightLabel = n => { const d = new Date(n + 'T12:00'); const e = new Date(d); e.setDate(e.getDate() + 1);
+  return `Nuit du ${d.getDate()} au ${e.getDate()} ${e.toLocaleDateString('fr-FR', { month: 'long' })} ${e.getFullYear()}`; };
+const nightShort = n => { const d = new Date(n + 'T12:00'); const e = new Date(d); e.setDate(e.getDate() + 1);
+  return `${d.getDate()}→${e.getDate()} ${e.toLocaleDateString('fr-FR', { month: 'short' })}`; };
+const allNights = () => [...new Set(DET.map(d => d.night))].sort();
+const multiNight = () => st.nights.length > 1;
+// plusieurs nuits : à la suite en heure légale, superposées en heure relative au coucher
+const chained = () => multiNight() && st.axis === 'clock';
+const nightsLabel = () => multiNight() ? `${st.nights.length} nuits ${st.axis === 'rel' ? 'superposées' : 'à la suite'} (${st.nights.map(nightShort).join(', ')} ${st.nights[st.nights.length - 1].slice(0, 4)})` : (st.nights[0] ? nightLabel(st.nights[0]) : '');
+const nightsTag = () => multiNight() ? `${st.nights[0]}_${st.nights[st.nights.length - 1]}` : (st.nights[0] || CAMP.id);
+function refreshNights() {
+  const nights = allNights();
+  st.nights = st.nights.filter(n => nights.includes(n));
+  if (!st.nights.length && nights.length) st.nights = [nights[0]];
+}
+function allSites() { return Object.keys(SITES).filter(k => DET.some(d => d.site === k)).sort((a, b) => siteInfo(a).name.localeCompare(siteInfo(b).name)); }
+const metricWord = () => ({ det: 'détections', contact: 'contacts', minute: 'minutes positives' })[st.metric];
+
+function windowBounds(night) {
+  if (st.win === 'all') return null;
+  return nightSun(night, st.win === 'astro' ? 102 : 90.833);
+}
+// Transforme les détections en « unités » selon la métrique choisie
+function units(dets) {
+  if (st.metric === 'det') return dets.map(d => ({ ...d, n: 1 }));
+  const groups = new Map();
+  for (const d of dets) { const k = d.night + '|' + d.site + '|' + d.sp; (groups.get(k) || groups.set(k, []).get(k)).push(d); }
+  const out = [];
+  for (const g of groups.values()) {
+    g.sort((a, b) => a.t - b.t);
+    if (st.metric === 'minute') {
+      const mins = new Map();
+      for (const d of g) { const m = Math.floor(d.t); if (!mins.has(m)) mins.set(m, { ...d, t: m, n: 0, conf: 0 }); const u = mins.get(m); u.n++; u.conf = Math.max(u.conf, d.conf); }
+      out.push(...mins.values());
+    } else {
+      let cur = null;
+      for (const d of g) {
+        if (cur && (d.t - cur.tEnd) * 60 <= st.gap) { cur.n++; cur.tEnd = d.t + d.dur / 60; cur.conf = Math.max(cur.conf, d.conf); }
+        else { cur = { ...d, n: 1, tEnd: d.t + d.dur / 60 }; out.push(cur); }
+      }
+    }
+  }
+  return out;
+}
+const groupSpecies = g => g.cat ? new Set(DET.filter(d => catOf(d.sp) === g.cat).map(d => d.sp)) : new Set(g.species);
+const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+
+// Calcule la sélection une fois pour toute l'app
+function computeSel() {
+  const rel = st.axis === 'rel', n0 = st.nights[0];
+  // décalage appliqué au temps de chaque nuit : 24 h par jour d'écart (à la suite) ou −coucher (relatif)
+  const off = new Map(st.nights.map(n => [n, rel ? -nightSun(n, 90.833).set : Math.round((Date.parse(n + 'T12:00Z') - Date.parse(n0 + 'T12:00Z')) / 864e5) * 1440]));
+  const wbs = new Map(st.nights.map(n => [n, windowBounds(n)]));
+  const baseAll = [];          // toutes confiances : pour les courbes de seuil et la fiche espèce
+  for (const d of DET) {
+    if (!off.has(d.night) || st.sitesOff.has(d.site)) continue;
+    const wb = wbs.get(d.night); if (wb && (d.t < wb.set || d.t > wb.rise)) continue;
+    const o = off.get(d.night); baseAll.push(o ? { ...d, t: d.t + o } : d);
+  }
+  const base = baseAll.filter(d => d.conf >= st.conf);
+  const series = cfg.groups.filter(g => g.on).map(g => ({ g, set: groupSpecies(g), color: slotVar(g) }));
+  const union = new Set(series.flatMap(s => [...s.set]));
+  const U = units(base.filter(d => union.has(d.sp)));
+  const spSeries = new Map();   // couleur d'une espèce = celle de la première série qui la contient
+  for (const s of series) for (const sp of s.set) if (!spSeries.has(sp)) spSeries.set(sp, s);
+  const data = series.map(s => ({ ...s, U: U.filter(u => s.set.has(u.sp)) }));
+  const inTr = u => !st.tr || (u.t >= st.tr.t && u.t < st.tr.t + st.tr.step);
+  const UT = U.filter(inTr);
+  // segments de l'axe horaire : un par nuit (à la suite), ou un seul (une nuit, ou nuits superposées)
+  const segs = [];
+  const segOf = (n, o) => {
+    const wb = wbs.get(n), sun = nightSun(n, 90.833), civ = nightSun(n, 96);
+    let s, e;
+    if (wb) { s = wb.set + o; e = wb.rise + o; }
+    else { const ts = U.filter(u => u.night === n).map(u => u.t); if (!ts.length) return null; s = Math.min(...ts); e = Math.max(...ts) + 1; }
+    return { night: n, s, e, sun: { set: sun.set + o, rise: sun.rise + o }, civ: { set: civ.set + o, rise: civ.rise + o } };
+  };
+  if (chained() || !multiNight()) { for (const n of st.nights) { const g = segOf(n, off.get(n)); if (g) segs.push(g); } }
+  else {
+    const gs = st.nights.map(n => segOf(n, off.get(n))).filter(Boolean);
+    if (gs.length) segs.push({ night: n0, s: Math.min(...gs.map(g => g.s)), e: Math.max(...gs.map(g => g.e)),
+      sun: { set: 0, rise: mean(gs.map(g => g.sun.rise)) }, civ: { set: mean(gs.map(g => g.civ.set)), rise: mean(gs.map(g => g.civ.rise)) } });
+  }
+  return { off, wb: multiNight() || rel ? null : wbs.get(n0), segs, baseAll, union, U, UT, data, spSeries, inTr, sites: allSites().filter(k => !st.sitesOff.has(k)) };
+}
+// Axe horaire des graphiques : les segments mis bout à bout, chacun aligné sur le pas
+function makeAxis(step) {
+  const segs = [];
+  for (const g of SEL.segs) {
+    let s = Math.floor(g.s / step) * step; const e = Math.ceil(g.e / step) * step;
+    const prev = segs[segs.length - 1]; if (prev && s < prev.e) s = prev.e;
+    if (e > s) segs.push({ ...g, s, e });
+  }
+  const start = segs.length ? segs[0].s : 0;
+  let A = start;
+  for (const g of segs) { g.A = A; A += g.e - g.s; }
+  const last = segs[segs.length - 1];
+  const at = (g, t) => g.A + Math.min(Math.max(t, g.s), g.e) - g.s;
+  const segOfA = a => segs.find(g => a < g.A + g.e - g.s) || last;
+  return { segs, start, end: A, multi: segs.length > 1, at, segOfA,
+    toA: t => at(segs.find(g => t < g.e) || last, t),
+    toT: a => { const g = segOfA(a); return g.s + a - g.A; } };
+}
+function axisNight(ax, X, top, h, x0, x1) {
+  let s = '';
+  for (const g of ax.segs) {
+    const a = Math.max(x0, X(ax.at(g, g.sun.set))), b = Math.min(x1, X(ax.at(g, g.sun.rise)));
+    if (b > a) s += `<rect x="${a}" y="${top}" width="${b - a}" height="${h}" fill="var(--night)"/>`;
+  }
+  return s;
+}
+function axisSeps(ax, X, top, h) {
+  if (!ax.multi) return '';
+  return ax.segs.map((g, i) => { const x = X(g.A);
+    return (i ? `<line x1="${x}" x2="${x}" y1="${top}" y2="${top + h}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="4 3"/>` : '') +
+      `<text x="${x + 4}" y="${top + 11}" style="fill:var(--text-2);font-weight:600">${esc(nightShort(g.night))}</text>`; }).join('');
+}
+const trLabel = () => `${chained() && st.tr.night ? nightShort(st.tr.night) + ' · ' : ''}${fmtA(st.tr.t)}–${fmtA(st.tr.t + st.tr.step)}`;
+const spColor = sp => { const s = SEL.spSeries.get(sp); return s ? s.color : 'var(--gray)'; };
+function selSummary() {
+  const wb = SEL && SEL.wb;
+  const plage = { all: 'session complète', night: 'coucher → lever', astro: 'nuit noire' }[st.win] + (wb ? ` (${fmtT(wb.set)}–${fmtT(wb.rise)})` : '');
+  const sites = st.sitesOff.size ? allSites().filter(k => !st.sitesOff.has(k)).map(shortName).join(', ') : 'tous les sites';
+  const unit = metricWord() + (st.metric === 'contact' ? ` (fusion ≤ ${st.gap} s)` : '');
+  const tr = st.tr ? ` · tranche ${trLabel()}` : '';
+  const axe = st.axis === 'rel' ? ' · heures après le coucher' : '';
+  return `${CAMP.label} · ${nightsLabel()} · ${plage}${axe} · ${unit} · confiance ≥ ${virg(st.conf)} · ${sites}${tr}`;
+}
+
+// =====================================================================
+// Infobulle
+// =====================================================================
+const tip = $('tip');
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; moveTip(e); }
+function moveTip(e) {
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+document.addEventListener('mousemove', e => { if (tip.style.display === 'block') moveTip(e); });
+function bindTips(root) {
+  root.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', e => showTip(e, el.dataset.tip));
+    el.addEventListener('mouseleave', hideTip);
+  });
+  root.querySelectorAll('[data-sp]').forEach(el => el.addEventListener('click', () => { hideTip(); openFiche(el.dataset.sp); }));
+}
+
+// =====================================================================
+// Panneau de sélection
+// =====================================================================
+const segVal = (id, v) => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+$('fWin').onchange = e => { st.win = e.target.value; st.tr = null; renderAll(); };
+$('fConf').oninput = e => { st.conf = parseFloat(e.target.value) || 0; renderAll(); };
+$('fMetric').onchange = e => { st.metric = e.target.value; $('gapWrap').style.display = st.metric === 'contact' ? '' : 'none'; renderAll(); };
+$('fGap').oninput = e => { st.gap = parseFloat(e.target.value) || 0; renderAll(); };
+$('fAxis').querySelectorAll('button').forEach(b => b.onclick = () => { st.axis = b.dataset.v; st.tr = null; segVal('fAxis', st.axis); renderAll(); });
+// tiroir (téléphone) : focus dedans à l'ouverture, Échap ou clic dehors pour fermer, focus rendu au bouton
+function drawer(open) {
+  const was = document.body.classList.contains('pn-open'); if (was === open) return;
+  document.body.classList.toggle('pn-open', open); $('pnOpen').setAttribute('aria-expanded', open);
+  (open ? $('pnClose') : $('pnOpen')).focus();
+}
+$('pnOpen').onclick = () => drawer(true);
+$('pnClose').onclick = () => drawer(false);
+document.addEventListener('click', e => { if (!e.target.closest('#panel') && !e.target.closest('#pnOpen')) drawer(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) drawer(false); });
+
+// nombres du volet, dans la métrique choisie et avec les autres réglages (une nuit ou un site écarté garde son nombre)
+function panelCounts() {
+  const union = new Set(cfg.groups.filter(g => g.on).flatMap(g => [...groupSpecies(g)])), wbs = new Map();
+  const keep = d => { if (d.conf < st.conf || !union.has(d.sp)) return false;
+    if (!wbs.has(d.night)) wbs.set(d.night, windowBounds(d.night)); const wb = wbs.get(d.night); return !wb || (d.t >= wb.set && d.t <= wb.rise); };
+  const byN = {}, byS = {};
+  for (const u of units(DET.filter(d => !st.sitesOff.has(d.site) && keep(d)))) byN[u.night] = (byN[u.night] || 0) + 1;
+  for (const u of units(DET.filter(d => st.nights.includes(d.night) && keep(d)))) byS[u.site] = (byS[u.site] || 0) + 1;
+  return { byN, byS };
+}
+function renderPanel() {
+  const nights = allNights(), { byN, byS } = panelCounts();
+  document.querySelectorAll('#panel .pn-unit').forEach(e => e.textContent = metricWord());
+  const every = nights.every(n => st.nights.includes(n));
+  // 1 · Quand
+  $('nightChips').innerHTML = nights.map(n => `<span class="chip ${st.nights.includes(n) ? '' : 'off'}" data-n="${n}" role="button" tabindex="0" aria-pressed="${st.nights.includes(n)}" title="${esc(moonTxt(nightMoon(n)))}"><span class="ind"></span><span class="nm">${esc(nightShort(n))} ${n.slice(0, 4)}</span><span class="cnt">${byN[n] || 0}</span></span>`).join('');
+  $('nightLinks').innerHTML = nights.length > 1 ? `<button class="lien" id="allNightsBtn">${every ? 'une seule' : 'toutes'}</button>` : '';
+  $('nightChips').querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
+    const n = ch.dataset.n;
+    if (st.nights.includes(n)) { if (st.nights.length === 1) return; st.nights = st.nights.filter(x => x !== n); } else st.nights = [...st.nights, n].sort();
+    st.tr = null; renderAll();
+  });
+  if ($('allNightsBtn')) $('allNightsBtn').onclick = () => { st.nights = every ? [st.nights[0]] : nights; st.tr = null; renderAll(); };
+  $('axisHint').textContent = st.axis === 'rel'
+    ? 'Temps compté depuis le coucher du soleil : plusieurs nuits se superposent et se comparent.'
+    : (multiNight() ? 'Plusieurs nuits s\'affichent à la suite.' : '');
+  segVal('fAxis', st.axis);
+  $('fWin').value = st.win;
+  $('valQuand').textContent = `${st.nights.length > 1 ? st.nights.length + ' nuits' : '1 nuit'} · ${({ all: 'session', night: 'coucher→lever', astro: 'nuit noire' })[st.win]}`;
+  // 2 · Où
+  const sites = allSites();
+  $('siteChips').innerHTML = sites.map(k => `<span class="chip ${st.sitesOff.has(k) ? 'off' : ''}" data-s="${k}" role="button" tabindex="0" aria-pressed="${!st.sitesOff.has(k)}"><span class="sw" style="background:${siteColor(k)}"></span><span class="nm">${esc(siteInfo(k).name)}</span><span class="cnt">${byS[k] || 0}</span></span>`).join('');
+  $('siteChips').querySelectorAll('.chip').forEach(ch => ch.onclick = () => { const s = ch.dataset.s; st.sitesOff.has(s) ? st.sitesOff.delete(s) : st.sitesOff.add(s); renderAll(); });
+  $('valOu').textContent = `${sites.length - st.sitesOff.size}/${sites.length} sites`;
+  // 3 · Quoi
+  const cnt = new Map(SEL.data.map(d => [d.g, d.U.length]));
+  $('srChips').innerHTML = cfg.groups.length ? cfg.groups.map((g, i) => `<span class="chip ${g.on ? '' : 'off'}" data-i="${i}" role="button" tabindex="0" aria-pressed="${g.on}" title="${esc([...groupSpecies(g)].join(', ') || 'aucune espèce')}">
+      <span class="sw" style="background:${slotVar(g)}"></span><span class="nm">${esc(g.name)}</span><span class="cnt">${g.on ? cnt.get(g) || 0 : ''}</span><span class="x" data-x="${i}" title="Retirer cette série">✕</span></span>`).join('')
+    : '<span class="hint">Aucune série : ajoutez des espèces ou revenez aux catégories.</span>';
+  $('srChips').querySelectorAll('.chip').forEach(ch => ch.onclick = e => {
+    const i = +ch.dataset.i;
+    if (e.target.dataset.x !== undefined) cfg.groups.splice(i, 1); else cfg.groups[i].on = !cfg.groups[i].on;
+    saveCfg(); renderAll();
+  });
+  $('valQuoi').textContent = `${cfg.groups.filter(g => g.on).length}/${cfg.groups.length} séries`;
+  // 4 · Comptage
+  $('valCompte').textContent = `${({ det: 'détections', contact: 'contacts', minute: 'minutes' })[st.metric]} · ≥ ${virg(st.conf)}`;
+  // tranche isolée en tête du panneau
+  $('trSec').hidden = !st.tr;
+  if (st.tr) $('trLabel').textContent = trLabel();
+  $('panel').querySelectorAll('.chip[tabindex]').forEach(c => c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); c.click(); } });
+  renderBilan();
+}
+$('trClear').onclick = () => { st.tr = null; renderAll(); };
+$('sitesAll').onclick = () => { st.sitesOff.clear(); renderAll(); };
+$('sitesNone').onclick = () => { allSites().forEach(k => st.sitesOff.add(k)); renderAll(); };
+$('pnReset').onclick = () => {
+  Object.assign(st, { nights: [], win: 'night', metric: 'contact', gap: 30, axis: 'clock', tr: null, conf: CAMP.conf });
+  st.sitesOff.clear(); refreshNights();
+  $('fMetric').value = st.metric; $('fGap').value = st.gap; $('fConf').value = st.conf; $('gapWrap').style.display = '';
+  renderAll();
+};
+
+// ---- Choix des espèces (dialogue) ----
+const picked = new Set();
+function nightSpecies() {
+  const m = new Map();
+  for (const d of DET) if (st.nights.includes(d.night)) { const o = m.get(d.sp) || { sp: d.sp, latin: d.latin, n: 0 }; o.n++; m.set(d.sp, o); }
+  return [...m.values()].sort((a, b) => CAT_ORDER.indexOf(catOf(a.sp)) - CAT_ORDER.indexOf(catOf(b.sp)) || b.n - a.n);
+}
+function renderPicker() {
+  const q = norm($('pkSearch').value || ''), all = nightSpecies();
+  const list = all.filter(o => !q || norm(o.sp + o.latin).includes(q));
+  let h = '';
+  for (const c of CAT_ORDER) {
+    const items = list.filter(o => catOf(o.sp) === c); if (!items.length) continue;
+    h += `<div class="grp"><div class="repere" style="padding:8px 10px 2px">${CATS[c].label}</div>` + items.map(o =>
+      `<label><input type="checkbox" data-pk="${esc(o.sp)}" ${picked.has(o.sp) ? 'checked' : ''}><span class="sw ${CATS[c].hollow ? 'hollow' : ''}" style="background:var(${CATS[c].color});border-color:var(${CATS[c].color})"></span>${esc(o.sp)}<span class="n">${o.n}</span></label>`).join('') + '</div>';
+  }
+  $('pkList').innerHTML = h || '<div class="empty">Aucune espèce</div>';
+  $('pkList').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? picked.add(i.dataset.pk) : picked.delete(i.dataset.pk); });
+  $('addCat').innerHTML = '<option value="">choisir…</option>' + CAT_ORDER.filter(c => all.some(o => catOf(o.sp) === c)).map(c => `<option value="${c}">${CATS[c].label}</option>`).join('');
+}
+$('pkOpen').onclick = () => { $('pkMsg').textContent = ''; renderPicker(); $('pkDlg').showModal(); };
+$('pkSearch').oninput = renderPicker;
+$('pkAll').onclick = () => { $('pkList').querySelectorAll('input').forEach(i => picked.add(i.dataset.pk)); renderPicker(); };
+$('pkNone').onclick = () => { picked.clear(); renderPicker(); };
+function freeSlot() { const used = new Set(cfg.groups.map(g => g.slot)); return SLOT_COLORS.findIndex((_, i) => !used.has(i)); }
+function addSeries(def) {
+  const slot = freeSlot();
+  if (slot < 0) { $('pkMsg').textContent = '8 séries au maximum : retirez-en une pour en ajouter.'; return false; }
+  cfg.groups.push({ ...def, slot, on: true }); $('pkMsg').textContent = ''; saveCfg(); return true;
+}
+$('addGroup').onclick = () => {
+  if (!picked.size) { $('pkMsg').textContent = 'Cochez au moins une espèce.'; return; }
+  const sp = [...picked];
+  if (addSeries({ name: $('grpName').value.trim() || (sp.length === 1 ? sp[0] : `Groupe de ${sp.length} espèces`), species: sp })) { picked.clear(); $('grpName').value = ''; $('pkDlg').close(); renderAll(); }
+};
+$('addEach').onclick = () => {
+  if (!picked.size) { $('pkMsg').textContent = 'Cochez au moins une espèce.'; return; }
+  for (const sp of [...picked]) { if (!addSeries({ name: sp, species: [sp] })) break; picked.delete(sp); }
+  if (!picked.size) $('pkDlg').close();
+  renderAll();
+};
+// une série « catégorie » suit le tri : si une espèce change de catégorie, la série se met à jour
+$('addCat').onchange = e => { const c = e.target.value; if (c && addSeries({ name: CATS[c].label, cat: c, species: [] })) { $('pkDlg').close(); renderAll(); } e.target.value = ''; };
+$('srCats').onclick = () => { cfg.groups = DEFAULT_SERIES(); saveCfg(); renderAll(); };
+$('srClear').onclick = () => { cfg.groups = []; saveCfg(); renderAll(); };
+document.querySelectorAll('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+// =====================================================================
+// Onglets
+// =====================================================================
+const TABS = [...document.querySelectorAll('#tabs [role=tab]')];
+function showTab(id, focus) {
+  TAB = id; store.set('nocmig-tab', id);
+  try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  TABS.forEach(b => { const on = b.dataset.tab === id; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+  document.querySelectorAll('.tab').forEach(p => p.hidden = p.id !== 'tab-' + id);
+  if (id !== 'sim' && SIM.playing && !SIM.rec) simSetPlaying(false);
+  renderTab();
+}
+TABS.forEach((b, i) => {
+  b.onclick = () => showTab(b.dataset.tab);
+  b.onkeydown = e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) showTab(TABS[(i + d + TABS.length) % TABS.length].dataset.tab, true); };
+});
+
+// =====================================================================
+// Graphique générique : barres sur l'axe horaire
+// =====================================================================
+function binsOf(U, ax, step) {
+  const nb = Math.max(1, Math.round((ax.end - ax.start) / step)), b = new Array(nb).fill(0);
+  for (const u of U) { const i = Math.floor((ax.toA(u.t) - ax.start) / step); if (i >= 0 && i < nb) b[i]++; }
+  return b;
+}
+const binLbl = (ax, step, i) => { const a = ax.start + i * step, r = ax.toT(a); return `${ax.multi ? nightShort(ax.segOfA(a).night) + ' · ' : ''}${fmtA(r)}–${fmtA(r + step)}`; };
+// rows : [{ name, color, bins }] ; mode : 'stack' | 'group'
+function timeBars({ W, H, ax, step, rows, mode = 'stack', max, clickable = true, title = '' }) {
+  const t0 = ax.start, nb = rows[0].bins.length;
+  const ml = 36, mr = 8, mt = 8, mb = 22, bw = (W - ml - mr) / nb, ih = H - mt - mb;
+  const sumAt = i => rows.reduce((a, d) => a + d.bins[i], 0);
+  max = max || Math.max(1, ...Array.from({ length: nb }, (_, i) => mode === 'group' ? Math.max(...rows.map(d => d.bins[i])) : sumAt(i)));
+  const y = v => mt + ih * (1 - v / max), X = a => ml + (a - t0) / step * bw;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}">` + axisNight(ax, X, mt, ih, ml, W - mr);
+  const trIdx = st.tr && st.tr.step === step ? (ax.toA(st.tr.t) - t0) / step : -1;
+  if (trIdx >= 0) s += `<rect x="${ml + trIdx * bw}" y="${mt}" width="${bw}" height="${ih}" fill="var(--acc)" opacity="0.14"/>`;
+  niceTicks(max).forEach(t => s += `<line x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`);
+  const g = bw > 8 ? 2 : bw > 4 ? 1 : 0, lblEvery = Math.max(1, Math.ceil(nb / Math.floor((W - 50) / 46)));
+  for (let i = 0; i < nb; i++) {
+    const x0 = ml + i * bw + g / 2, w = Math.max(1, bw - g);
+    if (mode === 'group') {
+      const sw = w / rows.length;
+      rows.forEach((d, j) => { const v = d.bins[i]; if (v) s += `<rect x="${x0 + j * sw}" y="${y(v)}" width="${Math.max(1, sw - (sw > 4 ? 1 : 0))}" height="${y(0) - y(v)}" fill="${d.color}"/>`; });
+    } else {
+      let acc = 0; const segs = rows.filter(d => d.bins[i]);
+      // 2 px de fond entre segments empilés
+      segs.forEach((d, j) => { const v = d.bins[i], y0 = y(acc), y1 = y(acc + v); acc += v;
+        s += `<rect x="${x0}" y="${y1}" width="${w}" height="${Math.max(0, y0 - y1 - (j ? 2 : 0))}" fill="${d.color}"/>`; });
+    }
+    const tr = rows.filter(d => d.bins[i]).map(d => `<div class='r'>${rows.length > 1 ? `<span class='sw' style='background:${d.color}'></span>` : ''}${esc(d.name)}<b>${d.bins[i]}</b></div>`).join('');
+    s += `<rect x="${ml + i * bw}" y="${mt}" width="${bw}" height="${ih}" fill="transparent" ${clickable ? 'style="cursor:pointer" data-bin="' + i + '"' : ''} data-tip="${esc(`<div class='t'>${title}${binLbl(ax, step, i)}</div>${tr || "<div class='r'>aucun</div>"}${clickable ? "<div class='r'><i>Clic : isoler cette tranche</i></div>" : ''}`)}"/>`;
+    if (i % lblEvery === 0) s += `<text x="${ml + i * bw}" y="${H - 6}" text-anchor="middle">${fmtTick(ax.toT(t0 + i * step))}</text>`;
+  }
+  s += axisSeps(ax, X, mt, ih);
+  return s + `<line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="var(--axis)"/></svg>`;
+}
+function bindBins(el, ax, step) {
+  el.querySelectorAll('[data-bin]').forEach(r => r.onclick = () => {
+    const a = ax.start + +r.dataset.bin * step, t = ax.toT(a);
+    st.tr = st.tr && st.tr.t === t && st.tr.step === step ? null : { t, step, night: ax.segOfA(a).night };
+    hideTip(); renderAll();
+  });
+}
+const widthOf = el => Math.max(300, el.clientWidth || 700);
+
+// =====================================================================
+// Vue d'ensemble
+// =====================================================================
+// Bilan : chiffres clés + contexte de la sélection (sans redite : les sites ne sont cités que si tous ne le sont pas)
+function renderBilan() {
+  const sp = new Set(SEL.UT.map(u => u.sp)).size, sitesOn = new Set(SEL.UT.map(u => u.site)).size;
+  $('bilanN').innerHTML = `<span><b>${SEL.UT.length}</b>${metricWord()}</span><span><b>${sp}</b>espèces</span><span><b>${sitesOn}/${SEL.sites.length}</b>sites actifs</span>`;
+  const wb = SEL.wb, ctx = [
+    CAMP.id === 'import' ? 'Import' : CAMP.id,
+    multiNight() ? `${st.nights.length} nuits ${st.axis === 'rel' ? 'superposées' : 'à la suite'}` : nightShort(st.nights[0] || ''),
+    ({ all: 'session complète', night: 'coucher → lever', astro: 'nuit noire' })[st.win] + (wb ? ` ${fmtT(wb.set)}–${fmtT(wb.rise)}` : ''),
+    st.axis === 'rel' ? 'heures après le coucher' : '',
+    metricWord() + (st.metric === 'contact' ? ` (fusion ≤ ${st.gap} s)` : ''),
+    `confiance ≥ ${virg(st.conf)}`,
+    st.sitesOff.size ? allSites().filter(k => !st.sitesOff.has(k)).map(shortName).join(', ') : '',
+  ].filter(Boolean).map(esc).join(' · ');
+  $('resume').innerHTML = ctx + (st.tr ? ` <button class="tr" id="bilanTr" title="Revenir à toute la nuit">tranche ${esc(trLabel())} ✕</button>` : '');
+  if ($('bilanTr')) $('bilanTr').onclick = () => { st.tr = null; renderAll(); };
+}
+
+// ---- Fonds de carte ----
+function addBases(m) {
+  // crossOrigin : nécessaire pour copier les tuiles dans les images et la vidéo (IGN et CARTO l'autorisent)
+  const o = { crossOrigin: 'anonymous' };
+  const ign = (layer, fmt) => `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=normal&TILEMATRIXSET=PM&FORMAT=${fmt}&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`;
+  const bases = {
+    'Plan IGN': L.tileLayer(ign('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'), { maxZoom: 19, attribution: '© IGN', ...o }),
+    'Photos aériennes IGN': L.tileLayer(ign('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), { maxZoom: 19, attribution: '© IGN', ...o }),
+    'CARTO clair': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO', ...o }),
+    'CARTO sombre': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap © CARTO', ...o }),
+  };
+  bases['Plan IGN'].addTo(m);
+  L.control.layers(bases, null, { collapsed: true }).addTo(m);
+}
+// ---- Étiquettes des sites : décalées hors des symboles, reliées au point GPS par un filet ----
+const LBL_FONT = "12px 'IBM Plex Sans', sans-serif";
+let measureCtx = null;
+function textW(t, font = LBL_FONT) { measureCtx = measureCtx || document.createElement('canvas').getContext('2d'); measureCtx.font = font; return measureCtx.measureText(t).width; }
+// items : [{ x, y, w, h, sym: { x0, y0, x1, y1 } }] en pixels ; renvoie pour chacun la boîte d'étiquette.
+// Rangement ordonné : les sites de la moitié ouest ont leur étiquette dans une colonne à gauche du groupe
+// de symboles, ceux de la moitié est dans une colonne à droite. Dans chaque colonne, les étiquettes
+// gardent l'ordre nord → sud des points (les filets ne se croisent pas) et sont espacées régulièrement.
+function placeLabels(items, W, H) {
+  if (!items.length) return [];
+  const gap = 4, margin = 6, offset = 28, out = new Array(items.length);
+  const sx0 = Math.min(...items.map(i => i.sym.x0)), sx1 = Math.max(...items.map(i => i.sym.x1));
+  const xs = items.map(i => i.x).sort((a, b) => a - b), mid = (xs[Math.floor((xs.length - 1) / 2)] + xs[Math.ceil((xs.length - 1) / 2)]) / 2;
+  const west = k => items.length > 1 && items[k].x <= mid;
+  for (const side of ['g', 'd']) {
+    const ids = items.map((it, k) => k).filter(k => (side === 'g') === west(k)).sort((a, b) => items[a].y - items[b].y);
+    if (!ids.length) continue;
+    const cw = Math.max(...ids.map(k => items[k].w)), hs = ids.map(k => items[k].h);
+    // colonne collée au groupe de symboles, ramenée dans la carte si besoin
+    const x = Math.min(Math.max(margin, side === 'g' ? sx0 - offset - cw : sx1 + offset), W - margin - cw);
+    // ordonnées souhaitées = celles des points ; on écarte en descendant, puis on remonte si ça déborde en bas
+    const ys = ids.map(k => items[k].y - items[k].h / 2);
+    for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + hs[i - 1] + gap);
+    const over = ys[ys.length - 1] + hs[hs.length - 1] - (H - margin);
+    if (over > 0) { ys[ys.length - 1] -= over; for (let i = ys.length - 2; i >= 0; i--) ys[i] = Math.min(ys[i], ys[i + 1] - hs[i] - gap); }
+    ys[0] = Math.max(ys[0], margin); for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + hs[i - 1] + gap);
+    // colonne gauche alignée à droite (vers les points), colonne droite alignée à gauche
+    ids.forEach((k, i) => { const w = items[k].w, bx = side === 'g' ? x + cw - w : x; out[k] = { x0: bx, y0: ys[i], x1: bx + w, y1: ys[i] + hs[i], side }; });
+  }
+  return out;
+}
+// départ du filet : milieu du bord de l'étiquette tourné vers le point
+function edgePoint(b, x, y) { return [b.side === 'g' ? b.x1 : b.x0, (b.y0 + b.y1) / 2]; }
+// coude du filet : court palier horizontal au sortir de l'étiquette, puis droit vers le point
+const kneePoint = (b, e) => [e[0] + (b.side === 'g' ? 10 : -10), e[1]];
+
+let map = null, markers = {}, mapMode = 'circ', labelLayer = null, mapGeom = {};
+$('mapMode').querySelectorAll('button').forEach(b => b.onclick = () => { mapMode = b.dataset.v; segVal('mapMode', mapMode); renderMap(); });
+function renderMap() {
+  if (!map) {
+    map = L.map('map', { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, fadeAnimation: false }).setView([47.665, -3.22], 12); addBases(map);
+    labelLayer = L.layerGroup().addTo(map);
+    map.on('zoomend', () => layoutMapLabels());
+  }
+  map.invalidateSize();
+  const sites = SEL.sites, data = SEL.data;
+  for (const k of Object.keys(markers)) if (!sites.includes(k)) { map.removeLayer(markers[k]); delete markers[k]; }
+  labelLayer.clearLayers();
+  if (!sites.length) { $('mapInfo').textContent = ''; return; }
+  const cnt = {}; for (const k of sites) cnt[k] = data.map(d => d.U.filter(u => u.site === k && SEL.inTr(u)).length);
+  const tot = k => SEL.UT.filter(u => u.site === k).length;
+  const maxCol = Math.max(1, ...sites.flatMap(k => cnt[k])), maxTot = Math.max(1, ...sites.map(tot));
+  $('mapInfo').textContent = (mapMode === 'cols'
+    ? `Hauteur des colonnes : ${metricWord()} de chaque série, même échelle pour tous les spots (max ${maxCol}). Le carré noir marque la position GPS.`
+    : `Surface du cercle : ${metricWord()} de la sélection (max ${maxTot}). Couleur : série dominante sur le spot.`) + ' Cliquez sur un spot pour le détail.';
+  const srcTxt = { data: 'coordonnées du spot', csv: 'coordonnées du CSV', manuel: 'placée à la main (glisser pour corriger)', approx: 'approximative' };
+  mapGeom = {};
+  for (const k of sites) {
+    const info = siteInfo(k), c = cnt[k], n = tot(k);
+    let icon;
+    if (mapMode === 'cols' && data.length) {
+      const bw = 12, gp = 2, Hb = 80, W = data.length * bw + (data.length - 1) * gp;
+      let svg = `<svg width="${W}" height="${Hb}" viewBox="0 0 ${W} ${Hb}" style="width:${W}px;display:block">`;
+      c.forEach((v, j) => {
+        const h = v ? Math.max(3, Hb * v / maxCol) : 0, x = j * (bw + gp);
+        svg += v ? `<rect x="${x}" y="${Hb - h}" width="${bw}" height="${h}" fill="${resolveVar(data[j].color)}" stroke="${cssv('--card')}" stroke-width="1"/>`
+                 : `<line x1="${x}" x2="${x + bw}" y1="${Hb - 0.5}" y2="${Hb - 0.5}" stroke="${cssv('--text-3')}"/>`;
+      });
+      svg += '</svg>';
+      // colonnes posées sur le point GPS, centrées ; le carré noir marque le point exact
+      icon = L.divIcon({ className: '', html: `<div class="srm" style="width:${W}px;height:${Hb}px">${svg}<span class="gps" style="left:${W / 2 - 3.5}px;top:${Hb - 3.5}px"></span></div>`, iconSize: [W, Hb], iconAnchor: [W / 2, Hb] });
+      const tallest = Math.max(3, Hb * Math.max(...c) / maxCol);
+      mapGeom[k] = { x0: -W / 2, x1: W / 2, y0: -tallest, y1: 4 };
+    } else {
+      const dom = c.length ? c.indexOf(Math.max(...c)) : -1, col = dom >= 0 && n ? resolveVar(data[dom].color) : cssv('--gray');
+      const size = n ? Math.round(16 + 54 * Math.sqrt(n / maxTot)) : 14;
+      icon = L.divIcon({ className: '', html: `<div class="site-ic ${n ? '' : 'zero'}" style="width:${size}px;height:${size}px;border-radius:50%;background:${hexA(col, 0.55)};border-color:${col}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+      mapGeom[k] = { x0: -size / 2, x1: size / 2, y0: -size / 2, y1: size / 2 };
+    }
+    mapGeom[k].text = `${shortName(k)}|${n}`;
+    const popup = `<b>${esc(info.name)}</b><br><span style="color:var(--text-3)">Position : ${srcTxt[info.src] || ''}</span><br>${n} ${metricWord()}${st.tr ? ` (${trLabel()})` : ''}<br>` +
+      data.map((d, j) => `<span class="sw" style="background:${d.color}"></span> ${esc(d.g.name)} : <b>${c[j]}</b>`).join('<br>');
+    const drag = info.src === 'manuel';
+    if (!markers[k]) {
+      markers[k] = L.marker([info.lat, info.lon], { icon, draggable: drag }).addTo(map);
+      markers[k].on('dragend', ev => { const p = ev.target.getLatLng(); cfg.pos[k] = [+p.lat.toFixed(5), +p.lng.toFixed(5)]; saveCfg();
+        const s = IMPORT.sites.find(x => x.key === k); if (s) { s.lat = cfg.pos[k][0]; s.lon = cfg.pos[k][1]; SITES[k].lat = s.lat; SITES[k].lon = s.lon; updateSun(); } renderAll(); });
+    } else markers[k].setIcon(icon).setLatLng([info.lat, info.lon]);
+    drag ? markers[k].dragging.enable() : markers[k].dragging.disable();
+    markers[k].bindPopup(popup);
+  }
+  const sig = CAMP.id + '|' + sites.join('|');
+  if (sig !== renderMap.sig) { renderMap.sig = sig; map.fitBounds(L.latLngBounds(sites.map(k => markers[k].getLatLng())).pad(0.25)); }
+  layoutMapLabels();
+}
+function layoutMapLabels() {
+  if (!labelLayer) return;
+  labelLayer.clearLayers();
+  const ks = Object.keys(mapGeom).filter(k => markers[k]); if (!ks.length) return;
+  const size = map.getSize();
+  const items = ks.map(k => { const p = map.latLngToContainerPoint(markers[k].getLatLng()), g = mapGeom[k], [name, n] = g.text.split('|');
+    return { k, name, n, x: p.x, y: p.y, w: textW(name) + textW(' ' + n, "11px 'JetBrains Mono', monospace") + 14, h: 18, sym: { x0: p.x + g.x0, x1: p.x + g.x1, y0: p.y + g.y0, y1: p.y + g.y1 } }; });
+  const boxes = placeLabels(items, size.x, size.y);
+  const ink = cssv('--ink');
+  items.forEach((it, i) => {
+    const b = boxes[i], ll = map.containerPointToLatLng([b.x0, b.y0]), e = edgePoint(b, it.x, it.y);
+    L.polyline([markers[it.k].getLatLng(), map.containerPointToLatLng(kneePoint(b, e)), map.containerPointToLatLng(e)], { color: ink, weight: 1, opacity: 1, interactive: false }).addTo(labelLayer);
+    L.marker(ll, { interactive: false, keyboard: false, zIndexOffset: 1000,
+      icon: L.divIcon({ className: '', html: `<span class="site-lbl">${esc(it.name)} <b>${it.n}</b></span>`, iconSize: null, iconAnchor: [0, 0] }) }).addTo(labelLayer);
+  });
+}
+
+// ---- Histogrammes d'activité ----
+$('srStep').onchange = e => { SR.step = +e.target.value; st.tr = null; renderAll(); };
+$('srMode').onchange = e => { SR.mode = e.target.value; $('srScaleWrap').style.display = SR.mode === 'multi' ? '' : 'none'; renderHist(); };
+$('srScale').onchange = e => { SR.scale = e.target.value; renderHist(); };
+function renderHist() {
+  const el = $('series');
+  if (!SEL.data.length || !SEL.segs.length) { el.innerHTML = EMPTY; return; }
+  const step = SR.step, ax = makeAxis(step), W = widthOf(el);
+  const rows = SR.mode === 'site'
+    ? SEL.sites.map(k => ({ name: siteInfo(k).name, color: siteColor(k), bins: binsOf(SEL.U.filter(u => u.site === k), ax, step) }))
+    : SEL.data.map(d => ({ name: d.g.name, color: d.color, bins: binsOf(d.U, ax, step) }));
+  rows.forEach(d => d.tot = d.bins.reduce((a, b) => a + b, 0));
+  let out = '';
+  if (SR.mode === 'multi') {
+    const gmax = Math.max(1, ...rows.flatMap(d => d.bins));
+    for (const d of rows) out += `<div class="mini"><h3><span class="sw" style="background:${d.color}"></span>${esc(d.name)} <span class="tot">${d.tot} ${metricWord()}</span></h3>` +
+      timeBars({ W, H: 130, ax, step, rows: [d], max: SR.scale === 'common' ? gmax : 0 }) + '</div>';
+  } else {
+    out += `<div class="legend">${rows.map(d => `<span><span class="sw" style="background:${d.color}"></span>${esc(d.name)} (${d.tot})</span>`).join('')}</div>`;
+    out += timeBars({ W, H: 320, ax, step, rows, mode: SR.mode === 'group' ? 'group' : 'stack' });
+  }
+  el.innerHTML = out; bindTips(el); bindBins(el, ax, step);
+}
+
+// ---- Ciel et météo : lune levée, nuages, pluie, vent, sur l'axe de l'activité ----
+const meteoTried = new Set();
+function renderCiel() {
+  const el = $('ciel'), tb = $('cielTbl');
+  if (!st.nights.length || !SEL.segs.length) { el.innerHTML = EMPTY; tb.innerHTML = ''; return; }
+  const all = allNights(), want = [...new Set([...st.nights, ...all])], key = SUN.lat.toFixed(2) + SUN.lon.toFixed(2) + want.join();
+  if (!meteoHave(want) && !meteoTried.has(key)) { meteoTried.add(key); meteoLoad(want).then(() => { if (TAB === 'ov' && SEL) renderCiel(); }); }
+  const step = SR.step, ax = makeAxis(step), W = widthOf(el);
+  // nuits superposées (heure après le coucher) : une bande par nuit, sinon une seule bande
+  const blocks = multiNight() && st.axis === 'rel' ? st.nights.map(n => [n]) : [st.nights];
+  let out = (meteoPending ? '<p class="hint">Chargement de la météo…</p>' : meteoErr ? `<p class="hint">${esc(meteoErr)}</p>` : '');
+  for (const b of blocks) out += (blocks.length > 1 ? `<div class="ciel-nuit">${esc(nightLabel(b[0]))}</div>` : '') + cielChart(W, ax, b);
+  el.innerHTML = out; bindTips(el);
+  const deg = (v, p, m) => `${virg(Math.abs(v), 2)}° ${v >= 0 ? p : m}`, srcs = Object.values(SITES).map(x => x.src);
+  $('cielLieu').innerHTML = `Lieu de référence : ${deg(SUN.lat, 'N', 'S')}, ${deg(SUN.lon, 'E', 'O')} (barycentre des sites), heure de Paris.` +
+    (srcs.length && srcs.every(x => x === 'manuel' || x === 'approx') ? ' <b>Position des sites inconnue dans les fichiers : glissez-les à leur place sur la carte pour corriger la lune et la météo.</b>' : '');
+  renderCielTable(all);
+}
+function cielChart(W, ax, nights) {
+  const ml = 36, mr = 8, span = Math.max(1, ax.end - ax.start), X = a => ml + (a - ax.start) / span * (W - ml - mr), xr = W - mr;
+  // morceaux d'axe couverts par l'intervalle [t0, t1] (minutes depuis midi) d'une nuit
+  const spans = (n, t0, t1) => { const o = SEL.off.get(n), r = [];
+    for (const g of ax.segs) { const a = Math.max(t0 + o, g.s), b = Math.min(t1 + o, g.e); if (b > a) r.push([X(g.A + a - g.s), X(g.A + b - g.s)]); } return r; };
+  const xAt = (n, t) => { const r = spans(n, t, t + 0.01)[0]; return r ? r[0] : null; };
+  const hours = n => Array.from({ length: 24 }, (_, i) => (i + 12) % 24).map(h => ({ h, t: h >= 12 ? h * 60 - 720 : h * 60 + 720, m: meteoAt(n, h), n }));
+  const all = nights.flatMap(n => hours(n).filter(x => spans(n, x.t - 30, x.t + 30).length));
+  const met = all.filter(x => x.m);
+  const pmax = Math.max(1, Math.ceil(Math.max(0, ...met.map(x => x.m.p)))), wmax = Math.max(20, Math.ceil(Math.max(0, ...met.map(x => x.m.w)) * 1.15 / 10) * 10);
+  // rangées : [haut, hauteur] ; chaque titre est posé 8 px au-dessus de sa rangée
+  // vent : une voie de 26 px pour les flèches, puis la courbe
+  const R = { lune: [26, 22], nuages: [84, 56], pluie: [176, 40], vent: [286, 72] }, lane = 256, bot = 374, H = bot + 24;
+  const TF = "font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;fill:var(--ink)", SF = "font-family:'IBM Plex Sans',sans-serif;font-size:12px;fill:var(--text-3)";
+  // résumé à droite du titre, seulement s'il tient (sinon il reste lisible dans le tableau par nuit)
+  const fits = (t, sum) => textW(t, "600 13px 'IBM Plex Sans'") + textW(sum, "12px 'IBM Plex Sans'") + 24 < xr - ml;
+  const head = (y, t, sum) => `<text x="${ml}" y="${y}" style="${TF}">${t}</text>` + (sum && fits(t, sum) ? `<text x="${xr}" y="${y}" text-anchor="end" style="${SF}">${sum}</text>` : '');
+  const title = (r, t, sum) => head(R[r][0] - 8, t, sum);
+  const grid = (r, v, max, lbl) => { const y = R[r][0] + R[r][1] * (1 - v / max);
+    return `<line x1="${ml}" x2="${xr}" y1="${y}" y2="${y}" stroke="${v ? 'var(--grid)' : 'var(--axis)'}"/><text x="${ml - 6}" y="${y + 4}" text-anchor="end">${lbl}</text>`; };
+  const avg = f => met.length ? mean(met.map(x => f(x.m))) : 0;
+  const vlines = (x, c, d) => [[R.lune[0], R.lune[0] + R.lune[1]], [R.nuages[0], R.nuages[0] + R.nuages[1]], [R.pluie[0], R.pluie[0] + R.pluie[1]], [lane, bot]]
+    .map(([a, b]) => `<line x1="${x}" x2="${x}" y1="${a}" y2="${b}" stroke="${c}" stroke-dasharray="${d}"/>`).join('');
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  // coucher et lever du soleil : traits verticaux sur toute la hauteur
+  for (const n of nights) { const sun = nightSun(n, 90.833);
+    for (const [t, lb] of [[sun.set, 'coucher'], [sun.rise, 'lever']]) { const x = xAt(n, t); if (x == null) continue;
+      svg += vlines(x, 'var(--text-3)', '3 3') +
+        `<text x="${x + (lb === 'lever' ? -4 : 4)}" y="${bot - 5}" text-anchor="${lb === 'lever' ? 'end' : 'start'}" style="${SF}">${lb} ${fmtT(t)}</text>`; } }
+  // séparateurs de nuits (à la suite)
+  if (ax.multi) ax.segs.slice(1).forEach(g => svg += vlines(X(g.A), 'var(--ink)', '5 3'));
+
+  // 1. Lune : bande quand elle est au-dessus de l'horizon, texte dedans
+  const one = nights.length === 1 ? nightMoon(nights[0]) : null;
+  svg += title('lune', 'Lune', one ? `${Math.round(one.k * 100)} % éclairée, ${one.phase}` : '');
+  svg += `<rect x="${ml}" y="${R.lune[0]}" width="${xr - ml}" height="${R.lune[1]}" fill="var(--line-soft)"/>`;
+  let lunePos = 0;
+  for (const n of nights) { const m = nightMoon(n);
+    for (const [a, b] of m.up) for (const [x0, x1] of spans(n, a, b)) { lunePos++;
+      const txt = `levée${a > 0 ? ' à ' + fmtT(a) : ''}${b < 1440 ? ', couchée à ' + fmtT(b) : ''}${one ? '' : ' · ' + Math.round(m.k * 100) + ' %'}`;
+      svg += `<rect x="${x0}" y="${R.lune[0]}" width="${x1 - x0}" height="${R.lune[1]}" fill="#e3d49a"/>` +
+        (x1 - x0 > 26 ? `<g transform="translate(${x0 + 3} ${R.lune[0] + 2})">${moonIcon(m, 8)}</g>` : '') +
+        (x1 - x0 > textW(txt, "12px 'IBM Plex Sans'") + 34 ? `<text x="${x0 + 26}" y="${R.lune[0] + 15}" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;fill:var(--ink)">${txt}</text>` : ''); } }
+  if (!lunePos) svg += `<text x="${ml + 6}" y="${R.lune[0] + 15}" style="${SF}">sous l'horizon toute la période</text>`;
+
+  // 2. Nuages : aire en escalier de 0 à 100 %
+  svg += title('nuages', 'Couverture nuageuse (%)', met.length ? `moyenne ${Math.round(avg(m => m.c))} %, max ${Math.max(...met.map(x => x.m.c))} %` : '');
+  svg += grid('nuages', 0, 100, '0') + grid('nuages', 50, 100, '50') + grid('nuages', 100, 100, '100');
+  // 3. Pluie : barres par heure
+  const ptot = met.reduce((a, x) => a + x.m.p, 0);
+  svg += title('pluie', 'Pluie (mm par heure)', met.length ? (ptot ? `cumul ${virg(ptot, 1)} mm` : 'aucune pluie') : '');
+  svg += grid('pluie', 0, pmax, '0') + grid('pluie', pmax, pmax, pmax);
+  // 4. Vent : vitesse en courbe, direction en flèches avec valeurs
+  const vx = avg(m => m.w * Math.sin(m.d * D2R)), vy = avg(m => m.w * Math.cos(m.d * D2R));
+  svg += head(lane - 8, 'Vent à 10 m (km/h)', met.length ? `moyenne ${Math.round(avg(m => m.w))} km/h, dominant de ${roseOf((Math.atan2(vx, vy) / D2R + 360) % 360)}` : '');
+  svg += grid('vent', 0, wmax, '0') + grid('vent', wmax / 2, wmax, wmax / 2) + grid('vent', wmax, wmax, wmax);
+  if (!met.length) svg += `<text x="${ml + 6}" y="${R.nuages[0] + 30}" style="${SF}">${meteoPending ? 'chargement de la météo…' : 'pas de données météo'}</text>`;
+
+  const hourPx = (W - ml - mr) / span * 60, every = hourPx >= 56 ? 1 : hourPx >= 28 ? 2 : hourPx >= 14 ? 4 : 6;
+  const yN = v => R.nuages[0] + R.nuages[1] * (1 - v / 100), yP = v => R.pluie[0] + R.pluie[1] * (1 - v / pmax), yV = v => R.vent[0] + R.vent[1] * (1 - v / wmax);
+  for (const n of nights) {
+    const hs = hours(n).filter(x => x.m);
+    // nuages : une marche par heure (valeur centrée sur l'heure)
+    let path = '';
+    for (const x of hs) for (const [x0, x1] of spans(n, x.t - 30, x.t + 30)) path += `M${x0} ${yN(0)}V${yN(x.m.c)}H${x1}V${yN(0)}Z`;
+    if (path) svg += `<path d="${path}" fill="#9fa4bd" stroke="none"/>`;
+    let top = ''; for (const x of hs) for (const [x0, x1] of spans(n, x.t - 30, x.t + 30)) top += `M${x0} ${yN(x.m.c)}H${x1}`;
+    if (top) svg += `<path d="${top}" fill="none" stroke="#4f5468" stroke-width="2"/>`;
+    // pluie : cumul de l'heure écoulée
+    for (const x of hs) if (x.m.p > 0) for (const [x0, x1] of spans(n, x.t - 60, x.t)) svg += `<rect x="${x0 + 1}" y="${yP(x.m.p)}" width="${Math.max(1, x1 - x0 - 2)}" height="${yP(0) - yP(x.m.p)}" fill="#3d3a82"/>`;
+    // vent
+    const pts = hs.map(x => [xAt(n, x.t), yV(x.m.w), x]).filter(p => p[0] != null);
+    if (pts.length > 1) svg += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+    pts.forEach(p => { if (p[2].h % every) return;
+      svg += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--ink)"/>` +
+        `<g transform="translate(${p[0].toFixed(1)} ${lane + 12})"><path d="M0 -9L6 5L0 2L-6 5Z" fill="var(--ink)" transform="rotate(${(p[2].m.d + 180) % 360})"/></g>` +
+        `<text x="${p[0]}" y="${(p[1] + 16).toFixed(1)}" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--text-2)">${roseOf(p[2].m.d)} ${Math.round(p[2].m.w)}</text>`; });
+  }
+  // graduations horaires communes avec l'activité
+  const nb = Math.max(1, Math.round(span / SR.step)), lblEvery = Math.max(1, Math.ceil(nb / Math.floor((W - 50) / 46)));
+  for (let i = 0; i < nb; i += lblEvery) svg += `<text x="${X(ax.start + i * SR.step)}" y="${H - 6}" text-anchor="middle">${fmtTick(ax.toT(ax.start + i * SR.step))}</text>`;
+  svg += `<line x1="${ml}" x2="${xr}" y1="${bot}" y2="${bot}" stroke="var(--axis)"/>`;
+  // infobulles : une zone par heure
+  for (const x of all) for (const [x0, x1] of spans(x.n, x.t - 30, x.t + 30)) {
+    const m = nightMoon(x.n), o = SEL.off.get(x.n), w = x.m;
+    const tipH = `<div class='t'>${nights.length > 1 || ax.multi ? nightShort(x.n) + ' · ' : ''}${fmtT(x.t)}${st.axis === 'rel' ? ' (' + fmtRel(x.t + o) + ')' : ''}</div>` +
+      `<div class='r'>Lune<b>${moonUpAt(m, x.t) ? 'levée, ' + Math.round(m.k * 100) + ' %' : 'couchée'}</b></div>` +
+      (w ? `<div class='r'>Nuages<b>${w.c} %</b></div><div class='r'>Pluie<b>${virg(w.p, 1)} mm</b></div><div class='r'>Vent<b>${roseOf(w.d)} ${Math.round(w.w)} km/h</b></div><div class='r'>Température<b>${virg(w.T, 0)} °C</b></div>` : `<div class='r'><i>météo non chargée</i></div>`);
+    svg += `<rect x="${x0}" y="4" width="${x1 - x0}" height="${bot - 4}" fill="transparent" data-tip="${esc(tipH)}"/>`;
+  }
+  return svg + '</svg>';
+}
+// bilan par nuit de la campagne : lune, météo moyenne sur la fenêtre coucher → lever, activité
+function renderCielTable(nights) {
+  const series = cfg.groups.filter(g => g.on), union = new Set(series.flatMap(g => [...groupSpecies(g)]));
+  const rows = nights.map(n => {
+    const sun = nightSun(n, 90.833), wb = windowBounds(n), m = nightMoon(n);
+    const dets = DET.filter(d => d.night === n && d.conf >= st.conf && !st.sitesOff.has(d.site) && union.has(d.sp) && (!wb || (d.t >= wb.set && d.t <= wb.rise)));
+    const nU = units(dets).length, dur = wb ? (wb.rise - wb.set) / 60 : 0;
+    const hrs = []; for (let t = Math.ceil(sun.set / 60) * 60; t <= sun.rise; t += 60) { const w = meteoAt(n, ((t + 720) / 60) % 24); if (w) hrs.push(w); }
+    const vx = mean(hrs.map(w => w.w * Math.sin(w.d * D2R))), vy = mean(hrs.map(w => w.w * Math.cos(w.d * D2R)));
+    const upNight = m.up.map(([a, b]) => [Math.max(a, sun.set), Math.min(b, sun.rise)]).filter(([a, b]) => b > a);
+    const upTxt = !upNight.length ? 'non' : upNight.length === 1 && upNight[0][0] <= sun.set + 5 && upNight[0][1] >= sun.rise - 5 ? 'toute la nuit' : upNight.map(([a, b]) => fmtT(a) + '–' + fmtT(b)).join(', ');
+    return `<tr data-n="${n}" class="${st.nights.includes(n) ? 'sel' : ''}" style="cursor:pointer" title="Afficher cette nuit seule">` +
+      `<td>${esc(nightShort(n))}</td><td>${Math.round(m.k * 100)} %</td><td>${upTxt}</td>` +
+      (hrs.length ? `<td class="num">${Math.round(mean(hrs.map(w => w.c)))} %</td><td class="num">${roseOf((Math.atan2(vx, vy) / D2R + 360) % 360)} ${Math.round(mean(hrs.map(w => w.w)))}</td><td class="num">${virg(hrs.reduce((a, w) => a + w.p, 0), 1)}</td>` : '<td>–</td><td>–</td><td>–</td>') +
+      `<td class="num">${nU}</td><td class="num">${dur ? virg(nU / dur, 1) : '–'}</td></tr>`;
+  });
+  $('cielTbl').innerHTML = `<thead><tr><th>Nuit</th><th>Lune</th><th>Levée</th><th>Nuages</th><th>Vent km/h</th><th>Pluie mm</th><th>${esc(metricWord())}</th><th>/ heure</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  $('cielTbl').querySelectorAll('tr[data-n]').forEach(r => r.onclick = () => { st.nights = [r.dataset.n]; st.tr = null; renderAll(); });
+}
+
+// =====================================================================
+// Espèces
+// =====================================================================
+function speciesTotals(U) {
+  const m = new Map();
+  for (const u of U) { const o = m.get(u.sp) || { sp: u.sp, latin: u.latin, n: 0, sites: new Set() }; o.n++; o.sites.add(u.site); m.set(u.sp, o); }
+  return [...m.values()].sort((a, b) => b.n - a.n);
+}
+const cut = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+function renderBars() {
+  const el = $('bars'), rows = speciesTotals(SEL.UT);
+  if (!rows.length) { el.innerHTML = EMPTY; return; }
+  const W = widthOf(el), rh = 22, lw = Math.min(220, W * 0.45), H = rows.length * rh + 6;
+  const max = rows[0].n, x = v => (W - lw - 50) * v / max;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  rows.forEach((r, i) => {
+    const col = spColor(r.sp), y = i * rh + 3, w = Math.max(2, x(r.n)), dout = catOf(r.sp) === 'dout', ser = SEL.spSeries.get(r.sp);
+    s += `<g data-sp="${esc(r.sp)}" data-tip="${esc(`<div class='t'>${esc(r.sp)}</div><div class='r'><i>${esc(r.latin)}</i></div><div class='r'>Série<b>${esc(ser ? ser.g.name : '')}</b></div><div class='r'>${metricWord()}<b>${r.n}</b></div><div class='r'>Sites<b>${r.sites.size}</b></div><div class='r'><i>Clic : fiche espèce</i></div>`)}">
+      <rect x="0" y="${y - 3}" width="${W}" height="${rh}" fill="transparent"/>
+      <text class="lbl" x="${lw - 8}" y="${y + 11}" text-anchor="end">${esc(cut(r.sp, 32))}</text>
+      ${dout ? `<rect x="${lw + 1}" y="${y + 1}" width="${Math.max(0, w - 2)}" height="${rh - 10}" fill="none" stroke="${col}" stroke-width="2"/>` : `<rect x="${lw}" y="${y}" width="${w}" height="${rh - 8}" fill="${col}"/>`}
+      <text class="val" x="${lw + w + 6}" y="${y + 11}">${r.n}</text></g>`;
+  });
+  el.innerHTML = s + '</svg>'; bindTips(el);
+}
+function renderHeat() {
+  const el = $('heat'), rows = speciesTotals(SEL.UT), sites = SEL.sites;
+  if (!rows.length) { el.innerHTML = EMPTY; return; }
+  const cnt = {}; for (const u of SEL.UT) cnt[u.sp + '|' + u.site] = (cnt[u.sp + '|' + u.site] || 0) + 1;
+  const max = Math.max(...Object.values(cnt)), steps = ['--q1', '--q2', '--q3', '--q4', '--q5', '--q6', '--q7'];
+  const lw = 200, cw = 50, rh = 22, hh = 70, W = lw + sites.length * cw + 60, H = hh + rows.length * rh;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" style="min-width:${W}px;max-width:${W}px">`;
+  sites.forEach((k, j) => s += `<text class="lbl" transform="translate(${lw + j * cw + cw / 2},${hh - 6}) rotate(-35)">${esc(shortName(k))}</text>`);
+  rows.forEach((r, i) => {
+    const y = hh + i * rh;
+    s += `<g data-sp="${esc(r.sp)}"><rect x="0" y="${y}" width="${lw}" height="${rh}" fill="transparent"/><rect x="${lw - 14}" y="${y + 7}" width="8" height="8" fill="${spColor(r.sp)}"/><text class="lbl" x="${lw - 20}" y="${y + 15}" text-anchor="end">${esc(cut(r.sp, 28))}</text></g>`;
+    sites.forEach((k, j) => {
+      const v = cnt[r.sp + '|' + k] || 0, idx = v ? Math.min(6, Math.floor(Math.log(v) / Math.log(max + 1) * 7)) : -1;
+      s += `<rect x="${lw + j * cw + 1}" y="${y + 1}" width="${cw - 2}" height="${rh - 2}" fill="${v ? `var(${steps[idx]})` : 'var(--page)'}" data-tip="${esc(`<div class='t'>${esc(r.sp)}</div><div class='r'>${esc(siteInfo(k).name)}<b>${v}</b></div>`)}"/>`;
+      if (v) s += `<text x="${lw + j * cw + cw / 2}" y="${y + 15}" text-anchor="middle" style="fill:${idx >= 4 ? '#ffffff' : '#191b16'};pointer-events:none">${v}</text>`;
+    });
+  });
+  el.innerHTML = s + '</svg>'; bindTips(el);
+}
+
+// =====================================================================
+// Chronologie
+// =====================================================================
+// Chronogramme. Deux représentations sans contour, lisibles quand les contacts se serrent :
+//  - densité : par espèce, un ruban découpé en intervalles courts, intensité = nombre de contacts ;
+//  - traits : un trait vertical fin et semi-transparent par contact (les superpositions foncent).
+let chMode = 'dens';
+$('chMode').querySelectorAll('button').forEach(b => b.onclick = () => { chMode = b.dataset.v; segVal('chMode', chMode); renderChrono(); });
+function renderChrono() {
+  const el = $('chrono'), U = SEL.U;
+  if (!U.length) { el.innerHTML = EMPTY; $('chronoLegend').innerHTML = ''; return; }
+  const order = new Map(SEL.data.map((d, i) => [d.g, i]));
+  const rows = speciesTotals(U).sort((a, b) => order.get(SEL.spSeries.get(a.sp).g) - order.get(SEL.spSeries.get(b.sp).g) || b.n - a.n).map(r => r.sp);
+  const ax = makeAxis(60), t0 = ax.start, t1 = ax.end;
+  const W = Math.max(700, el.clientWidth || 900), lw = 200, mr = 12, rh = 20, mt = 4, H = mt + rows.length * rh + 26, pw = W - lw - mr;
+  const x = a => lw + pw * (a - t0) / Math.max(60, t1 - t0);
+  // intervalle de la densité : le plus fin qui garde au moins 4 px par case
+  const bin = [2, 5, 10, 15, 30, 60].find(m => pw / ((t1 - t0) / m) >= 4) || 60;
+  $('chNote').textContent = chMode === 'dens'
+    ? `Chaque ligne est une espèce ; chaque case couvre ${bin} min et fonce avec le nombre de ${metricWord()}. Survolez une case pour le détail ; cliquez sur un nom pour la fiche espèce. « ? » = identification douteuse.`
+    : 'Un trait fin par contact, sans contour : là où les contacts se serrent, les traits se superposent et la couleur fonce. « ? » = identification douteuse.';
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" style="min-width:${W}px">` + axisNight(ax, x, mt, rows.length * rh, lw, W - mr);
+  if (st.tr) { const a = ax.toA(st.tr.t); s += `<rect x="${x(a)}" y="${mt}" width="${Math.max(1, x(a + st.tr.step) - x(a))}" height="${rows.length * rh}" fill="var(--acc)" opacity="0.14"/>`; }
+  for (let a = t0; a <= t1; a += 60) s += `<line x1="${x(a)}" x2="${x(a)}" y1="${mt}" y2="${mt + rows.length * rh}" stroke="var(--grid)"/><text x="${x(a)}" y="${H - 8}" text-anchor="middle">${fmtTick(ax.toT(a))}</text>`;
+  rows.forEach((sp, i) => {
+    const y = mt + i * rh + rh / 2, dout = catOf(sp) === 'dout';
+    s += `<line x1="${lw}" x2="${W - mr}" y1="${y}" y2="${y}" stroke="var(--grid)"/><g data-sp="${esc(sp)}"><rect x="0" y="${y - rh / 2}" width="${lw}" height="${rh}" fill="transparent"/><text class="lbl" x="${lw - 8}" y="${y + 4}" text-anchor="end"${dout ? ' style="font-style:italic"' : ''}>${esc(cut(sp, 28))}${dout ? ' ?' : ''}</text></g>`;
+  });
+  s += axisSeps(ax, x, mt, rows.length * rh);
+  const rowOf = new Map(rows.map((sp, i) => [sp, i]));
+  let vmaxShown = 0;
+  if (chMode === 'dens') {
+    const cells = new Map();
+    for (const u of U) {
+      const a = ax.toA(u.t), j = Math.floor((a - t0) / bin), key = u.sp + '|' + j;
+      const c = cells.get(key) || cells.set(key, { sp: u.sp, j, n: 0, sites: {} }).get(key);
+      c.n++; c.sites[u.site] = (c.sites[u.site] || 0) + 1;
+    }
+    const vmax = Math.max(1, ...[...cells.values()].map(c => c.n)); vmaxShown = vmax;
+    const cw = pw * bin / Math.max(60, t1 - t0);
+    for (const c of cells.values()) {
+      const i = rowOf.get(c.sp), y = mt + i * rh + 3, x0 = x(t0 + c.j * bin);
+      const op = 0.22 + 0.78 * Math.log(1 + c.n) / Math.log(1 + vmax);
+      const a0 = ax.toT(t0 + c.j * bin);
+      const tipH = `<div class='t'>${esc(c.sp)}</div><div class='r'>${multiNight() && ax.multi ? nightShort(ax.segOfA(t0 + c.j * bin).night) + ' · ' : ''}${fmtA(a0)}–${fmtA(a0 + bin)}</div><div class='r'>${metricWord()}<b>${c.n}</b></div>` +
+        Object.entries(c.sites).sort((p, q) => q[1] - p[1]).map(([k, v]) => `<div class='r'><span class='sw' style='background:${siteColor(k)}'></span>${esc(shortName(k))}<b>${v}</b></div>`).join('');
+      s += `<rect x="${x0}" y="${y}" width="${Math.max(1.5, cw - (cw > 5 ? 1 : 0))}" height="${rh - 6}" fill="${spColor(c.sp)}" opacity="${op.toFixed(2)}" data-tip="${esc(tipH)}"/>`;
+    }
+  } else {
+    for (const u of U) {
+      const i = rowOf.get(u.sp), y = mt + i * rh + rh / 2, ux = x(ax.toA(u.t));
+      const tipH = `<div class='t'>${esc(u.sp)}</div><div class='r'>${esc(siteInfo(u.site).name)}</div><div class='r'>Heure<b>${multiNight() ? nightShort(u.night) + ' · ' : ''}${fmtA(u.t)}</b></div><div class='r'>Confiance max<b>${virg(u.conf)}</b></div>${u.n > 1 ? `<div class='r'>Détections regroupées<b>${u.n}</b></div>` : ''}<div class='r'>${esc(u.file)}</div>`;
+      s += `<line x1="${ux}" x2="${ux}" y1="${y - 7}" y2="${y + 7}" stroke="${spColor(u.sp)}" stroke-width="2" stroke-opacity=".55" data-tip="${esc(tipH)}"/>`;
+    }
+  }
+  el.innerHTML = s + '</svg>'; bindTips(el);
+  const scale = chMode === 'dens' ? `<span><svg width="54" height="10" style="width:54px;display:inline-block">${[0.22, 0.48, 0.74, 1].map((o, i) => `<rect x="${i * 13.5}" y="0" width="12.5" height="10" fill="var(--text-2)" opacity="${o}"/>`).join('')}</svg>de 1 à ${vmaxShown} ${metricWord()} par case</span>` : '';
+  $('chronoLegend').innerHTML = SEL.data.map(d => `<span><span class="sw" style="background:${d.color}"></span>${esc(d.g.name)}</span>`).join('') + scale;
+}
+$('stStep').onchange = () => renderSiteHists();
+$('stScale').onchange = () => renderSiteHists();
+function renderSiteHists() {
+  const el = $('siteHists'), data = SEL.data;
+  if (!data.length || !SEL.sites.length || !SEL.segs.length) { el.innerHTML = EMPTY; $('sitesLegend').innerHTML = ''; return; }
+  const step = +$('stStep').value, ax = makeAxis(step), W = widthOf(el);
+  const per = SEL.sites.map(k => ({ k, rows: data.map(d => ({ name: d.g.name, color: d.color, bins: binsOf(d.U.filter(u => u.site === k), ax, step) })) }));
+  const tots = p => p.rows[0].bins.map((_, i) => p.rows.reduce((a, r) => a + r.bins[i], 0));
+  const gmax = Math.max(1, ...per.flatMap(tots));
+  el.innerHTML = per.map(p => { const sum = tots(p).reduce((a, b) => a + b, 0);
+    return `<div class="mini"><h3><span class="sw" style="background:${siteColor(p.k)}"></span>${esc(siteInfo(p.k).name)} <span class="tot">${sum} ${metricWord()}</span></h3>` +
+      timeBars({ W, H: 120, ax, step, rows: p.rows, max: $('stScale').value === 'common' ? gmax : 0, title: esc(shortName(p.k)) + ' · ' }) + '</div>'; }).join('');
+  bindTips(el); bindBins(el, ax, step);
+  $('sitesLegend').innerHTML = data.map(d => `<span><span class="sw" style="background:${d.color}"></span>${esc(d.g.name)}</span>`).join('') +
+    '<span><span class="sw" style="background:var(--night);border:1px solid var(--axis)"></span>Nuit</span>';
+}
+
+// =====================================================================
+// Méthode : courbes pédagogiques
+// =====================================================================
+// Courbe en lignes sur l'axe horaire (escaliers) ; series : [{ name, color, vals, width }]
+function timeLines({ W, H, ax, step, series, ymax, title }) {
+  const t0 = ax.start, nb = series[0].vals.length, ml = 36, mr = 64, mt = 10, mb = 22, ih = H - mt - mb, bw = (W - ml - mr) / nb;
+  const y = v => mt + ih * (1 - v / ymax), X = a => ml + (a - t0) / step * bw;
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}">` + axisNight(ax, X, mt, ih, ml, W - mr);
+  niceTicks(ymax).forEach(t => s += `<line x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`);
+  // étiquettes directes en bout de courbe, décalées pour ne pas se chevaucher
+  const ends = [];
+  for (const sr of series) {
+    let d = `M${ml},${y(0)}`;
+    sr.vals.forEach((v, i) => d += `V${y(v)}H${ml + (i + 1) * bw}`);
+    s += `<path d="${d}" fill="none" stroke="${sr.color}" stroke-width="${sr.width || 2}" stroke-linejoin="miter"/>`;
+    ends.push({ y: y(sr.vals[nb - 1]), name: sr.short || sr.name, v: sr.vals[nb - 1] });
+  }
+  ends.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 12) ends[i].y = ends[i - 1].y + 12;
+  ends.forEach(e => s += `<text class="lbl" x="${W - mr + 6}" y="${e.y + 4}" style="font-size:11px">${esc(cut(e.name, 10))} ${e.v}</text>`);
+  const lblEvery = Math.max(1, Math.ceil(nb / Math.floor((W - 90) / 46)));
+  for (let i = 0; i < nb; i++) {
+    const rowsH = series.map(sr => `<div class='r'><span class='sw' style='background:${sr.color}'></span>${esc(sr.name)}<b>${sr.vals[i]}</b></div>`).join('');
+    s += `<rect x="${ml + i * bw}" y="${mt}" width="${bw}" height="${ih}" fill="transparent" data-tip="${esc(`<div class='t'>${title} à ${fmtA(ax.toT(t0 + (i + 1) * step))}</div>${rowsH}`)}"/>`;
+    if (i % lblEvery === 0) s += `<text x="${ml + i * bw}" y="${H - 6}" text-anchor="middle">${fmtTick(ax.toT(t0 + i * step))}</text>`;
+  }
+  s += axisSeps(ax, X, mt, ih);
+  return s + `<line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="var(--axis)"/></svg>`;
+}
+function renderRich() {
+  const el = $('rich');
+  if (!SEL.U.length || !SEL.segs.length) { el.innerHTML = EMPTY; $('richLegend').innerHTML = ''; return; }
+  const step = 15, ax = makeAxis(step), nb = Math.max(1, Math.round((ax.end - ax.start) / step));
+  const cumul = U => { const first = new Map(); for (const u of U) { const i = Math.floor((ax.toA(u.t) - ax.start) / step); if (!first.has(u.sp) || i < first.get(u.sp)) first.set(u.sp, i); }
+    const v = new Array(nb).fill(0); for (const i of first.values()) for (let j = Math.max(0, i); j < nb; j++) v[j]++; return v; };
+  const series = SEL.sites.map(k => ({ name: siteInfo(k).name, short: shortName(k), color: siteColor(k), vals: cumul(SEL.U.filter(u => u.site === k)) }));
+  if (series.length > 1) series.push({ name: 'Tous sites', short: 'Tous', color: 'var(--ink)', width: 3, vals: cumul(SEL.U) });
+  const ymax = Math.max(1, ...series.map(s => s.vals[nb - 1]));
+  el.innerHTML = timeLines({ W: widthOf(el), H: 320, ax, step, series, ymax, title: 'Espèces cumulées' });
+  $('richLegend').innerHTML = series.map(s => `<span><span class="sw" style="background:${s.color}"></span>${esc(s.name)}</span>`).join('');
+  bindTips(el);
+}
+// petit graphique en ligne, axe des x = seuil de confiance ; clic = appliquer le seuil
+function seuilChart(W, H, xs, vals, label) {
+  const ml = 40, mr = 12, mt = 22, mb = 24, ih = H - mt - mb, ymax = Math.max(1, ...vals);
+  const X = v => ml + (W - ml - mr) * (v - xs[0]) / (xs[xs.length - 1] - xs[0]), y = v => mt + ih * (1 - v / ymax);
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}" class="seuil-svg" data-x0="${xs[0]}" data-x1="${xs[xs.length - 1]}" data-ml="${ml}" data-mr="${mr}" style="cursor:pointer">`;
+  s += `<text x="0" y="12" style="fill:var(--ink);font-family:var(--sans);font-size:12px;font-weight:600">${label}</text>`;
+  niceTicks(ymax).forEach(t => s += `<line x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`);
+  s += `<path d="${xs.map((x, i) => (i ? 'L' : 'M') + X(x) + ',' + y(vals[i])).join('')}" fill="none" stroke="var(--s1)" stroke-width="2"/>`;
+  xs.forEach((x, i) => { s += `<circle cx="${X(x)}" cy="${y(vals[i])}" r="4" fill="var(--s1)" stroke="var(--card)" stroke-width="2" data-tip="${esc(`<div class='t'>Seuil ${virg(x)}</div><div class='r'>${label}<b>${vals[i]}</b></div><div class='r'><i>Clic : appliquer ce seuil</i></div>`)}"/>`;
+    if (i % 2 === 0) s += `<text x="${X(x)}" y="${H - 6}" text-anchor="middle">${virg(x)}</text>`; });
+  if (st.conf >= xs[0] && st.conf <= xs[xs.length - 1]) s += `<line x1="${X(st.conf)}" x2="${X(st.conf)}" y1="${mt - 4}" y2="${H - mb}" stroke="var(--acc)" stroke-width="2"/>`;
+  return s + `<line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="var(--axis)"/></svg>`;
+}
+function renderSeuil() {
+  const el = $('seuil'), raw = SEL.baseAll.filter(d => SEL.union.has(d.sp));
+  if (!raw.length) { el.innerHTML = EMPTY; return; }
+  const lo = Math.floor(Math.min(...raw.map(d => d.conf)) * 20) / 20, xs = [];
+  for (let x = Math.min(lo, 0.95); x <= 0.951; x += 0.05) xs.push(Math.round(x * 100) / 100);
+  const res = xs.map(x => { const U = units(raw.filter(d => d.conf >= x)); return [U.length, new Set(U.map(u => u.sp)).size]; });
+  const W = widthOf(el);
+  el.innerHTML = seuilChart(W, 200, xs, res.map(r => r[0]), metricWord().replace(/^./, c => c.toUpperCase())) + '<div style="height:12px"></div>' + seuilChart(W, 200, xs, res.map(r => r[1]), 'Espèces');
+  bindTips(el);
+  el.querySelectorAll('.seuil-svg').forEach(svg => svg.onclick = e => {
+    const r = svg.getBoundingClientRect(), k = r.width / W, x0 = +svg.dataset.x0, x1 = +svg.dataset.x1, ml = +svg.dataset.ml * k, mr = +svg.dataset.mr * k;
+    const f = Math.min(1, Math.max(0, (e.clientX - r.left - ml) / (r.width - ml - mr)));
+    st.conf = Math.round((x0 + f * (x1 - x0)) * 20) / 20; $('fConf').value = st.conf; hideTip(); renderAll();
+  });
+}
+function confBars(W, H, dets) {
+  const lo = Math.floor(Math.min(...dets.map(d => d.conf)) * 20) / 20, nb = Math.max(1, Math.round((1 - lo) / 0.05));
+  const bins = new Array(nb).fill(0); for (const d of dets) bins[Math.min(nb - 1, Math.floor((d.conf - lo) / 0.05 + 1e-9))]++;
+  const ml = 40, mr = 10, mt = 10, mb = 24, ih = H - mt - mb, bw = (W - ml - mr) / nb, max = Math.max(1, ...bins), y = v => mt + ih * (1 - v / max);
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  niceTicks(max).forEach(t => s += `<line x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/><text x="${ml - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`);
+  bins.forEach((v, i) => { const a = lo + i * 0.05, kept = a + 1e-9 >= st.conf;
+    if (v) s += `<rect x="${ml + i * bw + 1}" y="${y(v)}" width="${Math.max(1, bw - 2)}" height="${y(0) - y(v)}" fill="${kept ? 'var(--s1)' : 'var(--gray)'}"/>`;
+    s += `<rect x="${ml + i * bw}" y="${mt}" width="${bw}" height="${ih}" fill="transparent" data-tip="${esc(`<div class='t'>Confiance ${virg(a)}–${virg(Math.min(1, a + 0.05))}</div><div class='r'>Détections<b>${v}</b></div><div class='r'>${kept ? 'gardées' : 'écartées par le seuil'}</div>`)}"/>`;
+    if (i % 2 === 0) s += `<text x="${ml + i * bw}" y="${H - 6}" text-anchor="middle">${virg(a)}</text>`; });
+  const xs = ml + (st.conf - lo) / 0.05 * bw;
+  if (st.conf > lo && st.conf <= 1) s += `<line x1="${xs}" x2="${xs}" y1="${mt - 4}" y2="${H - mb}" stroke="var(--acc)" stroke-width="2"/>`;
+  return s + `<line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="var(--axis)"/></svg>`;
+}
+function renderConfHist() {
+  const el = $('confHist'), raw = SEL.baseAll.filter(d => SEL.union.has(d.sp));
+  if (!raw.length) { el.innerHTML = EMPTY; return; }
+  const kept = raw.filter(d => d.conf >= st.conf).length;
+  el.innerHTML = confBars(widthOf(el), 300, raw) + `<p class="hint" style="margin:8px 0 0">${kept} détections gardées sur ${raw.length} (${Math.round(100 * kept / raw.length)} %).</p>`;
+  bindTips(el);
+}
+
+// =====================================================================
+// Fiche espèce
+// =====================================================================
+let ficheSp = null;
+function openFiche(sp) { ficheSp = sp; if (!$('fiche').open) $('fiche').showModal(); renderFiche(); }
+$('fiche').addEventListener('close', () => ficheSp = null);
+function renderFiche() {
+  const sp = ficheSp; if (!sp) return;
+  const raw = SEL.baseAll.filter(d => d.sp === sp), kept = raw.filter(d => d.conf >= st.conf), U = units(kept);
+  const latin = (DET.find(d => d.sp === sp) || {}).latin || '';
+  $('fcTitle').textContent = sp; $('fcLatin').textContent = latin;
+  const cat = catOf(sp);
+  let h = `<div class="row-tools"><label class="hint">Catégorie <select id="fcCat">${CAT_ORDER.map(k => `<option value="${k}" ${k === cat ? 'selected' : ''}>${CATS[k].label}</option>`).join('')}</select></label>
+    ${SEL.spSeries.get(sp) ? `<span class="hint"><span class="sw" style="background:${spColor(sp)}"></span> série « ${esc(SEL.spSeries.get(sp).g.name)} »</span>` : '<span class="hint">Hors des séries affichées.</span>'}</div>`;
+  const confs = kept.map(d => d.conf).sort((a, b) => a - b);
+  h += `<div class="kpis">${[
+    [U.length, metricWord()], [kept.length, 'détections ≥ seuil'], [new Set(U.map(u => u.site)).size, 'sites'],
+    [confs.length ? virg(confs[Math.floor(confs.length / 2)]) : '—', 'confiance médiane'],
+  ].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  if (!raw.length) { $('fcBody').innerHTML = h + '<div class="empty">Aucune détection de cette espèce dans les nuits, sites et fenêtre choisis.</div>'; bindFicheCat(); return; }
+  h += `<div class="fiche-grid"><div><h3 class="repere">Profil horaire (pas 30 min)</h3><div id="fcProf"></div>
+    <h3 class="repere" style="margin-top:14px">Scores de confiance (détections brutes)</h3><div id="fcConf"></div></div>
+    <div><h3 class="repere">Par site</h3><div id="fcSites"></div>${multiNight() ? '<h3 class="repere" style="margin-top:14px">Par nuit</h3><div id="fcNights"></div>' : ''}</div></div>`;
+  $('fcBody').innerHTML = h; bindFicheCat();
+  const W1 = widthOf($('fcProf')), col = SEL.spSeries.get(sp) ? spColor(sp) : 'var(--s1)';
+  if (SEL.segs.length && U.length) { const ax = makeAxis(30); $('fcProf').innerHTML = timeBars({ W: W1, H: 170, ax, step: 30, rows: [{ name: sp, color: col, bins: binsOf(U, ax, 30) }], clickable: false }); }
+  else $('fcProf').innerHTML = '<div class="empty">Aucun contact au-dessus du seuil.</div>';
+  $('fcConf').innerHTML = confBars(W1, 170, raw);
+  const hbars = (el, rows) => { const W = widthOf(el), lw = Math.min(150, W * .45), rh = 22, max = Math.max(1, ...rows.map(r => r[1]));
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${rows.length * rh + 4}" height="${rows.length * rh + 4}">` + rows.map(([n, v, c], i) => { const w = (W - lw - 40) * v / max;
+      return `<text class="lbl" x="${lw - 8}" y="${i * rh + 15}" text-anchor="end">${esc(cut(n, 22))}</text>${v ? `<rect x="${lw}" y="${i * rh + 4}" width="${Math.max(2, w)}" height="${rh - 8}" fill="${c}"/>` : ''}<text class="val" x="${lw + w + 6}" y="${i * rh + 15}">${v}</text>`; }).join('') + '</svg>'; };
+  hbars($('fcSites'), SEL.sites.map(k => [siteInfo(k).name, U.filter(u => u.site === k).length, siteColor(k)]));
+  if ($('fcNights')) hbars($('fcNights'), st.nights.map(n => [nightShort(n), U.filter(u => u.night === n).length, col]));
+  bindTips($('fcBody'));
+}
+function bindFicheCat() {
+  $('fcCat').onchange = e => { const sp = ficheSp; if ((DEFAULT_CATS[sp] || 'nc') === e.target.value) delete cfg.cats[sp]; else cfg.cats[sp] = e.target.value; saveCfg(); renderAll(); };
+}
+
+// =====================================================================
+// Simulation animée
+// =====================================================================
+const SIM = { T: 0, t0: 0, t1: 1, playing: false, last: 0, data: [], pts: [], sites: [], rec: null, cumMax: 1, heatMax: 1 };
+let simMap = null;
+function simInit() {
+  simMap = L.map('simMap', { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, fadeAnimation: false }).setView([47.665, -3.22], 12);
+  addBases(simMap);
+  simMap.on('move zoom resize', () => { if (!SIM.playing) simDraw(); });
+  $('simPlay').onclick = () => simSetPlaying(!SIM.playing);
+  $('simRestart').onclick = () => { SIM.T = SIM.t0; simDraw(); };
+  $('simSlider').oninput = e => { SIM.T = SIM.t0 + (SIM.t1 - SIM.t0) * e.target.value / 1000; simDraw(); };
+  $('simRec').onclick = simRecord;
+  document.querySelectorAll('.sim-params input').forEach(i => i.oninput = () => { simPrecompute(); simDraw(); });
+  const curve = $('simCurve');
+  const seek = e => { const r = curve.getBoundingClientRect(), g = SIM.curveGeom; if (!g) return; const k = r.width / g.W; const f = Math.min(1, Math.max(0, (e.clientX - r.left - g.ml * k) / (r.width - (g.ml + g.mr) * k))); SIM.T = SIM.t0 + f * (SIM.t1 - SIM.t0); simDraw(); };
+  curve.addEventListener('pointerdown', e => { curve.setPointerCapture(e.pointerId); seek(e); curve.onpointermove = seek; });
+  curve.addEventListener('pointerup', () => curve.onpointermove = null);
+}
+const P = id => { const el = $(id); return el.type === 'checkbox' ? el.checked : parseFloat(el.value) || 0; };
+// pseudo-aléatoire déterministe : un contact garde sa place d'une image à l'autre
+function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; }
+function simRefresh() {
+  if (!simMap) simInit();
+  if (!meteoHave(st.nights)) meteoLoad(st.nights);
+  simMap.invalidateSize();
+  SIM.data = SEL.data; SIM.sites = SEL.sites;
+  if (!SIM.data.length || !SEL.segs.length) {
+    $('simMsg').textContent = 'Aucune série dans la sélection.';
+    SIM.pts = []; $('simLegend').style.display = 'none'; $('simCurve').innerHTML = ''; simDraw(); return;
+  }
+  $('simMsg').textContent = '';
+  SIM.ax = makeAxis(15);
+  const t0 = SIM.ax.start, t1 = SIM.ax.end;
+  if (t0 !== SIM.t0 || t1 !== SIM.t1) { SIM.t0 = t0; SIM.t1 = t1; SIM.T = t0; }
+  SIM.T = Math.min(Math.max(SIM.T, t0), t1);
+  SIM.pts = SIM.data.flatMap((d, j) => d.U.map(u => ({ t: SIM.ax.toA(u.t), site: u.site, j, a: hash(u.site + u.sp + u.t + u.night), r: hash(u.sp + u.t + u.site + u.night + 'r') }))).sort((a, b) => a.t - b.t);
+  $('simLegend').style.display = '';
+  $('simLegend').innerHTML = SIM.data.map(d => `<span><span class="sw" style="background:${d.color}"></span>${esc(d.g.name)} (${d.U.length})</span>`).join('');
+  const sig = CAMP.id + '|' + SIM.sites.join('|');
+  if (sig !== SIM.sig && SIM.sites.length) { simMap.fitBounds(L.latLngBounds(SIM.sites.map(k => { const i = siteInfo(k); return [i.lat, i.lon]; })).pad(0.25)); SIM.sig = sig; }
+  simPrecompute(); simCurve(); simDraw();
+}
+function simPrecompute() {
+  const cnt = {}; for (const p of SIM.pts) { const k = p.site + '|' + p.j; cnt[k] = (cnt[k] || 0) + 1; }
+  SIM.cumMax = Math.max(1, ...Object.values(cnt));
+  const win = P('pWin'); let hm = 1;
+  for (let T = SIM.t0; T <= SIM.t1; T += 5) {
+    const c = {}; for (const p of SIM.pts) if (p.t > T - win && p.t <= T) { const k = p.site + '|' + p.j; c[k] = (c[k] || 0) + 1; }
+    hm = Math.max(hm, ...Object.values(c));
+  }
+  SIM.heatMax = hm;
+}
+function simSetPlaying(on) {
+  SIM.playing = on;
+  $('simPlay').textContent = on ? '❚❚ Pause' : '▶ Lecture';
+  if (on) { if (SIM.T >= SIM.t1) SIM.T = SIM.t0; SIM.last = performance.now(); requestAnimationFrame(simTick); }
+}
+function simTick(now) {
+  if (!SIM.playing) return;
+  const dt = (now - SIM.last) / 1000; SIM.last = now;
+  SIM.T += dt * 60 / (+$('simSpeed').value);
+  if (SIM.T >= SIM.t1) { SIM.T = SIM.t1; simDraw(); simSetPlaying(false); if (SIM.rec) SIM.rec.stop(); return; }
+  simDraw(); requestAnimationFrame(simTick);
+}
+function simCiel(T) {
+  if (!SIM.ax || !SIM.ax.segs.length || (multiNight() && st.axis === 'rel')) return '';
+  const n = SIM.ax.segOfA(T).night, t = SIM.ax.toT(T) - SEL.off.get(n), m = nightMoon(n);
+  const w = meteoAt(n, ((Math.round(t / 60) + 12) % 24 + 24) % 24);
+  return (moonUpAt(m, t) ? `lune levée ${Math.round(m.k * 100)} %` : 'lune couchée') + (w ? ` · vent ${roseOf(w.d)} ${Math.round(w.w)} km/h · nuages ${w.c} %` : '');
+}
+function simPhase(T) {
+  if (!SIM.ax || !SIM.ax.segs.length) return '';
+  const g = SIM.ax.segOfA(T), t = SIM.ax.toT(T);
+  if (t < g.sun.set || t > g.sun.rise) return 'jour';
+  if (t < g.civ.set || t > g.civ.rise) return 'crépuscule civil';
+  return 'nuit';
+}
+function simDraw() {
+  if (!simMap) return;
+  const cv = $('simCanvas'), wrap = cv.parentElement, dpr = devicePixelRatio || 1;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  simPaint(ctx, W, H);
+  $('simTime').textContent = SIM.pts.length ? fmtA(SIM.ax.toT(SIM.T)) : '--h--';
+  $('simPhase').textContent = simPhase(SIM.T) + (st.axis === 'rel' ? ' · depuis le coucher' : '') + (SIM.pts.length && SIM.ax.multi ? ' · ' + nightShort(SIM.ax.segOfA(SIM.T).night) : '');
+  $('simCiel').textContent = SIM.pts.length ? simCiel(SIM.T) : '';
+  $('simSlider').value = Math.round(1000 * (SIM.T - SIM.t0) / Math.max(1, SIM.t1 - SIM.t0));
+  simCursor();
+  if (SIM.rec) simRecFrame();
+}
+function simPaint(ctx, W, H) {
+  const T = SIM.T, col = j => resolveVar(SIM.data[j].color);
+  const xy = {}; for (const k of SIM.sites) { const i = siteInfo(k); xy[k] = simMap.latLngToContainerPoint([i.lat, i.lon]); }
+  const ph = simPhase(T);
+  if (P('pDim') && ph && ph !== 'jour') { ctx.fillStyle = ph === 'nuit' ? 'rgba(8,12,30,0.35)' : 'rgba(8,12,30,0.18)'; ctx.fillRect(0, 0, W, H); }
+  const n = SIM.data.length;
+  const off = j => n > 1 ? { x: Math.cos(2 * Math.PI * j / n) * 10, y: Math.sin(2 * Math.PI * j / n) * 10 } : { x: 0, y: 0 };
+  if (P('pHeat')) {
+    const win = P('pWin'), R = P('pHeatR'), A = P('pHeatA'), c = {};
+    for (const p of SIM.pts) { if (p.t > T) break; if (p.t > T - win) { const k = p.site + '|' + p.j; c[k] = (c[k] || 0) + 1; } }
+    for (const [k, v] of Object.entries(c)) {
+      const [site, j] = k.split('|'), o = off(+j), q = xy[site]; if (!q) continue;
+      const r = Math.max(6, R * Math.sqrt(v / SIM.heatMax)), x = q.x + o.x, y = q.y + o.y;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r), cc = col(+j);
+      g.addColorStop(0, hexA(cc, A)); g.addColorStop(0.6, hexA(cc, A * 0.45)); g.addColorStop(1, hexA(cc, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.fill();
+    }
+  }
+  if (P('pCum') && n) {
+    const Hm = P('pCumH'), bw = 10, gp = 2, Wc = n * bw + (n - 1) * gp, c = {};
+    for (const p of SIM.pts) { if (p.t > T) break; const k = p.site + '|' + p.j; c[k] = (c[k] || 0) + 1; }
+    for (const k of SIM.sites) {
+      const q = xy[k]; if (!q) continue;
+      for (let j = 0; j < n; j++) {
+        const v = c[k + '|' + j] || 0, h = v ? Math.max(2, Hm * v / SIM.cumMax) : 0, x = q.x - Wc / 2 + j * (bw + gp), y = q.y - 8;
+        ctx.globalAlpha = 0.9; ctx.fillStyle = col(j);
+        if (h) ctx.fillRect(x, y - h, bw, h); else ctx.fillRect(x, y - 1, bw, 1);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+  if (P('pPulse')) {
+    const rem = P('pRem'), disp = P('pDisp'), sz = P('pSize');
+    for (const p of SIM.pts) {
+      if (p.t > T) break;
+      const age = T - p.t; if (age > rem) continue;
+      const q = xy[p.site]; if (!q) continue;
+      const ang = p.a * 2 * Math.PI, rr = Math.sqrt(p.r) * disp, x = q.x + Math.cos(ang) * rr, y = q.y + Math.sin(ang) * rr;
+      const life = 1 - age / rem, cc = col(p.j);
+      if (age < rem * 0.15) { const k = age / (rem * 0.15);
+        ctx.strokeStyle = hexA(cc, 0.8 * (1 - k)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, sz + 14 * k, 0, 2 * Math.PI); ctx.stroke(); }
+      ctx.fillStyle = hexA(cc, 0.25 + 0.75 * life); ctx.beginPath(); ctx.arc(x, y, sz, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = `rgba(255,255,255,${0.8 * life})`; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+  // point GPS exact de chaque spot
+  ctx.fillStyle = cssv('--ink'); ctx.strokeStyle = cssv('--card'); ctx.lineWidth = 1.5;
+  for (const k of SIM.sites) { const q = xy[k]; if (q) { ctx.fillRect(q.x - 3.5, q.y - 3.5, 7, 7); ctx.strokeRect(q.x - 3.5, q.y - 3.5, 7, 7); } }
+  if (P('pNames')) {
+    const c = {}; for (const p of SIM.pts) { if (p.t > T) break; c[p.site] = (c[p.site] || 0) + 1; }
+    const boxes = simLabelLayout(xy, W, H);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    for (const [k, b] of boxes) {
+      const q = xy[k], e = edgePoint(b, q.x, q.y);
+      ctx.strokeStyle = cssv('--ink'); ctx.lineWidth = 1;
+      const kn = kneePoint(b, e);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(kn[0], kn[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+      ctx.fillStyle = cssv('--card'); ctx.fillRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
+      ctx.strokeRect(b.x0 + .5, b.y0 + .5, b.x1 - b.x0 - 1, b.y1 - b.y0 - 1);
+      ctx.fillStyle = cssv('--ink'); ctx.font = LBL_FONT; ctx.fillText(shortName(k), b.x0 + 5, (b.y0 + b.y1) / 2 + 1);
+      ctx.font = "11px 'JetBrains Mono', monospace"; ctx.fillText(String(c[k] || 0), b.x0 + 9 + textW(shortName(k)), (b.y0 + b.y1) / 2 + 1);
+    }
+  }
+}
+// Étiquettes de la simulation : boîtes calculées pour le total de la nuit (largeur stable pendant
+// l'animation), recalculées seulement si la carte, les spots ou les réglages d'affichage changent.
+function simLabelLayout(xy, W, H) {
+  const n = SIM.data.length, Wc = n * 10 + (n - 1) * 2, Hm = P('pCum') ? P('pCumH') : 0, R = P('pPulse') ? P('pDisp') + P('pSize') : 0;
+  const tot = {}; for (const p of SIM.pts) tot[p.site] = (tot[p.site] || 0) + 1;
+  const ks = SIM.sites.filter(k => xy[k]);
+  const sig = ks.map(k => `${k}:${Math.round(xy[k].x)},${Math.round(xy[k].y)}`).join('|') + `|${W}x${H}|${Hm}|${R}|${n}`;
+  if (SIM.lblSig === sig) return SIM.lblBoxes;
+  const half = Math.max(R, Hm ? Wc / 2 : 0);
+  const items = ks.map(k => { const q = xy[k];
+    return { k, x: q.x, y: q.y, w: textW(shortName(k)) + textW(' ' + (tot[k] || 0), "11px 'JetBrains Mono', monospace") + 14, h: 18,
+      sym: { x0: q.x - half, x1: q.x + half, y0: q.y - Math.max(R, Hm ? Hm + 8 : 0), y1: q.y + R } }; });
+  const boxes = placeLabels(items, W, H);
+  SIM.lblSig = sig; SIM.lblBoxes = items.map((it, i) => [it.k, boxes[i]]);
+  return SIM.lblBoxes;
+}
+function simCurve() {
+  const el = $('simCurve'); if (!SIM.pts.length) { el.innerHTML = ''; return; }
+  const step = 15, W = widthOf(el), rows = SIM.data.map((d, j) => ({ name: d.g.name, color: d.color, bins: binsOf(d.U, SIM.ax, step) }));
+  el.innerHTML = timeBars({ W, H: 110, ax: SIM.ax, step, rows, clickable: false }).replace('</svg>',
+    `<rect id="simShade" x="36" y="8" width="0" height="80" fill="var(--card)" opacity="0.6"/><line id="simCur" x1="0" x2="0" y1="4" y2="88" stroke="var(--ink)" stroke-width="2"/></svg>`);
+  SIM.curveGeom = { ml: 36, mr: 8, W };
+  simCursor();
+}
+function simCursor() {
+  const c = $('simCur'), sh = $('simShade'), g = SIM.curveGeom; if (!c || !g) return;
+  const x = g.ml + (g.W - g.ml - g.mr) * (SIM.T - SIM.t0) / Math.max(1, SIM.t1 - SIM.t0);
+  c.setAttribute('x1', x); c.setAttribute('x2', x);
+  sh.setAttribute('x', x); sh.setAttribute('width', Math.max(0, g.W - g.mr - x));
+}
+function simRecord() {
+  if (SIM.rec) { SIM.rec.stop(); return; }
+  if (!SIM.pts.length) { $('simMsg').textContent = 'Rien à enregistrer : la sélection est vide.'; return; }
+  if (!window.MediaRecorder) { $('simMsg').textContent = "Ce navigateur ne permet pas l'enregistrement vidéo."; return; }
+  const wrap = $('simCanvas').parentElement, W = wrap.clientWidth, H = wrap.clientHeight;
+  const out = document.createElement('canvas'); out.width = W * 2; out.height = H * 2;
+  const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(out.captureStream(30), { mimeType: mime, videoBitsPerSecond: 8e6 });
+  const chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = () => {
+    SIM.rec = null; $('simRec').textContent = '⏺ Enregistrer la vidéo'; simSetPlaying(false);
+    download(`nocmig_simulation_${nightsTag()}.webm`, new Blob(chunks, { type: 'video/webm' }));
+    $('simMsg').textContent = 'Vidéo enregistrée (format WebM, lisible par VLC, Firefox ou Chrome).';
+  };
+  SIM.rec = rec; SIM.recCanvas = out; SIM.recTaint = false;
+  $('simRec').textContent = '⏹ Arrêter';
+  $('simMsg').textContent = 'Enregistrement en cours… la nuit est rejouée depuis le début.';
+  SIM.T = SIM.t0; rec.start(200); simSetPlaying(true);
+}
+function simRecFrame() {
+  const out = SIM.recCanvas, ctx = out.getContext('2d'), wrap = $('simCanvas').parentElement;
+  const W = wrap.clientWidth, H = wrap.clientHeight, box = wrap.getBoundingClientRect();
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx.fillStyle = cssv('--card'); ctx.fillRect(0, 0, W, H);
+  if (!SIM.recTaint) wrap.querySelectorAll('.leaflet-tile-loaded').forEach(img => {
+    const r = img.getBoundingClientRect();
+    ctx.drawImage(img, r.left - box.left, r.top - box.top, r.width, r.height);
+  });
+  simPaint(ctx, W, H);
+  const big = "500 30px 'JetBrains Mono', monospace", small = "12px 'IBM Plex Sans', sans-serif";
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  const tt = fmtA(SIM.ax.toT(SIM.T)), ph = simPhase(SIM.T), ciel = simCiel(SIM.T), sub = `${ph}${ph ? ' · ' : ''}${st.axis === 'rel' ? 'depuis le coucher · ' : ''}${nightLabel(SIM.ax.segOfA(SIM.T).night)}${ciel ? ' · ' + ciel : ''}`;
+  ctx.font = small; const w2 = ctx.measureText(sub).width; ctx.font = big;
+  const wb = Math.max(ctx.measureText(tt).width, w2) + 24;
+  ctx.fillStyle = cssv('--card'); ctx.fillRect(10, 10, wb, 56); ctx.strokeStyle = cssv('--ink'); ctx.strokeRect(10.5, 10.5, wb - 1, 55);
+  ctx.fillStyle = cssv('--ink'); ctx.fillText(tt, 22, 14);
+  ctx.font = small; ctx.fillStyle = cssv('--text-2'); ctx.fillText(sub, 22, 48);
+  const lines = SIM.data.map(d => [resolveVar(d.color), `${d.g.name} (${d.U.length})`]);
+  const lw = Math.max(...lines.map(l => ctx.measureText(l[1]).width)) + 36, lh = lines.length * 18 + 10;
+  ctx.fillStyle = cssv('--card'); ctx.fillRect(10, H - lh - 10, lw, lh); ctx.strokeRect(10.5, H - lh - 9.5, lw - 1, lh - 1);
+  lines.forEach(([c, t], i) => { ctx.fillStyle = c; ctx.fillRect(18, H - lh - 10 + 8 + i * 18, 10, 10); ctx.fillStyle = cssv('--ink'); ctx.fillText(t, 34, H - lh - 10 + 6 + i * 18); });
+  ctx.fillStyle = cssv('--text-3'); ctx.textAlign = 'right'; ctx.fillText('Fond © IGN / © OpenStreetMap © CARTO', W - 8, H - 18);
+  if (!SIM.recTaint) { try { ctx.getImageData(0, 0, 1, 1); } catch (e) { SIM.recTaint = true; $('simMsg').textContent = 'Fond de carte non copiable : la vidéo est enregistrée sans fond.'; } }
+}
+
+// =====================================================================
+// Données : fiche de campagne, tri des espèces, exports
+// =====================================================================
+function renderCampInfo() {
+  const nights = allNights(), sp = new Set(DET.map(d => d.sp));
+  $('campInfo').innerHTML = [
+    ['Campagne', esc(CAMP.label)], ['Source', esc(CAMP.source)],
+    ['Détections', `<span style="font-family:var(--mono)">${DET.length}</span>`],
+    ['Nuits', nights.map(nightLabel).join('<br>') || '—'],
+    ['Sites', allSites().map(k => esc(siteInfo(k).name)).join(', ')],
+    ['Espèces', `<span style="font-family:var(--mono)">${sp.size}</span>`],
+    ['Seuil par défaut', `<span style="font-family:var(--mono)">${virg(CAMP.conf)}</span>`],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+}
+function renderTable() {
+  const q = norm($('spSearch').value || '');
+  const stats = new Map();
+  for (const d of DET) if (st.nights.includes(d.night)) { const o = stats.get(d.sp) || { sp: d.sp, latin: d.latin, n: 0, cmax: 0 }; o.n++; o.cmax = Math.max(o.cmax, d.conf); stats.set(d.sp, o); }
+  const rows = [...stats.values()].filter(o => !q || norm(o.sp + o.latin).includes(q)).sort((a, b) => b.n - a.n);
+  $('spTable').innerHTML = `<thead><tr><th>Espèce</th><th>Nom latin</th><th class="n">Détections</th><th class="n">Conf. max</th><th>Catégorie</th></tr></thead><tbody>` +
+    rows.map(o => { const c = catOf(o.sp);
+      return `<tr><td><span class="sw ${CATS[c].hollow ? 'hollow' : ''}" style="background:var(${CATS[c].color});border-color:var(${CATS[c].color});margin-right:8px"></span><button class="lien spname" data-fc="${esc(o.sp)}">${esc(o.sp)}</button>${cfg.cats[o.sp] ? ' <span class="hint">(modifié)</span>' : ''}</td>
+        <td class="latin">${esc(o.latin)}</td><td class="n">${o.n}</td><td class="n">${virg(o.cmax)}</td>
+        <td><select data-sp-cat="${esc(o.sp)}">${CAT_ORDER.map(k => `<option value="${k}" ${k === c ? 'selected' : ''}>${CATS[k].label}</option>`).join('')}</select></td></tr>`; }).join('') + '</tbody>';
+  $('spTable').querySelectorAll('select').forEach(s => s.onchange = () => {
+    const sp = s.dataset.spCat;
+    if ((DEFAULT_CATS[sp] || 'nc') === s.value) delete cfg.cats[sp]; else cfg.cats[sp] = s.value;
+    saveCfg(); renderAll();
+  });
+  $('spTable').querySelectorAll('[data-fc]').forEach(b => b.onclick = () => openFiche(b.dataset.fc));
+}
+$('spSearch').oninput = renderTable;
+function download(name, data, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('expCfg').onclick = () => download('nocmig_configuration.json', JSON.stringify(cfg, null, 2), 'application/json');
+$('impCfg').onclick = () => $('impFile').click();
+$('impFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const c = JSON.parse(await f.text());
+    if (c.cats || c.pos || c.groups) { cfg = { ...cfg, cats: c.cats || cfg.cats, pos: { ...cfg.pos, ...(c.pos || {}) }, groups: c.groups || cfg.groups }; saveCfg(); renderAll(); }
+  } catch (err) { $('loaded').textContent = 'Fichier de configuration illisible.'; }
+  e.target.value = '';
+};
+$('resetCfg').onclick = () => {
+  const b = $('resetCfg');
+  if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = 'Confirmer la réinitialisation ?'; return; }
+  delete b.dataset.armed; b.textContent = 'Réinitialiser le tri';
+  cfg.cats = {}; saveCfg(); renderAll();
+};
+$('expCsv').onclick = () => {
+  const sites = SEL.sites, U = SEL.UT;
+  const cnt = {}; for (const u of U) cnt[u.sp + '|' + u.site] = (cnt[u.sp + '|' + u.site] || 0) + 1;
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  const lines = [q(selSummary()), ['Espèce', 'Nom latin', 'Série', 'Catégorie', ...sites.map(k => siteInfo(k).name), 'Total'].map(q).join(';')];
+  for (const r of speciesTotals(U)) lines.push([q(r.sp), q(r.latin), q(SEL.spSeries.get(r.sp)?.g.name || ''), q(CATS[catOf(r.sp)].label), ...sites.map(k => cnt[r.sp + '|' + k] || 0), r.n].join(';'));
+  download(`nocmig_synthese_${nightsTag()}_${st.metric}.csv`, '﻿' + lines.join('\n'), 'text/csv');
+};
+
+// =====================================================================
+// Export PNG d'une carte
+// =====================================================================
+document.querySelectorAll('.exportable .png').forEach(b => b.onclick = () => exportCard(b.closest('.exportable'), b));
+async function exportCard(card, btn) {
+  const label = btn.textContent; btn.textContent = '…'; btn.disabled = true;
+  let mapOff = null;
+  try {
+    if (card.id === 'cSim') simDraw();
+    await new Promise(r => setTimeout(r, 250));   // laisse finir le chargement des tuiles en cours
+    const canvas = await html2canvas(card, {
+      useCORS: true, scale: 2, backgroundColor: cssv('--card'), logging: false,
+      ignoreElements: el => el.classList && (el.classList.contains('noexp') || (el.classList.contains('leaflet-overlay-pane') && el.closest('#map')) || el.classList.contains('leaflet-control-zoom') || el.classList.contains('leaflet-control-layers')),
+      onclone: doc => {
+        const c = doc.getElementById(card.id);
+        const cap = c.querySelector('.exp-cap'); if (cap) { cap.style.display = 'block'; cap.textContent = selSummary(); }
+        c.querySelectorAll('.scroll').forEach(s => s.style.overflow = 'visible');
+        c.querySelectorAll('.leaflet-tile').forEach(t => t.style.opacity = 1);
+        // les SVG sont rendus hors du document : on y fige les couleurs calculées
+        const win = doc.defaultView;
+        const cm = c.querySelector('#map'); if (cm) { const a = cm.getBoundingClientRect(), b = c.getBoundingClientRect(); mapOff = [a.left - b.left, a.top - b.top]; }
+        c.querySelectorAll('svg').forEach(svg => {
+          const r = svg.getBoundingClientRect();
+          svg.setAttribute('width', r.width); svg.setAttribute('height', r.height);
+          svg.querySelectorAll('*').forEach(el => {
+            const cs = win.getComputedStyle(el);
+            el.setAttribute('style', `${el.getAttribute('style') || ''};fill:${cs.fill};stroke:${cs.stroke};stroke-width:${cs.strokeWidth};opacity:${cs.opacity};font-size:${cs.fontSize};font-family:${cs.fontFamily};font-weight:${cs.fontWeight}`);
+          });
+        });
+      },
+    });
+    // filets de la carte : html2canvas décale le calque SVG de Leaflet → on les redessine nous-mêmes
+    if (mapOff && labelLayer) {
+      const ctx = canvas.getContext('2d'), m = $('map').getBoundingClientRect();
+      ctx.setTransform(2, 0, 0, 2, 2 * mapOff[0], 2 * mapOff[1]);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, m.width, m.height); ctx.clip();
+      ctx.strokeStyle = cssv('--ink'); ctx.lineWidth = 1;
+      labelLayer.eachLayer(l => { if (!(l instanceof L.Polyline)) return;
+        ctx.beginPath(); l.getLatLngs().forEach((ll, i) => { const q = map.latLngToContainerPoint(ll); ctx[i ? 'lineTo' : 'moveTo'](q.x, q.y); }); ctx.stroke(); });
+      ctx.restore();
+    }
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    download(`nocmig_${card.dataset.name}_${nightsTag()}${st.tr ? '_' + fmtA(st.tr.t) : ''}.png`, blob);
+  } catch (e) {
+    let p = card.querySelector('.exp-err'); if (!p) { p = document.createElement('p'); p.className = 'hint exp-err noexp'; card.appendChild(p); }
+    p.textContent = "L'image n'a pas pu être créée : " + e.message;
+  } finally { btn.textContent = label; btn.disabled = false; }
+}
+
+// =====================================================================
+// Rendu
+// =====================================================================
+function renderTab() {
+  if (!SEL) return;
+  ({
+    ov: () => { renderMap(); renderHist(); renderCiel(); },
+    sp: () => { renderBars(); renderHeat(); },
+    ch: () => { renderChrono(); renderSiteHists(); },
+    sim: () => simRefresh(),
+    me: () => { renderRich(); renderSeuil(); renderConfHist(); },
+    da: () => { renderCampInfo(); renderTable(); },
+  })[TAB]();
+}
+function renderAll() {
+  SEL = computeSel();
+  renderPanel();
+  renderTab();
+  if (ficheSp) renderFiche();
+  if ($('pkDlg').open) renderPicker();
+}
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => renderTab(), 200); });
+
+if (!CAMPS.length) { $('resume').textContent = 'Données introuvables (data.js) : importez des CSV dans l\'onglet Données.'; }
+else {
+  setCamp(store.get('nocmig-camp', CAMPS[0].id));
+  const t = location.hash.slice(1) || store.get('nocmig-tab', 'ov');
+  SEL = computeSel();
+  showTab(TABS.some(b => b.dataset.tab === t) ? t : 'ov');
+  renderAll();
+}
+</script>
+</body>
+</html>
