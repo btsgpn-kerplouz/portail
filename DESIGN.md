@@ -125,7 +125,7 @@ jamais en fond dominant.
 Roster actuel : PhytoScope vert `#1f6b45` · Végétations ocre `#b5651d` ·
 Habitats-Gâvres sarcelle `#0b5f7d` · Habitats-Landes mauve `#6f4478` · Organisation
 des cours bleu `#23458c` · À l'affût bordeaux `#8a2f39` · Quizz naturaliste prune
-sombre `#6d3a5d`. Chaque app garde la liberté de nuances internes
+sombre `#6d3a5d` · NOCMIG (migration nocturne) indigo de nuit `#3d3a82`. Chaque app garde la liberté de nuances internes
 supplémentaires (ex. couleurs de série de relevés en PhytoScope) tant qu'elles ne
 concurrencent pas l'accent identitaire.
 

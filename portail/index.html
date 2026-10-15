@@ -43,6 +43,7 @@
       --pt-app-organisation:  #23458c;
       --pt-app-affut:         #8a2f39;
       --pt-app-quizz:     #6d3a5d;
+      --pt-app-nocmig:    #3d3a82;
 
       /* Statut */
       --pt-chantier:          #8a5f17;
@@ -288,6 +289,19 @@
           </a>
 
           <!-- Tuiles « en chantier » : toujours en fin de liste (voir aussi .tool--wip{order:1}). -->
+          <!-- NOCMIG : passer en <a class="tool tool--active" … href="https://nocmig.kerplouz.workers.dev"> une fois le worker créé. -->
+          <article class="tool tool--wip" style="--acc:var(--pt-app-nocmig)" data-status="chantier">
+            <div class="tool-lisere"></div>
+            <div class="tool-inner">
+              <div class="tool-row">
+                <span class="tool-picto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 19h20"></path><path d="M5 12l3-2.2 3 2.2 3-2.2 3 2.2"></path><rect x="17" y="3" width="3.2" height="3.2" fill="currentColor" stroke="none"></rect><path d="M4 16h2M9 16h2M14 16h2M19 16h1"></path></svg></span>
+                <span class="tool-title">Migration nocturne</span>
+                <span class="tool-status">⌛ en chantier</span>
+              </div>
+              <p class="tool-desc only-desktop">NOCMIG : enregistrements nocturnes d'oiseaux traités par Chirpity — carte des spots, activité au fil de la nuit, espèces, simulation.</p>
+              <p class="tool-desc only-mobile">Enregistrements de migration nocturne.</p>
+            </div>
+          </article>
           <article class="tool tool--wip" style="--acc:var(--pt-app-landes)" data-status="chantier">
             <div class="tool-lisere"></div>
             <div class="tool-inner">
@@ -327,6 +341,7 @@
       <span class="sw" style="background:var(--pt-app-quizz)"></span>
       <span class="sw" style="background:var(--pt-app-landes)"></span>
       <span class="sw" style="background:var(--pt-app-affut)"></span>
+      <span class="sw" style="background:var(--pt-app-nocmig)"></span>
     </span>
     <a class="foot-contact" href="mailto:martin.diraison@kerplouz.com">Contact</a>
   </footer>
