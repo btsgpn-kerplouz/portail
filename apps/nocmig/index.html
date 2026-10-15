@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NOCMIG — Migration nocturne</title>
+<title>NOCMIG</title>
 <meta name="theme-color" content="#191b16">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -45,26 +45,26 @@ button, select, input { font: inherit; color: var(--ink); }
 :focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 35%, transparent); }
 
 /* ---------- Bandeau ---------- */
-.app-header { background: var(--nuit-0); color: var(--clair); border-top: 4px solid var(--acc-clair); display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
+.app-header { background: var(--nuit-0); color: var(--clair); border-top: 4px solid var(--lune); display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
 .logo-wrap { flex: none; display: block; }
-.app-logo { width: 54px; height: 40px; color: var(--clair); display: block; }
-.titre { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; line-height: 1.15; letter-spacing: .02em; }
-.titre .sous-titre { font-weight: 400; font-size: 1rem; margin-left: .55em; opacity: .86; letter-spacing: 0; }
-.titre small { display: block; font-family: var(--sans); font-weight: 400; font-size: .76rem; color: var(--clair-2); margin-top: .2em; letter-spacing: 0; }
+.app-logo { width: 54px; height: 40px; color: var(--lune); display: block; }
+.titre { font-family: var(--serif); font-weight: 700; font-size: 1.3rem; color: var(--lune); line-height: 1.15; letter-spacing: .02em; }
+.titre .sous-titre { font-weight: 400; font-size: 1rem; margin-left: .55em; color: var(--clair); letter-spacing: 0; }
+.titre small { display: block; font-family: var(--sans); font-weight: 400; font-size: .86rem; color: var(--clair); margin-top: .2em; letter-spacing: 0; }
 .titre small a { color: var(--clair); text-decoration: underline; text-underline-offset: 2px; }
 .camps { display: flex; margin-left: auto; border: 1px solid var(--nuit-ctl); }
 .camps button { background: transparent; border: 0; color: var(--clair-2); font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; padding: 7px 14px; min-height: 36px; cursor: pointer; }
 .camps button:hover { background: var(--nuit-3); color: var(--clair); }
 .camps button + button { border-left: 1px solid var(--nuit-ctl); }
-.camps button[aria-pressed="true"] { background: var(--clair); color: var(--nuit-0); font-weight: 700; }
+.camps button[aria-pressed="true"] { background: var(--lune); color: var(--nuit-0); font-weight: 700; }
 .portail-lien { font-family: var(--mono); font-size: .72rem; color: var(--clair-3); text-decoration: none; white-space: nowrap; align-self: flex-start; padding: 4px 10px 4px 0; border-right: 1px solid var(--nuit-line); margin-right: 2px; }
 .portail-lien:hover { color: var(--clair); }
 
 /* ---------- Barre d'onglets : pleine largeur, sous le bandeau, toujours visible ---------- */
-.tabs { position: sticky; top: 0; z-index: 1000; display: flex; height: var(--tabs-h); background: var(--nuit-1); border-bottom: 1px solid var(--nuit-line); overflow-x: auto; scrollbar-width: none; padding-left: var(--panel-w); }
+.tabs { position: sticky; top: 0; z-index: 1000; display: flex; height: var(--tabs-h); background: var(--nuit-1); border-bottom: 1px solid var(--nuit-line); overflow-x: auto; scrollbar-width: none; margin: 0 -24px; }
 .tabs button { position: relative; background: transparent; border: 0; border-right: 1px solid var(--nuit-line); padding: 0 22px; font-family: var(--sans); font-size: .98rem; font-weight: 600; color: var(--clair-2); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
-.tabs button:first-child { border-left: 1px solid var(--nuit-line); }
-.tabs button .tn { font-family: var(--mono); font-size: .68rem; font-weight: 500; color: var(--clair-3); }
+.tabs button:first-child { border-left: 0; }
+.tabs button .tn { font-family: var(--mono); font-size: .68rem; font-weight: 500; color: var(--lune); }
 .tabs button:hover { background: var(--nuit-3); color: var(--clair); }
 /* onglet actif : il « s'ouvre » sur la zone de visualisation (même papier), filet indigo en tête */
 .tabs button[aria-selected="true"] { background: var(--page); color: var(--ink); }
@@ -75,9 +75,9 @@ button, select, input { font: inherit; color: var(--ink); }
 .layout { display: grid; grid-template-columns: var(--panel-w) minmax(0, 1fr); align-items: start; }
 .repere { font-family: var(--mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); font-weight: 500; }
 /* Volet de sélection : surface de commande nocturne */
-#panel { position: sticky; top: var(--tabs-h); height: calc(100vh - var(--tabs-h)); overflow-y: auto; background: var(--nuit-1); color: var(--clair); color-scheme: dark; padding: 0 0 24px; scrollbar-color: var(--nuit-3) var(--nuit-1); }
-.pn-head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--nuit-0); border-bottom: 1px solid var(--nuit-line); position: sticky; top: 0; z-index: 5; }
-.pn-head .repere { color: var(--clair); font-weight: 700; margin-right: auto; letter-spacing: .18em; }
+#panel { position: sticky; top: 0; height: 100vh; border-right: 1px solid var(--nuit-line); overflow-y: auto; background: var(--nuit-1); color: var(--clair); color-scheme: dark; padding: 0 0 24px; scrollbar-color: var(--nuit-3) var(--nuit-1); }
+.pn-head { display: flex; align-items: center; gap: 8px; box-sizing: border-box; height: var(--tabs-h); padding: 0 16px; background: var(--nuit-0); border-bottom: 1px solid var(--nuit-line); position: sticky; top: 0; z-index: 5; }
+.pn-head .repere { color: var(--lune); font-weight: 700; margin-right: auto; letter-spacing: .18em; }
 #panel .btn { background: transparent; color: var(--clair); border-color: var(--nuit-ctl); }
 #panel .btn:hover { background: var(--nuit-3); border-color: var(--clair); }
 #panel .btn.lune { border-color: var(--lune); color: var(--lune); }
@@ -87,7 +87,7 @@ button, select, input { font: inherit; color: var(--ink); }
 #panel select, #panel input[type=number] { background: var(--nuit-2); color: var(--clair); border-color: var(--nuit-ctl); }
 #panel select:hover, #panel input:hover { border-color: var(--clair); }
 #panel select:focus, #panel input:focus { border-color: var(--acc-clair); }
-#panel :focus-visible, .app-header :focus-visible, .tabs :focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-clair) 55%, transparent); }
+#panel :focus-visible, .app-header :focus-visible, .tabs :focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--lune) 70%, transparent); }
 .pn-tranche { margin: 12px 16px; border: 1px solid var(--lune); border-left-width: 5px; background: var(--nuit-2); padding: 8px 10px; }
 .pn-tranche .repere { color: var(--lune); }
 .pn-tranche b { display: block; font-family: var(--mono); font-size: .9rem; color: var(--clair); margin: 2px 0 6px; }
@@ -101,13 +101,23 @@ button, select, input { font: inherit; color: var(--ink); }
 .pn-sec > summary::after { content: '▾'; color: var(--clair-3); font-size: .8rem; }
 .pn-sec:not([open]) > summary::after { content: '▸'; }
 .pn-body { padding: 2px 16px 16px; }
-.pn-lab { display: flex; align-items: baseline; gap: 10px; font-size: .8rem; font-weight: 600; color: var(--clair-2); margin: 6px 0 6px; }
+.pn-lab { display: flex; align-items: baseline; gap: 10px; font-size: .8rem; font-weight: 600; color: var(--clair-2); margin: 14px 0 6px; }
+.pn-body > .pn-lab:first-child { margin-top: 4px; }
+.pn-unit { font-family: var(--mono); font-size: .66rem; font-weight: 400; color: var(--clair-3); letter-spacing: .04em; }
+.pn-lab .pn-unit { margin-left: auto; }
+#nightLinks:not(:empty) { margin-left: auto; }
+#nightLinks:not(:empty) ~ .pn-unit, .pn-lab .lien ~ .pn-unit { margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--nuit-line); }
 .pn-lab .lien { font-size: .8rem; font-weight: 400; padding: 0; }
 .pn-lab .lien:first-of-type { margin-left: auto; }
-.pn-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--clair-2); font-size: .86rem; font-weight: 600; }
-.pn-row > span:first-child { min-width: 86px; }
-.pn-row select, .pn-row input[type=number] { flex: 1; min-width: 0; font-weight: 400; }
-.pn-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 10px; }
+/* réglages : libellé | commande, même hauteur partout */
+.pn-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: 8px; margin: 8px 0 0; color: var(--clair-2); font-size: .84rem; font-weight: 600; }
+.pn-row select, .pn-row input[type=number] { width: 100%; min-width: 0; height: 34px; font-weight: 400; box-sizing: border-box; }
+.pn-row .seg { display: flex; }
+.pn-row .seg button { flex: 1; padding: 0 6px; height: 34px; min-height: 0; line-height: 1.1; }
+.pn-unite { display: flex; align-items: center; gap: 8px; }
+.pn-unite i { font-style: normal; font-weight: 400; color: var(--clair-3); }
+.pn-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 8px; }
+.pn-actions .btn { min-height: 34px; }
 .only-m { display: none !important; }
 #workspace { min-width: 0; padding: 0 24px 48px; }
 /* Bilan : chiffres clés + contexte de la sélection, en une bande compacte toujours visible */
@@ -119,7 +129,7 @@ button, select, input { font: inherit; color: var(--ink); }
 .bilan-ctx .tr { background: var(--acc); color: #fff; padding: 1px 6px; margin-left: 4px; cursor: pointer; border: 0; font: inherit; }
 .tab[hidden] { display: none; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.grid-ov { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 16px; align-items: start; }
+.grid-ov { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
 
 /* ---------- Composants ---------- */
 .card { background: var(--card); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 16px; min-width: 0; }
@@ -158,11 +168,20 @@ select:focus, input:focus { border-color: var(--acc); }
 .seg button:hover { background: var(--line-soft); color: var(--ink); }
 .seg button + button { border-left: 1px solid var(--ink); }
 .seg button[aria-pressed="true"], .seg button[aria-pressed="true"]:hover { background: var(--ink); color: var(--page); }
+/* volet : nuits, sites et séries en listes alignées (une ligne par élément, nombre en colonne à droite) */
+#panel .chips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+#panel .chip { display: flex; gap: 9px; min-height: 34px; padding: 0 10px; }
+#panel .chip .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#panel .chip .cnt { flex: none; text-align: right; min-width: 3ch; }
+#panel .chip .ind { width: 10px; height: 10px; flex: none; border: 1.5px solid currentColor; background: currentColor; box-sizing: border-box; }
+#panel .chip.off { text-decoration: none; }
+#panel .chip.off .nm { text-decoration: line-through; text-decoration-color: var(--clair-3); }
+#panel .chip.off .ind { background: transparent; }
 #panel .seg { border-color: var(--nuit-ctl); }
 #panel .seg button { background: transparent; color: var(--clair-2); }
 #panel .seg button:hover { background: var(--nuit-3); color: var(--clair); }
 #panel .seg button + button { border-left-color: var(--nuit-ctl); }
-#panel .seg button[aria-pressed="true"] { background: var(--clair); color: var(--nuit-0); font-weight: 600; }
+#panel .seg button[aria-pressed="true"] { background: var(--lune); color: var(--nuit-0); font-weight: 600; }
 .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--card); margin-bottom: 14px; }
 .kpi { padding: 8px 14px; border-left: 1px solid var(--line-soft); }
 .kpi:first-child { border-left: 0; }
@@ -177,6 +196,18 @@ select:focus, input:focus { border-color: var(--acc); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 4px 0 10px; color: var(--text-2); font-size: .82rem; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .mini { margin-bottom: 14px; }
+.col-ov { display: flex; flex-direction: column; min-width: 0; }
+.ciel-nuit { font-size: .84rem; font-weight: 600; margin: 10px 0 2px; display: flex; gap: 6px; align-items: center; }
+.lune-ic { flex: none; vertical-align: -2px; width: auto; display: inline; }
+/* les contrôles Leaflet (z-index 1000) restent dans leur carte, sous la bande de bilan collante */
+.leaflet-container { isolation: isolate; }
+.chip .lune-ic { margin-right: -2px; }
+.ciel-tbl td { white-space: nowrap; }
+.ciel-tbl th { white-space: normal; vertical-align: bottom; }
+.ciel-tbl tr.sel td { background: var(--acc-soft); }
+.ciel-tbl .num { font-family: var(--mono); text-align: right; }
+.ciel-tbl td, .ciel-tbl th { padding-left: 6px; padding-right: 6px; }
+.ciel-src { font-size: .74rem; color: var(--text-3); margin: 8px 0 0; }
 .mini h3 { font-size: .9rem; font-weight: 600; margin: 0 0 2px; display: flex; gap: 6px; align-items: center; }
 .mini h3 .tot { color: var(--text-3); font-weight: 400; font-family: var(--mono); font-size: .76rem; }
 .scroll { overflow-x: auto; }
@@ -194,7 +225,7 @@ svg [data-sp] { cursor: pointer; }
 svg [data-sp]:hover .lbl { fill: var(--acc); text-decoration: underline; }
 
 /* Carte */
-.mapbox { height: 460px; border: 1px solid var(--line-soft); }
+.mapbox { height: 520px; border: 1px solid var(--line-soft); }
 .site-ic { border: 2px solid; }
 .site-ic.zero { background: transparent !important; border-style: dashed; }
 .srm { position: relative; }
@@ -269,7 +300,8 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
 }
 @media (max-width: 860px) {
   :root { --tabs-h: 48px; }
-  .tabs { padding-left: 0; }
+  .tabs { margin: 0 -16px; }
+  .pn-head { height: auto; padding: 12px 16px; }
   .tabs button { padding: 0 14px; font-size: .9rem; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   #panel { position: fixed; inset: 0 auto 0 0; top: 0; height: 100vh; width: min(360px, 92vw); z-index: 1200; transform: translateX(-100%); transition: transform .2s; border-right: 1px solid var(--nuit-line); }
@@ -296,17 +328,9 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
 <header class="app-header">
   <a class="portail-lien" href="https://portail-gpn.kerplouz.workers.dev/">‹ Portail</a>
   <span class="logo-wrap" title="Sonogramme réel : cri en vol (« tsip ») d'une Grive musicienne, enregistré de nuit le 15 octobre 2025 (4,5 – 10,5 kHz, 0,03 s)"><svg class="app-logo" viewBox="0 0 36 27" fill="none" aria-hidden="true"><path d="M4 1v23h31" stroke="currentColor" stroke-width=".8" opacity=".55"/><path d="M2 3h2M2 9h2M2 15h2M2 21h2" stroke="currentColor" stroke-width=".8" opacity=".55"/><svg x="7" y="1" width="28" height="22" viewBox="0 0 28 22" fill="currentColor" shape-rendering="crispEdges"><path d="M5 2h4v1h-4zM3 3h2v1h-2zM8 3h2v1h-2zM2 4h4v1h-4zM8 4h2v1h-2zM2 5h1v1h-1zM8 5h3v1h-3zM1 6h3v1h-3zM8 6h4v1h-4zM0 7h4v1h-4zM9 7h4v1h-4zM0 8h3v1h-3zM9 8h2v1h-2zM12 8h2v1h-2zM0 9h3v1h-3zM9 9h1v1h-1zM13 9h2v1h-2zM0 10h2v1h-2zM9 10h2v1h-2zM14 10h1v1h-1zM10 11h1v1h-1zM14 11h1v1h-1zM10 12h1v1h-1zM14 12h1v1h-1zM10 13h1v1h-1zM15 13h1v1h-1zM10 14h1v1h-1zM16 14h1v1h-1zM11 15h1v1h-1zM16 15h1v1h-1zM11 16h1v1h-1zM18 16h7v1h-7zM23 17h1v1h-1zM12 18h1v1h-1zM23 18h1v1h-1zM13 19h1v1h-1zM22 19h2v1h-2zM15 20h5v1h-5z" opacity=".3"/><path d="M5 3h3v1h-3zM11 8h1v1h-1zM10 9h3v1h-3zM11 10h3v1h-3zM11 11h3v1h-3zM11 12h3v1h-3zM11 13h4v1h-4zM11 14h5v1h-5zM12 15h4v1h-4zM12 16h1v1h-1zM16 16h2v1h-2zM12 17h1v1h-1zM18 17h5v1h-5zM13 18h1v1h-1zM22 18h1v1h-1zM14 19h1v1h-1zM20 19h2v1h-2z" opacity=".62"/><path d="M13 16h3v1h-3zM13 17h5v1h-5zM14 18h8v1h-8zM15 19h5v1h-5z"/></svg></svg></span>
-  <div class="titre">NOCMIG<span class="sous-titre">Migration nocturne</span><small>Enregistrements nocturnes d'oiseaux issus d'un traitement par <a href="https://chirpity.net/" target="_blank" rel="noopener">Chirpity ↗</a></small></div>
+  <div class="titre">NOCMIG<small>Analyse d'enregistrements de migration nocturne d'oiseaux issus d'un traitement par <a href="https://chirpity.net/" target="_blank" rel="noopener">Chirpity ↗</a></small></div>
   <div class="camps" id="camps" role="group" aria-label="Campagne"></div>
 </header>
-  <nav class="tabs" role="tablist" id="tabs">
-    <button role="tab" data-tab="ov" aria-selected="true"><span class="tn">01</span>Vue d'ensemble</button>
-    <button role="tab" data-tab="sp" aria-selected="false"><span class="tn">02</span>Espèces</button>
-    <button role="tab" data-tab="ch" aria-selected="false"><span class="tn">03</span>Chronologie</button>
-    <button role="tab" data-tab="sim" aria-selected="false"><span class="tn">04</span>Simulation</button>
-    <button role="tab" data-tab="me" aria-selected="false"><span class="tn">05</span>Méthode</button>
-    <button role="tab" data-tab="da" aria-selected="false"><span class="tn">06</span>Données</button>
-  </nav>
 
 <div class="layout">
   <!-- ======== Panneau de sélection, commun à tous les onglets ======== -->
@@ -320,7 +344,7 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
     <details class="pn-sec" open>
       <summary><span class="pn-num">1</span><span class="pn-tit">Quand</span><span class="pn-val" id="valQuand"></span></summary>
       <div class="pn-body">
-        <div class="pn-lab">Nuits <span id="nightLinks"></span></div>
+        <div class="pn-lab">Nuits <span id="nightLinks"></span><span class="pn-unit"></span></div>
         <div class="chips" id="nightChips"></div>
         <label class="pn-row"><span>Plage</span><select id="fWin">
           <option value="all">Toute la session</option>
@@ -336,20 +360,19 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
     <details class="pn-sec" open>
       <summary><span class="pn-num">2</span><span class="pn-tit">Où</span><span class="pn-val" id="valOu"></span></summary>
       <div class="pn-body">
-        <div class="pn-lab">Sites <button class="lien" id="sitesAll">tous</button><button class="lien" id="sitesNone">aucun</button></div>
+        <div class="pn-lab">Sites <button class="lien" id="sitesAll">tous</button><button class="lien" id="sitesNone">aucun</button><span class="pn-unit"></span></div>
         <div class="chips" id="siteChips"></div>
       </div>
     </details>
     <details class="pn-sec" open>
       <summary><span class="pn-num">3</span><span class="pn-tit">Quoi</span><span class="pn-val" id="valQuoi"></span></summary>
       <div class="pn-body">
-        <div class="pn-lab">Séries d'espèces</div>
+        <div class="pn-lab">Séries <button class="lien" id="srCats" title="Revenir aux 4 catégories">catégories</button><button class="lien" id="srClear" title="Retirer toutes les séries">aucune</button><span class="pn-unit"></span></div>
         <div class="chips" id="srChips"></div>
         <div class="pn-actions">
           <button class="btn lune" id="pkOpen">+ Ajouter des espèces…</button>
         </div>
-        <div class="pn-lab" style="margin-top:8px"><button class="lien" id="srCats" style="margin-left:0">Revenir aux 4 catégories</button><button class="lien" id="srClear">Tout retirer</button></div>
-        <p class="hint" style="margin:4px 0 0">Clic sur une série : la masquer ou l'afficher ; ✕ : la retirer. 8 séries au maximum.</p>
+        <p class="hint" style="margin:6px 0 0">Clic : masquer ou afficher · ✕ : retirer · 8 séries au plus.</p>
       </div>
     </details>
     <details class="pn-sec" open>
@@ -360,7 +383,7 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
           <option value="contact" selected>Contacts</option>
           <option value="minute">Minutes positives</option>
         </select></label>
-        <label class="pn-row" id="gapWrap"><span>Fusion si ≤</span><input id="fGap" type="number" min="3" max="600" step="3" value="30"> s</label>
+        <label class="pn-row" id="gapWrap"><span>Fusion si ≤</span><span class="pn-unite"><input id="fGap" type="number" min="3" max="600" step="3" value="30"><i>s</i></span></label>
         <label class="pn-row"><span>Confiance ≥</span><input id="fConf" type="number" min="0" max="1" step="0.05" value="0.6"></label>
         <p class="hint" style="margin:6px 0 0">Contact : détections successives d'une même espèce sur un même site, fusionnées si moins de N s les séparent.</p>
       </div>
@@ -369,6 +392,14 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
 
   <!-- ======== Espace de travail ======== -->
   <div id="workspace">
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="ov" aria-selected="true"><span class="tn">01</span>Vue d'ensemble</button>
+      <button role="tab" data-tab="sp" aria-selected="false"><span class="tn">02</span>Espèces</button>
+      <button role="tab" data-tab="ch" aria-selected="false"><span class="tn">03</span>Chronologie</button>
+      <button role="tab" data-tab="sim" aria-selected="false"><span class="tn">04</span>Simulation</button>
+      <button role="tab" data-tab="me" aria-selected="false"><span class="tn">05</span>Méthode</button>
+      <button role="tab" data-tab="da" aria-selected="false"><span class="tn">06</span>Données</button>
+    </nav>
     <div class="bilan" aria-live="polite">
       <button class="btn petit only-m" id="pnOpen" aria-controls="panel" aria-expanded="false">▾ Sélection</button>
       <div class="bilan-n" id="bilanN"></div>
@@ -383,25 +414,38 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
             <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
           </div>
           <div class="reglages noexp"><span class="repere">Réglages</span>
-            <label>Symbole <span class="seg" id="mapMode"><button data-v="cols" aria-pressed="true">Colonnes par série</button><button data-v="circ" aria-pressed="false">Cercle total</button></span></label>
+            <label>Symbole <span class="seg" id="mapMode"><button data-v="cols" aria-pressed="false">Colonnes par série</button><button data-v="circ" aria-pressed="true">Cercle total</button></span></label>
           </div>
           <p class="exp-cap"></p>
           <p class="note noexp" id="mapInfo"></p>
           <div id="map" class="mapbox"></div>
         </section>
+        <div class="col-ov">
         <section class="card exportable" id="cHist" data-name="activite">
           <div class="card-h"><h2>Activité au fil de la nuit</h2>
             <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
           </div>
           <div class="reglages noexp"><span class="repere">Réglages</span>
             <label>Pas <select id="srStep"><option value="10">10 min</option><option value="15">15 min</option><option value="30" selected>30 min</option><option value="60">1 h</option><option value="120">2 h</option></select></label>
-            <label>Affichage <select id="srMode"><option value="multi">un graphique par série</option><option value="stack">séries empilées</option><option value="group">séries côte à côte</option><option value="site">empilé par site</option></select></label>
-            <label id="srScaleWrap">Échelle <select id="srScale"><option value="own">propre à chaque série</option><option value="common">commune</option></select></label>
+            <label>Affichage <select id="srMode"><option value="multi">un graphique par série</option><option value="stack" selected>séries empilées</option><option value="group">séries côte à côte</option><option value="site">empilé par site</option></select></label>
+            <label id="srScaleWrap" style="display:none">Échelle <select id="srScale"><option value="own">propre à chaque série</option><option value="common">commune</option></select></label>
           </div>
           <p class="exp-cap"></p>
           <p class="note noexp">Bande grisée : soleil sous l'horizon. Cliquez sur une barre pour isoler cette tranche horaire dans toute l'app.</p>
           <div id="series"></div>
         </section>
+        <section class="card exportable" id="cCiel" data-name="ciel_meteo">
+          <div class="card-h"><h2>Ciel et météo</h2>
+            <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
+          </div>
+          <p class="exp-cap"></p>
+          <p class="note noexp">Même axe horaire que l'activité ci-dessus. Lune calculée (position et éclairement) ; météo heure par heure au barycentre des sites. Survolez une heure pour le détail.</p>
+          <p class="note" id="cielLieu"></p>
+          <div id="ciel"></div>
+          <div class="tablewrap"><table class="ciel-tbl" id="cielTbl"></table></div>
+          <p class="ciel-src">Météo : <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), réanalyse ERA5 et modèles. Pluie = cumul de l'heure écoulée ; vent à 10 m : flèche dans le sens où il souffle, lettres = d'où il vient (NE = vent de nord-est).</p>
+        </section>
+        </div>
       </div>
     </section>
 
@@ -464,11 +508,11 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
           <summary>Paramètres d'affichage</summary>
           <div class="sim-grid">
             <fieldset><legend><label><input type="checkbox" id="pPulse" checked> Impulsions</label></legend>
-              <label>Rémanence <input type="number" id="pRem" value="20" min="1" max="240"> min</label>
-              <label>Dispersion <input type="number" id="pDisp" value="22" min="0" max="80"> px</label>
-              <label>Taille <input type="number" id="pSize" value="5" min="2" max="14"> px</label>
+              <label>Rémanence <input type="number" id="pRem" value="30" min="1" max="240"> min</label>
+              <label>Dispersion <input type="number" id="pDisp" value="10" min="0" max="80"> px</label>
+              <label>Taille <input type="number" id="pSize" value="10" min="2" max="14"> px</label>
             </fieldset>
-            <fieldset><legend><label><input type="checkbox" id="pCum" checked> Cumul de la nuit</label></legend>
+            <fieldset><legend><label><input type="checkbox" id="pCum"> Cumul de la nuit</label></legend>
               <label>Hauteur max <input type="number" id="pCumH" value="70" min="20" max="200"> px</label>
             </fieldset>
             <fieldset><legend><label><input type="checkbox" id="pHeat"> Chaleur glissante</label></legend>
@@ -478,14 +522,14 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
             </fieldset>
             <fieldset><legend>Fond</legend>
               <label><input type="checkbox" id="pNames" checked> Noms des spots</label>
-              <label><input type="checkbox" id="pDim" checked> Assombrir la nuit</label>
+              <label><input type="checkbox" id="pDim"> Assombrir la nuit</label>
             </fieldset>
           </div>
         </details>
         <div class="sim-wrap">
           <div id="simMap"></div>
           <canvas id="simCanvas"></canvas>
-          <div id="simClock"><b id="simTime">--h--</b><span id="simPhase"></span></div>
+          <div id="simClock"><b id="simTime">--h--</b><span id="simPhase"></span><span id="simCiel"></span></div>
           <div id="simLegend"></div>
         </div>
         <div id="simCurve"></div>
@@ -698,6 +742,83 @@ function nightSun(nightDate, zenith) {
   const rise = sunTimesUTC(ny, nm, nd, SUN.lat, SUN.lon, zenith)[0] + parisOffsetMin(ny, nm, nd) + 720;
   const r = { set, rise }; sunCache.set(key, r); return r;
 }
+// ---- Lune : position et éclairement (formules basse précision de l'Astronomical Almanac, ~0,3°) ----
+const D2R = Math.PI / 180, jdOf = ms => ms / 864e5 + 2440587.5;
+function moonEcl(ms) {
+  const T = (jdOf(ms) - 2451545) / 36525, s = x => Math.sin(x * D2R), c = x => Math.cos(x * D2R);
+  const lam = 218.32 + 481267.881 * T + 6.29 * s(134.9 + 477198.85 * T) - 1.27 * s(259.2 - 413335.38 * T) + 0.66 * s(235.7 + 890534.23 * T)
+    + 0.21 * s(269.9 + 954397.70 * T) - 0.19 * s(357.5 + 35999.05 * T) - 0.11 * s(186.6 + 966404.05 * T);
+  const bet = 5.13 * s(93.3 + 483202.03 * T) + 0.28 * s(228.2 + 960400.87 * T) - 0.28 * s(318.3 + 6003.18 * T) - 0.17 * s(217.6 - 407332.20 * T);
+  const par = 0.9508 + 0.0518 * c(134.9 + 477198.85 * T) + 0.0095 * c(259.2 - 413335.38 * T) + 0.0078 * c(235.7 + 890534.23 * T) + 0.0028 * c(269.9 + 954397.70 * T);
+  return { lam, bet, par };
+}
+function sunLon(ms) { const d = jdOf(ms) - 2451545, g = (357.528 + 0.9856003 * d) * D2R; return 280.46 + 0.9856474 * d + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g); }
+// hauteur topocentrique de la Lune (degrés)
+function moonAlt(ms, lat, lon) {
+  const { lam, bet, par } = moonEcl(ms), e = 23.439 * D2R, l = lam * D2R, b = bet * D2R;
+  const x = Math.cos(b) * Math.cos(l), y = Math.cos(e) * Math.cos(b) * Math.sin(l) - Math.sin(e) * Math.sin(b), z = Math.sin(e) * Math.cos(b) * Math.sin(l) + Math.cos(e) * Math.sin(b);
+  const ra = Math.atan2(y, x), dec = Math.asin(z), H = (280.46061837 + 360.98564736629 * (jdOf(ms) - 2451545) + lon) * D2R - ra;
+  const alt = Math.asin(Math.sin(lat * D2R) * Math.sin(dec) + Math.cos(lat * D2R) * Math.cos(dec) * Math.cos(H)) / D2R;
+  return alt - par * Math.cos(alt * D2R);
+}
+const PHASES = ['nouvelle lune', 'premier croissant', 'premier quartier', 'gibbeuse croissante', 'pleine lune', 'gibbeuse décroissante', 'dernier quartier', 'dernier croissant'];
+// minutes « depuis midi du soir » → instant UTC (décalage de Paris du soir de la nuit)
+const nightMs = (n, t) => { const [y, m, d] = n.split('-').map(Number); return Date.UTC(y, m - 1, d, 12) + (t - parisOffsetMin(y, m, d)) * 6e4; };
+// lune d'une nuit : éclairement à minuit, phase, intervalles où elle est levée (en minutes depuis midi)
+const moonCache = new Map();
+function nightMoon(n) {
+  const key = n + '|' + SUN.lat.toFixed(2) + '|' + SUN.lon.toFixed(2); if (moonCache.has(key)) return moonCache.get(key);
+  const mid = nightMs(n, 720), { lam, bet } = moonEcl(mid), dl = ((lam - sunLon(mid)) % 360 + 360) % 360;
+  const k = (1 - Math.cos(dl * D2R) * Math.cos(bet * D2R)) / 2;
+  const up = []; let cur = null;
+  for (let t = 0; t <= 1440; t += 5) {
+    const on = moonAlt(nightMs(n, t), SUN.lat, SUN.lon) > -0.83;   // réfraction + demi-diamètre
+    if (on && !cur) up.push(cur = [t, t]); if (on) cur[1] = t; else cur = null;
+  }
+  const r = { k, waxing: dl < 180, phase: PHASES[Math.round(dl / 45) % 8], up };
+  moonCache.set(key, r); return r;
+}
+const moonUpAt = (m, t) => m.up.some(([a, b]) => t >= a && t <= b);
+// pictogramme : disque nuit, partie éclairée couleur lune (à droite quand elle croît, hémisphère nord)
+function moonIcon(m, r = 7) {
+  const rx = r * Math.abs(1 - 2 * m.k), lit = `M0 ${-r}A${r} ${r} 0 0 1 0 ${r}A${rx} ${r} 0 0 ${m.k < 0.5 ? 0 : 1} 0 ${-r}Z`;
+  return `<svg class="lune-ic" width="${2 * r + 2}" height="${2 * r + 2}" viewBox="${-r - 1} ${-r - 1} ${2 * r + 2} ${2 * r + 2}" aria-hidden="true">` +
+    `<circle r="${r}" fill="#20253f" stroke="#8389b3" stroke-width=".8"/>` + (m.k > 0.02 ? `<path d="${lit}" fill="#f0e6c0"${m.waxing ? '' : ' transform="scale(-1 1)"'}/>` : '') + '</svg>';
+}
+const moonTxt = m => `lune ${Math.round(m.k * 100)} % (${m.phase})`;
+
+// ---- Météo horaire : Open-Meteo (archive ERA5, sinon modèles récents), mise en cache par jour ----
+const METEO_VARS = 'cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,temperature_2m';
+const meteoMem = new Map();   // 'lat|lon|AAAA-MM-JJTHH:00' → { c, p, w, d, T }
+const meteoKey = (h) => SUN.lat.toFixed(2) + '|' + SUN.lon.toFixed(2) + '|' + h;
+let meteoPending = null, meteoErr = '';
+try { const o = JSON.parse(localStorage.getItem('nocmig-meteo') || '{}'); for (const k in o) meteoMem.set(k, o[k]); } catch (e) {}
+const nextDay = n => { const d = new Date(n + 'T12:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+function meteoAt(n, h) { return meteoMem.get(meteoKey(`${h < 12 ? nextDay(n) : n}T${pad(h % 24)}:00`)); }
+// heures des nuits demandées (de 12 h le soir à 12 h le lendemain) déjà en mémoire ?
+const meteoHave = nights => nights.every(n => meteoAt(n, 18) && meteoAt(n, 6));
+async function meteoLoad(nights) {
+  if (meteoHave(nights)) return true;
+  if (meteoPending) return meteoPending;
+  const days = [...new Set(nights.flatMap(n => [n, nextDay(n)]))].sort(), a = days[0], b = days[days.length - 1];
+  const q = `?latitude=${SUN.lat.toFixed(3)}&longitude=${SUN.lon.toFixed(3)}&start_date=${a}&end_date=${b}&hourly=${METEO_VARS}&wind_speed_unit=kmh&timezone=Europe%2FParis`;
+  const get = async url => { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); return j.hourly; };
+  meteoPending = (async () => {
+    let h = null;
+    try { h = await get('https://archive-api.open-meteo.com/v1/archive' + q); } catch (e) {}
+    // archive pas encore à jour pour les derniers jours → modèles de prévision (historique de ~3 mois)
+    if (!h || h.cloud_cover.some(v => v == null)) { try { h = await get('https://api.open-meteo.com/v1/forecast' + q); } catch (e) { h = h || null; } }
+    if (!h) { meteoErr = 'Météo indisponible (hors ligne ou service injoignable) : seule la lune est affichée.'; return false; }
+    h.time.forEach((t, i) => { if (h.cloud_cover[i] != null) meteoMem.set(meteoKey(t), { c: h.cloud_cover[i], p: h.precipitation[i], w: h.wind_speed_10m[i], d: h.wind_direction_10m[i], T: h.temperature_2m[i] }); });
+    try { localStorage.setItem('nocmig-meteo', JSON.stringify(Object.fromEntries([...meteoMem].slice(-3000)))); } catch (e) {}
+    meteoErr = meteoHave(nights) ? '' : 'Météo incomplète pour ces dates.';
+    return true;
+  })().finally(() => { meteoPending = null; });
+  return meteoPending;
+}
+const ROSE = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+const roseOf = d => ROSE[Math.round(d / 45) % 8];
+
 const fmtT = t => { const mm = ((Math.round(t) + 720) % 1440 + 1440) % 1440; return pad(Math.floor(mm / 60)) + 'h' + pad(mm % 60); };
 const fmtRel = t => { const a = Math.abs(Math.round(t)); return (t < -0.5 ? '−' : '+') + Math.floor(a / 60) + 'h' + pad(a % 60); };
 // heure affichée selon l'axe choisi : heure légale, ou temps écoulé depuis le coucher du soleil
@@ -739,8 +860,7 @@ function setCamp(id) {
   DET = CAMP === IMPORT ? IMPORT.det : campDet(CAMP);
   SITES = {};
   CAMP.sites.forEach((s, i) => SITES[s.key] = { ...s, idx: i, src: s.src || 'data' });
-  const pos = CAMP.sites.filter(s => isFinite(s.lat) && isFinite(s.lon));
-  SUN = pos.length ? { lat: mean(pos.map(s => s.lat)), lon: mean(pos.map(s => s.lon)) } : { ...ETEL };
+  updateSun();
   st.nights = []; st.sitesOff.clear(); st.tr = null; st.conf = CAMP.conf;
   $('fConf').value = st.conf;
   refreshNights();
@@ -751,6 +871,11 @@ function renderCamps() {
   const list = [...CAMPS, ...(IMPORT.det.length ? [IMPORT] : [])];
   $('camps').innerHTML = list.map(c => `<button data-c="${c.id}" aria-pressed="${c === CAMP}" title="${esc(c.source)}">${esc(c.id === 'import' ? 'IMPORT' : c.id)}</button>`).join('');
   $('camps').querySelectorAll('button').forEach(b => b.onclick = () => { if (b.dataset.c !== CAMP.id) { setCamp(b.dataset.c); renderAll(); } });
+}
+// point de référence (soleil, lune, météo) : barycentre des sites de la campagne, recalculé si on déplace un site
+function updateSun() {
+  const pos = CAMP.sites.filter(s => isFinite(s.lat) && isFinite(s.lon));
+  SUN = pos.length ? { lat: mean(pos.map(s => s.lat)), lon: mean(pos.map(s => s.lon)) } : { ...ETEL };
 }
 const siteInfo = k => SITES[k] || { key: k, name: k, lat: ETEL.lat, lon: ETEL.lon, idx: 0, src: 'approx' };
 const shortName = k => siteInfo(k).name.split(' (')[0];
@@ -821,7 +946,7 @@ drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); [...e.da
 // État de la sélection
 // =====================================================================
 const st = { nights: [], win: 'night', conf: 0.6, metric: 'contact', gap: 30, axis: 'clock', sitesOff: new Set(), tr: null };
-const SR = { step: 30, mode: 'multi', scale: 'own' };
+const SR = { step: 30, mode: 'stack', scale: 'own' };
 let SEL = null;
 let TAB = 'ov';
 
@@ -908,7 +1033,7 @@ function computeSel() {
     if (gs.length) segs.push({ night: n0, s: Math.min(...gs.map(g => g.s)), e: Math.max(...gs.map(g => g.e)),
       sun: { set: 0, rise: mean(gs.map(g => g.sun.rise)) }, civ: { set: mean(gs.map(g => g.civ.set)), rise: mean(gs.map(g => g.civ.rise)) } });
   }
-  return { wb: multiNight() || rel ? null : wbs.get(n0), segs, baseAll, union, U, UT, data, spSeries, inTr, sites: allSites().filter(k => !st.sitesOff.has(k)) };
+  return { off, wb: multiNight() || rel ? null : wbs.get(n0), segs, baseAll, union, U, UT, data, spSeries, inTr, sites: allSites().filter(k => !st.sitesOff.has(k)) };
 }
 // Axe horaire des graphiques : les segments mis bout à bout, chacun aligné sur le pas
 function makeAxis(step) {
@@ -996,11 +1121,22 @@ $('pnClose').onclick = () => drawer(false);
 document.addEventListener('click', e => { if (!e.target.closest('#panel') && !e.target.closest('#pnOpen')) drawer(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) drawer(false); });
 
+// nombres du volet, dans la métrique choisie et avec les autres réglages (une nuit ou un site écarté garde son nombre)
+function panelCounts() {
+  const union = new Set(cfg.groups.filter(g => g.on).flatMap(g => [...groupSpecies(g)])), wbs = new Map();
+  const keep = d => { if (d.conf < st.conf || !union.has(d.sp)) return false;
+    if (!wbs.has(d.night)) wbs.set(d.night, windowBounds(d.night)); const wb = wbs.get(d.night); return !wb || (d.t >= wb.set && d.t <= wb.rise); };
+  const byN = {}, byS = {};
+  for (const u of units(DET.filter(d => !st.sitesOff.has(d.site) && keep(d)))) byN[u.night] = (byN[u.night] || 0) + 1;
+  for (const u of units(DET.filter(d => st.nights.includes(d.night) && keep(d)))) byS[u.site] = (byS[u.site] || 0) + 1;
+  return { byN, byS };
+}
 function renderPanel() {
-  const nights = allNights(), cntN = {}; for (const d of DET) cntN[d.night] = (cntN[d.night] || 0) + 1;
+  const nights = allNights(), { byN, byS } = panelCounts();
+  document.querySelectorAll('#panel .pn-unit').forEach(e => e.textContent = metricWord());
   const every = nights.every(n => st.nights.includes(n));
   // 1 · Quand
-  $('nightChips').innerHTML = nights.map(n => `<span class="chip ${st.nights.includes(n) ? '' : 'off'}" data-n="${n}" role="button" tabindex="0" aria-pressed="${st.nights.includes(n)}">${esc(nightShort(n))} ${n.slice(0, 4)} <span class="cnt">${cntN[n]}</span></span>`).join('');
+  $('nightChips').innerHTML = nights.map(n => `<span class="chip ${st.nights.includes(n) ? '' : 'off'}" data-n="${n}" role="button" tabindex="0" aria-pressed="${st.nights.includes(n)}" title="${esc(moonTxt(nightMoon(n)))}"><span class="ind"></span><span class="nm">${esc(nightShort(n))} ${n.slice(0, 4)}</span><span class="cnt">${byN[n] || 0}</span></span>`).join('');
   $('nightLinks').innerHTML = nights.length > 1 ? `<button class="lien" id="allNightsBtn">${every ? 'une seule' : 'toutes'}</button>` : '';
   $('nightChips').querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
     const n = ch.dataset.n;
@@ -1016,13 +1152,13 @@ function renderPanel() {
   $('valQuand').textContent = `${st.nights.length > 1 ? st.nights.length + ' nuits' : '1 nuit'} · ${({ all: 'session', night: 'coucher→lever', astro: 'nuit noire' })[st.win]}`;
   // 2 · Où
   const sites = allSites();
-  $('siteChips').innerHTML = sites.map(k => `<span class="chip ${st.sitesOff.has(k) ? 'off' : ''}" data-s="${k}" role="button" tabindex="0" aria-pressed="${!st.sitesOff.has(k)}"><span class="sw" style="background:${siteColor(k)}"></span>${esc(siteInfo(k).name)}</span>`).join('');
+  $('siteChips').innerHTML = sites.map(k => `<span class="chip ${st.sitesOff.has(k) ? 'off' : ''}" data-s="${k}" role="button" tabindex="0" aria-pressed="${!st.sitesOff.has(k)}"><span class="sw" style="background:${siteColor(k)}"></span><span class="nm">${esc(siteInfo(k).name)}</span><span class="cnt">${byS[k] || 0}</span></span>`).join('');
   $('siteChips').querySelectorAll('.chip').forEach(ch => ch.onclick = () => { const s = ch.dataset.s; st.sitesOff.has(s) ? st.sitesOff.delete(s) : st.sitesOff.add(s); renderAll(); });
   $('valOu').textContent = `${sites.length - st.sitesOff.size}/${sites.length} sites`;
   // 3 · Quoi
   const cnt = new Map(SEL.data.map(d => [d.g, d.U.length]));
   $('srChips').innerHTML = cfg.groups.length ? cfg.groups.map((g, i) => `<span class="chip ${g.on ? '' : 'off'}" data-i="${i}" role="button" tabindex="0" aria-pressed="${g.on}" title="${esc([...groupSpecies(g)].join(', ') || 'aucune espèce')}">
-      <span class="sw" style="background:${slotVar(g)}"></span>${esc(g.name)}${g.on ? ` <span class="cnt">${cnt.get(g) || 0}</span>` : ''}<span class="x" data-x="${i}" title="Retirer cette série">✕</span></span>`).join('')
+      <span class="sw" style="background:${slotVar(g)}"></span><span class="nm">${esc(g.name)}</span><span class="cnt">${g.on ? cnt.get(g) || 0 : ''}</span><span class="x" data-x="${i}" title="Retirer cette série">✕</span></span>`).join('')
     : '<span class="hint">Aucune série : ajoutez des espèces ou revenez aux catégories.</span>';
   $('srChips').querySelectorAll('.chip').forEach(ch => ch.onclick = e => {
     const i = +ch.dataset.i;
@@ -1231,11 +1367,11 @@ function edgePoint(b, x, y) { return [b.side === 'g' ? b.x1 : b.x0, (b.y0 + b.y1
 // coude du filet : court palier horizontal au sortir de l'étiquette, puis droit vers le point
 const kneePoint = (b, e) => [e[0] + (b.side === 'g' ? 10 : -10), e[1]];
 
-let map = null, markers = {}, mapMode = 'cols', labelLayer = null, mapGeom = {};
+let map = null, markers = {}, mapMode = 'circ', labelLayer = null, mapGeom = {};
 $('mapMode').querySelectorAll('button').forEach(b => b.onclick = () => { mapMode = b.dataset.v; segVal('mapMode', mapMode); renderMap(); });
 function renderMap() {
   if (!map) {
-    map = L.map('map', { scrollWheelZoom: false, fadeAnimation: false }).setView([47.665, -3.22], 12); addBases(map);
+    map = L.map('map', { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, fadeAnimation: false }).setView([47.665, -3.22], 12); addBases(map);
     labelLayer = L.layerGroup().addTo(map);
     map.on('zoomend', () => layoutMapLabels());
   }
@@ -1281,7 +1417,7 @@ function renderMap() {
     if (!markers[k]) {
       markers[k] = L.marker([info.lat, info.lon], { icon, draggable: drag }).addTo(map);
       markers[k].on('dragend', ev => { const p = ev.target.getLatLng(); cfg.pos[k] = [+p.lat.toFixed(5), +p.lng.toFixed(5)]; saveCfg();
-        const s = IMPORT.sites.find(x => x.key === k); if (s) { s.lat = cfg.pos[k][0]; s.lon = cfg.pos[k][1]; SITES[k].lat = s.lat; SITES[k].lon = s.lon; } renderAll(); });
+        const s = IMPORT.sites.find(x => x.key === k); if (s) { s.lat = cfg.pos[k][0]; s.lon = cfg.pos[k][1]; SITES[k].lat = s.lat; SITES[k].lon = s.lon; updateSun(); } renderAll(); });
     } else markers[k].setIcon(icon).setLatLng([info.lat, info.lon]);
     drag ? markers[k].dragging.enable() : markers[k].dragging.disable();
     markers[k].bindPopup(popup);
@@ -1329,6 +1465,136 @@ function renderHist() {
     out += timeBars({ W, H: 320, ax, step, rows, mode: SR.mode === 'group' ? 'group' : 'stack' });
   }
   el.innerHTML = out; bindTips(el); bindBins(el, ax, step);
+}
+
+// ---- Ciel et météo : lune levée, nuages, pluie, vent, sur l'axe de l'activité ----
+const meteoTried = new Set();
+function renderCiel() {
+  const el = $('ciel'), tb = $('cielTbl');
+  if (!st.nights.length || !SEL.segs.length) { el.innerHTML = EMPTY; tb.innerHTML = ''; return; }
+  const all = allNights(), want = [...new Set([...st.nights, ...all])], key = SUN.lat.toFixed(2) + SUN.lon.toFixed(2) + want.join();
+  if (!meteoHave(want) && !meteoTried.has(key)) { meteoTried.add(key); meteoLoad(want).then(() => { if (TAB === 'ov' && SEL) renderCiel(); }); }
+  const step = SR.step, ax = makeAxis(step), W = widthOf(el);
+  // nuits superposées (heure après le coucher) : une bande par nuit, sinon une seule bande
+  const blocks = multiNight() && st.axis === 'rel' ? st.nights.map(n => [n]) : [st.nights];
+  let out = (meteoPending ? '<p class="hint">Chargement de la météo…</p>' : meteoErr ? `<p class="hint">${esc(meteoErr)}</p>` : '');
+  for (const b of blocks) out += (blocks.length > 1 ? `<div class="ciel-nuit">${esc(nightLabel(b[0]))}</div>` : '') + cielChart(W, ax, b);
+  el.innerHTML = out; bindTips(el);
+  const deg = (v, p, m) => `${virg(Math.abs(v), 2)}° ${v >= 0 ? p : m}`, srcs = Object.values(SITES).map(x => x.src);
+  $('cielLieu').innerHTML = `Lieu de référence : ${deg(SUN.lat, 'N', 'S')}, ${deg(SUN.lon, 'E', 'O')} (barycentre des sites), heure de Paris.` +
+    (srcs.length && srcs.every(x => x === 'manuel' || x === 'approx') ? ' <b>Position des sites inconnue dans les fichiers : glissez-les à leur place sur la carte pour corriger la lune et la météo.</b>' : '');
+  renderCielTable(all);
+}
+function cielChart(W, ax, nights) {
+  const ml = 36, mr = 8, span = Math.max(1, ax.end - ax.start), X = a => ml + (a - ax.start) / span * (W - ml - mr), xr = W - mr;
+  // morceaux d'axe couverts par l'intervalle [t0, t1] (minutes depuis midi) d'une nuit
+  const spans = (n, t0, t1) => { const o = SEL.off.get(n), r = [];
+    for (const g of ax.segs) { const a = Math.max(t0 + o, g.s), b = Math.min(t1 + o, g.e); if (b > a) r.push([X(g.A + a - g.s), X(g.A + b - g.s)]); } return r; };
+  const xAt = (n, t) => { const r = spans(n, t, t + 0.01)[0]; return r ? r[0] : null; };
+  const hours = n => Array.from({ length: 24 }, (_, i) => (i + 12) % 24).map(h => ({ h, t: h >= 12 ? h * 60 - 720 : h * 60 + 720, m: meteoAt(n, h), n }));
+  const all = nights.flatMap(n => hours(n).filter(x => spans(n, x.t - 30, x.t + 30).length));
+  const met = all.filter(x => x.m);
+  const pmax = Math.max(1, Math.ceil(Math.max(0, ...met.map(x => x.m.p)))), wmax = Math.max(20, Math.ceil(Math.max(0, ...met.map(x => x.m.w)) * 1.15 / 10) * 10);
+  // rangées : [haut, hauteur] ; chaque titre est posé 8 px au-dessus de sa rangée
+  // vent : une voie de 26 px pour les flèches, puis la courbe
+  const R = { lune: [26, 22], nuages: [84, 56], pluie: [176, 40], vent: [286, 72] }, lane = 256, bot = 374, H = bot + 24;
+  const TF = "font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;fill:var(--ink)", SF = "font-family:'IBM Plex Sans',sans-serif;font-size:12px;fill:var(--text-3)";
+  // résumé à droite du titre, seulement s'il tient (sinon il reste lisible dans le tableau par nuit)
+  const fits = (t, sum) => textW(t, "600 13px 'IBM Plex Sans'") + textW(sum, "12px 'IBM Plex Sans'") + 24 < xr - ml;
+  const head = (y, t, sum) => `<text x="${ml}" y="${y}" style="${TF}">${t}</text>` + (sum && fits(t, sum) ? `<text x="${xr}" y="${y}" text-anchor="end" style="${SF}">${sum}</text>` : '');
+  const title = (r, t, sum) => head(R[r][0] - 8, t, sum);
+  const grid = (r, v, max, lbl) => { const y = R[r][0] + R[r][1] * (1 - v / max);
+    return `<line x1="${ml}" x2="${xr}" y1="${y}" y2="${y}" stroke="${v ? 'var(--grid)' : 'var(--axis)'}"/><text x="${ml - 6}" y="${y + 4}" text-anchor="end">${lbl}</text>`; };
+  const avg = f => met.length ? mean(met.map(x => f(x.m))) : 0;
+  const vlines = (x, c, d) => [[R.lune[0], R.lune[0] + R.lune[1]], [R.nuages[0], R.nuages[0] + R.nuages[1]], [R.pluie[0], R.pluie[0] + R.pluie[1]], [lane, bot]]
+    .map(([a, b]) => `<line x1="${x}" x2="${x}" y1="${a}" y2="${b}" stroke="${c}" stroke-dasharray="${d}"/>`).join('');
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  // coucher et lever du soleil : traits verticaux sur toute la hauteur
+  for (const n of nights) { const sun = nightSun(n, 90.833);
+    for (const [t, lb] of [[sun.set, 'coucher'], [sun.rise, 'lever']]) { const x = xAt(n, t); if (x == null) continue;
+      svg += vlines(x, 'var(--text-3)', '3 3') +
+        `<text x="${x + (lb === 'lever' ? -4 : 4)}" y="${bot - 5}" text-anchor="${lb === 'lever' ? 'end' : 'start'}" style="${SF}">${lb} ${fmtT(t)}</text>`; } }
+  // séparateurs de nuits (à la suite)
+  if (ax.multi) ax.segs.slice(1).forEach(g => svg += vlines(X(g.A), 'var(--ink)', '5 3'));
+
+  // 1. Lune : bande quand elle est au-dessus de l'horizon, texte dedans
+  const one = nights.length === 1 ? nightMoon(nights[0]) : null;
+  svg += title('lune', 'Lune', one ? `${Math.round(one.k * 100)} % éclairée, ${one.phase}` : '');
+  svg += `<rect x="${ml}" y="${R.lune[0]}" width="${xr - ml}" height="${R.lune[1]}" fill="var(--line-soft)"/>`;
+  let lunePos = 0;
+  for (const n of nights) { const m = nightMoon(n);
+    for (const [a, b] of m.up) for (const [x0, x1] of spans(n, a, b)) { lunePos++;
+      const txt = `levée${a > 0 ? ' à ' + fmtT(a) : ''}${b < 1440 ? ', couchée à ' + fmtT(b) : ''}${one ? '' : ' · ' + Math.round(m.k * 100) + ' %'}`;
+      svg += `<rect x="${x0}" y="${R.lune[0]}" width="${x1 - x0}" height="${R.lune[1]}" fill="#e3d49a"/>` +
+        (x1 - x0 > 26 ? `<g transform="translate(${x0 + 3} ${R.lune[0] + 2})">${moonIcon(m, 8)}</g>` : '') +
+        (x1 - x0 > textW(txt, "12px 'IBM Plex Sans'") + 34 ? `<text x="${x0 + 26}" y="${R.lune[0] + 15}" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;fill:var(--ink)">${txt}</text>` : ''); } }
+  if (!lunePos) svg += `<text x="${ml + 6}" y="${R.lune[0] + 15}" style="${SF}">sous l'horizon toute la période</text>`;
+
+  // 2. Nuages : aire en escalier de 0 à 100 %
+  svg += title('nuages', 'Couverture nuageuse (%)', met.length ? `moyenne ${Math.round(avg(m => m.c))} %, max ${Math.max(...met.map(x => x.m.c))} %` : '');
+  svg += grid('nuages', 0, 100, '0') + grid('nuages', 50, 100, '50') + grid('nuages', 100, 100, '100');
+  // 3. Pluie : barres par heure
+  const ptot = met.reduce((a, x) => a + x.m.p, 0);
+  svg += title('pluie', 'Pluie (mm par heure)', met.length ? (ptot ? `cumul ${virg(ptot, 1)} mm` : 'aucune pluie') : '');
+  svg += grid('pluie', 0, pmax, '0') + grid('pluie', pmax, pmax, pmax);
+  // 4. Vent : vitesse en courbe, direction en flèches avec valeurs
+  const vx = avg(m => m.w * Math.sin(m.d * D2R)), vy = avg(m => m.w * Math.cos(m.d * D2R));
+  svg += head(lane - 8, 'Vent à 10 m (km/h)', met.length ? `moyenne ${Math.round(avg(m => m.w))} km/h, dominant de ${roseOf((Math.atan2(vx, vy) / D2R + 360) % 360)}` : '');
+  svg += grid('vent', 0, wmax, '0') + grid('vent', wmax / 2, wmax, wmax / 2) + grid('vent', wmax, wmax, wmax);
+  if (!met.length) svg += `<text x="${ml + 6}" y="${R.nuages[0] + 30}" style="${SF}">${meteoPending ? 'chargement de la météo…' : 'pas de données météo'}</text>`;
+
+  const hourPx = (W - ml - mr) / span * 60, every = hourPx >= 56 ? 1 : hourPx >= 28 ? 2 : hourPx >= 14 ? 4 : 6;
+  const yN = v => R.nuages[0] + R.nuages[1] * (1 - v / 100), yP = v => R.pluie[0] + R.pluie[1] * (1 - v / pmax), yV = v => R.vent[0] + R.vent[1] * (1 - v / wmax);
+  for (const n of nights) {
+    const hs = hours(n).filter(x => x.m);
+    // nuages : une marche par heure (valeur centrée sur l'heure)
+    let path = '';
+    for (const x of hs) for (const [x0, x1] of spans(n, x.t - 30, x.t + 30)) path += `M${x0} ${yN(0)}V${yN(x.m.c)}H${x1}V${yN(0)}Z`;
+    if (path) svg += `<path d="${path}" fill="#9fa4bd" stroke="none"/>`;
+    let top = ''; for (const x of hs) for (const [x0, x1] of spans(n, x.t - 30, x.t + 30)) top += `M${x0} ${yN(x.m.c)}H${x1}`;
+    if (top) svg += `<path d="${top}" fill="none" stroke="#4f5468" stroke-width="2"/>`;
+    // pluie : cumul de l'heure écoulée
+    for (const x of hs) if (x.m.p > 0) for (const [x0, x1] of spans(n, x.t - 60, x.t)) svg += `<rect x="${x0 + 1}" y="${yP(x.m.p)}" width="${Math.max(1, x1 - x0 - 2)}" height="${yP(0) - yP(x.m.p)}" fill="#3d3a82"/>`;
+    // vent
+    const pts = hs.map(x => [xAt(n, x.t), yV(x.m.w), x]).filter(p => p[0] != null);
+    if (pts.length > 1) svg += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+    pts.forEach(p => { if (p[2].h % every) return;
+      svg += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--ink)"/>` +
+        `<g transform="translate(${p[0].toFixed(1)} ${lane + 12})"><path d="M0 -9L6 5L0 2L-6 5Z" fill="var(--ink)" transform="rotate(${(p[2].m.d + 180) % 360})"/></g>` +
+        `<text x="${p[0]}" y="${(p[1] + 16).toFixed(1)}" text-anchor="middle" style="font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--text-2)">${roseOf(p[2].m.d)} ${Math.round(p[2].m.w)}</text>`; });
+  }
+  // graduations horaires communes avec l'activité
+  const nb = Math.max(1, Math.round(span / SR.step)), lblEvery = Math.max(1, Math.ceil(nb / Math.floor((W - 50) / 46)));
+  for (let i = 0; i < nb; i += lblEvery) svg += `<text x="${X(ax.start + i * SR.step)}" y="${H - 6}" text-anchor="middle">${fmtTick(ax.toT(ax.start + i * SR.step))}</text>`;
+  svg += `<line x1="${ml}" x2="${xr}" y1="${bot}" y2="${bot}" stroke="var(--axis)"/>`;
+  // infobulles : une zone par heure
+  for (const x of all) for (const [x0, x1] of spans(x.n, x.t - 30, x.t + 30)) {
+    const m = nightMoon(x.n), o = SEL.off.get(x.n), w = x.m;
+    const tipH = `<div class='t'>${nights.length > 1 || ax.multi ? nightShort(x.n) + ' · ' : ''}${fmtT(x.t)}${st.axis === 'rel' ? ' (' + fmtRel(x.t + o) + ')' : ''}</div>` +
+      `<div class='r'>Lune<b>${moonUpAt(m, x.t) ? 'levée, ' + Math.round(m.k * 100) + ' %' : 'couchée'}</b></div>` +
+      (w ? `<div class='r'>Nuages<b>${w.c} %</b></div><div class='r'>Pluie<b>${virg(w.p, 1)} mm</b></div><div class='r'>Vent<b>${roseOf(w.d)} ${Math.round(w.w)} km/h</b></div><div class='r'>Température<b>${virg(w.T, 0)} °C</b></div>` : `<div class='r'><i>météo non chargée</i></div>`);
+    svg += `<rect x="${x0}" y="4" width="${x1 - x0}" height="${bot - 4}" fill="transparent" data-tip="${esc(tipH)}"/>`;
+  }
+  return svg + '</svg>';
+}
+// bilan par nuit de la campagne : lune, météo moyenne sur la fenêtre coucher → lever, activité
+function renderCielTable(nights) {
+  const series = cfg.groups.filter(g => g.on), union = new Set(series.flatMap(g => [...groupSpecies(g)]));
+  const rows = nights.map(n => {
+    const sun = nightSun(n, 90.833), wb = windowBounds(n), m = nightMoon(n);
+    const dets = DET.filter(d => d.night === n && d.conf >= st.conf && !st.sitesOff.has(d.site) && union.has(d.sp) && (!wb || (d.t >= wb.set && d.t <= wb.rise)));
+    const nU = units(dets).length, dur = wb ? (wb.rise - wb.set) / 60 : 0;
+    const hrs = []; for (let t = Math.ceil(sun.set / 60) * 60; t <= sun.rise; t += 60) { const w = meteoAt(n, ((t + 720) / 60) % 24); if (w) hrs.push(w); }
+    const vx = mean(hrs.map(w => w.w * Math.sin(w.d * D2R))), vy = mean(hrs.map(w => w.w * Math.cos(w.d * D2R)));
+    const upNight = m.up.map(([a, b]) => [Math.max(a, sun.set), Math.min(b, sun.rise)]).filter(([a, b]) => b > a);
+    const upTxt = !upNight.length ? 'non' : upNight.length === 1 && upNight[0][0] <= sun.set + 5 && upNight[0][1] >= sun.rise - 5 ? 'toute la nuit' : upNight.map(([a, b]) => fmtT(a) + '–' + fmtT(b)).join(', ');
+    return `<tr data-n="${n}" class="${st.nights.includes(n) ? 'sel' : ''}" style="cursor:pointer" title="Afficher cette nuit seule">` +
+      `<td>${esc(nightShort(n))}</td><td>${Math.round(m.k * 100)} %</td><td>${upTxt}</td>` +
+      (hrs.length ? `<td class="num">${Math.round(mean(hrs.map(w => w.c)))} %</td><td class="num">${roseOf((Math.atan2(vx, vy) / D2R + 360) % 360)} ${Math.round(mean(hrs.map(w => w.w)))}</td><td class="num">${virg(hrs.reduce((a, w) => a + w.p, 0), 1)}</td>` : '<td>–</td><td>–</td><td>–</td>') +
+      `<td class="num">${nU}</td><td class="num">${dur ? virg(nU / dur, 1) : '–'}</td></tr>`;
+  });
+  $('cielTbl').innerHTML = `<thead><tr><th>Nuit</th><th>Lune</th><th>Levée</th><th>Nuages</th><th>Vent km/h</th><th>Pluie mm</th><th>${esc(metricWord())}</th><th>/ heure</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  $('cielTbl').querySelectorAll('tr[data-n]').forEach(r => r.onclick = () => { st.nights = [r.dataset.n]; st.tr = null; renderAll(); });
 }
 
 // =====================================================================
@@ -1589,7 +1855,7 @@ function bindFicheCat() {
 const SIM = { T: 0, t0: 0, t1: 1, playing: false, last: 0, data: [], pts: [], sites: [], rec: null, cumMax: 1, heatMax: 1 };
 let simMap = null;
 function simInit() {
-  simMap = L.map('simMap', { scrollWheelZoom: false, fadeAnimation: false }).setView([47.665, -3.22], 12);
+  simMap = L.map('simMap', { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, fadeAnimation: false }).setView([47.665, -3.22], 12);
   addBases(simMap);
   simMap.on('move zoom resize', () => { if (!SIM.playing) simDraw(); });
   $('simPlay').onclick = () => simSetPlaying(!SIM.playing);
@@ -1607,6 +1873,7 @@ const P = id => { const el = $(id); return el.type === 'checkbox' ? el.checked :
 function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; }
 function simRefresh() {
   if (!simMap) simInit();
+  if (!meteoHave(st.nights)) meteoLoad(st.nights);
   simMap.invalidateSize();
   SIM.data = SEL.data; SIM.sites = SEL.sites;
   if (!SIM.data.length || !SEL.segs.length) {
@@ -1647,6 +1914,12 @@ function simTick(now) {
   if (SIM.T >= SIM.t1) { SIM.T = SIM.t1; simDraw(); simSetPlaying(false); if (SIM.rec) SIM.rec.stop(); return; }
   simDraw(); requestAnimationFrame(simTick);
 }
+function simCiel(T) {
+  if (!SIM.ax || !SIM.ax.segs.length || (multiNight() && st.axis === 'rel')) return '';
+  const n = SIM.ax.segOfA(T).night, t = SIM.ax.toT(T) - SEL.off.get(n), m = nightMoon(n);
+  const w = meteoAt(n, ((Math.round(t / 60) + 12) % 24 + 24) % 24);
+  return (moonUpAt(m, t) ? `lune levée ${Math.round(m.k * 100)} %` : 'lune couchée') + (w ? ` · vent ${roseOf(w.d)} ${Math.round(w.w)} km/h · nuages ${w.c} %` : '');
+}
 function simPhase(T) {
   if (!SIM.ax || !SIM.ax.segs.length) return '';
   const g = SIM.ax.segOfA(T), t = SIM.ax.toT(T);
@@ -1663,6 +1936,7 @@ function simDraw() {
   simPaint(ctx, W, H);
   $('simTime').textContent = SIM.pts.length ? fmtA(SIM.ax.toT(SIM.T)) : '--h--';
   $('simPhase').textContent = simPhase(SIM.T) + (st.axis === 'rel' ? ' · depuis le coucher' : '') + (SIM.pts.length && SIM.ax.multi ? ' · ' + nightShort(SIM.ax.segOfA(SIM.T).night) : '');
+  $('simCiel').textContent = SIM.pts.length ? simCiel(SIM.T) : '';
   $('simSlider').value = Math.round(1000 * (SIM.T - SIM.t0) / Math.max(1, SIM.t1 - SIM.t0));
   simCursor();
   if (SIM.rec) simRecFrame();
@@ -1793,7 +2067,7 @@ function simRecFrame() {
   simPaint(ctx, W, H);
   const big = "500 30px 'JetBrains Mono', monospace", small = "12px 'IBM Plex Sans', sans-serif";
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  const tt = fmtA(SIM.ax.toT(SIM.T)), ph = simPhase(SIM.T), sub = `${ph}${ph ? ' · ' : ''}${st.axis === 'rel' ? 'depuis le coucher · ' : ''}${nightLabel(SIM.ax.segOfA(SIM.T).night)}`;
+  const tt = fmtA(SIM.ax.toT(SIM.T)), ph = simPhase(SIM.T), ciel = simCiel(SIM.T), sub = `${ph}${ph ? ' · ' : ''}${st.axis === 'rel' ? 'depuis le coucher · ' : ''}${nightLabel(SIM.ax.segOfA(SIM.T).night)}${ciel ? ' · ' + ciel : ''}`;
   ctx.font = small; const w2 = ctx.measureText(sub).width; ctx.font = big;
   const wb = Math.max(ctx.measureText(tt).width, w2) + 24;
   ctx.fillStyle = cssv('--card'); ctx.fillRect(10, 10, wb, 56); ctx.strokeStyle = cssv('--ink'); ctx.strokeRect(10.5, 10.5, wb - 1, 55);
@@ -1924,7 +2198,7 @@ async function exportCard(card, btn) {
 function renderTab() {
   if (!SEL) return;
   ({
-    ov: () => { renderMap(); renderHist(); },
+    ov: () => { renderMap(); renderHist(); renderCiel(); },
     sp: () => { renderBars(); renderHeat(); },
     ch: () => { renderChrono(); renderSiteHists(); },
     sim: () => simRefresh(),
