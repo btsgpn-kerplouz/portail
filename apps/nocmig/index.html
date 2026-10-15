@@ -414,10 +414,11 @@ dialog::backdrop { background: rgba(25, 27, 22, .45); }
             <div class="tools noexp"><button class="btn petit png">⬇ PNG</button></div>
           </div>
           <div class="reglages noexp"><span class="repere">Réglages</span>
-            <label>Symbole <span class="seg" id="mapMode"><button data-v="cols" aria-pressed="false">Colonnes par série</button><button data-v="circ" aria-pressed="true">Cercle total</button></span></label>
+            <label>Symbole <span class="seg" id="mapMode"><button data-v="cols" aria-pressed="false">Colonnes par série</button><button data-v="circ" aria-pressed="true">Cercle total</button><button data-v="pie" aria-pressed="false">Camembert</button></span></label>
           </div>
           <p class="exp-cap"></p>
           <p class="note noexp" id="mapInfo"></p>
+          <div class="legend" id="mapLegend"></div>
           <div id="map" class="mapbox"></div>
         </section>
         <div class="col-ov">
@@ -1385,7 +1386,10 @@ function renderMap() {
   const maxCol = Math.max(1, ...sites.flatMap(k => cnt[k])), maxTot = Math.max(1, ...sites.map(tot));
   $('mapInfo').textContent = (mapMode === 'cols'
     ? `Hauteur des colonnes : ${metricWord()} de chaque série, même échelle pour tous les spots (max ${maxCol}). Le carré noir marque la position GPS.`
-    : `Surface du cercle : ${metricWord()} de la sélection (max ${maxTot}). Couleur : série dominante sur le spot.`) + ' Cliquez sur un spot pour le détail.';
+    : mapMode === 'pie' ? `Surface du disque : ${metricWord()} de la sélection (max ${maxTot}). Parts : poids de chaque série active sur le spot.`
+    : `Surface du cercle : ${metricWord()} de la sélection, toutes séries confondues (max ${maxTot}).`) + ' Cliquez sur un spot pour le détail.';
+  // légende des séries (colonnes et camembert : la couleur porte la série)
+  $('mapLegend').innerHTML = mapMode === 'circ' ? '' : data.map((d, j) => `<span><span class="sw" style="background:${d.color}"></span>${esc(d.g.name)} (${sites.reduce((a, k) => a + cnt[k][j], 0)})</span>`).join('');
   const srcTxt = { data: 'coordonnées du spot', csv: 'coordonnées du CSV', manuel: 'placée à la main (glisser pour corriger)', approx: 'approximative' };
   mapGeom = {};
   for (const k of sites) {
@@ -1404,10 +1408,23 @@ function renderMap() {
       icon = L.divIcon({ className: '', html: `<div class="srm" style="width:${W}px;height:${Hb}px">${svg}<span class="gps" style="left:${W / 2 - 3.5}px;top:${Hb - 3.5}px"></span></div>`, iconSize: [W, Hb], iconAnchor: [W / 2, Hb] });
       const tallest = Math.max(3, Hb * Math.max(...c) / maxCol);
       mapGeom[k] = { x0: -W / 2, x1: W / 2, y0: -tallest, y1: 4 };
+    } else if (mapMode === 'pie' && data.length && c.some(v => v)) {
+      // camembert : surface = total du spot, une part par série (dans l'ordre des séries), parts jointives
+      const size = Math.round(16 + 54 * Math.sqrt(n / maxTot)), r = size / 2, sum = c.reduce((a, b) => a + b, 0);
+      let a0 = -Math.PI / 2, parts = '';
+      c.forEach((v, j) => { if (!v) return;
+        const col = resolveVar(data[j].color);
+        if (v === sum) { parts += `<circle cx="${r}" cy="${r}" r="${r - 1}" fill="${col}"/>`; return; }
+        const a1 = a0 + 2 * Math.PI * v / sum, big = a1 - a0 > Math.PI ? 1 : 0;
+        const P = a => `${(r + (r - 1) * Math.cos(a)).toFixed(2)} ${(r + (r - 1) * Math.sin(a)).toFixed(2)}`;
+        parts += `<path d="M${r} ${r}L${P(a0)}A${r - 1} ${r - 1} 0 ${big} 1 ${P(a1)}Z" fill="${col}" stroke="${col}" stroke-width=".5"/>`;
+        a0 = a1; });
+      icon = L.divIcon({ className: '', html: `<svg class="site-pie" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="width:${size}px;display:block">${parts}<circle cx="${r}" cy="${r}" r="${r - 1}" fill="none" stroke="${cssv('--ink')}" stroke-width="1"/></svg>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+      mapGeom[k] = { x0: -size / 2, x1: size / 2, y0: -size / 2, y1: size / 2 };
     } else {
-      const dom = c.length ? c.indexOf(Math.max(...c)) : -1, col = dom >= 0 && n ? resolveVar(data[dom].color) : cssv('--gray');
-      const size = n ? Math.round(16 + 54 * Math.sqrt(n / maxTot)) : 14;
-      icon = L.divIcon({ className: '', html: `<div class="site-ic ${n ? '' : 'zero'}" style="width:${size}px;height:${size}px;border-radius:50%;background:${hexA(col, 0.55)};border-color:${col}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+      // cercle total : une seule couleur, bleu nuit de l'app (hors palette des séries)
+      const col = cssv('--nuit-2'), size = n ? Math.round(16 + 54 * Math.sqrt(n / maxTot)) : 14;
+      icon = L.divIcon({ className: '', html: `<div class="site-ic ${n ? '' : 'zero'}" style="width:${size}px;height:${size}px;border-radius:50%;background:${hexA(col, 0.5)};border-color:${col}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
       mapGeom[k] = { x0: -size / 2, x1: size / 2, y0: -size / 2, y1: size / 2 };
     }
     mapGeom[k].text = `${shortName(k)}|${n}`;
