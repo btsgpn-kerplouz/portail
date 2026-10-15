@@ -85,7 +85,11 @@ Le dernier argument numérique est le **seuil de confiance par défaut** de la c
 
 ## Déploiement
 
-Worker Cloudflare `nocmig` (`wrangler.jsonc`, assets statiques ; `.assetsignore`
-exclut `outils/` et ce README). À créer une fois dans le tableau de bord Cloudflare
-(racine `apps/nocmig`), puis passer la tuile du portail de « en chantier » à
-« en service » (commentaire dans `portail/index.html`).
+En ligne : **https://nocmig.kerplouz.workers.dev** — worker Cloudflare `nocmig`
+(`wrangler.jsonc`, assets statiques ; `.assetsignore` exclut `outils/`, ce README et la
+config), relié au dépôt GitHub : redéploiement automatique à chaque fusion dans `main`.
+
+Réglages de construction (Workers & Pages → nocmig → Settings → Build) : branche
+`main`, dossier racine `apps/nocmig`, commande de construction vide, commande de
+déploiement `npx wrangler deploy`. ⚠️ Pas de « * » dans les chemins (dossier racine ou
+chemins surveillés) : la construction échouait avec « root directory not found ».
