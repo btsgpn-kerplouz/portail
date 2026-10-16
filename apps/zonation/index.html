@@ -2640,7 +2640,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.36.1';
+const VERSION_APPLI = '1.36.2';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -5379,13 +5379,40 @@ function projetParDefautPhytoscope(liste){
   const qui = obs.length > 3 ? `${obs.slice(0,3).join(', ')} +${obs.length-3}` : obs.join(', ');
   return [[uniques(r => r.site)[0] || 'Petite Mer de Gâvres', quand].filter(Boolean).join(' '), qui].filter(Boolean).join(' · ');
 }
+/* Nom des fichiers exportés : « zonation_site_date_observateurs_type.csv », ex.
+   zonation_le-magouero-massif-dunaire_2026-06-10_groupe-essai_phytoscope.csv.
+   Il était figé sur « releves_petite_mer_de_gavres_… », y compris pour les dunes
+   ou un autre site. Une partie absente (ni site, ni observateur saisi) est sautée
+   plutôt qu'inventée ; plusieurs sites ou plus de trois observateurs sont résumés. */
+function nomFichierExport(liste, type){
+  const uniques = f => [...new Set(liste.map(f).filter(Boolean))];
+  const slug = (t, max = 40) => {
+    const s = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return s.length <= max ? s : s.slice(0, max).replace(/-[^-]*$/, '');
+  };
+  const sites = uniques(r => (r.site || '').trim());
+  const dates = uniques(r => r.dateReleve || (r.date || '').slice(0,10)).sort();
+  const obs = uniques(r => (r.observateur || '').trim());
+  const site = !sites.length ? '' : sites.length === 1 ? slug(sites[0]) : 'plusieurs-sites';
+  const quand = !dates.length ? '' : dates.length === 1 ? dates[0] : `${dates[0]}_au_${dates[dates.length-1]}`;
+  const qui = !obs.length ? '' : slug(obs.slice(0,3).join(' ')) + (obs.length > 3 ? `-et-${obs.length-3}-autres` : '');
+  return ['zonation', site, quand, qui, type].filter(Boolean).join('_') + '.csv';
+}
 /* En-tête d'un relevé dans la disposition de PhytoScope (9 premières colonnes).
    code_projet : le nom saisi au-dessus du bouton d'export, sinon projetParDefautPhytoscope. */
 function enteteRelevePhytoscope(r, releveId, projet){
   const date = r.dateReleve || (r.date || new Date().toISOString()).slice(0,10);
   const site = [r.site, r.commune].filter(Boolean).join(' — ') || 'Petite Mer de Gâvres';
   return [releveId, nomCourtReleve(r), site, projet,
-    date, r.observateur || '', r.commune || '', '', '1 m²'];
+    date, r.observateur || '', r.commune || '', coordonneesPhytoscope(r), '1 m²'];
+}
+/* Position GPS du relevé au format lu par PhytoScope (« 47.665147, -3.250150 »,
+   d'où il tire aussi le Lambert 93). Vide si le relevé n'a pas de position. */
+function coordonneesPhytoscope(r){
+  const g = r.gps;
+  if(!g || !Number.isFinite(g.lat) || !Number.isFinite(g.lon)) return '';
+  return `${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}`;
 }
 /* Colonnes de rangement lues par PhytoScope, en fin de ligne. */
 function rangementRelevePhytoscope(r){
@@ -5423,7 +5450,7 @@ function exporterHistoriqueCSV(){
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres_complet.csv');
+    nomFichierExport(liste, 'complet'));
 }
 
 /* ---------- Export compatible Phytoscope ----------
@@ -5464,7 +5491,7 @@ function exporterPourPhytoscopeCSV(){
     });
   });
   telechargerTexte(lignes.map(l => l.map(champCSV).join(';')).join('\r\n'),
-    'releves_petite_mer_de_gavres_phytoscope.csv');
+    nomFichierExport(liste, 'phytoscope'));
   if(omises.size || libres.size){
     const bloc = [];
     if(omises.size) bloc.push('Sans équivalent dans le référentiel de Phytoscope :\n'
