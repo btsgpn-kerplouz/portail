@@ -1316,10 +1316,10 @@ const SOL_NU = {taxonId:-1, nom:'Sol nu', strate:'Sans végétation', habitat:'S
    xérosère intradunaire). Tout le reste — saisie, import, exports, analyses,
    profil dessiné — est commun.
 
-   Un relevé porte son milieu, et les identifiants de fiches les distinguent
-   sans ambiguïté : nombres pour le marais (1, 6, 17), codes pour les dunes
-   (« 1.1a », « 2.1c »). C'est ce qui permet d'analyser un transect dunaire
-   alors que l'écran de saisie est resté sur le marais. */
+   Un relevé porte son milieu, qui seul dit dans quel référentiel lire sa fiche :
+   les deux numérotent à partir de 1 (f6 = Dunes blanches à Oyat ou Fourré
+   halophile à Obione). C'est ce qui permet d'analyser un transect dunaire alors
+   que l'écran de saisie est resté sur le marais. */
 const CLE_MILIEU = 'pmg_milieu_v1';
 const MILIEUX = {
   marais: {
@@ -1355,11 +1355,29 @@ const milieuDeFiche = (id, milieu) => MILIEUX[milieu] ? milieu : milieuActif;
 /* Milieu d'un relevé : son champ, sinon le marais — seul référentiel existant
    avant cette version. */
 const milieuDuReleve = r => MILIEUX[r && r.milieu] ? r.milieu : 'marais';
-/* Milieu d'un transect : celui de ses relevés. */
-const milieuTransect = nom => {
-  const r = chargerHistorique().find(x => (x.transect || 'Transect (sans nom)') === nom);
-  return milieuDuReleve(r);
+/* Milieu d'un ensemble de relevés : le plus représenté parmi ceux qui portent
+   des espèces. Un relevé de sol nu n'en dit rien : importé sans colonne milieu,
+   il a pu être rangé au marais par défaut, et un transect dunaire commençant sur
+   la plage nue ne doit pas basculer pour autant. À égalité, le premier rencontré ;
+   sans aucune espèce, le milieu du premier relevé. */
+const milieuDesReleves = rs => {
+  const n = new Map();
+  rs.filter(r => !r.solNu && (r.cortege || []).length).forEach(r => {
+    const m = milieuDuReleve(r);
+    n.set(m, (n.get(m) || 0) + 1);
+  });
+  let retenu = null;
+  n.forEach((c, m) => { if(retenu === null || c > n.get(retenu)) retenu = m; });
+  return retenu || milieuDuReleve(rs[0]);
 };
+/* Milieu d'un transect : celui de ses relevés. */
+const relevesDeTransect = (nom, liste) =>
+  liste.filter(x => (x.transect || 'Transect (sans nom)') === nom);
+const milieuTransect = nom => milieuDesReleves(relevesDeTransect(nom, chargerHistorique()));
+/* Milieu annoncé pour un relevé : le sien, sauf le sol nu qui suit son transect. */
+const milieuAnnonce = (r, liste) => r.solNu
+  ? milieuDesReleves(relevesDeTransect(r.transect || 'Transect (sans nom)', liste))
+  : milieuDuReleve(r);
 const profilDeFiche = (id, milieu) => MILIEUX[milieuDeFiche(id, milieu)].profil;
 const habitatsDeFiche = (id, milieu) => MILIEUX[milieuDeFiche(id, milieu)].habitats;
 function habitatParId(id, milieu){ return (habitatsDeFiche(id, milieu) || []).find(h => h.id === id); }
@@ -2640,7 +2658,7 @@ function ouvrirMiniFloreGlobale(){
 /* Numéro de version affiché dans l'en-tête, sur tous les écrans : permet de vérifier d'un coup d'œil
    qu'un appareil a bien reçu la dernière mise à jour. À incrémenter en même
    temps que VERSION dans service-worker.js (qui en tire le nom du cache). */
-const VERSION_APPLI = '1.36.2';
+const VERSION_APPLI = '1.36.3';
 const CLE_HISTORIQUE = 'pmg_releves_v1';
 
 function chargerHistorique(){
@@ -2660,7 +2678,7 @@ function majCompteurHistorique(){
   const ca = document.getElementById('porte-n-analyses');
   if(ca){
     const transects = new Set(liste.map(r => r.transect || 'Transect (sans nom)'));
-    const milieux = [...new Set(liste.map(milieuDuReleve))].map(m => MILIEUX[m].nom.toLowerCase());
+    const milieux = [...new Set(liste.map(r => milieuAnnonce(r, liste)))].map(m => MILIEUX[m].nom.toLowerCase());
     ca.textContent = transects.size
       ? `${transects.size} transect${transects.size > 1 ? 's' : ''} enregistré${transects.size > 1 ? 's' : ''}`
         + (milieux.length ? ` · ${milieux.join(' et ')}` : '')
@@ -3164,7 +3182,7 @@ function afficherHistorique(){
         return `<tr${nom === nomActif ? ' class="transect-actif"' : ''}>
           <td><b>${echapHTML(nom)}</b>${nom === nomActif ? ' <span class="tag">en cours</span>' : ''}
             ${r0.observateur ? `<br><span class="latin">${echapHTML(r0.observateur)}</span>` : ''}</td>
-          <td>${MILIEUX[milieuDuReleve(r0)].nom}</td>
+          <td>${MILIEUX[milieuDesReleves(rs)].nom}</td>
           <td class="num">${rs.length}</td>
           <td>${avecD.length ? `${avecD[0]} → ${avecD[avecD.length-1]} m` : '—'}</td>
           <td>${r0.dateReleve ? r0.dateReleve.split('-').reverse().join('/') : '—'}</td>
@@ -3389,7 +3407,7 @@ function construireProfilTransectSVG(nomTransect, options){
     ? legendeDessinsSVG(dessin.liste, 14, yLeg + 54, W - 28) : null;
   /* Groupements rencontrés, dans l'ordre du transect : le SVG téléchargé les
      nomme en clair, sinon la figure ne porte que des numéros de fiches. */
-  const milieuTr = milieuDuReleve(rs[0]);
+  const milieuTr = milieuDesReleves(rs);
   const fichesVues = [...new Set(rs.filter(r => r.topFiche != null).map(r => r.topFiche))];
   const H = page ? yAxe + 52
     : yLeg + (interactif ? 46 : 66) + (legDessins ? legDessins.hauteur + 44 : 0)
@@ -3439,7 +3457,7 @@ function construireProfilTransectSVG(nomTransect, options){
     const fiche = t.fiches && t.fiches.length ? t.fiches[0] : null;
     const attrs = ` class="bande-zone${fiche != null ? ' zone-cliquable' : ''}" data-zone="${echapXML(t.zone)}" data-de="${t.debut}" data-a="${t.fin}"${fiche != null ? ` data-fiche="${fiche}"` : ''}`;
     S.push(`<rect x="${x1.toFixed(1)}" y="${yEspeces - 6}" width="${Math.max(0, x2-x1).toFixed(1)}" height="${yAxe - (yEspeces - 6)}" fill="${teinteZone(t.rang)}" fill-opacity="0.45"${attrs}>`
-      + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? `\n${echapXML(nomGroupement(fiche, milieuDuReleve(rs[0])) || '')} (fiche ${fiche}) — cliquer pour ouvrir` : ''}</title>` : '')
+      + (interactif ? `<title>${echapXML(t.zone)} · ${t.debut} → ${t.fin} m${fiche != null ? `\n${echapXML(nomGroupement(fiche, milieuDesReleves(rs)) || '')} (fiche ${fiche}) — cliquer pour ouvrir` : ''}</title>` : '')
       + `</rect>`);
   });
 
@@ -3594,7 +3612,7 @@ function construireLegendesSVG(nomTransect, format){
 
   let mmParPx = MM_PAR_PX_VISE;
   const W = Math.round(page.L / mmParPx);
-  const milieuTr = milieuDuReleve(rs[0]);
+  const milieuTr = milieuDesReleves(rs);
   const S = [];
   let y = 40;
 
@@ -4003,7 +4021,7 @@ function afficherListeAnalyses(cible, cochable){
     const r0 = tous[0];
     // le milieu en tête : la liste mêle marais et dunes, chacun analysé avec son
     // propre référentiel
-    const infos = [MILIEUX[milieuDuReleve(r0)].nom, `${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
+    const infos = [MILIEUX[milieuDesReleves(tous)].nom, `${tous.length} relevé${tous.length > 1 ? 's' : ''}`];
     if(rs.length) infos.push(`${rs[0].d} → ${rs[rs.length-1].d} m`);
     if(r0.observateur) infos.push(echapHTML(r0.observateur));
     if(r0.dateReleve) infos.push(r0.dateReleve.split('-').reverse().join('/'));
@@ -4230,7 +4248,7 @@ function construireEcranComparaison(){
     return {
       courbe, emprises, especes,
       nom, rs, troncons, pas, dMin, dMax, longueur: dMax - dMin + pas,
-      milieu: milieuDuReleve(rs[0]), vigilance,
+      milieu: milieuDesReleves(rs), vigilance,
       observateur: rs[0].observateur || '', date: rs[0].dateReleve || '',
       richesseMed: richesses.length ? richesses[Math.floor(richesses.length / 2)] : 0,
       zones: [...new Set(troncons.filter(t => t.rang != null).map(t => t.zone))]
@@ -4872,7 +4890,7 @@ function construireEcranAnalyse(){
            retours en arrière, mais des données trop courtes pour trancher. */
         const indecis = rs.filter(r => (r.exaequo || []).length);
         if(!indecis.length) return '';
-        const milieuT = milieuDuReleve(rs[0]);
+        const milieuT = milieuDesReleves(rs);
         return `<h4 class="analyse-soustitre">Relevés qui ne tranchent pas</h4>
           <p class="analyse-aide">${indecis.length} relevé${indecis.length>1?'s ne permettent':' ne permet'} pas de choisir entre plusieurs groupements : même part d'espèces caractéristiques retrouvées, indice global quasi égal. C'est une limite des données recueillies — cortège trop court, espèce différentielle non vue, détermination restée au genre — et non une hésitation du terrain.</p>
           <ul class="analyse-liste">
@@ -5220,12 +5238,19 @@ function appliquerImportCSV(texte, nomFichier, infos){
   const ajoutes = [];
   let doublons = 0;
   const milieuxDeduits = new Map();       // milieu → nombre de relevés, pour le compte rendu
+  /* Le sol nu ne dit rien du milieu : il prend celui des relevés avec espèces de
+     son transect. Calculé avant la boucle, qui renomme les transects. */
+  const milieuParTransect = new Map();
+  [...new Set([...groupes.values()].map(g => g.transect))].forEach(t => {
+    milieuParTransect.set(t, milieuDesReleves([...groupes.values()].filter(g => g.transect === t)
+      .map(g => ({...g, milieu: g.milieu || milieuProbable(g.cortege)}))));
+  });
   groupes.forEach(g => {
     if(dejaLa.has(empreinte(g))){ doublons++; return; }
     g.transectFichier = g.transect;
     g.transect = nomRetenu(g.transect);
     if(!g.milieu){
-      g.milieu = milieuProbable(g.cortege);
+      g.milieu = g.solNu || !g.cortege.length ? milieuParTransect.get(g.transectFichier) : milieuProbable(g.cortege);
       g.milieuDeduit = true;
       milieuxDeduits.set(g.milieu, (milieuxDeduits.get(g.milieu) || 0) + 1);
     }
@@ -5439,7 +5464,7 @@ function exporterHistoriqueCSV(){
   liste.forEach(r=>{
     // le milieu figure dans le fichier : un tableur mêlant marais et dunes doit
     // pouvoir les séparer, et l'import le relit
-    const milieu = MILIEUX[milieuDuReleve(r)].nom;
+    const milieu = MILIEUX[milieuAnnonce(r, liste)].nom;
     const bordereau = [r.transect||'', r.numero ?? '', r.distance ?? '', r.dateReleve||(r.date||'').slice(0,10),
       r.observateur||'', r.site||'', r.commune||'', milieu];
     const z = r.solNu ? {zone:'Sol nu'} : (r.topFiche != null ? zoneDeFiche(r.topFiche, milieuDuReleve(r)) : null);
@@ -5471,14 +5496,15 @@ function idPhytoscope(){ return Math.random().toString(36).slice(2,10)+Date.now(
 function exporterPourPhytoscopeCSV(){
   const liste = chargerHistorique();
   if(!liste.length) return;
-  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi","transect","placette","distance_m","habitat"];
+  const entetes = ["releve_id","releve_nom","site","code_projet","date","observateur","localisation","coordonnees_gps","surface","taxon_id","nom_scientifique","strate","mode_recouvrement","recouvrement_saisi","transect","placette","distance_m","habitat","milieu"];
   const projet = (document.getElementById('in-projet-phytoscope')?.value || '').trim() || projetParDefautPhytoscope(liste);
   const lignes = [entetes];
   const omises = new Set();       // espèces référencées mais sans équivalent chez Phytoscope
   const libres = new Set();       // espèces saisies au clavier, sans nom scientifique
   liste.forEach(r=>{
     const entete = enteteRelevePhytoscope(r, idPhytoscope(), projet);
-    const rangement = rangementRelevePhytoscope(r);
+    // milieu en dernière colonne : PhytoScope ne la lit pas, l'import de Zonation si
+    const rangement = [...rangementRelevePhytoscope(r), MILIEUX[milieuAnnonce(r, liste)].nom];
     observationsDuReleve(r).forEach(o=>{
       if(o.solNu){
         // taxon -1 : Phytoscope le reconnaît comme sol nu et conserve le relevé
