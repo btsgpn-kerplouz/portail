@@ -4,7 +4,103 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
-## État au 04/09/2026 — reprendre ici
+## État au 20/09/2026 — reprendre ici
+
+**✅ Trois lots mergés depuis le 15/09 (#115, #116, #118).** Tous déployés
+côté front (déploiement automatique au merge) ; deux points côté Supabase à
+reconfirmer, listés en fin de section.
+
+- **#115 — écran Sources : 3 cadences par source.** L'écran affichait un
+  filtre « hebdomadaires / mensuelles » qui laissait croire à deux collectes
+  séparées, alors qu'il n'y en a qu'une, chaque samedi. Plutôt qu'une simple
+  reformulation, chaque source a désormais une cadence éditable
+  (formulaire « modifier ») parmi trois : **hebdomadaire** (visitée chaque
+  samedi), **tiers-mensuelle** (renommage de l'ancienne « mensuelle » :
+  répartie en 3 groupes par hash de l'id, un tiers visité chaque samedi),
+  **mensuelle** (nouveau sens : visitée une seule fois, le premier samedi du
+  mois). Migration `016-source-mensuelle-vs-tiers-mensuelle.sql` (élargit la
+  contrainte **avant** de renommer les 137 lignes existantes en
+  `tiers-mensuelle` — l'ordre inverse échouait en 23514) ; sélection des
+  sources adaptée dans l'Edge Function `affut-veille`.
+- **#116 — clavier virtuel mobile sur l'écran de connexion.** `render()`
+  reconstruit tout le DOM, et l'écouteur `resize` (Lot 20) le rappelait
+  150 ms après chaque redimensionnement — or l'ouverture du clavier virtuel
+  déclenche un `resize`. Le champ recréé perdait le focus, le clavier se
+  refermait aussitôt et empêchait toute saisie (connexion, puis tout
+  formulaire). Le re-rendu sur `resize` est ignoré tant qu'un champ de
+  saisie a le focus.
+- **#118 — chiffres clés en teaser + texte des tuiles justifié (20/09/2026).**
+  - *Brief de veille* (`documents/brief-veille.md`, « Règle du 19/09/2026 »):
+    **0 à 3 chiffres par candidat**, ~40 caractères pour `valeur | libellé`
+    (60 au maximum), pas de subordonnées ni de contexte explicatif — même
+    logique que titre/résumé : la tuile donne envie d'ouvrir la source, elle
+    ne la résume pas. Aide du champ « Chiffres clés » du formulaire alignée.
+    **Volontairement pas de plafond technique** : ni l'Edge Function (toujours
+    20 éléments / 200 caractères, rejet du lot entier au dépassement) ni le
+    front (pas de coupe au « Retenir ») — la règle ne joue qu'à la prochaine
+    moisson, sur les nouveaux candidats ; les entrées déjà en base gardent
+    leurs chiffres. **À juger après la prochaine moisson** ; si le brief ne
+    suffit pas, pistes notées : garder les 3 premiers au « Retenir »
+    (`chiffresCandidatVersBlocs`) ou rejeter côté Edge Function (redéploiement
+    nécessaire).
+  - *Vue publiée* : `.carte-titre` et `.carte-corps .flat-resume` justifiés
+    (`text-align:justify`, césure automatique). La **ligne de chiffres reste
+    alignée à gauche** (mono + pastilles + points médians : les blancs étirés
+    y séparent mal les valeurs — choix confirmé par l'utilisateur). Vue
+    rédaction, moisson et impression inchangées. **Rendu non vérifié à
+    l'écran** (vue publiée dépendante de Supabase) : à regarder en colonne
+    étroite (mobile).
+
+**À reconfirmer** : (1) migration `016` appliquée en base (l'utilisateur a
+rencontré et corrigé l'erreur 23514, application finale non reconfirmée
+dans ce recap) ; (2) Edge Function `affut-veille` **redéployée** avec la
+sélection à 3 cadences (mêmes réserves que pour le Lot 27).
+
+## État au 15/09/2026
+
+**✅ Session Bilan + typographie + cadrage — tout mergé et déployé**, deux
+migrations appliquées par l'utilisateur (`014-log-frequentation.sql`,
+`015-image-position.sql`) :
+
+- **Correctif** : l'écran Bilan ne se rafraîchissait jamais après le
+  chargement initial de la page (numéros/vues/clics chargés une seule fois,
+  jamais relus depuis Supabase en changeant d'onglet) — corrigé en
+  rechargeant les données à l'ouverture du Bilan.
+- **Lot 28 — détail journalier de fréquentation.** Nouveau journal horodaté
+  (`affut_vues_log`, `affut_clics_log`, `014-log-frequentation.sql`), rempli
+  par les 2 fonctions RPC existantes en plus de leur incrément habituel —
+  aucun changement sur les compteurs cumulés qui marchaient déjà. Dans le
+  Bilan, bouton « Voir le détail jour par jour » : histogramme (jours en
+  abscisse) sous chaque numéro et chaque entrée, chargé à la demande. Pas
+  d'historique rétroactif (rien avant le 15/09/2026). Vérifié en écrivant/
+  lisant réellement dans les 2 tables en prod.
+- **Nav rédacteur réordonnée** : Sommaire, Rechercher | séparateur |
+  Sources, Rédaction, Vue publiée, Bilan.
+- **Typographie plus chaleureuse** : titre d'un numéro en italique, couleur
+  accent grenat, nouvelle police **Fraunces** (auto-hébergée,
+  `fonts/fraunces-semibold*.woff2`) partagée avec le n° du numéro (droit) et
+  le titre (italique). Tuiles du Sommaire : texte des entrées agrandi
+  (12,5→14px) et pastille de source à fond plein (repris d'un travail resté
+  en stash, jamais commité jusqu'ici).
+- **Lot 29 — cadrage manuel de l'illustration d'un numéro.** La tuile
+  Sommaire recadrait au centre par défaut (`object-fit:cover`), mal adapté
+  à certaines photos en desktop (colonne étroite et haute — le mobile masque
+  les entrées et laisse plus de place à l'image). Nouvelle colonne
+  `affut_numeros.image_position` (`015-image-position.sql`, défaut
+  `50% 50%`) : dans le panneau de rédaction, cliquer sur l'aperçu de
+  l'illustration déplace le point de cadrage, enregistré aussitôt. Changer
+  l'URL de l'image réinitialise le cadrage.
+- **Repéré en chemin, pas un problème** : les 5 anciens commits de la
+  branche `affut/fix-routine-cible-brouillon` (routine fantôme, veille
+  15-20, fusion sources, rotation, glisser-déposer) étaient déjà en ligne
+  depuis le 12/09 via le squash-merge de la #102, sous d'autres hashes —
+  `git log main..branche` les affichait à tort comme non mergés. Pour
+  vérifier un doute pareil : comparer le contenu (`git diff <tip> main --
+  <fichier>`, vide = déjà dedans), pas seulement les hashes de commit.
+- **PR #111** (Bilan/journalier/nav/typo) et **PR #112** (cadrage) mergées
+  et déployées. Branches de travail supprimées après merge.
+
+## État au 04/09/2026
 
 **✅ Lot 26 (date de publication distincte de la semaine de collecte) fait,
 migration SQL appliquée (04/09/2026).** Jusqu'ici `semaine`/`mois` étaient
