@@ -272,9 +272,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .bloc-ligne{display:flex;align-items:flex-start;gap:8px}
 .bloc-ligne .case-bloc{margin-top:2px}
 .bloc-masque-texte{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);padding-top:1px}
-.flat-chiffres{flex:1;min-width:0;font-family:var(--af-police-mono);font-size:11px;color:var(--af-encre-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.flat-chiffres b{display:inline-block;font-weight:700;background:var(--af-accent);color:var(--af-sur-accent);padding:1px 6px;margin-right:1px}
-.mode-redaction .flat-chiffres b [data-ed="true"]{color:var(--af-encre-courant)}
 .flat-resume{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--af-encre-2)}
 .lien-resume{color:var(--af-accent);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
 .mode-redaction [data-ed="true"] .lien-resume{cursor:pointer}
@@ -314,13 +311,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .carte-lien-texte{width:100%}
 .carte-corps{padding:14px 18px 18px;display:flex;flex-direction:column;gap:7px}
 .carte-titre{font-size:18px;font-weight:700;line-height:1.32;color:var(--af-accent)}
-.carte-corps .flat-chiffres{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px}
 .carte-corps .flat-resume{font-size:13.5px;line-height:1.5}
 /* Texte justifié dans les tuiles de la vue publiée (demande du 19/09/2026) :
    la césure automatique (html lang="fr") évite les « rivières » de blancs sur
-   les colonnes étroites ; la dernière ligne reste alignée à gauche. La ligne
-   de chiffres (mono, pastilles, points médians) reste volontairement non
-   justifiée : les blancs étirés y sépareraient mal les valeurs. */
+   les colonnes étroites ; la dernière ligne reste alignée à gauche. */
 .carte-titre,.carte-corps .flat-resume{text-align:justify;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 @media print{
   .mode-publiee .entree{display:block !important}
@@ -671,7 +665,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   body{background:var(--af-print-papier)}
   .page{padding:0;display:block}
   .app,.app.mode-redaction{max-width:none;border:0;background:var(--af-print-papier);color:var(--af-print-encre)}
-  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.flat-chiffres,.bloc-masque-texte{display:none !important}
+  .app-liw,.bandeau,.mode-banniere,.numero-entete,.entete-actions,.entree-actions,.valide-case,.reorder-btns,.case-bloc,.etat-pastille,.pied,.moisson-section,.ecart-panel,.deplacer-select-wrap,.btn-source-compact,.modal-overlay,.usage,.pastille-echelle,.bloc-masque-texte{display:none !important}
   /* en-tête de page compacté (lot 4quater) : 2 lignes au lieu de 3 bandeaux */
   .print-entete{display:block;border-bottom:2px solid var(--af-print-encre);padding-bottom:6px;margin-bottom:10px}
   .print-ligne1{font-family:var(--af-police-mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--af-print-encre);opacity:.7;margin-bottom:3px}
@@ -1620,56 +1614,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var entree = entrees.filter(function(e){ return e.id === parts[0]; })[0];
     if (!entree) return;
     if (parts[1] === "source") entree.source[parts[2]] = value;
-    else if (parts[1] === "chiffres") entree.chiffres[parseInt(parts[2], 10)][parts[3]] = value;
     else entree[parts[1]] = value;
   }
 
-  // esc(c.v) + " " + esc(c.l) sans le v (cas des chiffres repris d'un
-  // candidat de moisson, voir chiffresCandidatVersBlocs) laisserait une
-  // espace insécable en tête du texte affiché.
-  // `path` (Lot 12) : préfixe "eid.chiffres.i" pour rendre valeur et libellé
-  // éditables en place chacun séparément, plutôt qu'un bloc texte unique —
-  // ajout/suppression/accent restent du ressort du formulaire modal.
-  function chiffreTexte(c, path){
-    var vTxt = path ? ed(esc(c.v), path + ".v") : esc(c.v);
-    var lTxt = path ? ed(esc(c.l), path + ".l") : esc(c.l);
-    var v = c.v || path ? vTxt + " " : "";
-    return c.accent ? "<b>" + v + "</b>" + lTxt : v + lTxt;
-  }
-
-  // Un candidat de moisson (Edge Function affut-veille) porte ses chiffres
-  // en chaînes brutes au format "valeur | libellé" (voir la consigne
-  // donnée à l'agent, documents/brief-veille.md) — même convention que le
-  // textarea du formulaire d'entrée (parseChiffreLigne ci-dessous), donc
-  // réutilisée telle quelle au moment de retenir un candidat comme entrée.
-  // Bug corrigé le 01/09/2026 : la 1re version empaquetait la chaîne
-  // entière dans `l` sans la découper — en plus d'un antique "undefined"
-  // (le tout premier bug, .v/.l lus sur une chaîne brute jamais convertie),
-  // ça produisait des lignes bien plus longues que prévu ("108 | ours
-  // détectés…" affiché tel quel), qui débordaient de l'écran une fois
-  // enregistrées.
-  function chiffresCandidatVersBlocs(chiffres){
-    return (chiffres || []).map(function(s){ return parseChiffreLigne(String(s || "").trim()); });
-  }
-
-  function flatChiffres(e){
-    if (!e.chiffres.length) return "";
-    if (state.mode !== "redaction") {
-      if (!e.blocs.chiffres) return "";
-      var txtPub = e.chiffres.map(chiffreTexte).join(" · ");
-      return '<div class="flat-chiffres tab-num">' + txtPub + '</div>';
-    }
-    var checkbox = '<input type="checkbox" class="case case-bloc" ' + (e.blocs.chiffres ? "checked" : "") + ' data-action="toggle-bloc" data-id="' + e.id + '" data-bloc="chiffres" title="Afficher les chiffres clés">';
-    var contenu;
-    if (e.blocs.chiffres) {
-      var txt = e.chiffres.map(function(c, i){ return chiffreTexte(c, e.id + ".chiffres." + i); }).join(" · ");
-      contenu = '<div class="flat-chiffres tab-num">' + txt + '</div>';
-    } else {
-      var vals = e.chiffres.map(function(c){ return c.v; }).join(" · ");
-      contenu = '<span class="bloc-masque-texte">Chiffres clés masqués — conservés : ' + esc(vals) + '</span>';
-    }
-    return '<div class="bloc-ligne">' + checkbox + contenu + '</div>';
-  }
+  // Chiffres clés supprimés le 15/11/2026 (ni recherchés par la routine de
+  // veille, ni affichés) : le champ `chiffres` reste dans le modèle de
+  // données pour ne pas casser le schéma Supabase, mais n'est plus lu.
 
   function flatResume(e){
     if (state.mode !== "redaction") {
@@ -1723,7 +1673,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
             (redac && mobileActif()
               ? '<button type="button" class="flat-titre flat-titre-bouton" data-action="edit-entree" data-id="' + e.id + '">' + esc(e.titre) + '<span class="flat-titre-chevron">›</span></button>'
               : '<div class="flat-titre">' + ed(esc(e.titre), e.id + ".titre") + '</div>') +
-            flatChiffres(e) +
             flatResume(e) +
           '</div>' +
         '</div>' +
@@ -1785,7 +1734,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '<span class="meta-mono">' + esc(e.source.domaine) + ' · ' + esc(e.source.date) + '</span>' +
         '</div>' +
         '<div class="carte-titre">' + esc(e.titre) + '</div>' +
-        flatChiffres(e) +
         flatResume(e) +
       '</div>' +
     '</div>';
@@ -2004,28 +1952,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (nouvelleHandle) nouvelleHandle.focus();
   });
 
-  // Une ligne "valeur | libellé" (le "*" final marque l'accent) -> {v,l[,accent]}.
-  // Partagée entre le textarea de saisie manuelle (parseChiffres) et les
-  // chiffres bruts d'un candidat de moisson (chiffresCandidatVersBlocs) —
-  // même convention des deux côtés.
-  function parseChiffreLigne(line){
-    var idx = line.indexOf("|");
-    if (idx === -1) return { v: line, l: "" };
-    var v = line.slice(0, idx).trim();
-    var l = line.slice(idx + 1).trim();
-    var accent = /\*$/.test(l);
-    if (accent) l = l.replace(/\*$/, "").trim();
-    return accent ? { v: v, l: l, accent: true } : { v: v, l: l };
-  }
-
-  function parseChiffres(text){
-    return String(text || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean).map(parseChiffreLigne);
-  }
-
-  function chiffresToText(chiffres){
-    return (chiffres || []).map(function(c){ return c.v + " | " + c.l + (c.accent ? " *" : ""); }).join("\n");
-  }
-
   function champ(label, name, value, aide, isTextarea){
     var tag = isTextarea
       ? '<textarea id="champ-' + name + '" name="' + name + '">' + esc(value || "") + '</textarea>'
@@ -2240,7 +2166,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           '</div>' +
           champ("Titre de l'entrée", "titre", e ? e.titre : "", "reprendre le titre de la source tel quel, pas une reformulation") +
           renderChampIllustration(e ? e.imageUrl : "") +
-          champ("Chiffres clés", "chiffres", chiffresToText(e ? e.chiffres : []), "1 à 3 lignes courtes (~40 caractères), « valeur | libellé » — un teaser, pas un résumé ; terminer par * pour mettre en avant", true) +
           champ("Résumé factuel", "resume", e ? e.resume : "", "citation tronquée des 1res phrases de la source, terminée par « [...] » — pas une paraphrase. Une adresse collée (https://… ou www.…) devient un lien cliquable", true) +
           champ("Usage en cours (privé, jamais publié)", "usage", e ? e.usage : "", "", true) +
           '<div class="modal-boutons">' +
@@ -2441,7 +2366,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         var pool = [{ texte: e.titre, label: "le titre" }, { texte: e.resume, label: "le résumé" }];
         if (champFiltre !== "titres") {
           pool.push({ texte: e.source.nom, label: "la source" });
-          (e.chiffres || []).forEach(function(c){ if (c.l) pool.push({ texte: c.l, label: "le bandeau de chiffres" }); });
         }
         // e.usage n'est jamais ajouté au pool : jamais publié, donc jamais indexé (règle 11)
         var hit = pool.filter(function(p){ return p.texte && normalise(p.texte).indexOf(qNorm) !== -1; })[0];
@@ -2596,7 +2520,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   // Un candidat de moisson au même niveau de détail qu'une entrée retenue
-  // (renderEntree) : titre, chiffres, résumé, lien source cliquable — plus
+  // (renderEntree) : titre, résumé, lien source cliquable — plus
   // le geste « écarter avec motif » toujours visible sur la carte (Lot 10,
   // retour d'usage du 31/08/2026 : la modale précédente était trop petite
   // et le motif d'écart, caché derrière un window.prompt, n'était pas
@@ -2608,9 +2532,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var btn = c.url
       ? '<a class="btn-source-compact" href="' + esc(c.url) + '" target="_blank" rel="noopener"><span class="lib">Ouvrir la source<span class="fleche">→</span></span><span class="domaine">' + esc(src.domaine || "") + '</span></a>'
       : '<span class="btn-source-compact desactive"><span class="lib">Pas encore de lien</span></span>';
-    var chiffresHtml = (c.chiffres && c.chiffres.length)
-      ? '<div class="flat-chiffres tab-num">' + c.chiffres.map(esc).join(" · ") + '</div>'
-      : "";
     var resumeHtml = c.resume ? '<div class="flat-resume">' + escLiens(c.resume) + '</div>' : "";
     var ecartPanel = state.ecarterOuvert === c.id
       ? '<div class="ecart-panel">' +
@@ -2634,7 +2555,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
               (noteProbleme ? '<span class="etat-pastille mort">✕ ' + noteProbleme + '</span>' : "") +
             '</div>' +
             '<div class="flat-titre">' + esc(c.titre) + '</div>' +
-            chiffresHtml +
             resumeHtml +
           '</div>' +
         '</div>' +
@@ -3754,8 +3674,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           id: cand.id, rubrique: cand.rubrique, valide: true, origine: cand.origine,
           ordre: prochainOrdre(), format: cand.format || null,
           source: cand.source, url: cand.url, lienMort: cand.lienMort, lienMortDepuis: cand.lienMortDepuis,
-          titre: cand.titre, chiffres: chiffresCandidatVersBlocs(cand.chiffres), resume: cand.resume, usage: cand.usage,
-          blocs: { chiffres: !!(cand.chiffres && cand.chiffres.length), resume: true }
+          titre: cand.titre, chiffres: [], resume: cand.resume, usage: cand.usage,
+          blocs: { chiffres: false, resume: true }
         };
         entrees.push(nouvelleEntree);
         numero.entrees = entrees;
@@ -4193,7 +4113,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var editing = state.modal && state.modal.mode === "edit";
     var id = editing ? state.modal.id : "e" + Date.now();
     var existing = editing ? entrees.filter(function(x){ return x.id === id; })[0] : null;
-    var chiffres = parseChiffres(val("chiffres"));
     var rubriqueSaisie = val("rubrique") || "Sans rubrique";
 
     var entry = {
@@ -4208,12 +4127,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       url: val("url") || ("#" + id),
       titre: val("titre"),
       imageUrl: val("imageUrl") || null,
-      chiffres: chiffres,
+      chiffres: existing ? existing.chiffres : [],
       resume: val("resume"),
       usage: val("usage") || null,
       blocs: existing
-        ? { chiffres: existing.blocs.chiffres && !!chiffres.length, resume: existing.blocs.resume }
-        : { chiffres: !!chiffres.length, resume: true }
+        ? { chiffres: false, resume: existing.blocs.resume }
+        : { chiffres: false, resume: true }
     };
 
     if (existing) {

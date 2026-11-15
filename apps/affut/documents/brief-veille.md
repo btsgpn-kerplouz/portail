@@ -62,9 +62,7 @@ successifs. Voir `apps/affut/supabase/functions/affut-veille/README.md`.
 
 Étudiants de BTS Gestion et Protection de la Nature. Le carnet doit leur
 montrer le geste de veille du technicien de la nature en train de se
-faire — pas un flux d'actualités « écologie » grand public. Les entrées
-portent des chiffres de terrain concrets (effectifs comptés, budgets,
-durées d'étude, surfaces), mais ce n'est pas redhibitoire si la source d'information ne comporte pas de chiffres. 
+faire — pas un flux d'actualités « écologie » grand public.
 Un autre objectif est de permettre de dresser un panel varier des métiers et missions de la protection de la nature, gestion des espaces naturels et de leurs faire découvrir des territoires, thématiques, espèces, milieux, organisations professionnelles ou amateurs. Cela peut débloquer des idées de stages (mais la sélection ne doit pas s'attarder à se demander si la source est pourvoyeuse de stages). 
 
 ## Territoire
@@ -324,7 +322,7 @@ l'enseignant (voir le code du bouton « Retenir »,
   "lienMort": false,
   "lienMortDepuis": null,
   "titre": "titre de la source, repris tel quel — voir règle ci-dessous",
-  "chiffres": ["valeur | libellé", "..."],
+  "chiffres": [],
   "resume": "citation tronquée du début de l'article, terminée par « [...] » — voir règle ci-dessous",
   "usage": "piste pédagogique privée, voir section ci-dessus"
 }
@@ -365,30 +363,15 @@ source, pas de la remplacer. Deux points à respecter strictement :
   Validé le 05/09/2026 après test sur les numéros 1 et 2 (voir
   [[affut-fusion-veilles-2026-09-05]]) — remplace l'ancienne consigne
   « résumé volontairement partiel » qui laissait trop de latitude pour
-  paraphraser. Cette règle ne change rien aux cases à cocher « Afficher les
-  chiffres clés »/« Afficher le résumé » de l'écran de rédaction (elles
-  restent disponibles telles quelles) : c'est le contenu du champ `resume`
+  paraphraser. Cette règle ne change rien à la case à cocher « Afficher le
+  résumé » de l'écran de rédaction (elle reste disponible telle quelle) : c'est le contenu du champ `resume`
   lui-même qui doit être une citation tronquée, pas son masquage.
 
-**Règle du 19/09/2026 — `chiffres` : un teaser, pas un résumé chiffré.**
-Même logique que pour `titre` et `resume` : la tuile donne envie d'ouvrir la
-source, elle ne la remplace pas. Les propositions précédentes alignaient
-souvent 5 à 8 chiffres, chacun quasi une phrase — la ligne débordait de la
-tuile et dispensait de lire la source. Désormais :
-
-- **0 à 3 chiffres par candidat, jamais plus.** Un seul suffit souvent. Ne
-  garder que le ou les plus frappants, le plus marquant en premier. Une
-  source sans chiffre parlant → tableau vide `[]`, ce n'est pas un défaut.
-- **Chaque élément est court** : `valeur` de 1 à 3 mots (« 770 », « 65 205 € »,
-  « 18 mois »), `libellé` de 1 à 4 mots (« chauves-souris comptées »,
-  « plan de gestion »). **Environ 40 caractères au total pour `valeur | libellé`,
-  60 au grand maximum.** Un chiffre qui demande une subordonnée (« dont … »,
-  « soit … contre … ») n'est pas un chiffre clé : le couper ou l'écarter.
-- **Pas de contexte qui explique le chiffre** : c'est justement ce que la
-  source apporte. Donner la valeur et son objet, pas sa cause ni sa conclusion.
-- Les chiffres restent repris tels quels de la source (règle « Ce que l'agent
-  ne fait jamais » ci-dessous) : choisir parmi ceux de la source, ne pas en
-  fabriquer un plus court par calcul ou arrondi.
+**Règle du 15/11/2026 — plus de chiffres clés.** Le carnet n'affiche plus
+de chiffres clés par entrée : ne pas en chercher. Le champ `chiffres` est
+toujours envoyé **vide** (`[]`) — il reste exigé par l'Edge Function, qui
+rejette un candidat où il manque. (Remplace la règle du 19/09/2026 sur les
+chiffres « teaser ».)
 
 ## Ne jamais reproposer ce qui a déjà été vu
 
@@ -549,8 +532,6 @@ base (formats et motifs) et ce brief.
 - N'écrit jamais dans `usage_en_cours` un contenu qui pourrait être publié
   tel quel si le champ venait à fuiter — toujours écrit comme une note
   interne, jamais comme une phrase editoriale prête à l'affichage public.
-- N'invente jamais de chiffre : un chiffre dans `chiffres` doit être
-  repris tel quel de la source, pas déduit/estimé par l'agent.
 - Ne modifie jamais une entrée déjà validée par l'enseignant (`valide:
   true`) — l'agent n'écrit que dans `moisson`, jamais directement dans les
   entrées publiées d'un numéro déjà en cours de rédaction.
