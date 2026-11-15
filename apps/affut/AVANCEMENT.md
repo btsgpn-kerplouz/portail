@@ -2594,6 +2594,38 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         portent des chiffres de terrain concrets » (section Public et angle).
       - Non testé dans le navigateur (seulement `node --check` du JS).
 
+- [ ] **Fréquentation par visiteur anonyme** (15/11/2026, branche
+      `affut/frequentation-visiteurs`). Demande : mieux suivre la
+      fréquentation, y compris **les lecteurs qui reviennent plusieurs
+      fois dans une même journée**.
+      - **⚠️ À appliquer : `supabase/020-frequentation-visiteurs.sql`**
+        (SQL Editor, projet `portail`, idempotent). Tant qu'elle ne l'est
+        pas, le front retombe sur les anciens compteurs (rien de perdu) et
+        le Bilan affiche « Indisponible tant que la migration 020… ».
+      - Table unique `affut_evenements` (ouverture, sommaire, recherche,
+        vue_numero, clic_source, installation), qui reprend et remplace
+        `affut_vues_log`/`affut_clics_log` (plus alimentés, conservés,
+        suppressibles plus tard). Totaux `vues`/`clics_source` gardés :
+        ils portent l'historique d'avant le 15/09/2026.
+      - Visiteur = uuid au hasard dans le localStorage (`affut:visiteur`),
+        aucune donnée personnelle. Visite = pas de pause > 30 min ; jours à
+        l'heure de Paris ; anti-rebond 10 s ; purge à 25 mois (repère CNIL).
+      - Rédacteur jamais compté : ni connecté, ni sur un appareil où il
+        s'est déjà connecté (marque `affut:appareil-redacteur`). Pour
+        tester comme un élève : fenêtre de navigation privée.
+      - Bilan : chiffres regroupés côté base par
+        `affut_bilan_frequentation()` (fin du plafond de 1 000 lignes de
+        l'API, qui aurait tronqué le détail jour par jour). Nouveaux
+        chiffres : lecteurs distincts, visites, lecteurs revenus plusieurs
+        fois le même jour, recherches, installations ; par numéro :
+        lecteurs, relecteurs, % ayant ouvert une source, délai médian de
+        1re lecture ; tableau « L'app jour par jour » (30 jours).
+      - Tests : `supabase/tests/frequentation.test.mjs` (front, 8 cas) ;
+        migration testée hors dépôt sur un Postgres embarqué (PGlite) :
+        visites, minuit heure de Paris, anti-rebond, purge, reprise
+        idempotente, accès refusé hors rédacteur. Écran Bilan non vu dans
+        un vrai navigateur (nécessite la migration et une connexion).
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés

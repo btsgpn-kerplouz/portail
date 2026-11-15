@@ -24,6 +24,10 @@ Dans le **SQL Editor** du projet `portail` (dashboard Supabase) :
 3. `003-compteurs.sql` — fonctions RPC d'incrémentation des compteurs de
    fréquentation (`affut_incrementer_vue_numero`,
    `affut_incrementer_clic_source`), utilisables par `anon`.
+   Migrations suivantes (`004` à `020`) : dans l'ordre des numéros. La
+   `020-frequentation-visiteurs.sql` remplace les journaux de `014` par
+   `affut_evenements` (visiteur anonyme) et ajoute
+   `affut_bilan_frequentation()`, lue par l'écran Bilan.
 4. (optionnel, recommandé) `test-rls-manuel.sql` puis
    `test-rls-nettoyage.sql` — vérification via l'API réelle plutôt qu'en
    SQL Editor : un bloc PL/pgSQL complexe (fonction ou `do $$...$$`) tenté

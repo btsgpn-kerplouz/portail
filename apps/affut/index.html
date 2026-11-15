@@ -545,6 +545,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .source-nom{display:flex;flex-direction:column;gap:2px;min-width:0}
 .source-nom .nom{font-size:14px;font-weight:700;color:var(--af-encre)}
 .source-nom .adresse{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3);word-break:break-all}
+.source-nom .adresse.detail{word-break:normal;color:var(--af-encre-2)}
 .source-nom .echec-note{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-mort)}
 .source-rubrique{font-size:12.5px;color:var(--af-encre-2)}
 .source-moisson{font-family:var(--af-police-mono);font-size:11.5px;color:var(--af-encre-2)}
@@ -1477,8 +1478,67 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // requête HTTP n'est envoyée que si l'on appelle .then()/await, jamais
   // sinon. Sans lui (bug trouvé le 03/09/2026), ces deux compteurs ne
   // s'incrémentaient donc jamais, même sur une vraie visite anonyme.
-  function compterVueNumero(n){ client().rpc("affut_incrementer_vue_numero", { p_numero: n }).then(function(){}, function(){}); }
-  function compterClicSource(id){ client().rpc("affut_incrementer_clic_source", { p_entree_id: id }).then(function(){}, function(){}); }
+  //
+  // Visiteur anonyme (15/11/2026, voir supabase/020-frequentation-visiteurs.sql) :
+  // un uuid tiré au hasard, gardé dans le localStorage du navigateur — aucun
+  // nom, aucun compte. Il permet de compter les lecteurs distincts et ceux
+  // qui reviennent plusieurs fois dans la journée. Navigation privée ou
+  // stockage bloqué : uuid propre à la page (compté comme nouveau visiteur
+  // à chaque chargement, sans gravité).
+  //
+  // Le rédacteur n'est jamais compté : ni connecté, ni sur un appareil où
+  // il s'est déjà connecté une fois (marque « affut:appareil-redacteur »,
+  // posée par render()) — sinon ses relectures déconnectées gonfleraient
+  // les chiffres des élèves.
+  var CLE_VISITEUR = "affut:visiteur", CLE_APPAREIL_REDACTEUR = "affut:appareil-redacteur";
+  var visiteurPage = null;
+  function nouvelUuid(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
+      var r = Math.random() * 16 | 0;
+      return (c === "x" ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+  function idVisiteur(){
+    try {
+      var v = localStorage.getItem(CLE_VISITEUR);
+      if (!v) { v = nouvelUuid(); localStorage.setItem(CLE_VISITEUR, v); }
+      return v;
+    } catch (e) {
+      return visiteurPage = visiteurPage || nouvelUuid();
+    }
+  }
+  function marquerAppareilRedacteur(){ try { localStorage.setItem(CLE_APPAREIL_REDACTEUR, "1"); } catch (e) {} }
+  function appareilRedacteur(){ try { return localStorage.getItem(CLE_APPAREIL_REDACTEUR) === "1"; } catch (e) { return false; } }
+
+  // Repli sur les anciennes fonctions tant que la migration 020 n'est pas
+  // appliquée (fonction absente → code PGRST202) : rien n'est perdu.
+  var REPLI_ANCIEN_COMPTEUR = {
+    vue_numero: function(numero){ return ["affut_incrementer_vue_numero", { p_numero: numero }]; },
+    clic_source: function(numero, entreeId){ return ["affut_incrementer_clic_source", { p_entree_id: entreeId }]; }
+  };
+  function enregistrerEvenement(type, numero, entreeId){
+    if (estRedacteurActif() || appareilRedacteur()) return;
+    client().rpc("affut_enregistrer_evenement", {
+      p_type: type, p_visiteur: idVisiteur(),
+      p_numero: numero == null ? null : numero, p_entree_id: entreeId || null
+    }).then(function(res){
+      if (res && res.error && res.error.code === "PGRST202" && REPLI_ANCIEN_COMPTEUR[type]) {
+        var appel = REPLI_ANCIEN_COMPTEUR[type](numero, entreeId);
+        client().rpc(appel[0], appel[1]).then(function(){}, function(){});
+      }
+    }, function(){});
+  }
+  // Une fois par chargement de page et par écran (pas à chaque re-rendu).
+  var ecransComptes = {};
+  function enregistrerUneFois(cle, type, numero){
+    if (ecransComptes[cle]) return;
+    ecransComptes[cle] = true;
+    enregistrerEvenement(type, numero, null);
+  }
+  function compterVueNumero(n){ enregistrerUneFois("n" + n, "vue_numero", n); }
+  function compterClicSource(id){ enregistrerEvenement("clic_source", null, id); }
+  window.addEventListener("appinstalled", function(){ enregistrerEvenement("installation", null, null); });
 
   // ---- authentification (Lot 7, calquée sur organisation-cours/js/auth.js) ----
 
@@ -1544,7 +1604,6 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     modalAuth: null, // null | { attente: bool, erreur: string|null, enCours: bool }
     modalNumero: null, // null | { erreur: string|null }
     auth: { user: null, redacteur: null },
-    vuesComptees: {}, // { [numero]: true } — garde anti-double-comptage du compteur de vues sur re-render
     // Sommaire par défaut (02/09/2026, retour d'usage mobile ET desktop) :
     // atterrir directement sur le dernier numéro laissait une page vide et
     // sans intérêt tant que ce numéro n'a pas encore d'entrées (le cas
@@ -2602,12 +2661,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // que seules les entrées retenues apparaissent, comme en publication
     // réelle.
 
-    // Compteur de fréquentation (Lot 6) : une fois par ouverture d'un numéro
-    // publié en vue publiée, pas à chaque re-rendu (state.vuesComptees).
-    if (state.mode === "publiee" && numero.statut === "publie" && !state.vuesComptees[numero.numero]) {
-      state.vuesComptees[numero.numero] = true;
-      compterVueNumero(numero.numero);
-    }
+    // Compteur de fréquentation (Lot 6) : une fois par chargement de page et
+    // par numéro publié ouvert en vue publiée, voir enregistrerUneFois().
+    if (state.mode === "publiee" && numero.statut === "publie") compterVueNumero(numero.numero);
 
     // Liste à plat (Lot 17) : plus de sections par rubrique à l'écran — la
     // rubrique de chaque entrée est indiquée par une pastille sur l'entrée
@@ -2813,28 +2869,31 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   }
 
   // ---- Bilan de fréquentation (Lot 13) : totaux (vues par numéro, clics
-  // « Ouvrir la source » par entrée) — compteurs cumulés posés et branchés
-  // depuis le Lot 6. Depuis le Lot 28 (15/09/2026, 014-log-frequentation.sql),
-  // un journal horodaté existe EN PLUS de ces totaux : voir plus bas
-  // (renderGrapheJournalier) pour le détail jour par jour, chargé à la
-  // demande. Les totaux ci-dessous restent la source affichée par défaut —
-  // rien ne change dans les migrations avant le Lot 28.
-  var vuesLogParNumero = {}, clicsLogParEntree = {};
+  // « Ouvrir la source » par entrée), compteurs cumulés depuis le Lot 6.
+  // Depuis le 15/11/2026 (supabase/020-frequentation-visiteurs.sql), le
+  // détail (lecteurs distincts, visites, revenus le même jour, jour par
+  // jour) arrive DÉJÀ regroupé par affut_bilan_frequentation() : plus de
+  // lecture du journal brut, que l'API plafonnait à 1 000 lignes.
+  // Chargé à chaque ouverture du Bilan ; « indisponible » tant que la
+  // migration 020 n'est pas appliquée (le Bilan garde alors ses totaux).
+  var frequentation = null, frequentationEtat = "a-charger"; // "a-charger" | "chargement" | "ok" | "indisponible"
+  var vuesParJourNumero = {}, clicsParJourEntree = {}, frequentationParNumero = {};
 
-  async function chargerLogsFrequentation(){
-    var s = client();
-    var resV = await s.from("affut_vues_log").select("numero, survenu_le");
-    if (resV.error) throw resV.error;
-    vuesLogParNumero = {};
-    resV.data.forEach(function(r){
-      (vuesLogParNumero[r.numero] = vuesLogParNumero[r.numero] || []).push(new Date(r.survenu_le));
-    });
-    var resC = await s.from("affut_clics_log").select("entree_id, survenu_le");
-    if (resC.error) throw resC.error;
-    clicsLogParEntree = {};
-    resC.data.forEach(function(r){
-      (clicsLogParEntree[r.entree_id] = clicsLogParEntree[r.entree_id] || []).push(new Date(r.survenu_le));
-    });
+  async function chargerFrequentation(){
+    frequentationEtat = "chargement";
+    var res = await client().rpc("affut_bilan_frequentation", { p_jours: 30 });
+    if (res.error || !res.data) { frequentation = null; frequentationEtat = "indisponible"; return; }
+    var d = res.data;
+    vuesParJourNumero = {}; clicsParJourEntree = {}; frequentationParNumero = {};
+    (d.par_jour_numero || []).forEach(function(r){ (vuesParJourNumero[r.numero] = vuesParJourNumero[r.numero] || {})[r.jour] = r.vues; });
+    (d.par_jour_entree || []).forEach(function(r){ (clicsParJourEntree[r.entree_id] = clicsParJourEntree[r.entree_id] || {})[r.jour] = r.clics; });
+    (d.par_numero || []).forEach(function(r){ frequentationParNumero[r.numero] = r; });
+    frequentation = d;
+    frequentationEtat = "ok";
+  }
+  function lancerChargementFrequentation(){
+    if (frequentationEtat === "chargement") return;
+    chargerFrequentation().then(render, function(){ frequentation = null; frequentationEtat = "indisponible"; render(); });
   }
 
   var JOURS_LABEL = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
@@ -2848,25 +2907,24 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // fine du fuseau horaire — à un jour près pour un événement proche de
   // minuit, sans enjeu pour ce repère interne (même simplification que
   // 003-compteurs.sql pour l'absence de garde-fou anti-abus).
-  function fenetreSeptJours(dateDepartIso, evenementsRepli){
+  // Comptes par jour : { "AAAA-MM-JJ": total }, jours à l'heure de Paris
+  // (calculés par affut_bilan_frequentation()).
+  function fenetreSeptJours(dateDepartIso, comptesParJour){
     var depart;
+    var joursConnus = Object.keys(comptesParJour || {}).sort();
     if (dateDepartIso) {
       depart = new Date(dateDepartIso + "T00:00:00Z");
-    } else if (evenementsRepli && evenementsRepli.length) {
-      var premier = evenementsRepli.slice().sort(function(a, b){ return a - b; })[0];
-      depart = new Date(Date.UTC(premier.getUTCFullYear(), premier.getUTCMonth(), premier.getUTCDate()));
+    } else if (joursConnus.length) {
+      depart = new Date(joursConnus[0] + "T00:00:00Z");
     } else return null;
     var jours = [];
     for (var i = 0; i < 7; i++) jours.push(new Date(depart.getTime() + i * 86400000));
     return jours;
   }
 
-  function compterParJour(jours, evenements){
+  function compterParJour(jours, comptesParJour){
     return jours.map(function(jour){
-      var total = evenements.filter(function(e){
-        return e.getUTCFullYear() === jour.getUTCFullYear() && e.getUTCMonth() === jour.getUTCMonth() && e.getUTCDate() === jour.getUTCDate();
-      }).length;
-      return { jour: jour, total: total };
+      return { jour: jour, total: (comptesParJour || {})[jour.toISOString().slice(0, 10)] || 0 };
     });
   }
 
@@ -2936,26 +2994,48 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // déterminable (numéro sans date de publication ET sans aucun événement
   // enregistré depuis le Lot 28 : rien à tracer).
   function grapheJournalierNumero(n){
-    var evenements = vuesLogParNumero[n.numero] || [];
-    var jours = fenetreSeptJours(n.datePublication, evenements);
+    var comptes = vuesParJourNumero[n.numero] || {};
+    var jours = fenetreSeptJours(n.datePublication, comptes);
     if (!jours) return "";
-    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, evenements), "vue") + '</div>';
+    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, comptes), "vue") + '</div>';
   }
 
   // Détail jour par jour d'une entrée (clics) — même fenêtre que le numéro
   // qui la porte, pour rester lisible côte à côte.
   function grapheJournalierEntree(e, n){
-    var evenements = clicsLogParEntree[e.id] || [];
-    var jours = fenetreSeptJours(n.datePublication, evenements);
+    var comptes = clicsParJourEntree[e.id] || {};
+    var jours = fenetreSeptJours(n.datePublication, comptes);
     if (!jours) return "";
-    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, evenements), "clic") + '</div>';
+    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, comptes), "clic") + '</div>';
+  }
+
+  function pluriel(nb, mot){ return nb + " " + mot + (nb > 1 ? "s" : ""); }
+  function formatDelai(heures){
+    if (heures == null) return "";
+    if (heures < 1) return "moins d'1 h";
+    if (heures < 48) return Math.round(heures) + " h";
+    return (Math.round(heures / 2.4) / 10).toString().replace(".", ",") + " j";
+  }
+
+  // Ligne de détail d'un numéro : lecteurs distincts, relecteurs, part
+  // ayant ouvert une source, délai médian de 1re lecture après parution.
+  function detailFrequentationNumero(n){
+    var f = frequentationParNumero[n.numero];
+    if (!f || !f.lecteurs) return "";
+    var morceaux = [pluriel(f.lecteurs, "lecteur")];
+    if (f.relecteurs) morceaux.push(f.relecteurs + " l'ont rouvert");
+    morceaux.push(Math.round(100 * Math.min(f.lecteurs_source, f.lecteurs) / f.lecteurs) + " % ont ouvert une source");
+    if (f.delai_median_h != null) morceaux.push("1re lecture en médiane " + formatDelai(f.delai_median_h) + " après parution");
+    return morceaux.join(" · ");
   }
 
   function renderBilanRowNumero(n, maxVues){
     var vues = n.vues || 0;
     var pct = maxVues ? Math.round((vues / maxVues) * 100) : 0;
+    var detail = detailFrequentationNumero(n);
     return '<div class="source-row bilan-row bilan-row-2">' +
-      '<div class="source-nom"><span class="nom">n° ' + n.numero + (n.titre ? " · " + esc(n.titre) : "") + '</span><span class="adresse">' + esc(n.semaine || "") + '</span></div>' +
+      '<div class="source-nom"><span class="nom">n° ' + n.numero + (n.titre ? " · " + esc(n.titre) : "") + '</span><span class="adresse">' + esc(n.semaine || "") + '</span>' +
+        (detail ? '<span class="adresse detail">' + esc(detail) + '</span>' : "") + '</div>' +
       '<div class="bilan-mesure"><div class="bilan-barre"><div class="bilan-barre-remplie" style="width:' + pct + '%"></div></div><span class="n tab-num">' + vues + '</span></div>' +
     '</div>' +
     (state.bilanDetailJournalierOuvert ? grapheJournalierNumero(n) : "");
@@ -3062,7 +3142,28 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       titre("Règles en vigueur (" + actives + " active" + (actives > 1 ? "s" : "") + ")") + lignes + ajout;
   }
 
+  // « L'app jour par jour » : lecteurs distincts, visites et lecteurs
+  // revenus au moins deux fois le même jour (visite = pas de pause de plus
+  // de 30 min, voir 020-frequentation-visiteurs.sql). 30 derniers jours,
+  // jours sans aucune visite omis, le plus récent en haut.
+  function renderBilanFrequentationApp(){
+    var titre = '<div class="groupe-titre"><span>L\'app jour par jour — 30 derniers jours</span><span class="filet"></span></div>';
+    if (frequentationEtat === "a-charger" || frequentationEtat === "chargement") return titre + '<p class="bilan-note">Chargement…</p>';
+    if (frequentationEtat === "indisponible") return titre + '<p class="bilan-note">Indisponible tant que la migration 020 n\'est pas appliquée dans Supabase.</p>';
+    var jours = (frequentation.par_jour || []).slice().reverse();
+    if (!jours.length) return titre + '<p class="bilan-note">Aucune visite d\'élève enregistrée sur cette période.</p>';
+    var enTete = '<div class="bilan-format-ligne" aria-hidden="true" style="font-family:var(--af-police-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)"><span>Jour</span><span class="nb">Lecteurs</span><span class="nb">Visites</span><span>Revenus le même jour</span></div>';
+    var lignes = jours.map(function(j){
+      var date = new Date(j.jour + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+      return '<div class="bilan-format-ligne"><span>' + esc(date) + '</span><span class="nb">' + j.visiteurs + '</span><span class="nb">' + j.visites + '</span>' +
+        '<span class="taux">' + (j.visiteurs_multi ? pluriel(j.visiteurs_multi, "lecteur") : "—") + '</span></div>';
+    }).join("");
+    return titre + enTete + lignes +
+      '<p class="bilan-note">Une visite = un passage sans pause de plus de 30 minutes. « Revenus le même jour » : lecteurs venus au moins deux fois dans la journée. Lecteurs anonymes (un identifiant au hasard par navigateur) ; vos propres passages ne sont jamais comptés.</p>';
+  }
+
   function renderBilanEcran(){
+    if (frequentationEtat === "a-charger") lancerChargementFrequentation();
     var numerosVus = numeros.filter(function(n){ return n.statut !== "brouillon"; });
     var totalVues = numerosVus.reduce(function(s, n){ return s + (n.vues || 0); }, 0);
 
@@ -3072,9 +3173,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var numeroTop = numerosVus.slice().sort(function(a, b){ return (b.vues || 0) - (a.vues || 0); })[0];
 
+    var f = frequentationEtat === "ok" ? frequentation : null;
+    var depuis = f && f.depuis ? new Date(f.depuis).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null;
     var entete = '<h1 class="sr-only">Bilan de fréquentation</h1><div class="sources-entete">' +
+      (f ? '<div class="sources-entete-principal"><span class="label">Lecteurs distincts</span><span class="total"><b class="tab-num">' + f.visiteurs + '</b>' + (depuis ? "depuis le " + esc(depuis) : "") + '</span></div>' +
+        '<div class="sources-entete-principal"><span class="label">Visites</span><span class="total"><b class="tab-num">' + f.visites + '</b></span></div>' : "") +
       '<div class="sources-entete-principal"><span class="label">Vues cumulées</span><span class="total"><b class="tab-num">' + totalVues + '</b>sur ' + numerosVus.length + ' numéro' + (numerosVus.length > 1 ? "s" : "") + ' publié' + (numerosVus.length > 1 ? "s" : "") + '</span></div>' +
       '<div class="sources-entete-principal"><span class="label">Clics « Ouvrir la source »</span><span class="total"><b class="tab-num">' + totalClics + '</b>sur ' + toutesEntrees.length + ' entrée' + (toutesEntrees.length > 1 ? "s" : "") + '</span></div>' +
+      (f ? '<div class="sources-collecte"><span class="label">Revenus plusieurs fois le même jour</span><span class="valeur">' + pluriel(f.visiteurs_multi, "lecteur") + (f.jours_multi ? ' · ' + f.jours_multi + ' fois en tout' : "") + '</span></div>' +
+        '<div class="sources-collecte"><span class="label">Recherche · installations</span><span class="valeur">' + pluriel(f.recherches, "recherche") + ' · ' + pluriel(f.installations, "installation") + '</span></div>' : "") +
       (numeroTop && numeroTop.vues ? '<div class="sources-collecte"><span class="label">Numéro le plus consulté</span><span class="valeur">n° ' + numeroTop.numero + ' · ' + numeroTop.vues + ' vue' + (numeroTop.vues > 1 ? "s" : "") + '</span></div>' : "") +
     '</div>';
 
@@ -3083,8 +3190,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // Détail jour par jour (15/09/2026) : un petit graphique sous CHAQUE
     // ligne (numéro ET entrée, demandé explicitement) — un seul bouton pour
     // les deux, à la place du graphique de tendance chronologique essayé
-    // avant (pas ce qui était demandé). Chargé à la demande, voir
-    // chargerLogsFrequentation() et le data-action plus bas.
+    // avant (pas ce qui était demandé). Données chargées avec le Bilan,
+    // voir chargerFrequentation().
     var titreNum = '<div class="groupe-titre"><span>Numéros — du plus au moins consulté</span><span class="filet"></span>' +
       '<button type="button" class="deplier" data-action="toggle-bilan-detail-jour">' + (state.bilanDetailJournalierOuvert ? "Masquer le détail jour par jour" : "Voir le détail jour par jour") + '</button>' +
       '</div>';
@@ -3104,7 +3211,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var sectionEnt = titreEnt + colsEnt + visibles.map(function(x){ return renderBilanRowEntree(x.e, x.n, maxClics); }).join("");
 
     return '<div class="sources bilan">' + entete +
-      '<div class="sources-table">' + sectionNum + '</div>' +
+      '<div class="sources-table">' + renderBilanFrequentationApp() + '</div>' +
+      '<div class="sources-table bilan-section">' + sectionNum + '</div>' +
       '<div class="sources-table bilan-section">' + sectionEnt + '</div>' +
       '<div class="sources-table bilan-section">' + renderBilanFormats() + '</div>' +
     '</div>';
@@ -3307,6 +3415,12 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 
     var redacActif = estRedacteurActif();
 
+    // Fréquentation : appareil du rédacteur marqué (jamais compté ensuite,
+    // même déconnecté) ; écrans publics comptés une fois par chargement.
+    if (redacActif) marquerAppareilRedacteur();
+    else if (navPret && state.vue === "sommaire") enregistrerUneFois("sommaire", "sommaire");
+    else if (navPret && state.vue === "recherche") enregistrerUneFois("recherche", "recherche");
+
     // Deux barres d'onglets distinctes (01/09/2026, retour d'usage sur le
     // Lot 10quater : un simple bouton « Rédaction » perdu dans le nav
     // public ne convenait pas). Hors connexion (ou compte pas encore
@@ -3422,6 +3536,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       }
       if (vueCible === "bilan" && estRedacteurActif()) {
         chargerDonneesRedaction().then(render);
+        lancerChargementFrequentation();
       }
       return;
     }
@@ -3841,18 +3956,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (ev.target.closest('[data-action="deplier-bilan-entrees"]')) { state.bilanEntreesDeplie = !state.bilanEntreesDeplie; render(); return; }
 
     if (ev.target.closest('[data-action="toggle-bilan-detail-jour"]')) {
+      // Données déjà chargées avec le Bilan (affut_bilan_frequentation()).
       state.bilanDetailJournalierOuvert = !state.bilanDetailJournalierOuvert;
       render();
-      // Chargé à la demande, à l'ouverture seulement (pas au chargement du
-      // Bilan) : ce journal peut grossir avec le temps, pas de raison de le
-      // récupérer tant que personne ne regarde le détail jour par jour.
-      if (state.bilanDetailJournalierOuvert) {
-        chargerLogsFrequentation().then(render, function(e){
-          window.alert("Détail jour par jour indisponible : " + (e && e.message ? e.message : "erreur réseau") + " — la migration supabase/014-log-frequentation.sql a-t-elle été appliquée dans Supabase ?");
-          state.bilanDetailJournalierOuvert = false;
-          render();
-        });
-      }
       return;
     }
   });
@@ -4177,6 +4283,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // Adresse directe (#/n5, #/recherche…) : lien partagé ou rechargement.
     if (navLireHash() !== null) navAppliquer(navLireHash());
     navPret = true;
+    // Avant render() : la visite commence par l'ouverture de l'app.
+    enregistrerEvenement("ouverture", null, null);
     render();
 
     s.auth.onAuthStateChange(function(event){
