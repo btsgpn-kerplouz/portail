@@ -2649,6 +2649,38 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         (PGlite) ; rendu vérifié en capture (ordinateur + mobile, données
         fictives), pas encore dans l'app réelle.
 
+- [ ] **Non-retenus, nouveaux motifs, veille réorientée** (15/11/2026,
+      branche `affut/non-retenus-motifs`). Suite du bilan éditorial
+      `documents/affut_bilan_editorial_2026-11-15.md` (racine du dépôt) :
+      82 candidats sur 251 restaient dans la moisson à la publication,
+      invisibles pour la veille (80 % de retenus perçus, 46 % réels).
+      - **⚠️ À appliquer : `supabase/022-non-retenus-et-motifs.sql`** (SQL
+        Editor, idempotent) AVANT de déployer le front et la fonction.
+        Motifs `acces_difficile`, `institutionnel`, `non_retenu` ;
+        rattrapage des moissons des numéros publiés (→ `non_retenu`, daté
+        du jour de publication) puis moisson vidée ; « Protocoles »
+        fusionnée dans « Science & protocoles » ; 7 pages d'actualités
+        ajoutées (adresses vérifiées le 15/11) en `tiers-mensuelle` —
+        **aucune source hebdomadaire, tout passe par la rotation par
+        tiers** (rappel de l'enseignant) ; 3 doublons d'adresse supprimés.
+      - Front : publier un numéro enregistre les candidats restés en
+        moisson comme « non retenus » (un insert), puis vide la moisson ;
+        en cas d'échec, publié quand même, moisson gardée. Infobulle sur
+        le bouton Publier ; note dans « Ce que vous retenez, par format ».
+        `non_retenu` n'est jamais proposé au choix.
+      - **⚠️ À redéployer : fonction `affut-veille`** :
+        `bilan_par_format` gagne `dont_non_retenues`, les non-retenus
+        sont exclus des motifs et des 15 écarts récents.
+      - Brief, d'après le § 8 du bilan revu par l'enseignant : chercher
+        davantage de contenus politiques (positionnements, débats,
+        tribunes) ; ne pas proposer brèves/agenda/consultations (sauf
+        colloque scientifique ou évènement breton à venir), vie
+        institutionnelle, sources en anglais/payantes/pages-relais,
+        documents pour élus ; rubriques resserrées ; médias grand public
+        et vidéo ouverts à la recherche.
+      - Tests : `bilan-formats.test.mjs` (+2), `dedoublonnage.test.mjs`
+        (+1) ; migration 022 non testée hors base.
+
 ## Idées pour plus tard (hors lots planifiés)
 
 **Backlog du 01/09/2026 entièrement traité au 02/09/2026** (chiffres clés

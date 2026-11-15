@@ -101,11 +101,20 @@ test("bilan par format : retenues et écartées comptées, jamais par source", (
      { format: "agenda", motif_code: "hors_sujet" }, { format: "inconnu", motif_code: null }],
   );
   const get = (f) => r.par_format.find((x) => x.format === f);
-  assert.deepEqual(get("rapport_etude"), { format: "rapport_etude", retenues: 2, ecartees: 0 });
-  assert.deepEqual(get("breve"), { format: "breve", retenues: 1, ecartees: 3 });
-  assert.deepEqual(get("non_classe"), { format: "non_classe", retenues: 1, ecartees: 1 }); // sans format ou format hors vocabulaire
+  assert.deepEqual(get("rapport_etude"), { format: "rapport_etude", retenues: 2, ecartees: 0, dont_non_retenues: 0 });
+  assert.deepEqual(get("breve"), { format: "breve", retenues: 1, ecartees: 3, dont_non_retenues: 0 });
+  assert.deepEqual(get("non_classe"), { format: "non_classe", retenues: 1, ecartees: 1, dont_non_retenues: 0 }); // sans format ou format hors vocabulaire
   assert.deepEqual(r.motifs_ecart, [{ motif: "trop_court", nombre: 2 }, { motif: "hors_sujet", nombre: 1 }]);
   assert.equal(r.par_format[0].format, "breve"); // le plus fréquent d'abord
+});
+test("bilan par format : « non_retenu » compté comme écarté, à part, jamais comme motif", () => {
+  const r = compterParFormat(
+    [{ format: "article_fond" }],
+    [{ format: "article_fond", motif_code: "non_retenu" }, { format: "article_fond", motif_code: "non_retenu" },
+     { format: "article_fond", motif_code: "acces_difficile" }],
+  );
+  assert.deepEqual(r.par_format[0], { format: "article_fond", retenues: 1, ecartees: 3, dont_non_retenues: 2 });
+  assert.deepEqual(r.motifs_ecart, [{ motif: "acces_difficile", nombre: 1 }]);
 });
 test("vocabulaire des formats : codes uniques, identiques à la migration SQL", () => {
   const codes = FORMATS_AUTORISES.map((f) => f.code);

@@ -1222,8 +1222,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     { code: "agenda", libelle: "Agenda, événement" },
     { code: "trop_local", libelle: "Trop local ou trop pointu" },
     { code: "redondant", libelle: "Déjà traité, redondant" },
+    // Ajoutés le 15/11/2026 (migration 022), d'après les précisions écrites
+    // à la main le plus souvent sans case correspondante.
+    { code: "acces_difficile", libelle: "Accès difficile (anglais, payant, renvoi)" },
+    { code: "institutionnel", libelle: "Vie institutionnelle" },
     { code: "autre", libelle: "Autre" }
   ];
+  // Pas un motif au choix : posé automatiquement sur les candidats restés
+  // dans la moisson quand on publie le numéro (migration 022). Sans lui, la
+  // veille ne voyait pas ces refus silencieux (bilan éditorial du 15/11/2026).
+  var MOTIF_NON_RETENU = "non_retenu";
   function renderMotifChoix(){
     return '<span class="lbl">Pourquoi ? Un clic suffit — la veille en tient compte pour les prochaines recherches (par type de contenu, jamais par source).</span>' +
       '<div class="motif-choix" role="radiogroup" aria-label="Motif">' +
@@ -1419,6 +1427,35 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var res = await client().from("affut_candidats_ecartes").insert(ligne);
     if (res.error) { signalerErreurEcriture(res.error); return; }
     if (ecartes) ecartes.push({ format: cand.format || null, motif_code: motifCode || null });
+  }
+  // Publication : les candidats encore dans la moisson sont enregistrés comme
+  // « non retenus » (un seul insert), puis la moisson est vidée. Si l'insert
+  // échoue, le numéro est publié quand même et la moisson est conservée —
+  // rien n'est perdu, la publication suivante réessaiera.
+  async function publierNumero(num){
+    var restants = (num.moisson || []).slice();
+    if (!restants.length) {
+      var r0 = await client().from("affut_numeros").update({ statut: "publie" }).eq("numero", num.numero);
+      if (r0.error) signalerErreurEcriture(r0.error);
+      return;
+    }
+    var lignes = restants.map(function(c){
+      var l = { numero_id: num.numero, candidat_id: c.id, rubrique: c.rubrique || "", source: c.source || {},
+        url: c.url || "", titre: c.titre || "", motif: null, motif_code: MOTIF_NON_RETENU };
+      if (c.format && FORMATS[c.format] && c.format !== "non_classe") l.format = c.format;
+      return l;
+    });
+    var res = await client().from("affut_candidats_ecartes").insert(lignes);
+    if (res.error) {
+      num.moisson = restants;
+      var r1 = await client().from("affut_numeros").update({ statut: "publie" }).eq("numero", num.numero);
+      signalerErreurEcriture(r1.error || res.error);
+      render();
+      return;
+    }
+    if (ecartes) lignes.forEach(function(l){ ecartes.push({ format: l.format || null, motif_code: MOTIF_NON_RETENU }); });
+    var r2 = await client().from("affut_numeros").update({ statut: "publie", moisson: [] }).eq("numero", num.numero);
+    if (r2.error) signalerErreurEcriture(r2.error);
   }
   // Numéro suivant : le plus grand numéro existant + 1 (démo ou pas, la
   // suite logique d'une parution hebdomadaire).
@@ -2739,7 +2776,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     // revenir en arrière sans intervention en base.
     var boutonPublication = numero.statut === "publie"
       ? '<button class="btn-ligne danger" type="button" data-action="depublier-numero">Dépublier le n° ' + numero.numero + '</button>'
-      : '<button class="btn-plein" type="button" data-action="publier-numero">Publier le n° ' + numero.numero + '</button>';
+      : '<button class="btn-plein" type="button" data-action="publier-numero"' +
+          ((numero.moisson || []).length
+            ? ' title="Les ' + numero.moisson.length + ' propositions encore en moisson seront enregistrées comme non retenues — la veille en tient compte."'
+            : '') + '>Publier le n° ' + numero.numero + '</button>';
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
@@ -3210,8 +3250,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       .sort(function(a, b){ return motifs[b.code] - motifs[a.code]; })
       .map(function(m){ return '<span>' + esc(m.libelle) + ' <b>' + motifs[m.code] + '</b></span>'; }).join("");
     var nonClasse = lignes.non_classe ? (lignes.non_classe.r + lignes.non_classe.e) : 0;
+    var nonRetenus = motifs[MOTIF_NON_RETENU] || 0;
     return titre + enTete + rows +
       (motifsHtml ? '<div class="bilan-motifs"><span>Motifs d\'écart :</span>' + motifsHtml + '</div>' : "") +
+      (nonRetenus ? '<p class="bilan-note">Dont ' + nonRetenus + ' proposition' + (nonRetenus > 1 ? "s" : "") + ' laissée' + (nonRetenus > 1 ? "s" : "") + ' dans la moisson à la publication, comptée' + (nonRetenus > 1 ? "s" : "") + ' comme écartée' + (nonRetenus > 1 ? "s" : "") + ' sans motif.</p>' : "") +
       (nonClasse ? '<p class="bilan-note">« Non classé » : décisions antérieures à cette mesure ou entrées sans format — ce compte ne baisse que si on les reclasse.</p>' : "");
   }
 
@@ -3904,7 +3946,9 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         state.publicationRefusee = { numeroId: numero.numero, fautives: fautives };
       } else {
         numero.statut = "publie";
-        ecrireNumero({ statut: "publie" });
+        var aPublier = numero;
+        publierNumero(aPublier);
+        aPublier.moisson = [];
       }
       render();
       return;

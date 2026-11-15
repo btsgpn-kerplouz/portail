@@ -73,6 +73,25 @@ espèces embarquées) — mais une **actualité régionale ou locale
 (Bretagne, Morbihan) est à privilégier à sujet égal**, parce qu'elle
 résonne davantage avec les sorties terrain des étudiants. 
 
+## Orientations tirées du bilan éditorial (15/11/2026)
+
+- **Chercher davantage de contenus politiques** : positionnements,
+  débats, discussions, tribunes, prises de parole d'associations ou de
+  scientifiques, décisions de justice et controverses autour de la
+  protection de la nature. C'est l'un des registres les mieux retenus
+  (rubrique « Positionnement politique » : 12 sur 19 ; format `tribune` :
+  5 sur 8), et le carnet est aussi un espace de positionnement (voir la
+  fin de « Sources à privilégier »).
+- **Ne pas proposer** :
+  - de brèves, d'agenda ni de consultations publiques, sauf colloque
+    scientifique ou évènement breton à venir ;
+  - de vie institutionnelle (anniversaires, conventions, partenariats,
+    trophées, départs en retraite) ;
+  - de contenu dont la source n'est accessible qu'en anglais ou derrière
+    un accès payant, ni de page qui ne fait que renvoyer vers une autre ;
+  - de documents destinés aux élus ou aux collectivités, sauf s'ils
+    servent directement un technicien gestionnaire.
+
 ## Les rubriques
 
 Depuis le 05/09/2026, la liste des rubriques n'est plus figée à 4 : l'écran
@@ -124,6 +143,19 @@ Ne pas la confondre avec **Evènement**, qui reste la simple annonce d'un
 rendez-vous daté. « Animation & médiation » porte le fond : comment on
 s'adresse au public, avec quels outils, pour quel résultat.
 
+### Rubriques resserrées (15/11/2026)
+
+- **« Protocoles » a été fusionnée dans « Science & protocoles »** : ne
+  plus l'employer.
+- **Ne pas employer « Revue »** : la sortie d'un nouveau numéro de revue
+  n'est pas un sujet en soi. Proposer l'article précis qui le mérite, dans
+  la rubrique de son sujet.
+- **« Evènement » seulement** pour un colloque ou des rencontres
+  scientifiques, ou un rendez-vous naturaliste en Bretagne, **à venir**
+  après la date de publication.
+- Ne créer une rubrique nouvelle qu'exceptionnellement : il y en a déjà
+  une vingtaine pour une dizaine d'entrées par numéro.
+
 Idéalement il vaut mieux répartir les candidats entre les rubriques plutôt que de tout concentrer
 sur une seule — un numéro qui n'a que des « Gestion » est un
 signal que la recherche a été trop étroite. Mais si la veille ne trouve qu'une seule rubrique ce n'est pas dramatique. 
@@ -165,13 +197,20 @@ sans creuser :
   Botanica (botanique).
 - Structures de recherche publiant des résultats de terrain accessibles
   (universités, CNRS, INRAE, stations marines).
-- **Textes réglementaires et consultations publiques** (Légifrance/JO :
-  arrêtés espèces protégées, espèces exotiques envahissantes,
-  dérogations ; consultations publiques du ministère) — utile pour la
-  rubrique Gestion, terrain rarement exploré sinon.
+- **Textes réglementaires** (Légifrance/JO : arrêtés espèces protégées,
+  espèces exotiques envahissantes, dérogations) — utile pour la rubrique
+  Gestion. Un texte **publié**, pas un projet en consultation publique
+  (voir « Orientations tirées du bilan éditorial »).
 - Médias spécialisés, à condition de toujours recouper avec la source
   primaire qu'ils citent (ex. Actu-Environnement rubrique biodiversité,
   La Gazette des communes) — ne remplacent jamais un organisme producteur.
+- **Médias grand public de qualité et vidéo** (ajouté le 15/11/2026) :
+  l'enseignant en ajoute régulièrement à la main faute de les voir
+  proposés — reportage ou entretien sur un travail de terrain (ex. Vert,
+  The Conversation, France 3 régions, Radio-Canada), vidéo de gestionnaire
+  ou d'association montrant un chantier, un suivi, une observation. Format
+  `multimedia` pour une vidéo. Même exigence de fond qu'ailleurs, et lien
+  vers la source primaire dans le résumé quand elle existe.
 
 ### Axe « animation, médiation et valorisation » (ajouté le 26/09/2026)
 
@@ -276,6 +315,9 @@ Rejeter d'emblée, ne pas proposer en candidat :
   factuelle notable (nouveaux chiffres, suite de l'histoire).
 - Lien vers un site qui demande une inscription/un paywall pour lire
   l'essentiel du contenu.
+- Vie institutionnelle, document destiné aux élus, page-relais vers un
+  article en anglais ou payant : voir « Orientations tirées du bilan
+  éditorial ».
 
 ## Ce qui fait un bon « Usage en cours »
 
@@ -488,10 +530,15 @@ pas insister.
 À chaque exécution, avant de chercher, lire dans le `GET` :
 
 - `bilan_par_format` : pour chaque format, combien de candidats ont été
-  retenus et combien écartés depuis le début ;
+  retenus et combien écartés depuis le début. `dont_non_retenues` compte,
+  parmi les écartés, ceux que l'enseignant a simplement laissés dans la
+  moisson en publiant le numéro (depuis le 15/11/2026, motif
+  `non_retenu`) : c'est un refus sans raison donnée, qui pèse comme un
+  écart dans le taux mais n'apprend rien sur le pourquoi ;
 - `motifs_ecart_frequents` : les raisons d'écart choisies par l'enseignant
   (`trop_court`, `pas_de_donnees`, `hors_sujet`, `agenda`, `trop_local`,
-  `redondant`, `autre`) ;
+  `redondant`, `acces_difficile`, `institutionnel`, `autre`) —
+  `non_retenu` n'y figure jamais ;
 - `candidats_ecartes_recents` (avec `motif`, `motif_code`, `format`) et
   `entrees_retenues_recentes`, pour les cas concrets (les précisions plus
   anciennes passent par la synthèse hebdomadaire ci-dessus, qui les
