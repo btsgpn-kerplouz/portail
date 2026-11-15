@@ -2594,14 +2594,10 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         portent des chiffres de terrain concrets » (section Public et angle).
       - Non testé dans le navigateur (seulement `node --check` du JS).
 
-- [ ] **Fréquentation par visiteur anonyme** (15/11/2026, branche
-      `affut/frequentation-visiteurs`). Demande : mieux suivre la
+- [x] **Fréquentation par visiteur anonyme** (15/11/2026, PR #149,
+      fusionnée et déployée ; migration 020 appliquée). Demande : mieux suivre la
       fréquentation, y compris **les lecteurs qui reviennent plusieurs
       fois dans une même journée**.
-      - **⚠️ À appliquer : `supabase/020-frequentation-visiteurs.sql`**
-        (SQL Editor, projet `portail`, idempotent). Tant qu'elle ne l'est
-        pas, le front retombe sur les anciens compteurs (rien de perdu) et
-        le Bilan affiche « Indisponible tant que la migration 020… ».
       - Table unique `affut_evenements` (ouverture, sommaire, recherche,
         vue_numero, clic_source, installation), qui reprend et remplace
         `affut_vues_log`/`affut_clics_log` (plus alimentés, conservés,
@@ -2625,6 +2621,33 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
         visites, minuit heure de Paris, anti-rebond, purge, reprise
         idempotente, accès refusé hors rédacteur. Écran Bilan non vu dans
         un vrai navigateur (nécessite la migration et une connexion).
+
+- [ ] **Bilan refait pour être lisible** (15/11/2026, branche
+      `affut/bilan-lisible`). Retour d'usage : « toute la page Bilan est
+      compliquée à lire ». But de la page : l'app est-elle utilisée, à quelle
+      intensité, quand (au jour près, pas à l'heure), quels numéros et
+      entrées sont les plus consultés.
+      - **⚠️ À appliquer : `supabase/021-bilan-periode.sql`** (SQL Editor,
+        idempotent). Sans elle, le Bilan affiche « Indisponible tant que la
+        migration 021… ».
+      - Période : 7 jours / 30 jours (défaut) / depuis la rentrée ; flèches
+        ‹ › pour remonter, bornées au 1er septembre.
+      - Trois blocs : **Est-ce utilisé ?** (lecteurs, visites, jours avec
+        visite, revenus le même jour, + écart avec la période précédente
+        quand elle est entièrement suivie par lecteur) ; **Quand ?** (une
+        barre par jour, parutions en pointillé, infobulle, tableau
+        dépliable) ; **Quoi ?** (top 5 numéros et entrées par lecteurs,
+        « Voir tout »).
+      - Avant le suivi par lecteur (avant le 15/11/2026) : vues anciennes en ocre
+        `#a8812a` (validé daltonisme avec le grenat), jamais mélangées aux
+        lecteurs.
+      - Supprimés : délai médian, relecteurs, petits graphiques sous chaque
+        ligne. « Ce que vous retenez, par format » déplacé dans Sources ›
+        Mémoire de la veille.
+      - Tests : `frequentation.test.mjs` (12 cas), `memoire.test.mjs` et
+        `bilan-formats.test.mjs` adaptés ; migration 021 testée hors dépôt
+        (PGlite) ; rendu vérifié en capture (ordinateur + mobile, données
+        fictives), pas encore dans l'app réelle.
 
 ## Idées pour plus tard (hors lots planifiés)
 

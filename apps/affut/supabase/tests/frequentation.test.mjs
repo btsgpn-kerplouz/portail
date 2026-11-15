@@ -13,12 +13,9 @@ const entre = (debut, fin) => {
   return html.slice(i, j);
 };
 const suivi = entre('  var CLE_VISITEUR = "affut:visiteur"', "  // ---- authentification");
-const bilan = entre("  var frequentation = null, frequentationEtat", "  // Histogramme compact");
-const lignes = entre("  function pluriel(nb, mot)", "  function renderBilanRowNumero");
-const app = entre("  function renderBilanFrequentationApp(){", "  function renderBilanEcran(){");
-
+const bilan = entre("  function pluriel(nb, mot)", "  // « Ce que vous retenez, par format »");
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-function fabrique({ redacteur = false, stockage = new Map(), rpcReponse = { data: null, error: null } } = {}) {
+function fabrique({ redacteur = false, stockage = new Map(), rpcReponse = { data: null, error: null }, numeros = [] } = {}) {
   const appels = [];
   const localStorage = {
     getItem: (k) => (stockage.has(k) ? stockage.get(k) : null),
@@ -28,15 +25,13 @@ function fabrique({ redacteur = false, stockage = new Map(), rpcReponse = { data
     rpc: (nom, args) => { appels.push([nom, args]); return { then: (ok) => Promise.resolve(nom === "affut_bilan_frequentation" ? rpcReponse : (args && args.p_type === "repli" ? {} : rpcReponse)).then(ok) }; },
   });
   const window = { addEventListener() {}, crypto: globalThis.crypto };
-  const f = new Function("localStorage", "client", "window", "esc", "estRedacteurActif", "render", "crypto", `
+  const etat = { vue: "bilan", bilanPeriode: { duree: "30", decalage: 0 }, bilanTout: { numeros: false, entrees: false } };
+  const f = new Function("localStorage", "client", "window", "esc", "estRedacteurActif", "render", "crypto", "state", "numeros", "mobileActif", `
     ${suivi}
     ${bilan}
-    ${lignes}
-    ${app}
-    return { idVisiteur, enregistrerEvenement, compterVueNumero, marquerAppareilRedacteur, chargerFrequentation,
-      fenetreSeptJours, compterParJour, detailFrequentationNumero, formatDelai, renderBilanFrequentationApp,
-      etat: () => frequentationEtat };`);
-  return { ...f(localStorage, client, window, esc, () => redacteur, () => {}, globalThis.crypto), appels, stockage };
+    return { idVisiteur, enregistrerEvenement, compterVueNumero, marquerAppareilRedacteur,
+      periodeBilan, donneesPeriode, renderBilanEcran, renderBilanQuand, maxRond, isoJour };`);
+  return { ...f(localStorage, client, window, esc, () => redacteur, () => {}, globalThis.crypto, etat, numeros, () => false), appels, stockage, etat };
 }
 let n = 0;
 const test = async (nom, f) => { await f(); n++; console.log("ok  " + nom); };
@@ -75,38 +70,69 @@ await test("migration 020 absente : repli sur l'ancien compteur", async () => {
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(t.appels[1], ["affut_incrementer_clic_source", { p_entree_id: "e1" }]);
 });
-await test("Bilan : chiffres regroupés lus, graphes jour par jour remplis", async () => {
-  const data = {
-    depuis: "2026-11-10T07:00:00+00:00", visiteurs: 2, visites: 5, visiteurs_multi: 1, jours_multi: 1, recherches: 0, installations: 0,
-    par_jour: [{ jour: "2026-11-10", visiteurs: 2, visites: 4, visiteurs_multi: 1 }, { jour: "2026-11-11", visiteurs: 1, visites: 1, visiteurs_multi: 0 }],
-    par_numero: [{ numero: 1, lecteurs: 2, lecteurs_source: 1, relecteurs: 1, delai_median_h: 33.175 }],
-    par_jour_numero: [{ numero: 1, jour: "2026-11-10", vues: 3, lecteurs: 2 }],
-    par_jour_entree: [],
-  };
-  const t = fabrique({ rpcReponse: { data, error: null } });
-  await t.chargerFrequentation();
-  assert.equal(t.etat(), "ok");
-  assert.equal(t.detailFrequentationNumero({ numero: 1 }), "2 lecteurs · 1 l'ont rouvert · 50 % ont ouvert une source · 1re lecture en médiane 33 h après parution");
-  assert.equal(t.detailFrequentationNumero({ numero: 9 }), "");
-  const h = t.renderBilanFrequentationApp();
-  assert.ok(h.indexOf("11 nov") < h.indexOf("10 nov"), "le plus récent en haut");
-  assert.ok(h.includes("1 lecteur<"));
-  const jours = t.fenetreSeptJours("2026-11-09", {});
-  const c = t.compterParJour(jours, { "2026-11-10": 3 });
-  assert.deepEqual(c.map((x) => x.total), [0, 3, 0, 0, 0, 0, 0]);
-  assert.equal(t.fenetreSeptJours(null, { "2026-11-12": 1, "2026-11-10": 2 })[0].toISOString().slice(0, 10), "2026-11-10");
-  assert.equal(t.fenetreSeptJours(null, {}), null);
-});
-await test("Bilan : migration absente → message, pas de plantage", async () => {
-  const t = fabrique({ rpcReponse: { data: null, error: { code: "PGRST202" } } });
-  await t.chargerFrequentation();
-  assert.equal(t.etat(), "indisponible");
-  assert.ok(t.renderBilanFrequentationApp().includes("migration 020"));
-});
-await test("délais lisibles", () => {
+const J = (a, m, j) => new Date(a, m - 1, j);
+const iso = (d) => d.toISOString ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : d;
+await test("période : 30 jours par défaut, précédente comparable", () => {
   const t = fabrique();
-  assert.equal(t.formatDelai(0.4), "moins d'1 h");
-  assert.equal(t.formatDelai(5.2), "5 h");
-  assert.equal(t.formatDelai(60), "2,5 j");
+  const p = t.periodeBilan(J(2026, 11, 15), { duree: "30", decalage: 0 });
+  assert.deepEqual([iso(p.debut), iso(p.fin), p.jours, p.plusRecente, p.plusAncienne], ["2026-10-17", "2026-11-15", 30, true, false]);
+  assert.deepEqual([iso(p.precedente.debut), iso(p.precedente.fin)], ["2026-09-17", "2026-10-16"]);
+});
+await test("période : ‹ remonte et s'arrête au 1er septembre", () => {
+  const t = fabrique();
+  const p1 = t.periodeBilan(J(2026, 11, 15), { duree: "30", decalage: 1 });
+  assert.deepEqual([iso(p1.debut), iso(p1.fin), p1.plusAncienne], ["2026-09-17", "2026-10-16", false]);
+  const p2 = t.periodeBilan(J(2026, 11, 15), { duree: "30", decalage: 2 });
+  assert.deepEqual([iso(p2.debut), iso(p2.fin), p2.plusAncienne, p2.precedente], ["2026-09-01", "2026-09-16", true, null]);
+});
+await test("période : depuis la rentrée (y compris en janvier)", () => {
+  const t = fabrique();
+  const p = t.periodeBilan(J(2027, 1, 10), { duree: "rentree", decalage: 0 });
+  assert.deepEqual([iso(p.debut), iso(p.fin), p.precedente], ["2026-09-01", "2027-01-10", null]);
+});
+await test("graduation ronde", () => {
+  const t = fabrique();
+  assert.deepEqual([1, 3, 7, 12, 48].map(t.maxRond), [1, 5, 10, 20, 50]);
+});
+const DONNEES = {
+  lecteurs: 3, visites: 5, jours_actifs: 2, revenus: 1, anonymes: 2, suivi_depuis: "2026-11-10",
+  par_jour: [{ jour: "2026-11-01", lecteurs: 0, visites: 0, revenus: 0, vues_anonymes: 2 }, { jour: "2026-11-12", lecteurs: 3, visites: 5, revenus: 1, vues_anonymes: 0 }],
+  numeros: [{ numero: 12, lecteurs: 1, vues_anonymes: 2 }, { numero: 13, lecteurs: 3, vues_anonymes: 0 }],
+  entrees: [{ entree_id: "e1", numero: 13, lecteurs: 2, clics_anonymes: 0 }, { entree_id: "inconnue", numero: 13, lecteurs: 9, clics_anonymes: 0 }],
+};
+const NUMEROS = [
+  { numero: 12, statut: "publie", titre: "Haies", semaine: "S45", datePublication: "2026-11-02", entrees: [] },
+  { numero: 13, statut: "publie", titre: "Loutre", semaine: "S46", datePublication: "2026-11-09", entrees: [{ id: "e1", titre: "La loutre <revient>", rubrique: "Faune" }] },
+];
+await test("Bilan : chargement puis page complète", async () => {
+  const t = fabrique({ rpcReponse: { data: DONNEES, error: null }, numeros: NUMEROS });
+  assert.ok(t.renderBilanEcran().includes("Chargement"));
+  await new Promise((r) => setTimeout(r, 0));
+  const h = t.renderBilanEcran();
+  assert.equal(t.appels.filter((a) => a[0] === "affut_bilan_periode").length, 2, "période + précédente, une seule fois chacune");
+  for (const attendu of ["Est-ce utilisé ?", "Quand ?", "Quoi ?", "Revenus plusieurs fois le même jour", "Vues anciennes"]) assert.ok(h.includes(attendu), attendu);
+  assert.ok(h.indexOf("n° 13 · Loutre") < h.indexOf("n° 12 · Haies"), "classé par lecteurs");
+  assert.ok(h.includes("+ 2 vues avant le suivi"));
+  assert.ok(h.includes("La loutre &lt;revient&gt;"), "titre échappé");
+  assert.ok(!h.includes("inconnue"), "entrée supprimée ignorée");
+  assert.ok(!h.includes("bilan-ecart\">▲"), "pas de comparaison : période précédente antérieure au suivi");
+});
+await test("Quand : barres, parutions, vues anciennes légendées, infobulles", () => {
+  const t = fabrique({ numeros: NUMEROS });
+  const p = t.periodeBilan(J(2026, 11, 15), { duree: "30", decalage: 0 });
+  const h = t.renderBilanQuand(p, DONNEES);
+  assert.equal((h.match(/class="bg-barre"/g) || []).length, 1);
+  assert.equal((h.match(/class="bg-barre ancien"/g) || []).length, 1);
+  assert.equal((h.match(/class="bg-parution"/g) || []).length, 2);
+  assert.equal((h.match(/class="bg-zone"/g) || []).length, 30);
+  assert.ok(h.includes("3 lecteurs · 5 visites · 1 revenu le même jour"));
+  assert.ok(h.includes("Vues, avant le suivi par lecteur"));
+  assert.ok(t.renderBilanQuand(p, { par_jour: [] }).includes("Aucune visite"));
+});
+await test("Bilan : migration 021 absente → message", async () => {
+  const t = fabrique({ rpcReponse: { data: null, error: { code: "PGRST202" } } });
+  t.renderBilanEcran();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.ok(t.renderBilanEcran().includes("migration 021"));
 });
 console.log(n + " tests passés");
