@@ -217,6 +217,9 @@ const FORMATS_AUTORISES: { code: string; description: string }[] = [
   { code: "autre", description: "Autre — à éviter, seulement si aucun format ne convient" },
 ];
 const CODES_FORMATS = FORMATS_AUTORISES.map((f) => f.code);
+// Posé par l'app sur les candidats restés dans la moisson à la publication
+// (migration 022, 15/11/2026) : un refus silencieux, sans raison donnée.
+const MOTIF_NON_RETENU = "non_retenu";
 
 // Comptes par format (retenues / écartées) et par motif d'écart. Entrées :
 // les entrées retenues d'origine « auto » et les candidats écartés. Sans
@@ -225,19 +228,27 @@ function compterParFormat(
   entrees: { format?: string | null }[],
   ecartes: { format?: string | null; motif_code?: string | null }[],
 ): {
-  par_format: { format: string; retenues: number; ecartees: number }[];
+  par_format: { format: string; retenues: number; ecartees: number; dont_non_retenues: number }[];
   motifs_ecart: { motif: string; nombre: number }[];
 } {
-  const formats = new Map<string, { retenues: number; ecartees: number }>();
+  const formats = new Map<string, { retenues: number; ecartees: number; dont_non_retenues: number }>();
   const ligne = (f?: string | null) => {
     const cle = f && CODES_FORMATS.includes(f) ? f : "non_classe";
-    if (!formats.has(cle)) formats.set(cle, { retenues: 0, ecartees: 0 });
+    if (!formats.has(cle)) formats.set(cle, { retenues: 0, ecartees: 0, dont_non_retenues: 0 });
     return formats.get(cle)!;
   };
   for (const e of entrees) ligne(e.format).retenues++;
-  for (const e of ecartes) ligne(e.format).ecartees++;
+  for (const e of ecartes) {
+    const l = ligne(e.format);
+    l.ecartees++;
+    if (e.motif_code === MOTIF_NON_RETENU) l.dont_non_retenues++;
+  }
+  // « non_retenu » n'est pas une raison : compté dans `ecartees` (et à part
+  // dans `dont_non_retenues`), jamais dans les motifs.
   const motifs = new Map<string, number>();
-  for (const e of ecartes) if (e.motif_code) motifs.set(e.motif_code, (motifs.get(e.motif_code) ?? 0) + 1);
+  for (const e of ecartes) {
+    if (e.motif_code && e.motif_code !== MOTIF_NON_RETENU) motifs.set(e.motif_code, (motifs.get(e.motif_code) ?? 0) + 1);
+  }
   return {
     par_format: [...formats.entries()]
       .map(([format, c]) => ({ format, ...c }))
@@ -407,6 +418,9 @@ async function handleContext(): Promise<Response> {
     const complet = await supabase
       .from("affut_candidats_ecartes")
       .select("candidat_id, titre, url, rubrique, source, motif, motif_code, format, ecarte_le")
+      // Les « non retenus » (sans raison) noieraient les vrais écarts motivés
+      // dans ces 15 exemples : ils ne comptent que dans bilan_par_format.
+      .or("motif_code.is.null,motif_code.neq.non_retenu")
       .order("ecarte_le", { ascending: false })
       .limit(15);
     if (!complet.error) {

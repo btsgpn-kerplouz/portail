@@ -85,7 +85,8 @@ La veille apprend des **formats** d'actualité, jamais des sources.
   Valeur inconnue → retirée, candidat gardé non classé, signalée dans
   `avertissements`.
 - **`GET`** renvoie en plus `formats_autorises` (codes + définitions),
-  `bilan_par_format` (retenues / écartées par format) et
+  `bilan_par_format` (retenues / écartées par format, dont `dont_non_retenues` :
+  candidats laissés dans la moisson à la publication, migration 022) et
   `motifs_ecart_frequents`. Ces deux derniers valent `null` tant que la
   migration `017-format-et-motif-ecart.sql` n'est pas appliquée (le reste du
   contexte fonctionne sans elle). **Aucun compteur par source** — voulu.
