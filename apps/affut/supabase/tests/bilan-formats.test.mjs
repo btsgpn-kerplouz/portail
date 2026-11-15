@@ -14,7 +14,7 @@ const entre = (debut, fin) => {
 };
 const vocab = entre("  var FORMATS = {", "  function motifCodeChoisi");
 const motifCodeChoisi = entre("  function motifCodeChoisi", "\n  }\n") + "\n  }\n";
-const bilan = entre("  function renderBilanFormats(){", "  function renderBilanEcran(){");
+const bilan = entre("  function renderBilanFormats(){", "  // Espace « Mémoire de la veille »");
 
 const fabrique = new Function("numeros", "ecartes", "esc", `
   ${vocab}

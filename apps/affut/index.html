@@ -558,23 +558,55 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .sources-replie .chip{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3)}
 
 .bilan-section{margin-top:22px}
-.bilan-cols,.bilan-row{grid-template-columns:1fr 150px 220px}
-.bilan-cols-2,.bilan-row-2{grid-template-columns:1fr 220px}
 .bilan-mesure{display:flex;align-items:center;gap:10px;justify-content:flex-end}
 .bilan-barre{flex:1;height:6px;background:var(--af-surface-2);border:1px solid var(--af-filet)}
 .bilan-barre-remplie{height:100%;background:var(--af-accent)}
+.bilan-barre.ancien .bilan-barre-remplie{background:#a8812a}
 .bilan-mesure .n{font-family:var(--af-police-mono);font-size:15px;font-weight:700;color:var(--af-encre);min-width:26px;text-align:right}
-
-.source-row:has(+ .graphe-jour-wrap){border-bottom:none}
-.graphe-jour-wrap{padding:0 22px 14px;background:var(--af-surface-2);border-bottom:1px solid var(--af-filet)}
-.graphe-jour{position:relative;margin:10px 0 4px}
-.graphe-jour-svg{display:block;width:100%;max-width:340px;height:auto}
-.graphe-jour-barre{fill:var(--af-accent)}
-.graphe-jour-axe{stroke:var(--af-filet-fort);stroke-width:1}
-.graphe-jour-label{font-family:var(--af-police-mono);font-size:8px;fill:var(--af-encre-3)}
-.graphe-jour-valeur{font-family:var(--af-police-mono);font-size:9px;font-weight:700;fill:var(--af-encre)}
-.graphe-jour-hit{fill:transparent}
-.graphe-jour-hit:hover,.graphe-jour-hit:focus-visible{fill:var(--af-sur-accent-2)}
+.bilan-periode{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;background:var(--af-surface-2);border-bottom:1px solid var(--af-filet)}
+.bilan-periode-nav{display:flex;align-items:center;gap:6px}
+.bilan-fleche{font-family:var(--af-police-mono);font-size:15px;line-height:1;width:32px;height:32px;border:1px solid var(--af-filet-fort);color:var(--af-encre)}
+.bilan-fleche:hover:not(:disabled){background:var(--af-sur-accent-2)}
+.bilan-fleche:disabled{opacity:.35;cursor:default}
+.bilan-dates{font-family:var(--af-police-mono);font-size:12px;color:var(--af-encre-2);margin-left:6px}
+.bilan-tuiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--af-filet);border-bottom:1px solid var(--af-filet)}
+.bilan-tuile{display:flex;flex-direction:column;gap:4px;padding:16px 22px;background:var(--af-fond)}
+.bilan-tuile .label{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--af-encre-3)}
+.bilan-tuile b{font-family:var(--af-police-mono);font-size:28px;font-weight:700;color:var(--af-encre)}
+.bilan-tuile b small{font-size:13px;font-weight:400;color:var(--af-encre-3)}
+.bilan-ecart{font-size:11.5px;color:var(--af-encre-2)}
+.bilan-legende{display:flex;flex-wrap:wrap;gap:6px 18px;padding:12px 22px 0;font-size:11.5px;color:var(--af-encre-2)}
+.bilan-legende span{display:inline-flex;align-items:center;gap:6px}
+.bilan-legende .pastille{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--af-accent)}
+.bilan-legende .pastille.ancien{background:#a8812a}
+.bilan-legende .trait-parution{display:inline-block;width:0;height:12px;border-left:1px dashed var(--af-encre-3)}
+.bilan-graphe{position:relative;padding:8px 22px 4px}
+.bilan-graphe svg{display:block;width:100%;height:auto}
+.bg-barre{fill:var(--af-accent)}
+.bg-barre.ancien{fill:#a8812a}
+.bg-axe{stroke:var(--af-filet-fort);stroke-width:1}
+.bg-grille{stroke:var(--af-filet);stroke-width:1}
+.bg-graduation,.bg-date{font-family:var(--af-police-mono);font-size:10px;fill:var(--af-encre-3)}
+.bg-valeur{font-family:var(--af-police-mono);font-size:11px;font-weight:700;fill:var(--af-encre)}
+.bg-parution{stroke:var(--af-encre-3);stroke-width:1;stroke-dasharray:3 3}
+.bg-parution-label{font-family:var(--af-police-mono);font-size:10px;fill:var(--af-encre-2)}
+.bg-zone{fill:transparent;outline:none}
+.bg-zone:hover,.bg-zone:focus-visible{fill:var(--af-encre);fill-opacity:.06}
+.bilan-tableau{padding:4px 22px 14px;font-size:12px;color:var(--af-encre-2)}
+.bilan-tableau summary{cursor:pointer;font-family:var(--af-police-mono);font-size:11px;color:var(--af-accent)}
+.bilan-tableau table{margin-top:8px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.bilan-tableau th,.bilan-tableau td{padding:4px 14px 4px 0;text-align:right;border-bottom:1px solid var(--af-filet)}
+.bilan-tableau th:first-child,.bilan-tableau td:first-child{text-align:left}
+.bilan-tableau th{font-family:var(--af-police-mono);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-3)}
+.bilan-quoi{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--af-filet);border-bottom:1px solid var(--af-filet)}
+.bilan-classement{background:var(--af-fond);padding:12px 0 14px}
+.bilan-classement-titre{padding:0 22px 6px;font-family:var(--af-police-mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--af-encre-2)}
+.bilan-classement-titre small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--af-encre-3)}
+.bilan-classement-ligne{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,40%);gap:12px;align-items:center;padding:7px 22px}
+.bilan-classement-nom{display:flex;flex-direction:column;gap:1px;min-width:0}
+.bilan-classement-nom .nom{font-size:13px;font-weight:600;color:var(--af-encre);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bilan-classement-nom .sous{font-family:var(--af-police-mono);font-size:10px;color:var(--af-encre-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bilan-tout{margin:8px 22px 0}
 .graphe-jour-tooltip{position:absolute;pointer-events:none;background:var(--af-encre);color:var(--af-sur-accent);font-family:var(--af-police-mono);font-size:10.5px;padding:4px 8px;white-space:nowrap;opacity:0;transform:translate(-50%,-115%);transition:opacity .1s;z-index:5}
 .graphe-jour-tooltip.visible{opacity:1}
 
@@ -718,6 +750,13 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   .bilan-format-ligne{grid-template-columns:minmax(0,1fr) 48px 48px;padding:9px 14px}
   .bilan-format-ligne .taux{grid-column:1 / -1}
   .bilan-note,.bilan-motifs{padding-left:14px;padding-right:14px}
+  .bilan-periode,.bilan-tuile,.bilan-legende,.bilan-graphe,.bilan-tableau,.bilan-classement-titre,.bilan-classement-ligne{padding-left:14px;padding-right:14px}
+  .bilan-tout{margin-left:14px}
+  .bilan-tuiles{grid-template-columns:1fr 1fr}
+  .bilan-tuile:last-child:nth-child(odd){grid-column:1 / -1}
+  .bilan-classement-ligne{grid-template-columns:minmax(0,1fr) 110px}
+  .bilan-tuile b{font-size:24px}
+  .bilan-quoi{grid-template-columns:1fr}
   .page{padding:0 0 40px}
   .app,.app.mode-redaction{max-width:100%;border-left:0;border-right:0}
   .bandeau{padding:11px 14px}
@@ -1619,8 +1658,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     sommaireDeplie: {},
     sourcesDeplie: false,
     sourcesFiltre: "toutes", // "toutes" | "hebdomadaire" | "mensuelle" | "tiers-mensuelle" — filtre de l'écran Sources
-    bilanEntreesDeplie: false,
-    bilanDetailJournalierOuvert: false, // petits graphiques « jour par jour » (vues/numéro, clics/entrée) sous les lignes du Bilan
+    bilanPeriode: { duree: "30", decalage: 0 }, // Bilan : "7" | "30" | "rentree" ; decalage = nb de périodes en arrière
+    bilanTout: { numeros: false, entrees: false }, // Bilan : classements dépliés au-delà des 5 premiers
     publicationRefusee: null,
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
     deplacerOuvert: null, // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
@@ -2868,188 +2907,279 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     return '<div class="sources">' + espaces + entete + filtres + '<div class="sources-table">' + cols + groupeEchec + groupeAttention + groupeAutres + '</div></div>';
   }
 
-  // ---- Bilan de fréquentation (Lot 13) : totaux (vues par numéro, clics
-  // « Ouvrir la source » par entrée), compteurs cumulés depuis le Lot 6.
-  // Depuis le 15/11/2026 (supabase/020-frequentation-visiteurs.sql), le
-  // détail (lecteurs distincts, visites, revenus le même jour, jour par
-  // jour) arrive DÉJÀ regroupé par affut_bilan_frequentation() : plus de
-  // lecture du journal brut, que l'API plafonnait à 1 000 lignes.
-  // Chargé à chaque ouverture du Bilan ; « indisponible » tant que la
-  // migration 020 n'est pas appliquée (le Bilan garde alors ses totaux).
-  var frequentation = null, frequentationEtat = "a-charger"; // "a-charger" | "chargement" | "ok" | "indisponible"
-  var vuesParJourNumero = {}, clicsParJourEntree = {}, frequentationParNumero = {};
+  // ---- Bilan de fréquentation (refonte du 15/11/2026) ----------------------
+  // Une page qui répond, de haut en bas, à trois questions : l'app est-elle
+  // utilisée (et à quelle intensité) ? quand (au jour près) ? quels numéros
+  // et quelles entrées sont les plus consultés ? Sur une période choisie :
+  // 7 jours, 30 jours (par défaut) ou depuis la rentrée, avec ‹ › pour
+  // remonter jusqu'au 1er septembre. Chiffres regroupés côté base par
+  // affut_bilan_periode() (supabase/021-bilan-periode.sql), appelée pour la
+  // période affichée ET la précédente (comparaison). Le tableau « par
+  // format », qui parle du tri de la veille et pas de fréquentation, est
+  // parti dans Sources › Mémoire de la veille.
 
-  async function chargerFrequentation(){
-    frequentationEtat = "chargement";
-    var res = await client().rpc("affut_bilan_frequentation", { p_jours: 30 });
-    if (res.error || !res.data) { frequentation = null; frequentationEtat = "indisponible"; return; }
-    var d = res.data;
-    vuesParJourNumero = {}; clicsParJourEntree = {}; frequentationParNumero = {};
-    (d.par_jour_numero || []).forEach(function(r){ (vuesParJourNumero[r.numero] = vuesParJourNumero[r.numero] || {})[r.jour] = r.vues; });
-    (d.par_jour_entree || []).forEach(function(r){ (clicsParJourEntree[r.entree_id] = clicsParJourEntree[r.entree_id] || {})[r.jour] = r.clics; });
-    (d.par_numero || []).forEach(function(r){ frequentationParNumero[r.numero] = r; });
-    frequentation = d;
-    frequentationEtat = "ok";
-  }
-  function lancerChargementFrequentation(){
-    if (frequentationEtat === "chargement") return;
-    chargerFrequentation().then(render, function(){ frequentation = null; frequentationEtat = "indisponible"; render(); });
-  }
+  function pluriel(nb, mot){ return nb + " " + mot + (nb > 1 ? "s" : ""); }
+  function isoJour(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function jourDepuisIso(s){ var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function ajouterJours(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function nbJours(debut, fin){ return Math.round((fin - debut) / 86400000) + 1; }
+  function aujourdhui(){ var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  // Rentrée = 1er septembre de l'année scolaire en cours.
+  function debutRentree(auj){ return new Date(auj.getMonth() >= 8 ? auj.getFullYear() : auj.getFullYear() - 1, 8, 1); }
+  function dateCourte(d){ return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); }
+  function dateLongue(d){ return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }); }
 
-  var JOURS_LABEL = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
-  var JOURS_LABEL_LONG = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
-  function indiceJourIso(date){ return (date.getUTCDay() + 6) % 7; }
-
-  // Fenêtre de 7 jours (le rythme hebdomadaire du carnet, voir CLAUDE.md) à
-  // partir de la date de publication du numéro ; repli sur le premier
-  // événement enregistré si elle est absente (numéros créés à la main, avant
-  // le Lot 26 qui l'a introduite). Comparaison de dates en UTC, sans gestion
-  // fine du fuseau horaire — à un jour près pour un événement proche de
-  // minuit, sans enjeu pour ce repère interne (même simplification que
-  // 003-compteurs.sql pour l'absence de garde-fou anti-abus).
-  // Comptes par jour : { "AAAA-MM-JJ": total }, jours à l'heure de Paris
-  // (calculés par affut_bilan_frequentation()).
-  function fenetreSeptJours(dateDepartIso, comptesParJour){
-    var depart;
-    var joursConnus = Object.keys(comptesParJour || {}).sort();
-    if (dateDepartIso) {
-      depart = new Date(dateDepartIso + "T00:00:00Z");
-    } else if (joursConnus.length) {
-      depart = new Date(joursConnus[0] + "T00:00:00Z");
-    } else return null;
-    var jours = [];
-    for (var i = 0; i < 7; i++) jours.push(new Date(depart.getTime() + i * 86400000));
-    return jours;
+  // Période affichée. `decalage` = nombre de périodes en arrière (0 = la plus
+  // récente). Bornée à la rentrée : la dernière période vers le passé est
+  // raccourcie pour commencer le 1er septembre.
+  function periodeBilan(auj, choix){
+    var rentree = debutRentree(auj);
+    if (choix.duree === "rentree") {
+      return { debut: rentree, fin: auj, jours: nbJours(rentree, auj), plusAncienne: true, plusRecente: true, precedente: null };
+    }
+    var n = +choix.duree;
+    var fin = ajouterJours(auj, -n * choix.decalage);
+    var debut = ajouterJours(fin, -(n - 1));
+    var plusAncienne = debut <= rentree;
+    if (plusAncienne) debut = rentree;
+    return {
+      debut: debut, fin: fin, jours: nbJours(debut, fin),
+      plusAncienne: plusAncienne, plusRecente: choix.decalage === 0,
+      // Comparaison avec la période précédente de même durée — sauf pour la
+      // première période de l'année (rien avant la rentrée à comparer).
+      precedente: plusAncienne ? null : { debut: ajouterJours(debut, -n), fin: ajouterJours(debut, -1) }
+    };
   }
 
-  function compterParJour(jours, comptesParJour){
-    return jours.map(function(jour){
-      return { jour: jour, total: (comptesParJour || {})[jour.toISOString().slice(0, 10)] || 0 };
-    });
+  // Cache par période ("debut|fin") : naviguer en arrière puis revenir ne
+  // relance pas la requête. Vidé à chaque ouverture de l'onglet Bilan.
+  var bilanCache = {};
+  function donneesPeriode(debut, fin){
+    var cle = isoJour(debut) + "|" + isoJour(fin);
+    var c = bilanCache[cle];
+    if (!c) {
+      c = bilanCache[cle] = { etat: "chargement", data: null };
+      client().rpc("affut_bilan_periode", { p_debut: isoJour(debut), p_fin: isoJour(fin) }).then(function(res){
+        if (res.error || !res.data) c.etat = "indisponible";
+        else { c.etat = "ok"; c.data = res.data; }
+        if (state.vue === "bilan") render();
+      }, function(){ c.etat = "indisponible"; if (state.vue === "bilan") render(); });
+    }
+    return c;
   }
 
-  // Histogramme compact (7 barres, un jour = une barre) : direct-label
-  // uniquement sur le pic (jamais un chiffre sur chaque barre, voir la
-  // pratique du projet) — le reste se lit au survol/focus, voir
-  // initGrapheJournalierHover ; pas de crosshair (barres, pas une courbe :
-  // chaque barre porte son propre survol, voir la doc interne du projet sur
-  // les graphiques).
-  function renderGrapheJournalier(jours, unite){
-    var largeur = 300, hauteur = 84, padG = 4, padD = 4, padHaut = 18, padBas = 15;
-    var n = jours.length;
-    var base = hauteur - padBas;
-    var hauteurUtile = hauteur - padHaut - padBas;
-    var pas = (largeur - padG - padD) / n;
-    var largeurBarre = Math.min(22, pas - 6);
-    var maxV = jours.reduce(function(m, j){ return Math.max(m, j.total); }, 0);
-
-    var elements = jours.map(function(j, i){
-      var cx = padG + i * pas + pas / 2;
-      var h = maxV > 0 ? (j.total / maxV) * hauteurUtile : 0;
-      var estPic = maxV > 0 && j.total === maxV;
-      var label = JOURS_LABEL[indiceJourIso(j.jour)];
-      var labelLong = JOURS_LABEL_LONG[indiceJourIso(j.jour)];
-      return (h > 0 ? '<rect class="graphe-jour-barre" x="' + (cx - largeurBarre / 2) + '" y="' + (base - h) + '" width="' + largeurBarre + '" height="' + h + '" rx="3"></rect>' : "") +
-        (estPic ? '<text class="graphe-jour-valeur" x="' + cx + '" y="' + (base - h - 5) + '" text-anchor="middle">' + j.total + '</text>' : "") +
-        '<text class="graphe-jour-label" x="' + cx + '" y="' + (hauteur - 3) + '" text-anchor="middle">' + label + '</text>' +
-        '<rect class="graphe-jour-hit" data-total="' + j.total + '" data-jour="' + labelLong + '" x="' + (padG + i * pas) + '" y="' + padHaut + '" width="' + pas + '" height="' + (hauteurUtile + (padBas - 11)) + '" tabindex="0" role="img" aria-label="' + labelLong + ', ' + j.total + ' ' + unite + (j.total !== 1 ? "s" : "") + '"></rect>';
-    }).join("");
-
-    return '<div class="graphe-jour" data-unite="' + esc(unite) + '">' +
-      '<svg class="graphe-jour-svg" viewBox="0 0 ' + largeur + ' ' + hauteur + '">' +
-        '<line class="graphe-jour-axe" x1="' + padG + '" y1="' + base + '" x2="' + (largeur - padD) + '" y2="' + base + '"></line>' +
-        elements +
-      '</svg>' +
-      '<div class="graphe-jour-tooltip"></div>' +
+  function renderBilanPeriode(p){
+    var choix = state.bilanPeriode;
+    var bouton = function(duree, libelle){
+      return '<button type="button" data-action="bilan-duree" data-duree="' + duree + '" aria-pressed="' + (choix.duree === duree) + '">' + libelle + '</button>';
+    };
+    var memeAnnee = p.debut.getFullYear() === p.fin.getFullYear();
+    var dates = (memeAnnee ? dateCourte(p.debut) : p.debut.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })) +
+      " – " + p.fin.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    var nav = choix.duree === "rentree" ? "" :
+      '<button type="button" class="bilan-fleche" data-action="bilan-decaler" data-sens="1" aria-label="Période précédente"' + (p.plusAncienne ? " disabled" : "") + '>‹</button>' +
+      '<button type="button" class="bilan-fleche" data-action="bilan-decaler" data-sens="-1" aria-label="Période suivante"' + (p.plusRecente ? " disabled" : "") + '>›</button>';
+    return '<div class="bilan-periode">' +
+      '<div class="filtre-toggle" role="group" aria-label="Durée de la période">' + bouton("7", "7 jours") + bouton("30", "30 jours") + bouton("rentree", "Depuis la rentrée") + '</div>' +
+      '<div class="bilan-periode-nav">' + nav + '<span class="bilan-dates">' + esc(dates) + '</span></div>' +
     '</div>';
   }
 
-  // Survol/clavier (dataviz : une tooltip par défaut) — branché en dehors du
-  // cycle state+render() pour ne pas tout reconstruire le DOM à chaque
-  // pointermove ; ré-attaché à chaque rendu du Bilan puisque chaque graphique
-  // est recréé à chaque fois (voir la boucle dans render()).
-  function initGrapheJournalierHover(container){
-    var hits = Array.prototype.slice.call(container.querySelectorAll(".graphe-jour-hit"));
-    var tooltip = container.querySelector(".graphe-jour-tooltip");
-    var unite = container.getAttribute("data-unite") || "";
-    if (!hits.length || !tooltip) return;
-    hits.forEach(function(hit){
+  function renderEcart(actuel, precedent, libellePeriode){
+    var d = actuel - precedent;
+    var texte = d > 0 ? "▲ " + d + " de plus" : d < 0 ? "▼ " + (-d) + " de moins" : "= autant";
+    return '<span class="bilan-ecart">' + texte + " que " + libellePeriode + '</span>';
+  }
+
+  function renderBilanUtilise(p, d, prec){
+    // Comparaison seulement si la période précédente est entièrement suivie
+    // par lecteur (sinon « +23 lecteurs » ne voudrait rien dire).
+    var comparable = prec && d.suivi_depuis && isoJour(p.precedente.debut) >= d.suivi_depuis;
+    var libPrec = "les " + p.jours + " jours précédents";
+    var tuile = function(label, valeur, sous){
+      return '<div class="bilan-tuile"><span class="label">' + label + '</span><b class="tab-num">' + valeur + '</b>' + (sous || "") + '</div>';
+    };
+    return '<div class="groupe-titre"><span>Est-ce utilisé ?</span><span class="filet"></span></div>' +
+      '<div class="bilan-tuiles">' +
+        tuile("Lecteurs", d.lecteurs, comparable ? renderEcart(d.lecteurs, prec.lecteurs, libPrec) : "") +
+        tuile("Visites", d.visites, comparable ? renderEcart(d.visites, prec.visites, libPrec) : "") +
+        tuile("Jours avec au moins une visite", d.jours_actifs + '<small> / ' + p.jours + '</small>') +
+        tuile("Revenus plusieurs fois le même jour", d.revenus, '<span class="bilan-ecart">' + (d.revenus > 1 ? "lecteurs" : "lecteur") + '</span>') +
+        (d.anonymes ? tuile("Vues anciennes", d.anonymes, '<span class="bilan-ecart">sans lecteur identifié</span>') : "") +
+      '</div>';
+  }
+
+  // Graduation « ronde » au-dessus du maximum (1, 2, 5 × 10^k).
+  function maxRond(v){
+    if (v <= 1) return 1;
+    var p = Math.pow(10, Math.floor(Math.log10(v)));
+    var m = [1, 2, 5, 10].filter(function(k){ return k * p >= v; })[0];
+    return m * p;
+  }
+
+  // « Quand ? » : une barre par jour (lecteurs distincts), parutions des
+  // numéros en pointillé. Jours d'avant le suivi par lecteur : barre ocre
+  // des vues anciennes (même axe, légendée — c'est un autre comptage).
+  // Survol/clavier : une infobulle par jour (voir initBilanGraphe()).
+  function renderBilanQuand(p, d){
+    var parJour = {};
+    (d.par_jour || []).forEach(function(j){ parJour[j.jour] = j; });
+    var jours = [];
+    for (var i = 0; i < p.jours; i++) {
+      var date = ajouterJours(p.debut, i), j = parJour[isoJour(date)] || {};
+      var anc = !j.lecteurs && j.vues_anonymes ? j.vues_anonymes : 0;
+      jours.push({ date: date, lecteurs: j.lecteurs || 0, visites: j.visites || 0, revenus: j.revenus || 0, anciennes: j.vues_anonymes || 0, valeur: j.lecteurs || anc, ancien: !!anc });
+    }
+    var titre = '<div class="groupe-titre"><span>Quand ?</span><span class="filet"></span></div>';
+    var max = jours.reduce(function(m, x){ return Math.max(m, x.valeur); }, 0);
+    if (!max) return titre + '<p class="bilan-note">Aucune visite sur cette période.</p>';
+
+    // Largeur du dessin = largeur réelle (à peu près) : textes lisibles sur mobile.
+    var L = mobileActif() ? 360 : 720, H = 190, gauche = 30, droite = 8, haut = 26, bas = 22;
+    var base = H - bas, utile = base - haut, pas = (L - gauche - droite) / jours.length;
+    var largeur = Math.max(1, Math.min(24, pas - 2));
+    var echelle = maxRond(max);
+    var y = function(v){ return base - (v / echelle) * utile; };
+    var svg = '';
+    [echelle / 2, echelle].forEach(function(g){
+      if (g !== Math.round(g)) return;
+      svg += '<line class="bg-grille" x1="' + gauche + '" x2="' + (L - droite) + '" y1="' + y(g) + '" y2="' + y(g) + '"></line>' +
+        '<text class="bg-graduation" x="' + (gauche - 6) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g + '</text>';
+    });
+    // Parutions
+    var dernierLabel = -Infinity;
+    numeros.forEach(function(n){
+      if (n.statut !== "publie" || !n.datePublication) return;
+      var k = nbJours(p.debut, jourDepuisIso(n.datePublication)) - 1;
+      if (k < 0 || k >= jours.length) return;
+      var x = gauche + k * pas + pas / 2;
+      svg += '<line class="bg-parution" x1="' + x + '" x2="' + x + '" y1="' + (haut - 8) + '" y2="' + base + '"></line>';
+      if (x - dernierLabel > 36) { svg += '<text class="bg-parution-label" x="' + x + '" y="' + (haut - 12) + '" text-anchor="middle">n° ' + n.numero + '</text>'; dernierLabel = x; }
+    });
+    // Barres (4 px arrondis en haut, carrées sur la ligne de base)
+    var pic = jours.reduce(function(a, b){ return b.valeur > a.valeur ? b : a; });
+    jours.forEach(function(j, k){
+      if (!j.valeur) return;
+      var x = gauche + k * pas + (pas - largeur) / 2, h = base - y(j.valeur), r = Math.min(4, largeur / 2, h);
+      svg += '<path class="bg-barre' + (j.ancien ? " ancien" : "") + '" d="M' + x + ',' + base + 'V' + (base - h + r) + 'Q' + x + ',' + (base - h) + ' ' + (x + r) + ',' + (base - h) +
+        'H' + (x + largeur - r) + 'Q' + (x + largeur) + ',' + (base - h) + ' ' + (x + largeur) + ',' + (base - h + r) + 'V' + base + 'Z"></path>';
+      if (j === pic) svg += '<text class="bg-valeur" x="' + (x + largeur / 2) + '" y="' + (base - h - 5) + '" text-anchor="middle">' + j.valeur + '</text>';
+    });
+    svg += '<line class="bg-axe" x1="' + gauche + '" x2="' + (L - droite) + '" y1="' + base + '" y2="' + base + '"></line>';
+    // Dates : 6 repères au plus, toujours le premier et le dernier jour.
+    var nbRep = Math.min(L < 500 ? 4 : 6, jours.length), reperes = {};
+    for (var r = 0; r < nbRep; r++) reperes[Math.round(r * (jours.length - 1) / Math.max(1, nbRep - 1))] = true;
+    Object.keys(reperes).forEach(function(k){
+      k = +k;
+      var x = gauche + k * pas + pas / 2;
+      var ancre = k === 0 ? "start" : k === jours.length - 1 ? "end" : "middle";
+      if (jours.length > 1 && k === 0) x = gauche; if (jours.length > 1 && k === jours.length - 1) x = L - droite;
+      svg += '<text class="bg-date" x="' + x + '" y="' + (H - 6) + '" text-anchor="' + ancre + '">' + esc(dateCourte(jours[k].date)) + '</text>';
+    });
+    // Zones de survol (toute la hauteur du jour)
+    jours.forEach(function(j, k){
+      var texte = dateLongue(j.date) + " · " + (j.lecteurs || j.visites
+        ? pluriel(j.lecteurs, "lecteur") + " · " + pluriel(j.visites, "visite") + (j.revenus ? " · " + j.revenus + " revenu" + (j.revenus > 1 ? "s" : "") + " le même jour" : "")
+        : j.anciennes ? pluriel(j.anciennes, "vue") + " (avant le suivi par lecteur)" : "aucune visite");
+      svg += '<rect class="bg-zone" x="' + (gauche + k * pas) + '" y="' + haut + '" width="' + pas + '" height="' + utile + '" tabindex="0" role="img" aria-label="' + esc(texte) + '" data-texte="' + esc(texte) + '"></rect>';
+    });
+
+    var avecAnciennes = jours.some(function(j){ return j.ancien; });
+    var legende = '<div class="bilan-legende"><span><i class="pastille"></i>Lecteurs par jour</span>' +
+      (avecAnciennes ? '<span><i class="pastille ancien"></i>Vues, avant le suivi par lecteur</span>' : "") +
+      '<span><i class="trait-parution"></i>Parution d\'un numéro</span></div>';
+
+    var actifs = jours.filter(function(j){ return j.valeur; }).reverse();
+    var tableau = '<details class="bilan-tableau"><summary>Voir les chiffres jour par jour</summary><table><thead><tr><th>Jour</th><th>Lecteurs</th><th>Visites</th><th>Revenus le même jour</th>' + (avecAnciennes ? '<th>Vues anciennes</th>' : "") + '</tr></thead><tbody>' +
+      actifs.map(function(j){
+        return '<tr><td>' + esc(dateLongue(j.date)) + '</td><td>' + j.lecteurs + '</td><td>' + j.visites + '</td><td>' + j.revenus + '</td>' + (avecAnciennes ? '<td>' + j.anciennes + '</td>' : "") + '</tr>';
+      }).join("") + '</tbody></table></details>';
+
+    return titre + legende +
+      '<div class="bilan-graphe"><svg viewBox="0 0 ' + L + ' ' + H + '" role="group" aria-label="Lecteurs par jour">' + svg + '</svg><div class="graphe-jour-tooltip"></div></div>' +
+      tableau;
+  }
+
+  function initBilanGraphe(conteneur){
+    var tooltip = conteneur.querySelector(".graphe-jour-tooltip");
+    if (!tooltip) return;
+    Array.prototype.forEach.call(conteneur.querySelectorAll(".bg-zone"), function(zone){
       function montrer(){
-        var total = hit.getAttribute("data-total");
-        tooltip.textContent = hit.getAttribute("data-jour") + " · " + total + " " + unite + (total !== "1" ? "s" : "");
-        var rectHit = hit.getBoundingClientRect(), rectWrap = container.getBoundingClientRect();
-        tooltip.style.left = (rectHit.left - rectWrap.left + rectHit.width / 2) + "px";
-        tooltip.style.top = (rectHit.top - rectWrap.top) + "px";
+        tooltip.textContent = zone.getAttribute("data-texte");
+        var rz = zone.getBoundingClientRect(), rc = conteneur.getBoundingClientRect();
+        var x = rz.left - rc.left + rz.width / 2;
+        tooltip.style.left = Math.max(80, Math.min(rc.width - 80, x)) + "px";
+        tooltip.style.top = (rz.top - rc.top) + "px";
         tooltip.classList.add("visible");
       }
       function cacher(){ tooltip.classList.remove("visible"); }
-      hit.addEventListener("pointerenter", montrer);
-      hit.addEventListener("pointerleave", cacher);
-      hit.addEventListener("focus", montrer);
-      hit.addEventListener("blur", cacher);
+      zone.addEventListener("pointerenter", montrer);
+      zone.addEventListener("pointerleave", cacher);
+      zone.addEventListener("focus", montrer);
+      zone.addEventListener("blur", cacher);
     });
   }
 
-  // Détail jour par jour d'un numéro (vues) — null si aucune fenêtre n'est
-  // déterminable (numéro sans date de publication ET sans aucun événement
-  // enregistré depuis le Lot 28 : rien à tracer).
-  function grapheJournalierNumero(n){
-    var comptes = vuesParJourNumero[n.numero] || {};
-    var jours = fenetreSeptJours(n.datePublication, comptes);
-    if (!jours) return "";
-    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, comptes), "vue") + '</div>';
+  // « Quoi ? » : deux classements, numéros et entrées, par lecteurs
+  // distincts. Période entièrement antérieure au suivi par lecteur : classés
+  // par vues / clics anciens, à défaut d'autre chose.
+  function renderClassement(lignes, cle, titre, unite, uniteAncienne){
+    var ancien = !lignes.some(function(l){ return l.lecteurs; });
+    var valeur = function(l){ return ancien ? l.anciens : l.lecteurs; };
+    lignes = lignes.filter(function(l){ return l.lecteurs || l.anciens; }).sort(function(a, b){ return valeur(b) - valeur(a) || b.anciens - a.anciens; });
+    var tete = '<div class="bilan-classement-titre">' + titre + (ancien && lignes.length ? " <small>(" + uniteAncienne + "s, avant le suivi par lecteur)</small>" : "") + '</div>';
+    if (!lignes.length) return '<div class="bilan-classement">' + tete + '<p class="bilan-note">Rien sur cette période.</p></div>';
+    var tout = state.bilanTout[cle];
+    var visibles = tout ? lignes : lignes.slice(0, 5);
+    var max = Math.max(1, valeur(lignes[0]));
+    return '<div class="bilan-classement">' + tete +
+      visibles.map(function(l){
+        var sous = l.sous + (!ancien && l.anciens ? " · + " + pluriel(l.anciens, uniteAncienne) + " avant le suivi" : "");
+        return '<div class="bilan-classement-ligne"><div class="bilan-classement-nom"><span class="nom">' + esc(l.nom) + '</span>' + (sous ? '<span class="sous">' + esc(sous) + '</span>' : "") + '</div>' +
+          '<div class="bilan-mesure"><div class="bilan-barre' + (ancien ? " ancien" : "") + '"><div class="bilan-barre-remplie" style="width:' + Math.round(100 * valeur(l) / max) + '%"></div></div><span class="n tab-num" aria-label="' + valeur(l) + " " + (ancien ? uniteAncienne : unite) + (valeur(l) > 1 ? "s" : "") + '">' + valeur(l) + '</span></div></div>';
+      }).join("") +
+      (lignes.length > 5 ? '<button type="button" class="deplier bilan-tout" data-action="bilan-tout" data-liste="' + cle + '">' + (tout ? "Replier" : "Voir tout (" + lignes.length + ")") + '</button>' : "") +
+    '</div>';
   }
 
-  // Détail jour par jour d'une entrée (clics) — même fenêtre que le numéro
-  // qui la porte, pour rester lisible côte à côte.
-  function grapheJournalierEntree(e, n){
-    var comptes = clicsParJourEntree[e.id] || {};
-    var jours = fenetreSeptJours(n.datePublication, comptes);
-    if (!jours) return "";
-    return '<div class="graphe-jour-wrap">' + renderGrapheJournalier(compterParJour(jours, comptes), "clic") + '</div>';
+  function renderBilanQuoi(d){
+    var parNumero = {}, parEntree = {};
+    numeros.forEach(function(n){
+      parNumero[n.numero] = n;
+      (n.entrees || []).forEach(function(e){ parEntree[e.id] = { e: e, n: n }; });
+    });
+    var lignesNum = (d.numeros || []).filter(function(x){ return parNumero[x.numero]; }).map(function(x){
+      var n = parNumero[x.numero];
+      return { nom: "n° " + n.numero + (n.titre ? " · " + n.titre : ""), sous: n.semaine || "", lecteurs: x.lecteurs, anciens: x.vues_anonymes };
+    });
+    var lignesEnt = (d.entrees || []).filter(function(x){ return parEntree[x.entree_id]; }).map(function(x){
+      var c = parEntree[x.entree_id];
+      return { nom: c.e.titre || "(sans titre)", sous: "n° " + c.n.numero + (c.e.rubrique ? " · " + c.e.rubrique : ""), lecteurs: x.lecteurs, anciens: x.clics_anonymes };
+    });
+    return '<div class="groupe-titre"><span>Quoi ?</span><span class="filet"></span></div>' +
+      '<div class="bilan-quoi">' +
+        renderClassement(lignesNum, "numeros", "Numéros — lecteurs", "lecteur", "vue") +
+        renderClassement(lignesEnt, "entrees", "Entrées — lecteurs ayant ouvert la source", "lecteur", "clic") +
+      '</div>';
   }
 
-  function pluriel(nb, mot){ return nb + " " + mot + (nb > 1 ? "s" : ""); }
-  function formatDelai(heures){
-    if (heures == null) return "";
-    if (heures < 1) return "moins d'1 h";
-    if (heures < 48) return Math.round(heures) + " h";
-    return (Math.round(heures / 2.4) / 10).toString().replace(".", ",") + " j";
-  }
-
-  // Ligne de détail d'un numéro : lecteurs distincts, relecteurs, part
-  // ayant ouvert une source, délai médian de 1re lecture après parution.
-  function detailFrequentationNumero(n){
-    var f = frequentationParNumero[n.numero];
-    if (!f || !f.lecteurs) return "";
-    var morceaux = [pluriel(f.lecteurs, "lecteur")];
-    if (f.relecteurs) morceaux.push(f.relecteurs + " l'ont rouvert");
-    morceaux.push(Math.round(100 * Math.min(f.lecteurs_source, f.lecteurs) / f.lecteurs) + " % ont ouvert une source");
-    if (f.delai_median_h != null) morceaux.push("1re lecture en médiane " + formatDelai(f.delai_median_h) + " après parution");
-    return morceaux.join(" · ");
-  }
-
-  function renderBilanRowNumero(n, maxVues){
-    var vues = n.vues || 0;
-    var pct = maxVues ? Math.round((vues / maxVues) * 100) : 0;
-    var detail = detailFrequentationNumero(n);
-    return '<div class="source-row bilan-row bilan-row-2">' +
-      '<div class="source-nom"><span class="nom">n° ' + n.numero + (n.titre ? " · " + esc(n.titre) : "") + '</span><span class="adresse">' + esc(n.semaine || "") + '</span>' +
-        (detail ? '<span class="adresse detail">' + esc(detail) + '</span>' : "") + '</div>' +
-      '<div class="bilan-mesure"><div class="bilan-barre"><div class="bilan-barre-remplie" style="width:' + pct + '%"></div></div><span class="n tab-num">' + vues + '</span></div>' +
-    '</div>' +
-    (state.bilanDetailJournalierOuvert ? grapheJournalierNumero(n) : "");
-  }
-
-  function renderBilanRowEntree(e, n, maxClics){
-    var clics = e.clicsSource || 0;
-    var pct = maxClics ? Math.round((clics / maxClics) * 100) : 0;
-    return '<div class="source-row bilan-row">' +
-      '<div class="source-nom"><span class="nom">' + esc(e.titre || "(sans titre)") + '</span><span class="adresse">' + esc(e.rubrique || "") + '</span></div>' +
-      '<div class="source-rubrique">n° ' + n.numero + '</div>' +
-      '<div class="bilan-mesure"><div class="bilan-barre"><div class="bilan-barre-remplie" style="width:' + pct + '%"></div></div><span class="n tab-num">' + clics + '</span></div>' +
-    '</div>' +
-    (state.bilanDetailJournalierOuvert ? grapheJournalierEntree(e, n) : "");
+  function renderBilanEcran(){
+    var p = periodeBilan(aujourdhui(), state.bilanPeriode);
+    var cour = donneesPeriode(p.debut, p.fin);
+    var prec = p.precedente ? donneesPeriode(p.precedente.debut, p.precedente.fin) : null;
+    var corps;
+    if (cour.etat === "chargement") corps = '<p class="bilan-note">Chargement…</p>';
+    else if (cour.etat === "indisponible") corps = '<p class="bilan-note">Indisponible tant que la migration 021 n\'est pas appliquée dans Supabase.</p>';
+    else {
+      var d = cour.data;
+      var depuis = d.suivi_depuis ? jourDepuisIso(d.suivi_depuis).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null;
+      corps = renderBilanUtilise(p, d, prec && prec.etat === "ok" ? prec.data : null) +
+        renderBilanQuand(p, d) +
+        renderBilanQuoi(d) +
+        '<p class="bilan-note">Lecteur : un identifiant anonyme par navigateur (un élève sur deux appareils compte pour deux). Visite : passage sans pause de plus de 30 minutes. Vos propres passages ne sont jamais comptés.' +
+        (depuis ? " Lecteurs suivis depuis le " + esc(depuis) + " ; avant, seules les vues étaient enregistrées." : "") + '</p>';
+    }
+    return '<div class="sources bilan"><h1 class="sr-only">Bilan de fréquentation</h1>' + renderBilanPeriode(p) + corps + '</div>';
   }
 
   // « Ce que vous retenez, par format » (mémoire de la veille, étape 2) :
@@ -3138,84 +3268,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         '<textarea id="regle-nouvelle" maxlength="400" placeholder="Ex. : Les sorties et conférences ne m\'intéressent pas, sauf les colloques scientifiques."></textarea>' +
         '<div class="regle-actions"><button type="button" class="btn-plein" data-action="regle-ajouter">Ajouter la règle</button></div></div>';
 
+    // « Par format » (déplacé depuis le Bilan le 15/11/2026) : il mesure le
+    // tri de la veille, pas la fréquentation.
     return intro + propositionsHtml +
-      titre("Règles en vigueur (" + actives + " active" + (actives > 1 ? "s" : "") + ")") + lignes + ajout;
-  }
-
-  // « L'app jour par jour » : lecteurs distincts, visites et lecteurs
-  // revenus au moins deux fois le même jour (visite = pas de pause de plus
-  // de 30 min, voir 020-frequentation-visiteurs.sql). 30 derniers jours,
-  // jours sans aucune visite omis, le plus récent en haut.
-  function renderBilanFrequentationApp(){
-    var titre = '<div class="groupe-titre"><span>L\'app jour par jour — 30 derniers jours</span><span class="filet"></span></div>';
-    if (frequentationEtat === "a-charger" || frequentationEtat === "chargement") return titre + '<p class="bilan-note">Chargement…</p>';
-    if (frequentationEtat === "indisponible") return titre + '<p class="bilan-note">Indisponible tant que la migration 020 n\'est pas appliquée dans Supabase.</p>';
-    var jours = (frequentation.par_jour || []).slice().reverse();
-    if (!jours.length) return titre + '<p class="bilan-note">Aucune visite d\'élève enregistrée sur cette période.</p>';
-    var enTete = '<div class="bilan-format-ligne" aria-hidden="true" style="font-family:var(--af-police-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)"><span>Jour</span><span class="nb">Lecteurs</span><span class="nb">Visites</span><span>Revenus le même jour</span></div>';
-    var lignes = jours.map(function(j){
-      var date = new Date(j.jour + "T12:00:00Z").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-      return '<div class="bilan-format-ligne"><span>' + esc(date) + '</span><span class="nb">' + j.visiteurs + '</span><span class="nb">' + j.visites + '</span>' +
-        '<span class="taux">' + (j.visiteurs_multi ? pluriel(j.visiteurs_multi, "lecteur") : "—") + '</span></div>';
-    }).join("");
-    return titre + enTete + lignes +
-      '<p class="bilan-note">Une visite = un passage sans pause de plus de 30 minutes. « Revenus le même jour » : lecteurs venus au moins deux fois dans la journée. Lecteurs anonymes (un identifiant au hasard par navigateur) ; vos propres passages ne sont jamais comptés.</p>';
-  }
-
-  function renderBilanEcran(){
-    if (frequentationEtat === "a-charger") lancerChargementFrequentation();
-    var numerosVus = numeros.filter(function(n){ return n.statut !== "brouillon"; });
-    var totalVues = numerosVus.reduce(function(s, n){ return s + (n.vues || 0); }, 0);
-
-    var toutesEntrees = [];
-    numeros.forEach(function(n){ (n.entrees || []).forEach(function(e){ toutesEntrees.push({ e: e, n: n }); }); });
-    var totalClics = toutesEntrees.reduce(function(s, x){ return s + (x.e.clicsSource || 0); }, 0);
-
-    var numeroTop = numerosVus.slice().sort(function(a, b){ return (b.vues || 0) - (a.vues || 0); })[0];
-
-    var f = frequentationEtat === "ok" ? frequentation : null;
-    var depuis = f && f.depuis ? new Date(f.depuis).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null;
-    var entete = '<h1 class="sr-only">Bilan de fréquentation</h1><div class="sources-entete">' +
-      (f ? '<div class="sources-entete-principal"><span class="label">Lecteurs distincts</span><span class="total"><b class="tab-num">' + f.visiteurs + '</b>' + (depuis ? "depuis le " + esc(depuis) : "") + '</span></div>' +
-        '<div class="sources-entete-principal"><span class="label">Visites</span><span class="total"><b class="tab-num">' + f.visites + '</b></span></div>' : "") +
-      '<div class="sources-entete-principal"><span class="label">Vues cumulées</span><span class="total"><b class="tab-num">' + totalVues + '</b>sur ' + numerosVus.length + ' numéro' + (numerosVus.length > 1 ? "s" : "") + ' publié' + (numerosVus.length > 1 ? "s" : "") + '</span></div>' +
-      '<div class="sources-entete-principal"><span class="label">Clics « Ouvrir la source »</span><span class="total"><b class="tab-num">' + totalClics + '</b>sur ' + toutesEntrees.length + ' entrée' + (toutesEntrees.length > 1 ? "s" : "") + '</span></div>' +
-      (f ? '<div class="sources-collecte"><span class="label">Revenus plusieurs fois le même jour</span><span class="valeur">' + pluriel(f.visiteurs_multi, "lecteur") + (f.jours_multi ? ' · ' + f.jours_multi + ' fois en tout' : "") + '</span></div>' +
-        '<div class="sources-collecte"><span class="label">Recherche · installations</span><span class="valeur">' + pluriel(f.recherches, "recherche") + ' · ' + pluriel(f.installations, "installation") + '</span></div>' : "") +
-      (numeroTop && numeroTop.vues ? '<div class="sources-collecte"><span class="label">Numéro le plus consulté</span><span class="valeur">n° ' + numeroTop.numero + ' · ' + numeroTop.vues + ' vue' + (numeroTop.vues > 1 ? "s" : "") + '</span></div>' : "") +
-    '</div>';
-
-    var numerosTries = numerosVus.slice().sort(function(a, b){ return (b.vues || 0) - (a.vues || 0); });
-    var maxVues = numerosTries.reduce(function(m, n){ return Math.max(m, n.vues || 0); }, 0);
-    // Détail jour par jour (15/09/2026) : un petit graphique sous CHAQUE
-    // ligne (numéro ET entrée, demandé explicitement) — un seul bouton pour
-    // les deux, à la place du graphique de tendance chronologique essayé
-    // avant (pas ce qui était demandé). Données chargées avec le Bilan,
-    // voir chargerFrequentation().
-    var titreNum = '<div class="groupe-titre"><span>Numéros — du plus au moins consulté</span><span class="filet"></span>' +
-      '<button type="button" class="deplier" data-action="toggle-bilan-detail-jour">' + (state.bilanDetailJournalierOuvert ? "Masquer le détail jour par jour" : "Voir le détail jour par jour") + '</button>' +
-      '</div>';
-    var colsNum = '<div class="sources-cols bilan-cols bilan-cols-2"><span>Numéro</span><span>Vues</span></div>';
-    var sectionNum = titreNum +
-      colsNum + numerosTries.map(function(n){ return renderBilanRowNumero(n, maxVues); }).join("");
-
-    var entreesTriees = toutesEntrees.slice().sort(function(a, b){ return (b.e.clicsSource || 0) - (a.e.clicsSource || 0); });
-    var maxClics = entreesTriees.reduce(function(m, x){ return Math.max(m, x.e.clicsSource || 0); }, 0);
-    var seuil = 10;
-    var reste = entreesTriees.length - seuil;
-    var visibles = state.bilanEntreesDeplie ? entreesTriees : entreesTriees.slice(0, seuil);
-    var titreEnt = '<div class="groupe-titre"><span>Entrées — clics sur « Ouvrir la source » (' + entreesTriees.length + ')</span><span class="filet"></span>' +
-      (reste > 0 ? '<button type="button" class="deplier" data-action="deplier-bilan-entrees">' + (state.bilanEntreesDeplie ? "Replier" : "Déplier les " + reste + " autres") + '</button>' : "") +
-      '</div>';
-    var colsEnt = '<div class="sources-cols bilan-cols"><span>Entrée</span><span>Numéro</span><span>Clics</span></div>';
-    var sectionEnt = titreEnt + colsEnt + visibles.map(function(x){ return renderBilanRowEntree(x.e, x.n, maxClics); }).join("");
-
-    return '<div class="sources bilan">' + entete +
-      '<div class="sources-table">' + renderBilanFrequentationApp() + '</div>' +
-      '<div class="sources-table bilan-section">' + sectionNum + '</div>' +
-      '<div class="sources-table bilan-section">' + sectionEnt + '</div>' +
-      '<div class="sources-table bilan-section">' + renderBilanFormats() + '</div>' +
-    '</div>';
+      titre("Règles en vigueur (" + actives + " active" + (actives > 1 ? "s" : "") + ")") + lignes + ajout +
+      '<div class="bilan-section">' + renderBilanFormats() + '</div>';
   }
 
   function renderModalSource(){
@@ -3492,11 +3549,10 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     }
     modaleFoyerPrecedent = foyerActuel;
 
-    // Survol/clavier des graphiques jour par jour (Bilan) : recréés à
-    // chaque rendu (innerHTML ci-dessus), on ré-attache donc les écouteurs
-    // à chaque fois plutôt qu'une fois au chargement.
-    var graphesJour = app.querySelectorAll(".graphe-jour");
-    for (var gj = 0; gj < graphesJour.length; gj++) initGrapheJournalierHover(graphesJour[gj]);
+    // Survol/clavier du graphique du Bilan : recréé à chaque rendu
+    // (innerHTML ci-dessus), on ré-attache donc les écouteurs à chaque fois.
+    var grapheBilan = app.querySelector(".bilan-graphe");
+    if (grapheBilan) initBilanGraphe(grapheBilan);
 
     navSynchroniser();
   }
@@ -3535,8 +3591,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         if (estRedacteurActif()) rafraichirMemoire().then(render); // la routine a pu déposer des propositions
       }
       if (vueCible === "bilan" && estRedacteurActif()) {
+        bilanCache = {}; // chiffres frais à chaque ouverture de l'onglet
         chargerDonneesRedaction().then(render);
-        lancerChargementFrequentation();
       }
       return;
     }
@@ -3953,14 +4009,15 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     var sourcesFiltreBtn = ev.target.closest('[data-action="sources-filtre"]');
     if (sourcesFiltreBtn) { state.sourcesFiltre = sourcesFiltreBtn.getAttribute("data-filtre"); state.sourcesDeplie = false; render(); return; }
 
-    if (ev.target.closest('[data-action="deplier-bilan-entrees"]')) { state.bilanEntreesDeplie = !state.bilanEntreesDeplie; render(); return; }
-
-    if (ev.target.closest('[data-action="toggle-bilan-detail-jour"]')) {
-      // Données déjà chargées avec le Bilan (affut_bilan_frequentation()).
-      state.bilanDetailJournalierOuvert = !state.bilanDetailJournalierOuvert;
-      render();
-      return;
+    var bilanDureeBtn = ev.target.closest('[data-action="bilan-duree"]');
+    if (bilanDureeBtn) { state.bilanPeriode = { duree: bilanDureeBtn.getAttribute("data-duree"), decalage: 0 }; render(); return; }
+    var bilanDecalerBtn = ev.target.closest('[data-action="bilan-decaler"]');
+    if (bilanDecalerBtn && !bilanDecalerBtn.disabled) {
+      state.bilanPeriode.decalage = Math.max(0, state.bilanPeriode.decalage + parseInt(bilanDecalerBtn.getAttribute("data-sens"), 10));
+      render(); return;
     }
+    var bilanToutBtn = ev.target.closest('[data-action="bilan-tout"]');
+    if (bilanToutBtn) { var liste = bilanToutBtn.getAttribute("data-liste"); state.bilanTout[liste] = !state.bilanTout[liste]; render(); return; }
   });
 
   document.addEventListener("change", function(ev){

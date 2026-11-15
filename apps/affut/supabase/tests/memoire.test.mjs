@@ -8,11 +8,11 @@ import assert from "node:assert/strict";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const html = readFileSync(join(racine, "index.html"), "utf8");
-const i = html.indexOf("  function renderMemoireEspace(){"), j = html.indexOf("  function renderBilanEcran(){");
+const i = html.indexOf("  function renderMemoireEspace(){"), j = html.indexOf("  function renderModalSource(){", i);
 assert.ok(i >= 0 && j > i, "renderMemoireEspace introuvable");
 const fabrique = (regles, propositions, regleEdition = null, derniereSynthese = null) =>
-  new Function("regles", "propositions", "state", "esc", "MAX_REGLES_ACTIVES", "derniereSynthese", html.slice(i, j) + "\nreturn renderMemoireEspace();")(
-    regles, propositions, { regleEdition }, (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), 30, derniereSynthese);
+  new Function("regles", "propositions", "state", "esc", "MAX_REGLES_ACTIVES", "derniereSynthese", "renderBilanFormats", html.slice(i, j) + "\nreturn renderMemoireEspace();")(
+    regles, propositions, { regleEdition }, (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), 30, derniereSynthese, () => "<!--par-format-->");
 let n = 0;
 const test = (nom, f) => { f(); n++; console.log("ok  " + nom); };
 const regle = (id, texte, extra = {}) => ({ id, texte, actif: true, origine: "enseignant", ...extra });
@@ -22,6 +22,7 @@ test("migration 018 non appliquée (regles = null) : message, pas d'erreur", () 
 });
 test("aucune règle : message d'accueil et formulaire d'ajout", () => {
   const h = fabrique([], []);
+  assert.match(h, /<!--par-format-->/, "tableau « par format » déplacé ici depuis le Bilan");
   assert.match(h, /Aucune règle pour l'instant/);
   assert.match(h, /data-action="regle-ajouter"/);
   assert.match(h, /Règles en vigueur \(0 active\)/);
