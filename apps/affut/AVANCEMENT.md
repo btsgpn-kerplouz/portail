@@ -2573,6 +2573,26 @@ Cocher au fur et à mesure, noter les écarts/décisions prises pendant le lot.
       fiche sommaire ouverte dessous sur toute la largeur de la grille.
       Page d'un numéro sur téléphone : cartes d'entrée élargies (marges de
       `.carte-grille` 22 → 8 px, corps de carte 18 → 14 px).
+- [x] **Suppression des chiffres clés par entrée** (15/11/2026, PR #147,
+      mergée). Demande de l'utilisateur : plus besoin d'en chercher ni de
+      les afficher. Annule le Lot 12 (chiffres éditables en place) et la
+      règle « teaser » du 19/09/2026.
+      - `index.html` : retrait de l'affichage (vue publiée, rédaction avec
+        sa case « Afficher les chiffres clés », candidats de moisson), du
+        champ « Chiffres clés » du formulaire, de la recherche transversale
+        sur les chiffres, et du code/CSS associé (`flatChiffres`,
+        `chiffreTexte`, `parseChiffre*`, `.flat-chiffres`…).
+      - Le champ `chiffres` **reste dans le modèle de données** (schéma
+        Supabase inchangé, aucune migration) mais n'est plus lu : entrées
+        retenues ou créées à la main → `[]` ; entrées existantes gardent
+        leurs anciens chiffres en base, sans affichage.
+      - `documents/brief-veille.md` : la routine n'en cherche plus et envoie
+        toujours `"chiffres": []` — le champ reste exigé par l'Edge Function
+        `affut-veille` (un candidat sans lui est rejeté), donc pas de
+        redéploiement nécessaire. Retirés aussi : la règle du 19/09/2026,
+        l'interdit « n'invente jamais de chiffre » et la phrase « les entrées
+        portent des chiffres de terrain concrets » (section Public et angle).
+      - Non testé dans le navigateur (seulement `node --check` du JS).
 
 ## Idées pour plus tard (hors lots planifiés)
 
