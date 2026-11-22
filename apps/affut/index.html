@@ -686,6 +686,18 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
 .refus-item{border-left:3px solid var(--af-mort);background:var(--af-surface-2);padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--af-encre-courant)}
 .refus-item.vide{border-left-color:var(--af-prive)}
 .refus-item b{color:var(--af-encre)}
+/* mail d'annonce (après publication) */
+.btn-ligne:disabled{opacity:.4;cursor:not-allowed}
+.mail-champ{display:flex;flex-direction:column;gap:6px}
+.mail-champ .lbl{font-family:var(--af-police-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--af-encre-3)}
+.mail-objet{font-size:13px;padding:8px 10px;border:1px solid var(--af-filet-fort);background:var(--af-surface-2);color:var(--af-encre);overflow-wrap:anywhere}
+.mail-apercu{font-size:13px;line-height:1.5;padding:12px 14px;border:1px solid var(--af-filet-fort);background:var(--af-surface-2);color:var(--af-encre-courant);max-height:50vh;overflow-y:auto;overflow-wrap:anywhere}
+.mail-apercu p{margin:0 0 10px}
+.mail-apercu ul{margin:0 0 10px;padding-left:18px}
+.mail-apercu li{margin-bottom:8px}
+.mail-apercu a{color:var(--af-accent);text-decoration:underline;text-underline-offset:2px}
+.mail-copie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mail-copie .ok{font-family:var(--af-police-mono);font-size:10.5px;color:var(--af-encre-3)}
 .glyphe-alerte{font-family:var(--af-police-mono);font-size:22px;color:var(--af-mort);display:block}
 
 /* ---- impression (lot 4, écran 4c) : masqué à l'écran ---- */
@@ -1698,6 +1710,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     bilanPeriode: { duree: "30", decalage: 0 }, // Bilan : "7" | "30" | "rentree" ; decalage = nb de périodes en arrière
     bilanTout: { numeros: false, entrees: false }, // Bilan : classements dépliés au-delà des 5 premiers
     publicationRefusee: null,
+    mailAnnonce: null, // { objet, html, texte } : mail type proposé juste après « Publier »
     ecarterOuvert: null, // id du candidat dont le panneau « écarter avec motif » est ouvert
     deplacerOuvert: null, // id de l'entrée dont le sélecteur « déplacer vers » est ouvert
     ecarterEntreeOuvert: null // id de l'entrée retenue dont le panneau « supprimer et écarter » est ouvert
@@ -2780,6 +2793,11 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
           ((numero.moisson || []).length
             ? ' title="Les ' + numero.moisson.length + ' propositions encore en moisson seront enregistrées comme non retenues — la veille en tient compte."'
             : '') + '>Publier le n° ' + numero.numero + '</button>';
+    // Mail d'annonce : bouton à la demande (pas d'ouverture automatique à la
+    // publication), grisé tant que le numéro n'est pas publié.
+    var boutonMail = numero.statut === "publie"
+      ? '<button class="btn-ligne" type="button" data-action="mail-annonce">Mail d\'annonce</button>'
+      : '<button class="btn-ligne" type="button" disabled title="Disponible une fois le numéro publié">Mail d\'annonce</button>';
     var enteteActions = state.mode === "redaction"
       ? '<div class="entete-actions">' + renderSelecteurNumero() +
         '<div class="entete-compteur"><span class="n tab-num">' + entrees.filter(function(e){return e.valide;}).length + '</span><span class="l">sur ' + numero.candidates + ' candidates</span>' + publieBadge + '</div>' +
@@ -2792,7 +2810,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
         // plus engageants (publier/dépublier, supprimer).
         '<div class="entete-boutons">' +
           '<div class="entete-boutons-groupe" aria-label="Actions sur les entrées"><button class="btn-ligne" type="button" data-action="new-entree">+ Ajouter une entrée</button><button class="btn-ligne" type="button" data-action="recuperer-illustrations-manquantes">Récupérer les illustrations manquantes</button></div>' +
-          '<div class="entete-boutons-groupe" aria-label="Actions sur le numéro"><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + '<button class="btn-ligne danger" type="button" data-action="supprimer-numero">Supprimer ce numéro</button></div>' +
+          '<div class="entete-boutons-groupe" aria-label="Actions sur le numéro"><button class="btn-ligne" type="button" data-action="nouveau-numero">+ Nouveau numéro</button><button class="btn-imprimer" type="button" data-action="imprimer">Imprimer ce numéro</button>' + boutonPublication + boutonMail + '<button class="btn-ligne danger" type="button" data-action="supprimer-numero">Supprimer ce numéro</button></div>' +
         '</div>' +
         renderChampIllustrationNumero() +
       '</div>'
@@ -2842,6 +2860,82 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       if (!e.url || !e.url.trim()) return { id: e.id, titre: e.titre, type: "vide", message: "bloc source vide. Un lien au minimum est exigé." };
       return null;
     }).filter(Boolean);
+  }
+
+  // ---- Mail d'annonce (demandé le 22/11/2026) ----
+  // Juste après « Publier le n° X », une fenêtre propose un mail type prêt à
+  // coller dans la messagerie : objet « Titre - veille naturaliste n°X -
+  // semaine S - Année », puis une intro, le lien vers le numéro, la liste des
+  // entrées retenues (titre cliquable vers la source + résumé, tel qu'affiché dans le
+  // numéro) et un lien vers le Sommaire. Le contenu est copié en HTML (liens
+  // cliquables une fois collé dans Gmail/Thunderbird…) avec une version texte
+  // brut de secours (adresses écrites en clair).
+  function escAttr(s){ return esc(s).replace(/"/g, "&quot;"); }
+
+  function construireMailAnnonce(n){
+    var base = location.origin + location.pathname;
+    var urlNumero = base + "#/n" + n.numero;
+    var mSem = /semaine\s+(\d+)/.exec(n.semaine || "");
+    var annee = n.datePublication ? n.datePublication.slice(0, 4) : ((/(\d{4})/.exec(n.mois || "") || [])[1] || String(new Date().getFullYear()));
+    var objet = (n.titre ? n.titre + " - " : "") + "veille naturaliste n°" + n.numero +
+      (mSem ? " - semaine " + mSem[1] : "") + " - " + annee;
+    var retenues = entreesOrdonnees().filter(function(e){ return e.valide; });
+    var nomNumero = "n° " + n.numero + (n.titre ? " — " + n.titre : "");
+    // Titre d'une entrée → sa source (l'adresse saisie dans l'entrée) ;
+    // à défaut, la page du numéro.
+    var lienEntree = function(e){ return e.url && e.url.trim() ? e.url.trim() : urlNumero; };
+
+    var html = '<p>Le nouveau numéro hebdomadaire est sorti : <a href="' + escAttr(urlNumero) + '">' + esc(nomNumero) + '</a></p>' +
+      (retenues.length
+        ? '<ul>' + retenues.map(function(e){
+            var resume = e.blocs && e.blocs.resume && e.resume ? '<br>' + esc(e.resume) : "";
+            return '<li><a href="' + escAttr(lienEntree(e)) + '"><b>' + esc(e.titre) + '</b></a>' + resume + '</li>';
+          }).join("") + '</ul>'
+        : "") +
+      '<p><a href="' + escAttr(base) + '">Consulter les autres numéros</a></p>';
+
+    var texte = "Le nouveau numéro hebdomadaire est sorti : " + nomNumero + "\n" + urlNumero + "\n\n" +
+      retenues.map(function(e){
+        return "• " + e.titre + "\n  " + lienEntree(e) + (e.blocs && e.blocs.resume && e.resume ? "\n  " + e.resume : "");
+      }).join("\n\n") + (retenues.length ? "\n\n" : "") +
+      "Consulter les autres numéros : " + base + "\n";
+
+    return { numeroId: n.numero, objet: objet, html: html, texte: texte, copie: null };
+  }
+
+  function renderMailAnnonce(){
+    if (!state.mailAnnonce) return "";
+    var m = state.mailAnnonce;
+    var ok = function(quoi){ return m.copie === quoi ? '<span class="ok" role="status">✓ copié</span>' : (m.copie === quoi + "-echec" ? '<span class="ok" role="status">copie impossible — sélectionner le texte à la main</span>' : ""); };
+    return '<div class="modal-overlay" data-action="close-mail-backdrop">' +
+      '<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="Mail d\'annonce du n° ' + m.numeroId + '">' +
+        '<div class="modal-titre">Mail d\'annonce — n° ' + m.numeroId + '</div>' +
+        '<div class="mail-champ"><span class="lbl">Objet</span><div class="mail-objet">' + esc(m.objet) + '</div>' +
+          '<div class="mail-copie"><button type="button" class="btn-ligne" data-action="copier-mail-objet">Copier l\'objet</button>' + ok("objet") + '</div></div>' +
+        '<div class="mail-champ"><span class="lbl">Contenu</span><div class="mail-apercu">' + m.html + '</div>' +
+          '<div class="mail-copie"><button type="button" class="btn-ligne" data-action="copier-mail-contenu">Copier le contenu</button>' + ok("contenu") + '</div></div>' +
+        '<div class="modal-boutons"><span></span><div class="modal-boutons-droite"><button type="button" class="btn-plein" data-action="close-mail">Fermer</button></div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function copierMail(quoi){
+    var m = state.mailAnnonce;
+    if (!m) return;
+    try {
+      if (quoi === "contenu" && window.ClipboardItem) {
+        await navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([m.html], { type: "text/html" }),
+          "text/plain": new Blob([m.texte], { type: "text/plain" })
+        })]);
+      } else {
+        await navigator.clipboard.writeText(quoi === "objet" ? m.objet : m.texte);
+      }
+      m.copie = quoi;
+    } catch (err) {
+      m.copie = quoi + "-echec";
+    }
+    render();
   }
 
   function renderPublicationRefusee(){
@@ -3366,7 +3460,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
   // saisie par le clavier.
   var modaleFoyerPrecedent = null;
   function modaleFoyerActuel(){
-    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.publicationRefusee ? "refus" : null;
+    return state.modal ? "modal" : state.modalSource ? "modalSource" : state.modalAuth ? "modalAuth" : state.modalNumero ? "modalNumero" : state.publicationRefusee ? "refus" : state.mailAnnonce ? "mail" : null;
   }
 
   // ---- Lot 7 : connexion / compte en attente / déconnexion ----
@@ -3498,7 +3592,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (!navPret) return; // encore en chargement
     navAppliquer(page);
     state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-    state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
+    state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null; state.mailAnnonce = null;
     navRestauration = true;
     try { render(); } finally { navRestauration = false; }
   });
@@ -3578,7 +3672,8 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       renderModalSource() +
       renderModalAuth() +
       renderModalNumero() +
-      renderPublicationRefusee();
+      renderPublicationRefusee() +
+      renderMailAnnonce();
 
     // Focus envoyé dans la modale seulement si elle vient de s'ouvrir
     // (lot 5, audit RGAA — 2.4.3) : sans ça, le focus clavier restait
@@ -3620,7 +3715,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       var vueCible = vueBtn.getAttribute("data-vue");
       state.vue = vueCible;
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null; state.mailAnnonce = null;
       render();
       // Bilan (Lot 13) : `numeros` ne vit qu'en mémoire, chargé une fois par
       // chargerDonnees() (init, connexion…) — jamais republié depuis. Sans ce
@@ -3643,7 +3738,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.vue = "numero";
       state.mode = "redaction";
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null; state.mailAnnonce = null;
       render();
       return;
     }
@@ -3652,7 +3747,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       state.vue = "numero";
       state.mode = "publiee";
       state.modal = null; state.modalSource = null; state.modalAuth = null; state.modalNumero = null;
-      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null;
+      state.ecarterOuvert = null; state.deplacerOuvert = null; state.ecarterEntreeOuvert = null; state.publicationRefusee = null; state.mailAnnonce = null;
       render();
       return;
     }
@@ -3996,6 +4091,16 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
       return;
     }
 
+    if (ev.target.closest('[data-action="mail-annonce"]')) {
+      if (numero.statut === "publie") { state.mailAnnonce = construireMailAnnonce(numero); render(); }
+      return;
+    }
+    if (ev.target.closest('[data-action="copier-mail-objet"]')) { copierMail("objet"); return; }
+    if (ev.target.closest('[data-action="copier-mail-contenu"]')) { copierMail("contenu"); return; }
+    if (ev.target.closest('[data-action="close-mail"]') || ev.target === document.querySelector('[data-action="close-mail-backdrop"]')) {
+      state.mailAnnonce = null; render(); return;
+    }
+
     if (ev.target.closest('[data-action="close-refus"]') || ev.target === document.querySelector('[data-action="close-refus-backdrop"]')) {
       state.publicationRefusee = null; render(); return;
     }
@@ -4200,6 +4305,7 @@ mark.surlignage{background:var(--af-surlignage-fond);color:var(--af-encre);paddi
     if (state.deplacerOuvert) { state.deplacerOuvert = null; render(); return; }
     if (state.ecarterEntreeOuvert) { state.ecarterEntreeOuvert = null; render(); return; }
     if (state.publicationRefusee) { state.publicationRefusee = null; render(); return; }
+    if (state.mailAnnonce) { state.mailAnnonce = null; render(); return; }
   });
 
   document.addEventListener("submit", async function(ev){

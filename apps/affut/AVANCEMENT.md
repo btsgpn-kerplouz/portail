@@ -4,6 +4,21 @@
 > neuve (après un `/clear` ou une compaction) pour savoir où on en est,
 > sans dépendre de la mémoire de la conversation précédente.
 
+## 22/11/2026 — mail d'annonce après publication (branche `affut/mail-annonce`, non commitée)
+
+Bouton « Mail d'annonce » dans les actions du numéro (rédaction), grisé tant
+que le numéro n'est pas publié — pas d'ouverture automatique à la
+publication. Il ouvre une fenêtre avec un mail type : **objet** `Titre - veille naturaliste n°X - semaine S - Année`
+(semaine et année tirées de `semaine`/`date_publication`) et **contenu** :
+« Le nouveau numéro hebdomadaire est sorti » + lien vers `#/nX`, liste des
+entrées retenues (titre cliquable vers la source de l'entrée, `url` —
+la page du numéro à défaut — + résumé s'il est affiché dans le numéro),
+puis « Consulter les autres numéros » → Sommaire. Boutons « Copier l'objet »
+et « Copier le contenu » (copié en HTML → liens cliquables une fois collé,
+avec une version texte brut de secours). Code : `construireMailAnnonce()`,
+`renderMailAnnonce()`, `copierMail()` dans `index.html`, état
+`state.mailAnnonce`.
+
 ## État au 04/09/2026 — reprendre ici
 
 **✅ Lot 26 (date de publication distincte de la semaine de collecte) fait,
